@@ -92,8 +92,9 @@ first/contiguous/overlapping candle, a duplicate/unknown flag, an unmarked gap,
 or an excessive gap fails closed. Per-timeframe marker counts are exposed as
 model context, not as execution authority. The schedule semantics follow the
 official [cTrader model messages](https://help.ctrader.com/open-api/model-messages/);
-cTrader also documents that a no-tick interval does not produce a trendbar, so
-an absent bar during an open session is not silently treated as a closure.
+cTrader also documents in its [Open API FAQ](https://help.ctrader.com/open-api/faq/)
+that a no-tick interval does not produce a trendbar, so an absent bar during an
+open session is not silently treated as a closure.
 
 Broker behavior is expressed by `MarketDataAdapter`, `AccountAdapter`, and `ExecutionGateway`. Gateways accept already normalized command objects; they do not accept raw model output. AI behavior is expressed by `ModelClient`, while local validators are independent of the provider.
 

@@ -280,8 +280,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   broker command submission structurally disabled returned 600 M1, 500 M5, and
   300 M15 completed candles. The adapter marked 1, 2, and 3 broker-session gaps,
   respectively; strict updated analytics accepted the snapshot with no
-  rejection. All required local quality/security gates passed; PR review/merge,
-  deployment, and stopped post-deploy validation remain.
+  rejection. All required local quality/security gates passed; the checkpoint is
+  under review in [PR #16](https://github.com/AegisFintech/scalping-bot/pull/16).
+  Merge, deployment, and stopped post-deploy validation remain.
 
 ## Acceptance criteria
 

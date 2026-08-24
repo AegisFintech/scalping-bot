@@ -178,8 +178,9 @@ service. It received 600 M1, 500 M5, and 300 M15 completed candles with 1, 2,
 and 3 trusted session gaps; depth was complete and continuous, and strict
 analytics accepted the request with no rejection. Execution stayed stopped and
 no order-capable cycle or broker command was invoked. The complete local gate
-suite passed; merge, deployment, and post-deploy evidence are recorded
-separately when complete.
+suite passed; delivery is tracked in
+[PR #16](https://github.com/AegisFintech/scalping-bot/pull/16). Merge, deployment,
+and post-deploy evidence are recorded separately when complete.
 
 ## Shadow-mode setup
 
