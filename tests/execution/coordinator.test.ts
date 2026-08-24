@@ -342,6 +342,22 @@ describe("analysis coordinator", () => {
     expect(result.placement).not.toBeNull();
   });
 
+  it("flushes broker callbacks only after placement persistence", async () => {
+    const trail = new InMemoryDecisionTrail();
+    const flushExecutionEvents = vi.fn(() => {
+      expect(trail.events.at(-1)).toMatchObject({ type: "placement" });
+      return Promise.resolve();
+    });
+
+    const result = await new AnalysisCoordinator(
+      options({ trail, flushExecutionEvents }),
+    ).runOnce();
+
+    expect(result.outcome).toBe("PLACED");
+    expect(flushExecutionEvents).toHaveBeenCalledOnce();
+    expect(trail.events.at(-1)).toMatchObject({ type: "transition" });
+  });
+
   it("rejects a mismatched prompt artifact before risk or placement", async () => {
     const place = vi.fn(() => Promise.reject(new Error("must not place")));
     const configured = options({

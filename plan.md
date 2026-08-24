@@ -168,9 +168,10 @@ evidence precede any broker-capable live implementation.
 | ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
 | ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
 | ISSUE-024 | complete    | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
-| ISSUE-025 | in progress | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)   | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
+| ISSUE-025 | complete    | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)   | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
 | ISSUE-026 | complete    | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)   | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
-| ISSUE-027 | in progress | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
+| ISSUE-027 | complete    | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
+| ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)     | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -697,10 +698,13 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #51](https://github.com/AegisFintech/scalping-bot/issues/51),
   migrations through `0010`, official cTrader close-position field semantics,
   ISSUE-024's deployed scheduler, and an empty/certain reconciled demo scope.
-- Current status: implementation is in progress on
-  `feat/issue-025-demo-terminal-repeat`. The candidate immutable release identity
-  was `0.1.0-actionable-oco-auto-demo.3`. Partial/multiple closing-deal outcomes
-  remain explicitly unsupported and block repetition rather than being guessed.
+- Current status: complete through
+  [PR #52](https://github.com/AegisFintech/scalping-bot/pull/52). Immutable
+  identity `.3` was preserved, ISSUE-026 registered `.4`, and the merged
+  scheduler/trade-history behavior ran repeatedly under the cap of 20. The
+  first broker-accepted OCO later expired terminally and released its accepted
+  analysis. Partial/multiple closing-deal outcomes remain explicitly
+  unsupported and block repetition rather than being guessed.
 
 ### ISSUE-026 delivery details
 
@@ -729,9 +733,39 @@ never justify empty, noisy, unsafe, or misleading commits.
   under a new immutable identity.
 - Dependencies: [issue #55](https://github.com/AegisFintech/scalping-bot/issues/55),
   current broker metadata, ISSUE-026 deployment, and both active database controls.
-- Current status: in progress on `fix/issue-027-notional-volume-cap` with
-  candidate identity `0.1.0-actionable-oco-auto-demo.5`. No configured risk,
-  notional, margin, spread, freshness, or reconciliation ceiling is increased.
+- Current status: complete through
+  [PR #56](https://github.com/AegisFintech/scalping-bot/pull/56). Immutable
+  identity `0.1.0-actionable-oco-auto-demo.5` deployed under both database
+  controls, recovered with an empty/certain broker scope, and was released only
+  after verification. It submitted the first valid minimum-volume two-leg demo
+  OCO while preserving every configured risk, notional, margin, spread,
+  freshness, and reconciliation ceiling.
+
+### ISSUE-028 delivery details
+
+- Acceptance criteria: retain raw cTrader callbacks until both local placement
+  broker IDs have committed; match a strategy-labelled callback by broker order
+  ID when cTrader omits the client order ID; keep callback persistence
+  idempotent; derive readiness from unresolved PostgreSQL journal evidence so a
+  later final fill can resolve a partial-fill blocker without process restart;
+  keep normalization/persistence failure fail closed; add ordering, recovery,
+  PostgreSQL, and rejection coverage; deploy stopped under a new immutable
+  identity; and prove a terminal OCO releases readiness and permits a later
+  automatic broker-minute claim without restart.
+- Dependencies: [issue #57](https://github.com/AegisFintech/scalping-bot/issues/57),
+  the deployed `.5` broker evidence, migration `0006`, ISSUE-025 terminal
+  release, and active database pause/emergency controls.
+- Current status: implementation is in progress on
+  `fix/issue-028-demo-callback-ordering` with candidate immutable identity
+  `0.1.0-actionable-oco-auto-demo.6`. It changes callback ordering and readiness
+  only; it adds no order authority and weakens no market, model, risk, cap,
+  reconciliation, or emergency gate. The pre-merge suite passes: Prettier,
+  ESLint, TypeScript typecheck/build, 146 Node tests across 29 files, 12 schema
+  tests, 3 migration tests, all 3 configured isolated-PostgreSQL integration
+  tests, Ruff format/lint, strict mypy over 19 source files, 43 Python tests,
+  replay/backtest smoke tests, npm/pip audits with zero known vulnerabilities,
+  secret and shell checks, and all five offline systemd security parses at 2.8
+  (`OK`).
 
 ## Acceptance criteria
 

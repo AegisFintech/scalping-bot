@@ -73,6 +73,7 @@ export interface DemoExecutionPersistenceResult {
 
 export interface DemoExecutionStore {
   persist(event: DemoExecutionEvent): Promise<DemoExecutionPersistenceResult>;
+  readiness(): Promise<DemoExecutionPersistenceResult>;
 }
 
 export interface DemoExecutionNormalizerOptions {
@@ -374,8 +375,6 @@ export function normalizeDemoExecution(
       : normalizeOrder(order, receivedAt, execution.errorCode);
   if (normalizedOrder !== null)
     assertExecutionOrderState(execution.executionType, normalizedOrder.state);
-  if (normalizedOrder?.clientOrderId === "" && deal === null)
-    throw new Error("DEMO_EXECUTION_CLIENT_ORDER_ID_MISSING");
   const normalizedPosition =
     position === null ? null : normalizePosition(position, receivedAt);
   const brokerOrderId =
@@ -456,6 +455,7 @@ export class DurableDemoExecutionRecorder {
   readonly #store: DemoExecutionStore;
   readonly #options: DemoExecutionNormalizerOptions;
   #tail: Promise<void> = Promise.resolve();
+  readonly #pending: BrokerExecution[] = [];
   #reasonCodes = new Set<string>();
 
   constructor(
@@ -467,12 +467,16 @@ export class DurableDemoExecutionRecorder {
   }
 
   enqueue(execution: BrokerExecution): void {
-    this.#tail = this.#tail.then(async () => {
+    this.#pending.push(execution);
+  }
+
+  async #drain(): Promise<void> {
+    while (this.#pending.length > 0) {
+      const execution = this.#pending.shift()!;
       try {
         const normalized = normalizeDemoExecution(execution, this.#options);
-        if (normalized === null) return;
+        if (normalized === null) continue;
         const result = await this.#store.persist(normalized);
-        for (const reason of result.reasonCodes) this.#reasonCodes.add(reason);
         if (!result.certain && result.reasonCodes.length === 0)
           this.#reasonCodes.add("DEMO_EXECUTION_PERSISTENCE_UNCERTAIN");
       } catch (error) {
@@ -482,18 +486,30 @@ export class DurableDemoExecutionRecorder {
             : "DEMO_EXECUTION_PERSISTENCE_FAILED",
         );
       }
-    });
+    }
   }
 
   async flush(): Promise<DemoExecutionPersistenceResult> {
+    this.#tail = this.#tail.then(() => this.#drain());
     while (true) {
       const tail = this.#tail;
       await tail;
       if (tail === this.#tail) break;
     }
+    let persisted: DemoExecutionPersistenceResult;
+    try {
+      persisted = await this.#store.readiness();
+    } catch {
+      this.#reasonCodes.add("DEMO_EXECUTION_READINESS_FAILED");
+      persisted = { certain: false, reasonCodes: [] };
+    }
+    const reasonCodes = new Set([
+      ...this.#reasonCodes,
+      ...persisted.reasonCodes,
+    ]);
     return {
-      certain: this.#reasonCodes.size === 0,
-      reasonCodes: [...this.#reasonCodes].sort(),
+      certain: persisted.certain && reasonCodes.size === 0,
+      reasonCodes: [...reasonCodes].sort(),
     };
   }
 }

@@ -26,6 +26,10 @@ class MemoryStore implements DemoExecutionStore {
     this.events.push(event);
     return Promise.resolve(this.result);
   }
+
+  readiness(): Promise<typeof this.result> {
+    return Promise.resolve(this.result);
+  }
 }
 
 describe("cTrader demo execution normalization", () => {
@@ -45,6 +49,20 @@ describe("cTrader demo execution normalization", () => {
       },
     });
     expect(event?.eventKey).toMatch(/^event:[0-9a-f]{64}$/);
+  });
+
+  it("retains a strategy-labelled acceptance without a client order ID", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    delete order.clientOrderId;
+
+    const event = normalizeDemoExecution({ ...raw, order }, { symbolId: "7" });
+
+    expect(event).toMatchObject({
+      clientOrderId: null,
+      brokerOrderId: "501",
+      order: { clientOrderId: "", state: "PENDING" },
+    });
   });
 
   it("normalizes a partial fill with broker-native volume and scaled commission", async () => {
@@ -223,6 +241,7 @@ describe("durable demo execution recorder", () => {
     const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
     recorder.enqueue(await fixture("demo-order-accepted-v1.json"));
     recorder.enqueue(await fixture("demo-order-filled-v1.json"));
+    expect(store.events).toEqual([]);
     await expect(recorder.flush()).resolves.toEqual({
       certain: true,
       reasonCodes: [],
@@ -245,5 +264,20 @@ describe("durable demo execution recorder", () => {
       certain: false,
       reasonCodes: ["DEMO_EXECUTION_LOCAL_INTENT_NOT_FOUND"],
     });
+  });
+
+  it("clears a persisted reason after the store reports it resolved", async () => {
+    const store = new MemoryStore();
+    const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
+    store.result = {
+      certain: false,
+      reasonCodes: ["DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED"],
+    };
+    recorder.enqueue(await fixture("demo-order-partial-fill-v1.json"));
+    await expect(recorder.flush()).resolves.toEqual(store.result);
+
+    store.result = { certain: true, reasonCodes: [] };
+    recorder.enqueue(await fixture("demo-order-filled-v1.json"));
+    await expect(recorder.flush()).resolves.toEqual(store.result);
   });
 });

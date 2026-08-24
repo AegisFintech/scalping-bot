@@ -90,7 +90,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   post-model completed-candle identity check remains unchanged.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or
-  reconnect before restoring readiness.
+  reconnect before restoring readiness. Placement callbacks queue until the
+  returned broker IDs commit, then may use that broker ID as a fallback when a
+  strategy-labelled cTrader event omits its client order ID. Readiness is
+  recalculated from current unresolved journal evidence after each drain.
 - Uses paper, demo, shadow, and live-compatible gateways behind one interface.
 - Samples the typed fresh-quote endpoint once per minute into an idempotent,
   account/symbol-scoped spread history even while analysis and trading are

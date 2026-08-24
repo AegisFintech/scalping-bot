@@ -70,6 +70,12 @@ credential-free versioned record, serialized through a durable PostgreSQL event
 journal, and applied atomically to order/fill/position state. Deal IDs provide
 fill idempotency; non-deal events use a normalized payload hash. Startup and
 reconnect replay bounded broker order/deal history for unresolved local intents.
+Synchronous placement callbacks are queued until the OCO placement transaction
+has committed both returned broker order IDs, then drained before the analysis
+is marked accepted. A strategy-labelled callback that omits its client order ID
+may therefore match the durable local intent by broker order ID. Runtime
+readiness is recalculated from unresolved journal rows after every drain, so a
+final fill can resolve earlier partial-fill evidence without a restart.
 Pagination, missing local intent, duplicate-key conflicts, partial fills,
 unknown fields/states, or persistence failure make reconciliation uncertain and
 block placement.

@@ -672,6 +672,47 @@ integration tests, Ruff, strict mypy, 43 Python tests, replay/backtest, npm/pip
 dependency audits, secret/shell checks, and all five offline systemd security
 parses at 2.8 (`OK`).
 
+PR #56 merged the notional correction and immutable `.5` started under the
+database pause and emergency stop with the cap of 20 already protected by its
+strategy hash. Startup recovery was certain and its broker scope was empty.
+After release, analysis `1d484be6-9932-48fe-8313-0645b6ecebdf` placed cTrader
+demo OCO group `29f9bc8e-8e50-4230-824d-2e1005aeab15` at 10:29 UTC. Both
+minimum-volume legs were broker accepted: buy 4650.10 / stop 4646 / target
+4658.30 and sell 4642.40 / stop 4646 / target 4635.20. Each final volume was
+100, each estimated margin was 4.64, and each maximum-loss budget was 5. Better
+Stack received the correlated analysis, risk, intent, and placement stages.
+The still-pending OCO expired automatically at 10:34:17 UTC; the analysis,
+group, and both orders became terminal with `ANALYSIS_EXPIRED` and no manual
+broker action.
+
+## Demo callback ordering and durable readiness
+
+The first credentialed expiry exposed a post-terminal readiness defect. cTrader
+can synchronously emit an order acceptance before the placement response has
+returned and before its broker order ID is committed to the local intent. The
+callback was therefore unmatched, and the recorder retained that reason in
+memory even after durable terminal reconciliation. Order maintenance performed
+the correct expiry/cancellation, but automatic analysis remained blocked until
+a stopped execution restart rebuilt readiness from PostgreSQL.
+
+ISSUE-028 queues raw placement callbacks until the OCO placement transaction has
+stored both broker IDs, drains them before the accepted state transition, and
+allows a strategy-labelled callback without a client order ID to match by its
+broker order ID. Recorder readiness now reflects current unresolved PostgreSQL
+journal rows instead of permanently latching a persistence result: a final fill
+may resolve prior partial evidence while the retained rows remain auditable.
+Normalization exceptions, persistence failures, unmapped/conflicting rows, and
+unresolved reasons still block. The new immutable candidate is
+`0.1.0-actionable-oco-auto-demo.6`; deployment remains stopped until the full
+gate suite and merge complete.
+
+The complete ISSUE-028 pre-merge suite passed Prettier, ESLint, TypeScript
+typecheck/build, 146 Node tests across 29 files, 12 JSON Schema tests, 3 static
+migration tests, all 3 configured isolated-PostgreSQL integration tests, Ruff
+format/lint, strict mypy over 19 source files, 43 Python tests, replay/backtest
+smoke tests, npm/pip audits with zero known vulnerabilities, secret and shell
+checks, and all five offline systemd security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

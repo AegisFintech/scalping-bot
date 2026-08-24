@@ -57,6 +57,41 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
     this.#options = options;
   }
 
+  async readiness(): Promise<DemoExecutionPersistenceResult> {
+    const result = await this.#options.pool.query<{
+      mapping_state: "MAPPED" | "UNMATCHED" | "CONFLICT";
+      reason_codes: unknown;
+    }>(
+      `SELECT mapping_state, reason_codes
+       FROM broker_execution_events
+       WHERE account_id = $1 AND symbol_id = $2
+         AND (
+           mapping_state <> 'MAPPED'
+           OR (resolved_at IS NULL AND jsonb_array_length(reason_codes) > 0)
+         )
+       ORDER BY occurred_at, id`,
+      [this.#options.accountId, this.#options.symbolId],
+    );
+    const reasons = new Set<string>();
+    for (const row of result.rows) {
+      let rowHasReason = false;
+      if (Array.isArray(row.reason_codes)) {
+        for (const reason of row.reason_codes) {
+          if (typeof reason === "string") {
+            reasons.add(reason);
+            rowHasReason = true;
+          }
+        }
+      }
+      if (row.mapping_state !== "MAPPED" && !rowHasReason)
+        reasons.add(`DEMO_EXECUTION_${row.mapping_state}`);
+    }
+    return {
+      certain: result.rows.length === 0,
+      reasonCodes: [...reasons].sort(),
+    };
+  }
+
   async persist(
     event: DemoExecutionEvent,
   ): Promise<DemoExecutionPersistenceResult> {
