@@ -157,7 +157,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
 | ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
 | ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
-| ISSUE-019 | in progress | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
+| ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -448,9 +448,17 @@ never justify empty, noisy, unsafe, or misleading commits.
   TypeScript typecheck/build, 114 Node tests, 10 schema tests, 3 migration tests,
   all 3 configured integration tests, Ruff format/lint, mypy, 30 Python tests,
   replay/backtest smoke tests, both dependency audits, secret and shell checks,
-  and all five offline systemd security parses at 2.8 (`OK`) pass. Merge and
-  stopped deployment remain pending in
-  [PR #33](https://github.com/AegisFintech/scalping-bot/pull/33).
+  and all five offline systemd security parses at 2.8 (`OK`) pass. The change
+  merged in [PR #33](https://github.com/AegisFintech/scalping-bot/pull/33) as
+  `21312cb`. The merged execution build was restarted with explicit safe
+  overrides under immutable strategy/code identity
+  `0.1.0-decision-refresh.1`. Startup recovery and readiness passed; demo and
+  automatic analysis remained disabled with both emergency stops active. The
+  new provenance row exists, demo order groups/orders/active positions/fills
+  and unresolved broker events are zero, and the startup audit recovered from
+  two rejected Better Stack attempts to `DELIVERED` on attempt three with zero
+  backlog. No cycle or broker command was invoked after deployment. Another
+  order-capable supervised cycle still requires a fresh exact acknowledgement.
 
 ## Acceptance criteria
 
