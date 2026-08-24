@@ -21,6 +21,11 @@ history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
 `0005`-through-`0007` migration paths exercise the database constraints.
+The configured PostgreSQL integration also executes the production model-trail
+transaction: UUID primary key and text request ID persist through distinct bind
+parameters with the same value, request/response/validity commit together,
+sensitive payload keys remain redacted, and a forced invalid validity timestamp
+rolls back both new rows.
 
 ## Historical limitations
 
@@ -138,3 +143,20 @@ had 32 samples, accepted strict 600/500/300-candle analytics, and approved a
 9-point spread at percentile `71.875` with no session abnormality. Execution
 events, groups, orders, active positions, and fills remained zero. No cycle was
 invoked.
+
+The next fresh acknowledgement opened one bounded demo window. An initial HTTP
+request with an empty JSON body was rejected by Fastify before coordinator entry;
+cleanup restored the database stop and `lastCycle` remained null. The corrected
+single cycle reached `MODEL_PENDING` and failed closed with PostgreSQL
+`inconsistent types deduced for parameter $1`, analysis
+`ca2c49d7-f133-4a5f-a4e2-b36c5465b8a7`, and no placement. The model-trail
+transaction had reused one parameter for UUID `model_requests.id` and text
+`request_id`, so PostgreSQL rolled it back. Both stops and disabled demo settings
+were restored; execution events, groups, orders, active positions, and fills
+remained zero. The operator acknowledgement is consumed.
+
+The ISSUE-017 distinct-bind change passed formatting, ESLint, TypeScript
+typecheck/build, 103 Node unit tests, 10 schema tests, 3 static migration tests,
+all 3 configured integration tests, Ruff format/lint, mypy, 30 Python tests,
+replay/backtest, both dependency audits, secret and shell checks, and all five
+offline systemd security parses.

@@ -14,12 +14,63 @@ import {
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
+import { PostgresDecisionTrail } from "../../apps/execution-service/src/postgres-trail.js";
 import { PostgresSpreadObservationStore } from "../../apps/execution-service/src/spread-observations.js";
+import type { ModelResponse } from "../../packages/contracts/src/index.js";
 import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
 const databaseTest =
   connectionString === undefined || connectionString === "" ? it.skip : it;
+
+function noTradeResponse(
+  analysisId: string,
+  validUntil = "2026-08-24T00:05:00.000Z",
+): ModelResponse {
+  const disabledOrder = {
+    enabled: false,
+    trigger_price: "1",
+    entry_price: "1",
+    stop_loss: "1",
+    take_profit: "1",
+    risk_reward_ratio: "2",
+    expires_at: validUntil,
+    invalidation_price: "1",
+  };
+  return {
+    schema_version: "1.0",
+    analysis_id: analysisId,
+    symbol: "XAUUSD",
+    generated_at: "2026-08-24T00:00:00.000Z",
+    valid_until: validUntil,
+    decision: "NO_TRADE",
+    market_regime: "UNCERTAIN",
+    waiting_area: {
+      lower: "1",
+      upper: "2",
+      description_code: "NO_VALID_ZONE",
+    },
+    buy_stop: disabledOrder,
+    sell_stop: disabledOrder,
+    confidence: {
+      overall: 0,
+      buy: 0,
+      sell: 0,
+      original_overall: 0,
+      original_buy: 0,
+      original_sell: 0,
+    },
+    setup_tags: [],
+    evidence_codes: [],
+    risk_flags: ["INSUFFICIENT_EVIDENCE"],
+    performance_adjustment: {
+      applied: false,
+      confidence_delta: 0,
+      reason_codes: [],
+    },
+    data_quality: { acceptable: true, warnings: [] },
+  };
+}
 
 describe("PostgreSQL migrations integration", () => {
   databaseTest("applies all migrations in an isolated schema", async () => {
@@ -207,6 +258,77 @@ describe("PostgreSQL migrations integration", () => {
          VALUES ($1, $2, $3, $4, 'demo', 'ACCEPTED', now(), now() + interval '1 hour')`,
         [analysisId, demoAccountId, symbolId, strategyVersionId],
       );
+      const trail = new PostgresDecisionTrail({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+        strategyVersionId,
+        mode: "demo",
+        apiStyle: "responses",
+        model: "integration-model",
+        promptVersion: "system-v1",
+        schemaVersion: "1.0",
+        payloadMode: "compact",
+        instanceId: "integration-instance",
+        environment: "test",
+      });
+      await expect(
+        trail.model(
+          analysisId,
+          { schema_version: "1.0", authorization: "must-be-redacted" },
+          noTradeResponse(analysisId),
+          '{"status":"completed"}',
+        ),
+      ).resolves.toBeUndefined();
+      const modelTrail = await isolated.query<{
+        id_matches_request_id: boolean;
+        requests: string;
+        responses: string;
+        valid_until: Date | null;
+        authorization: string;
+      }>(
+        `SELECT mr.id::text = mr.request_id AS id_matches_request_id,
+                (SELECT count(*)::text FROM model_requests WHERE analysis_id = $1) AS requests,
+                (SELECT count(*)::text FROM model_responses mres
+                 JOIN model_requests mreq ON mreq.id = mres.model_request_id
+                 WHERE mreq.analysis_id = $1) AS responses,
+                ar.valid_until,
+                mr.payload_redacted ->> 'authorization' AS authorization
+         FROM analysis_runs ar
+         JOIN model_requests mr ON mr.analysis_id = ar.id
+         WHERE ar.id = $1`,
+        [analysisId],
+      );
+      expect(modelTrail.rows[0]).toEqual({
+        id_matches_request_id: true,
+        requests: "1",
+        responses: "1",
+        valid_until: new Date("2026-08-24T00:05:00.000Z"),
+        authorization: "[REDACTED]",
+      });
+      await expect(
+        trail.model(
+          analysisId,
+          { schema_version: "1.0" },
+          noTradeResponse(analysisId, "not-a-timestamp"),
+          "{}",
+        ),
+      ).rejects.toThrow();
+      const rolledBackModelTrail = await isolated.query<{
+        requests: string;
+        responses: string;
+      }>(
+        `SELECT
+           (SELECT count(*)::text FROM model_requests WHERE analysis_id = $1) AS requests,
+           (SELECT count(*)::text FROM model_responses mres
+            JOIN model_requests mreq ON mreq.id = mres.model_request_id
+            WHERE mreq.analysis_id = $1) AS responses`,
+        [analysisId],
+      );
+      expect(rolledBackModelTrail.rows[0]).toEqual({
+        requests: "1",
+        responses: "1",
+      });
       await isolated.query(
         `INSERT INTO order_groups
           (id, analysis_id, idempotency_key, mode, state, expires_at)

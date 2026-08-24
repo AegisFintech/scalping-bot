@@ -319,10 +319,12 @@ export class PostgresDecisionTrail implements DecisionTrail {
         `INSERT INTO model_requests
           (id, analysis_id, request_id, api_style, model, prompt_version, schema_version,
            payload_mode, payload_redacted, payload_sha256, status, attempt_count, requested_at, completed_at)
-         VALUES ($1, $2, $1, $3, $4, $5, $6, $7, $8::jsonb, $9, 'COMPLETED', 1, now(), now())`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10,
+                 'COMPLETED', 1, now(), now())`,
         [
           requestId,
           analysisId,
+          requestId,
           this.#options.apiStyle,
           this.#options.model,
           this.#options.promptVersion,
