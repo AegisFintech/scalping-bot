@@ -1,0 +1,62 @@
+{
+  "executionType": 3,
+  "order": {
+    "orderId": "601",
+    "orderStatus": 2,
+    "executedVolume": "100",
+    "executionPrice": 2011.28,
+    "utcLastUpdateTimestamp": 1787544121000,
+    "closingOrder": true,
+    "tradeData": {
+      "symbolId": "7",
+      "volume": "100",
+      "tradeSide": 2,
+      "openTimestamp": 1787544120000,
+      "label": "ctrader-ai-scalper:0.1.0"
+    }
+  },
+  "position": {
+    "positionId": "801",
+    "positionStatus": 2,
+    "price": 2001.28,
+    "utcLastUpdateTimestamp": 1787544121000,
+    "tradeData": {
+      "symbolId": "7",
+      "volume": "0",
+      "tradeSide": 1,
+      "openTimestamp": 1787544060000,
+      "closeTimestamp": 1787544121000,
+      "label": "ctrader-ai-scalper:0.1.0"
+    }
+  },
+  "deal": {
+    "dealId": "903",
+    "orderId": "601",
+    "positionId": "801",
+    "volume": "100",
+    "filledVolume": "100",
+    "symbolId": "7",
+    "createTimestamp": 1787544121000,
+    "executionTimestamp": 1787544121000,
+    "executionPrice": 2011.28,
+    "tradeSide": 2,
+    "dealStatus": 2,
+    "commission": "-20",
+    "moneyDigits": 2,
+    "label": "ctrader-ai-scalper:0.1.0",
+    "closePositionDetail": {
+      "entryPrice": 2001.28,
+      "grossProfit": "1000",
+      "swap": "-10",
+      "commission": "-20",
+      "pnlConversionFee": "-5",
+      "balance": "1000965",
+      "closedVolume": "100",
+      "balanceVersion": "43",
+      "moneyDigits": 2,
+      "quoteToDepositConversionRate": 1
+    }
+  },
+  "errorCode": null,
+  "receivedAt": "2026-08-24T04:02:01.100Z"
+}

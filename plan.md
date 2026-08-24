@@ -145,7 +145,7 @@ evidence precede any broker-capable live implementation.
 | ID        | Status      | Issue                                                                                                                           | Acceptance summary                                                                                            |
 | --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | ISSUE-001 | in progress | [Supervised cTrader demo order lifecycle](https://github.com/AegisFintech/scalping-bot/issues/11)                               | Bounded manual session; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit   |
-| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)          | Callback journal/order/fill/position recovery implemented; closed-trade mapping awaits supervised evidence    |
+| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)          | Callback journal/order/fill/position/trade mapping implemented; supervised broker evidence remains            |
 | ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                           | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
 | ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                      | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
 | ISSUE-005 | pending     | Neon backup, restore, outage, and least-privilege role drill                                                                    | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
@@ -167,7 +167,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
 | ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
 | ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
-| ISSUE-024 | in progress | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
+| ISSUE-024 | complete    | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
+| ISSUE-025 | in progress | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)   | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -301,15 +302,15 @@ never justify empty, noisy, unsafe, or misleading commits.
   OCO peer-cancel tests, and both fresh/upgrade migration tests are required.
 - Dependencies: official cTrader execution/order/deal/position contracts, the
   existing disabled-by-default demo gateway, migration `0006`, and supervised
-  broker evidence for closing-deal commission/P&L signs.
+  broker evidence for closing-deal event sequencing.
 - Current status: callback journal plus order/fill/position mapping and restart/
   reconnect recovery are implemented on `feat/issue-002-demo-event-lifecycle`.
   This checkpoint is under review in
   [PR #4](https://github.com/AegisFintech/scalping-bot/pull/4).
-  Closing events are intentionally reason-coded
-  `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until supervised demo evidence confirms
-  broker-specific money fields. Migration `0006` passed fresh and `0005` upgrade
-  tests but is not yet applied to the configured database.
+  ISSUE-025 adds fully closed, single-deal demo trade persistence using the
+  protocol-defined signed gross-profit, swap, commission, and conversion-fee
+  fields. Missing detail, partial/multiple closing outcomes, conflicts, and
+  uncertain sequencing remain fail closed pending supervised broker evidence.
 
 ### ISSUE-011 delivery details
 
@@ -667,17 +668,37 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #49](https://github.com/AegisFintech/scalping-bot/issues/49),
   typed broker quote time, completed-candle snapshots, ISSUE-023's demo release,
   PostgreSQL availability, and the active pause on new analyses.
-- Current status: implementation is in progress on
-  `feat/issue-024-m1-analysis-window`. Migration `0010` provides the durable
+- Current status: complete and deployed through
+  [PR #50](https://github.com/AegisFintech/scalping-bot/pull/50). Migration `0010` provides the durable
   interval ledger, automatic starts use the first configured broker-M1 seconds,
   AI defaults to one provider attempt per interval, and immutable candidate
   identity is `0.1.0-actionable-oco-auto-demo.2`. No freshness, spread,
   semantic, risk, cap, reconciliation, mode, or emergency rule is changed. The
-  complete local gate suite passes: format/lint/typecheck/build, 136 Node tests
+  complete gate suite passed: format/lint/typecheck/build, 136 Node tests
   across 29 files, 12 schema tests, 3 migration tests, all 3 configured
   PostgreSQL integration tests, Ruff, mypy, 41 Python tests, replay/backtest,
   dependency audits, secret/shell checks, and five offline systemd parses at
-  2.8 (`OK`).
+  2.8 (`OK`). Credentialed broker-minute cycles were claimed at the opening
+  window. One reached a schema-2 response and post-model refresh in the same M1
+  context, proving the scheduler correction; the moved market made that proposal
+  non-executable, so semantic validation correctly rejected it before intent.
+
+### ISSUE-025 delivery details
+
+- Acceptance criteria: map one fully closed single-deal cTrader demo position
+  to exactly one versioned `trades` row; calculate net realized P/L from signed
+  broker money fields with Decimal arithmetic; reject missing, partial,
+  conflicting, or ambiguous close evidence; release an accepted analysis only
+  after its order group is terminal; show broker-minute claims and terminal
+  trade outcome in Streamlit; and deploy a bounded daily group cap that permits
+  automatic repetition after rejection, expiry, failure, or full closure.
+- Dependencies: [issue #51](https://github.com/AegisFintech/scalping-bot/issues/51),
+  migrations through `0010`, official cTrader close-position field semantics,
+  ISSUE-024's deployed scheduler, and an empty/certain reconciled demo scope.
+- Current status: implementation is in progress on
+  `feat/issue-025-demo-terminal-repeat`. The candidate immutable release identity
+  is `0.1.0-actionable-oco-auto-demo.3`. Partial/multiple closing-deal outcomes
+  remain explicitly unsupported and block repetition rather than being guessed.
 
 ## Acceptance criteria
 
@@ -707,9 +728,10 @@ never justify empty, noisy, unsafe, or misleading commits.
   systemd journals; OTLP export and Better Stack heartbeat-URL delivery remain
   unimplemented.
 - Paper fills/positions/trades are durable. Demo callbacks now have a durable,
-  deduplicated event journal with order/fill/position mapping and bounded restart
-  recovery. Closed-trade P/L remains blocked pending supervised validation of
-  the broker's commission, swap, and conversion-fee signs.
+  deduplicated event journal with order/fill/position/trade mapping and bounded
+  restart recovery. Fully closed single-deal outcomes use the protocol-defined
+  signed gross-profit, swap, commission, and conversion-fee fields; partial or
+  multiple closing deals remain a reconciliation blocker pending supervised evidence.
 - PostgreSQL TLS connectivity and isolated-schema tests through migration `0007`
   passed; the configured Neon schema is now at `0007`, with a clean empty event
   journal and certain startup recovery. Backup/restore and
@@ -743,11 +765,11 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 29 files, 136 tests passed.
+- [x] `npm test`: 29 files, 138 tests passed.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0010` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 12 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
-- [x] Ruff format/check, mypy, and pytest: 41 Python tests passed.
+- [x] Ruff format/check, mypy, and pytest: 43 Python tests passed.
 - [x] Checked-in replay and conservative backtest CLI smoke commands completed successfully.
 - [x] `pip-audit -r requirements.lock`: no known vulnerabilities.
 - [x] Secret scan and shell syntax checks passed.
@@ -758,8 +780,8 @@ runtime.
       verify durable Better Stack retry/recovery and the Streamlit delivery view.
 - [x] Apply reviewed migration `0009` under both emergency stops after ISSUE-022
       merges; restart AI/execution/dashboard and verify the prompt-history view.
-- [ ] Apply reviewed migration `0010` while automatic analysis is paused; restart
-      AI/execution and verify one durable broker-M1 claim plus terminal cycle.
+- [x] Apply reviewed migration `0010` while automatic analysis is paused; restart
+      AI/execution and verify durable broker-M1 claims plus terminal cycles.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.

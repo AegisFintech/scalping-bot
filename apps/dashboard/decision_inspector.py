@@ -29,6 +29,21 @@ _MAX_MODEL_INPUT_BYTES = 4_000_000
 _MAX_AUDIT_DETAIL_BYTES = 65_536
 _MAX_PROMPT_BYTES = 65_536
 _MAX_EXACT_COLLECTION_ITEMS = 2_000
+_TRADE_OUTCOME_FIELDS = {
+    "mode",
+    "direction",
+    "setup_tags",
+    "market_regime",
+    "confidence_bucket",
+    "realized_pnl",
+    "fees",
+    "opened_at",
+    "closed_at",
+    "model_version",
+    "prompt_version",
+    "schema_version",
+    "strategy_version",
+}
 _PROMPT_FILES = {
     "system-v1": "system-v1.md",
     "system-v2": "system-v2.md",
@@ -203,6 +218,27 @@ def exact_model_input_view(value: object) -> dict[str, Any]:
     safe = _safe_value(document, max_collection_items=_MAX_EXACT_COLLECTION_ITEMS)
     if not isinstance(safe, dict):  # pragma: no cover - guaranteed by _mapping
         raise DecisionViewError("DECISION_VIEW_MODEL_INPUT_INVALID")
+    return safe
+
+
+def trade_outcome_view(value: object) -> dict[str, Any]:
+    """Return one bounded terminal trade outcome without broker identifiers."""
+
+    document = _mapping(value, "DECISION_VIEW_TRADE_OUTCOME_INVALID")
+    if set(document) != _TRADE_OUTCOME_FIELDS:
+        raise DecisionViewError("DECISION_VIEW_TRADE_OUTCOME_FIELDS_INVALID")
+    _reject_sensitive_keys(document)
+    if document.get("mode") != "demo":
+        raise DecisionViewError("DECISION_VIEW_TRADE_OUTCOME_MODE_INVALID")
+    if document.get("direction") not in {"LONG", "SHORT"}:
+        raise DecisionViewError("DECISION_VIEW_TRADE_OUTCOME_DIRECTION_INVALID")
+    for key in ("realized_pnl", "fees"):
+        value = document.get(key)
+        if not isinstance(value, Decimal) or not value.is_finite():
+            raise DecisionViewError("DECISION_VIEW_TRADE_OUTCOME_DECIMAL_INVALID")
+    safe = _safe_value(document)
+    if not isinstance(safe, dict):  # pragma: no cover - guaranteed by _mapping
+        raise DecisionViewError("DECISION_VIEW_TRADE_OUTCOME_INVALID")
     return safe
 
 

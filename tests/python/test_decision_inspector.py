@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from decimal import Decimal
 from hashlib import sha256
 
 import pytest
@@ -15,6 +17,7 @@ from apps.dashboard.decision_inspector import (
     prompt_artifact_view,
     safe_audit_detail,
     stage_state,
+    trade_outcome_view,
 )
 
 
@@ -184,3 +187,48 @@ def test_stage_state_never_treats_missing_or_rejected_as_accepted() -> None:
     assert stage_state([{"approved": True}, {"approved": True}]) == "ACCEPTED"
     assert stage_state([{"accepted": True}, {"accepted": False}]) == "REJECTED"
     assert stage_state([{"status": "COMPLETED"}]) == "RECORDED"
+
+
+def test_trade_outcome_view_preserves_signed_decimal_strings() -> None:
+    outcome = {
+        "mode": "demo",
+        "direction": "LONG",
+        "setup_tags": ["BREAKOUT"],
+        "market_regime": "TRENDING",
+        "confidence_bucket": "HIGH",
+        "realized_pnl": Decimal("9.6500000000"),
+        "fees": Decimal("-0.3500000000"),
+        "opened_at": datetime(2026, 8, 24, 10, 0, tzinfo=UTC),
+        "closed_at": datetime(2026, 8, 24, 10, 2, tzinfo=UTC),
+        "model_version": "test-model",
+        "prompt_version": "system-v2",
+        "schema_version": "2.0",
+        "strategy_version": "test-strategy",
+    }
+
+    view = trade_outcome_view(outcome)
+
+    assert view["realized_pnl"] == "9.6500000000"
+    assert view["fees"] == "-0.3500000000"
+
+
+def test_trade_outcome_view_rejects_sensitive_or_malformed_data() -> None:
+    with pytest.raises(DecisionViewError, match="FIELDS_INVALID"):
+        trade_outcome_view({"broker_position_id": "must-not-render"})
+    malformed = {
+        "mode": "demo",
+        "direction": "LONG",
+        "setup_tags": [],
+        "market_regime": "TRENDING",
+        "confidence_bucket": "HIGH",
+        "realized_pnl": "9.65",
+        "fees": Decimal("-0.35"),
+        "opened_at": datetime(2026, 8, 24, 10, 0, tzinfo=UTC),
+        "closed_at": datetime(2026, 8, 24, 10, 2, tzinfo=UTC),
+        "model_version": "test-model",
+        "prompt_version": "system-v2",
+        "schema_version": "2.0",
+        "strategy_version": "test-strategy",
+    }
+    with pytest.raises(DecisionViewError, match="DECIMAL_INVALID"):
+        trade_outcome_view(malformed)

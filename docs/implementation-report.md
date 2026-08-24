@@ -608,6 +608,38 @@ integration tests, Ruff, mypy, 41 Python tests, replay/backtest, both dependency
 audits, secret/shell checks, and all five offline systemd security parses at
 2.8 (`OK`).
 
+Credentialed deployment then proved that interval claims began inside the
+broker-M1 opening window and that a schema-2 model response plus market refresh
+completed without a candle-context rollover. The refreshed quote had already
+crossed the proposed buy-stop entry, so the existing semantic executable-price
+check rejected it before an order intent. Later provider HTTP failure opened the
+bounded circuit as designed; a service restart or the configured reset interval
+returns scheduling to later broker minutes.
+
+## Terminal demo outcomes and automatic repetition
+
+ISSUE-025 maps a fully closed single-deal demo position to one immutable trade.
+It uses Decimal arithmetic over the cTrader close detail's signed gross profit,
+swap, commission, and P/L conversion fee, and retains model, prompt, schema,
+strategy, setup, regime, confidence, direction, and timestamps. The same event
+deduplicates after restart. A different event attempting a second outcome is
+journaled as a conflict and blocks readiness. Missing close detail and partial
+closing state also remain explicit reconciliation blockers.
+
+Order maintenance now releases an accepted analysis immediately after its group
+is durably `CLOSED`, `EXPIRED`, or `FAILED`; it does not wait for `valid_until`.
+The automatic scheduler can therefore claim a later broker minute after a
+terminal lifecycle while active or uncertain state still blocks it. Streamlit
+adds durable broker-minute claim history and the sanitized closed-trade outcome.
+Immutable release identity `0.1.0-actionable-oco-auto-demo.3` protects this code
+and the bounded repeated-demo configuration.
+
+The pre-merge gate passed formatting, linting, TypeScript typecheck/build, 138
+Node tests across 29 files, 12 schema tests, 3 migration tests, all 3 configured
+PostgreSQL integration tests, Ruff, strict mypy, 43 Python tests,
+replay/backtest, npm/pip dependency audits, secret and shell checks, and all five
+offline systemd security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
@@ -625,9 +657,9 @@ No credentialed shadow session was run in this checkout.
   configuration.
 - Demo order submission defaults off and needs a separate exact acknowledgement.
 - Demo execution callbacks now enter a normalized, deduplicated PostgreSQL
-  journal and atomically update order/fill/position state. Bounded startup and
-  reconnect history recovery is fail-closed. Closed-trade P/L remains blocked
-  until supervised broker evidence confirms commission/swap/conversion signs.
+  journal and atomically update order/fill/position/trade state. Bounded startup
+  and reconnect history recovery is fail closed. Fully closed single-deal
+  outcomes are supported; partial/multiple closes remain blocked.
 - Streamlit now renders bounded, mode-labelled operational charts through pure
   validated builders. Completed-candle, malformed OHLC, enum, numeric, empty,
   and mode-separation paths are covered; a configured AppTest run rendered four
@@ -641,7 +673,7 @@ No credentialed shadow session was run in this checkout.
   mirror run in execution-service only. Persistent host/process metrics remain
   in PostgreSQL; OTLP export and the optional Better Stack heartbeat URL are not
   implemented.
-- Demo closed-trade persistence awaits supervised event-field validation;
+- Demo full-close field ordering still needs credentialed supervised evidence;
   unresolved callback/recovery evidence and reconciliation counts fail closed.
 - Remote dashboard access depends on the externally managed Cloudflare Access
   application; the repository deliberately bundles no identity provider.

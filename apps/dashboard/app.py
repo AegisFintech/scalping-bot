@@ -31,6 +31,7 @@ from decision_inspector import (
     prompt_artifact_view,
     safe_audit_detail,
     stage_state,
+    trade_outcome_view,
 )
 from psycopg.rows import dict_row
 
@@ -406,6 +407,19 @@ with tabs[4]:
                    ORDER BY ar.created_at DESC LIMIT 50""",
                 (account_environment, selected_symbol),
             )
+            automatic_history = query(
+                """SELECT ai.interval_start, ai.broker_server_time, ai.claimed_at,
+                          ai.completed_at, ai.outcome,
+                          COALESCE(ai.analysis_id::text, ai.cycle_id::text) AS cycle_id,
+                          ar.state AS analysis_state, ar.rejection_reasons
+                   FROM automatic_analysis_intervals ai
+                   JOIN accounts a ON a.id = ai.account_id
+                   JOIN symbols s ON s.id = ai.symbol_id
+                   LEFT JOIN analysis_runs ar ON ar.id = ai.analysis_id
+                   WHERE a.environment = %s AND s.name = %s
+                   ORDER BY ai.interval_start DESC LIMIT 100""",
+                (account_environment, selected_symbol),
+            )
             candles = query(
                 """SELECT c.timeframe, count(*)::int AS candle_count,
                           bool_and(c.complete) AS completed_only,
@@ -494,6 +508,21 @@ with tabs[4]:
                    ORDER BY bee.occurred_at, bee.id""",
                 (selected_analysis_id, account_environment, selected_symbol),
             )
+            trade_rows = query(
+                """SELECT t.mode, t.direction, t.setup_tags, t.market_regime,
+                          t.confidence_bucket, t.realized_pnl, t.fees,
+                          t.opened_at, t.closed_at, t.model_version,
+                          t.prompt_version, t.schema_version, t.strategy_version
+                   FROM trades t
+                   JOIN order_groups og ON og.id = t.order_group_id
+                   JOIN analysis_runs ar ON ar.id = og.analysis_id
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   ORDER BY t.closed_at DESC LIMIT 1""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            trade_outcomes = [trade_outcome_view(row) for row in trade_rows]
             audit_events = query(
                 """SELECT ae.id::text AS event_id, ae.occurred_at, ae.severity,
                           ae.service, ae.event_name, ae.outcome, ae.reason_code,
@@ -554,7 +583,9 @@ with tabs[4]:
                 {"stage": "Deterministic risk sizing", "status": stage_state(risk_decisions)},
                 {
                     "stage": "Broker order lifecycle",
-                    "status": "RECORDED" if orders or broker_events else "NOT_REACHED",
+                    "status": (
+                        "RECORDED" if orders or broker_events or trade_outcomes else "NOT_REACHED"
+                    ),
                 },
             ]
 
@@ -564,12 +595,15 @@ with tabs[4]:
             )
             st.subheader("Prompt and response history")
             st.dataframe(pd.DataFrame(prompt_history), width="stretch", hide_index=True)
+            st.subheader("Automatic broker-minute cycle history")
+            st.dataframe(pd.DataFrame(automatic_history), width="stretch", hide_index=True)
             summary_columns = st.columns(4)
             summary_columns[0].metric("Run state", str(detail["state"]))
             summary_columns[1].metric("AI output", model_proposal)
             summary_columns[2].metric("Validation", stage_state(validations))
             summary_columns[3].metric(
-                "Broker outcome", "RECORDED" if orders or broker_events else "NOT_REACHED"
+                "Broker outcome",
+                "RECORDED" if orders or broker_events or trade_outcomes else "NOT_REACHED",
             )
             if detail.get("rejection_reasons"):
                 st.error(
@@ -703,6 +737,15 @@ with tabs[4]:
                     st.dataframe(pd.DataFrame(broker_events), width="stretch", hide_index=True)
                 else:
                     st.info("No cTrader execution callback exists for this analysis.")
+                st.subheader("Closed demo trade outcome")
+                if trade_outcomes:
+                    st.json(trade_outcomes[0])
+                    st.caption(
+                        "Realized P/L equals broker gross profit plus signed swap, commission, "
+                        "and P/L conversion fee. PostgreSQL retains the versioned outcome."
+                    )
+                else:
+                    st.info("No fully closed demo trade exists for this analysis.")
 
             with inspector_tabs[3]:
                 st.subheader("Chronological PostgreSQL decision trail")
