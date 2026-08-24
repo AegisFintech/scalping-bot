@@ -159,7 +159,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
 | ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
 | ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
-| ISSUE-021 | in progress | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
+| ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -560,11 +560,13 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: the existing append-only decision trail, redacted model
   request/response persistence, current account/symbol scoping, Streamlit, and
   the Better Stack outbox.
-- Current status: implementation, documentation, configured model/pre-model
-  Streamlit renders, and the complete repository quality gates pass on
-  `feat/issue-021-decision-inspector`; [PR #41](https://github.com/AegisFintech/scalping-bot/pull/41)
-  is in review. No analysis cycle, broker command, execution behavior, or
-  database contract was changed.
+- Current status: complete. [PR #41](https://github.com/AegisFintech/scalping-bot/pull/41)
+  merged as `d64114a`; the dashboard restarted from `main`, its health check and
+  configured model/pre-model renders passed, and execution remained demo with
+  trading/automatic analysis disabled and the emergency stop active. No
+  analysis cycle, broker command, execution behavior, or database contract was
+  changed. Deployment evidence is recorded in
+  [PR #42](https://github.com/AegisFintech/scalping-bot/pull/42).
 
 ## Acceptance criteria
 

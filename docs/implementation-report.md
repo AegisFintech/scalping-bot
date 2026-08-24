@@ -491,6 +491,13 @@ npm/pip dependency audits, secret scanning, shell syntax, and all five offline
 systemd security parses at 2.8 (`OK`). No analysis cycle or broker command was
 run.
 
+PR #41 merged as `d64114a`. The PM2 dashboard process restarted from `main`,
+the local Streamlit health endpoint returned `ok`, and configured AppTest again
+passed the completed-model and pre-model-rejection paths. Execution remained in
+demo mode with trading and automatic analysis disabled, startup checks passed,
+and the emergency stop active. No execution service was restarted and no cycle
+or broker command was invoked.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
