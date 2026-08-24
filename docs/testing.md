@@ -160,3 +160,10 @@ typecheck/build, 103 Node unit tests, 10 schema tests, 3 static migration tests,
 all 3 configured integration tests, Ruff format/lint, mypy, 30 Python tests,
 replay/backtest, both dependency audits, secret and shell checks, and all five
 offline systemd security parses.
+
+PR #25 merged as `eae91f6`. The execution service was rebuilt and restarted
+under both emergency stops with automatic analysis and demo/live submission
+disabled. Readiness and startup recovery passed; execution events, groups,
+orders, active positions, and fills stayed zero. The rejected supervised
+analysis retained zero model-request rows, confirming the failed pre-fix
+transaction left no partial evidence. No deployment cycle was invoked.
