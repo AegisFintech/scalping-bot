@@ -66,8 +66,9 @@ pinned to Node 22 and still needs validation on that runtime.
   probe that returned a locally validated, identity-matched `NO_TRADE`.
 - Migration structure/safety: 3 tests passed, including pinned historical
   `0001`/`0002` byte checksums; migration `0006` passed isolated
-  fresh/upgrade testing while `0001` through `0005` remain applied to the
-  configured Neon schema. Backup/restore remains pending.
+  fresh/upgrade testing and is applied to the configured Neon schema. The
+  stopped migration/restart check found an empty journal/order/position/fill
+  state and certain startup recovery. Backup/restore remains pending.
 - Ruff format/lint, strict mypy across analytics/dashboard, and Python: 13 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.

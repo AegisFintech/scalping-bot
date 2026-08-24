@@ -55,7 +55,9 @@ npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
 passed. TLS connectivity and all six migrations passed inside isolated Neon
 schemas, which the tests dropped afterward; migrations `0001` through `0005`
-remain applied to the configured Neon schema. The host used Node 24.18.0; the supported Node 22
+and `0006` are applied to the configured Neon schema. The post-migration demo
+restart reported certain startup recovery with no journal exceptions or local
+execution state. The host used Node 24.18.0; the supported Node 22
 deployment baseline and installed systemd paths still require a Debian release
 validation. Offline systemd security parsing passed for all five units with a
 2.8 (`OK`) common sandbox score on systemd 257. Credentialed cTrader demo auth,
