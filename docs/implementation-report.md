@@ -419,6 +419,18 @@ recovered through bounded Better Stack backoff and reached `DELIVERED` on
 attempt five, returning backlog to zero. No cycle or broker command was run
 after deployment.
 
+A subsequent fresh acknowledgement authorized one capped post-fix demo cycle.
+The stopped preflight accepted complete 600/500/300 candles, continuous depth,
+strict analytics, current daily risk and caps, empty durable execution state,
+and a 9-point spread at percentile `66.4`. Analysis
+`4033a032-19d7-449d-b9c2-4a949004b091` then captured an 11-point spread and
+rejected on both absolute-point and adaptive-percentile protection before any
+model request, risk decision, intent, order group, or broker command. The
+mandatory stop trap fired, cancellation/reconciliation was certain, demo
+enablement and acknowledgement were cleared, both stops were restored, and
+orders, fills, active positions, and unresolved broker events remained zero.
+All six correlated audit events reached Better Stack on their first attempt.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
