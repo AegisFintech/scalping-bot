@@ -31,6 +31,17 @@ Run formatting, linting, TypeScript type checks, Node tests, Python formatting/l
 
 ## GitHub delivery discipline
 
+- After every completed user-requested repository update that changes tracked
+  files, inspect the diff and staged diff, run the secret scan and applicable
+  quality gates, create a coherent commit on the issue branch, and push it
+  before handoff. This applies to documentation-only updates too; a successful
+  handoff must not leave the completed update only in the working tree or in an
+  unpushed local commit.
+- If authentication, authorization, network availability, branch protection,
+  or another remote failure prevents the required commit or push, preserve the
+  local work, do not claim successful delivery, and report the exact blocker
+  and required operator action. Never bypass review or expose credentials to
+  satisfy this rule.
 - Represent planned development as bounded issues in `plan.md` with an identifier,
   acceptance criteria, dependencies, and current status. Add the GitHub issue or
   pull-request link after it exists remotely.

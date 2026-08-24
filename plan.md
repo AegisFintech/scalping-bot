@@ -137,23 +137,43 @@ remain stable when the corresponding GitHub issues are created. Mandatory phase
 ordering applies: supervised demo and shadow evidence precede any broker-capable
 live implementation.
 
-| ID        | Status  | Issue                                                                   | Acceptance summary                                                                  |
-| --------- | ------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| ISSUE-001 | pending | Supervised cTrader demo order lifecycle                                 | Place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit |
-| ISSUE-002 | pending | Complete durable demo fill, position, and trade event mapping           | Versioned event fixtures; duplicate/partial/race tests; reconciled database state   |
-| ISSUE-003 | pending | Credentialed live-data shadow rollout                                   | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled    |
-| ISSUE-004 | pending | Broker-specific XAUUSD risk and execution parameter review              | Precision, volume, margin, spread, slippage, stop, session limits documented        |
-| ISSUE-005 | pending | Neon backup, restore, outage, and least-privilege role drill            | Encrypted backup and isolated restore evidence; outage remains fail-closed          |
-| ISSUE-006 | pending | Debian Node 22 least-privilege systemd release validation               | Non-root services, restart/rollback/graceful shutdown, hardened paths verified      |
-| ISSUE-007 | pending | Cross-service structured logging, metrics, heartbeats, and alert drills | Better Stack delivery/redaction and required failure alerts exercised               |
-| ISSUE-008 | pending | Cloudflare Access policy, session, CSRF, and audit-retention review     | Authorized identities only; controls protected; access/audit evidence retained      |
-| ISSUE-009 | blocked | Broker-capable live execution composition and independent safety review | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item      |
-| ISSUE-010 | blocked | Supervised live canary authorization                                    | Separate operator approval; all gates; minimal exposure; rollback/incident drill    |
+| ID        | Status                         | Issue                                                                   | Acceptance summary                                                                                 |
+| --------- | ------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| ISSUE-001 | pending                        | Supervised cTrader demo order lifecycle                                 | Place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit                |
+| ISSUE-002 | pending                        | Complete durable demo fill, position, and trade event mapping           | Versioned event fixtures; duplicate/partial/race tests; reconciled database state                  |
+| ISSUE-003 | pending                        | Credentialed live-data shadow rollout                                   | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                   |
+| ISSUE-004 | pending                        | Broker-specific XAUUSD risk and execution parameter review              | Precision, volume, margin, spread, slippage, stop, session limits documented                       |
+| ISSUE-005 | pending                        | Neon backup, restore, outage, and least-privilege role drill            | Encrypted backup and isolated restore evidence; outage remains fail-closed                         |
+| ISSUE-006 | pending                        | Debian Node 22 least-privilege systemd release validation               | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                     |
+| ISSUE-007 | pending                        | Cross-service structured logging, metrics, heartbeats, and alert drills | Better Stack delivery/redaction and required failure alerts exercised                              |
+| ISSUE-008 | pending                        | Cloudflare Access policy, session, CSRF, and audit-retention review     | Authorized identities only; controls protected; access/audit evidence retained                     |
+| ISSUE-009 | blocked                        | Broker-capable live execution composition and independent safety review | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                     |
+| ISSUE-010 | blocked                        | Supervised live canary authorization                                    | Separate operator approval; all gates; minimal exposure; rollback/incident drill                   |
+| ISSUE-011 | local-ready / delivery-blocked | Require commit and push after every completed repository update         | Rule documented and verified; remote requires a GitHub token with Issues and Contents write access |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
 required checks, reviews, and safety sequencing pass. Contribution-count targets
 never justify empty, noisy, unsafe, or misleading commits.
+
+### ISSUE-011 delivery details
+
+- Acceptance criteria: `AGENTS.md` requires diff review, secret scanning,
+  applicable quality gates, a coherent commit, and a push after every completed
+  user-requested tracked-file update; remote failures must be reported rather
+  than bypassed.
+- Dependencies: a GitHub identity/token authorized for Issues write and Contents
+  write on `AegisFintech/scalping-bot`, plus an available remote and compliant
+  branch protection.
+- Current status: implemented and verified on local branch
+  `docs/issue-011-post-update-delivery`. Creating the GitHub issue and pushing
+  the existing baseline both returned authorization errors with the configured
+  credential, so the remote issue and pull-request links are pending.
+- Verification on 2026-08-24: Prettier, ESLint, TypeScript typecheck/build, 63
+  Node unit tests, 10 schema tests, 2 static migration tests, both configured
+  integration tests (including isolated-schema migration), npm audit, Ruff
+  format/lint, mypy, 13 Python tests, pip-audit, replay, conservative backtest,
+  secret scan, and `git diff --check` passed.
 
 ## Acceptance criteria
 
