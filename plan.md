@@ -562,9 +562,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   the Better Stack outbox.
 - Current status: implementation, documentation, configured model/pre-model
   Streamlit renders, and the complete repository quality gates pass on
-  `feat/issue-021-decision-inspector`; pull request creation is pending. No
-  analysis cycle, broker command, execution behavior, or database contract was
-  changed.
+  `feat/issue-021-decision-inspector`; [PR #41](https://github.com/AegisFintech/scalping-bot/pull/41)
+  is in review. No analysis cycle, broker command, execution behavior, or
+  database contract was changed.
 
 ## Acceptance criteria
 
