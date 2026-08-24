@@ -218,6 +218,19 @@ cycle was invoked for this validation. The complete local quality, integration,
 replay/backtest, security, and dependency gate suite passed. Delivery is tracked
 in [PR #19](https://github.com/AegisFintech/scalping-bot/pull/19).
 
+PR #19 merged as `38e8b77`. The merged analytics service was restarted while
+demo/live submission, automatic analysis, and both demo emergency stops remained
+disabled/active as appropriate. Production analytics emitted canonical M1 ATR
+`2.7244341586` with ten fractional places and accepted the snapshot; deterministic
+absolute/ATR spread validation approved the five-point observation. Execution
+state remained at zero events, orders, active positions, and fills.
+
+The fully configured adaptive check still correctly denies with
+`SPREAD_HISTORY_MISSING`: only 2 of the required 30 distinct recent observations
+exist. No percentile setting or minimum was weakened. Issue #20 will add a
+read-only, one-per-minute durable sampler that can accumulate genuine history
+while trading and automatic analysis remain stopped.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

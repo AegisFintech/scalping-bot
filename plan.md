@@ -137,23 +137,24 @@ Remote issue links are added as each bounded issue starts. These identifiers
 remain stable. Mandatory phase ordering applies: supervised demo and shadow
 evidence precede any broker-capable live implementation.
 
-| ID        | Status      | Issue                                                                                                                       | Acceptance summary                                                                                            |
-| --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| ISSUE-001 | in progress | [Supervised cTrader demo order lifecycle](https://github.com/AegisFintech/scalping-bot/issues/11)                           | Bounded manual session; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit   |
-| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)      | Callback journal/order/fill/position recovery implemented; closed-trade mapping awaits supervised evidence    |
-| ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                       | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
-| ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                  | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
-| ISSUE-005 | pending     | Neon backup, restore, outage, and least-privilege role drill                                                                | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
-| ISSUE-006 | pending     | Debian Node 22 least-privilege systemd release validation                                                                   | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                                |
-| ISSUE-007 | pending     | Cross-service structured logging, metrics, heartbeats, and alert drills                                                     | Better Stack delivery/redaction and required failure alerts exercised                                         |
-| ISSUE-008 | pending     | Cloudflare Access policy, session, CSRF, and audit-retention review                                                         | Authorized identities only; controls protected; access/audit evidence retained                                |
-| ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                     | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
-| ISSUE-010 | blocked     | Supervised live canary authorization                                                                                        | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
-| ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1)  | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
-| ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)      | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
-| ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                      | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
-| ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)          | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
-| ISSUE-015 | in progress | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18) | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
+| ID        | Status      | Issue                                                                                                                           | Acceptance summary                                                                                            |
+| --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| ISSUE-001 | in progress | [Supervised cTrader demo order lifecycle](https://github.com/AegisFintech/scalping-bot/issues/11)                               | Bounded manual session; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit   |
+| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)          | Callback journal/order/fill/position recovery implemented; closed-trade mapping awaits supervised evidence    |
+| ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                           | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
+| ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                      | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
+| ISSUE-005 | pending     | Neon backup, restore, outage, and least-privilege role drill                                                                    | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
+| ISSUE-006 | pending     | Debian Node 22 least-privilege systemd release validation                                                                       | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                                |
+| ISSUE-007 | pending     | Cross-service structured logging, metrics, heartbeats, and alert drills                                                         | Better Stack delivery/redaction and required failure alerts exercised                                         |
+| ISSUE-008 | pending     | Cloudflare Access policy, session, CSRF, and audit-retention review                                                             | Authorized identities only; controls protected; access/audit evidence retained                                |
+| ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                         | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
+| ISSUE-010 | blocked     | Supervised live canary authorization                                                                                            | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
+| ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1)      | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
+| ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)          | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
+| ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                          | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
+| ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)              | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
+| ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)     | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
+| ISSUE-016 | in progress | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -299,15 +300,29 @@ never justify empty, noisy, unsafe, or misleading commits.
   validation without `SPREAD_INPUT_INVALID`.
 - Dependencies: Python `Decimal` features, the typed analytics response, and the
   risk engine's canonical decimal parser.
-- Current status: implementation and tests are in progress on
-  `fix/issue-015-analytics-decimals`. A credentialed read-only snapshot produced
-  canonical M1 ATR `2.9329720428`; strict analytics accepted it and deterministic
-  absolute/ATR spread validation approved the six-point observation. This was
-  not an execution cycle and did not alter stopped broker state. All required
-  local quality, integration, replay/backtest, security, and dependency gates
-  passed; the checkpoint is under review in
-  [PR #19](https://github.com/AegisFintech/scalping-bot/pull/19). Merge and stopped
-  deployment remain.
+- Current status: complete in
+  [PR #19](https://github.com/AegisFintech/scalping-bot/pull/19), merge commit
+  `38e8b77`. All required local gates passed. The merged analytics service was
+  deployed with both demo emergency stops active. A production-loopback snapshot
+  emitted canonical ten-place M1 ATR `2.7244341586`; strict analytics accepted
+  it and deterministic absolute/ATR spread validation approved the five-point
+  observation. Execution remained disabled and broker/local execution counts
+  stayed zero.
+
+### ISSUE-016 delivery details
+
+- Acceptance criteria: persist only fresh, non-crossed, broker-time-consistent
+  typed quote observations; enforce one idempotent sample per UTC minute; collect
+  while analysis/trading are stopped without any execution authority; require
+  at least 30 distinct recent observations before percentile approval; cover
+  migrations, restart, failures, and rollback documentation; deploy stopped and
+  accumulate genuine timed observations rather than synthesizing history.
+- Dependencies: [issue #20](https://github.com/AegisFintech/scalping-bot/issues/20),
+  the typed market quote endpoint, PostgreSQL, and existing adaptive spread logic.
+- Current status: planned. The deployed decimal fix exposes the next expected
+  denial: `SPREAD_HISTORY_MISSING`, with 2 genuine samples against the configured
+  minimum of 30. Percentile protection remains enabled and its minimum has not
+  been lowered.
 
 ## Acceptance criteria
 

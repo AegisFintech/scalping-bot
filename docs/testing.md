@@ -115,3 +115,9 @@ fractional places versus the risk boundary's ten. Post-cycle reconciliation and
 both restored stops passed; all broker/local execution counts stayed zero. The
 ISSUE-015 stopped credentialed probe produced ten-place ATR and crossed into
 spread validation successfully without invoking a cycle.
+
+After PR #19 merged, production-loopback analytics again emitted ten-place ATR
+and the absolute/ATR checks accepted the stopped five-point spread. Adaptive
+percentile validation remained fail-closed with `SPREAD_HISTORY_MISSING` because
+only 2 of 30 required recent samples existed. No thresholds were changed and
+all execution-state counts remained zero.
