@@ -211,7 +211,7 @@ Failure of any gate returns structured denial reason codes and emits an audit ev
 
 ## Consistency and recovery
 
-PostgreSQL transactions establish intent before side effects. Broker callbacks are inserted with unique event/idempotency keys. On any uncertain network result, the service records `RECONCILIATION_REQUIRED` instead of retrying submission blindly. Startup and reconnect reconciliation compare local intent with broker state and block cycles until certainty is restored.
+PostgreSQL transactions establish intent before side effects. Broker callbacks are inserted with unique event/idempotency keys. Entry and broker-created closing-order identities remain distinct even when cTrader reuses a client order ID; closing children map through the durable broker position and resolve only from exact terminal deal evidence. On any uncertain network result, the service records `RECONCILIATION_REQUIRED` instead of retrying submission blindly. Startup and reconnect reconciliation compare local intent with broker order/deal/position history and block cycles until certainty is restored.
 
 ## Dependency rationale
 

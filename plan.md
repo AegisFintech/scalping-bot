@@ -832,6 +832,32 @@ never justify empty, noisy, unsafe, or misleading commits.
   claimed broker minute 11:16 without restart. A second 503 reopened it, and it
   again half-opened at 11:21:43 before broker minute 11:22 placed an OCO.
 
+### ISSUE-031 delivery details
+
+- Acceptance criteria: journal cTrader order type and closing-order identity;
+  ignore unpriced contextual positions on non-deal lifecycle events while
+  retaining their position ID; never overwrite an entry with a broker-created
+  SL/TP child that inherits its client ID; hold child acceptance pending exact
+  deal evidence; map one complete close atomically to fill, closed position,
+  trade, group, and analysis; recover that close from durable local position
+  plus broker history when reconciliation no longer returns the position;
+  retain ambiguous, missing, partial, or multiple evidence as blocking; add a
+  forward migration, contracts, documentation, positive and rejection tests;
+  then deploy stopped under a new immutable identity and prove an unattended
+  terminal repeat under one PID.
+- Dependencies: [issue #64](https://github.com/AegisFintech/scalping-bot/issues/64),
+  the credentialed `.9` entry/peer/SL-TP evidence, migration `0011`, and active
+  database pause/emergency controls.
+- Current status: implementation is in progress on
+  `feat/issue-031-ctrader-closing-order-recovery` with candidate immutable
+  identity `0.1.0-actionable-oco-auto-demo.10`. The pre-merge suite passes
+  Prettier, ESLint, TypeScript typecheck/build, 161 Node tests across 29 files,
+  12 schema tests, 3 migration tests, all 3 configured isolated-PostgreSQL
+  integration tests, Ruff format/lint, strict mypy over 16 source files, 43
+  Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+  secret and shell checks, and five offline systemd security parses. Both
+  database controls remain active and the broker scope is empty.
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.

@@ -2,6 +2,8 @@
   "executionType": 3,
   "order": {
     "orderId": "501",
+    "orderType": 3,
+    "closingOrder": false,
     "orderStatus": 2,
     "clientOrderId": "cas-buy-111111111111111111111111",
     "executedVolume": "100",

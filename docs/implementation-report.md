@@ -795,6 +795,24 @@ source files, 43 Python tests, replay/backtest smoke tests, npm/pip audits with
 zero known vulnerabilities, secret/shell checks, and all five offline systemd
 security parses at 2.8 (`OK`).
 
+The credentialed `.9` cycle then proved the complete broker side of the POC:
+one stop entry filled, its OCO peer cancelled, and cTrader's server-created
+SL/TP order closed the position. The callback adapter treated the unpriced
+non-deal cancellation context as a position and treated the closing child's
+new broker order ID as a conflict with the inherited entry client ID. ISSUE-031
+adds journal schema `1.1`, preserves exact entry identity, maps the child through
+the durable position, and recovers the terminal single-deal close from broker
+history when reconciliation no longer returns the position. Candidate `.10`
+remains stopped until migration, merge, deployment recovery, and an unattended
+terminal repeat prove the same PID can continue automatically.
+
+The `.10` pre-merge suite passes Prettier, ESLint, TypeScript typecheck/build,
+161 Node tests across 29 files, 12 JSON Schema tests, 3 static migration tests,
+all 3 configured isolated-PostgreSQL integration tests, Ruff format/lint,
+strict mypy over 16 source files, 43 Python tests, replay/backtest smoke tests,
+zero-vulnerability npm/pip audits, secret and shell checks, and all five
+offline systemd security parses.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
