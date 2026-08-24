@@ -111,6 +111,10 @@ semantics without a database write or broker call. Configured Streamlit AppTest
 rendered 11 analysis-history options, prompt history, the exact prompt/input
 controls, and zero exceptions. The follow-up historical-label test ensures an
 old schema 1.0 self-veto is not presented as a current schema 2.0 proposal.
+The correction merged in PR #45 as `1fec8fe`; after the dashboard-only reload,
+configured AppTest again reported zero exceptions with the historical notice
+and prompt/input controls visible. Execution remained trading-disabled and
+automatic-analysis-disabled, and durable execution-state counts stayed zero.
 
 A configured Streamlit `AppTest` run completed without an exception and rendered
 four charts from current data; its visible error/warning elements were the

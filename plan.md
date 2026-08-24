@@ -165,7 +165,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
 | ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
 | ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
-| ISSUE-022 | in review   | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
+| ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -618,7 +618,12 @@ never justify empty, noisy, unsafe, or misleading commits.
   verification identified and corrected a display-only ambiguity so an old
   schema 1.0 self-veto is explicitly historical rather than labelled as a
   current two-leg proposal. Follow-up review:
-  [PR #45](https://github.com/AegisFintech/scalping-bot/pull/45).
+  [PR #45](https://github.com/AegisFintech/scalping-bot/pull/45), merged as
+  `1fec8fe`. The dashboard-only reload remained healthy. Final configured
+  AppTest showed the historical notice, exact prompt/input controls, 11 history
+  options, and zero exceptions. Execution stayed healthy and stopped; all
+  order/fill/active-position/execution-event counts remained zero. Final
+  deployment evidence: [PR #46](https://github.com/AegisFintech/scalping-bot/pull/46).
 
 ## Acceptance criteria
 
