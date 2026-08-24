@@ -128,7 +128,8 @@ On startup/reconnect, stop new analyses; load unresolved intents; fetch broker p
 - [ ] Phase 5b: credentialed supervised shadow sessions.
 - [x] Phase 6: dormant live-compatible interface; production live gateway remains unwired.
 - [x] Dashboard, baseline observability, and Debian/systemd artifacts.
-- [ ] Debian Node 22, supervised demo, shadow, Neon backup/restore, and alert drills. Production migrations are applied.
+- [x] Production migrations through `0006` are applied.
+- [ ] Debian Node 22, supervised demo, shadow, Neon backup/restore, and alert drills.
 
 ## Development issue backlog
 
@@ -150,8 +151,8 @@ live implementation.
 | ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                    | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
 | ISSUE-010 | blocked     | Supervised live canary authorization                                                                                       | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
 | ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
-| ISSUE-012 | in progress | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)     | Exact historical bytes/checksums restored; apply `0006` stopped; verify journal and fail-closed runtime       |
-| ISSUE-013 | pending     | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
+| ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)     | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
+| ISSUE-013 | in progress | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -206,10 +207,14 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [PR #4](https://github.com/AegisFintech/scalping-bot/pull/4),
   recovered Git blobs, configured database access, and migration `0006` rollback
   notes.
-- Current status: exact historical blobs were recovered from Git. Both files
+- Current status: complete. Exact historical blobs were recovered from Git. Both files
   differ from `main` only by one trailing blank line; their content hashes match
   the database ledger. No checksum row has been or will be rewritten. Delivery
-  is tracked in [PR #7](https://github.com/AegisFintech/scalping-bot/pull/7).
+  was merged in [PR #7](https://github.com/AegisFintech/scalping-bot/pull/7).
+  Migration `0006` was then applied with execution stopped. After restart,
+  startup recovery was certain, the execution journal/order/position/fill counts
+  were zero, and emergency stop plus disabled demo submission still blocked all
+  trading.
 
 ### ISSUE-013 delivery details
 
@@ -220,8 +225,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   positive and rejection-path tests.
 - Dependencies: existing PostgreSQL tables/views, the pandas/Plotly/Streamlit
   lockfile, and the dashboard's loopback/read-only security boundary.
-- Current status: pending ISSUE-012 so the configured schema and demo journal
-  are current before dashboard queries expand.
+- Current status: in progress now that ISSUE-012 has made the configured schema
+  and demo journal current.
 
 ## Acceptance criteria
 
@@ -252,8 +257,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   recovery. Closed-trade P/L remains blocked pending supervised validation of
   the broker's commission, swap, and conversion-fee signs.
 - PostgreSQL TLS connectivity and isolated-schema tests through migration `0006`
-  passed; the configured Neon schema remains at `0005` pending review/application
-  of `0006`. Backup/restore and
+  passed; the configured Neon schema is now at `0006`, with a clean empty event
+  journal and certain startup recovery. Backup/restore and
   Node 22 Debian deployment have not been exercised. The remote dashboard
   hostname returns a Cloudflare Access redirect, but its long-term policy and
   audit retention still require operator review.
@@ -292,7 +297,7 @@ runtime.
 - [x] `pip-audit -r requirements.lock`: no known vulnerabilities.
 - [x] Secret scan and shell syntax checks passed.
 - [x] `systemd-analyze security --offline=yes` parsed all five services; common sandbox score is 2.8 (`OK`) on systemd 257.
-- [x] Apply reviewed migrations `0001` through `0005` to the configured Neon schema.
+- [x] Apply reviewed migrations `0001` through `0006` to the configured Neon schema.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.
