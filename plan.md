@@ -418,7 +418,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   zero exceptions, and the Better Stack delivery section. Execution startup is
   ready but trading is false; demo submission and automatic analysis are off;
   broker execution events, order groups, orders, active positions, and fills
-  remain zero. No analysis cycle or broker command was run.
+  remain zero. No analysis cycle or broker command was run. Post-deployment
+  evidence is recorded in
+  [PR #31](https://github.com/AegisFintech/scalping-bot/pull/31).
 
 ## Acceptance criteria
 
