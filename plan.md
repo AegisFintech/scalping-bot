@@ -152,7 +152,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
 | ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)     | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
 | ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
-| ISSUE-014 | in progress | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)         | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
+| ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)         | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -275,14 +275,16 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: cTrader `ProtoOASymbol.schedule`/`scheduleTimeZone`, trendbar and
   spot/depth timestamp semantics, the typed market/analytics boundary, and the
   existing stopped demo account.
-- Current status: implementation and failure tests are in progress on
-  `fix/issue-014-session-aware-snapshots`. A credentialed read-only probe with
-  broker command submission structurally disabled returned 600 M1, 500 M5, and
-  300 M15 completed candles. The adapter marked 1, 2, and 3 broker-session gaps,
-  respectively; strict updated analytics accepted the snapshot with no
-  rejection. All required local quality/security gates passed; the checkpoint is
-  under review in [PR #16](https://github.com/AegisFintech/scalping-bot/pull/16).
-  Merge, deployment, and stopped post-deploy validation remain.
+- Current status: complete in
+  [PR #16](https://github.com/AegisFintech/scalping-bot/pull/16), merge commit
+  `a81cfb2`. All required local quality/security gates passed. The merged build
+  was deployed to PM2; analytics, market data, execution, and Streamlit health
+  checks passed. A stopped production-loopback probe returned 600 M1, 500 M5,
+  and 300 M15 completed candles; the adapter marked 1, 2, and 3 broker-session
+  gaps and strict analytics accepted the snapshot. Execution remained in demo
+  mode with automatic analysis and trading disabled plus database/environment
+  emergency stops active. Demo execution-event/order/active-position/fill
+  counts remained zero.
 
 ## Acceptance criteria
 
@@ -333,7 +335,8 @@ Broker differences, incomplete depth, token/connection failures, race conditions
 - [x] Emergency-stopped demo preflight: distinct broker identity, empty broker
       state/deal history, audited baseline, and disabled demo/live submission.
 - [ ] Reconcile account/symbol orders and positions before analysis.
-- [ ] Confirm candle/depth freshness and metadata revision.
+- [x] Confirm candle/depth freshness and metadata revision for the stopped
+      ISSUE-014 deployment; repeat immediately before every supervised cycle.
 - [ ] Confirm log redaction, alert delivery, audit persistence, and backups.
 - [ ] For demo only, supervise order lifecycle and OCO cancellation.
 - [ ] For shadow, confirm gateway cannot submit.
