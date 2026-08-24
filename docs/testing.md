@@ -116,6 +116,13 @@ configured AppTest again reported zero exceptions with the historical notice
 and prompt/input controls visible. Execution remained trading-disabled and
 automatic-analysis-disabled, and durable execution-state counts stayed zero.
 
+The first operator-authorized automated-demo restart correctly failed the
+strategy-provenance check because it attempted to reuse the prior release name
+with a changed automatic-analysis configuration hash. The database emergency
+stop remained active, the restart loop was stopped, and no analysis or order was
+created. ISSUE-023 adds a new immutable release identity and a deployment test
+that prevents accidental reuse of the old name.
+
 A configured Streamlit `AppTest` run completed without an exception and rendered
 four charts from current data; its visible error/warning elements were the
 expected demo emergency-stop and disabled-submission banners.

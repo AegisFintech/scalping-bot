@@ -555,6 +555,25 @@ notice, prompt/input controls, 11 history options, and zero exceptions, and the
 execution service remained stopped with no order, fill, active-position, or
 broker execution-event state.
 
+## Automated demo release identity
+
+The operator-authorized `.env` transition enables demo submission and automatic
+analysis while retaining `TRADING_MODE=demo`, `CTRADER_CONNECTION_MODE=demo`,
+`LIVE_TRADING_ENABLED=false`, the exact demo acknowledgement, positive daily
+order-group/notional caps, and the active database emergency stop during staged
+startup. Reusing `0.1.0-actionable-oco.1` correctly failed closed with
+`STRATEGY_VERSION_IMMUTABILITY_VIOLATION` because automatic analysis is part of
+the protected configuration hash. The failed process never became reachable,
+the database stop was not cleared, and no analysis or broker command ran.
+
+ISSUE-023 assigns `0.1.0-actionable-oco-auto-demo.1` instead of rewriting prior
+provenance. Execution remains stopped until that identity passes the full gates,
+merges, and starts successfully under the database emergency stop. Its complete
+pre-merge suite passed 130 Node tests, 12 schema tests, 3 migration tests, all 3
+configured PostgreSQL integration tests, 41 Python tests, formatting/lint/type
+checks/build, replay/backtest, both dependency audits, secret/shell checks, and
+all five offline systemd security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
