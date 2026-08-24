@@ -169,6 +169,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   broker evidence for closing-deal commission/P&L signs.
 - Current status: callback journal plus order/fill/position mapping and restart/
   reconnect recovery are implemented on `feat/issue-002-demo-event-lifecycle`.
+  This checkpoint is under review in
+  [PR #4](https://github.com/AegisFintech/scalping-bot/pull/4).
   Closing events are intentionally reason-coded
   `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until supervised demo evidence confirms
   broker-specific money fields. Migration `0006` passed fresh and `0005` upgrade
