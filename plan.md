@@ -66,7 +66,12 @@ Normalized tables cover accounts, symbols, raw snapshots, candles, indicators, d
 
 ## Model contract
 
-Schema `1.0` accepts only bounded JSON with decimal strings, strict enums, timestamps, scenarios, confidence, evidence/risk codes, and performance adjustment. It contains no size, credentials, executable content, or broker IDs. Structured output is requested where supported and always validated locally. See `docs/model-contract.md`.
+Schema `2.0` accepts only a bounded mandatory two-leg conditional OCO proposal
+with decimal strings, strict enums, timestamps, confidence, evidence/risk codes,
+warnings, and performance adjustment. It has no `NO_TRADE` or leg-enable switch
+and contains no size, credentials, executable content, or broker IDs. Historical
+schema `1.0` remains immutable for audit. Structured output is requested where
+supported and always validated locally. See `docs/model-contract.md`.
 
 ## Risk controls
 
@@ -160,6 +165,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
 | ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
 | ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
+| ISSUE-022 | in review   | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -568,6 +574,40 @@ never justify empty, noisy, unsafe, or misleading commits.
   changed. Deployment evidence is recorded in
   [PR #42](https://github.com/AegisFintech/scalping-bot/pull/42).
 
+### ISSUE-022 delivery details
+
+- Acceptance criteria: after deterministic analysis eligibility succeeds, a
+  new versioned model contract requires one buy-stop plus one sell-stop OCO
+  proposal and has no decision or leg-enable switch; AI evidence and quality observations remain bounded
+  diagnostics rather than a self-veto; malformed, stale, imprecise,
+  semantically invalid, unaffordable, unreconciled, or otherwise unsafe output
+  still creates no order; historical schema/prompt artifacts remain intact;
+  and Streamlit shows the exact hash-verified system prompt, redacted request,
+  response, and prior run history without exposing secrets or broker/account
+  identifiers.
+- Dependencies: the existing deterministic analytics/preflight, schema/prompt
+  version registry, immutable strategy provenance, semantic/risk engine,
+  redacted model trail, and Streamlit decision inspector.
+- Current status: implemented on `feat/issue-022-actionable-oco`. Schema 2.0
+  requires both conditional stops and excludes `NO_TRADE`, leg-enable switches,
+  and AI-controlled data-quality acceptance. The exact tracked prompt/hash and
+  redacted user JSON are persisted for new runs and exposed with scoped history
+  in Streamlit. A deterministic incompatibility check prevents an impossible
+  stop-distance contract from repeatedly reaching the model. All local gates
+  pass: format/lint/typecheck/build, 130 Node tests across 28 files, 12 schema
+  tests, 3 migration tests, all 3 configured PostgreSQL integration tests, Ruff,
+  mypy, 40 Python tests, replay/backtest, both dependency audits, secret and
+  shell checks, and five offline systemd parses at 2.8 (`OK`). A configured,
+  read-only/no-broker AI probe returned schema 2.0 with both legs, no legacy
+  switches, matching system-v2 prompt hash, and passed deterministic semantics
+  with no reason codes. One preliminary probe produced
+  `SEMANTIC_DECIMAL_INVALID` because its ad-hoc harness failed to normalize an
+  empty optional environment value to the production `null`; the corrected
+  production-equivalent probe passed. No analysis run, database mutation,
+  execution-state change, or broker command occurred. Migration/deployment and
+  configured Streamlit AppTest remain pending merge.
+  Review: [PR #44](https://github.com/AegisFintech/scalping-bot/pull/44).
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.
@@ -632,11 +672,11 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 28 files, 123 tests passed.
-- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0008` upgrade paths in isolated Neon schemas that were dropped afterward.
-- [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
+- [x] `npm test`: 28 files, 130 tests passed.
+- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0009` upgrade paths in isolated Neon schemas that were dropped afterward.
+- [x] `npm run test:schemas`: 12 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
-- [x] Ruff format/check, mypy, and pytest: 30 Python tests passed.
+- [x] Ruff format/check, mypy, and pytest: 40 Python tests passed.
 - [x] Checked-in replay and conservative backtest CLI smoke commands completed successfully.
 - [x] `pip-audit -r requirements.lock`: no known vulnerabilities.
 - [x] Secret scan and shell syntax checks passed.
@@ -645,6 +685,8 @@ runtime.
 - [x] Apply reviewed migration `0007` under both emergency stops after PR merge.
 - [x] Apply reviewed migration `0008` under both emergency stops after PR merge;
       verify durable Better Stack retry/recovery and the Streamlit delivery view.
+- [ ] Apply reviewed migration `0009` under both emergency stops after ISSUE-022
+      merges; restart AI/execution/dashboard and verify the prompt-history view.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.

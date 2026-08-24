@@ -29,9 +29,21 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v1",
-  schemaVersion: "1.0" as const,
+  promptVersion: "system-v2",
+  schemaVersion: "2.0" as const,
   strategyVersion: "test",
+  executionConstraints: {
+    currentBid: "1999.9",
+    currentAsk: "2000.1",
+    tickSize: "0.01",
+    digits: 2,
+    brokerMinStopDistance: "0.1",
+    configuredMinStopDistance: "0.1",
+    minRiskRewardRatio: "2",
+    maxStopDistanceAtr: "3",
+    orderExpiryMinSeconds: 15,
+    orderExpiryMaxSeconds: 1800,
+  },
 };
 
 describe("model payload builder", () => {
@@ -50,5 +62,21 @@ describe("model payload builder", () => {
       timeframes: Record<string, { candles: unknown[] }>;
     };
     expect(market.timeframes.M15?.candles).toHaveLength(1);
+  });
+
+  it("supplies exact non-sizing execution constraints to the model", () => {
+    const payload = buildModelPayload({ ...common, mode: "compact" });
+    expect(payload.execution_constraints).toEqual({
+      current_bid: "1999.9",
+      current_ask: "2000.1",
+      tick_size: "0.01",
+      digits: 2,
+      broker_min_stop_distance: "0.1",
+      configured_min_stop_distance: "0.1",
+      min_risk_reward_ratio: "2",
+      max_stop_distance_atr: "3",
+      order_expiry_min_seconds: 15,
+      order_expiry_max_seconds: 1800,
+    });
   });
 });

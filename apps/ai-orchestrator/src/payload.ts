@@ -9,8 +9,20 @@ export interface ModelPayloadInput {
   readonly analyticsFeatures: Readonly<Record<string, unknown>>;
   readonly performanceContext: Readonly<Record<string, unknown>>;
   readonly promptVersion: string;
-  readonly schemaVersion: "1.0";
+  readonly schemaVersion: "2.0";
   readonly strategyVersion: string;
+  readonly executionConstraints: {
+    readonly currentBid: string;
+    readonly currentAsk: string;
+    readonly tickSize: string;
+    readonly digits: number;
+    readonly brokerMinStopDistance: string;
+    readonly configuredMinStopDistance: string;
+    readonly minRiskRewardRatio: string;
+    readonly maxStopDistanceAtr: string;
+    readonly orderExpiryMinSeconds: number;
+    readonly orderExpiryMaxSeconds: number;
+  };
 }
 
 function boundedPerformance(
@@ -73,6 +85,22 @@ export function buildModelPayload(
       ),
       order_book: input.analyticsFeatures.order_book,
       spread_atr_ratio_m1: input.analyticsFeatures.spread_atr_ratio_m1,
+    },
+    execution_constraints: {
+      current_bid: input.executionConstraints.currentBid,
+      current_ask: input.executionConstraints.currentAsk,
+      tick_size: input.executionConstraints.tickSize,
+      digits: input.executionConstraints.digits,
+      broker_min_stop_distance:
+        input.executionConstraints.brokerMinStopDistance,
+      configured_min_stop_distance:
+        input.executionConstraints.configuredMinStopDistance,
+      min_risk_reward_ratio: input.executionConstraints.minRiskRewardRatio,
+      max_stop_distance_atr: input.executionConstraints.maxStopDistanceAtr,
+      order_expiry_min_seconds:
+        input.executionConstraints.orderExpiryMinSeconds,
+      order_expiry_max_seconds:
+        input.executionConstraints.orderExpiryMaxSeconds,
     },
     performance: boundedPerformance(input.performanceContext),
   };

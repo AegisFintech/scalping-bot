@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import { Decimal } from "decimal.js";
+
 import type {
   AccountAdapter,
   AccountState,
@@ -8,6 +10,7 @@ import type {
   AnalyticsResponse,
   ExecutionGateway,
   MarketSnapshot,
+  ModelPromptArtifact,
   ModelResponse,
   OcoPlacementResult,
   Timeframe,
@@ -15,7 +18,9 @@ import type {
   SymbolMetadata,
 } from "../../../packages/contracts/src/index.js";
 import {
+  canonical,
   checkSpread,
+  decimal,
   validateSemantics,
   type SpreadDecision,
 } from "../../../packages/risk-engine/src/index.js";
@@ -55,6 +60,7 @@ export interface ModelProvider {
   }): Promise<{
     readonly response: ModelResponse;
     readonly rawResponse: string;
+    readonly promptArtifact: ModelPromptArtifact;
   }>;
 }
 
@@ -73,6 +79,7 @@ export interface DecisionTrail {
     requestPayload: Readonly<Record<string, unknown>>,
     response: ModelResponse,
     rawResponse: string,
+    promptArtifact: ModelPromptArtifact,
   ): Promise<void>;
   validation(
     analysisId: string,
@@ -133,6 +140,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
     requestPayload: Readonly<Record<string, unknown>>,
     response: ModelResponse,
     rawResponse: string,
+    promptArtifact: ModelPromptArtifact,
   ): Promise<void> {
     this.events.push({
       type: "model",
@@ -140,6 +148,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
       requestPayload,
       response,
       rawResponse,
+      promptArtifact,
     });
     return Promise.resolve();
   }
@@ -178,8 +187,8 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: string;
-  readonly schemaVersion: "1.0";
+  readonly promptVersion: "system-v2";
+  readonly schemaVersion: "2.0";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
   readonly minExpirySeconds: number;
@@ -211,7 +220,7 @@ export interface CoordinatorOptions {
 
 export interface CycleResult {
   readonly analysisId: string;
-  readonly outcome: "PLACED" | "NO_TRADE" | "REJECTED";
+  readonly outcome: "PLACED" | "REJECTED";
   readonly reasonCodes: readonly string[];
   readonly placement: OcoPlacementResult | null;
 }
@@ -231,6 +240,18 @@ function m1Atr(response: AnalyticsResponse): string {
   const atr = (m1 as Record<string, unknown>).atr;
   if (typeof atr !== "string") throw new Error("ANALYTICS_M1_ATR_MISSING");
   return atr;
+}
+
+function configuredMinimumStopDistance(
+  snapshot: MarketSnapshot,
+  minimumPoints: string | null,
+): Decimal {
+  const tickSize = decimal(snapshot.metadata.tickSize);
+  return Decimal.max(
+    decimal(snapshot.metadata.minStopDistance),
+    tickSize,
+    minimumPoints === null ? tickSize : tickSize.mul(decimal(minimumPoints)),
+  );
 }
 
 function executionMetadataFingerprint(metadata: SymbolMetadata): string {
@@ -377,6 +398,25 @@ export class AnalysisCoordinator {
       );
       if (!spread.approved) return await reject(spread.reasonCodes);
 
+      const minimumStopDistance = configuredMinimumStopDistance(
+        snapshot,
+        this.#options.minStopDistancePoints,
+      );
+      if (
+        minimumStopDistance.gt(
+          decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
+        )
+      ) {
+        const reasons = ["MODEL_PROPOSAL_CONSTRAINTS_UNSATISFIABLE"];
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          false,
+          reasons,
+        );
+        return await reject(reasons);
+      }
+
       await this.#recordTransition(analysisId, machine, "FEATURED");
       const performance = await this.#options.performance(analytics);
       const payload = buildModelPayload({
@@ -390,6 +430,18 @@ export class AnalysisCoordinator {
         promptVersion: this.#options.promptVersion,
         schemaVersion: this.#options.schemaVersion,
         strategyVersion: this.#options.strategyVersion,
+        executionConstraints: {
+          currentBid: snapshot.quote.bid,
+          currentAsk: snapshot.quote.ask,
+          tickSize: snapshot.metadata.tickSize,
+          digits: snapshot.metadata.digits,
+          brokerMinStopDistance: snapshot.metadata.minStopDistance,
+          configuredMinStopDistance: canonical(minimumStopDistance),
+          minRiskRewardRatio: this.#options.minRiskRewardRatio,
+          maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
+          orderExpiryMinSeconds: this.#options.minExpirySeconds,
+          orderExpiryMaxSeconds: this.#options.maxExpirySeconds,
+        },
       });
       await this.#recordTransition(analysisId, machine, "MODEL_PENDING");
       const model = await this.#options.model.analyze({
@@ -397,11 +449,15 @@ export class AnalysisCoordinator {
         symbol: this.#options.symbol,
         payload,
       });
+      if (model.promptArtifact.version !== this.#options.promptVersion) {
+        return await reject(["MODEL_PROMPT_VERSION_MISMATCH"]);
+      }
       await this.#options.trail.model(
         analysisId,
         payload,
         model.response,
         model.rawResponse,
+        model.promptArtifact,
       );
       await this.#recordTransition(analysisId, machine, "VALIDATING");
 
@@ -509,15 +565,6 @@ export class AnalysisCoordinator {
         semantic.reasonCodes,
       );
       if (!semantic.accepted) return await reject(semantic.reasonCodes);
-      if (!semantic.executable) {
-        await this.#recordTransition(analysisId, machine, "ACCEPTED");
-        return {
-          analysisId,
-          outcome: "NO_TRADE",
-          reasonCodes: [],
-          placement: null,
-        };
-      }
 
       const account = await this.#options.account.reconcile(
         decisionSnapshot.metadata.symbolId,

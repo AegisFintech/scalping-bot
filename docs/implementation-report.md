@@ -30,8 +30,8 @@ The repository was initially empty. The implementation added:
 - runtime applications under `apps/`;
 - shared TypeScript packages under `packages/`;
 - Python analytics/replay/backtest modules under `python/`;
-- eight ordered SQL migrations under `migrations/`;
-- strict model schema and prompt under `schemas/` and `prompts/`;
+- nine ordered SQL migrations under `migrations/`;
+- immutable strict model schemas and prompts under `schemas/` and `prompts/`;
 - operational documentation under `docs/`;
 - Debian scripts/units under `scripts/` and `systemd/`;
 - Node, Python, integration, failure, schema, migration, and replay fixtures/tests
@@ -59,18 +59,19 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 28 files, 123 tests passed.
+- Node unit: 28 files, 130 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
-  (3 tests total), including fresh migration and `0005`-through-`0008` upgrade paths.
+  (3 tests total), including fresh migration and `0005`-through-`0009` upgrade paths.
   The temporary schemas were dropped afterward.
-- JSON Schema: 10 tests passed, plus a real configured-endpoint structured-output
-  probe that returned a locally validated, identity-matched `NO_TRADE`.
+- JSON Schema: 12 tests passed. A configured, non-trading system-v2 probe
+  returned both mandatory legs, no legacy decision/enable fields, the matching
+  tracked prompt hash, and passed local deterministic semantics.
 - Migration structure/safety: 3 tests passed, including pinned historical
-  `0001`/`0002` byte checksums; migrations through `0008` passed isolated
+  `0001`/`0002` byte checksums; migrations through `0009` passed isolated
   fresh/upgrade testing. The configured Neon schema is at `0008`; the stopped
   migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
-- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 30 tests passed.
+- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 40 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
 - Secret scan and shell syntax checks passed.
@@ -497,6 +498,44 @@ passed the completed-model and pre-model-rejection paths. Execution remained in
 demo mode with trading and automatic analysis disabled, startup checks passed,
 and the emergency stop active. No execution service was restarted and no cycle
 or broker command was invoked.
+
+## Mandatory two-leg proposal contract and prompt history
+
+ISSUE-022 introduces immutable system-v2/schema 2.0 for future analyses while
+retaining system-v1/schema 1.0 artifacts for historical interpretation. The new
+response has no decision field, `NO_TRADE` value, enabled/disabled leg switch,
+or AI-controlled data-quality acceptance flag. Both conditional stop objects
+are required. Conflicts and weak evidence remain visible through bounded
+confidence, regime, evidence, risk, and warning fields rather than suppressing
+the proposal.
+
+The request now supplies exact non-sizing execution constraints: bid/ask,
+digits, tick size, broker/configured minimum stop distance, reward-to-risk,
+maximum ATR stop distance, and expiry bounds. It still excludes account money,
+risk budget, volume, credentials, and execution authority. Post-model candle
+identity, refreshed spread/quote/depth, semantic price rules, deterministic
+sizing/exposure/margin, reconciliation, mode, and emergency gates remain
+independent and fail closed.
+
+Migration `0009` stores the exact non-secret system prompt and SHA-256 as a
+bounded pair for each new request while leaving legacy rows null. The
+orchestrator/consumer/database/dashboard verify the artifact rather than trust
+an unbound label. Streamlit adds a scoped prompt/response history table, exact
+system prompt, and opt-in exact persisted redacted user JSON. It labels model
+levels as proposals, never as queued or broker orders.
+
+The complete pre-merge gate rerun passed Prettier, ESLint, TypeScript
+typecheck/build, 130 Node tests across 28 files, 12 schema tests, 3 migration
+tests, all 3 configured PostgreSQL integration tests, Ruff format/lint, strict
+mypy across analytics/dashboard, 40 Python tests, replay/backtest smoke tests,
+npm/pip audits, secret scanning, shell syntax, and all five offline systemd
+security parses at 2.8 (`OK`). The configured AI probe above used current
+persisted market context only as read input and did not create an analysis run,
+database row, execution state, or broker command. A preliminary ad-hoc semantic
+probe passed an empty optional environment string where production supplies
+`null` and therefore reported `SEMANTIC_DECIMAL_INVALID`; after matching the
+production normalization, the repeated response passed with no semantic reason
+codes. Runtime migration and dashboard AppTest remain post-merge steps.
 
 ## Shadow-mode setup
 

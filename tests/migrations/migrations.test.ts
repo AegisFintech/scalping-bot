@@ -68,6 +68,7 @@ describe("migrations", () => {
       "0006_ctrader_demo_execution_events.sql",
       "0007_spread_observations.sql",
       "0008_observability_outbox.sql",
+      "0009_model_prompt_artifacts.sql",
     ]);
     const sql = (
       await Promise.all(

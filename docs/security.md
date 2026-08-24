@@ -27,12 +27,17 @@ are excluded.
 
 The Streamlit decision inspector displays the complete parsed model object only
 after defensive size, shape, depth, and sensitive-key checks. It never renders
-raw provider text or the full persisted model request. Model-input and analytics
-candle/return/pivot arrays are reduced to bounded counts and boundary samples;
-the exact redacted request remains identifiable by its SHA-256 hash. Audit
-details are independently bounded and recursively redacted. Any malformed,
-oversized, or sensitive parsed model document is rejected from display rather
-than partially trusted.
+raw provider text. The default model-input view reduces candle/return/pivot
+arrays to bounded counts and boundary samples; an explicit operator checkbox
+can render the exact already-redacted, 4 MiB-bounded persisted user JSON.
+Sensitive keys, oversized collections, and malformed documents fail closed.
+Audit details are independently bounded and recursively redacted.
+
+For schema 2.0 requests, the exact tracked system prompt and its SHA-256 are
+persisted together under a 64 KiB bound. The execution service rejects an
+incomplete, mismatched-version, malformed-hash, or hash-mismatched artifact.
+Streamlit independently verifies the hash and rejects secret-like content
+before display. Better Stack never receives the full prompt or request.
 
 ## Supply chain
 

@@ -107,7 +107,6 @@ export interface PerformanceSummary {
 }
 
 export interface ModelOrderProposal {
-  readonly enabled: boolean;
   readonly trigger_price: DecimalString;
   readonly entry_price: DecimalString;
   readonly stop_loss: DecimalString;
@@ -118,12 +117,11 @@ export interface ModelOrderProposal {
 }
 
 export interface ModelResponse {
-  readonly schema_version: "1.0";
+  readonly schema_version: "2.0";
   readonly analysis_id: string;
   readonly symbol: string;
   readonly generated_at: IsoTimestamp;
   readonly valid_until: IsoTimestamp;
-  readonly decision: "PLACE_OCO" | "NO_TRADE";
   readonly market_regime:
     "TRENDING" | "RANGING" | "BREAKOUT" | "VOLATILE" | "QUIET" | "UNCERTAIN";
   readonly waiting_area: {
@@ -150,9 +148,14 @@ export interface ModelResponse {
     readonly reason_codes: readonly string[];
   };
   readonly data_quality: {
-    readonly acceptable: boolean;
     readonly warnings: readonly string[];
   };
+}
+
+export interface ModelPromptArtifact {
+  readonly version: "system-v2";
+  readonly content: string;
+  readonly sha256: string;
 }
 
 export interface SymbolMetadata {

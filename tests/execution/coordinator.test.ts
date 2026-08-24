@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,6 +12,7 @@ import type {
   AccountState,
   AnalyticsRequest,
   MarketSnapshot,
+  ModelPromptArtifact,
   ModelResponse,
   PendingOrderCommand,
 } from "../../packages/contracts/src/index.js";
@@ -52,29 +55,48 @@ function safety(): SafetyGateInput {
   };
 }
 
-function noTrade(analysisId: string): ModelResponse {
-  const now = Date.now();
-  const order = {
-    enabled: false,
-    trigger_price: "1",
-    entry_price: "1",
-    stop_loss: "1",
-    take_profit: "1",
-    risk_reward_ratio: "2",
-    expires_at: new Date(now + 60_000).toISOString(),
-    invalidation_price: "1",
-  };
+function promptArtifact(): ModelPromptArtifact {
+  const content = "Return a mandatory OCO proposal.";
   return {
-    schema_version: "1.0",
+    version: "system-v2",
+    content,
+    sha256: createHash("sha256").update(content).digest("hex"),
+  };
+}
+
+function ocoProposal(analysisId: string): ModelResponse {
+  const now = Date.now();
+  const expiresAt = new Date(now + 60_000).toISOString();
+  return {
+    schema_version: "2.0",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: new Date(now).toISOString(),
-    valid_until: new Date(now + 60_000).toISOString(),
-    decision: "NO_TRADE",
+    valid_until: expiresAt,
     market_regime: "UNCERTAIN",
-    waiting_area: { lower: "1", upper: "2", description_code: "NO_VALID_ZONE" },
-    buy_stop: order,
-    sell_stop: order,
+    waiting_area: {
+      lower: "1999",
+      upper: "2001",
+      description_code: "IMMEDIATE_DECISION_ZONE",
+    },
+    buy_stop: {
+      trigger_price: "2001",
+      entry_price: "2001",
+      stop_loss: "2000",
+      take_profit: "2003",
+      risk_reward_ratio: "2",
+      expires_at: expiresAt,
+      invalidation_price: "2000",
+    },
+    sell_stop: {
+      trigger_price: "1999",
+      entry_price: "1999",
+      stop_loss: "2000",
+      take_profit: "1997",
+      risk_reward_ratio: "2",
+      expires_at: expiresAt,
+      invalidation_price: "2000",
+    },
     confidence: {
       overall: 0,
       buy: 0,
@@ -85,49 +107,13 @@ function noTrade(analysisId: string): ModelResponse {
     },
     setup_tags: [],
     evidence_codes: [],
-    risk_flags: ["INSUFFICIENT_EVIDENCE"],
+    risk_flags: [],
     performance_adjustment: {
       applied: false,
       confidence_delta: 0,
       reason_codes: [],
     },
-    data_quality: { acceptable: true, warnings: [] },
-  };
-}
-
-function placeOco(analysisId: string): ModelResponse {
-  const now = Date.now();
-  const expiresAt = new Date(now + 60_000).toISOString();
-  return {
-    ...noTrade(analysisId),
-    decision: "PLACE_OCO",
-    valid_until: expiresAt,
-    waiting_area: {
-      lower: "1999",
-      upper: "2001",
-      description_code: "BREAKOUT_WAITING_AREA",
-    },
-    buy_stop: {
-      enabled: true,
-      trigger_price: "2001",
-      entry_price: "2001",
-      stop_loss: "2000",
-      take_profit: "2003",
-      risk_reward_ratio: "2",
-      expires_at: expiresAt,
-      invalidation_price: "2000",
-    },
-    sell_stop: {
-      enabled: true,
-      trigger_price: "1999",
-      entry_price: "1999",
-      stop_loss: "2000",
-      take_profit: "1997",
-      risk_reward_ratio: "2",
-      expires_at: expiresAt,
-      invalidation_price: "2000",
-    },
-    risk_flags: [],
+    data_quality: { warnings: [] },
   };
 }
 
@@ -264,8 +250,8 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v1",
-    schemaVersion: "1.0",
+    promptVersion: "system-v2",
+    schemaVersion: "2.0",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
     minExpirySeconds: 15,
@@ -306,22 +292,38 @@ function options(
       circuitOpen: false,
       analyze: vi.fn((request: { readonly analysisId: string }) =>
         Promise.resolve({
-          response: noTrade(request.analysisId),
+          response: ocoProposal(request.analysisId),
           rawResponse: "{}",
+          promptArtifact: promptArtifact(),
         }),
       ),
     },
     account: {
       authenticate: () => Promise.resolve(),
-      reconcile: () => Promise.reject(new Error("not used for no trade")),
+      reconcile: () => Promise.resolve(accountState()),
     },
     risk: {
-      evaluate: () => Promise.reject(new Error("not used for no trade")),
+      evaluate: (input) =>
+        Promise.resolve({
+          approved: true,
+          reasonCodes: [],
+          risk: null,
+          commands: commands(input.response.analysis_id),
+          equity: "10000",
+          perLegRiskPercent: "0.5",
+        }),
     },
     gateway: {
       kind: "paper",
       canSubmitToBroker: false,
-      placeOco: vi.fn(() => Promise.reject(new Error("must not place"))),
+      placeOco: vi.fn(
+        (submitted: readonly [PendingOrderCommand, PendingOrderCommand]) =>
+          Promise.resolve({
+            orderGroupId: submitted[0].orderGroupId,
+            idempotentReplay: false,
+            orders: [],
+          }),
+      ),
       cancelStrategyOrder: () => Promise.reject(new Error("not used")),
       reconcile: () => Promise.reject(new Error("not used")),
     },
@@ -333,10 +335,45 @@ function options(
 }
 
 describe("analysis coordinator", () => {
-  it("accepts a valid NO_TRADE response without invoking risk or execution", async () => {
+  it("carries a mandatory two-leg proposal through deterministic placement", async () => {
     const configured = options();
     const result = await new AnalysisCoordinator(configured).runOnce();
-    expect(result.outcome).toBe("NO_TRADE");
+    expect(result.outcome).toBe("PLACED");
+    expect(result.placement).not.toBeNull();
+  });
+
+  it("rejects a mismatched prompt artifact before risk or placement", async () => {
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const configured = options({
+      model: {
+        circuitOpen: false,
+        analyze: vi.fn((request: { readonly analysisId: string }) =>
+          Promise.resolve({
+            response: ocoProposal(request.analysisId),
+            rawResponse: "{}",
+            promptArtifact: {
+              ...promptArtifact(),
+              version: "system-v1",
+            } as unknown as ModelPromptArtifact,
+          }),
+        ),
+      },
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["MODEL_PROMPT_VERSION_MISMATCH"],
+    });
+    expect(place).not.toHaveBeenCalled();
   });
 
   it("rejects before market collection when emergency stopped", async () => {
@@ -354,6 +391,22 @@ describe("analysis coordinator", () => {
       reasonCodes: ["EMERGENCY_STOP_ENV"],
     });
     expect(market.snapshot).not.toHaveBeenCalled();
+  });
+
+  it("rejects before the model when proposal constraints are mathematically incompatible", async () => {
+    const model = vi.fn(() => Promise.reject(new Error("must not call model")));
+    const configured = options({
+      maxStopDistanceAtr: "0.001",
+      model: { circuitOpen: false, analyze: model },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["MODEL_PROPOSAL_CONSTRAINTS_UNSATISFIABLE"],
+    });
+    expect(model).not.toHaveBeenCalled();
   });
 
   it("refreshes decision market state after model latency", async () => {
@@ -376,8 +429,9 @@ describe("analysis coordinator", () => {
           analyze: vi.fn((request: { readonly analysisId: string }) => {
             vi.setSystemTime(new Date("2026-08-24T08:00:10.000Z"));
             return Promise.resolve({
-              response: noTrade(request.analysisId),
+              response: ocoProposal(request.analysisId),
               rawResponse: "{}",
+              promptArtifact: promptArtifact(),
             });
           }),
         },
@@ -386,7 +440,7 @@ describe("analysis coordinator", () => {
       await expect(
         new AnalysisCoordinator(configured).runOnce(),
       ).resolves.toMatchObject({
-        outcome: "NO_TRADE",
+        outcome: "PLACED",
         reasonCodes: [],
       });
       expect(market.snapshot).toHaveBeenCalledTimes(2);
@@ -523,8 +577,9 @@ describe("analysis coordinator", () => {
           analyze: vi.fn((request: { readonly analysisId: string }) => {
             vi.setSystemTime(new Date("2026-08-24T08:00:10.000Z"));
             return Promise.resolve({
-              response: noTrade(request.analysisId),
+              response: ocoProposal(request.analysisId),
               rawResponse: "{}",
+              promptArtifact: promptArtifact(),
             });
           }),
         },
@@ -608,8 +663,9 @@ describe("analysis coordinator", () => {
         circuitOpen: false,
         analyze: vi.fn((request: { readonly analysisId: string }) =>
           Promise.resolve({
-            response: placeOco(request.analysisId),
+            response: ocoProposal(request.analysisId),
             rawResponse: "{}",
+            promptArtifact: promptArtifact(),
           }),
         ),
       },
@@ -660,8 +716,9 @@ describe("analysis coordinator", () => {
           circuitOpen: false,
           analyze: vi.fn((request: { readonly analysisId: string }) =>
             Promise.resolve({
-              response: placeOco(request.analysisId),
+              response: ocoProposal(request.analysisId),
               rawResponse: "{}",
+              promptArtifact: promptArtifact(),
             }),
           ),
         },

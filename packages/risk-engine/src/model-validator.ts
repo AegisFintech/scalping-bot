@@ -184,7 +184,6 @@ export interface SemanticContext {
 
 export interface SemanticResult {
   readonly accepted: boolean;
-  readonly executable: boolean;
   readonly reasonCodes: readonly string[];
 }
 
@@ -194,7 +193,6 @@ function checkLeg(
   context: SemanticContext,
   reasons: string[],
 ): void {
-  if (!proposal.enabled) return;
   const entry = decimal(proposal.entry_price);
   const trigger = decimal(proposal.trigger_price);
   const stop = decimal(proposal.stop_loss);
@@ -302,8 +300,6 @@ export function validateSemantics(
     )
   )
     reasons.push("WAITING_AREA_INVALID");
-  if (!response.data_quality.acceptable)
-    reasons.push("MODEL_DATA_QUALITY_REJECTED");
   if (response.performance_adjustment.confidence_delta > 0)
     reasons.push("PERFORMANCE_ADJUSTMENT_INCREASE_INVALID");
   const expectedAdjusted = (original: number): number =>
@@ -337,17 +333,6 @@ export function validateSemantics(
       reasons.push("PERFORMANCE_ADJUSTMENT_MISMATCH");
     }
   }
-  if (response.decision === "NO_TRADE") {
-    if (response.buy_stop.enabled || response.sell_stop.enabled)
-      reasons.push("NO_TRADE_HAS_ENABLED_LEG");
-    return {
-      accepted: reasons.length === 0,
-      executable: false,
-      reasonCodes: [...new Set(reasons)].sort(),
-    };
-  }
-  if (!response.buy_stop.enabled || !response.sell_stop.enabled)
-    reasons.push("PLACE_OCO_REQUIRES_BOTH_LEGS");
   const buyExpiry = Date.parse(response.buy_stop.expires_at);
   const sellExpiry = Date.parse(response.sell_stop.expires_at);
   if (
@@ -370,7 +355,6 @@ export function validateSemantics(
   }
   return {
     accepted: reasons.length === 0,
-    executable: reasons.length === 0,
     reasonCodes: [...new Set(reasons)].sort(),
   };
 }
