@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { OpenAiCompatibleClient } from "../../packages/ai-client/src/client.js";
 import {
   AiOrchestratorHttpClient,
+  aiOrchestratorCircuitResetMs,
   aiOrchestratorRequestTimeoutMs,
 } from "../../packages/ai-client/src/http-client.js";
 
@@ -165,6 +166,19 @@ describe("OpenAI-compatible client", () => {
 });
 
 describe("AI orchestrator HTTP client", () => {
+  it.each([0, 0.5, 2_147_484])(
+    "rejects an unsafe caller circuit reset: %s seconds",
+    (seconds) => {
+      expect(() => aiOrchestratorCircuitResetMs(seconds)).toThrow(
+        "AI_CIRCUIT_RESET_INVALID",
+      );
+    },
+  );
+
+  it("converts a valid caller circuit reset to milliseconds", () => {
+    expect(aiOrchestratorCircuitResetMs(300)).toBe(300_000);
+  });
+
   it("budgets the complete configured provider retry window", () => {
     expect(
       aiOrchestratorRequestTimeoutMs({
@@ -208,6 +222,76 @@ describe("AI orchestrator HTTP client", () => {
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
     ).rejects.toThrow("AI_ORCHESTRATOR_TIMEOUT");
     expect(client.circuitOpen).toBe(true);
+  });
+
+  it("blocks during cooldown and half-opens at the exact reset boundary", async () => {
+    let clock = 1_000;
+    const rawResponse = JSON.stringify(validResponse());
+    const fetchMock = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(new Response("unavailable", { status: 503 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+          status: 200,
+        }),
+      );
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      circuitResetMs: 5_000,
+      now: () => clock,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_HTTP_ERROR:503");
+    expect(client.circuitOpen).toBe(true);
+    clock = 5_999;
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_CIRCUIT_OPEN");
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    clock = 6_000;
+    expect(client.circuitOpen).toBe(false);
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).resolves.toMatchObject({ response: { analysis_id: analysisId } });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(client.circuitOpen).toBe(false);
+  });
+
+  it("reopens the half-open circuit after another transport failure", async () => {
+    let clock = 10_000;
+    const fetchMock = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(new Response("unavailable", { status: 503 }))
+      .mockRejectedValueOnce(new TypeError("fetch failed"));
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      circuitResetMs: 5_000,
+      now: () => clock,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_HTTP_ERROR:503");
+    clock = 15_000;
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_UNAVAILABLE");
+    expect(client.circuitOpen).toBe(true);
+    clock = 19_999;
+    expect(client.circuitOpen).toBe(true);
+    clock = 20_000;
+    expect(client.circuitOpen).toBe(false);
   });
 
   it("accepts a completed locally validated orchestrator response", async () => {

@@ -24,8 +24,8 @@ function service(name, overrides = {}) {
     env: {
       NODE_ENV: "production",
       APP_ENV: "production",
-      STRATEGY_VERSION: "0.1.0-actionable-oco-auto-demo.7",
-      CODE_VERSION: "0.1.0-actionable-oco-auto-demo.7",
+      STRATEGY_VERSION: "0.1.0-actionable-oco-auto-demo.8",
+      CODE_VERSION: "0.1.0-actionable-oco-auto-demo.8",
     },
     ...overrides,
   };

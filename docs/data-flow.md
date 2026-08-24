@@ -43,6 +43,10 @@ the temporary fail-closed daily-risk reason.
 9. Call the AI endpoint with per-attempt timeout/retries/circuit breaker. The
    execution-to-orchestrator deadline covers every configured attempt plus
    bounded grace; invalid or timer-overflowing budgets reject startup.
+   A timeout, transport loss, or HTTP 503 opens the execution caller circuit for
+   the configured provider reset interval. It blocks during cooldown and
+   half-opens only at the exact expiry boundary; the scheduler can then use a
+   later fresh broker minute without restarting execution.
 10. Size-limit, parse, and JSON-Schema validate the mandatory two-leg proposal.
     Schema 2.0 contains no `NO_TRADE`, leg-enabled switch, or model-controlled
     data-eligibility veto.

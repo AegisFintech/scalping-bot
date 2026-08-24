@@ -173,6 +173,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-027 | complete    | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
 | ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)     | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
 | ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
+| ISSUE-030 | in progress | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -791,6 +792,30 @@ never justify empty, noisy, unsafe, or misleading commits.
   it does not clear or bypass the failure and issue #59 remains open until the
   observed shape is fixed and repeated successfully. The observation release
   passes Prettier, ESLint, TypeScript typecheck/build, 148 Node tests across 29
+  files, 12 schema tests, 3 migration tests, all 3 configured
+  isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19 source files,
+  43 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
+  audits, secret/shell checks, and five offline systemd parses at 2.8 (`OK`).
+
+### ISSUE-030 delivery details
+
+- Acceptance criteria: replace the execution caller's permanent circuit boolean
+  with a deterministic configured cooldown; block every caller request during
+  that interval; half-open at the exact expiry boundary; clear after a fully
+  validated success; reopen on timeout, unavailability, or HTTP 503; reject
+  invalid/fractional/overflowing reset configuration at startup; and prove a
+  later broker-minute automatic analysis resumes under the same PID.
+- Dependencies: [issue #61](https://github.com/AegisFintech/scalping-bot/issues/61),
+  the existing provider-side 300-second breaker, ISSUE-024 broker-minute claims,
+  `.7` observation deployment, and active database controls.
+- Current status: `.7` broker minute 11:01 UTC received
+  `AI_ORCHESTRATOR_HTTP_ERROR:503`. The execution HTTP client set a permanent
+  boolean while its safety gate prevented the later request needed to clear it,
+  proving a restart-only deadlock. Both database controls were reactivated with
+  an empty terminal scope. Candidate `.8` uses the unchanged configured reset
+  duration and a clock-controlled half-open boundary; it does not bypass the
+  provider breaker or change same-interval retry behavior. The complete suite
+  passes Prettier, ESLint, TypeScript typecheck/build, 154 Node tests across 29
   files, 12 schema tests, 3 migration tests, all 3 configured
   isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19 source files,
   43 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
