@@ -129,7 +129,10 @@ The supervised-demo guardrail checkpoint defaults automatic analysis off while
 retaining maintenance/reconciliation, exposes that state in status/Streamlit,
 and rejects demo-enabled startup unless the exact acknowledgement plus daily
 order-group and per-position notional caps are present. It does not enable demo
-submission or clear an emergency stop.
+submission or clear an emergency stop. The first deployment correctly rejected
+reuse of the prior strategy version after the safety-config hash changed; the
+PM2 release identity is therefore advanced to the immutable
+`0.1.0-demo-guardrails.1` version rather than altering stored provenance.
 
 ## Shadow-mode setup
 

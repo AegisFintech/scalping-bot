@@ -52,7 +52,7 @@ describe("PM2 deployment configuration", () => {
     );
     expect(
       config.apps.every(
-        (app) => app.env.STRATEGY_VERSION === "0.1.0-demo-preflight.1",
+        (app) => app.env.STRATEGY_VERSION === "0.1.0-demo-guardrails.1",
       ),
     ).toBe(true);
   });

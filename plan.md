@@ -175,7 +175,12 @@ never justify empty, noisy, unsafe, or misleading commits.
   state. These guardrails are in progress on
   `feat/issue-001-supervised-demo-guardrails` and proposed in
   [PR #12](https://github.com/AegisFintech/scalping-bot/pull/12); submission and
-  emergency stop remain unchanged.
+  emergency stop remain unchanged. Deployment then failed closed on the
+  expected strategy-version immutability check after the cap/config hash
+  changed. A new immutable `0.1.0-demo-guardrails.1` release identity is being
+  delivered in
+  [PR #13](https://github.com/AegisFintech/scalping-bot/pull/13); no provenance
+  row is rewritten.
 
 ### ISSUE-002 delivery details
 
