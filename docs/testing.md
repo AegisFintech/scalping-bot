@@ -237,6 +237,14 @@ PostgreSQL test verified that refreshed depth is appended and linked while the
 original model candle snapshot remains unchanged. No credentialed cycle or
 broker command was run for this checkpoint.
 
+PR #33 merged as `21312cb`. The merged execution build started under immutable
+strategy/code identity `0.1.0-decision-refresh.1` with demo and automatic
+analysis disabled and both emergency stops active. Startup recovery/readiness
+passed; the provenance row exists and demo group/order/active-position/fill and
+unresolved-event counts remained zero. The startup audit reached `DELIVERED` on
+its third bounded Better Stack attempt and left zero backlog. No post-deployment
+cycle or broker command was invoked.
+
 AI timeout-budget tests cover the configured three-attempt total, zero-retry
 mode, nonpositive/fractional/overflowing budgets, a valid locally revalidated
 response, normalized timeout and transport failures, and execution-side circuit
@@ -249,10 +257,10 @@ tests, all 3 configured integration tests, Ruff format/lint, mypy, 30 Python
 tests, replay/backtest smoke tests, npm/pip dependency audits, secret and shell
 checks, and all five offline systemd security parses at 2.8 (`OK`).
 
-PR #33 merged as `21312cb`. The merged execution build started under immutable
-strategy/code identity `0.1.0-decision-refresh.1` with demo and automatic
+PR #36 merged as `eae2aff`. The merged execution build started under immutable
+strategy/code identity `0.1.0-ai-timeout-budget.1` with demo and automatic
 analysis disabled and both emergency stops active. Startup recovery/readiness
-passed; the provenance row exists and demo group/order/active-position/fill and
-unresolved-event counts remained zero. The startup audit reached `DELIVERED` on
-its third bounded Better Stack attempt and left zero backlog. No post-deployment
-cycle or broker command was invoked.
+passed; the new provenance row exists and demo group/order/fill/active-position
+and unresolved-event counts remained zero. The slowest startup reconciliation
+audit reached `DELIVERED` on attempt five and left zero Better Stack backlog.
+No post-deployment cycle or broker command was invoked.
