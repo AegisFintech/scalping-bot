@@ -167,3 +167,21 @@ disabled. Readiness and startup recovery passed; execution events, groups,
 orders, active positions, and fills stayed zero. The rejected supervised
 analysis retained zero model-request rows, confirming the failed pre-fix
 transaction left no partial evidence. No deployment cycle was invoked.
+
+A fresh post-fix acknowledgement authorized one bounded demo cycle. The stopped
+preflight accepted 600/500/300 completed candles, complete continuous depth,
+strict analytics, and a 5-point spread at percentile `33.9622641509`; the
+minimum-volume notional was `4648.29` under the `5500` cap and daily loss was
+zero. The cycle snapshot widened to 11 points at the 100th percentile. Analysis
+`199c679e-abd5-43d5-9e39-1a161254c3ed` therefore rejected at deterministic
+spread validation with `SPREAD_POINTS_EXCEEDED` and
+`SPREAD_PERCENTILE_EXCEEDED`, before any model request, risk decision, intent,
+or broker command. Cleanup reconciled successfully, both stops and disabled
+demo settings were restored, and execution events, groups, orders, active
+positions, and fills remained zero.
+
+The documentation checkpoint for that supervised result passed formatting,
+ESLint, TypeScript typecheck/build, 103 Node tests, 10 schema tests, 3 migration
+tests, all 3 configured PostgreSQL integration tests, Ruff format/lint, mypy, 30
+Python tests, replay/backtest smoke tests, both dependency audits, secret and
+shell checks, and all five offline systemd security parses at 2.8 (`OK`).

@@ -202,8 +202,24 @@ never justify empty, noisy, unsafe, or misleading commits.
   bind for UUID `model_requests.id` and text `request_id`; its transaction
   rolled back. Demo enablement and acknowledgement were cleared, both stops were
   restored, reconciliation was certain, and execution-event/group/order/active-
-  position/fill counts remained zero. ISSUE-017 tracks the fix; any later
-  order-capable cycle requires a fresh exact acknowledgement.
+  position/fill counts remained zero. ISSUE-017's fix merged in
+  [PR #25](https://github.com/AegisFintech/scalping-bot/pull/25). A fourth exact
+  acknowledgement then authorized one post-fix cycle. Its stopped preflight
+  accepted 600/500/300 completed candles, complete continuous depth, strict
+  analytics, and a 5-point spread at percentile `33.9622641509`; the minimum
+  notional was `4648.29` against a `5500` cap, daily loss was zero, and durable
+  execution state was empty. The decision snapshot widened to 11 points at the
+  100th percentile, so deterministic spread validation rejected analysis
+  `199c679e-abd5-43d5-9e39-1a161254c3ed` before model, risk sizing, intent, or
+  placement. Mandatory stop/cancel/reconciliation succeeded. Demo enablement
+  and acknowledgement were cleared, both stops were restored, and execution-
+  event/group/order/active-position/fill counts remained zero. A later
+  order-capable cycle requires another fresh exact acknowledgement. The
+  documentation checkpoint passed formatting, ESLint, TypeScript
+  typecheck/build, 103 Node tests, 10 schema tests, 3 migration tests, all 3
+  configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
+  tests, replay/backtest smoke tests, both dependency audits, secret and shell
+  checks, and all five offline systemd security parses at 2.8 (`OK`).
 
 ### ISSUE-002 delivery details
 

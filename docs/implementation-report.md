@@ -279,6 +279,19 @@ emergency stops active. It reports ready startup recovery but
 fills remain zero, and the rejected pre-fix analysis has no partial model rows.
 No deployment cycle was invoked; the prior acknowledgement remains consumed.
 
+The next fresh acknowledgement authorized one post-fix bounded demo cycle.
+Immediately before enablement, the stopped preflight accepted 600/500/300
+completed candles, complete continuous depth, strict analytics, and a 5-point
+spread at percentile `33.9622641509`. The minimum-volume notional was `4648.29`
+under the `5500` cap; the reconciled daily baseline/current equity were both
+`1000000` with zero loss and no durable execution state. The decision snapshot
+then widened to 11 points at the 100th percentile, exceeding both configured
+spread gates. Analysis `199c679e-abd5-43d5-9e39-1a161254c3ed` rejected before
+model, risk sizing, intent, or placement. Mandatory database stop restoration,
+strategy-owned cancellation, and reconciliation succeeded. Demo enablement and
+acknowledgement were cleared, the environment stop was restored, and execution
+events, groups, orders, active positions, and fills remained zero.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
