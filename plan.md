@@ -622,7 +622,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   `1fec8fe`. The dashboard-only reload remained healthy. Final configured
   AppTest showed the historical notice, exact prompt/input controls, 11 history
   options, and zero exceptions. Execution stayed healthy and stopped; all
-  order/fill/active-position/execution-event counts remained zero.
+  order/fill/active-position/execution-event counts remained zero. Final
+  deployment evidence: [PR #46](https://github.com/AegisFintech/scalping-bot/pull/46).
 
 ## Acceptance criteria
 
