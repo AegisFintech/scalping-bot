@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -33,10 +34,29 @@ const requiredTables = [
   "strategy_versions",
   "broker_execution_events",
 ];
+const directory = path.resolve("migrations");
 
 describe("migrations", () => {
+  it("preserves historically applied migration bytes", async () => {
+    const expected = new Map([
+      [
+        "0001_initial.sql",
+        "bf2cc9b1a9bcb7753dc0ed0a9040947c4e105a617ac8f5753038db81563a29f6",
+      ],
+      [
+        "0002_dashboard_views.sql",
+        "cb4713734ca1c89f597b46603f256fecd88a71db83145a7bdfeeb0f89f44e119",
+      ],
+    ]);
+    for (const [file, checksum] of expected) {
+      const contents = await readFile(path.join(directory, file));
+      expect(createHash("sha256").update(contents).digest("hex")).toBe(
+        checksum,
+      );
+    }
+  });
+
   it("are ordered and contain every required normalized table", async () => {
-    const directory = path.resolve("migrations");
     expect(await migrationFiles(directory)).toEqual([
       "0001_initial.sql",
       "0002_dashboard_views.sql",

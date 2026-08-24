@@ -58,13 +58,14 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 25 files, 79 tests passed.
+- Node unit: 25 files, 80 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
   (3 tests total), including fresh migration and `0005`-to-`0006` upgrade paths.
   The temporary schemas were dropped afterward.
 - JSON Schema: 10 tests passed, plus a real configured-endpoint structured-output
   probe that returned a locally validated, identity-matched `NO_TRADE`.
-- Migration structure/safety: 2 tests passed; migration `0006` passed isolated
+- Migration structure/safety: 3 tests passed, including pinned historical
+  `0001`/`0002` byte checksums; migration `0006` passed isolated
   fresh/upgrade testing while `0001` through `0005` remain applied to the
   configured Neon schema. Backup/restore remains pending.
 - Ruff format/lint, strict mypy across analytics/dashboard, and Python: 13 tests passed.

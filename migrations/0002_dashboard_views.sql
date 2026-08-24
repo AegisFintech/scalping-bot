@@ -53,3 +53,4 @@ SELECT
   drs.lockout_reason,
   drs.reconciled_at
 FROM daily_risk_state drs;
+

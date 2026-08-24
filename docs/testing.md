@@ -48,8 +48,8 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 79 Node unit
-tests across 25 files, 10 schema tests, 2 static migration tests, Ruff, strict mypy across the
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 80 Node unit
+tests across 25 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
 analytics and dashboard code, 13 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
