@@ -279,7 +279,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   typecheck/build, 123 Node tests, 10 schema tests, 3 migration tests, all 3
   configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
   tests, replay/backtest, both dependency audits, secret and shell checks, and
-  all five offline systemd security parses at 2.8 (`OK`).
+  all five offline systemd security parses at 2.8 (`OK`). Evidence is tracked
+  in [PR #39](https://github.com/AegisFintech/scalping-bot/pull/39).
 
 ### ISSUE-002 delivery details
 
