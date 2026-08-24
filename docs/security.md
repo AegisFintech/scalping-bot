@@ -18,6 +18,13 @@ Environment configuration, exact acknowledgement, manual sentinel, startup safet
 
 Raw AI payloads may expose trading strategy/account context; store only what operations/audit require, with redaction and retention limits. Never store authorization headers. Encrypt backups and restrict database roles. Dashboard queries use a read-oriented role; migrations and runtime use separate least-privilege roles where practical.
 
+Better Stack receives bounded audit summaries only. The exporter applies the
+same recursive redaction as structured logs and omits raw account/broker IDs,
+full candle arrays, and full model request/response payloads. Stable UUID event
+and analysis/request/group correlation remains visible. Treat Better Stack
+access and retention as sensitive operational metadata even though credentials
+are excluded.
+
 ## Supply chain
 
 Pin direct/transitive dependencies in lockfiles, use deterministic installs, run

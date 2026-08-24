@@ -14,9 +14,13 @@ import {
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
+import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
 import { PostgresDecisionTrail } from "../../apps/execution-service/src/postgres-trail.js";
 import { PostgresSpreadObservationStore } from "../../apps/execution-service/src/spread-observations.js";
-import type { ModelResponse } from "../../packages/contracts/src/index.js";
+import type {
+  ModelResponse,
+  ReconciliationSnapshot,
+} from "../../packages/contracts/src/index.js";
 import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
@@ -95,6 +99,7 @@ describe("PostgreSQL migrations integration", () => {
         "0005",
         "0006",
         "0007",
+        "0008",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -329,6 +334,195 @@ describe("PostgreSQL migrations integration", () => {
         requests: "1",
         responses: "1",
       });
+      const reconciliation: ReconciliationSnapshot = {
+        asOf: "2026-08-24T00:09:00.000Z",
+        certain: true,
+        reasonCodes: [],
+        orders: [
+          {
+            clientOrderId: "operator-order",
+            brokerOrderId: "must-not-export-broker-order-id",
+            state: "PENDING",
+            filledVolume: "0",
+            updatedAt: "2026-08-24T00:09:00.000Z",
+            reasonCode: "DEMO_MANUAL_ORDER_BLOCKING",
+          },
+        ],
+        relevantPositionCount: 0,
+      };
+      await trail.reconciliation(reconciliation);
+      await trail.reconciliation(reconciliation);
+      const reconciliationAudit = await isolated.query<{
+        count: string;
+        details: Record<string, unknown>;
+      }>(
+        `SELECT count(*) OVER ()::text AS count, details
+         FROM audit_events WHERE event_name = 'reconciliation_completed'
+         LIMIT 1`,
+      );
+      expect(reconciliationAudit.rows[0]).toEqual({
+        count: "1",
+        details: expect.objectContaining({
+          certain: true,
+          manual_order_count: 1,
+          strategy_order_count: 0,
+        }),
+      });
+      const deliveredPayloads: unknown[] = [];
+      const successfulOutbox = new PostgresObservabilityOutbox({
+        pool: isolated,
+        transport: {
+          send: (payload) => {
+            deliveredPayloads.push(payload);
+            return Promise.resolve(true);
+          },
+        },
+        batchSize: 50,
+        now: () => new Date("2099-08-24T00:10:00.000Z"),
+      });
+      const successfulFlush = await successfulOutbox.flush();
+      expect(successfulFlush.claimed).toBeGreaterThanOrEqual(2);
+      expect(successfulFlush.retried).toBe(0);
+      const modelDelivery = deliveredPayloads.find(
+        (payload) =>
+          (payload as { event_name?: unknown }).event_name ===
+          "model_completed",
+      ) as Record<string, unknown> | undefined;
+      expect(modelDelivery).toMatchObject({
+        analysis_id: analysisId,
+        event_name: "model_completed",
+        outcome: "accepted",
+      });
+      expect(JSON.stringify(modelDelivery)).not.toContain("must-be-redacted");
+      const reconciliationDelivery = deliveredPayloads.find(
+        (payload) =>
+          (payload as { event_name?: unknown }).event_name ===
+          "reconciliation_completed",
+      );
+      expect(JSON.stringify(reconciliationDelivery)).not.toContain(
+        "must-not-export-broker-order-id",
+      );
+
+      const retryAuditId = randomUUID();
+      await isolated.query(
+        `INSERT INTO audit_events
+          (id, occurred_at, severity, service, instance_id, environment,
+           trading_mode, analysis_id, event_name, outcome, details)
+         VALUES ($1, '2026-08-24T00:11:00.000Z', 'warn', 'execution-service',
+                 'integration-instance', 'test', 'demo', $2,
+                 'delivery_retry_test', 'failed', $3::jsonb)`,
+        [
+          retryAuditId,
+          analysisId,
+          JSON.stringify({ authorization: "must-not-leak" }),
+        ],
+      );
+      const rejectedOutbox = new PostgresObservabilityOutbox({
+        pool: isolated,
+        transport: { send: () => Promise.resolve(false) },
+        now: () => new Date("2099-08-24T00:11:01.000Z"),
+        retryBaseMs: 5_000,
+      });
+      await expect(rejectedOutbox.flush()).resolves.toEqual({
+        claimed: 1,
+        delivered: 0,
+        retried: 1,
+      });
+      const retryState = await isolated.query<{
+        status: string;
+        attempt_count: number;
+        last_error_code: string | null;
+      }>(
+        `SELECT status, attempt_count, last_error_code
+         FROM observability_outbox WHERE audit_event_id = $1`,
+        [retryAuditId],
+      );
+      expect(retryState.rows[0]).toEqual({
+        status: "RETRY",
+        attempt_count: 1,
+        last_error_code: "BETTER_STACK_DELIVERY_REJECTED",
+      });
+      await isolated.query(
+        `UPDATE observability_outbox
+         SET next_attempt_at = '2099-08-24T00:11:05.000Z'
+         WHERE audit_event_id = $1`,
+        [retryAuditId],
+      );
+      const retriedPayloads: unknown[] = [];
+      const recoveredOutbox = new PostgresObservabilityOutbox({
+        pool: isolated,
+        transport: {
+          send: (payload) => {
+            retriedPayloads.push(payload);
+            return Promise.resolve(true);
+          },
+        },
+        now: () => new Date("2099-08-24T00:11:06.000Z"),
+      });
+      await expect(recoveredOutbox.flush()).resolves.toEqual({
+        claimed: 1,
+        delivered: 1,
+        retried: 0,
+      });
+      expect(JSON.stringify(retriedPayloads)).toContain(retryAuditId);
+      expect(JSON.stringify(retriedPayloads)).toContain("[REDACTED]");
+      expect(JSON.stringify(retriedPayloads)).not.toContain("must-not-leak");
+      const deliveredState = await isolated.query<{
+        status: string;
+        attempt_count: number;
+        delivered_at: Date | null;
+      }>(
+        `SELECT status, attempt_count, delivered_at
+         FROM observability_outbox WHERE audit_event_id = $1`,
+        [retryAuditId],
+      );
+      expect(deliveredState.rows[0]).toEqual({
+        status: "DELIVERED",
+        attempt_count: 2,
+        delivered_at: new Date("2099-08-24T00:11:06.000Z"),
+      });
+      const reclaimedAuditId = randomUUID();
+      await isolated.query(
+        `INSERT INTO audit_events
+          (id, occurred_at, severity, service, instance_id, environment,
+           trading_mode, analysis_id, event_name, outcome)
+         VALUES ($1, '2026-08-24T00:12:00.000Z', 'warn', 'execution-service',
+                 'integration-instance', 'test', 'demo', $2,
+                 'delivery_lease_reclaimed_test', 'failed')`,
+        [reclaimedAuditId, analysisId],
+      );
+      const staleClaimOutbox = new PostgresObservabilityOutbox({
+        pool: isolated,
+        transport: {
+          send: async () => {
+            await isolated.query(
+              `UPDATE observability_outbox
+               SET attempt_count = attempt_count + 1
+               WHERE audit_event_id = $1`,
+              [reclaimedAuditId],
+            );
+            return true;
+          },
+        },
+        now: () => new Date("2099-08-24T00:12:01.000Z"),
+      });
+      await expect(staleClaimOutbox.flush()).rejects.toThrow(
+        "OBSERVABILITY_DELIVERY_STATE_CONFLICT",
+      );
+      const reclaimedState = await isolated.query<{
+        status: string;
+        attempt_count: number;
+        delivered_at: Date | null;
+      }>(
+        `SELECT status, attempt_count, delivered_at
+         FROM observability_outbox WHERE audit_event_id = $1`,
+        [reclaimedAuditId],
+      );
+      expect(reclaimedState.rows[0]).toEqual({
+        status: "DELIVERING",
+        attempt_count: 2,
+        delivered_at: null,
+      });
       await isolated.query(
         `INSERT INTO order_groups
           (id, analysis_id, idempotency_key, mode, state, expires_at)
@@ -465,7 +659,7 @@ describe("PostgreSQL migrations integration", () => {
     }
   });
 
-  databaseTest("upgrades 0005 safely through 0007", async () => {
+  databaseTest("upgrades 0005 safely through 0008", async () => {
     const schema = `test_${randomUUID().replaceAll("-", "")}`;
     const migrationDirectory = await mkdtemp(
       path.join(os.tmpdir(), "ctrader-migrations-"),
@@ -555,6 +749,15 @@ describe("PostgreSQL migrations integration", () => {
                  100, 100, now() + interval '1 hour')`,
         [orderId, orderGroupId, `upgrade-${orderId}`, `idempotency-${orderId}`],
       );
+      const legacyAuditId = randomUUID();
+      await isolated.query(
+        `INSERT INTO audit_events
+          (id, occurred_at, severity, service, instance_id, environment,
+           trading_mode, analysis_id, event_name, outcome)
+         VALUES ($1, now(), 'info', 'execution-service', 'upgrade-instance',
+                 'test', 'demo', $2, 'legacy_before_outbox', 'accepted')`,
+        [legacyAuditId, analysisId],
+      );
       await copyFile(
         path.resolve("migrations", "0006_ctrader_demo_execution_events.sql"),
         path.join(migrationDirectory, "0006_ctrader_demo_execution_events.sql"),
@@ -563,9 +766,14 @@ describe("PostgreSQL migrations integration", () => {
         path.resolve("migrations", "0007_spread_observations.sql"),
         path.join(migrationDirectory, "0007_spread_observations.sql"),
       );
+      await copyFile(
+        path.resolve("migrations", "0008_observability_outbox.sql"),
+        path.join(migrationDirectory, "0008_observability_outbox.sql"),
+      );
       expect(await migrate(isolated, migrationDirectory)).toEqual([
         "0006",
         "0007",
+        "0008",
       ]);
       const upgraded = await isolated.query<{ account_id: string }>(
         "SELECT account_id FROM orders WHERE id = $1",
@@ -580,6 +788,30 @@ describe("PostgreSQL migrations integration", () => {
         `SELECT to_regclass('spread_observations') IS NOT NULL AS exists`,
       );
       expect(spreadTable.rows[0]?.exists).toBe(true);
+      const legacyOutbox = await isolated.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM observability_outbox
+         WHERE audit_event_id = $1`,
+        [legacyAuditId],
+      );
+      expect(legacyOutbox.rows[0]?.count).toBe("0");
+      const newAuditId = randomUUID();
+      await isolated.query(
+        `INSERT INTO audit_events
+          (id, occurred_at, severity, service, instance_id, environment,
+           trading_mode, analysis_id, event_name, outcome)
+         VALUES ($1, now(), 'info', 'execution-service', 'upgrade-instance',
+                 'test', 'demo', $2, 'new_after_outbox', 'accepted')`,
+        [newAuditId, analysisId],
+      );
+      const newOutbox = await isolated.query<{
+        count: string;
+        status: string;
+      }>(
+        `SELECT count(*)::text AS count, min(status) AS status
+         FROM observability_outbox WHERE audit_event_id = $1`,
+        [newAuditId],
+      );
+      expect(newOutbox.rows[0]).toEqual({ count: "1", status: "PENDING" });
       const clientOrderConstraints = await isolated.query<{
         definition: string;
       }>(

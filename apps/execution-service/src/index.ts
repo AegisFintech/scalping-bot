@@ -48,6 +48,7 @@ import {
   type MarginEstimator,
 } from "./oco-risk-evaluator.js";
 import { OrderMaintenance } from "./order-maintenance.js";
+import { PostgresObservabilityOutbox } from "./observability-outbox.js";
 import { PaperAccountAdapter, LinearMarginEstimator } from "./paper-account.js";
 import { PaperGateway } from "./paper-gateway.js";
 import { PostgresPerformanceContext } from "./performance-context.js";
@@ -189,6 +190,21 @@ async function main(): Promise<void> {
       environment.DATABASE_SSL_MODE === "disable" ? "disable" : "require",
   });
   await pool.query("SELECT 1");
+  const observabilityOutbox = betterStack.configured
+    ? new PostgresObservabilityOutbox({
+        pool,
+        transport: betterStack,
+        batchSize: integer(environment, "BETTERSTACK_OUTBOX_BATCH_SIZE", 50),
+        leaseMs:
+          integer(environment, "BETTERSTACK_OUTBOX_LEASE_SECONDS", 30) * 1_000,
+        retryBaseMs:
+          integer(environment, "BETTERSTACK_OUTBOX_RETRY_BASE_SECONDS", 5) *
+          1_000,
+        retryMaxMs:
+          integer(environment, "BETTERSTACK_OUTBOX_RETRY_MAX_SECONDS", 300) *
+          1_000,
+      })
+    : null;
 
   const candleCounts = counts(environment);
   const marketClient = new MarketDataHttpClient({
@@ -1021,9 +1037,52 @@ async function main(): Promise<void> {
   };
   const spreadTimer = setInterval(() => void sampleSpread(), 60_000);
   spreadTimer.unref();
+  const observabilityIntervalSeconds = integer(
+    environment,
+    "BETTERSTACK_OUTBOX_INTERVAL_SECONDS",
+    5,
+  );
+  if (observabilityIntervalSeconds < 1) {
+    throw new Error(
+      "CONFIG_INTEGER_TOO_SMALL:BETTERSTACK_OUTBOX_INTERVAL_SECONDS",
+    );
+  }
+  let observabilityTail = Promise.resolve();
+  const scheduleObservabilityFlush = (): void => {
+    if (observabilityOutbox === null) return;
+    observabilityTail = observabilityTail.then(async () => {
+      try {
+        const result = await observabilityOutbox.flush();
+        if (result.retried > 0) {
+          logger.log("warn", {
+            event_name: "better_stack_outbox_delivery_retried",
+            outcome: "retrying",
+            reason_code: "BETTER_STACK_DELIVERY_REJECTED",
+            claimed: result.claimed,
+            delivered: result.delivered,
+            retried: result.retried,
+          });
+        }
+      } catch {
+        logger.log("error", {
+          event_name: "better_stack_outbox_flush_failed",
+          outcome: "failed",
+          reason_code: "BETTER_STACK_OUTBOX_FLUSH_FAILED",
+        });
+      }
+    });
+  };
+  const observabilityTimer = setInterval(
+    scheduleObservabilityFlush,
+    observabilityIntervalSeconds * 1_000,
+  );
+  observabilityTimer.unref();
+  scheduleObservabilityFlush();
   const shutdown = async (): Promise<void> => {
     clearInterval(timer);
     clearInterval(spreadTimer);
+    clearInterval(observabilityTimer);
+    await observabilityTail;
     metrics.stop();
     unsubscribeDemoExecutions?.();
     unsubscribeDemoSynchronization?.();

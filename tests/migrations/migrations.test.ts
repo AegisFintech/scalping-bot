@@ -31,6 +31,7 @@ const requiredTables = [
   "service_health",
   "server_metrics",
   "audit_events",
+  "observability_outbox",
   "runtime_controls",
   "strategy_versions",
   "broker_execution_events",
@@ -66,6 +67,7 @@ describe("migrations", () => {
       "0005_paper_account_identity.sql",
       "0006_ctrader_demo_execution_events.sql",
       "0007_spread_observations.sql",
+      "0008_observability_outbox.sql",
     ]);
     const sql = (
       await Promise.all(

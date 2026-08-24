@@ -441,6 +441,29 @@ with tabs[7]:
         else:
             st.plotly_chart(audit_chart, width="stretch")
         st.dataframe(events, width="stretch", hide_index=True)
+        delivery = frame(
+            """SELECT o.status, count(*) AS events,
+                      max(o.attempt_count) AS maximum_attempts,
+                      min(o.next_attempt_at) FILTER
+                        (WHERE o.status IN ('PENDING', 'RETRY', 'DELIVERING')) AS next_attempt_at,
+                      max(o.delivered_at) AS latest_delivery
+               FROM observability_outbox o
+               GROUP BY o.status ORDER BY o.status"""
+        )
+        recent_delivery = frame(
+            """SELECT o.created_at, o.status, o.attempt_count, o.next_attempt_at,
+                      o.delivered_at, o.last_error_code, e.analysis_id,
+                      e.event_name, e.outcome, e.reason_code
+               FROM observability_outbox o
+               JOIN audit_events e ON e.id = o.audit_event_id
+               ORDER BY o.created_at DESC LIMIT 500"""
+        )
+        st.subheader("Better Stack decision-trail delivery")
+        if delivery.empty:
+            st.info("No post-migration audit events have entered the delivery outbox.")
+        else:
+            st.dataframe(delivery, width="stretch", hide_index=True)
+        st.dataframe(recent_delivery, width="stretch", hide_index=True)
     except ChartDataError as error:
         st.error(f"Operations chart rejected invalid persisted data: {error}")
     except Exception as error:

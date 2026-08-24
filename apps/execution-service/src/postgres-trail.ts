@@ -73,6 +73,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
   readonly #options: PostgresDecisionTrailOptions;
   readonly #candleSnapshots = new Map<string, string>();
   readonly #modelResponses = new Map<string, string>();
+  #lastReconciliationFingerprint: string | null = null;
 
   constructor(options: PostgresDecisionTrailOptions) {
     this.#options = options;
@@ -268,6 +269,33 @@ export class PostgresDecisionTrail implements DecisionTrail {
     } finally {
       client.release();
     }
+    await this.#audit(
+      analysisId,
+      "market_snapshot_persisted",
+      "accepted",
+      null,
+      {
+        server_time: snapshot.serverTime,
+        captured_at: snapshot.capturedAt,
+        observed_skew_ms: snapshot.observedSkewMs,
+        candle_counts: Object.fromEntries(
+          snapshot.candles.map((series) => [
+            series.timeframe,
+            series.candles.length,
+          ]),
+        ),
+        completed_candles_only: snapshot.candles.every((series) =>
+          series.candles.every((candle) => candle.complete),
+        ),
+        order_book: {
+          bid_levels: snapshot.orderBook.bids.length,
+          ask_levels: snapshot.orderBook.asks.length,
+          complete: snapshot.orderBook.complete,
+          discontinuity: snapshot.orderBook.discontinuity,
+          reconnect_sequence: snapshot.orderBook.reconnectSequence,
+        },
+      },
+    );
   }
 
   async analytics(
@@ -294,6 +322,29 @@ export class PostgresDecisionTrail implements DecisionTrail {
         response.acceptable,
         JSON.stringify(response.rejectionReasons),
       ],
+    );
+    await this.#audit(
+      analysisId,
+      "analytics_completed",
+      response.acceptable ? "accepted" : "rejected",
+      response.rejectionReasons[0] ?? null,
+      {
+        feature_version: "1.0",
+        generated_at: response.generatedAt,
+        acceptable: response.acceptable,
+        reason_codes: response.rejectionReasons,
+        m1: {
+          atr: typeof m1.atr === "string" ? m1.atr : null,
+          ema_fast: typeof m1.ema_fast === "string" ? m1.ema_fast : null,
+          ema_slow: typeof m1.ema_slow === "string" ? m1.ema_slow : null,
+        },
+        session_gap_counts: Object.fromEntries(
+          ["M1", "M5", "M15"].map((timeframe) => {
+            const features = timeframeFeatures(response, timeframe);
+            return [timeframe, features.session_gap_count ?? null];
+          }),
+        ),
+      },
     );
   }
 
@@ -352,6 +403,21 @@ export class PostgresDecisionTrail implements DecisionTrail {
     } finally {
       client.release();
     }
+    await this.#audit(analysisId, "model_completed", "accepted", null, {
+      request_id: requestId,
+      response_id: responseId,
+      api_style: this.#options.apiStyle,
+      model: this.#options.model,
+      prompt_version: this.#options.promptVersion,
+      schema_version: this.#options.schemaVersion,
+      payload_mode: this.#options.payloadMode,
+      decision: response.decision,
+      market_regime: response.market_regime,
+      valid_until: response.valid_until,
+      data_quality: response.data_quality,
+      evidence_codes: response.evidence_codes,
+      risk_flags: response.risk_flags,
+    });
   }
 
   async validation(
@@ -471,6 +537,18 @@ export class PostgresDecisionTrail implements DecisionTrail {
     } finally {
       client.release();
     }
+    await this.#audit(analysisId, "risk_intent_persisted", "accepted", null, {
+      order_group_id: buyCommand.orderGroupId,
+      per_leg_risk_percent: evaluation.perLegRiskPercent,
+      commands: evaluation.commands.map((command) => ({
+        side: command.side,
+        entry_price: command.entryPrice,
+        stop_loss: command.stopLoss,
+        take_profit: command.takeProfit,
+        normalized_volume: command.volume,
+        expires_at: command.expiresAt,
+      })),
+    });
   }
 
   async placement(
@@ -516,6 +594,11 @@ export class PostgresDecisionTrail implements DecisionTrail {
     await this.#audit(analysisId, "oco_placement_completed", "accepted", null, {
       order_group_id: result.orderGroupId,
       idempotent_replay: result.idempotentReplay,
+      orders: result.orders.map((order) => ({
+        state: order.state,
+        filled_volume: order.filledVolume,
+        updated_at: order.updatedAt,
+      })),
     });
   }
 
@@ -593,6 +676,43 @@ export class PostgresDecisionTrail implements DecisionTrail {
       throw error;
     } finally {
       client.release();
+    }
+    const stateCounts = Object.fromEntries(
+      [...new Set(snapshot.orders.map((order) => order.state))]
+        .sort()
+        .map((state) => [
+          state,
+          snapshot.orders.filter((order) => order.state === state).length,
+        ]),
+    );
+    const summary = {
+      certain: snapshot.certain,
+      reason_codes: snapshot.reasonCodes,
+      strategy_order_count: snapshot.orders.filter(
+        (order) =>
+          order.reasonCode !== "DEMO_MANUAL_ORDER_BLOCKING" &&
+          !order.clientOrderId.startsWith("manual:"),
+      ).length,
+      manual_order_count: snapshot.orders.filter(
+        (order) =>
+          order.reasonCode === "DEMO_MANUAL_ORDER_BLOCKING" ||
+          order.clientOrderId.startsWith("manual:"),
+      ).length,
+      relevant_position_count: snapshot.relevantPositionCount,
+      order_state_counts: stateCounts,
+    };
+    const fingerprint = createHash("sha256")
+      .update(safeJson(summary))
+      .digest("hex");
+    if (fingerprint !== this.#lastReconciliationFingerprint) {
+      await this.#audit(
+        null,
+        "reconciliation_completed",
+        snapshot.certain ? "accepted" : "rejected",
+        snapshot.reasonCodes[0] ?? null,
+        summary,
+      );
+      this.#lastReconciliationFingerprint = fingerprint;
     }
   }
 
@@ -753,7 +873,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
   }
 
   async #audit(
-    analysisId: string,
+    analysisId: string | null,
     eventName: string,
     outcome: string,
     reasonCode: string | null,

@@ -156,6 +156,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)     | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
 | ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
 | ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
+| ISSUE-018 | in progress | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -395,6 +396,28 @@ never justify empty, noisy, unsafe, or misleading commits.
   analysis correctly retains zero partial model rows. No deployment cycle was
   invoked; another order-capable cycle requires fresh exact acknowledgement.
 
+### ISSUE-018 delivery details
+
+- Acceptance criteria: atomically enqueue each new PostgreSQL audit event once;
+  deliver bounded redacted summaries to Better Stack with stable event IDs,
+  leases, at-least-once retry, and bounded backoff; exclude credentials, raw
+  account/broker identifiers, full candle arrays, and full model payloads;
+  expose backlog/delivery state in Streamlit; retain PostgreSQL as authority and
+  keep remote logging outside trading authority.
+- Dependencies: [issue #29](https://github.com/AegisFintech/scalping-bot/issues/29),
+  migration `0008`, the existing append-only audit stream, configured Better
+  Stack HTTPS source, and redaction tests.
+- Current status: in progress on `feat/issue-018-better-stack-outbox`. The
+  configured source accepted a production-transport redaction probe while demo
+  submission, automatic analysis, and both emergency stops remained disabled.
+  The implementation is in
+  [PR #30](https://github.com/AegisFintech/scalping-bot/pull/30). The dashboard
+  view, runbook, fresh/upgrade database tests, 105 Node tests, 30 Python tests,
+  schema/migration suites, type/lint/build checks, replay/backtest smokes,
+  dependency audits, secret scan, shell syntax, and offline systemd checks pass.
+  GitHub reports the PR mergeable with no required checks/reviews. Stopped
+  migration/deployment verification and merge evidence remain.
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.
@@ -459,8 +482,8 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 27 files, 103 tests passed.
-- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0007` upgrade paths in isolated Neon schemas that were dropped afterward.
+- [x] `npm test`: 28 files, 105 tests passed.
+- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0008` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
 - [x] Ruff format/check, mypy, and pytest: 30 Python tests passed.
@@ -470,6 +493,7 @@ runtime.
 - [x] `systemd-analyze security --offline=yes` parsed all five services; common sandbox score is 2.8 (`OK`) on systemd 257.
 - [x] Apply reviewed migrations `0001` through `0006` to the configured Neon schema.
 - [x] Apply reviewed migration `0007` under both emergency stops after PR merge.
+- [ ] Apply reviewed migration `0008` under both emergency stops after PR merge.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.

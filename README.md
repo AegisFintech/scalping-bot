@@ -87,6 +87,14 @@ Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style. 
 
 Create an ingestion source, set its token/host only in the protected environment, and set `BETTERSTACK_ENABLED=true`. Test redaction and delivery in paper mode. Logging transport failure never blocks reconciliation; critical audit persistence failure blocks new live orders.
 
+New PostgreSQL audit events are also atomically queued for redacted delivery to
+the configured source. Use the Streamlit **Operations** tab to monitor queue
+status and delivery attempts, and use `event_id`, `analysis_id`, `request_id`,
+or `order_group_id` to correlate Better Stack Live Tail with PostgreSQL. The
+database remains the complete authoritative trail; remote delivery is
+at-least-once and may contain a duplicate after a crash between HTTP acceptance
+and the delivery checkpoint.
+
 ## Running services
 
 Development commands (after dependencies and migrations):

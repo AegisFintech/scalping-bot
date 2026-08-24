@@ -33,6 +33,7 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 | `service_health`          | service/instance state, dependency reasons and heartbeat                                      |
 | `server_metrics`          | bounded sampled CPU/memory/disk/network/process data                                          |
 | `audit_events`            | append-only correlation IDs, pseudonyms, event/outcome/reason/redacted detail                 |
+| `observability_outbox`    | one durable delivery state per new audit event; leased, retried, and idempotently enqueued    |
 | `runtime_controls`        | emergency stop, pause, dashboard acknowledgement and versioned expiry/actor/reason            |
 | `strategy_versions`       | immutable code/config/prompt/schema/feature version hashes                                    |
 
@@ -84,3 +85,12 @@ was originally migrated with one trailing blank line in `0001` and `0002`; the
 repository preserves those exact recovered bytes and pins their SHA-256 values
 in migration tests. Operators must never rewrite a ledger checksum to bypass a
 mismatch.
+
+Migration `0008` adds `observability_outbox` and an `AFTER INSERT` trigger on
+`audit_events`. Enqueue and audit persistence are atomic; one unique outbox row
+is created for every audit event inserted after the migration. Existing audit
+history is deliberately not backfilled. Status, attempt count, next attempt,
+lease expiry, last error code, and delivery time support crash recovery and
+operator monitoring. Rollback is manual and operator-reviewed: stop exporters,
+retain required evidence, remove the trigger/function, and remove the table only
+when the external mirror and retention requirements have been addressed.
