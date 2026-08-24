@@ -502,7 +502,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   startup reconciliation audit recovered through bounded backoff to
   `DELIVERED` on attempt five, leaving zero Better Stack backlog. No cycle or
   broker command was invoked after deployment. Another supervised cycle
-  requires a fresh exact acknowledgement.
+  requires a fresh exact acknowledgement. Deployment evidence is recorded in
+  [PR #37](https://github.com/AegisFintech/scalping-bot/pull/37).
 
 ## Acceptance criteria
 
