@@ -1,0 +1,41 @@
+[Unit]
+Description=cTrader AI Scalper Streamlit dashboard
+After=network-online.target ctrader-execution.service
+Wants=network-online.target ctrader-execution.service
+
+[Service]
+Type=simple
+User=ctrader-scalper
+Group=ctrader-scalper
+WorkingDirectory=/opt/ctrader-ai-scalper/current
+EnvironmentFile=/etc/ctrader-ai-scalper/ctrader-ai-scalper.env
+ExecStart=/opt/ctrader-ai-scalper/current/.venv/bin/streamlit run apps/dashboard/app.py --server.headless true --server.address 127.0.0.1 --server.port 8501 --browser.gatherUsageStats false
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ReadWritePaths=/var/lib/ctrader-ai-scalper /var/log/ctrader-ai-scalper
+RemoveIPC=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=ctrader-ai-scalper.target

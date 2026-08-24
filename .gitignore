@@ -1,0 +1,64 @@
+# Environment and credentials
+.env
+.env.*
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+*credential-export*
+*ctrader*token*
+
+# Runtime safety sentinels and local state
+.runtime/
+*.sqlite
+*.sqlite3
+*.db
+data/tmp/
+data/market-data/
+
+# Node.js
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log*
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Test and analysis artifacts
+coverage/
+.nyc_output/
+test-results/
+artifacts/
+*.lcov
+
+# Logs and temporary files
+logs/
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Local deployment overrides
+systemd/overrides/
+*.service.d/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+[Unit]
+Description=cTrader AI Scalper services
+Wants=ctrader-analytics.service ctrader-market-data.service ctrader-ai.service ctrader-execution.service ctrader-dashboard.service
+After=network-online.target
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,97 @@
+# Data Flow and State Machines
+
+## Eligibility preflight
+
+The scheduler asks for one serialized cycle per account/symbol. It rejects before AI work unless every condition is known and true:
+
+1. Services/dependencies are ready and emergency stop/pause are inactive.
+2. Account is authenticated, synchronized, and reconciled.
+3. Symbol metadata is complete and current.
+4. No relevant open, pending, partial, cancellation-pending, unknown, or reconciliation-pending state exists.
+5. Last accepted analysis is absent or expired and reconciled.
+6. Completed candles are synchronized; depth is complete/fresh; timestamp skew is within tolerance.
+7. Daily lockout and AI circuit breaker are inactive.
+
+An in-process cycle mutex prevents overlapping scheduler/manual cycles in one
+instance. A partial unique index on active analyses prevents two instances from
+creating active cycles for the same account/symbol; the losing insert fails
+closed. No PostgreSQL advisory lock is currently used.
+
+## First broker-day baseline
+
+Paper uses its own database identity and may bootstrap a simulated baseline.
+Broker demo does not. If its first startup occurs after the configured opening
+grace, an authenticated operator can request one baseline while the environment
+emergency stop is active and demo submission is disabled. The service samples
+empty account-wide reconciliation, account equity/balance, cash-flow history,
+and empty deal history twice around the observation window. Changed, nonempty,
+missing, or uncertain evidence rejects the request. The baseline and audit event
+then commit together exactly once; only a subsequent safety evaluation can clear
+the temporary fail-closed daily-risk reason.
+
+## Analysis cycle
+
+1. Obtain authoritative broker/server time and record local receive/monotonic time.
+2. Assemble the configured completed 15m/5m/1m bars.
+3. Capture top-N depth near the same logical timestamp and freeze immutable inputs.
+4. Persist raw snapshot timestamps, skew, completeness, and reconnect flags.
+5. Reject excessive age/skew/discontinuity.
+6. Call the typed analytics API; persist features and data-quality findings.
+7. Query bounded session/setup statistics and calculate deterministic confidence adjustment.
+8. Build a full or compact, size-bounded, versioned model request.
+9. Call the AI endpoint with timeout/retries/circuit breaker.
+10. Size-limit, parse, JSON-Schema validate, and semantically validate the output.
+11. Run deterministic spread, stop, precision, daily loss, volume, margin, exposure, and duplicate checks.
+12. Persist the entire decision trail and outcome transactionally.
+13. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
+    submit; shadow cannot; live is deliberately unwired in this release.
+14. Record each before/after transition and reconcile external state.
+
+## Timestamp rules
+
+Every candle has source start/end timestamps and must be closed at or before the authoritative analysis time. Snapshot records include broker/server time, collector receive time, order-book source time, analysis time, and calculated maximum skew/age. Local wall time is diagnostic only. Future timestamps beyond tolerance are invalid.
+
+## Analysis states
+
+```text
+PENDING -> COLLECTING -> FEATURED -> MODEL_PENDING -> VALIDATING
+                                                       |       |
+                                                       v       v
+                                                   ACCEPTED  REJECTED
+                                                       |
+                                                    EXPIRED
+```
+
+Any failure transitions to a terminal rejection with reason codes. Accepted output is immutable. Supersession first cancels and reconciles old strategy-owned pending orders.
+
+## OCO states
+
+```text
+INTENT_RECORDED -> SUBMITTING -> ACTIVE
+                     |            |
+                     v            v
+             RECONCILIATION   ONE_FILLED -> CANCELLING_PEER
+                  REQUIRED                     |
+                                               v
+                                      POSITION_OPEN / RECONCILIATION_REQUIRED
+                                               |
+                                          CLOSED / FAILED
+```
+
+Each leg has an idempotency key derived from strategy version, account pseudonym, symbol, analysis ID, side, and version. Broker labels identify strategy ownership. A fill (including partial) immediately blocks new analyses and initiates peer cancellation. Duplicate events are acknowledged but do not repeat transitions.
+
+## Expiry and cancellation
+
+On analysis/order expiry, staleness, unsafe spread, account uncertainty, risk breach, emergency stop, invalidated context, or configured shutdown policy:
+
+- mark cancellation intent before external calls;
+- cancel only labelled strategy-owned pending orders;
+- reconcile broker state;
+- classify races/partial fills as blocking uncertainty;
+- expire the group only after no active strategy order/position remains.
+
+Manual orders/positions block by default but are not cancelled by default.
+
+## Failure behavior
+
+Missing or ambiguous dependency data produces no order. Safe, permitted cleanup may still cancel obsolete strategy pending orders. Reconciliation continues even if remote logging fails. Database/audit unavailability blocks new demo/live commands. Network timeouts after a broker request are uncertain outcomes, not retry authorization.

@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/model-response-1.0.json",
+  "title": "AI market analysis response 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "symbol",
+    "generated_at",
+    "valid_until",
+    "decision",
+    "market_regime",
+    "waiting_area",
+    "buy_stop",
+    "sell_stop",
+    "confidence",
+    "setup_tags",
+    "evidence_codes",
+    "risk_flags",
+    "performance_adjustment",
+    "data_quality"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "analysis_id": { "type": "string", "format": "uuid" },
+    "symbol": { "type": "string", "pattern": "^[A-Z0-9._-]{1,32}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "valid_until": { "type": "string", "format": "date-time" },
+    "decision": { "type": "string", "enum": ["PLACE_OCO", "NO_TRADE"] },
+    "market_regime": {
+      "type": "string",
+      "enum": [
+        "TRENDING",
+        "RANGING",
+        "BREAKOUT",
+        "VOLATILE",
+        "QUIET",
+        "UNCERTAIN"
+      ]
+    },
+    "waiting_area": { "$ref": "#/$defs/waitingArea" },
+    "buy_stop": { "$ref": "#/$defs/orderProposal" },
+    "sell_stop": { "$ref": "#/$defs/orderProposal" },
+    "confidence": { "$ref": "#/$defs/confidence" },
+    "setup_tags": { "$ref": "#/$defs/codeArray" },
+    "evidence_codes": { "$ref": "#/$defs/codeArray" },
+    "risk_flags": { "$ref": "#/$defs/codeArray" },
+    "performance_adjustment": { "$ref": "#/$defs/performanceAdjustment" },
+    "data_quality": { "$ref": "#/$defs/dataQuality" }
+  },
+  "$defs": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$",
+      "maxLength": 27
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,63}$",
+      "maxLength": 64
+    },
+    "codeArray": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/code" }
+    },
+    "waitingArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper", "description_code"],
+      "properties": {
+        "lower": { "$ref": "#/$defs/decimal" },
+        "upper": { "$ref": "#/$defs/decimal" },
+        "description_code": {
+          "type": "string",
+          "enum": [
+            "IMMEDIATE_DECISION_ZONE",
+            "CONSOLIDATION_ZONE",
+            "PULLBACK_ZONE",
+            "NO_VALID_ZONE"
+          ]
+        }
+      }
+    },
+    "orderProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "trigger_price",
+        "entry_price",
+        "stop_loss",
+        "take_profit",
+        "risk_reward_ratio",
+        "expires_at",
+        "invalidation_price"
+      ],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "trigger_price": { "$ref": "#/$defs/decimal" },
+        "entry_price": { "$ref": "#/$defs/decimal" },
+        "stop_loss": { "$ref": "#/$defs/decimal" },
+        "take_profit": { "$ref": "#/$defs/decimal" },
+        "risk_reward_ratio": { "$ref": "#/$defs/decimal" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "invalidation_price": { "$ref": "#/$defs/decimal" }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overall",
+        "buy",
+        "sell",
+        "original_overall",
+        "original_buy",
+        "original_sell"
+      ],
+      "properties": {
+        "overall": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "buy": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "sell": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "original_overall": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "original_buy": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "original_sell": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "performanceAdjustment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applied", "confidence_delta", "reason_codes"],
+      "properties": {
+        "applied": { "type": "boolean" },
+        "confidence_delta": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 0
+        },
+        "reason_codes": { "$ref": "#/$defs/codeArray" }
+      }
+    },
+    "dataQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acceptable", "warnings"],
+      "properties": {
+        "acceptable": { "type": "boolean" },
+        "warnings": { "$ref": "#/$defs/codeArray" }
+      }
+    }
+  }
+}

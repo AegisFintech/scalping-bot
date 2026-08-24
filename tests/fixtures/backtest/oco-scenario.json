@@ -1,0 +1,44 @@
+{
+  "candles": [
+    {
+      "startTime": "2026-01-01T00:00:00Z",
+      "endTime": "2026-01-01T00:01:00Z",
+      "open": "100.00",
+      "high": "101.50",
+      "low": "99.50",
+      "close": "101.00",
+      "volume": "10.00",
+      "complete": true,
+      "qualityFlags": []
+    },
+    {
+      "startTime": "2026-01-01T00:01:00Z",
+      "endTime": "2026-01-01T00:02:00Z",
+      "open": "101.00",
+      "high": "105.00",
+      "low": "100.00",
+      "close": "104.00",
+      "volume": "12.00",
+      "complete": true,
+      "qualityFlags": []
+    }
+  ],
+  "buy": {
+    "entry": "101.00",
+    "stop_loss": "99.00",
+    "take_profit": "105.00",
+    "expires_at": "2026-01-01T00:10:00+00:00"
+  },
+  "sell": {
+    "entry": "98.00",
+    "stop_loss": "100.00",
+    "take_profit": "94.00",
+    "expires_at": "2026-01-01T00:10:00+00:00"
+  },
+  "config": {
+    "tick_size": "0.01",
+    "slippage_points": "2",
+    "spread_points": "4",
+    "latency_bars": 0
+  }
+}

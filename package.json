@@ -1,0 +1,55 @@
+{
+  "name": "ctrader-ai-scalper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0 <23"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "node scripts/clean.mjs",
+    "dev:market-data": "tsx watch apps/market-data-service/src/index.ts",
+    "dev:ai": "tsx watch apps/ai-orchestrator/src/index.ts",
+    "dev:execution": "tsx watch apps/execution-service/src/index.ts",
+    "start:market-data": "node dist/apps/market-data-service/src/index.js",
+    "start:ai": "node dist/apps/ai-orchestrator/src/index.js",
+    "start:execution": "node dist/apps/execution-service/src/index.js",
+    "db:migrate": "tsx packages/database/src/cli.ts migrate",
+    "db:status": "tsx packages/database/src/cli.ts status",
+    "format": "prettier --write \"**/*.{ts,mjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,mjs,json,md,yml,yaml}\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run tests/integration --passWithNoTests",
+    "test:schemas": "vitest run tests/schema",
+    "test:migrations": "vitest run tests/migrations"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "decimal.js": "10.6.0",
+    "dotenv": "17.4.2",
+    "fastify": "5.12.1",
+    "pg": "8.23.0",
+    "pino": "10.3.1",
+    "pino-roll": "4.0.0",
+    "prom-client": "15.1.3",
+    "ws": "8.21.3",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.1",
+    "@types/pg": "8.23.1",
+    "@types/ws": "8.18.1",
+    "eslint": "10.0.0",
+    "pino-pretty": "13.1.3",
+    "prettier": "3.9.6",
+    "tsx": "4.23.12",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.11"
+  }
+}

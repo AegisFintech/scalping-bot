@@ -1,0 +1,17 @@
+# Runtime dependencies. Exact versions are mirrored in requirements.lock.
+fastapi==0.141.1
+pydantic==2.13.4
+uvicorn==0.52.4
+streamlit==1.62.0
+psycopg[binary,pool]==3.3.4
+plotly==6.9.0
+pandas==3.0.5
+psutil==7.2.2
+prometheus-client==0.24.1
+
+# Quality and test tooling.
+pytest==9.1.1
+httpx==0.28.1
+ruff==0.16.4
+mypy==2.3.1
+pip-audit==2.10.1
