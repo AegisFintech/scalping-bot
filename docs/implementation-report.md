@@ -272,6 +272,13 @@ restored, and another order-capable cycle requires fresh acknowledgement. The
 complete Node, Python, integration, schema, migration, replay/backtest, security,
 and dependency-audit suite passed for the fix.
 
+PR #25 merged as `eae91f6`. The corrected execution service was rebuilt and
+restarted with demo submission disabled, automatic analysis off, and both
+emergency stops active. It reports ready startup recovery but
+`tradingEnabled=false`. Execution events, groups, orders, active positions, and
+fills remain zero, and the rejected pre-fix analysis has no partial model rows.
+No deployment cycle was invoked; the prior acknowledgement remains consumed.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

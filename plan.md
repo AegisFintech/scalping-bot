@@ -155,7 +155,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)              | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
 | ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)     | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
 | ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
-| ISSUE-017 | in progress | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
+| ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -352,11 +352,15 @@ never justify empty, noisy, unsafe, or misleading commits.
   redaction, validation, risk, idempotency, and execution gates.
 - Dependencies: [issue #24](https://github.com/AegisFintech/scalping-bot/issues/24),
   the existing append-only decision trail, and configured isolated-schema tests.
-- Current status: the distinct-bind fix and configured PostgreSQL success/
-  rollback regression pass on `fix/issue-017-model-trail`. The supervised cycle
-  failed closed at `MODEL_PENDING`; no model row, intent, or broker order
-  committed, and the exact acknowledgement is consumed. The complete required
-  gate suite passes; remote delivery and stopped deployment remain.
+- Current status: complete in
+  [PR #25](https://github.com/AegisFintech/scalping-bot/pull/25), merge commit
+  `eae91f6`. The configured PostgreSQL commit/rollback regression and complete
+  gate suite passed. The merged execution service was rebuilt and restarted
+  with demo submission disabled, automatic analysis off, and both emergency
+  stops active. Startup recovery is certain and execution events, groups,
+  orders, active positions, and fills remain zero. The failed supervised
+  analysis correctly retains zero partial model rows. No deployment cycle was
+  invoked; another order-capable cycle requires fresh exact acknowledgement.
 
 ## Acceptance criteria
 
