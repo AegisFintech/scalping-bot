@@ -62,7 +62,35 @@ describe("execution safety gates", () => {
       demoTradingEnabled: false,
       emergencyStop: true,
       automaticAnalysisEnabled: false,
+      automaticAnalysisStartWindowSeconds: 10,
     });
+  });
+
+  it("bounds the automatic broker-M1 start window", () => {
+    expect(
+      loadExecutionConfig({
+        AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS: "1",
+      }).automaticAnalysisStartWindowSeconds,
+    ).toBe(1);
+    expect(
+      loadExecutionConfig({
+        AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS: "30",
+      }).automaticAnalysisStartWindowSeconds,
+    ).toBe(30);
+    for (const value of ["0", "31"]) {
+      expect(() =>
+        loadExecutionConfig({
+          AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS: value,
+        }),
+      ).toThrow(
+        "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS",
+      );
+    }
+    expect(() =>
+      loadExecutionConfig({
+        AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS: "1.5",
+      }),
+    ).toThrow("CONFIG_INTEGER_INVALID:AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS");
   });
 
   it("requires explicit bounded configuration before demo submission", () => {

@@ -166,7 +166,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
 | ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
 | ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
-| ISSUE-023 | in progress | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
+| ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
+| ISSUE-024 | in progress | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -638,17 +639,45 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #47](https://github.com/AegisFintech/scalping-bot/issues/47),
   completed ISSUE-022 deployment, configured demo acknowledgement/caps, empty
   reconciled execution state, and active database emergency stop.
-- Current status: in progress on `feat/issue-023-auto-demo-release`. Enabling
+- Current status: complete. Enabling
   automatic analysis changed the protected configuration hash, so startup
   correctly rejected reuse of `0.1.0-actionable-oco.1` with
   `STRATEGY_VERSION_IMMUTABILITY_VIOLATION`. The database stop was not released,
   no analysis/order ran, and the restart loop was stopped. The new candidate
-  identity is `0.1.0-actionable-oco-auto-demo.1`. Pre-merge gates pass:
+  identity is `0.1.0-actionable-oco-auto-demo.1`. Pre-merge gates passed:
   format/lint/typecheck/build, 130 Node tests, 12 schema tests, 3 migration
   tests, all 3 configured PostgreSQL integration tests, Ruff, mypy, 41 Python
   tests, replay/backtest, dependency audits, secret/shell checks, and five
-  offline systemd security parses at 2.8 (`OK`). Review:
-  [PR #48](https://github.com/AegisFintech/scalping-bot/pull/48).
+  offline systemd security parses at 2.8 (`OK`).
+  [PR #48](https://github.com/AegisFintech/scalping-bot/pull/48) merged and the
+  identity started successfully under the database stop. After release, two
+  system-v2 automatic responses persisted exact prompt/request/response history
+  but crossed the next M1 boundary after 62.2 and 32.7 seconds. Unchanged
+  decision-context validation rejected both before intent or placement. New
+  analyses are paused while ISSUE-024 corrects automatic start timing.
+
+### ISSUE-024 delivery details
+
+- Acceptance criteria: automatic cycles start only in a bounded broker-time M1
+  opening window; one durable account/symbol/interval claim survives restarts;
+  provider retries wait for a later fresh interval; manual cycles and the
+  post-model candle identity check remain unchanged; invalid time/configuration
+  and duplicate claims fail closed; migration, positive, boundary, rejection,
+  and configured deployment evidence are required.
+- Dependencies: [issue #49](https://github.com/AegisFintech/scalping-bot/issues/49),
+  typed broker quote time, completed-candle snapshots, ISSUE-023's demo release,
+  PostgreSQL availability, and the active pause on new analyses.
+- Current status: implementation is in progress on
+  `feat/issue-024-m1-analysis-window`. Migration `0010` provides the durable
+  interval ledger, automatic starts use the first configured broker-M1 seconds,
+  AI defaults to one provider attempt per interval, and immutable candidate
+  identity is `0.1.0-actionable-oco-auto-demo.2`. No freshness, spread,
+  semantic, risk, cap, reconciliation, mode, or emergency rule is changed. The
+  complete local gate suite passes: format/lint/typecheck/build, 136 Node tests
+  across 29 files, 12 schema tests, 3 migration tests, all 3 configured
+  PostgreSQL integration tests, Ruff, mypy, 41 Python tests, replay/backtest,
+  dependency audits, secret/shell checks, and five offline systemd parses at
+  2.8 (`OK`).
 
 ## Acceptance criteria
 
@@ -714,8 +743,8 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 28 files, 130 tests passed.
-- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0009` upgrade paths in isolated Neon schemas that were dropped afterward.
+- [x] `npm test`: 29 files, 136 tests passed.
+- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0010` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 12 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
 - [x] Ruff format/check, mypy, and pytest: 41 Python tests passed.
@@ -729,6 +758,8 @@ runtime.
       verify durable Better Stack retry/recovery and the Streamlit delivery view.
 - [x] Apply reviewed migration `0009` under both emergency stops after ISSUE-022
       merges; restart AI/execution/dashboard and verify the prompt-history view.
+- [ ] Apply reviewed migration `0010` while automatic analysis is paused; restart
+      AI/execution and verify one durable broker-M1 claim plus terminal cycle.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.

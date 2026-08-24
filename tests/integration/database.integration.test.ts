@@ -12,6 +12,7 @@ import {
   migrate,
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
+import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
 import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
@@ -182,6 +183,7 @@ describe("PostgreSQL migrations integration", () => {
         "0007",
         "0008",
         "0009",
+        "0010",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -209,6 +211,10 @@ describe("PostgreSQL migrations integration", () => {
         [schema],
       );
       expect(promptColumn.rows[0]?.exists).toBe(true);
+      const automaticIntervals = await isolated.query<{ exists: boolean }>(
+        `SELECT to_regclass('automatic_analysis_intervals') IS NOT NULL AS exists`,
+      );
+      expect(automaticIntervals.rows[0]?.exists).toBe(true);
       await isolated.query(
         `INSERT INTO accounts
           (id, provider, provider_account_key_hash, environment, account_type, currency)
@@ -354,6 +360,87 @@ describe("PostgreSQL migrations integration", () => {
          VALUES ($1, $2, $3, $4, 'demo', 'ACCEPTED', now(), now() + interval '1 hour')`,
         [analysisId, demoAccountId, symbolId, strategyVersionId],
       );
+      const automaticSchedule = new PostgresAutomaticAnalysisSchedule({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+      });
+      const automaticInterval = "2026-08-24T00:00:00.000Z";
+      await expect(
+        automaticSchedule.claim({
+          intervalStart: automaticInterval,
+          brokerServerTime: "2026-08-24T00:00:03.000Z",
+        }),
+      ).resolves.toBe(true);
+      const restartedAutomaticSchedule = new PostgresAutomaticAnalysisSchedule({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+      });
+      await expect(
+        restartedAutomaticSchedule.claim({
+          intervalStart: automaticInterval,
+          brokerServerTime: "2026-08-24T00:00:04.000Z",
+        }),
+      ).resolves.toBe(false);
+      await restartedAutomaticSchedule.complete(automaticInterval, {
+        analysisId,
+        outcome: "REJECTED",
+        reasonCodes: ["TEST_REJECTION"],
+        placement: null,
+      });
+      const completedInterval = await isolated.query<{
+        cycle_id: string;
+        analysis_id: string;
+        outcome: string;
+      }>(
+        `SELECT cycle_id, analysis_id, outcome
+         FROM automatic_analysis_intervals
+         WHERE account_id = $1 AND symbol_id = $2 AND interval_start = $3`,
+        [demoAccountId, symbolId, automaticInterval],
+      );
+      expect(completedInterval.rows[0]).toEqual({
+        cycle_id: analysisId,
+        analysis_id: analysisId,
+        outcome: "REJECTED",
+      });
+      const preflightInterval = "2026-08-24T00:01:00.000Z";
+      await expect(
+        automaticSchedule.claim({
+          intervalStart: preflightInterval,
+          brokerServerTime: "2026-08-24T00:01:02.000Z",
+        }),
+      ).resolves.toBe(true);
+      const unpersistedCycleId = randomUUID();
+      await automaticSchedule.complete(preflightInterval, {
+        analysisId: unpersistedCycleId,
+        outcome: "REJECTED",
+        reasonCodes: ["PREVIOUS_ANALYSIS_ACTIVE"],
+        placement: null,
+      });
+      const preflightCompletion = await isolated.query<{
+        cycle_id: string;
+        analysis_id: string | null;
+        outcome: string;
+      }>(
+        `SELECT cycle_id, analysis_id, outcome
+         FROM automatic_analysis_intervals
+         WHERE account_id = $1 AND symbol_id = $2 AND interval_start = $3`,
+        [demoAccountId, symbolId, preflightInterval],
+      );
+      expect(preflightCompletion.rows[0]).toEqual({
+        cycle_id: unpersistedCycleId,
+        analysis_id: null,
+        outcome: "REJECTED",
+      });
+      await expect(
+        automaticSchedule.complete(preflightInterval, {
+          analysisId: unpersistedCycleId,
+          outcome: "REJECTED",
+          reasonCodes: [],
+          placement: null,
+        }),
+      ).rejects.toThrow("AUTOMATIC_ANALYSIS_INTERVAL_COMPLETION_MISSING");
       const trail = new PostgresDecisionTrail({
         pool: isolated,
         accountId: demoAccountId,
@@ -929,11 +1016,16 @@ describe("PostgreSQL migrations integration", () => {
         path.resolve("migrations", "0009_model_prompt_artifacts.sql"),
         path.join(migrationDirectory, "0009_model_prompt_artifacts.sql"),
       );
+      await copyFile(
+        path.resolve("migrations", "0010_automatic_analysis_intervals.sql"),
+        path.join(migrationDirectory, "0010_automatic_analysis_intervals.sql"),
+      );
       expect(await migrate(isolated, migrationDirectory)).toEqual([
         "0006",
         "0007",
         "0008",
         "0009",
+        "0010",
       ]);
       const legacyPrompt = await isolated.query<{
         system_prompt: string | null;
@@ -974,6 +1066,10 @@ describe("PostgreSQL migrations integration", () => {
         `SELECT to_regclass('spread_observations') IS NOT NULL AS exists`,
       );
       expect(spreadTable.rows[0]?.exists).toBe(true);
+      const automaticIntervalTable = await isolated.query<{ exists: boolean }>(
+        `SELECT to_regclass('automatic_analysis_intervals') IS NOT NULL AS exists`,
+      );
+      expect(automaticIntervalTable.rows[0]?.exists).toBe(true);
       const legacyOutbox = await isolated.query<{ count: string }>(
         `SELECT count(*)::text AS count FROM observability_outbox
          WHERE audit_event_id = $1`,

@@ -142,6 +142,26 @@ describe("OpenAI-compatible client", () => {
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
     ).rejects.toThrow("AI_CIRCUIT_OPEN");
   });
+
+  it("defaults to one provider attempt so a retry uses a fresh scheduler interval", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response("unavailable", { status: 503 })),
+    );
+    const client = new OpenAiCompatibleClient({
+      baseUrl: "https://ai.example.invalid/v1",
+      apiKey: "hidden",
+      model: "test-model",
+      apiStyle: "responses",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath: path.resolve("prompts/system-v2.md"),
+      promptVersion: "system-v2",
+      fetchImpl: fetchMock,
+    });
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_HTTP_ERROR:503");
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
 });
 
 describe("AI orchestrator HTTP client", () => {

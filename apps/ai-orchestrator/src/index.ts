@@ -54,7 +54,7 @@ async function main(): Promise<void> {
     systemPromptPath: path.resolve("prompts/system-v2.md"),
     promptVersion: "system-v2",
     timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
-    maxRetries: Number(process.env.AI_MAX_RETRIES ?? 2),
+    maxRetries: Number(process.env.AI_MAX_RETRIES ?? 0),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),
     circuitBreakerFailures: Number(
       process.env.AI_CIRCUIT_BREAKER_FAILURES ?? 3,

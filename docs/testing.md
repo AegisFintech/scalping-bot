@@ -20,7 +20,7 @@ Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
 history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
-`0005`-through-`0009` migration paths exercise the database constraints,
+`0005`-through-`0010` migration paths exercise the database constraints,
 including nullable legacy prompt artifacts and paired prompt/hash constraints.
 The configured PostgreSQL integration also executes the production model-trail
 transaction: UUID primary key and text request ID persist through distinct bind
@@ -77,12 +77,12 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 130 Node unit
-tests across 28 files, 12 schema tests, 3 static migration tests, Ruff, strict
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 136 Node unit
+tests across 29 files, 12 schema tests, 3 static migration tests, Ruff, strict
 mypy across the analytics and dashboard code, 41 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
-Node/Python integration plus fresh-schema and `0005`-through-`0009` upgrade tests
-passed. TLS connectivity and all nine migrations passed inside isolated Neon
+Node/Python integration plus fresh-schema and `0005`-through-`0010` upgrade tests
+passed. TLS connectivity and all ten migrations passed inside isolated Neon
 schemas, which the tests dropped afterward; migrations `0001` through `0009`
 are applied to the configured Neon schema under both emergency stops. The
 post-migration demo
@@ -350,3 +350,13 @@ The local Streamlit health endpoint returned `ok`, and the same configured
 model/pre-model AppTest paths passed after deployment. Execution remained in
 demo mode with trading and automatic analysis disabled, startup checks passed,
 and the emergency stop active.
+
+ISSUE-024 tests the broker-M1 opening window at its first millisecond, last
+allowed millisecond, exact rejection boundary, and next-minute rollover. Invalid
+broker timestamps plus zero, fractional, and excessive windows fail closed.
+Configured PostgreSQL integration covers a unique interval claim, duplicate
+claim after a simulated restart, completion correlated to a persisted analysis,
+completion for a preflight rejection without an analysis row, and duplicate
+completion rejection. Migration tests cover fresh and `0005` upgrade paths
+through `0010`. The provider client additionally proves that its default retry
+count makes exactly one request on a retryable HTTP failure.

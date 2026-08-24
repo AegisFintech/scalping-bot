@@ -35,6 +35,7 @@ const requiredTables = [
   "runtime_controls",
   "strategy_versions",
   "broker_execution_events",
+  "automatic_analysis_intervals",
 ];
 const directory = path.resolve("migrations");
 
@@ -69,6 +70,7 @@ describe("migrations", () => {
       "0007_spread_observations.sql",
       "0008_observability_outbox.sql",
       "0009_model_prompt_artifacts.sql",
+      "0010_automatic_analysis_intervals.sql",
     ]);
     const sql = (
       await Promise.all(

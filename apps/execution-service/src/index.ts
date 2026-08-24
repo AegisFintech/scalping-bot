@@ -38,6 +38,10 @@ import {
   evaluateAutomaticAnalysisEligibility,
 } from "./safety-gates.js";
 import { AnalysisCoordinator, type CycleResult } from "./coordinator.js";
+import {
+  evaluateAutomaticAnalysisWindow,
+  PostgresAutomaticAnalysisSchedule,
+} from "./automatic-analysis-schedule.js";
 import { loadExecutionConfig, safetyConfigHash } from "./config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
 import { CTraderDemoGateway, DEMO_ACKNOWLEDGEMENT } from "./demo-gateway.js";
@@ -340,7 +344,7 @@ async function main(): Promise<void> {
     timeoutMs: 15_000,
   });
   const aiProviderTimeoutMs = integer(environment, "AI_TIMEOUT_MS", 30_000);
-  const aiMaxRetries = integer(environment, "AI_MAX_RETRIES", 2);
+  const aiMaxRetries = integer(environment, "AI_MAX_RETRIES", 0);
   const model = new AiOrchestratorHttpClient({
     baseUrl:
       environment.AI_ORCHESTRATOR_BASE_URL ??
@@ -379,6 +383,11 @@ async function main(): Promise<void> {
     environment: config.appEnv,
   });
   const executionSymbolId = latestSnapshot.metadata.symbolId;
+  const automaticAnalysisSchedule = new PostgresAutomaticAnalysisSchedule({
+    pool,
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+  });
   const demoExecutionStore =
     brokerClient !== null && config.tradingMode === "demo"
       ? new PostgresDemoExecutionStore({
@@ -998,7 +1007,51 @@ async function main(): Promise<void> {
           config.automaticAnalysisEnabled,
         ).allowed
       ) {
-        lastCycle = await coordinator.runOnce();
+        const quote = await marketClient.quote(config.symbol);
+        const window = evaluateAutomaticAnalysisWindow({
+          serverTime: quote.serverTime,
+          startWindowSeconds: config.automaticAnalysisStartWindowSeconds,
+        });
+        if (
+          !window.allowed &&
+          !window.reasonCodes.includes(
+            "AUTOMATIC_ANALYSIS_OUTSIDE_M1_START_WINDOW",
+          )
+        ) {
+          logger.log("error", {
+            event_name: "automatic_analysis_window_rejected",
+            outcome: "rejected",
+            reason_code:
+              window.reasonCodes[0] ?? "AUTOMATIC_ANALYSIS_WINDOW_REJECTED",
+          });
+        }
+        if (window.allowed && window.intervalStart !== null) {
+          const claimed = await automaticAnalysisSchedule.claim({
+            intervalStart: window.intervalStart,
+            brokerServerTime: quote.serverTime,
+          });
+          if (claimed) {
+            logger.log("info", {
+              event_name: "automatic_analysis_interval_claimed",
+              outcome: "accepted",
+              interval_start: window.intervalStart,
+            });
+            lastCycle = await coordinator.runOnce();
+            await automaticAnalysisSchedule.complete(
+              window.intervalStart,
+              lastCycle,
+            );
+            logger.log("info", {
+              event_name: "automatic_analysis_interval_completed",
+              outcome: lastCycle.outcome.toLowerCase(),
+              analysis_id: lastCycle.analysisId,
+              ...(lastCycle.reasonCodes[0] === undefined
+                ? {}
+                : { reason_code: lastCycle.reasonCodes[0] }),
+              interval_start: window.intervalStart,
+            });
+          }
+        }
       }
     } catch (error) {
       logger.log("error", {
