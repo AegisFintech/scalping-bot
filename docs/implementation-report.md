@@ -313,6 +313,36 @@ Stack delivery is currently disabled and has no ingestion host or source token;
 the implemented remote transport covers execution-service structured logger
 events, not the complete PostgreSQL decision trail.
 
+## Durable Better Stack audit mirror
+
+ISSUE-018 adds a forward-only `observability_outbox` migration. Every new
+PostgreSQL audit event enqueues one delivery row in the same transaction. The
+execution service claims due rows with `SKIP LOCKED`, uses short leases for
+crash recovery, and retries rejected or failed HTTPS delivery with bounded
+exponential backoff. HTTP acceptance advances the row to `DELIVERED`; a crash
+between remote acceptance and that checkpoint may produce a duplicate with the
+same stable `event_id`.
+
+The remote event is a bounded, recursively redacted summary. It carries stable
+event, analysis, request, and order-group correlation plus stage outcome/reason
+metadata. New summaries mark snapshot persistence, analytics, model completion,
+risk intent, placement, and reconciliation without copying account IDs, broker
+IDs, raw candle arrays, or full AI payloads. PostgreSQL remains authoritative
+and remote logging cannot grant trading authority or override reconciliation.
+
+Streamlit's Operations tab now shows aggregate outbox state and the latest 500
+delivery checkpoints alongside existing audit charts. The runbook documents
+Live Tail filters and SQL queries for a complete correlated database trail.
+Existing pre-`0008` history is deliberately not backfilled.
+
+The configured Better Stack source accepted a production-transport probe with
+recursive redaction. Unit, migration, and isolated Neon integration tests then
+passed for stable payloads, redaction, bounded retry, failed delivery, recovery,
+fresh migration, upgrade, and no-backfill behavior. The production migration
+and process restart remain pending until the reviewed pull request is merged;
+demo submission and automatic analysis remain disabled under both emergency
+stops.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
@@ -342,9 +372,10 @@ No credentialed shadow session was run in this checkout.
   stop stayed active.
 - A quote/deposit currency conversion provider is absent; mismatched currencies
   fail closed.
-- Better Stack rotating/remote structured logging and persistent host/process
-  metrics currently run in execution-service only. OTLP export and the optional
-  Better Stack heartbeat URL are not implemented.
+- Better Stack rotating/remote structured logging and the durable audit-event
+  mirror run in execution-service only. Persistent host/process metrics remain
+  in PostgreSQL; OTLP export and the optional Better Stack heartbeat URL are not
+  implemented.
 - Demo closed-trade persistence awaits supervised event-field validation;
   unresolved callback/recovery evidence and reconciliation counts fail closed.
 - Remote dashboard access depends on the externally managed Cloudflare Access

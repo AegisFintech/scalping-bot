@@ -20,12 +20,19 @@ Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
 history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
-`0005`-through-`0007` migration paths exercise the database constraints.
+`0005`-through-`0008` migration paths exercise the database constraints.
 The configured PostgreSQL integration also executes the production model-trail
 transaction: UUID primary key and text request ID persist through distinct bind
 parameters with the same value, request/response/validity commit together,
 sensitive payload keys remain redacted, and a forced invalid validity timestamp
 rolls back both new rows.
+
+Observability-outbox tests cover recursive credential redaction, stable event
+and analysis correlation, bounded exponential retry, rejected transport,
+lease-based delivery, recovery to `DELIVERED`, and deliberate absence of a
+historical audit backfill. The configured PostgreSQL integration verifies that
+post-migration audit inserts enqueue exactly once and that the same event ID
+survives a retry.
 
 ## Historical limitations
 
@@ -62,15 +69,16 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 103 Node unit
-tests across 27 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 105 Node unit
+tests across 28 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
 analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
-Node/Python integration plus fresh-schema and `0005`-through-`0007` upgrade tests
+Node/Python integration plus fresh-schema and `0005`-through-`0008` upgrade tests
 passed. TLS connectivity and all seven migrations passed inside isolated Neon
 schemas, which the tests dropped afterward; migrations `0001` through `0007`
-are applied to the configured Neon schema under both emergency stops. The
-post-migration demo
+are applied to the configured Neon schema under both emergency stops. Migration
+`0008` passed isolated fresh/upgrade tests and awaits the stopped post-merge
+deployment. The post-migration demo
 restart reported certain startup recovery with no journal exceptions or local
 execution state. The host used Node 24.18.0; the supported Node 22
 deployment baseline and installed systemd paths still require a Debian release

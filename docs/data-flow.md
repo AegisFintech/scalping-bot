@@ -47,6 +47,14 @@ the temporary fail-closed daily-risk reason.
     submit; shadow cannot; live is deliberately unwired in this release.
 14. Record each before/after transition and reconcile external state.
 
+Each newly inserted `audit_events` row creates one outbox row in the same
+database transaction. The execution service later sends a bounded redacted
+summary to Better Stack. Delivery retries are independent of analysis and
+reconciliation, and PostgreSQL remains authoritative. The exported stage
+summaries cover snapshot persistence, analytics, model completion, risk intent,
+placement, and reconciliation without raw candle arrays, complete model
+payloads, account IDs, or broker order IDs.
+
 cTrader demo execution callbacks are independently normalized into a
 credential-free versioned record, serialized through a durable PostgreSQL event
 journal, and applied atomically to order/fill/position state. Deal IDs provide

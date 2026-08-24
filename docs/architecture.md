@@ -17,8 +17,8 @@ market-data-service ---- PostgreSQL ---- Streamlit dashboard
 Python analytics API --> ai-orchestrator --> execution-service
                                 |                 |
                          AI-compatible API   paper/demo/shadow/live gateway
-                                                  |
-                                            cTrader Open API
+                                                  |             |
+                                            cTrader Open API  Better Stack
 ```
 
 All application listeners default to `127.0.0.1`. Remote access belongs behind an authenticated TLS reverse proxy. No service depends on Docker.
@@ -69,6 +69,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   account/symbol-scoped spread history even while analysis and trading are
   stopped. The sampler depends only on quote retrieval and persistence; it has
   no coordinator, model, risk-intent, gateway, or broker-command capability.
+- Mirrors newly inserted audit events through a durable PostgreSQL outbox. The
+  exporter claims rows with leases, sends bounded redacted summaries with
+  stable correlation/event IDs, and retries with bounded backoff. Better Stack
+  is searchable operational telemetry, not trading authority or the system of
+  record.
 - Shadow gateway cannot submit. The production composition uses a disabled live
   gateway. A separately tested live-compatible decorator exists for future
   review but is not wired to a broker-capable gateway.
@@ -83,6 +88,8 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   data is trading-specific; chart floating-point conversion is presentation-only
   and never feeds a decision boundary.
 - Controls call a loopback API with a control token and are audited.
+- The Operations tab shows Better Stack outbox backlog, attempts, errors, and
+  recent delivery checkpoints alongside the authoritative audit-event chart.
 - Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
 
 ## Typed boundaries

@@ -111,6 +111,55 @@ reconnects. In systemd this path belongs under `/var/lib/ctrader-ai-scalper`, no
 the repository. Refresh failure changes readiness to false. Never write tokens
 into repository files or logs.
 
+## Better Stack decision-trail monitoring
+
+1. Create a Logs source in Better Stack and place its HTTPS ingest URL and
+   source token only in the protected environment as
+   `BETTERSTACK_INGESTING_HOST` and `BETTERSTACK_SOURCE_TOKEN`. Set
+   `BETTERSTACK_ENABLED=true`; never paste either value into commands, logs,
+   issues, or the dashboard.
+2. Apply migration `0008` before restarting the updated execution service.
+   Audit events inserted after that migration enqueue atomically; older history
+   remains available only in PostgreSQL unless exported through a separately
+   reviewed process.
+3. In Streamlit, open **Operations** and inspect **Better Stack decision-trail
+   delivery**. `PENDING` is awaiting a claim, `DELIVERING` holds a short lease,
+   `RETRY` records a rejected/failed delivery with bounded backoff, and
+   `DELIVERED` records the local checkpoint after HTTP acceptance.
+4. In Better Stack Live Tail, filter the configured source by `event_id` for an
+   exact audit row, `analysis_id` for a whole cycle, or by `event_name`,
+   `request_id`, `order_group_id`, `outcome`, and `reason_code`. Useful stage
+   names include `market_snapshot_persisted`, `analytics_completed`,
+   `model_completed`, `risk_intent_persisted`, `oco_placement_completed`, and
+   `reconciliation_completed`.
+5. Investigate any sustained backlog, repeated `RETRY`, expired `DELIVERING`
+   lease, or gap between PostgreSQL and Live Tail. A process crash after remote
+   acceptance but before the local checkpoint can produce a duplicate; dedupe
+   investigations by stable `event_id`. Never delete or edit `audit_events` or
+   outbox rows to make monitoring look healthy.
+
+For complete SQL inspection, start from the authoritative event and follow its
+correlation IDs:
+
+```sql
+SELECT occurred_at, id AS event_id, analysis_id, request_id, order_group_id,
+       event_name, outcome, reason_code, details
+FROM audit_events
+WHERE analysis_id = :analysis_id
+ORDER BY occurred_at, id;
+
+SELECT e.occurred_at, e.id AS event_id, e.event_name, o.status,
+       o.attempt_count, o.next_attempt_at, o.delivered_at, o.last_error_code
+FROM audit_events e
+JOIN observability_outbox o ON o.audit_event_id = e.id
+WHERE e.analysis_id = :analysis_id
+ORDER BY e.occurred_at, e.id;
+```
+
+Use a read-only database role for ad hoc monitoring. Better Stack delivery is
+non-critical and cannot permit or veto trading; a failure to persist the
+underlying PostgreSQL audit transaction remains fail-closed.
+
 ## Incident evidence
 
 Capture UTC interval, instance/service/mode, trace/request/analysis/order group IDs, reason codes, redacted logs, broker state, database audit rows, configuration hashes, prompt/model/schema/strategy versions, and remediation. Do not collect raw secrets or authorization headers.
