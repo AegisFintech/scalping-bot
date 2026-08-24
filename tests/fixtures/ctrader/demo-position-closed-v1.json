@@ -2,6 +2,7 @@
   "executionType": 3,
   "order": {
     "orderId": "601",
+    "orderType": 4,
     "orderStatus": 2,
     "executedVolume": "100",
     "executionPrice": 2011.28,

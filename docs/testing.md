@@ -20,7 +20,7 @@ Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
 history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
-`0005`-through-`0010` migration paths exercise the database constraints,
+`0005`-through-`0011` migration paths exercise the database constraints,
 including nullable legacy prompt artifacts and paired prompt/hash constraints.
 The configured PostgreSQL integration also executes the production model-trail
 transaction: UUID primary key and text request ID persist through distinct bind
@@ -400,3 +400,12 @@ assert no HTTP request occurs before the reset boundary, an exact-boundary
 half-open request can succeed and clear the circuit, a second transport failure
 reopens for the full interval, and zero, fractional, or timer-overflowing reset
 configuration rejects before startup.
+
+ISSUE-031 adds order-type/closing-flag normalization, non-deal contextual
+position handling, exact broker-ID entry recovery, and reconstruction of a
+single broker SL/TP close after the position disappears from reconciliation.
+Configured PostgreSQL coverage proves the closing child cannot overwrite its
+entry, its acceptance blocks pending deal evidence, the exact deal atomically
+closes the position/trade/group, and the retained acceptance becomes resolved.
+Missing closing-order evidence remains a tested fail-closed path. Migration
+tests cover fresh and `0005` upgrade paths through `0011`.

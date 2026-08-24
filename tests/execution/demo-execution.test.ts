@@ -37,10 +37,12 @@ describe("cTrader demo execution normalization", () => {
     const raw = await fixture("demo-order-accepted-v1.json");
     const event = normalizeDemoExecution(raw, { symbolId: "7" });
     expect(event).toMatchObject({
-      schemaVersion: "1.0",
+      schemaVersion: "1.1",
       executionType: 2,
       brokerOrderId: "501",
       brokerFillId: null,
+      brokerOrderType: 3,
+      closingOrder: false,
       occurredAt: "2026-08-24T04:00:00.000Z",
       order: {
         clientOrderId: "cas-buy-111111111111111111111111",
@@ -86,9 +88,37 @@ describe("cTrader demo execution normalization", () => {
     expect(event).toMatchObject({
       executionType: 2,
       brokerOrderId: "501",
-      brokerPositionId: null,
+      brokerPositionId: "801",
       position: null,
       order: { state: "PENDING" },
+    });
+  });
+
+  it("ignores an unpriced contextual position on cancellation", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    order.orderStatus = 5;
+    const position = {
+      positionId: "801",
+      positionStatus: 1,
+      tradeData: {
+        symbolId: "7",
+        volume: "100",
+        tradeSide: 1,
+        label: "ctrader-ai-scalper:0.1.0",
+      },
+    };
+
+    const event = normalizeDemoExecution(
+      { ...raw, executionType: 5, order, position },
+      { symbolId: "7" },
+    );
+
+    expect(event).toMatchObject({
+      executionType: 5,
+      brokerPositionId: "801",
+      position: null,
+      order: { state: "CANCELLED" },
     });
   });
 
@@ -153,6 +183,8 @@ describe("cTrader demo execution normalization", () => {
     const event = normalizeDemoExecution(raw, { symbolId: "7" });
     expect(event).toMatchObject({
       eventKey: "deal:903",
+      brokerOrderType: 4,
+      closingOrder: true,
       order: { clientOrderId: "", state: "FILLED" },
       position: {
         brokerPositionId: "801",
@@ -171,6 +203,40 @@ describe("cTrader demo execution normalization", () => {
       },
     });
     expect(demoExecutionReasonCodes(event!)).toEqual([]);
+  });
+
+  it("holds a broker-created closing acceptance until its deal arrives", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    order.orderId = "601";
+    order.orderType = 4;
+    order.closingOrder = true;
+    const position = {
+      positionId: "801",
+      positionStatus: 1,
+      tradeData: {
+        symbolId: "7",
+        volume: "100",
+        tradeSide: 1,
+        label: "ctrader-ai-scalper:0.1.0",
+      },
+    };
+
+    const event = normalizeDemoExecution(
+      { ...raw, order, position },
+      { symbolId: "7" },
+    );
+
+    expect(event).toMatchObject({
+      brokerOrderId: "601",
+      brokerPositionId: "801",
+      brokerOrderType: 4,
+      closingOrder: true,
+      position: null,
+    });
+    expect(demoExecutionReasonCodes(event!)).toEqual([
+      "DEMO_CLOSING_ORDER_AWAITING_DEAL",
+    ]);
   });
 
   it("keeps missing or partial close evidence fail-closed", async () => {

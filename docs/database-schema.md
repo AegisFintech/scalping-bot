@@ -127,3 +127,10 @@ consistent set; a preflight rejection may have no `analysis_runs` row. An
 incomplete claim is retained and cannot be replayed. Rollback is manual: pause
 automatic analysis, preserve the interval evidence, deploy scheduler code that
 does not use the table, and remove it only after operator review.
+
+Migration `0011` expands `broker_execution_events` to schema `1.1` with the
+broker-native order type and closing-order flag. This distinguishes cTrader's
+server-created SL/TP closing child from the original strategy entry even when
+the child inherits its client order ID. Existing `1.0` rows remain valid and
+unchanged. Rollback requires stopped execution, complete reconciliation, and
+retention/export of `1.1` evidence before the columns or constraint are removed.

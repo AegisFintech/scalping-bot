@@ -29,6 +29,14 @@ interface PositionMatch {
 
 export function demoExecutionReasonCodes(event: DemoExecutionEvent): string[] {
   const reasons: string[] = [];
+  if (
+    event.executionType === 2 &&
+    event.brokerOrderType === 4 &&
+    event.closingOrder &&
+    event.fill === null
+  ) {
+    reasons.push("DEMO_CLOSING_ORDER_AWAITING_DEAL");
+  }
   if (event.executionType === 4)
     reasons.push("DEMO_ORDER_REPLACED_RECONCILIATION_REQUIRED");
   if (event.executionType === 8) reasons.push("DEMO_CANCEL_REJECTED");
@@ -65,9 +73,10 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       `SELECT mapping_state, reason_codes
        FROM broker_execution_events
        WHERE account_id = $1 AND symbol_id = $2
+         AND resolved_at IS NULL
          AND (
            mapping_state <> 'MAPPED'
-           OR (resolved_at IS NULL AND jsonb_array_length(reason_codes) > 0)
+           OR jsonb_array_length(reason_codes) > 0
          )
        ORDER BY occurred_at, id`,
       [this.#options.accountId, this.#options.symbolId],
@@ -173,23 +182,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           reasonCodes: ["DEMO_EXECUTION_ORDER_AMBIGUOUS"],
         };
       }
-      const order = orders.rows[0] ?? null;
-      if (
-        order !== null &&
-        order.broker_order_id !== null &&
-        event.brokerOrderId !== null &&
-        order.broker_order_id !== event.brokerOrderId
-      ) {
-        await this.#insertEvent(client, event, order, null, "CONFLICT", [
-          "DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT",
-        ]);
-        await client.query("COMMIT");
-        return {
-          certain: false,
-          reasonCodes: ["DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT"],
-        };
-      }
-
+      let order = orders.rows[0] ?? null;
       const positions =
         event.brokerPositionId === null
           ? { rows: [] as PositionMatch[] }
@@ -216,6 +209,42 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         };
       }
       let position = positions.rows[0] ?? null;
+      const brokerGeneratedClosingOrder =
+        event.brokerOrderType === 4 &&
+        event.closingOrder &&
+        event.brokerPositionId !== null &&
+        position !== null;
+      if (order !== null && brokerGeneratedClosingOrder) {
+        if (position?.order_group_id !== order.order_group_id) {
+          await this.#insertEvent(client, event, order, position, "CONFLICT", [
+            "DEMO_EXECUTION_CLOSING_ORDER_GROUP_CONFLICT",
+          ]);
+          await client.query("COMMIT");
+          return {
+            certain: false,
+            reasonCodes: ["DEMO_EXECUTION_CLOSING_ORDER_GROUP_CONFLICT"],
+          };
+        }
+        // cTrader assigns a distinct broker order identity to its server-side
+        // SL/TP close while it may retain the entry's clientOrderId. The child
+        // is evidence for the position, never a mutation of the entry order.
+        order = null;
+      }
+      if (
+        order !== null &&
+        order.broker_order_id !== null &&
+        event.brokerOrderId !== null &&
+        order.broker_order_id !== event.brokerOrderId
+      ) {
+        await this.#insertEvent(client, event, order, position, "CONFLICT", [
+          "DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT",
+        ]);
+        await client.query("COMMIT");
+        return {
+          certain: false,
+          reasonCodes: ["DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT"],
+        };
+      }
       const orderGroupId =
         order?.order_group_id ?? position?.order_group_id ?? null;
       if (orderGroupId === null) {
@@ -447,6 +476,33 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           ],
         );
       }
+      if (
+        event.position?.state === "CLOSED" &&
+        event.closeDetail !== null &&
+        event.brokerOrderType === 4 &&
+        event.closingOrder &&
+        event.brokerOrderId !== null
+      ) {
+        await client.query(
+          `UPDATE broker_execution_events
+           SET mapping_state = 'MAPPED',
+               resolved_at = $3,
+               resolution_event_key = $4
+           WHERE account_id = $1 AND broker_order_id = $2
+             AND broker_event_key <> $4
+             AND resolved_at IS NULL
+             AND (
+               reason_codes = '["DEMO_CLOSING_ORDER_AWAITING_DEAL"]'::jsonb
+               OR reason_codes = '["DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT"]'::jsonb
+             )`,
+          [
+            this.#options.accountId,
+            event.brokerOrderId,
+            event.occurredAt,
+            event.eventKey,
+          ],
+        );
+      }
       await client.query("COMMIT");
       return { certain: reasons.length === 0, reasonCodes: reasons };
     } catch (error) {
@@ -592,9 +648,10 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         (id, account_id, symbol_id, order_group_id, order_id, position_id,
          broker_event_key, payload_hash, schema_version, execution_type,
          client_order_id, broker_order_id, broker_position_id, broker_fill_id,
-         mapping_state, reason_codes, normalized_payload, occurred_at, received_at)
+         broker_order_type, closing_order, mapping_state, reason_codes,
+         normalized_payload, occurred_at, received_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-               $14, $15, $16::jsonb, $17::jsonb, $18, $19)`,
+               $14, $15, $16, $17, $18::jsonb, $19::jsonb, $20, $21)`,
       [
         randomUUID(),
         this.#options.accountId,
@@ -610,6 +667,8 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         event.brokerOrderId,
         event.brokerPositionId,
         event.brokerFillId,
+        event.brokerOrderType,
+        event.closingOrder,
         mappingState,
         JSON.stringify(reasonCodes),
         JSON.stringify(event),

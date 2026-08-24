@@ -49,7 +49,7 @@ export interface DemoExecutionPosition {
 }
 
 export interface DemoExecutionEvent {
-  readonly schemaVersion: "1.0";
+  readonly schemaVersion: "1.1";
   readonly eventKey: string;
   readonly payloadHash: string;
   readonly executionType: number;
@@ -57,6 +57,8 @@ export interface DemoExecutionEvent {
   readonly brokerOrderId: string | null;
   readonly brokerPositionId: string | null;
   readonly brokerFillId: string | null;
+  readonly brokerOrderType: number | null;
+  readonly closingOrder: boolean;
   readonly order: GatewayOrder | null;
   readonly position: DemoExecutionPosition | null;
   readonly fill: DemoExecutionFill | null;
@@ -372,6 +374,17 @@ function hasOrderLabel(order: Record<string, unknown> | null): boolean {
   );
 }
 
+function optionalBooleanField(
+  object: Record<string, unknown>,
+  key: string,
+): boolean | null {
+  const value = object[key];
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "boolean")
+    throw new Error(`CTRADER_FIELD_INVALID:${key}`);
+  return value;
+}
+
 function failureReason(error: unknown, fallback: string): string {
   if (!(error instanceof Error)) return fallback;
   return /^(?:CTRADER|DEMO)_[A-Z0-9_]+(?::[A-Za-z][A-Za-z0-9_]*)?$/.test(
@@ -431,19 +444,37 @@ export function normalizeDemoExecution(
       : normalizeOrder(order, receivedAt, execution.errorCode);
   if (normalizedOrder !== null)
     assertExecutionOrderState(execution.executionType, normalizedOrder.state);
-  // cTrader may attach an unpriced position placeholder to ORDER_ACCEPTED.
-  // Acceptance establishes only the pending order; a position becomes
-  // authoritative when a fill/partial-fill execution carries its deal.
+  const brokerOrderType =
+    order === null ? null : (optionalNumberField(order, "orderType") ?? null);
+  if (
+    brokerOrderType !== null &&
+    (!Number.isSafeInteger(brokerOrderType) ||
+      brokerOrderType < 1 ||
+      brokerOrderType > 6)
+  ) {
+    throw new Error("CTRADER_ORDER_TYPE_INVALID");
+  }
+  const closingOrder =
+    order === null
+      ? false
+      : (optionalBooleanField(order, "closingOrder") ?? false);
+  // cTrader may attach an unpriced contextual position to non-deal order
+  // lifecycle events. A position transition becomes authoritative only when a
+  // fill/partial-fill execution carries its deal.
   const normalizedPosition =
-    position === null || (execution.executionType === 2 && deal === null)
+    position === null || ![3, 11].includes(execution.executionType)
       ? null
       : normalizePosition(position, receivedAt);
+  const contextualBrokerPositionId =
+    position === null ? null : stringField(position, "positionId");
   const brokerOrderId =
     normalizedOrder?.brokerOrderId ??
     (deal === null ? null : stringField(deal, "orderId"));
   const brokerPositionId =
     normalizedPosition?.brokerPositionId ??
-    (deal === null ? null : stringField(deal, "positionId"));
+    (deal === null
+      ? contextualBrokerPositionId
+      : stringField(deal, "positionId"));
   let fill: DemoExecutionFill | null = null;
   let brokerFillId: string | null = null;
   let closeDetail: DemoExecutionCloseDetail | null = null;
@@ -489,12 +520,14 @@ export function normalizeDemoExecution(
     normalizedPosition?.updatedAt ??
     receivedAt;
   const payload = {
-    schemaVersion: "1.0" as const,
+    schemaVersion: "1.1" as const,
     executionType: execution.executionType,
     clientOrderId,
     brokerOrderId,
     brokerPositionId,
     brokerFillId,
+    brokerOrderType,
+    closingOrder,
     order: normalizedOrder,
     position: normalizedPosition,
     fill,

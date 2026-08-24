@@ -53,6 +53,16 @@ not create a local position. The order acceptance is still journaled and mapped.
 An unpriced position on `ORDER_FILLED` or `ORDER_PARTIAL_FILL` remains invalid
 and blocking.
 
+cTrader may create a distinct `STOP_LOSS_TAKE_PROFIT` closing order after an
+entry fills and retain the entry's client order ID. Confirm the journal records
+`broker_order_type=4` and `closing_order=true` without replacing the entry's
+broker order ID. The child acceptance may temporarily report
+`DEMO_CLOSING_ORDER_AWAITING_DEAL`; only its exact single closing deal may
+resolve that row and close the position/trade/group. If the broker no longer
+returns the position, bounded recovery uses the durable local position plus
+that exact order/deal. Missing, ambiguous, or multiple evidence requires both
+controls to remain active; do not edit the journal or infer an outcome.
+
 Search Better Stack for `event_name=demo_execution_callback_failed`. Its
 `reason_code`, `stage`, execution/order enum values, and field-presence booleans
 are deliberately sufficient to classify the adapter boundary but never include

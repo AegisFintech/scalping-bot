@@ -185,6 +185,7 @@ describe("PostgreSQL migrations integration", () => {
         "0008",
         "0009",
         "0010",
+        "0011",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -918,6 +919,50 @@ describe("PostgreSQL migrations integration", () => {
          WHERE account_id = $1 AND client_order_id = $2`,
         [demoAccountId, "cas-sell-22222222222222222222222"],
       );
+      const closingAcceptedRaw = await eventFixture(
+        "demo-order-accepted-v1.json",
+      );
+      const closingAcceptedOrder = closingAcceptedRaw.order as Record<
+        string,
+        unknown
+      >;
+      closingAcceptedOrder.orderId = "601";
+      closingAcceptedOrder.orderType = 4;
+      closingAcceptedOrder.closingOrder = true;
+      (closingAcceptedOrder.tradeData as Record<string, unknown>).tradeSide = 2;
+      const closingAccepted = normalizeDemoExecution(
+        {
+          ...closingAcceptedRaw,
+          position: {
+            positionId: "801",
+            positionStatus: 1,
+            tradeData: {
+              symbolId: "7",
+              volume: "100",
+              tradeSide: 1,
+              label: "ctrader-ai-scalper:integration",
+            },
+          },
+        },
+        { symbolId: "7" },
+      );
+      expect(closingAccepted).not.toBeNull();
+      await expect(store.persist(closingAccepted!)).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_CLOSING_ORDER_AWAITING_DEAL"],
+      });
+      await expect(store.readiness()).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_CLOSING_ORDER_AWAITING_DEAL"],
+      });
+      const unchangedEntryOrder = await isolated.query<{
+        broker_order_id: string;
+      }>(
+        `SELECT broker_order_id FROM orders
+         WHERE account_id = $1 AND client_order_id = $2`,
+        [demoAccountId, "cas-buy-111111111111111111111111"],
+      );
+      expect(unchangedEntryOrder.rows[0]?.broker_order_id).toBe("501");
       const closedRaw = await eventFixture("demo-position-closed-v1.json");
       const closed = normalizeDemoExecution(closedRaw, { symbolId: "7" });
       expect(closed).not.toBeNull();
@@ -956,6 +1001,24 @@ describe("PostgreSQL migrations integration", () => {
         prompt_version: "system-v2",
         schema_version: "2.0",
         strategy_version: `integration-${strategyVersionId}`,
+      });
+      const closingEvidence = await isolated.query<{
+        broker_order_type: number;
+        closing_order: boolean;
+        unresolved: string;
+      }>(
+        `SELECT max(broker_order_type)::integer AS broker_order_type,
+                bool_and(closing_order) AS closing_order,
+                count(*) FILTER (WHERE resolved_at IS NULL
+                  AND jsonb_array_length(reason_codes) > 0)::text AS unresolved
+         FROM broker_execution_events
+         WHERE account_id = $1 AND broker_order_id = '601'`,
+        [demoAccountId],
+      );
+      expect(closingEvidence.rows[0]).toEqual({
+        broker_order_type: 4,
+        closing_order: true,
+        unresolved: "0",
       });
       const restartedStore = new PostgresDemoExecutionStore({
         pool: isolated,
@@ -1032,7 +1095,7 @@ describe("PostgreSQL migrations integration", () => {
     }
   });
 
-  databaseTest("upgrades 0005 safely through 0009", async () => {
+  databaseTest("upgrades 0005 safely through 0011", async () => {
     const schema = `test_${randomUUID().replaceAll("-", "")}`;
     const migrationDirectory = await mkdtemp(
       path.join(os.tmpdir(), "ctrader-migrations-"),
@@ -1173,6 +1236,56 @@ describe("PostgreSQL migrations integration", () => {
         "0009",
         "0010",
       ]);
+      await isolated.query(
+        `UPDATE orders
+         SET state = 'FILLED', broker_order_id = 'closing-child-601',
+             filled_volume = 100
+         WHERE id = $1`,
+        [orderId],
+      );
+      await isolated.query(
+        `INSERT INTO broker_execution_events
+          (id, account_id, symbol_id, order_group_id, order_id,
+           broker_event_key, payload_hash, schema_version, execution_type,
+           client_order_id, broker_order_id, broker_fill_id, mapping_state,
+           reason_codes, normalized_payload, occurred_at, received_at)
+         VALUES ($1, $2, $3, $4, $5, 'deal:upgrade-fill', $6, '1.0', 3,
+                 $7, 'entry-order-501', 'upgrade-fill', 'MAPPED', '[]'::jsonb,
+                 '{}'::jsonb, now() - interval '1 minute', now())`,
+        [
+          randomUUID(),
+          accountId,
+          symbolId,
+          orderGroupId,
+          orderId,
+          "2".repeat(64),
+          `upgrade-${orderId}`,
+        ],
+      );
+      await copyFile(
+        path.resolve("migrations", "0011_ctrader_closing_order_evidence.sql"),
+        path.join(
+          migrationDirectory,
+          "0011_ctrader_closing_order_evidence.sql",
+        ),
+      );
+      expect(await migrate(isolated, migrationDirectory)).toEqual(["0011"]);
+      const restoredEntry = await isolated.query<{
+        broker_order_id: string;
+        broker_order_type: number | null;
+        closing_order: boolean;
+      }>(
+        `SELECT o.broker_order_id, e.broker_order_type, e.closing_order
+         FROM orders o
+         JOIN broker_execution_events e ON e.order_id = o.id
+         WHERE o.id = $1`,
+        [orderId],
+      );
+      expect(restoredEntry.rows[0]).toEqual({
+        broker_order_id: "entry-order-501",
+        broker_order_type: null,
+        closing_order: false,
+      });
       const legacyPrompt = await isolated.query<{
         system_prompt: string | null;
         system_prompt_sha256: string | null;

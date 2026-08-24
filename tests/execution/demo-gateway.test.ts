@@ -133,6 +133,46 @@ class MockClient implements CTraderTradingClient {
     this.#handler?.(result);
   }
 
+  closeWithBrokerChild(clientOrderId: string): void {
+    const source = this.orders.find(
+      (order) => order.clientOrderId === clientOrderId,
+    );
+    if (source === undefined) throw new Error("missing");
+    const data = source.tradeData as Record<string, unknown>;
+    const closingOrder = {
+      ...source,
+      orderId: "601",
+      orderType: 4,
+      closingOrder: true,
+      orderStatus: 2,
+    };
+    this.orders.push(closingOrder);
+    this.#handler?.({
+      executionType: 3,
+      order: closingOrder,
+      position: {
+        positionId: "801",
+        positionStatus: 2,
+        price: 2001.01,
+        tradeData: { ...data, volume: "0" },
+      },
+      deal: {
+        dealId: "902",
+        orderId: "601",
+        positionId: "801",
+        volume: data.volume,
+        filledVolume: data.volume,
+        symbolId: data.symbolId,
+        executionTimestamp: Date.now(),
+        executionPrice: 1999,
+        dealStatus: 2,
+        label: data.label,
+      },
+      errorCode: null,
+      receivedAt: new Date().toISOString(),
+    });
+  }
+
   reconcileRaw(): Promise<RawReconciliation> {
     return Promise.resolve({
       receivedAt: new Date().toISOString(),
@@ -193,6 +233,39 @@ describe("cTrader demo gateway", () => {
     await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
     client.fill("client-BUY");
     await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(client.cancelled).toEqual(["102"]);
+  });
+
+  it("does not replace the entry identity with a broker closing child", async () => {
+    const client = new MockClient();
+    const gateway = new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    client.fill("client-BUY");
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+
+    client.closeWithBrokerChild("client-BUY");
+    const reconciliation = await gateway.reconcile("XAUUSD");
+
+    expect(
+      reconciliation.orders.find(
+        (order) => order.clientOrderId === "client-BUY",
+      ),
+    ).toMatchObject({ brokerOrderId: "101", state: "FILLED" });
+    expect(reconciliation.orders).toContainEqual(
+      expect.objectContaining({
+        clientOrderId: "closing:601",
+        brokerOrderId: "601",
+      }),
+    );
     expect(client.cancelled).toEqual(["102"]);
   });
 });

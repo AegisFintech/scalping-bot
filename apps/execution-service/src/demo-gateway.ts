@@ -65,6 +65,14 @@ function orderTradeData(
   return record(order.tradeData, "CTRADER_TRADE_DATA_INVALID");
 }
 
+function isBrokerGeneratedClosingOrder(
+  order: Record<string, unknown>,
+): boolean {
+  return (
+    order.closingOrder === true || optionalNumberField(order, "orderType") === 4
+  );
+}
+
 function external(order: TrackedOrder): GatewayOrder {
   return {
     clientOrderId: order.command.clientOrderId,
@@ -281,12 +289,15 @@ export class CTraderDemoGateway implements ExecutionGateway {
       );
       const brokerOrders = relevantOrders.map((order): GatewayOrder => {
         const data = orderTradeData(order);
+        const brokerOrderId = stringField(order, "orderId");
         const clientOrderId =
-          optionalStringField(order, "clientOrderId") ??
-          `manual:${stringField(order, "orderId")}`;
+          (isBrokerGeneratedClosingOrder(order)
+            ? `closing:${brokerOrderId}`
+            : optionalStringField(order, "clientOrderId")) ??
+          `manual:${brokerOrderId}`;
         return {
           clientOrderId,
-          brokerOrderId: stringField(order, "orderId"),
+          brokerOrderId,
           state: stateFromOrder(order),
           filledVolume: optionalStringField(order, "executedVolume") ?? "0",
           updatedAt:
@@ -425,6 +436,12 @@ export class CTraderDemoGateway implements ExecutionGateway {
   }
 
   #handleExecution(execution: BrokerExecution): void {
+    if (
+      execution.order !== null &&
+      isBrokerGeneratedClosingOrder(execution.order)
+    ) {
+      return;
+    }
     this.#applyExecution(execution);
     if (
       execution.order === null ||
@@ -461,6 +478,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
 
   #applyExecution(execution: BrokerExecution, reasonCode?: string): void {
     if (execution.order === null) return;
+    if (isBrokerGeneratedClosingOrder(execution.order)) return;
     const clientOrderId = optionalStringField(execution.order, "clientOrderId");
     if (clientOrderId === undefined) return;
     const tracked = this.#orders.get(clientOrderId);

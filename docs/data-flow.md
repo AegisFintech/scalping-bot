@@ -84,6 +84,16 @@ Some cTrader servers attach an unpriced position placeholder to a pending
 `ORDER_ACCEPTED` event. Because that event has no deal and does not establish a
 fill, only its order is mapped; position creation remains exclusive to a fill or
 partial-fill event carrying authoritative priced position/deal evidence.
+Non-deal cancellation and other lifecycle callbacks may carry the same
+context-only placeholder and likewise do not mutate position state. A
+broker-created SL/TP close has its own broker order ID and may inherit the entry
+client ID; schema `1.1` journals it as a closing child attached to the durable
+position without changing the entry order. Its acceptance remains unresolved
+until an exact closing deal supplies the terminal position and P/L evidence.
+Restart recovery matches known entries by exact broker order ID and can rebuild
+a disappeared terminal position from its durable local entry plus the exact
+broker closing order/deal. Missing, ambiguous, or multiple close evidence stays
+blocking.
 Pagination, missing local intent, duplicate-key conflicts, partial fills,
 unknown fields/states, or persistence failure make reconciliation uncertain and
 block placement.
