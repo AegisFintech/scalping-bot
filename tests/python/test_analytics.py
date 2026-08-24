@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -99,6 +100,7 @@ def test_analytics_builds_required_features() -> None:
     timeframes = response.features["timeframes"]
     assert isinstance(timeframes, dict)
     assert timeframes["M1"]["atr"] is not None
+    assert re.fullmatch(r"^-?(0|[1-9][0-9]{0,15})(\.[0-9]{1,10})?$", timeframes["M1"]["atr"])
     assert timeframes["M1"]["ema_alignment"] == "BULLISH"
     assert len(timeframes["M1"]["raw_tail"]) == 10
     assert len(timeframes["M1"]["full_candles"]) == 40

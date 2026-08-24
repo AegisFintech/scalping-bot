@@ -85,6 +85,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 
 Node/Python traffic uses JSON over local HTTP with versioned Pydantic/JSON Schema models. Prices, money, sizes, tick values, and ratios that affect decisions are decimal strings. Timestamps are UTC ISO-8601. Each request includes a schema version, request ID, analysis ID, symbol, and snapshot timestamp.
 
+Derived analytics decimals are canonicalized with Python `Decimal` to no more
+than ten fractional places before crossing back to Node. Positive values are
+truncated toward zero, never rounded upward; the Node risk engine independently
+parses the bounded string and rejects invalid or non-finite inputs.
+
 The cTrader adapter is the authority for the broker-declared weekly session
 schedule. Analytics accepts only the adapter's single
 `BROKER_SESSION_GAP_BEFORE` marker on a bounded positive gap; a marker on the

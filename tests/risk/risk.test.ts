@@ -96,6 +96,23 @@ describe("risk engine", () => {
     ).toEqual(["SPREAD_PROTECTION_REQUIRED"]);
   });
 
+  it("accepts a canonical ten-place analytics ATR", () => {
+    expect(
+      checkSpread({
+        bid: "4647.59",
+        ask: "4647.70",
+        tickSize: "0.01",
+        atr: "2.8400954573",
+        maxPoints: "12",
+        maxAtrRatio: "0.10",
+        observedPercentile: null,
+        maxPercentile: null,
+        sessionAbnormal: false,
+        liveMode: false,
+      }),
+    ).toMatchObject({ approved: true, reasonCodes: [] });
+  });
+
   it("performance history can only reduce confidence", () => {
     const result = performanceAdjustment(
       Array.from({ length: 30 }, (_, age) => ({ won: age % 4 === 0, age })),

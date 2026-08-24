@@ -12,6 +12,10 @@ persistence, and rejection of activity or duplicate initialization.
 Replay tests align 1m/5m/15m by completed end time, forbid future data, label/deny missing historical depth, inject latency/spread/slippage, and choose the adverse outcome when candle OHLC permits both TP and SL with unknown path.
 
 Failure tests include malformed/extra JSON, wrong IDs/symbol, stale/future response, impossible/inverted prices, bad R:R/precision/metadata/depth, expired token, DB/AI/network failure, partial fill/cancel race, duplicate events, restart, and partitions.
+Analytics feature-boundary tests also cover high-precision positive and signed
+values, tiny values, canonical zero, `None`, and non-finite rejection. The typed
+HTTP integration asserts the M1 ATR string accepted by deterministic spread risk
+has no more than ten fractional places.
 
 ## Historical limitations
 
@@ -48,9 +52,9 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 90 Node unit
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 91 Node unit
 tests across 26 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
-analytics and dashboard code, 25 Python tests,
+analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
 passed. TLS connectivity and all six migrations passed inside isolated Neon
@@ -104,3 +108,10 @@ analytics loopback endpoints. All service health checks passed; execution
 reported `trading_allowed=false`, both configured emergency stops remained
 active, and cTrader demo execution-event/order/active-position/fill counts were
 all zero.
+
+The next supervised cycle passed strict analytics and rejected safely before
+model/intent/order with `SPREAD_INPUT_INVALID`. Persisted M1 ATR had 27
+fractional places versus the risk boundary's ten. Post-cycle reconciliation and
+both restored stops passed; all broker/local execution counts stayed zero. The
+ISSUE-015 stopped credentialed probe produced ten-place ATR and crossed into
+spread validation successfully without invoking a cycle.

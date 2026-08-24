@@ -150,6 +150,13 @@ describe("Node to Python analytics integration", () => {
     const result = await client.analyze(request());
     expect(result.acceptable).toBe(true);
     expect(result.analysisId).toBe("22222222-2222-4222-8222-222222222222");
+    const timeframes = result.features.timeframes as Record<
+      string,
+      Record<string, unknown>
+    >;
+    expect(timeframes.M1?.atr).toMatch(
+      /^-?(0|[1-9][0-9]{0,15})(\.[0-9]{1,10})?$/,
+    );
     await expect(
       client.summarizePerformance([
         { netPnl: "18", closedAt: new Date().toISOString() },
