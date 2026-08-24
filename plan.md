@@ -158,7 +158,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
 | ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
 | ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
-| ISSUE-020 | in progress | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
+| ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -492,9 +492,18 @@ never justify empty, noisy, unsafe, or misleading commits.
   123 Node tests, 10 schema tests, 3 migration tests, all 3 configured
   integration tests, Ruff format/lint, mypy, 30 Python tests, replay/backtest,
   both dependency audits, secret and shell checks, and all five offline systemd
-  security parses at 2.8 (`OK`) pass. Review, merge, and stopped deployment
-  remain pending in
-  [PR #36](https://github.com/AegisFintech/scalping-bot/pull/36).
+  security parses at 2.8 (`OK`) pass. The fix merged in
+  [PR #36](https://github.com/AegisFintech/scalping-bot/pull/36) as `eae2aff`.
+  The merged execution build was restarted under immutable strategy/code
+  identity `0.1.0-ai-timeout-budget.1`; production identity, startup recovery,
+  and readiness passed. Demo and automatic analysis remain disabled with both
+  emergency stops active. The new provenance row exists; demo groups, orders,
+  fills, active positions, and unresolved events remain zero. The most delayed
+  startup reconciliation audit recovered through bounded backoff to
+  `DELIVERED` on attempt five, leaving zero Better Stack backlog. No cycle or
+  broker command was invoked after deployment. Another supervised cycle
+  requires a fresh exact acknowledgement. Deployment evidence is recorded in
+  [PR #37](https://github.com/AegisFintech/scalping-bot/pull/37).
 
 ## Acceptance criteria
 

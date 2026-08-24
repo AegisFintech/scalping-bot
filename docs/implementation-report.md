@@ -408,6 +408,17 @@ caller circuit. The new immutable release identity is
 `0.1.0-ai-timeout-budget.1`. This corrects coordination; it does not extend any
 market freshness limit or authorize another demo window.
 
+PR #36 merged as `eae2aff`. The merged execution service was rebuilt and
+restarted with explicit safe overrides under immutable strategy/code identity
+`0.1.0-ai-timeout-budget.1`. Production application identity, startup recovery,
+and readiness passed while demo submission and automatic analysis remained
+disabled under both database and environment emergency stops. The release
+provenance row exists; demo groups, orders, fills, active positions, and
+unresolved broker events remain zero. The slowest startup reconciliation audit
+recovered through bounded Better Stack backoff and reached `DELIVERED` on
+attempt five, returning backlog to zero. No cycle or broker command was run
+after deployment.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
