@@ -178,9 +178,23 @@ service. It received 600 M1, 500 M5, and 300 M15 completed candles with 1, 2,
 and 3 trusted session gaps; depth was complete and continuous, and strict
 analytics accepted the request with no rejection. Execution stayed stopped and
 no order-capable cycle or broker command was invoked. The complete local gate
-suite passed; delivery is tracked in
-[PR #16](https://github.com/AegisFintech/scalping-bot/pull/16). Merge, deployment,
-and post-deploy evidence are recorded separately when complete.
+suite passed. Delivery merged in
+[PR #16](https://github.com/AegisFintech/scalping-bot/pull/16).
+
+PR #16 merged as `a81cfb2` and was built from `main`. PM2 restarted analytics,
+market data, and execution, then saved the process list. Analytics, market data,
+execution, and Streamlit health endpoints passed; execution readiness explicitly
+reported `trading_allowed=false`. Status remained demo mode with automatic
+analysis and trading disabled and reason codes
+`DEMO_ACKNOWLEDGEMENT_INVALID`, `DEMO_TRADING_DISABLED`,
+`EMERGENCY_STOP_DATABASE`, and `EMERGENCY_STOP_ENV`.
+
+The deployed loopback snapshot again returned 600 M1, 500 M5, and 300 M15
+completed candles with session-gap counts 1, 2, and 3. Strict deployed analytics
+accepted it with no rejection; depth was complete/continuous and its broker
+source timestamp preceded final server time. A read-only database check found
+zero cTrader demo execution events, orders, active positions, and fills. No
+execution cycle or order endpoint was invoked during deployment validation.
 
 ## Shadow-mode setup
 

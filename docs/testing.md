@@ -98,3 +98,9 @@ and execution emergency-stopped. The broker's exact schedule/timezone parsed;
 weekly-session gaps. The updated analytics service accepted the snapshot with
 no rejection and exposed those counts. This is demo market-data validation, not
 an order, fill, paper result, backtest, or profitability evidence.
+
+After PR #16 merged, the same check passed through the deployed PM2 market and
+analytics loopback endpoints. All service health checks passed; execution
+reported `trading_allowed=false`, both configured emergency stops remained
+active, and cTrader demo execution-event/order/active-position/fill counts were
+all zero.
