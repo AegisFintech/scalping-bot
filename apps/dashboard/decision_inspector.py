@@ -173,6 +173,26 @@ def model_proposal_label(value: Mapping[str, Any]) -> str:
     raise DecisionViewError("DECISION_VIEW_MODEL_DECISION_INVALID")
 
 
+def model_output_authority_notice(value: Mapping[str, Any] | None) -> str:
+    """Describe proposal authority without relabelling historical decisions."""
+
+    if value is None:
+        return "AI was not reached for this run; no model proposal exists."
+    if value.get("schema_version") == "2.0":
+        return (
+            "The schema 2.0 AI output is a two-leg conditional proposal, not a queued "
+            "or broker order. Local semantic validation, risk sizing, freshness checks, "
+            "and mode gates retain execution authority."
+        )
+    if value.get("schema_version") == "1.0":
+        return (
+            "This is an immutable historical schema 1.0 output and may contain the old "
+            "NO_TRADE self-veto. It is retained as audit evidence and is not the current "
+            "schema 2.0 proposal contract."
+        )
+    raise DecisionViewError("DECISION_VIEW_MODEL_SCHEMA_VERSION_INVALID")
+
+
 def exact_model_input_view(value: object) -> dict[str, Any]:
     """Return exact redacted model JSON with PostgreSQL-normalized object ordering."""
 

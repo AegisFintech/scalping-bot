@@ -9,6 +9,7 @@ from apps.dashboard.decision_inspector import (
     analytics_summary,
     exact_model_input_view,
     model_input_summary,
+    model_output_authority_notice,
     model_output_view,
     model_proposal_label,
     prompt_artifact_view,
@@ -36,6 +37,8 @@ def test_model_output_view_preserves_exact_validated_ai_fields() -> None:
     assert view == payload
     assert view["waiting_area"]["lower"] == "4630.10"
     assert model_proposal_label(view) == "NO_TRADE"
+    assert "historical schema 1.0" in model_output_authority_notice(view)
+    assert "not the current" in model_output_authority_notice(view)
 
 
 def test_model_output_view_accepts_mandatory_v2_oco_without_decision_switches() -> None:
@@ -51,6 +54,13 @@ def test_model_output_view_accepts_mandatory_v2_oco_without_decision_switches() 
 
     assert view == payload
     assert model_proposal_label(view) == "OCO_PROPOSAL"
+    assert "two-leg conditional proposal" in model_output_authority_notice(view)
+
+
+def test_missing_model_output_notice_does_not_imply_a_proposal_exists() -> None:
+    assert model_output_authority_notice(None) == (
+        "AI was not reached for this run; no model proposal exists."
+    )
 
 
 def test_model_input_summary_counts_but_does_not_render_candle_arrays() -> None:
