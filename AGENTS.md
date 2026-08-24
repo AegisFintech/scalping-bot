@@ -51,10 +51,12 @@ Run formatting, linting, TypeScript type checks, Node tests, Python formatting/l
 - Commit coherent, reviewable checkpoints that build or document an intentional
   state. Do not commit every shell command, broken intermediate state, generated
   runtime data, or trivial changes solely to inflate contribution activity.
-- Push after meaningful checkpoints and before handoff. Merge only after the
-  issue acceptance criteria and applicable quality gates pass. Automatic merge
-  is permitted only when explicitly authorized, branch protection permits it,
-  and all required checks/reviews are successful.
+- Push after meaningful checkpoints and before handoff. After each successful
+  push, open or update the issue pull request and enable automatic merge. The
+  operator has explicitly authorized automatic merge for qualifying updates in
+  this repository. Merge only after the issue acceptance criteria, applicable
+  quality gates, branch protection, and all required checks/reviews pass; never
+  bypass a protection or failed check.
 - Never place a PAT in a remote URL, command argument, issue, pull request, log,
   or tracked file. Keep a rotated least-privilege token only in the ignored,
   mode-`0600` local environment or an approved credential store.
