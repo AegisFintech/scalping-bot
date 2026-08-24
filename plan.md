@@ -606,6 +606,7 @@ never justify empty, noisy, unsafe, or misleading commits.
   production-equivalent probe passed. No analysis run, database mutation,
   execution-state change, or broker command occurred. Migration/deployment and
   configured Streamlit AppTest remain pending merge.
+  Review: [PR #44](https://github.com/AegisFintech/scalping-bot/pull/44).
 
 ## Acceptance criteria
 
