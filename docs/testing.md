@@ -79,13 +79,12 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 130 Node unit
 tests across 28 files, 12 schema tests, 3 static migration tests, Ruff, strict
-mypy across the analytics and dashboard code, 40 Python tests,
+mypy across the analytics and dashboard code, 41 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-through-`0009` upgrade tests
 passed. TLS connectivity and all nine migrations passed inside isolated Neon
-schemas, which the tests dropped afterward; migrations `0001` through `0008`
-remain applied to the configured Neon schema under both emergency stops pending
-the post-merge `0009` deployment. The
+schemas, which the tests dropped afterward; migrations `0001` through `0009`
+are applied to the configured Neon schema under both emergency stops. The
 post-migration demo
 restart reported certain startup recovery with no journal exceptions or local
 execution state. The host used Node 24.18.0; the supported Node 22
@@ -103,6 +102,15 @@ deterministic semantic validation. The probe made no database write or broker
 call. The checked-in replay and backtest CLI
 smoke fixtures also completed; the replay fixture intentionally has too little
 history for long-window indicators and is not a trading-quality dataset.
+
+After PR #44 merged as `0d2f6cf`, migration `0009` applied cleanly and the
+AI/execution/dashboard processes restarted healthy with trading and automatic
+analysis disabled. A probe through the deployed loopback orchestrator returned
+both mandatory legs with the expected prompt artifact and passed deterministic
+semantics without a database write or broker call. Configured Streamlit AppTest
+rendered 11 analysis-history options, prompt history, the exact prompt/input
+controls, and zero exceptions. The follow-up historical-label test ensures an
+old schema 1.0 self-veto is not presented as a current schema 2.0 proposal.
 
 A configured Streamlit `AppTest` run completed without an exception and rendered
 four charts from current data; its visible error/warning elements were the

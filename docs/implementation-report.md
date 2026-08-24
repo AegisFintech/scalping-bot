@@ -68,10 +68,10 @@ pinned to Node 22 and still needs validation on that runtime.
   tracked prompt hash, and passed local deterministic semantics.
 - Migration structure/safety: 3 tests passed, including pinned historical
   `0001`/`0002` byte checksums; migrations through `0009` passed isolated
-  fresh/upgrade testing. The configured Neon schema is at `0008`; the stopped
+  fresh/upgrade testing. The configured Neon schema is at `0009`; the stopped
   migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
-- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 40 tests passed.
+- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 41 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
 - Secret scan and shell syntax checks passed.
@@ -527,7 +527,7 @@ levels as proposals, never as queued or broker orders.
 The complete pre-merge gate rerun passed Prettier, ESLint, TypeScript
 typecheck/build, 130 Node tests across 28 files, 12 schema tests, 3 migration
 tests, all 3 configured PostgreSQL integration tests, Ruff format/lint, strict
-mypy across analytics/dashboard, 40 Python tests, replay/backtest smoke tests,
+mypy across analytics/dashboard, 41 Python tests, replay/backtest smoke tests,
 npm/pip audits, secret scanning, shell syntax, and all five offline systemd
 security parses at 2.8 (`OK`). The configured AI probe above used current
 persisted market context only as read input and did not create an analysis run,
@@ -535,7 +535,21 @@ database row, execution state, or broker command. A preliminary ad-hoc semantic
 probe passed an empty optional environment string where production supplies
 `null` and therefore reported `SEMANTIC_DECIMAL_INVALID`; after matching the
 production normalization, the repeated response passed with no semantic reason
-codes. Runtime migration and dashboard AppTest remain post-merge steps.
+codes.
+
+PR #44 merged as `0d2f6cf`. Migration `0009` then applied with environment and
+database emergency stops active. The AI, execution, and dashboard processes
+restarted healthy under immutable identity `0.1.0-actionable-oco.1`; execution
+reported demo mode, startup checks passed, trading false, and automatic analysis
+false. Order groups, orders, fills, active positions, broker execution events,
+and schema 2.0 request rows all remained zero. A probe through the deployed
+loopback orchestrator returned both mandatory legs, no legacy switches, the
+matching prompt artifact, and passed deterministic semantics. It did not write
+the database or contact cTrader. Configured Streamlit AppTest rendered 11
+historical runs, prompt history, exact prompt/input controls, and zero
+exceptions. A follow-up display-only correction explicitly labels the selected
+schema 1.0 self-veto as historical instead of calling it a current two-leg
+proposal.
 
 ## Shadow-mode setup
 

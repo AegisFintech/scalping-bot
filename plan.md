@@ -596,7 +596,7 @@ never justify empty, noisy, unsafe, or misleading commits.
   stop-distance contract from repeatedly reaching the model. All local gates
   pass: format/lint/typecheck/build, 130 Node tests across 28 files, 12 schema
   tests, 3 migration tests, all 3 configured PostgreSQL integration tests, Ruff,
-  mypy, 40 Python tests, replay/backtest, both dependency audits, secret and
+  mypy, 41 Python tests, replay/backtest, both dependency audits, secret and
   shell checks, and five offline systemd parses at 2.8 (`OK`). A configured,
   read-only/no-broker AI probe returned schema 2.0 with both legs, no legacy
   switches, matching system-v2 prompt hash, and passed deterministic semantics
@@ -604,9 +604,20 @@ never justify empty, noisy, unsafe, or misleading commits.
   `SEMANTIC_DECIMAL_INVALID` because its ad-hoc harness failed to normalize an
   empty optional environment value to the production `null`; the corrected
   production-equivalent probe passed. No analysis run, database mutation,
-  execution-state change, or broker command occurred. Migration/deployment and
-  configured Streamlit AppTest remain pending merge.
-  Review: [PR #44](https://github.com/AegisFintech/scalping-bot/pull/44).
+  execution-state change, or broker command occurred. PR
+  [#44](https://github.com/AegisFintech/scalping-bot/pull/44) merged as
+  `0d2f6cf`. Migration `0009` was applied under the environment and database
+  emergency stops; AI, execution, and dashboard restarted healthy with the new
+  immutable release identity. Execution remains in demo mode with demo trading
+  and automatic analysis disabled, startup checks passed, and trading false.
+  All order groups, orders, fills, active positions, and broker execution-event
+  counts remain zero. The deployed orchestrator returned both mandatory legs
+  with a matching prompt hash and passed deterministic semantics without a
+  database write or broker call. Configured Streamlit AppTest rendered 11
+  historical runs, the exact prompt/input controls, and zero exceptions. Its
+  verification identified and corrected a display-only ambiguity so an old
+  schema 1.0 self-veto is explicitly historical rather than labelled as a
+  current two-leg proposal.
 
 ## Acceptance criteria
 
@@ -676,7 +687,7 @@ runtime.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0009` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 12 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
-- [x] Ruff format/check, mypy, and pytest: 40 Python tests passed.
+- [x] Ruff format/check, mypy, and pytest: 41 Python tests passed.
 - [x] Checked-in replay and conservative backtest CLI smoke commands completed successfully.
 - [x] `pip-audit -r requirements.lock`: no known vulnerabilities.
 - [x] Secret scan and shell syntax checks passed.
@@ -685,7 +696,7 @@ runtime.
 - [x] Apply reviewed migration `0007` under both emergency stops after PR merge.
 - [x] Apply reviewed migration `0008` under both emergency stops after PR merge;
       verify durable Better Stack retry/recovery and the Streamlit delivery view.
-- [ ] Apply reviewed migration `0009` under both emergency stops after ISSUE-022
+- [x] Apply reviewed migration `0009` under both emergency stops after ISSUE-022
       merges; restart AI/execution/dashboard and verify the prompt-history view.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.

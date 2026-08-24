@@ -25,6 +25,7 @@ from decision_inspector import (
     analytics_summary,
     exact_model_input_view,
     model_input_summary,
+    model_output_authority_notice,
     model_output_view,
     model_proposal_label,
     prompt_artifact_view,
@@ -582,11 +583,7 @@ with tabs[4]:
                 ["AI output", "Input & analytics", "Risk & execution", "Audit log"]
             )
             with inspector_tabs[0]:
-                st.warning(
-                    "The AI output is a two-leg conditional proposal, not a queued or broker "
-                    "order. Local semantic validation, risk sizing, freshness checks, and mode "
-                    "gates retain execution authority."
-                )
+                st.warning(model_output_authority_notice(model_view))
                 if model_view is None:
                     st.info("AI was not reached for this run; no model response exists.")
                 else:
