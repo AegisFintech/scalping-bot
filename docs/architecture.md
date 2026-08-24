@@ -94,6 +94,9 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   returned broker IDs commit, then may use that broker ID as a fallback when a
   strategy-labelled cTrader event omits its client order ID. Readiness is
   recalculated from current unresolved journal evidence after each drain.
+  Callback failures expose only a stable allowlisted reason, processing stage,
+  numeric event/status enums, and field-presence booleans; raw callbacks,
+  labels, client IDs, broker IDs, and database error text are never logged.
 - Uses paper, demo, shadow, and live-compatible gateways behind one interface.
 - Samples the typed fresh-quote endpoint once per minute into an idempotent,
   account/symbol-scoped spread history even while analysis and trading are

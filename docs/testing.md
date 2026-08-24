@@ -382,3 +382,10 @@ not race persistence, and durable readiness coverage proving a resolved partial
 fill clears without restart. Configured PostgreSQL coverage additionally proves
 broker-ID-only matching, duplicate-event idempotency, unresolved blocking,
 final-fill resolution, and conflicting-outcome blocking.
+
+ISSUE-029 adds callback-diagnostic rejection tests. A malformed accepted event
+must retain fail-closed uncertainty while emitting only its allowlisted field
+reason and structural booleans; a free-form persistence exception must collapse
+to a stable generic reason. Assertions explicitly forbid the fixture's client
+identifier, strategy label, malformed value, and database error text in the
+diagnostic summary.

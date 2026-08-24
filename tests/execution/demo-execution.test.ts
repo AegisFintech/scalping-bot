@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   DurableDemoExecutionRecorder,
@@ -264,6 +264,71 @@ describe("durable demo execution recorder", () => {
       certain: false,
       reasonCodes: ["DEMO_EXECUTION_LOCAL_INTENT_NOT_FOUND"],
     });
+  });
+
+  it("reports only a sanitized structural summary for normalization failure", async () => {
+    const store = new MemoryStore();
+    const onFailure = vi.fn();
+    const recorder = new DurableDemoExecutionRecorder(store, {
+      symbolId: "7",
+      onFailure,
+    });
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    order.utcLastUpdateTimestamp = "invalid-secret-value";
+    order.clientOrderId = "cas-buy-sensitive-identifier";
+    (order.tradeData as Record<string, unknown>).label =
+      "ctrader-ai-scalper:sensitive-label";
+
+    recorder.enqueue({ ...raw, order });
+
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["CTRADER_FIELD_INVALID:utcLastUpdateTimestamp"],
+    });
+    expect(onFailure).toHaveBeenCalledOnce();
+    expect(onFailure).toHaveBeenCalledWith({
+      reasonCode: "CTRADER_FIELD_INVALID:utcLastUpdateTimestamp",
+      stage: "NORMALIZE",
+      executionType: 2,
+      orderStatus: 1,
+      hasOrder: true,
+      hasPosition: false,
+      hasDeal: false,
+      hasClientOrderId: true,
+      hasOrderLabel: true,
+    });
+    expect(JSON.stringify(onFailure.mock.calls)).not.toMatch(
+      /sensitive-identifier|sensitive-label|invalid-secret-value/,
+    );
+    expect(store.events).toEqual([]);
+  });
+
+  it("maps an untrusted persistence error to a stable generic reason", async () => {
+    const store = new MemoryStore();
+    vi.spyOn(store, "persist").mockRejectedValue(
+      new Error("database rejected value sensitive-row-identifier"),
+    );
+    const onFailure = vi.fn();
+    const recorder = new DurableDemoExecutionRecorder(store, {
+      symbolId: "7",
+      onFailure,
+    });
+    recorder.enqueue(await fixture("demo-order-accepted-v1.json"));
+
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["DEMO_EXECUTION_PERSISTENCE_FAILED"],
+    });
+    expect(onFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reasonCode: "DEMO_EXECUTION_PERSISTENCE_FAILED",
+        stage: "PERSIST",
+      }),
+    );
+    expect(JSON.stringify(onFailure.mock.calls)).not.toContain(
+      "sensitive-row-identifier",
+    );
   });
 
   it("clears a persisted reason after the store reports it resolved", async () => {

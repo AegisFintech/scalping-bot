@@ -713,6 +713,37 @@ format/lint, strict mypy over 19 source files, 43 Python tests, replay/backtest
 smoke tests, npm/pip audits with zero known vulnerabilities, secret and shell
 checks, and all five offline systemd security parses at 2.8 (`OK`).
 
+PR #58 merged ISSUE-028 as `565d9fb`. Immutable `.6` started under both
+database controls with one matching strategy-version row, certain startup
+recovery, and zero active groups, orders, positions, or unresolved events.
+After release, broker minutes 10:43 through 10:47 repeated automatically through
+post-model refresh, stale-market, and spread rejections. At 10:48:36 UTC, `.6`
+automatically placed cTrader demo OCO group
+`639eefab-6bba-4316-abfa-03595dbb984f`; both minimum-volume legs returned broker
+IDs and pending status. They and the accepted analysis expired terminally at
+10:49 UTC. The unchanged PID `2470326` nevertheless retained
+`OPERATIONAL_RISK_LOCKOUT` and `RECONCILIATION_UNCERTAIN`. The database had zero
+callback journal rows/unresolved rows and only 2 of the configured 20 daily
+groups, isolating the remaining failure to a callback normalization or
+persistence exception before insertion. Both database controls were reactivated
+before further development.
+
+ISSUE-029 introduces a diagnostic-only immutable `.7` boundary. Recorder
+exceptions remain fail closed, but an allowlisted stable reason, processing
+stage, execution/order enums, and field-presence booleans are sent to the local
+structured log and Better Stack and included in status. Raw broker payloads,
+labels, client/broker IDs, and untrusted database error text are excluded by
+construction and negative tests. `.7` does not claim to fix or clear the broker
+exception; issue #59 remains open until the observed shape is corrected and a
+terminal same-PID automatic repeat is demonstrated.
+
+The `.7` observation release passes Prettier, ESLint, TypeScript
+typecheck/build, 148 Node tests across 29 files, 12 JSON Schema tests, 3 static
+migration tests, all 3 configured isolated-PostgreSQL tests, Ruff format/lint,
+strict mypy over 19 source files, 43 Python tests, replay/backtest smoke tests,
+npm/pip audits with zero known vulnerabilities, secret and shell checks, and
+all five offline systemd security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
