@@ -264,3 +264,14 @@ passed; the new provenance row exists and demo group/order/fill/active-position
 and unresolved-event counts remained zero. The slowest startup reconciliation
 audit reached `DELIVERED` on attempt five and left zero Better Stack backlog.
 No post-deployment cycle or broker command was invoked.
+
+A fresh post-ISSUE-020 acknowledgement authorized one capped manual cycle. The
+stopped preflight accepted complete 600/500/300 candles, continuous depth,
+strict analytics, current risk/caps, empty execution state, and a 9-point spread
+at percentile `66.4`. Analysis `4033a032-19d7-449d-b9c2-4a949004b091` captured
+an 11-point spread and rejected with `SPREAD_POINTS_EXCEEDED` and
+`SPREAD_PERCENTILE_EXCEEDED` before any model request, risk decision, intent, or
+broker command. The stop trap, cancellation/reconciliation, environment reset,
+zero execution-state checks, and all six first-attempt Better Stack deliveries
+passed. The complete required Node/Python/integration/schema/migration,
+replay/backtest, dependency, secret, shell, and systemd gate suite also passed.

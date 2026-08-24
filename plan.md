@@ -240,6 +240,21 @@ never justify empty, noisy, unsafe, or misleading commits.
   configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
   tests, replay/backtest smoke tests, both dependency audits, secret and shell
   checks, and all five offline systemd security parses at 2.8 (`OK`).
+  After ISSUE-020 merged and deployed, another fresh acknowledgement authorized
+  one capped post-fix cycle. The stopped preflight accepted complete
+  600/500/300 candles, continuous depth, strict analytics, current daily risk
+  and caps, empty durable execution state, and a 9-point spread at percentile
+  `66.4`. Analysis `4033a032-19d7-449d-b9c2-4a949004b091` then captured an
+  11-point spread; absolute and adaptive percentile protection rejected it
+  before any model request, risk decision, intent, or broker command. The stop
+  trap fired, cancellation/reconciliation was certain, demo enablement and the
+  acknowledgement were cleared, both stops were restored, and orders, fills,
+  active positions, and unresolved events remained zero. All six correlated
+  audit events reached Better Stack on their first attempt. Automatic analysis
+  remains off because no supervised broker order lifecycle has yet occurred.
+  The documentation checkpoint passed the complete 123-Node-test, configured
+  integration, schema/migration, 30-Python-test, replay/backtest, dependency,
+  secret, shell, and offline-systemd gate suite.
 
 ### ISSUE-002 delivery details
 
