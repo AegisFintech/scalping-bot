@@ -14,8 +14,11 @@ describe("cTrader depth book", () => {
         deletedQuotes: [],
       },
       new Date("2026-01-01T00:00:00Z"),
+      new Date("2026-01-01T00:00:00.250Z"),
     );
     expect(book.snapshot(1, new Date("2026-01-01T00:00:01Z"))).toMatchObject({
+      sourceTime: "2026-01-01T00:00:00.000Z",
+      receivedAt: "2026-01-01T00:00:00.250Z",
       bids: [{ price: "2000", size: "1" }],
       asks: [{ price: "2000.1", size: "2" }],
       complete: true,
@@ -23,5 +26,16 @@ describe("cTrader depth book", () => {
     });
     book.markReconnect();
     expect(() => book.snapshot(1)).toThrow("CTRADER_DEPTH_UNAVAILABLE");
+  });
+
+  it("rejects invalid source or receive timestamps", () => {
+    const book = new CTraderDepthBook();
+    expect(() =>
+      book.apply(
+        { newQuotes: [], deletedQuotes: [] },
+        new Date("invalid"),
+        new Date(),
+      ),
+    ).toThrow("CTRADER_DEPTH_TIMESTAMP_INVALID");
   });
 });

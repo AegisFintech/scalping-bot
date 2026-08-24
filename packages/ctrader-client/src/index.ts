@@ -4,3 +4,4 @@ export * from "./protocol.js";
 export * from "./token-manager.js";
 export * from "./token-store.js";
 export * from "./transport.js";
+export * from "./trading-schedule.js";

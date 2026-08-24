@@ -32,6 +32,7 @@ export class CTraderDepthBook {
   readonly #quotes = new Map<string, DepthQuote>();
   readonly #samples: BookSample[] = [];
   #updatedAt: Date | null = null;
+  #receivedAt: Date | null = null;
   #reconnectSequence = 0;
   #discontinuity = true;
 
@@ -40,9 +41,20 @@ export class CTraderDepthBook {
     this.#reconnectSequence += 1;
     this.#discontinuity = true;
     this.#updatedAt = null;
+    this.#receivedAt = null;
   }
 
-  apply(payload: Record<string, unknown>, receivedAt = new Date()): void {
+  apply(
+    payload: Record<string, unknown>,
+    sourceAt = new Date(),
+    receivedAt = sourceAt,
+  ): void {
+    if (
+      !Number.isFinite(sourceAt.getTime()) ||
+      !Number.isFinite(receivedAt.getTime())
+    ) {
+      throw new Error("CTRADER_DEPTH_TIMESTAMP_INVALID");
+    }
     const deleted = Array.isArray(payload.deletedQuotes)
       ? payload.deletedQuotes
       : [];
@@ -66,7 +78,8 @@ export class CTraderDepthBook {
       if (!this.#quotes.has(id)) additions += 1;
       this.#quotes.set(id, quote);
     }
-    this.#updatedAt = receivedAt;
+    this.#updatedAt = sourceAt;
+    this.#receivedAt = receivedAt;
     if (this.bids.length > 0 && this.asks.length > 0)
       this.#discontinuity = false;
     this.#samples.push({
@@ -100,12 +113,13 @@ export class CTraderDepthBook {
   }
 
   snapshot(depth: number, now = new Date()): OrderBookSnapshot {
-    if (this.#updatedAt === null) throw new Error("CTRADER_DEPTH_UNAVAILABLE");
+    if (this.#updatedAt === null || this.#receivedAt === null)
+      throw new Error("CTRADER_DEPTH_UNAVAILABLE");
     const bids = this.bids.slice(0, depth);
     const asks = this.asks.slice(0, depth);
     return {
       sourceTime: this.#updatedAt.toISOString(),
-      receivedAt: now.toISOString(),
+      receivedAt: this.#receivedAt.toISOString(),
       bids: bids.map((quote) => ({
         price: canonical(quote.price),
         size: canonical(quote.size),

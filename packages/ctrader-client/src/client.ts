@@ -29,6 +29,11 @@ import {
 import type { CTraderTokenManager } from "./token-manager.js";
 import { CTraderJsonTransport } from "./transport.js";
 import type { CTraderTransportOptions } from "./transport.js";
+import {
+  markBrokerSessionGaps,
+  type WeeklyTradingSchedule,
+  weeklyTradingSchedule,
+} from "./trading-schedule.js";
 
 const PERIOD: Readonly<
   Record<Timeframe, { code: number; milliseconds: number }>
@@ -243,6 +248,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   readonly #quotes = new Map<string, QuoteState>();
   readonly #books = new Map<string, CTraderDepthBook>();
   readonly #metadata = new Map<string, SymbolMetadata>();
+  readonly #schedules = new Map<string, WeeklyTradingSchedule>();
   readonly #subscribedSpots = new Set<string>();
   readonly #subscribedDepth = new Set<string>();
   readonly #executionHandlers = new Set<ExecutionHandler>();
@@ -523,6 +529,13 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       (candidate) => stringField(candidate, "symbolId") === symbolId,
     );
     if (full === undefined) throw new Error("CTRADER_SYMBOL_METADATA_MISSING");
+    const schedule = weeklyTradingSchedule(
+      stringField(full, "scheduleTimeZone"),
+      recordsField(full, "schedule").map((interval) => ({
+        startSecond: numberField(interval, "startSecond"),
+        endSecond: numberField(interval, "endSecond"),
+      })),
+    );
     const digits = numberField(full, "digits");
     if (!Number.isSafeInteger(digits) || digits < 0 || digits > 10)
       throw new Error("CTRADER_SYMBOL_DIGITS_INVALID");
@@ -579,6 +592,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       metadataTime: new Date().toISOString(),
     };
     this.#metadata.set(symbolId, metadata);
+    this.#schedules.set(symbolId, schedule);
     return metadata;
   }
 
@@ -695,7 +709,10 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       .slice(-count);
     if (candles.length !== count)
       throw new Error("CTRADER_COMPLETED_CANDLES_INSUFFICIENT");
-    return candles;
+    const schedule = this.#schedules.get(symbolId);
+    if (schedule === undefined)
+      throw new Error("CTRADER_SYMBOL_SCHEDULE_UNAVAILABLE");
+    return markBrokerSessionGaps(candles, period.milliseconds, schedule);
   }
 
   async expectedMargin(
@@ -914,8 +931,10 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       });
     } else if (message.payloadType === CTraderPayload.DEPTH_EVENT) {
       const symbolId = stringField(message.payload, "symbolId");
+      const sourceTime = this.#lastServerTime;
+      if (sourceTime === null) return;
       const book = this.#books.get(symbolId) ?? new CTraderDepthBook();
-      book.apply(message.payload);
+      book.apply(message.payload, sourceTime, new Date());
       this.#books.set(symbolId, book);
     } else if (message.payloadType === CTraderPayload.EXECUTION_EVENT) {
       const execution = this.#parseExecution(message);

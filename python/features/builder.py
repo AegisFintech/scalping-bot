@@ -16,6 +16,8 @@ from python.indicators import (
     rsi_wilder,
 )
 
+BROKER_SESSION_GAP_BEFORE = "BROKER_SESSION_GAP_BEFORE"
+
 
 @dataclass(frozen=True)
 class NumericBar:
@@ -194,6 +196,9 @@ def _timeframe_features(series: CandleSeries, request: AnalyticsRequest) -> dict
     )
     rolling = candles[-min(20, len(candles)) :]
     output: dict[str, object] = {
+        "session_gap_count": sum(
+            BROKER_SESSION_GAP_BEFORE in candle.quality_flags for candle in candles
+        ),
         "latest": {
             "start_time": candles[-1].start_time.isoformat(),
             "end_time": candles[-1].end_time.isoformat(),

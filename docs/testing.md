@@ -2,7 +2,7 @@
 
 ## Layers
 
-Unit tests cover ATR Wilder(15), EMA(5/19), optional indicators, Decimal canonicalization, compact features, schema/semantic validation, risk/volume/reward, daily boundaries, freshness, OCO/expiry, confidence adjustment, and redaction.
+Unit tests cover ATR Wilder(15), EMA(5/19), optional indicators, Decimal canonicalization, compact features, schema/semantic validation, risk/volume/reward, daily boundaries, freshness, OCO/expiry, confidence adjustment, and redaction. cTrader schedule tests distinguish weekly closures from missing open-session bars, reject malformed/overlapping schedules, and verify separate broker-source/local-receive depth timestamps. Analytics rejects unmarked gaps, overlaps, misplaced/unknown markers, and unbounded marked gaps.
 
 Integration tests cover Node/Python HTTP contracts, PostgreSQL migrations/constraints/transactions, AI mock variants, cTrader mock auth/events/reconciliation, paper lifecycle, reconnect/restart, and Better Stack transport failure.
 Daily-risk coverage includes paper/demo identity isolation, empty deal-history
@@ -48,9 +48,9 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 82 Node unit
-tests across 25 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
-analytics and dashboard code, 19 Python tests,
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 90 Node unit
+tests across 26 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
+analytics and dashboard code, 25 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
 passed. TLS connectivity and all six migrations passed inside isolated Neon
@@ -91,3 +91,10 @@ authenticated cycle under environment emergency stop returned `REJECTED`,
 `EMERGENCY_STOP_ENV`, and no placement. Demo journal/order/active-position/fill
 counts stayed zero. Dashboard health returned `ok`, and its configured AppTest
 rendered four charts with zero exceptions.
+
+A credentialed ISSUE-014 read-only probe ran with broker order commands disabled
+and execution emergency-stopped. The broker's exact schedule/timezone parsed;
+600 M1, 500 M5, and 300 M15 completed candles contained 1, 2, and 3 trusted
+weekly-session gaps. The updated analytics service accepted the snapshot with
+no rejection and exposed those counts. This is demo market-data validation, not
+an order, fill, paper result, backtest, or profitability evidence.

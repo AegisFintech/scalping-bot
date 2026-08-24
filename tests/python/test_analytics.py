@@ -126,3 +126,92 @@ def test_price_must_be_a_decimal_string() -> None:
     payload["candles"][0]["candles"][0]["open"] = 2000.0  # type: ignore[index]
     with pytest.raises(ValidationError):
         AnalyticsRequest.model_validate(payload)
+
+
+def test_broker_session_gap_is_accepted_and_counted() -> None:
+    payload = request_payload()
+    candles = payload["candles"][0]["candles"]  # type: ignore[index]
+    for item in candles[20:]:
+        item["startTime"] = (  # type: ignore[index]
+            datetime.fromisoformat(str(item["startTime"])) + timedelta(days=2)
+        ).isoformat()
+        item["endTime"] = (  # type: ignore[index]
+            datetime.fromisoformat(str(item["endTime"])) + timedelta(days=2)
+        ).isoformat()
+    candles[20]["qualityFlags"] = ["BROKER_SESSION_GAP_BEFORE"]  # type: ignore[index]
+    payload["analysisTime"] = (  # type: ignore[index]
+        datetime.fromisoformat(str(payload["analysisTime"])) + timedelta(days=2)
+    ).isoformat()
+
+    response = analyze(AnalyticsRequest.model_validate(payload))
+
+    assert response.acceptable
+    assert response.features["timeframes"]["M1"]["session_gap_count"] == 1  # type: ignore[index]
+
+
+def test_unmarked_gap_still_fails_closed() -> None:
+    payload = request_payload()
+    candles = payload["candles"][0]["candles"]  # type: ignore[index]
+    candles[20]["startTime"] = (  # type: ignore[index]
+        datetime.fromisoformat(str(candles[20]["startTime"])) + timedelta(minutes=1)
+    ).isoformat()
+    candles[20]["endTime"] = (  # type: ignore[index]
+        datetime.fromisoformat(str(candles[20]["endTime"])) + timedelta(minutes=1)
+    ).isoformat()
+
+    response = analyze(AnalyticsRequest.model_validate(payload))
+
+    assert not response.acceptable
+    assert "M1_GAP_OR_OVERLAP" in response.rejection_reasons
+
+
+@pytest.mark.parametrize("position", [0, 1])
+def test_misplaced_session_gap_marker_fails_closed(position: int) -> None:
+    payload = request_payload()
+    candles = payload["candles"][0]["candles"]  # type: ignore[index]
+    candles[position]["qualityFlags"] = ["BROKER_SESSION_GAP_BEFORE"]  # type: ignore[index]
+
+    response = analyze(AnalyticsRequest.model_validate(payload))
+
+    assert not response.acceptable
+    assert "M1_SESSION_GAP_FLAG_INVALID" in response.rejection_reasons
+
+
+def test_session_marker_cannot_hide_overlap_or_unknown_quality_flag() -> None:
+    payload = request_payload()
+    candles = payload["candles"][0]["candles"]  # type: ignore[index]
+    candles[20]["startTime"] = candles[19]["startTime"]  # type: ignore[index]
+    candles[20]["endTime"] = candles[19]["endTime"]  # type: ignore[index]
+    candles[20]["qualityFlags"] = [  # type: ignore[index]
+        "BROKER_SESSION_GAP_BEFORE",
+        "UNTRUSTED_FLAG",
+    ]
+
+    response = analyze(AnalyticsRequest.model_validate(payload))
+
+    assert not response.acceptable
+    assert "M1_GAP_OR_OVERLAP" in response.rejection_reasons
+    assert "M1_SESSION_GAP_FLAG_INVALID" in response.rejection_reasons
+    assert "M1_QUALITY_FLAG_INVALID" in response.rejection_reasons
+
+
+def test_session_marker_cannot_hide_an_unbounded_gap() -> None:
+    payload = request_payload()
+    candles = payload["candles"][0]["candles"]  # type: ignore[index]
+    for item in candles[20:]:
+        item["startTime"] = (  # type: ignore[index]
+            datetime.fromisoformat(str(item["startTime"])) + timedelta(days=15)
+        ).isoformat()
+        item["endTime"] = (  # type: ignore[index]
+            datetime.fromisoformat(str(item["endTime"])) + timedelta(days=15)
+        ).isoformat()
+    candles[20]["qualityFlags"] = ["BROKER_SESSION_GAP_BEFORE"]  # type: ignore[index]
+    payload["analysisTime"] = (  # type: ignore[index]
+        datetime.fromisoformat(str(payload["analysisTime"])) + timedelta(days=15)
+    ).isoformat()
+
+    response = analyze(AnalyticsRequest.model_validate(payload))
+
+    assert not response.acceptable
+    assert "M1_GAP_OR_OVERLAP" in response.rejection_reasons
+    assert "M1_SESSION_GAP_FLAG_INVALID" in response.rejection_reasons

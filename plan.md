@@ -152,6 +152,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
 | ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)     | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
 | ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
+| ISSUE-014 | in progress | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)         | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -180,9 +181,13 @@ never justify empty, noisy, unsafe, or misleading commits.
   [PR #13](https://github.com/AegisFintech/scalping-bot/pull/13); no provenance
   row was rewritten. The deployed process now reports startup recovery passed,
   automatic analysis off, demo trading disabled, and environment emergency stop
-  active. A stopped authenticated cycle rejected with `EMERGENCY_STOP_ENV`; the
-  demo journal/order/active-position/fill counts remain zero. Awaiting the
-  operator's exact demo acknowledgement before the supervised enablement window.
+  active. The operator supplied the exact demo acknowledgement for one bounded
+  window. Its single authenticated cycle rejected before AI/risk/intent on
+  broker-session candle gaps and an order-book timestamp ordering error. No
+  order was attempted, and journal/order/active-position/fill counts remained
+  zero. The acknowledgement was cleared and both emergency-stop sources were
+  restored. A new exact acknowledgement is required for any later order-capable
+  cycle after ISSUE-014 is deployed.
 
 ### ISSUE-002 delivery details
 
@@ -259,6 +264,25 @@ never justify empty, noisy, unsafe, or misleading commits.
   AppTest rendered four charts with no exception. Execution remained in demo
   mode with submission disabled and emergency stop active throughout.
 
+### ISSUE-014 delivery details
+
+- Acceptance criteria: parse and validate the broker's exact weekly symbol
+  schedule/timezone; mark only gaps wholly outside a session; reject open-session
+  missing bars, overlaps, unknown/misplaced markers, stale/incomplete depth, and
+  future source timestamps; use broker time for depth; expose per-timeframe gap
+  counts; and prove the configured demo snapshot through analytics without
+  enabling execution.
+- Dependencies: cTrader `ProtoOASymbol.schedule`/`scheduleTimeZone`, trendbar and
+  spot/depth timestamp semantics, the typed market/analytics boundary, and the
+  existing stopped demo account.
+- Current status: implementation and failure tests are in progress on
+  `fix/issue-014-session-aware-snapshots`. A credentialed read-only probe with
+  broker command submission structurally disabled returned 600 M1, 500 M5, and
+  300 M15 completed candles. The adapter marked 1, 2, and 3 broker-session gaps,
+  respectively; strict updated analytics accepted the snapshot with no
+  rejection. All required local quality/security gates passed; PR review/merge,
+  deployment, and stopped post-deploy validation remain.
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.
@@ -277,6 +301,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   This broker feed did not supply the configured default 20 depth levels, so
   the protected local configuration uses four. Capital-flow classifications,
   order event fields, fills, and demo OCO races still need supervised validation.
+- Weekly broker sessions are authoritative for closure-gap markers. Broker
+  holiday overrides are not yet modeled; a holiday that falls inside an
+  otherwise open weekly session therefore remains unmarked and fails closed.
 - A quote/deposit currency conversion provider is not configured; mismatched
   currencies fail closed.
 - Only the execution service currently emits rotating/Better Stack logs and
@@ -319,11 +346,11 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 25 files, 82 tests passed.
+- [x] `npm test`: 26 files, 90 tests passed.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-to-`0006` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
-- [x] Ruff format/check, mypy, and pytest: 19 Python tests passed.
+- [x] Ruff format/check, mypy, and pytest: 25 Python tests passed.
 - [x] Checked-in replay and conservative backtest CLI smoke commands completed successfully.
 - [x] `pip-audit -r requirements.lock`: no known vulnerabilities.
 - [x] Secret scan and shell syntax checks passed.
