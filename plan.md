@@ -493,7 +493,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   integration tests, Ruff format/lint, mypy, 30 Python tests, replay/backtest,
   both dependency audits, secret and shell checks, and all five offline systemd
   security parses at 2.8 (`OK`) pass. Review, merge, and stopped deployment
-  remain pending.
+  remain pending in
+  [PR #36](https://github.com/AegisFintech/scalping-bot/pull/36).
 
 ## Acceptance criteria
 
