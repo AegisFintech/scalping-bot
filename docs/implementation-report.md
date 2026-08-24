@@ -58,7 +58,7 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 26 files, 90 tests passed.
+- Node unit: 26 files, 91 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
   (3 tests total), including fresh migration and `0005`-to-`0006` upgrade paths.
   The temporary schemas were dropped afterward.
@@ -69,7 +69,7 @@ pinned to Node 22 and still needs validation on that runtime.
   fresh/upgrade testing and is applied to the configured Neon schema. The
   stopped migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
-- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 25 tests passed.
+- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 30 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
 - Secret scan and shell syntax checks passed.
@@ -195,6 +195,27 @@ accepted it with no rejection; depth was complete/continuous and its broker
 source timestamp preceded final server time. A read-only database check found
 zero cTrader demo execution events, orders, active positions, and fills. No
 execution cycle or order endpoint was invoked during deployment validation.
+
+The operator supplied a fresh exact acknowledgement for one subsequent bounded
+demo cycle. Preflight passed with strict analytics, a nine-point spread below
+the ten-point cap, minimum notional below the 5,500 USD cap, zero daily loss,
+and empty broker/local execution state. The cycle created no intent or order: it
+failed closed at deterministic spread validation with `SPREAD_INPUT_INVALID`.
+Persisted evidence isolated the input contract mismatch: M1 ATR was
+`2.840095457306321069040301509` in analytics features while the risk boundary
+permits at most ten fractional digits; PostgreSQL independently stored the
+numeric value as `2.8400954573`. Automatic post-cycle emergency-stop cleanup
+reconciled successfully. Demo enablement/acknowledgement were cleared, both
+stops were restored, and execution-event/group/order/active-position/fill counts
+remained zero.
+
+ISSUE-015 canonicalizes derived analytics decimals to ten fractional places
+with deterministic toward-zero truncation and explicit non-finite rejection.
+Focused Python/risk tests pass. A credentialed stopped snapshot produced M1 ATR
+`2.9329720428`; strict analytics accepted the request and the deterministic
+absolute/ATR spread validator approved its six-point spread. No order-capable
+cycle was invoked for this validation. The complete local quality, integration,
+replay/backtest, security, and dependency gate suite passed.
 
 ## Shadow-mode setup
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal, localcontext
 from itertools import pairwise
 
 from python.analytics.models import AnalyticsRequest, Candle, CandleSeries, OrderBookLevel
@@ -17,6 +17,8 @@ from python.indicators import (
 )
 
 BROKER_SESSION_GAP_BEFORE = "BROKER_SESSION_GAP_BEFORE"
+DECIMAL_PLACES = 10
+DECIMAL_QUANTUM = Decimal("0.0000000001")
 
 
 @dataclass(frozen=True)
@@ -29,7 +31,17 @@ class NumericBar:
 def decimal_text(value: Decimal | None) -> str | None:
     if value is None:
         return None
-    normalized = value.normalize()
+    if not value.is_finite():
+        raise ValueError("ANALYTICS_DECIMAL_NON_FINITE")
+    # Service-boundary decimals share the risk engine's ten-place contract.
+    # ROUND_DOWN truncates toward zero, so a positive ATR/risk input can never
+    # be increased by canonicalization.
+    with localcontext() as context:
+        context.prec = max(
+            40,
+            len(value.as_tuple().digits) + DECIMAL_PLACES + 2,
+        )
+        normalized = value.quantize(DECIMAL_QUANTUM, rounding=ROUND_DOWN).normalize()
     text = format(normalized, "f")
     return "0" if text in {"-0", ""} else text
 

@@ -8,6 +8,12 @@ The AI proposes price scenarios only. Deterministic code owns risk percent, volu
 
 Inputs arrive as canonical decimal strings and are parsed with arbitrary-precision decimal libraries. Binary floating-point is not used to compare execution levels or money. A price is valid only when `price / tick_size` is integral at broker precision.
 
+Analytics feature decimals cross the Node/Python boundary with at most ten
+fractional places. Python truncates toward zero using `Decimal`, matching the
+risk parser's canonical string contract. For positive ATR and volatility inputs,
+truncation cannot increase the value and therefore cannot relax an ATR-relative
+spread or stop-distance check. Non-finite values fail before model or risk work.
+
 ## Position sizing
 
 For one leg:
