@@ -26,6 +26,7 @@ function server(
         accountType: "demo",
         emergencyStopped: true,
         pauseNewAnalyses: false,
+        automaticAnalysisEnabled: false,
         tradingEnabled: false,
         startupChecksPassed: true,
         lastCycle: null,

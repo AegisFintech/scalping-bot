@@ -19,6 +19,7 @@ import {
   stringField,
 } from "../../../packages/ctrader-client/src/protocol.js";
 import { decimal } from "../../../packages/risk-engine/src/decimal.js";
+import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 
 export interface CTraderTradingClient {
   readonly tokenExpiryKnown: boolean;
@@ -57,9 +58,6 @@ interface TrackedGroup {
   readonly orderGroupId: string;
   readonly orders: [TrackedOrder, TrackedOrder];
 }
-
-const DEMO_ACKNOWLEDGEMENT =
-  "I_UNDERSTAND_DEMO_ORDERS_USE_A_BROKER_DEMO_ACCOUNT";
 
 function orderTradeData(
   order: Record<string, unknown>,

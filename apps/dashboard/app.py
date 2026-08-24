@@ -122,6 +122,9 @@ with tabs[0]:
     columns[0].metric("Emergency stop", "ACTIVE" if status.get("emergencyStopped") else "clear")
     columns[1].metric("Analyses paused", "YES" if status.get("pauseNewAnalyses") else "NO")
     columns[2].metric("Startup checks", "passed" if status.get("startupChecksPassed") else "FAILED")
+    columns[3].metric(
+        "Automatic analysis", "ON" if status.get("automaticAnalysisEnabled") else "OFF"
+    )
     try:
         overview = frame(
             """SELECT symbol, mode, state, analysis_time, valid_until, rejection_reasons

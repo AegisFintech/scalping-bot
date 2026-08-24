@@ -33,7 +33,10 @@ import {
   canonical,
   decimal,
 } from "../../../packages/risk-engine/src/decimal.js";
-import { evaluateAnalysisEligibility } from "./safety-gates.js";
+import {
+  evaluateAnalysisEligibility,
+  evaluateAutomaticAnalysisEligibility,
+} from "./safety-gates.js";
 import { AnalysisCoordinator, type CycleResult } from "./coordinator.js";
 import { loadExecutionConfig, safetyConfigHash } from "./config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
@@ -328,7 +331,7 @@ async function main(): Promise<void> {
     baseRiskPercent: config.baseRiskPercent,
     maxRiskPercent: config.maxRiskPercent,
     maxMarginUsagePercent: environment.MAX_MARGIN_USAGE_PERCENT ?? "30",
-    maxPositionNotional: optionalDecimal(environment.MAX_POSITION_NOTIONAL),
+    maxPositionNotional: config.maxPositionNotional,
     strategyVersion,
   });
   const trail = new PostgresDecisionTrail({
@@ -506,7 +509,6 @@ async function main(): Promise<void> {
   const accountEquityFloor = optionalDecimal(environment.ACCOUNT_EQUITY_FLOOR);
   if (accountEquityFloor !== null)
     decimal(accountEquityFloor, "ACCOUNT_EQUITY_FLOOR_INVALID");
-  const maxOrdersPerDay = integer(environment, "MAX_ORDERS_PER_DAY", 0);
   let cashFlowCache: {
     readonly dayStart: string;
     readonly capturedAt: number;
@@ -723,7 +725,7 @@ async function main(): Promise<void> {
         (accountEquityFloor !== null &&
           (!state.certain ||
             new Decimal(state.equity).lt(accountEquityFloor))) ||
-        (maxOrdersPerDay > 0 && ordersToday >= maxOrdersPerDay),
+        (config.maxOrdersPerDay > 0 && ordersToday >= config.maxOrdersPerDay),
       aiCircuitOpen: model.circuitOpen,
       symbolMetadataValid: latestSnapshot !== null,
       aiResponseValid: false,
@@ -818,6 +820,7 @@ async function main(): Promise<void> {
         current.filesystemEmergencyStop ||
         current.databaseEmergencyStop,
       pauseNewAnalyses: current.pauseNewAnalyses,
+      automaticAnalysisEnabled: config.automaticAnalysisEnabled,
       tradingEnabled:
         eligibility.allowed &&
         gateway.canSubmitToBroker &&
@@ -980,7 +983,12 @@ async function main(): Promise<void> {
         current.dailyLossLockout
       ) {
         await maintenance.cancelAll("AUTOMATIC_SAFETY_CANCELLATION");
-      } else if (evaluateAnalysisEligibility(current).allowed) {
+      } else if (
+        evaluateAutomaticAnalysisEligibility(
+          current,
+          config.automaticAnalysisEnabled,
+        ).allowed
+      ) {
         lastCycle = await coordinator.runOnce();
       }
     } catch (error) {

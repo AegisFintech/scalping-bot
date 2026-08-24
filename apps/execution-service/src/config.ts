@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 
+import { Decimal } from "decimal.js";
+
 import type { TradingMode } from "../../../packages/contracts/src/index.js";
+import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 
 export interface ExecutionConfig {
   readonly appEnv: string;
@@ -16,6 +19,7 @@ export interface ExecutionConfig {
   readonly emergencyStopFile: string;
   readonly liveEnablementFile: string;
   readonly pauseNewAnalyses: boolean;
+  readonly automaticAnalysisEnabled: boolean;
   readonly symbol: string;
   readonly accountKey: string;
   readonly baseRiskPercent: string;
@@ -24,6 +28,8 @@ export interface ExecutionConfig {
   readonly maxQuoteAgeMs: number;
   readonly maxOrderBookAgeMs: number;
   readonly maxMetadataAgeMs: number;
+  readonly maxOrdersPerDay: number;
+  readonly maxPositionNotional: string | null;
 }
 
 function booleanValue(
@@ -65,6 +71,23 @@ function decimalPercent(
   return text;
 }
 
+function optionalPositiveDecimal(
+  value: string | undefined,
+  name: string,
+): string | null {
+  if (value === undefined || value === "") return null;
+  try {
+    if (!/^\d+(?:\.\d+)?$/.test(value))
+      throw new Error(`CONFIG_DECIMAL_INVALID:${name}`);
+    const parsed = new Decimal(value);
+    if (!parsed.isFinite() || parsed.lte(0))
+      throw new Error(`CONFIG_DECIMAL_INVALID:${name}`);
+    return value;
+  } catch {
+    throw new Error(`CONFIG_DECIMAL_INVALID:${name}`);
+  }
+}
+
 export function loadExecutionConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): ExecutionConfig {
@@ -77,6 +100,29 @@ export function loadExecutionConfig(
   const symbol = environment.TRADING_SYMBOL ?? "XAUUSD";
   if (!/^[A-Z0-9._-]{1,32}$/.test(symbol))
     throw new Error("CONFIG_SYMBOL_INVALID");
+  const demoTradingEnabled = booleanValue(
+    environment.DEMO_TRADING_ENABLED,
+    false,
+    "DEMO_TRADING_ENABLED",
+  );
+  const demoAcknowledgement = environment.DEMO_TRADING_ACKNOWLEDGEMENT ?? "";
+  const maxOrdersPerDay = integerValue(
+    environment.MAX_ORDERS_PER_DAY,
+    0,
+    "MAX_ORDERS_PER_DAY",
+  );
+  const maxPositionNotional = optionalPositiveDecimal(
+    environment.MAX_POSITION_NOTIONAL,
+    "MAX_POSITION_NOTIONAL",
+  );
+  if (mode === "demo" && demoTradingEnabled) {
+    if (demoAcknowledgement !== DEMO_ACKNOWLEDGEMENT)
+      throw new Error("CONFIG_DEMO_ACKNOWLEDGEMENT_REQUIRED");
+    if (maxOrdersPerDay < 1)
+      throw new Error("CONFIG_DEMO_ORDER_LIMIT_REQUIRED");
+    if (maxPositionNotional === null)
+      throw new Error("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
+  }
   return {
     appEnv: environment.APP_ENV ?? "development",
     instanceId: environment.INSTANCE_ID ?? "local-1",
@@ -89,12 +135,8 @@ export function loadExecutionConfig(
       "LIVE_TRADING_ENABLED",
     ),
     liveAcknowledgement: environment.LIVE_TRADING_ACKNOWLEDGEMENT ?? "",
-    demoTradingEnabled: booleanValue(
-      environment.DEMO_TRADING_ENABLED,
-      false,
-      "DEMO_TRADING_ENABLED",
-    ),
-    demoAcknowledgement: environment.DEMO_TRADING_ACKNOWLEDGEMENT ?? "",
+    demoTradingEnabled,
+    demoAcknowledgement,
     emergencyStop: booleanValue(
       environment.EMERGENCY_STOP,
       true,
@@ -108,6 +150,11 @@ export function loadExecutionConfig(
       environment.PAUSE_NEW_ANALYSES,
       false,
       "PAUSE_NEW_ANALYSES",
+    ),
+    automaticAnalysisEnabled: booleanValue(
+      environment.AUTOMATIC_ANALYSIS_ENABLED,
+      false,
+      "AUTOMATIC_ANALYSIS_ENABLED",
     ),
     symbol,
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
@@ -144,6 +191,8 @@ export function loadExecutionConfig(
       86_400_000,
       "SYMBOL_METADATA_MAX_AGE_MS",
     ),
+    maxOrdersPerDay,
+    maxPositionNotional,
   };
 }
 
@@ -162,6 +211,9 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         maxQuoteAgeMs: config.maxQuoteAgeMs,
         maxOrderBookAgeMs: config.maxOrderBookAgeMs,
         maxMetadataAgeMs: config.maxMetadataAgeMs,
+        maxOrdersPerDay: config.maxOrdersPerDay,
+        maxPositionNotional: config.maxPositionNotional,
+        automaticAnalysisEnabled: config.automaticAnalysisEnabled,
       }),
     )
     .digest("hex");

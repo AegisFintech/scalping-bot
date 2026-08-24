@@ -38,6 +38,17 @@ deleting it. An unresolved partial fill, unknown state, history pagination,
 missing local intent, or closed-trade mapping pending requires emergency stop
 plus operator reconciliation. Never delete journal rows to clear readiness.
 
+For the first supervised session, keep `AUTOMATIC_ANALYSIS_ENABLED=false`, set
+`MAX_ORDERS_PER_DAY=1`, and configure a broker-reviewed positive
+`MAX_POSITION_NOTIONAL` that permits no more than the intended minimum-volume
+position at the current XAUUSD price. The process refuses demo-enabled startup
+when the exact demo acknowledgement or either hard cap is missing. Confirm the
+dashboard reports automatic analysis `OFF`; trigger only one authenticated
+loopback cycle. Immediately reactivate emergency stop after the observation,
+cancel strategy-owned pending orders through the protected control, reconcile,
+and restore `DEMO_TRADING_ENABLED=false` plus an empty acknowledgement before
+leaving the session unattended.
+
 Closing-deal commission, swap, and conversion-fee signs remain broker-specific
 and unverified in this release. The first closing event is retained but blocks
 new placement with `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until its supervised,

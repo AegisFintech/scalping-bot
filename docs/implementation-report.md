@@ -58,7 +58,7 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 25 files, 80 tests passed.
+- Node unit: 25 files, 82 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
   (3 tests total), including fresh migration and `0005`-to-`0006` upgrade paths.
   The temporary schemas were dropped afterward.
@@ -108,8 +108,10 @@ layout before live-readiness review.
 4. Complete replay and paper checks. Inspect discovered symbol metadata, quote,
    candles, depth, daily baseline, reconciliation, and dashboard mode labels.
 5. For a supervised demo-order session only, set `TRADING_MODE=demo`,
-   `DEMO_TRADING_ENABLED=true`, and the exact documented demo acknowledgement.
-   Clear each emergency-stop source deliberately after reconciliation.
+   `DEMO_TRADING_ENABLED=true`, the exact documented demo acknowledgement, a
+   positive daily order-group limit, and a positive per-position notional cap.
+   Keep automatic analysis off, then clear each emergency-stop source
+   deliberately after reconciliation and invoke one authenticated cycle.
 6. Observe token renewal, placement, OCO peer cancellation, partial fills,
    expiry, restart, and reconciliation. Re-enable the stop after the session.
 
@@ -122,6 +124,12 @@ the stable account state and cash-flow history were sampled twice; and the
 one-time daily-risk baseline plus audit event committed. The feed exposed no live
 account and did not supply 20 depth levels per side. No analysis or demo order
 was created; supervised placement/OCO/cancellation testing remains pending.
+
+The supervised-demo guardrail checkpoint defaults automatic analysis off while
+retaining maintenance/reconciliation, exposes that state in status/Streamlit,
+and rejects demo-enabled startup unless the exact acknowledgement plus daily
+order-group and per-position notional caps are present. It does not enable demo
+submission or clear an emergency stop.
 
 ## Shadow-mode setup
 

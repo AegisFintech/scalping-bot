@@ -48,7 +48,7 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 80 Node unit
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 82 Node unit
 tests across 25 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
 analytics and dashboard code, 19 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
@@ -79,3 +79,8 @@ After PR #9 merged, `scalper-dashboard` was restarted from `main`. The local
 Streamlit health endpoint returned `ok`; the configured AppTest again rendered
 four charts with zero exceptions. Execution status remained `demo` with startup
 checks passed, trading disabled, and emergency stop active.
+
+The supervised-demo scheduler/cap checkpoint adds positive and rejection tests
+for manual-by-default analysis and for the exact acknowledgement, daily
+order-group limit, and per-position notional limit required by demo-enabled
+startup. The full gate rerun above passed with demo submission still disabled.

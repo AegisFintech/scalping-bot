@@ -195,6 +195,16 @@ export function evaluateAnalysisEligibility(
   return { allowed: reasons.length === 0, reasonCodes: reasons.sort() };
 }
 
+export function evaluateAutomaticAnalysisEligibility(
+  input: SafetyGateInput,
+  automaticAnalysisEnabled: boolean,
+): SafetyGateResult {
+  if (!automaticAnalysisEnabled) {
+    return { allowed: false, reasonCodes: ["AUTOMATIC_ANALYSIS_DISABLED"] };
+  }
+  return evaluateAnalysisEligibility(input);
+}
+
 export function evaluatePlacementEligibility(
   input: SafetyGateInput,
 ): SafetyGateResult {
