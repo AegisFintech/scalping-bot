@@ -39,14 +39,22 @@ const candle: Candle = {
 function adapter(
   quote: Quote,
   orderBook: OrderBookSnapshot,
+  serverTime = "2026-08-24T00:00:00.100Z",
+  calls?: string[],
 ): MarketDataAdapter {
   return {
     connect: vi.fn(() => Promise.resolve()),
     disconnect: vi.fn(() => Promise.resolve()),
-    getServerTime: vi.fn(() => Promise.resolve("2026-08-24T00:00:00.000Z")),
+    getServerTime: vi.fn(() => {
+      calls?.push("server-time");
+      return Promise.resolve(serverTime);
+    }),
     discoverSymbol: vi.fn(() => Promise.resolve(metadata)),
     getCompletedCandles: vi.fn(() => Promise.resolve([candle])),
-    getOrderBookSnapshot: vi.fn(() => Promise.resolve(orderBook)),
+    getOrderBookSnapshot: vi.fn(() => {
+      calls?.push("order-book");
+      return Promise.resolve(orderBook);
+    }),
     getQuote: vi.fn(() => Promise.resolve(quote)),
   };
 }
@@ -126,6 +134,89 @@ describe("market-data freshness", () => {
 
     expect(response.statusCode).toBe(503);
     expect(response.json()).toMatchObject({ reason: "MARKET_QUOTE_STALE" });
+    await app.close();
+  });
+
+  it("captures final server time after snapshot components", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.parse("2026-08-24T00:00:00.100Z"),
+    );
+    const calls: string[] = [];
+    const value = adapter(
+      {
+        bid: "4499.99",
+        ask: "4500.01",
+        sourceTime: "2026-08-24T00:00:00.050Z",
+        receivedAt: "2026-08-24T00:00:00.080Z",
+      },
+      orderBook,
+      "2026-08-24T00:00:00.100Z",
+      calls,
+    );
+    const app = createMarketDataServer({
+      adapter: value,
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/snapshot",
+      payload: {
+        symbol: "XAUUSD",
+        counts: { M1: 1, M5: 1, M15: 1 },
+        depth: 1,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(calls.indexOf("server-time")).toBeGreaterThan(
+      calls.indexOf("order-book"),
+    );
+    await app.close();
+  });
+
+  it.each([
+    ["quote", "2026-08-24T00:00:00.101Z", orderBook],
+    [
+      "book",
+      "2026-08-24T00:00:00.050Z",
+      { ...orderBook, sourceTime: "2026-08-24T00:00:00.101Z" },
+    ],
+  ])("rejects a future %s source timestamp", async (_kind, quoteTime, book) => {
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.parse("2026-08-24T00:00:00.100Z"),
+    );
+    const app = createMarketDataServer({
+      adapter: adapter(
+        {
+          bid: "4499.99",
+          ask: "4500.01",
+          sourceTime: quoteTime,
+          receivedAt: "2026-08-24T00:00:00.080Z",
+        },
+        book,
+      ),
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/snapshot",
+      payload: {
+        symbol: "XAUUSD",
+        counts: { M1: 1, M5: 1, M15: 1 },
+        depth: 1,
+      },
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toMatchObject({
+      reason: "MARKET_SNAPSHOT_STALE_OR_INCOMPLETE",
+    });
     await app.close();
   });
 });

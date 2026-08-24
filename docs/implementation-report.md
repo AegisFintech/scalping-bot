@@ -58,7 +58,7 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 25 files, 82 tests passed.
+- Node unit: 26 files, 90 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
   (3 tests total), including fresh migration and `0005`-to-`0006` upgrade paths.
   The temporary schemas were dropped afterward.
@@ -69,7 +69,7 @@ pinned to Node 22 and still needs validation on that runtime.
   fresh/upgrade testing and is applied to the configured Neon schema. The
   stopped migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
-- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 19 tests passed.
+- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 25 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
 - Secret scan and shell syntax checks passed.
@@ -150,6 +150,37 @@ authenticated manual cycle rejected with `EMERGENCY_STOP_ENV` and no placement;
 the demo execution journal, order, active-position, and fill counts remained
 zero. Streamlit health returned `ok` and its configured AppTest rendered four
 charts with no exception.
+
+The operator then supplied the exact acknowledgement for one bounded supervised
+window. Preflight still showed one-order and 5,500 USD notional caps, a six-point
+spread under the provisional ten-point limit, certain reconciliation, zero
+orders/positions/fills/journal events, and no daily lockout. The one authenticated
+cycle rejected before AI, risk, intent, or broker placement with M1/M5/M15 gap
+reasons and an order-book future timestamp. The database and environment
+emergency stops were restored immediately, demo enablement and acknowledgement
+were cleared, and all execution-state counts remained zero.
+
+ISSUE-014 addresses those data-quality causes without relaxing validation. The
+cTrader adapter now validates `ProtoOASymbol.schedule` and `scheduleTimeZone`,
+marks only bounded gaps wholly outside weekly trading sessions, retains strict
+rejection of missing bars during open sessions, and separates broker depth
+source time from local receipt time. Snapshot collection captures broker server
+time last and rejects future quote/book sources. Analytics rejects unmarked,
+overlapping, misplaced, duplicate, unknown, and unbounded session-gap evidence
+and exposes accepted counts per timeframe. Broker holidays are deliberately not
+inferred: an override inside a weekly open interval still rejects. This follows
+the official [model definitions](https://help.ctrader.com/open-api/model-messages/)
+and the cTrader [no-tick trendbar behavior](https://help.ctrader.com/open-api/faq/).
+
+A credentialed read-only probe used an alternate market-data process whose
+client had order commands structurally disabled, plus the updated analytics
+service. It received 600 M1, 500 M5, and 300 M15 completed candles with 1, 2,
+and 3 trusted session gaps; depth was complete and continuous, and strict
+analytics accepted the request with no rejection. Execution stayed stopped and
+no order-capable cycle or broker command was invoked. The complete local gate
+suite passed; delivery is tracked in
+[PR #16](https://github.com/AegisFintech/scalping-bot/pull/16). Merge, deployment,
+and post-deploy evidence are recorded separately when complete.
 
 ## Shadow-mode setup
 

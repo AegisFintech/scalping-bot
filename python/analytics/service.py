@@ -7,6 +7,8 @@ from python.analytics.models import AnalyticsRequest, AnalyticsResponse
 from python.features import build_features
 
 TIMEFRAME_SECONDS = {"M1": 60, "M5": 300, "M15": 900}
+BROKER_SESSION_GAP_BEFORE = "BROKER_SESSION_GAP_BEFORE"
+MAX_SESSION_GAP_SECONDS = 14 * 24 * 60 * 60
 
 
 def quality_reasons(request: AnalyticsRequest) -> list[str]:
@@ -19,15 +21,35 @@ def quality_reasons(request: AnalyticsRequest) -> list[str]:
         previous_end: datetime | None = None
         expected_duration = TIMEFRAME_SECONDS[series.timeframe]
         for candle in series.candles:
+            flags = candle.quality_flags
+            marker_count = flags.count(BROKER_SESSION_GAP_BEFORE)
+            if marker_count > 1 or any(flag != BROKER_SESSION_GAP_BEFORE for flag in flags):
+                reasons.append(f"{series.timeframe}_QUALITY_FLAG_INVALID")
             if not candle.complete:
                 reasons.append(f"{series.timeframe}_FORMING_CANDLE")
             if candle.end_time.astimezone(UTC) > analysis_time:
                 reasons.append(f"{series.timeframe}_LOOKAHEAD_CANDLE")
-            duration = int((candle.end_time - candle.start_time).total_seconds())
+            duration = (candle.end_time - candle.start_time).total_seconds()
             if duration != expected_duration:
                 reasons.append(f"{series.timeframe}_DURATION_INVALID")
-            if previous_end is not None and candle.start_time != previous_end:
-                reasons.append(f"{series.timeframe}_GAP_OR_OVERLAP")
+            if previous_end is None:
+                if marker_count:
+                    reasons.append(f"{series.timeframe}_SESSION_GAP_FLAG_INVALID")
+            else:
+                difference = (candle.start_time - previous_end).total_seconds()
+                if difference == 0:
+                    if marker_count:
+                        reasons.append(f"{series.timeframe}_SESSION_GAP_FLAG_INVALID")
+                elif (
+                    difference < 0
+                    or marker_count != 1
+                    or not difference.is_integer()
+                    or int(difference) % expected_duration != 0
+                    or difference > MAX_SESSION_GAP_SECONDS
+                ):
+                    reasons.append(f"{series.timeframe}_GAP_OR_OVERLAP")
+                    if marker_count:
+                        reasons.append(f"{series.timeframe}_SESSION_GAP_FLAG_INVALID")
             previous_end = candle.end_time
     book = request.order_book
     if not book.complete:

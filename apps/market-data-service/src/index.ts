@@ -50,8 +50,17 @@ export function createMarketDataServer(
         );
         const quote = await options.adapter.getQuote(metadata.symbolId);
         const serverTime = await options.adapter.getServerTime();
+        const serverMs = Date.parse(serverTime);
+        const sourceMs = Date.parse(quote.sourceTime);
         const age = Date.now() - Date.parse(quote.receivedAt);
-        if (!Number.isFinite(age) || age < 0 || age > options.maxQuoteAgeMs) {
+        if (
+          !Number.isFinite(serverMs) ||
+          !Number.isFinite(sourceMs) ||
+          sourceMs > serverMs ||
+          !Number.isFinite(age) ||
+          age < 0 ||
+          age > options.maxQuoteAgeMs
+        ) {
           throw new Error("MARKET_QUOTE_STALE");
         }
         ready = true;
@@ -73,7 +82,6 @@ export function createMarketDataServer(
       const { symbol, counts, depth } = request.body;
       const metadata = await options.adapter.discoverSymbol(symbol);
       const quote = await options.adapter.getQuote(metadata.symbolId);
-      const serverTime = await options.adapter.getServerTime();
       const [m1, m5, m15, orderBook] = await Promise.all([
         options.adapter.getCompletedCandles(metadata.symbolId, "M1", counts.M1),
         options.adapter.getCompletedCandles(metadata.symbolId, "M5", counts.M5),
@@ -84,15 +92,22 @@ export function createMarketDataServer(
         ),
         options.adapter.getOrderBookSnapshot(metadata.symbolId, depth),
       ]);
+      // Capture the authoritative broker clock after all components so source
+      // timestamps cannot appear to be from the future merely due to ordering.
+      const serverTime = await options.adapter.getServerTime();
       const serverMs = Date.parse(serverTime);
       const capturedAtMs = Date.now();
       const quoteReceivedMs = Date.parse(quote.receivedAt);
       const bookReceivedMs = Date.parse(orderBook.receivedAt);
+      const quoteSourceMs = Date.parse(quote.sourceTime);
+      const bookSourceMs = Date.parse(orderBook.sourceTime);
       const quoteAge = capturedAtMs - quoteReceivedMs;
       const bookAge = capturedAtMs - bookReceivedMs;
       const skew = Math.abs(quoteReceivedMs - bookReceivedMs);
       if (
         !Number.isFinite(serverMs) ||
+        !Number.isFinite(quoteSourceMs) ||
+        !Number.isFinite(bookSourceMs) ||
         !Number.isFinite(quoteAge) ||
         !Number.isFinite(bookAge) ||
         !Number.isFinite(skew) ||
@@ -101,6 +116,8 @@ export function createMarketDataServer(
         bookAge < 0 ||
         bookAge > options.maxOrderBookAgeMs ||
         skew > options.maxSnapshotSkewMs ||
+        quoteSourceMs > serverMs ||
+        bookSourceMs > serverMs ||
         !orderBook.complete ||
         orderBook.discontinuity
       ) {

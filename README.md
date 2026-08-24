@@ -74,6 +74,11 @@ Never paste the URL into logs or command history on shared systems. See `docs/da
 
 Register an Open API application, authorize a demo account, and configure the documented demo endpoints, client ID/secret, access/refresh tokens, and optional account ID. Tokens are renewable and must not be treated as permanent. Start with market data and reconciliation; enable demo submission only after mock/replay/paper checks. Exact broker symbol metadata is discovered at runtime.
 
+Completed-candle continuity uses the symbol's broker-declared weekly schedule and
+timezone. Scheduled closures may be explicitly marked; a missing bar while the
+weekly session is open, malformed schedule, overlap, unmodeled holiday override,
+or future quote/depth source timestamp fails closed.
+
 ## OpenAI-compatible endpoint
 
 Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style. The Responses style requests strict JSON Schema output where the endpoint supports it; all output is size-limited and validated locally regardless. The system prompt and schema are versioned. AI failure opens a circuit breaker and creates no order.
