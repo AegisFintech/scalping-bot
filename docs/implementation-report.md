@@ -215,7 +215,8 @@ Focused Python/risk tests pass. A credentialed stopped snapshot produced M1 ATR
 `2.9329720428`; strict analytics accepted the request and the deterministic
 absolute/ATR spread validator approved its six-point spread. No order-capable
 cycle was invoked for this validation. The complete local quality, integration,
-replay/backtest, security, and dependency gate suite passed.
+replay/backtest, security, and dependency gate suite passed. Delivery is tracked
+in [PR #19](https://github.com/AegisFintech/scalping-bot/pull/19).
 
 ## Shadow-mode setup
 

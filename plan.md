@@ -305,7 +305,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   absolute/ATR spread validation approved the six-point observation. This was
   not an execution cycle and did not alter stopped broker state. All required
   local quality, integration, replay/backtest, security, and dependency gates
-  passed; push, review/merge, and stopped deployment remain.
+  passed; the checkpoint is under review in
+  [PR #19](https://github.com/AegisFintech/scalping-bot/pull/19). Merge and stopped
+  deployment remain.
 
 ## Acceptance criteria
 
