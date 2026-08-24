@@ -154,7 +154,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                          | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
 | ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)              | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
 | ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)     | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
-| ISSUE-016 | in progress | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
+| ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -319,14 +319,16 @@ never justify empty, noisy, unsafe, or misleading commits.
   accumulate genuine timed observations rather than synthesizing history.
 - Dependencies: [issue #20](https://github.com/AegisFintech/scalping-bot/issues/20),
   the typed market quote endpoint, PostgreSQL, and existing adaptive spread logic.
-- Current status: implementation and focused tests complete on
-  `feat/issue-016-spread-observations`. The deployed decimal fix exposed the
-  expected denial: `SPREAD_HISTORY_MISSING`, with 2 genuine samples against the
-  configured minimum of 30. Percentile protection remains enabled and its
-  minimum has not been lowered. Migration `0007`, a quote-only minute sampler,
-  dedicated adaptive-history query, decimal/timestamp validation, and
-  fresh/upgrade tests passed with the complete required gate suite; remote
-  delivery and stopped deployment remain.
+- Current status: complete in
+  [PR #22](https://github.com/AegisFintech/scalping-bot/pull/22), merge commit
+  `3b0fd4d`. Migration `0007` was applied with both emergency stops active and
+  execution restarted ready but with trading and automatic analysis disabled.
+  The sampler accumulated 30 genuine consecutive broker-source minute buckets
+  without seeding or threshold changes. A final stopped preflight had 32 recent
+  samples, accepted strict analytics, a 9-point spread at percentile `71.875`,
+  no session abnormality, and deterministic spread approval. Execution events,
+  groups, orders, active positions, and fills all remained zero; no cycle was
+  invoked and a later order-capable cycle still requires fresh acknowledgement.
 
 ## Acceptance criteria
 
@@ -359,8 +361,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   deduplicated event journal with order/fill/position mapping and bounded restart
   recovery. Closed-trade P/L remains blocked pending supervised validation of
   the broker's commission, swap, and conversion-fee signs.
-- PostgreSQL TLS connectivity and isolated-schema tests through migration `0006`
-  passed; the configured Neon schema is now at `0006`, with a clean empty event
+- PostgreSQL TLS connectivity and isolated-schema tests through migration `0007`
+  passed; the configured Neon schema is now at `0007`, with a clean empty event
   journal and certain startup recovery. Backup/restore and
   Node 22 Debian deployment have not been exercised. The remote dashboard
   hostname returns a Cloudflare Access redirect, but its long-term policy and
@@ -402,7 +404,7 @@ runtime.
 - [x] Secret scan and shell syntax checks passed.
 - [x] `systemd-analyze security --offline=yes` parsed all five services; common sandbox score is 2.8 (`OK`) on systemd 257.
 - [x] Apply reviewed migrations `0001` through `0006` to the configured Neon schema.
-- [ ] Apply reviewed migration `0007` under both emergency stops after PR merge.
+- [x] Apply reviewed migration `0007` under both emergency stops after PR merge.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.

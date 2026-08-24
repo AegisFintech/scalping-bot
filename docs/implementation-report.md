@@ -66,9 +66,8 @@ pinned to Node 22 and still needs validation on that runtime.
   probe that returned a locally validated, identity-matched `NO_TRADE`.
 - Migration structure/safety: 3 tests passed, including pinned historical
   `0001`/`0002` byte checksums; migrations through `0007` passed isolated
-  fresh/upgrade testing. The configured Neon schema remains at `0006` until the
-  stopped post-merge deployment. The prior
-  stopped migration/restart check found an empty journal/order/position/fill
+  fresh/upgrade testing. The configured Neon schema is at `0007`; the stopped
+  migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
 - Ruff format/lint, strict mypy across analytics/dashboard, and Python: 30 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
@@ -86,11 +85,12 @@ The five services run from `ecosystem.config.cjs` under PM2 and the enabled,
 active `pm2-root.service`. A saved process list was successfully resurrected by
 systemd, an individual AI-service restart recovered, and all five local health
 checks passed afterward. API and dashboard listeners bind only to `127.0.0.1`.
-Execution is in cTrader demo mode with the environment emergency stop active,
+Execution is in cTrader demo mode with both environment and database emergency
+stops active,
 demo and live submission disabled, and `tradingEnabled=false`. Its only status
-reasons are the expected demo-enable, demo-acknowledgement, and environment-stop
-gates. The new demo identity has no analyses, order groups, positions, or risk
-lockouts.
+reasons are the expected demo-enable, demo-acknowledgement, database-stop, and
+environment-stop gates. The demo identity has no order groups, orders, active
+positions, fills, or cTrader execution events.
 
 The dashboard has an independent protected control token, remains bound to
 loopback, and `trading.aims-sg.com` returns a Cloudflare Access redirect for an
@@ -241,8 +241,15 @@ percentile below 30 distinct observations. Repeating percentiles are truncated
 to the risk boundary's ten decimal places. The sampler has no analysis, model,
 risk-intent, execution-gateway, or broker-command dependency. The complete Node,
 Python, schema, migration, integration, replay/backtest, security, and dependency
-gate suite passed; remote delivery, stopped deployment, and genuine timed
-accumulation remain pending.
+gate suite passed. PR #22 merged as `3b0fd4d`. Migration `0007` was applied and
+execution restarted while both emergency stops remained active, automatic
+analysis stayed off, and demo/live submission stayed disabled. The sampler then
+accumulated 30 consecutive genuine broker-source minute buckets without manual
+or synthetic seeding. A final read-only preflight had 32 recent observations,
+accepted strict 600/500/300-candle analytics, and approved a 9-point spread at
+percentile `71.875` with no session abnormality. Execution events, groups,
+orders, active positions, and fills remained zero; no order-capable cycle was
+invoked.
 
 ## Shadow-mode setup
 
