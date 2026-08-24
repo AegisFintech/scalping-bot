@@ -146,7 +146,10 @@ No credentialed shadow session was run in this checkout.
 - Streamlit now renders bounded, mode-labelled operational charts through pure
   validated builders. Completed-candle, malformed OHLC, enum, numeric, empty,
   and mode-separation paths are covered; a configured AppTest run rendered four
-  current-data charts without an exception.
+  current-data charts without an exception. The merged dashboard was restarted,
+  its local health endpoint returned `ok`, and the same configured render check
+  passed after deployment while demo submission stayed disabled and emergency
+  stop stayed active.
 - A quote/deposit currency conversion provider is absent; mismatched currencies
   fail closed.
 - Better Stack rotating/remote structured logging and persistent host/process
