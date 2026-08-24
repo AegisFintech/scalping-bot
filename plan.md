@@ -173,8 +173,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   acknowledgement, a positive daily order-group limit, and a positive
   per-position notional cap. Status and Streamlit expose the automatic-analysis
   state. These guardrails are in progress on
-  `feat/issue-001-supervised-demo-guardrails`; submission and emergency stop
-  remain unchanged.
+  `feat/issue-001-supervised-demo-guardrails` and proposed in
+  [PR #12](https://github.com/AegisFintech/scalping-bot/pull/12); submission and
+  emergency stop remain unchanged.
 
 ### ISSUE-002 delivery details
 
