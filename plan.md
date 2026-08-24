@@ -166,6 +166,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
 | ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
 | ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
+| ISSUE-023 | in progress | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -624,6 +625,30 @@ never justify empty, noisy, unsafe, or misleading commits.
   options, and zero exceptions. Execution stayed healthy and stopped; all
   order/fill/active-position/execution-event counts remained zero. Final
   deployment evidence: [PR #46](https://github.com/AegisFintech/scalping-bot/pull/46).
+
+### ISSUE-023 delivery details
+
+- Acceptance criteria: register a new immutable strategy/code identity for the
+  operator-authorized automated-demo configuration; retain demo-only connection,
+  exact acknowledgement, positive daily-order and notional caps, live submission
+  disabled, and every deterministic validation/risk/reconciliation gate; restart
+  first under the active database emergency stop; release only that scoped stop
+  after readiness succeeds; then verify schema 2.0 prompt history and bounded
+  durable execution state.
+- Dependencies: [issue #47](https://github.com/AegisFintech/scalping-bot/issues/47),
+  completed ISSUE-022 deployment, configured demo acknowledgement/caps, empty
+  reconciled execution state, and active database emergency stop.
+- Current status: in progress on `feat/issue-023-auto-demo-release`. Enabling
+  automatic analysis changed the protected configuration hash, so startup
+  correctly rejected reuse of `0.1.0-actionable-oco.1` with
+  `STRATEGY_VERSION_IMMUTABILITY_VIOLATION`. The database stop was not released,
+  no analysis/order ran, and the restart loop was stopped. The new candidate
+  identity is `0.1.0-actionable-oco-auto-demo.1`. Pre-merge gates pass:
+  format/lint/typecheck/build, 130 Node tests, 12 schema tests, 3 migration
+  tests, all 3 configured PostgreSQL integration tests, Ruff, mypy, 41 Python
+  tests, replay/backtest, dependency audits, secret/shell checks, and five
+  offline systemd security parses at 2.8 (`OK`). Review:
+  [PR #48](https://github.com/AegisFintech/scalping-bot/pull/48).
 
 ## Acceptance criteria
 
