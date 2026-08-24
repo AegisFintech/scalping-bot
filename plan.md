@@ -178,8 +178,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   emergency stop remain unchanged. Deployment then failed closed on the
   expected strategy-version immutability check after the cap/config hash
   changed. A new immutable `0.1.0-demo-guardrails.1` release identity is being
-  delivered on `fix/issue-001-versioned-demo-config`; no provenance row is
-  rewritten.
+  delivered in
+  [PR #13](https://github.com/AegisFintech/scalping-bot/pull/13); no provenance
+  row is rewritten.
 
 ### ISSUE-002 delivery details
 
