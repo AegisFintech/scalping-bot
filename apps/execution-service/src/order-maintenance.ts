@@ -20,11 +20,19 @@ export class OrderMaintenance {
     await this.#pool.query(
       `UPDATE analysis_runs a
        SET state = 'EXPIRED', updated_at = now()
-       WHERE a.state = 'ACCEPTED' AND a.valid_until <= now()
+       WHERE a.state = 'ACCEPTED'
          AND NOT EXISTS (
            SELECT 1 FROM order_groups og
            WHERE og.analysis_id = a.id
              AND og.state NOT IN ('CLOSED', 'EXPIRED', 'FAILED')
+         )
+         AND (
+           a.valid_until <= now()
+           OR EXISTS (
+             SELECT 1 FROM order_groups og
+             WHERE og.analysis_id = a.id
+               AND og.state IN ('CLOSED', 'EXPIRED', 'FAILED')
+           )
          )`,
     );
     const result = await this.#pool.query<{

@@ -35,8 +35,9 @@ and the execution service reports successful startup recovery. Inspect
 `reason_codes` with `resolved_at IS NULL`; any such evidence blocks the session.
 A final fill retains and resolves earlier partial-fill evidence instead of
 deleting it. An unresolved partial fill, unknown state, history pagination,
-missing local intent, or closed-trade mapping pending requires emergency stop
-plus operator reconciliation. Never delete journal rows to clear readiness.
+missing local intent, missing full-close detail, partial/multiple close, or
+conflicting trade outcome requires emergency stop plus operator reconciliation.
+Never delete journal rows to clear readiness.
 
 For the first supervised session, keep `AUTOMATIC_ANALYSIS_ENABLED=false`, set
 `MAX_ORDERS_PER_DAY=1`, and configure a broker-reviewed positive
@@ -61,10 +62,11 @@ empty demo acknowledgement, automatic analysis off, and environment emergency
 stop on. Verify those values through the service status before any later
 enablement.
 
-Closing-deal commission, swap, and conversion-fee signs remain broker-specific
-and unverified in this release. The first closing event is retained but blocks
-new placement with `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until its supervised,
-redacted evidence is reviewed and the trade mapping is implemented/tested.
+For a fully closed single-deal demo position, persist the protocol-defined
+signed `grossProfit + swap + commission + pnlConversionFee` as realized P/L and
+persist the last three components as fees. Full-close detail and volume must
+match the durable filled volume. Missing detail, partial/multiple closing deals,
+or a second conflicting outcome stay unresolved and block new placement.
 
 After every completed model call, the coordinator reacquires the full snapshot.
 `DECISION_MARKET_REFRESH_FAILED`, `DECISION_MARKET_TIME_REGRESSION`,
@@ -89,11 +91,15 @@ account/symbol/minute claim is durable and unique; an incomplete claim after a
 crash is not replayed. Manual authenticated `/v1/cycle` requests are unchanged.
 The existing analysis, order-group, position, expiry, cancellation, and
 reconciliation gates prevent the next automatic cycle while prior strategy
-state is active or uncertain.
+state is active or uncertain. A rejected analysis may retry on a later broker
+minute. An accepted analysis becomes terminal only after its group closes,
+expires, or fails; only then can a later broker minute start the next cycle.
 
-Use Streamlit **AI Analysis → Prompt and response history** for the exact
-hash-verified prompt, persisted redacted user JSON, parsed schema-validated AI
-response, post-model refresh, validation/risk results, and broker outcome.
+Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
+broker-minute cycle history** for the exact hash-verified prompt, persisted
+redacted user JSON, parsed schema-validated AI response, post-model refresh,
+validation/risk results, scheduler outcome, order events, and terminal demo
+trade outcome.
 PostgreSQL remains authoritative. Better Stack receives correlated bounded
 events and the direct `automatic_analysis_interval_claimed` scheduler event;
 the matching `automatic_analysis_interval_completed` event contains the cycle

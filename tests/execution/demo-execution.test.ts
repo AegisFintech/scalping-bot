@@ -9,6 +9,7 @@ import {
   type DemoExecutionEvent,
   type DemoExecutionStore,
 } from "../../apps/execution-service/src/demo-execution.js";
+import { demoExecutionReasonCodes } from "../../apps/execution-service/src/demo-execution-store.js";
 import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
 
 async function fixture(name: string): Promise<BrokerExecution> {
@@ -63,7 +64,7 @@ describe("cTrader demo execution normalization", () => {
     });
   });
 
-  it("retains scaled close-detail evidence without deriving a trade outcome", async () => {
+  it("normalizes signed scaled close-detail money and volume", async () => {
     const raw = await fixture("demo-order-filled-v1.json");
     const deal = structuredClone(raw.deal) as Record<string, unknown>;
     deal.closePositionDetail = {
@@ -90,6 +91,60 @@ describe("cTrader demo execution normalization", () => {
       quoteToDepositConversionRate: "1",
       balanceVersion: "42",
     });
+  });
+
+  it("accepts complete broker-scaled close evidence for deterministic trade mapping", async () => {
+    const raw = await fixture("demo-position-closed-v1.json");
+    const event = normalizeDemoExecution(raw, { symbolId: "7" });
+    expect(event).toMatchObject({
+      eventKey: "deal:903",
+      order: { clientOrderId: "", state: "FILLED" },
+      position: {
+        brokerPositionId: "801",
+        state: "CLOSED",
+        side: "BUY",
+        volume: "0",
+        openedAt: "2026-08-24T04:01:00.000Z",
+        closedAt: "2026-08-24T04:02:01.000Z",
+      },
+      closeDetail: {
+        grossProfit: "10",
+        swap: "-0.1",
+        commission: "-0.2",
+        pnlConversionFee: "-0.05",
+        closedVolume: "100",
+      },
+    });
+    expect(demoExecutionReasonCodes(event!)).toEqual([]);
+  });
+
+  it("keeps missing or partial close evidence fail-closed", async () => {
+    const raw = await fixture("demo-position-closed-v1.json");
+    const missing = structuredClone(raw);
+    delete (missing.deal as Record<string, unknown>).closePositionDetail;
+    const missingEvent = normalizeDemoExecution(missing, { symbolId: "7" });
+    expect(demoExecutionReasonCodes(missingEvent!)).toEqual([
+      "DEMO_TRADE_OUTCOME_MISSING",
+    ]);
+
+    const partial = structuredClone(raw);
+    (partial.position as Record<string, unknown>).positionStatus = 1;
+    const partialEvent = normalizeDemoExecution(partial, { symbolId: "7" });
+    expect(demoExecutionReasonCodes(partialEvent!)).toEqual([
+      "DEMO_PARTIAL_CLOSE_RECONCILIATION_REQUIRED",
+    ]);
+
+    const volumeMissing = structuredClone(raw);
+    delete (
+      (volumeMissing.deal as Record<string, unknown>)
+        .closePositionDetail as Record<string, unknown>
+    ).closedVolume;
+    const volumeMissingEvent = normalizeDemoExecution(volumeMissing, {
+      symbolId: "7",
+    });
+    expect(demoExecutionReasonCodes(volumeMissingEvent!)).toEqual([
+      "DEMO_TRADE_CLOSED_VOLUME_MISSING",
+    ]);
   });
 
   it("rejects invalid close-detail volume", async () => {

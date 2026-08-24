@@ -16,6 +16,7 @@ import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
 import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
+import { OrderMaintenance } from "../../apps/execution-service/src/order-maintenance.js";
 import { PostgresDecisionTrail } from "../../apps/execution-service/src/postgres-trail.js";
 import { PostgresSpreadObservationStore } from "../../apps/execution-service/src/spread-observations.js";
 import type {
@@ -879,6 +880,114 @@ describe("PostgreSQL migrations integration", () => {
         certain: true,
         reasonCodes: [],
       });
+      await isolated.query(
+        `UPDATE orders SET state = 'CANCELLED', updated_at = now()
+         WHERE account_id = $1 AND client_order_id = $2`,
+        [demoAccountId, "cas-sell-22222222222222222222222"],
+      );
+      const closedRaw = await eventFixture("demo-position-closed-v1.json");
+      const closed = normalizeDemoExecution(closedRaw, { symbolId: "7" });
+      expect(closed).not.toBeNull();
+      await expect(store.persist(closed!)).resolves.toEqual({
+        certain: true,
+        reasonCodes: [],
+      });
+      const closedLifecycle = await isolated.query<{
+        group_state: string;
+        position_state: string;
+        direction: string;
+        realized_pnl: string;
+        fees: string;
+        model_version: string;
+        prompt_version: string;
+        schema_version: string;
+        strategy_version: string;
+      }>(
+        `SELECT og.state AS group_state, p.state AS position_state,
+                t.direction, t.realized_pnl::text, t.fees::text,
+                t.model_version, t.prompt_version, t.schema_version,
+                t.strategy_version
+         FROM order_groups og
+         JOIN positions p ON p.order_group_id = og.id
+         JOIN trades t ON t.order_group_id = og.id
+         WHERE og.id = $1`,
+        [orderGroupId],
+      );
+      expect(closedLifecycle.rows[0]).toEqual({
+        group_state: "CLOSED",
+        position_state: "CLOSED",
+        direction: "LONG",
+        realized_pnl: "9.6500000000",
+        fees: "-0.3500000000",
+        model_version: "integration-model",
+        prompt_version: "system-v2",
+        schema_version: "2.0",
+        strategy_version: `integration-${strategyVersionId}`,
+      });
+      const restartedStore = new PostgresDemoExecutionStore({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+      });
+      await expect(restartedStore.persist(closed!)).resolves.toEqual({
+        certain: true,
+        reasonCodes: [],
+      });
+
+      const conflictingRaw = structuredClone(closedRaw);
+      const conflictingDeal = conflictingRaw.deal as Record<string, unknown>;
+      conflictingDeal.dealId = "904";
+      const conflictingDetail = conflictingDeal.closePositionDetail as Record<
+        string,
+        unknown
+      >;
+      conflictingDetail.grossProfit = "1100";
+      const conflictingClose = normalizeDemoExecution(conflictingRaw, {
+        symbolId: "7",
+      });
+      await expect(restartedStore.persist(conflictingClose!)).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+      const conflictingOutcome = await isolated.query<{
+        mapping_state: string;
+        reason_codes: string[];
+      }>(
+        `SELECT mapping_state, reason_codes
+         FROM broker_execution_events
+         WHERE account_id = $1 AND broker_event_key = $2`,
+        [demoAccountId, conflictingClose!.eventKey],
+      );
+      expect(conflictingOutcome.rows[0]).toEqual({
+        mapping_state: "CONFLICT",
+        reason_codes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+
+      await isolated.query(
+        `UPDATE analysis_runs
+         SET valid_until = now() + interval '1 hour'
+         WHERE id = $1`,
+        [analysisId],
+      );
+      const unusedGateway = {
+        kind: "ctrader-demo" as const,
+        canSubmitToBroker: true,
+        placeOco: () => Promise.reject(new Error("UNEXPECTED_PLACEMENT")),
+        cancelStrategyOrder: () =>
+          Promise.reject(new Error("UNEXPECTED_CANCELLATION")),
+        reconcile: () => Promise.reject(new Error("UNEXPECTED_RECONCILIATION")),
+      };
+      const maintenance = new OrderMaintenance(
+        isolated,
+        unusedGateway,
+        "XAUUSD",
+      );
+      await maintenance.expireAndReconcile();
+      const terminalAnalysis = await isolated.query<{ state: string }>(
+        "SELECT state FROM analysis_runs WHERE id = $1",
+        [analysisId],
+      );
+      expect(terminalAnalysis.rows[0]?.state).toBe("EXPIRED");
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);

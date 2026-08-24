@@ -360,3 +360,11 @@ completion for a preflight rejection without an analysis row, and duplicate
 completion rejection. Migration tests cover fresh and `0005` upgrade paths
 through `0010`. The provider client additionally proves that its default retry
 count makes exactly one request on a retryable HTTP failure.
+
+ISSUE-025 adds positive normalization and PostgreSQL lifecycle coverage for one
+fully closed single-deal demo position. Tests assert signed Decimal net P/L and
+fees, one immutable versioned trade, terminal group state, restart idempotency,
+journaled conflicting-outcome rejection, missing-detail and partial-close
+rejection reasons, immediate terminal analysis release, and sanitized Streamlit
+display preserving decimal strings. Malformed or sensitive display data is
+rejected.

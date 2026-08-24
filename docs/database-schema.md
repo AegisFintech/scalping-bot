@@ -52,6 +52,9 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 - Accepted validation and risk decisions commit before order intent.
 - OCO group plus both client order intents/idempotency keys commit before gateway calls.
 - Each broker callback is inserted/deduplicated and its state transition commits atomically.
+- A supported fully closed demo position, its terminal state, signed broker
+  money outcome, and one immutable `trades` row commit in the same transaction.
+  A conflicting second outcome is journaled as `CONFLICT` and cannot overwrite it.
 - Cancellation intent commits before cancel call; result/reconciliation commits afterward.
 
 ## Retention and access
