@@ -229,7 +229,8 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Current status: in progress now that ISSUE-012 has made the configured schema
   and demo journal current. Pure chart builders, bounded account/symbol queries,
   completed-candle enforcement, explicit empty/error states, and six positive/
-  rejection-path tests are implemented on `feat/issue-013-streamlit-charts`.
+  rejection-path tests are implemented on `feat/issue-013-streamlit-charts` and
+  proposed in [PR #9](https://github.com/AegisFintech/scalping-bot/pull/9).
 
 ## Acceptance criteria
 
