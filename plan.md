@@ -214,7 +214,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   Migration `0006` was then applied with execution stopped. After restart,
   startup recovery was certain, the execution journal/order/position/fill counts
   were zero, and emergency stop plus disabled demo submission still blocked all
-  trading.
+  trading. The deployment record is delivered in
+  [PR #8](https://github.com/AegisFintech/scalping-bot/pull/8).
 
 ### ISSUE-013 delivery details
 
