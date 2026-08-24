@@ -164,8 +164,11 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
   Verify provider latency and configured `AI_TIMEOUT_MS`/`AI_MAX_RETRIES`; the
   automatic demo loop requires zero same-interval retries. The local caller
   must budget the single attempt and must not be shortened below the derived
-  total. Restart only after confirming no in-flight request and keeping trading
-  stopped.
+  total. The execution caller circuit uses the configured
+  `AI_CIRCUIT_BREAKER_RESET_SECONDS`, blocks throughout that cooldown, and
+  automatically half-opens for a later broker minute at the exact boundary.
+  A repeated timeout, connection failure, or 503 reopens it. Do not restart just
+  to clear the circuit; investigate a breaker that repeatedly reopens.
 - **reconciliation failure:** block account/symbol; query broker state; resolve labels/idempotency; never resubmit an uncertain command.
 - **daily loss lockout:** cancel pending strategy orders; monitor/document existing positions under approved policy; reset only next configured day after reconciliation.
 - **database failure:** block new order commands; keep broker reconciliation attempts and buffered local critical logs; recover DB and reconcile.

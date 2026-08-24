@@ -81,7 +81,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   checks.
 - Rejects invalid/overflowing AI timeout budgets at startup. A local AI timeout
   or transport loss becomes a stable reason code and opens the execution-side
-  circuit; it cannot create a model row, risk intent, or order command.
+  circuit; it cannot create a model row, risk intent, or order command. The
+  caller circuit stays closed for the configured provider reset interval, then
+  half-opens at the exact boundary so a later broker minute can probe without a
+  process restart. A repeated transient failure reopens it.
 - Writes intent and idempotency state transactionally before broker calls.
 - Starts automatic cycles only in a configured opening window of the broker's
   M1 interval. A PostgreSQL claim keyed by account, symbol, and broker minute is

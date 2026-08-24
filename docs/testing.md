@@ -389,3 +389,9 @@ reason and structural booleans; a free-form persistence exception must collapse
 to a stable generic reason. Assertions explicitly forbid the fixture's client
 identifier, strategy label, malformed value, and database error text in the
 diagnostic summary.
+
+ISSUE-030 adds deterministic-clock tests for the execution caller circuit. They
+assert no HTTP request occurs before the reset boundary, an exact-boundary
+half-open request can succeed and clear the circuit, a second transport failure
+reopens for the full interval, and zero, fractional, or timer-overflowing reset
+configuration rejects before startup.

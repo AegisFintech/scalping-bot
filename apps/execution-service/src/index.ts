@@ -9,6 +9,7 @@ import { Decimal } from "decimal.js";
 import { AnalyticsHttpClient } from "../../../packages/analytics-client/src/client.js";
 import {
   AiOrchestratorHttpClient,
+  aiOrchestratorCircuitResetMs,
   aiOrchestratorRequestTimeoutMs,
 } from "../../../packages/ai-client/src/http-client.js";
 import type {
@@ -356,6 +357,9 @@ async function main(): Promise<void> {
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
     }),
+    circuitResetMs: aiOrchestratorCircuitResetMs(
+      integer(environment, "AI_CIRCUIT_BREAKER_RESET_SECONDS", 300),
+    ),
   });
   const risk = new OcoRiskEvaluator({
     marginEstimator: margin,

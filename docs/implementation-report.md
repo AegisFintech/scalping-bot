@@ -744,6 +744,31 @@ strict mypy over 19 source files, 43 Python tests, replay/backtest smoke tests,
 npm/pip audits with zero known vulnerabilities, secret and shell checks, and
 all five offline systemd security parses at 2.8 (`OK`).
 
+The `.7` observation session automatically claimed broker minutes 10:55 through
+11:01 UTC under PID `2471803`; stale market/book and spread failures repeatedly
+released without intervention. At 11:01 the external AI path returned HTTP 503.
+The execution-side `AiOrchestratorHttpClient` set a permanent boolean circuit,
+while execution safety then blocked every future `analyze()` call that could
+clear that same boolean. The provider breaker had a configured 300-second reset,
+but the caller could not reach its half-open state without an execution restart.
+Both database controls were reactivated and issue #61 records the deadlock.
+
+ISSUE-030 replaces only that caller boolean with a validated reset timestamp.
+Timeout, transport loss, and HTTP 503 open it for the unchanged configured
+interval; the getter remains fail closed before the boundary and becomes
+eligible exactly at expiry. A later normal scheduler cycle acts as the half-open
+probe. A fully validated response clears the timestamp; another transient
+failure reopens it. Zero, fractional, unsafe, or timer-overflowing reset values
+reject startup. Immutable candidate identity is
+`0.1.0-actionable-oco-auto-demo.8`.
+
+The complete `.8` suite passes Prettier, ESLint, TypeScript typecheck/build, 154
+Node tests across 29 files, 12 JSON Schema tests, 3 static migration tests, all
+3 configured isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19
+source files, 43 Python tests, replay/backtest smoke tests, npm/pip audits with
+zero known vulnerabilities, secret/shell checks, and all five offline systemd
+security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

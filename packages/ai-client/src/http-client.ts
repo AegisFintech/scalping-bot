@@ -14,6 +14,8 @@ export interface AiOrchestratorHttpClientOptions {
   readonly systemPromptPath: string;
   readonly promptVersion: ModelPromptArtifact["version"];
   readonly timeoutMs?: number;
+  readonly circuitResetMs?: number;
+  readonly now?: () => number;
   readonly fetchImpl?: typeof fetch;
 }
 
@@ -46,13 +48,34 @@ export function aiOrchestratorRequestTimeoutMs(input: {
   return timeoutMs;
 }
 
+export function aiOrchestratorCircuitResetMs(resetSeconds: number): number {
+  const resetMs = resetSeconds * 1_000;
+  if (
+    !Number.isSafeInteger(resetSeconds) ||
+    resetSeconds < 1 ||
+    !Number.isSafeInteger(resetMs) ||
+    resetMs > MAX_TIMER_DELAY_MS
+  ) {
+    throw new Error("AI_CIRCUIT_RESET_INVALID");
+  }
+  return resetMs;
+}
+
 export class AiOrchestratorHttpClient {
   readonly #options: AiOrchestratorHttpClientOptions;
   readonly #validator: ModelResponseValidator;
   readonly #expectedPromptArtifact: ModelPromptArtifact;
-  #circuitOpen = false;
+  #openUntil = 0;
 
   constructor(options: AiOrchestratorHttpClientOptions) {
+    const resetMs = options.circuitResetMs ?? 300_000;
+    if (
+      !Number.isSafeInteger(resetMs) ||
+      resetMs < 1 ||
+      resetMs > MAX_TIMER_DELAY_MS
+    ) {
+      throw new Error("AI_CIRCUIT_RESET_INVALID");
+    }
     this.#options = options;
     this.#validator = new ModelResponseValidator(options.schemaPath);
     const content = readFileSync(options.systemPromptPath, "utf8").trim();
@@ -70,7 +93,13 @@ export class AiOrchestratorHttpClient {
   }
 
   get circuitOpen(): boolean {
-    return this.#circuitOpen;
+    return this.#openUntil > (this.#options.now ?? Date.now)();
+  }
+
+  #openCircuit(): void {
+    this.#openUntil =
+      (this.#options.now ?? Date.now)() +
+      (this.#options.circuitResetMs ?? 300_000);
   }
 
   async analyze(request: {
@@ -82,6 +111,7 @@ export class AiOrchestratorHttpClient {
     readonly rawResponse: string;
     readonly promptArtifact: ModelPromptArtifact;
   }> {
+    if (this.circuitOpen) throw new Error("AI_ORCHESTRATOR_CIRCUIT_OPEN");
     let response: Response;
     try {
       response = await (this.#options.fetchImpl ?? fetch)(
@@ -97,7 +127,7 @@ export class AiOrchestratorHttpClient {
         },
       );
     } catch (error) {
-      this.#circuitOpen = true;
+      this.#openCircuit();
       if (
         error instanceof Error &&
         (error.name === "TimeoutError" || error.name === "AbortError")
@@ -107,7 +137,7 @@ export class AiOrchestratorHttpClient {
       throw new Error("AI_ORCHESTRATOR_UNAVAILABLE", { cause: error });
     }
     if (!response.ok) {
-      this.#circuitOpen = response.status === 503;
+      if (response.status === 503) this.#openCircuit();
       throw new Error(`AI_ORCHESTRATOR_HTTP_ERROR:${response.status}`);
     }
     const envelope = record(
@@ -146,7 +176,7 @@ export class AiOrchestratorHttpClient {
     ) {
       throw new Error("AI_ORCHESTRATOR_IDENTITY_MISMATCH");
     }
-    this.#circuitOpen = false;
+    this.#openUntil = 0;
     return {
       response: local.response,
       rawResponse: envelope.rawResponse,
