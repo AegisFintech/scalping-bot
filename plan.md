@@ -565,7 +565,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   configured model/pre-model renders passed, and execution remained demo with
   trading/automatic analysis disabled and the emergency stop active. No
   analysis cycle, broker command, execution behavior, or database contract was
-  changed. The deployment evidence documentation pull request is pending.
+  changed. Deployment evidence is recorded in
+  [PR #42](https://github.com/AegisFintech/scalping-bot/pull/42).
 
 ## Acceptance criteria
 
