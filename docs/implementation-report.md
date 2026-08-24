@@ -803,8 +803,8 @@ new broker order ID as a conflict with the inherited entry client ID. ISSUE-031
 adds journal schema `1.1`, preserves exact entry identity, maps the child through
 the durable position, and recovers the terminal single-deal close from broker
 history when reconciliation no longer returns the position. Candidate `.10`
-remains stopped until migration, merge, deployment recovery, and an unattended
-terminal repeat prove the same PID can continue automatically.
+remained stopped until migration, merge, deployment recovery, and an unattended
+terminal repeat proved the same PID could continue automatically.
 
 The `.10` pre-merge suite passes Prettier, ESLint, TypeScript typecheck/build,
 161 Node tests across 29 files, 12 JSON Schema tests, 3 static migration tests,
@@ -812,6 +812,24 @@ all 3 configured isolated-PostgreSQL integration tests, Ruff format/lint,
 strict mypy over 16 source files, 43 Python tests, replay/backtest smoke tests,
 zero-vulnerability npm/pip audits, secret and shell checks, and all five
 offline systemd security parses.
+
+PR #65 merged as `1f20fffb`. Migration `0011` applied under both database
+controls, and `.10` started as PID `2476750`. Startup recovery used the original
+mapped entry fill plus the exact broker-created closing order/deal to produce a
+closed position/group, expired analysis, one demo trade with realized P/L
+`-4.83`, and zero unresolved event rows. The pause and emergency controls were
+then released; status reported automatic analysis and demo trading enabled,
+startup checks passed, and no reason codes.
+
+The same PID automatically claimed 11:47 and 11:53 UTC. The external endpoint
+returned HTTP 503 on each; both intervals completed rejected without orders,
+and the execution caller half-opened after each configured cooldown without a
+restart. The 11:59 claim stored a completed AI response but the post-model
+refresh rejected stale market/book data. The terminal rejection released
+immediately, and 12:00 was claimed automatically; its completed AI/validation/
+risk path rejected both risk-based volumes below the broker minimum. PID,
+controls, and readiness remained healthy. This is active unattended demo
+automation, while every invalid or unsafe cycle continues to create no order.
 
 ## Shadow-mode setup
 

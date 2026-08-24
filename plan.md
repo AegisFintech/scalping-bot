@@ -848,15 +848,25 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #64](https://github.com/AegisFintech/scalping-bot/issues/64),
   the credentialed `.9` entry/peer/SL-TP evidence, migration `0011`, and active
   database pause/emergency controls.
-- Current status: implementation is in progress on
-  `feat/issue-031-ctrader-closing-order-recovery` with candidate immutable
-  identity `0.1.0-actionable-oco-auto-demo.10`. The pre-merge suite passes
+- Current status: complete through
+  [PR #65](https://github.com/AegisFintech/scalping-bot/pull/65), merged as
+  `1f20fffb`. Immutable identity `0.1.0-actionable-oco-auto-demo.10` deployed
+  under both database controls after migration `0011`. Startup recovery mapped
+  the `.9` lifecycle to entry filled, peer cancelled, position/group closed,
+  analysis expired, one demo trade at `-4.83`, and zero unresolved journal
+  rows. After release, PID `2476750` automatically claimed 11:47 and 11:53 UTC,
+  rejected two external-AI 503s, and half-opened after each configured cooldown
+  without restart. It then claimed 11:59, stored a completed AI response, and
+  rejected stale refreshed market/book data; it immediately claimed 12:00,
+  completed AI/validation/risk, and rejected both legs below broker minimum
+  volume. This proves terminal release and unattended repetition; a broker OCO
+  will submit automatically only when all deterministic gates pass. The
+  pre-merge suite passes
   Prettier, ESLint, TypeScript typecheck/build, 161 Node tests across 29 files,
   12 schema tests, 3 migration tests, all 3 configured isolated-PostgreSQL
   integration tests, Ruff format/lint, strict mypy over 16 source files, 43
   Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
-  secret and shell checks, and five offline systemd security parses. Both
-  database controls remain active and the broker scope is empty.
+  secret and shell checks, and five offline systemd security parses.
 
 ## Acceptance criteria
 
@@ -940,6 +950,9 @@ runtime.
       merges; restart AI/execution/dashboard and verify the prompt-history view.
 - [x] Apply reviewed migration `0010` while automatic analysis is paused; restart
       AI/execution and verify durable broker-M1 claims plus terminal cycles.
+- [x] Apply reviewed migration `0011` under both database controls; recover the
+      broker-created SL/TP close and verify zero unresolved journal rows before
+      releasing automatic demo analysis/trading.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.
