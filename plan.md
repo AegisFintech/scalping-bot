@@ -254,7 +254,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   remains off because no supervised broker order lifecycle has yet occurred.
   The documentation checkpoint passed the complete 123-Node-test, configured
   integration, schema/migration, 30-Python-test, replay/backtest, dependency,
-  secret, shell, and offline-systemd gate suite.
+  secret, shell, and offline-systemd gate suite. Evidence is recorded in
+  [PR #38](https://github.com/AegisFintech/scalping-bot/pull/38).
 
 ### ISSUE-002 delivery details
 
