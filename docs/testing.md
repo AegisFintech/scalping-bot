@@ -236,3 +236,11 @@ shell checks, and all five offline systemd security parses at 2.8 (`OK`). The
 PostgreSQL test verified that refreshed depth is appended and linked while the
 original model candle snapshot remains unchanged. No credentialed cycle or
 broker command was run for this checkpoint.
+
+PR #33 merged as `21312cb`. The merged execution build started under immutable
+strategy/code identity `0.1.0-decision-refresh.1` with demo and automatic
+analysis disabled and both emergency stops active. Startup recovery/readiness
+passed; the provenance row exists and demo group/order/active-position/fill and
+unresolved-event counts remained zero. The startup audit reached `DELIVERED` on
+its third bounded Better Stack attempt and left zero backlog. No post-deployment
+cycle or broker command was invoked.

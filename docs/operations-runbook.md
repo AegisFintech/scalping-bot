@@ -52,6 +52,15 @@ cancel strategy-owned pending orders through the protected control, reconcile,
 and restore `DEMO_TRADING_ENABLED=false` plus an empty acknowledgement before
 leaving the session unattended.
 
+For PM2 deployment, do not export every development `.env` value into the
+process manager. In particular, a local `APP_ENV=development` can replace the
+checked production identity and correctly trigger strategy immutability
+failure. Build from the merged commit, restart through `ecosystem.config.cjs`,
+and pass only the explicit safe overrides needed for that restart: demo off,
+empty demo acknowledgement, automatic analysis off, and environment emergency
+stop on. Verify those values through the service status before any later
+enablement.
+
 Closing-deal commission, swap, and conversion-fee signs remain broker-specific
 and unverified in this release. The first closing event is retained but blocks
 new placement with `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until its supervised,

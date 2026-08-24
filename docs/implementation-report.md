@@ -373,6 +373,18 @@ not rewrite prior code/config provenance. This enables another supervised demo
 attempt after a fresh exact acknowledgement; it does not authorize scheduling
 or guarantee that market/model/risk conditions will produce an order.
 
+PR #33 merged as `21312cb`. The execution service was rebuilt from merged
+`main` and restarted through the checked PM2 ecosystem with explicit safe
+overrides only. It reports production application identity, immutable strategy
+and code identity `0.1.0-decision-refresh.1`, certain startup recovery, and
+readiness while demo submission and automatic analysis remain disabled under
+both database and environment emergency stops. The release provenance row was
+created without changing any prior version. Demo order groups, orders, active
+positions, fills, and unresolved broker events remain zero. The startup audit
+was rejected twice by Better Stack, then the bounded outbox retry delivered it
+on attempt three and returned backlog to zero. No cycle or broker command was
+run after deployment.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
