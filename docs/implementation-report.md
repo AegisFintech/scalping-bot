@@ -338,10 +338,17 @@ Existing pre-`0008` history is deliberately not backfilled.
 The configured Better Stack source accepted a production-transport probe with
 recursive redaction. Unit, migration, and isolated Neon integration tests then
 passed for stable payloads, redaction, bounded retry, failed delivery, recovery,
-fresh migration, upgrade, and no-backfill behavior. The production migration
-and process restart remain pending until the reviewed pull request is merged;
-demo submission and automatic analysis remain disabled under both emergency
-stops.
+lease-ownership conflict, fresh migration, upgrade, and no-backfill behavior.
+PR #30 merged as `81ee7bb`; migration `0008` was applied with both emergency
+stops active, and the execution/dashboard processes were rebuilt and restarted.
+The startup reconciliation event's first HTTPS delivery was rejected and
+persisted as `RETRY`; attempt two reached `DELIVERED` with no residual backlog,
+demonstrating the deployed recovery path. The execution health endpoint was
+ready with `trading_allowed=false`; Streamlit health returned `ok`, and its
+configured AppTest rendered seven charts plus the Better Stack delivery section
+with zero exceptions. Demo submission and automatic analysis stayed disabled,
+all execution-state counts remained zero, and no analysis cycle or broker
+command was run.
 
 ## Shadow-mode setup
 
