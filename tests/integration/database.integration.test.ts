@@ -14,6 +14,7 @@ import {
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
+import { PostgresSpreadObservationStore } from "../../apps/execution-service/src/spread-observations.js";
 import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
@@ -42,6 +43,7 @@ describe("PostgreSQL migrations integration", () => {
         "0004",
         "0005",
         "0006",
+        "0007",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -132,6 +134,62 @@ describe("PostgreSQL migrations integration", () => {
                  1, 0, 'integration', now(), 0.01)`,
         [symbolId, demoAccountId],
       );
+      const spreadQuote = {
+        serverTime: "2026-08-24T00:00:00.950Z",
+        metadata: { symbolId: "7", symbolName: "XAUUSD" },
+        quote: {
+          bid: "4649.12",
+          ask: "4649.21",
+          sourceTime: "2026-08-24T00:00:00.900Z",
+          receivedAt: "2026-08-24T00:00:00.980Z",
+        },
+      };
+      const spreadNow = new Date("2026-08-24T00:00:01.000Z");
+      const spreadStore = new PostgresSpreadObservationStore({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+      });
+      await expect(
+        spreadStore.record(spreadQuote, 3_000, spreadNow),
+      ).resolves.toBe(true);
+      const restartedSpreadStore = new PostgresSpreadObservationStore({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+      });
+      await expect(
+        restartedSpreadStore.record(spreadQuote, 3_000, spreadNow),
+      ).resolves.toBe(false);
+      const spreadRows = await isolated.query<{
+        count: string;
+        bid: string;
+        ask: string;
+        spread: string;
+      }>(
+        `SELECT count(*)::text AS count, min(bid)::text AS bid,
+                min(ask)::text AS ask, min(spread)::text AS spread
+         FROM spread_observations
+         WHERE account_id = $1 AND symbol_id = $2`,
+        [demoAccountId, symbolId],
+      );
+      expect(spreadRows.rows[0]).toEqual({
+        count: "1",
+        bid: "4649.1200000000",
+        ask: "4649.2100000000",
+        spread: "0.0900000000",
+      });
+      await expect(
+        isolated.query(
+          `INSERT INTO spread_observations
+            (id, account_id, symbol_id, source_minute, source_time, received_at,
+             server_time, bid, ask, spread, created_at)
+           VALUES ($1, $2, $3, 29792161, '2026-08-24T00:01:00.900Z',
+                   '2026-08-24T00:01:00.980Z', '2026-08-24T00:01:00.950Z',
+                   4649.22, 4649.21, 0, '2026-08-24T00:01:01.000Z')`,
+          [randomUUID(), demoAccountId, symbolId],
+        ),
+      ).rejects.toThrow();
       await isolated.query(
         `INSERT INTO strategy_versions
           (id, version, code_hash, config_hash, prompt_version, schema_version, feature_version)
@@ -285,7 +343,7 @@ describe("PostgreSQL migrations integration", () => {
     }
   });
 
-  databaseTest("upgrades an existing 0005 order safely to 0006", async () => {
+  databaseTest("upgrades 0005 safely through 0007", async () => {
     const schema = `test_${randomUUID().replaceAll("-", "")}`;
     const migrationDirectory = await mkdtemp(
       path.join(os.tmpdir(), "ctrader-migrations-"),
@@ -379,7 +437,14 @@ describe("PostgreSQL migrations integration", () => {
         path.resolve("migrations", "0006_ctrader_demo_execution_events.sql"),
         path.join(migrationDirectory, "0006_ctrader_demo_execution_events.sql"),
       );
-      expect(await migrate(isolated, migrationDirectory)).toEqual(["0006"]);
+      await copyFile(
+        path.resolve("migrations", "0007_spread_observations.sql"),
+        path.join(migrationDirectory, "0007_spread_observations.sql"),
+      );
+      expect(await migrate(isolated, migrationDirectory)).toEqual([
+        "0006",
+        "0007",
+      ]);
       const upgraded = await isolated.query<{ account_id: string }>(
         "SELECT account_id FROM orders WHERE id = $1",
         [orderId],
@@ -389,6 +454,10 @@ describe("PostgreSQL migrations integration", () => {
         `SELECT to_regclass('broker_execution_events') IS NOT NULL AS exists`,
       );
       expect(journal.rows[0]?.exists).toBe(true);
+      const spreadTable = await isolated.query<{ exists: boolean }>(
+        `SELECT to_regclass('spread_observations') IS NOT NULL AS exists`,
+      );
+      expect(spreadTable.rows[0]?.exists).toBe(true);
       const clientOrderConstraints = await isolated.query<{
         definition: string;
       }>(

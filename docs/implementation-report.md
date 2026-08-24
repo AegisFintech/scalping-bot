@@ -29,7 +29,7 @@ The repository was initially empty. The implementation added:
 - runtime applications under `apps/`;
 - shared TypeScript packages under `packages/`;
 - Python analytics/replay/backtest modules under `python/`;
-- five ordered SQL migrations under `migrations/`;
+- seven ordered SQL migrations under `migrations/`;
 - strict model schema and prompt under `schemas/` and `prompts/`;
 - operational documentation under `docs/`;
 - Debian scripts/units under `scripts/` and `systemd/`;
@@ -58,22 +58,23 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 26 files, 91 tests passed.
+- Node unit: 27 files, 103 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
-  (3 tests total), including fresh migration and `0005`-to-`0006` upgrade paths.
+  (3 tests total), including fresh migration and `0005`-through-`0007` upgrade paths.
   The temporary schemas were dropped afterward.
 - JSON Schema: 10 tests passed, plus a real configured-endpoint structured-output
   probe that returned a locally validated, identity-matched `NO_TRADE`.
 - Migration structure/safety: 3 tests passed, including pinned historical
-  `0001`/`0002` byte checksums; migration `0006` passed isolated
-  fresh/upgrade testing and is applied to the configured Neon schema. The
+  `0001`/`0002` byte checksums; migrations through `0007` passed isolated
+  fresh/upgrade testing. The configured Neon schema remains at `0006` until the
+  stopped post-merge deployment. The prior
   stopped migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
 - Ruff format/lint, strict mypy across analytics/dashboard, and Python: 30 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
 - Secret scan and shell syntax checks passed.
-- All five unit files passed offline security parsing; common systemd exposure
+- All five service units passed offline security parsing; common systemd exposure
   score is 2.8 (`OK`). Installed-path/service startup testing remains pending.
 
 These are engineering results, not evidence of profitability or broker fill
@@ -227,9 +228,21 @@ state remained at zero events, orders, active positions, and fills.
 
 The fully configured adaptive check still correctly denies with
 `SPREAD_HISTORY_MISSING`: only 2 of the required 30 distinct recent observations
-exist. No percentile setting or minimum was weakened. Issue #20 will add a
-read-only, one-per-minute durable sampler that can accumulate genuine history
-while trading and automatic analysis remain stopped.
+exist. No percentile setting or minimum was weakened. Issue #20 adds a
+read-only, one-per-minute durable sampler so this prerequisite is met with
+genuine history rather than synthetic or manually seeded rows.
+
+ISSUE-016 adds migration `0007` and a structurally read-only execution-service
+sampler. It accepts only typed, fresh, broker-time-consistent, non-crossed quotes,
+stores exact decimal bid/ask/spread and all three timestamps, and deduplicates on
+account/symbol/broker-source UTC minute across retries and restarts. Adaptive
+percentile context now reads this dedicated 24-hour history and still returns no
+percentile below 30 distinct observations. Repeating percentiles are truncated
+to the risk boundary's ten decimal places. The sampler has no analysis, model,
+risk-intent, execution-gateway, or broker-command dependency. The complete Node,
+Python, schema, migration, integration, replay/backtest, security, and dependency
+gate suite passed; remote delivery, stopped deployment, and genuine timed
+accumulation remain pending.
 
 ## Shadow-mode setup
 

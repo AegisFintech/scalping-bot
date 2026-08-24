@@ -54,6 +54,32 @@ and unverified in this release. The first closing event is retained but blocks
 new placement with `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until its supervised,
 redacted evidence is reviewed and the trade mapping is implemented/tested.
 
+## Adaptive spread-history warm-up
+
+1. Apply migration `0007` and restart the execution service with
+   `DEMO_TRADING_ENABLED=false`, `AUTOMATIC_ANALYSIS_ENABLED=false`, and both
+   environment/database emergency stops active.
+2. Leave the market-data and execution services running. The execution process
+   records at most one typed fresh quote per broker-source UTC minute through a
+   read-only sampler; it cannot invoke analysis or an order gateway.
+3. Count only recent distinct observations for the intended account and symbol:
+
+   ```sql
+   SELECT count(*)
+   FROM spread_observations
+   WHERE account_id = :account_id
+     AND symbol_id = :symbol_id
+     AND source_time >= now() - interval '24 hours';
+   ```
+
+4. Treat sampler warnings, malformed/crossed quotes, timestamp failures,
+   duplicates, database errors, or fewer than 30 rows as insufficient history.
+   Do not seed rows manually, copy decision snapshots, reduce the minimum, or
+   disable percentile protection to pass preflight.
+5. After 30 genuine observations exist, keep both stops active and repeat the
+   complete stopped preflight. A new exact operator acknowledgement is still
+   required for any later order-capable demo cycle.
+
 ## Emergency stop
 
 Any one of these activates stop: `EMERGENCY_STOP=true`, presence of the sentinel file, or active database runtime control. Dashboard emergency stop writes the database control and audit event. Activation stops new analyses/orders and initiates safe cancellation of strategy-owned pending orders. It does not blindly close open positions or cancel manual orders.

@@ -29,10 +29,7 @@ import {
 } from "../../../packages/logging/src/index.js";
 import { MarketDataHttpClient } from "../../../packages/market-data-client/src/client.js";
 import { MetricsCollector } from "../../../packages/observability/src/metrics.js";
-import {
-  canonical,
-  decimal,
-} from "../../../packages/risk-engine/src/decimal.js";
+import { decimal } from "../../../packages/risk-engine/src/decimal.js";
 import {
   evaluateAnalysisEligibility,
   evaluateAutomaticAnalysisEligibility,
@@ -57,6 +54,10 @@ import { PostgresPerformanceContext } from "./performance-context.js";
 import { PostgresDecisionTrail } from "./postgres-trail.js";
 import { createExecutionServer, type ExecutionStatus } from "./server.js";
 import { ShadowGateway } from "./shadow-gateway.js";
+import {
+  PostgresSpreadObservationStore,
+  SpreadObservationSampler,
+} from "./spread-observations.js";
 import {
   readFilesystemControls,
   type SafetyGateInput,
@@ -448,41 +449,23 @@ async function main(): Promise<void> {
     environment.SPREAD_SESSION_ABNORMAL_MULTIPLIER ?? "3",
     "SPREAD_SESSION_ABNORMAL_MULTIPLIER_INVALID",
   );
+  const spreadObservations = new PostgresSpreadObservationStore({
+    pool,
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+  });
   const spreadContext = async (
     snapshot: MarketSnapshot,
   ): Promise<{
     observedPercentile: string | null;
     sessionAbnormal: boolean;
   }> => {
-    const result = await pool.query<{ spread: string }>(
-      `SELECT spread::text
-       FROM order_book_snapshots
-       WHERE account_id = $1 AND symbol_id = $2 AND spread IS NOT NULL
-         AND source_time >= now() - interval '24 hours'
-       ORDER BY source_time DESC
-       LIMIT 500`,
-      [identity.accountId, identity.symbolId],
-    );
-    if (result.rows.length < spreadMinimumSamples) {
-      return { observedPercentile: null, sessionAbnormal: false };
-    }
-    const values = result.rows
-      .map((row) => new Decimal(row.spread))
-      .sort((left, right) => left.comparedTo(right));
-    const current = new Decimal(snapshot.quote.ask).minus(snapshot.quote.bid);
-    const percentile = new Decimal(
-      values.filter((value) => value.lte(current)).length,
-    )
-      .div(values.length)
-      .mul(100);
-    const median = values[Math.floor((values.length - 1) / 2)];
-    return {
-      observedPercentile: canonical(percentile),
-      sessionAbnormal:
-        median === undefined || median.eq(0)
-          ? false
-          : current.gt(median.mul(spreadAbnormalMultiplier)),
-    };
+    return await spreadObservations.context({
+      bid: snapshot.quote.bid,
+      ask: snapshot.quote.ask,
+      minimumSamples: spreadMinimumSamples,
+      abnormalMultiplier: spreadAbnormalMultiplier,
+    });
   };
   const maintenance = new OrderMaintenance(pool, gateway, config.symbol);
   const metrics = new MetricsCollector({
@@ -1007,8 +990,40 @@ async function main(): Promise<void> {
     throw new Error("CONFIG_INTEGER_TOO_SMALL:ANALYSIS_INTERVAL_SECONDS");
   const timer = setInterval(() => void tick(), intervalSeconds * 1_000);
   timer.unref();
+  const spreadSampler = new SpreadObservationSampler({
+    symbol: config.symbol,
+    providerSymbolId: executionSymbolId,
+    maxQuoteAgeMs: config.maxQuoteAgeMs,
+    quote: () => marketClient.quote(config.symbol),
+    record: (snapshot, now) =>
+      spreadObservations.record(snapshot, config.maxQuoteAgeMs, now),
+  });
+  let spreadSampling = false;
+  const sampleSpread = async (): Promise<void> => {
+    if (spreadSampling) return;
+    spreadSampling = true;
+    try {
+      const inserted = await spreadSampler.sample();
+      logger.log("info", {
+        event_name: "spread_observation_sampled",
+        outcome: inserted ? "success" : "duplicate",
+      });
+    } catch (error) {
+      logger.log("warn", {
+        event_name: "spread_observation_failed",
+        outcome: "rejected",
+        reason_code:
+          error instanceof Error ? error.message : "SPREAD_OBSERVATION_FAILED",
+      });
+    } finally {
+      spreadSampling = false;
+    }
+  };
+  const spreadTimer = setInterval(() => void sampleSpread(), 60_000);
+  spreadTimer.unref();
   const shutdown = async (): Promise<void> => {
     clearInterval(timer);
+    clearInterval(spreadTimer);
     metrics.stop();
     unsubscribeDemoExecutions?.();
     unsubscribeDemoSynchronization?.();
@@ -1032,6 +1047,7 @@ async function main(): Promise<void> {
       : {}),
   });
   void tick();
+  void sampleSpread();
 }
 
 if (
