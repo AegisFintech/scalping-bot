@@ -63,9 +63,9 @@ analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-through-`0007` upgrade tests
 passed. TLS connectivity and all seven migrations passed inside isolated Neon
-schemas, which the tests dropped afterward; migrations `0001` through `0006`
-are applied to the configured Neon schema and `0007` awaits stopped post-merge
-deployment. The prior post-migration demo
+schemas, which the tests dropped afterward; migrations `0001` through `0007`
+are applied to the configured Neon schema under both emergency stops. The
+post-migration demo
 restart reported certain startup recovery with no journal exceptions or local
 execution state. The host used Node 24.18.0; the supported Node 22
 deployment baseline and installed systemd paths still require a Debian release
@@ -130,5 +130,11 @@ all execution-state counts remained zero.
 
 ISSUE-016's complete Node, Python, schema, migration, configured integration,
 replay/backtest, dependency-audit, secret, shell, and offline-systemd suite
-passed. Stopped deployment evidence is recorded after the delivery checkpoint
-is merged.
+passed. PR #22 merged as `3b0fd4d`; migration `0007` was applied and execution
+restarted while both emergency stops remained active, automatic analysis stayed
+off, and demo/live submission stayed disabled. The sampler accumulated 30
+genuine consecutive broker-source minute buckets. A final read-only preflight
+had 32 samples, accepted strict 600/500/300-candle analytics, and approved a
+9-point spread at percentile `71.875` with no session abnormality. Execution
+events, groups, orders, active positions, and fills remained zero. No cycle was
+invoked.
