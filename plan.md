@@ -410,10 +410,13 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Current status: in progress on `feat/issue-018-better-stack-outbox`. The
   configured source accepted a production-transport redaction probe while demo
   submission, automatic analysis, and both emergency stops remained disabled.
-  The implementation, dashboard view, runbook, fresh/upgrade database tests,
-  complete local quality gates, replay/backtest smokes, dependency audits,
-  secret scan, and offline systemd checks pass. Push, pull request, stopped
-  migration/deployment verification, and merge evidence remain.
+  The implementation is in
+  [PR #30](https://github.com/AegisFintech/scalping-bot/pull/30). The dashboard
+  view, runbook, fresh/upgrade database tests, 105 Node tests, 30 Python tests,
+  schema/migration suites, type/lint/build checks, replay/backtest smokes,
+  dependency audits, secret scan, shell syntax, and offline systemd checks pass.
+  GitHub reports the PR mergeable with no required checks/reviews. Stopped
+  migration/deployment verification and merge evidence remain.
 
 ## Acceptance criteria
 
