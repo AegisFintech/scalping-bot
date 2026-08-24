@@ -74,6 +74,32 @@ quote age, depth age, semantic checks, and risk sizing use only the refreshed
 execution state. Investigate repeated context changes or refresh failures; do
 not widen freshness thresholds to accommodate model latency.
 
+## Automatic demo analysis loop
+
+Set `AUTOMATIC_ANALYSIS_ENABLED=true` only for an explicitly authorized demo
+session. The scheduler continues maintenance every
+`ANALYSIS_INTERVAL_SECONDS`, but it may claim a new analysis only during the
+first `AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS` of a broker-server-time M1
+interval. Keep that window between 1 and 30 seconds and use
+`AI_MAX_RETRIES=0`: a failed provider attempt is retried on the next fresh
+broker minute rather than against an expiring candle context.
+
+Migration `0010` must exist before this scheduler is deployed. Each
+account/symbol/minute claim is durable and unique; an incomplete claim after a
+crash is not replayed. Manual authenticated `/v1/cycle` requests are unchanged.
+The existing analysis, order-group, position, expiry, cancellation, and
+reconciliation gates prevent the next automatic cycle while prior strategy
+state is active or uncertain.
+
+Use Streamlit **AI Analysis → Prompt and response history** for the exact
+hash-verified prompt, persisted redacted user JSON, parsed schema-validated AI
+response, post-model refresh, validation/risk results, and broker outcome.
+PostgreSQL remains authoritative. Better Stack receives correlated bounded
+events and the direct `automatic_analysis_interval_claimed` scheduler event;
+the matching `automatic_analysis_interval_completed` event contains the cycle
+outcome and correlation ID. Better Stack never receives the full prompt or
+request payload.
+
 ## Adaptive spread-history warm-up
 
 1. Apply migration `0007` and restart the execution service with
@@ -113,9 +139,10 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
 - **invalid AI burst:** open circuit breaker; preserve redacted samples/hashes; verify model/prompt/schema/provider; do not loosen validation.
 - **AI orchestrator timeout:** treat `AI_ORCHESTRATOR_TIMEOUT` as a hard stop.
   Verify provider latency and configured `AI_TIMEOUT_MS`/`AI_MAX_RETRIES`; the
-  local caller must budget all attempts and must not be shortened below the
-  derived total. Restart only after confirming no in-flight request and keeping
-  trading stopped.
+  automatic demo loop requires zero same-interval retries. The local caller
+  must budget the single attempt and must not be shortened below the derived
+  total. Restart only after confirming no in-flight request and keeping trading
+  stopped.
 - **reconciliation failure:** block account/symbol; query broker state; resolve labels/idempotency; never resubmit an uncertain command.
 - **daily loss lockout:** cancel pending strategy orders; monitor/document existing positions under approved policy; reset only next configured day after reconciliation.
 - **database failure:** block new order commands; keep broker reconciliation attempts and buffered local critical logs; recover DB and reconcile.

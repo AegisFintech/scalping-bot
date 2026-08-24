@@ -83,6 +83,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   or transport loss becomes a stable reason code and opens the execution-side
   circuit; it cannot create a model row, risk intent, or order command.
 - Writes intent and idempotency state transactionally before broker calls.
+- Starts automatic cycles only in a configured opening window of the broker's
+  M1 interval. A PostgreSQL claim keyed by account, symbol, and broker minute is
+  committed before the cycle, so restarts cannot issue a second model request
+  for that interval. Provider failure retries on the next fresh interval; the
+  post-model completed-candle identity check remains unchanged.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or
   reconnect before restoring readiness.

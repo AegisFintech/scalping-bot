@@ -130,7 +130,7 @@ export class OpenAiCompatibleClient {
       throw new Error("AI_REQUEST_OVERSIZED");
     }
     const body = this.#requestBody(payloadText);
-    const maxRetries = this.#options.maxRetries ?? 2;
+    const maxRetries = this.#options.maxRetries ?? 0;
     const started = now();
     let lastError: Error = new Error("AI_REQUEST_FAILED");
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {

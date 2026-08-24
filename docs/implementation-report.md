@@ -59,15 +59,15 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 28 files, 130 tests passed.
+- Node unit: 29 files, 136 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
-  (3 tests total), including fresh migration and `0005`-through-`0009` upgrade paths.
+  (3 tests total), including fresh migration and `0005`-through-`0010` upgrade paths.
   The temporary schemas were dropped afterward.
 - JSON Schema: 12 tests passed. A configured, non-trading system-v2 probe
   returned both mandatory legs, no legacy decision/enable fields, the matching
   tracked prompt hash, and passed local deterministic semantics.
 - Migration structure/safety: 3 tests passed, including pinned historical
-  `0001`/`0002` byte checksums; migrations through `0009` passed isolated
+  `0001`/`0002` byte checksums; migrations through `0010` passed isolated
   fresh/upgrade testing. The configured Neon schema is at `0009`; the stopped
   migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
@@ -573,6 +573,40 @@ pre-merge suite passed 130 Node tests, 12 schema tests, 3 migration tests, all 3
 configured PostgreSQL integration tests, 41 Python tests, formatting/lint/type
 checks/build, replay/backtest, both dependency audits, secret/shell checks, and
 all five offline systemd security parses at 2.8 (`OK`).
+
+The identity merged in PR #48 and started successfully while the database stop
+remained active. After that stop was cleared, schema-2 automatic analyses
+`b0a366cc-cc27-479d-be72-7e97e2bd4fe7` and
+`bfcf3355-511f-465f-8774-24b40737a4a9` persisted the exact system-v2 prompt,
+redacted request, and mandatory two-leg response. Their 62.2-second and
+32.7-second lifetimes crossed the next completed M1 boundary, so unchanged
+post-model validation rejected `DECISION_CANDLE_CONTEXT_CHANGED`. No order
+intent or broker command was created. New analyses were then paused while the
+scheduler race was corrected.
+
+## Broker-M1 automatic analysis scheduling
+
+ISSUE-024 makes each automatic attempt a durable account/symbol/broker-minute
+operation. The scheduler reads broker server time from the typed quote API,
+allows a start only within the configured opening M1 window, and inserts the
+unique PostgreSQL interval claim before calling the coordinator. A restart or
+second scheduler tick cannot reuse that interval. Invalid server time,
+out-of-range configuration, database failure, active prior state, and every
+existing analysis/risk/reconciliation gate remain fail closed. Manual cycles
+are unchanged.
+
+The AI client and both runtime services now default to zero same-interval
+retries. A provider timeout/failure waits for a new completed-candle interval
+instead of extending inference across the current one. The post-model candle
+fingerprint is still mandatory. Migration `0010` records interval, broker time,
+cycle/analysis correlation, outcome, and completion; incomplete claims are
+retained rather than replayed. Immutable release identity
+`0.1.0-actionable-oco-auto-demo.2` protects the scheduling configuration.
+The complete pre-merge suite passed format/lint/typecheck/build, 136 Node tests
+across 29 files, 12 schema tests, 3 migration tests, all 3 configured PostgreSQL
+integration tests, Ruff, mypy, 41 Python tests, replay/backtest, both dependency
+audits, secret/shell checks, and all five offline systemd security parses at
+2.8 (`OK`).
 
 ## Shadow-mode setup
 

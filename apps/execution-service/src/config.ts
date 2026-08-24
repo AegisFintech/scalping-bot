@@ -20,6 +20,7 @@ export interface ExecutionConfig {
   readonly liveEnablementFile: string;
   readonly pauseNewAnalyses: boolean;
   readonly automaticAnalysisEnabled: boolean;
+  readonly automaticAnalysisStartWindowSeconds: number;
   readonly symbol: string;
   readonly accountKey: string;
   readonly baseRiskPercent: string;
@@ -156,6 +157,19 @@ export function loadExecutionConfig(
       false,
       "AUTOMATIC_ANALYSIS_ENABLED",
     ),
+    automaticAnalysisStartWindowSeconds: (() => {
+      const value = integerValue(
+        environment.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS,
+        10,
+        "AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS",
+      );
+      if (value < 1 || value > 30) {
+        throw new Error(
+          "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS",
+        );
+      }
+      return value;
+    })(),
     symbol,
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
     baseRiskPercent: decimalPercent(
@@ -214,6 +228,8 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         maxOrdersPerDay: config.maxOrdersPerDay,
         maxPositionNotional: config.maxPositionNotional,
         automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+        automaticAnalysisStartWindowSeconds:
+          config.automaticAnalysisStartWindowSeconds,
       }),
     )
     .digest("hex");

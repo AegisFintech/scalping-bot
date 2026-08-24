@@ -6,36 +6,37 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 
 ## Core tables
 
-| Table                     | Purpose and key constraints                                                                   |
-| ------------------------- | --------------------------------------------------------------------------------------------- |
-| `accounts`                | pseudonymous account key, paper/broker provider and environment; unique provider key hash     |
-| `symbols`                 | broker symbol ID/name, digits, tick/contract/volume-scale/margin metadata, revision/freshness |
-| `candle_snapshots`        | account/symbol/analysis timestamp, source skew, completeness; unique analysis/time            |
-| `candles`                 | snapshot/timeframe/start/end/OHLCV/quality; unique snapshot/timeframe/start                   |
-| `indicator_snapshots`     | versioned deterministic feature JSON and latest numeric fields                                |
-| `order_book_snapshots`    | source/receive times, bid/ask/spread/imbalance/age/discontinuity                              |
-| `spread_observations`     | fresh quote/server times and exact spread; unique account/symbol UTC source minute            |
-| `order_book_levels`       | snapshot/side/level/price/size; unique snapshot/side/level                                    |
-| `analysis_runs`           | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol   |
-| `model_requests`          | endpoint/model/prompt/schema, exact prompt/hash, redacted payload/hash, latency/status        |
-| `model_responses`         | redacted raw/parsed payload, provider IDs if non-sensitive, token/status bounds               |
-| `validation_results`      | schema/semantic/risk stage, accepted flag, bounded reason/detail JSON                         |
-| `risk_decisions`          | equity/risk budget/stop/tick/raw/normalized volume, margin/spread, approval/reasons           |
-| `order_groups`            | OCO analysis link, state, expiry, unique idempotency key                                      |
-| `orders`                  | group/side/type/state/client/broker ID, prices/volume, ownership, version counters            |
-| `fills`                   | deduplicated broker event, order, price/volume/fees/time                                      |
-| `positions`               | current/history broker position state and reconciliation version                              |
-| `trades`                  | closed outcome, mode/setup/regime/version and realized results                                |
-| `broker_execution_events` | deduplicated normalized cTrader callback/recovery evidence and mapping state                  |
-| `session_statistics`      | bounded aggregate by account/symbol/session/mode                                              |
-| `setup_statistics`        | aggregate/decay window by tags/regime/direction/hour/depth/vol/confidence/version             |
-| `daily_risk_state`        | timezone/day baseline/current equity, net capital flows, loss utilization, durable lockout    |
-| `service_health`          | service/instance state, dependency reasons and heartbeat                                      |
-| `server_metrics`          | bounded sampled CPU/memory/disk/network/process data                                          |
-| `audit_events`            | append-only correlation IDs, pseudonyms, event/outcome/reason/redacted detail                 |
-| `observability_outbox`    | one durable delivery state per new audit event; leased, retried, and idempotently enqueued    |
-| `runtime_controls`        | emergency stop, pause, dashboard acknowledgement and versioned expiry/actor/reason            |
-| `strategy_versions`       | immutable code/config/prompt/schema/feature version hashes                                    |
+| Table                          | Purpose and key constraints                                                                    |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `accounts`                     | pseudonymous account key, paper/broker provider and environment; unique provider key hash      |
+| `symbols`                      | broker symbol ID/name, digits, tick/contract/volume-scale/margin metadata, revision/freshness  |
+| `candle_snapshots`             | account/symbol/analysis timestamp, source skew, completeness; unique analysis/time             |
+| `candles`                      | snapshot/timeframe/start/end/OHLCV/quality; unique snapshot/timeframe/start                    |
+| `indicator_snapshots`          | versioned deterministic feature JSON and latest numeric fields                                 |
+| `order_book_snapshots`         | source/receive times, bid/ask/spread/imbalance/age/discontinuity                               |
+| `spread_observations`          | fresh quote/server times and exact spread; unique account/symbol UTC source minute             |
+| `order_book_levels`            | snapshot/side/level/price/size; unique snapshot/side/level                                     |
+| `analysis_runs`                | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol    |
+| `automatic_analysis_intervals` | durable broker-M1 scheduler claim and terminal cycle correlation; unique account/symbol/minute |
+| `model_requests`               | endpoint/model/prompt/schema, exact prompt/hash, redacted payload/hash, latency/status         |
+| `model_responses`              | redacted raw/parsed payload, provider IDs if non-sensitive, token/status bounds                |
+| `validation_results`           | schema/semantic/risk stage, accepted flag, bounded reason/detail JSON                          |
+| `risk_decisions`               | equity/risk budget/stop/tick/raw/normalized volume, margin/spread, approval/reasons            |
+| `order_groups`                 | OCO analysis link, state, expiry, unique idempotency key                                       |
+| `orders`                       | group/side/type/state/client/broker ID, prices/volume, ownership, version counters             |
+| `fills`                        | deduplicated broker event, order, price/volume/fees/time                                       |
+| `positions`                    | current/history broker position state and reconciliation version                               |
+| `trades`                       | closed outcome, mode/setup/regime/version and realized results                                 |
+| `broker_execution_events`      | deduplicated normalized cTrader callback/recovery evidence and mapping state                   |
+| `session_statistics`           | bounded aggregate by account/symbol/session/mode                                               |
+| `setup_statistics`             | aggregate/decay window by tags/regime/direction/hour/depth/vol/confidence/version              |
+| `daily_risk_state`             | timezone/day baseline/current equity, net capital flows, loss utilization, durable lockout     |
+| `service_health`               | service/instance state, dependency reasons and heartbeat                                       |
+| `server_metrics`               | bounded sampled CPU/memory/disk/network/process data                                           |
+| `audit_events`                 | append-only correlation IDs, pseudonyms, event/outcome/reason/redacted detail                  |
+| `observability_outbox`         | one durable delivery state per new audit event; leased, retried, and idempotently enqueued     |
+| `runtime_controls`             | emergency stop, pause, dashboard acknowledgement and versioned expiry/actor/reason             |
+| `strategy_versions`            | immutable code/config/prompt/schema/feature version hashes                                     |
 
 ## Transaction boundaries
 
@@ -108,3 +109,12 @@ malformed hash. Rollback is manual and operator-reviewed: stop AI/execution,
 retain/export required prompt evidence, deploy code that no longer writes or
 reads the columns, and remove the pair plus constraint only if audit-retention
 policy permits.
+
+Migration `0010` adds `automatic_analysis_intervals`. Its primary key makes an
+account/symbol/broker-minute claim durable across scheduler ticks and process
+restarts. Broker time must fall within the claimed minute. Completion stores the
+cycle ID, optional persisted analysis foreign key, outcome, and timestamp as a
+consistent set; a preflight rejection may have no `analysis_runs` row. An
+incomplete claim is retained and cannot be replayed. Rollback is manual: pause
+automatic analysis, preserve the interval evidence, deploy scheduler code that
+does not use the table, and remove it only after operator review.
