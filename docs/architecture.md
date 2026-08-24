@@ -56,6 +56,9 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 
 - Owns cycle eligibility, deterministic risk, gateway selection, OCO state, expiry, cancellation, and reconciliation.
 - Writes intent and idempotency state transactionally before broker calls.
+- Normalizes and durably journals cTrader demo callbacks, atomically maps
+  order/fill/position state, and replays bounded broker history after startup or
+  reconnect before restoring readiness.
 - Uses paper, demo, shadow, and live-compatible gateways behind one interface.
 - Shadow gateway cannot submit. The production composition uses a disabled live
   gateway. A separately tested live-compatible decorator exists for future

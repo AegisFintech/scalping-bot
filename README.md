@@ -147,6 +147,9 @@ control to initialize a one-time baseline. It succeeds only with empty
 account-wide positions/orders, no current-day cTrader deals, available cash-flow
 history, and no existing baseline. It never places an order. See
 `docs/operations-runbook.md` before any later supervised demo enablement.
+Migration `0006` and a clean durable cTrader execution-event recovery are also
+mandatory before demo submission. Closed-trade outcome mapping remains
+fail-closed pending supervised broker-field validation.
 
 ## Tests and quality gates
 

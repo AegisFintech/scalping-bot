@@ -17,6 +17,9 @@ wiring change; the checklist below then applies in full.
       demo-only pseudonym and reconciled daily baseline are verified.
 - [ ] Demo broker metadata/precision/tick value/volume/margin/order-distance behavior is recorded.
 - [ ] Demo OCO peer cancellation, disconnect recovery, and reconciliation are repeatedly supervised.
+- [ ] Demo callback/order/deal/position fixtures match supervised broker events;
+      the durable journal has no unmatched/conflicting rows and closed-trade
+      money-field semantics are approved.
 - [ ] Shadow mode runs with a gateway that structurally cannot submit.
 
 ## Engineering and operations

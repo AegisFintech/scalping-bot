@@ -1,0 +1,194 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import {
+  DurableDemoExecutionRecorder,
+  normalizeDemoExecution,
+  type DemoExecutionEvent,
+  type DemoExecutionStore,
+} from "../../apps/execution-service/src/demo-execution.js";
+import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
+
+async function fixture(name: string): Promise<BrokerExecution> {
+  return JSON.parse(
+    await readFile(path.resolve("tests", "fixtures", "ctrader", name), "utf8"),
+  ) as BrokerExecution;
+}
+
+class MemoryStore implements DemoExecutionStore {
+  readonly events: DemoExecutionEvent[] = [];
+  result = { certain: true, reasonCodes: [] as readonly string[] };
+
+  persist(event: DemoExecutionEvent): Promise<typeof this.result> {
+    this.events.push(event);
+    return Promise.resolve(this.result);
+  }
+}
+
+describe("cTrader demo execution normalization", () => {
+  it("normalizes an accepted strategy order without broker money inference", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const event = normalizeDemoExecution(raw, { symbolId: "7" });
+    expect(event).toMatchObject({
+      schemaVersion: "1.0",
+      executionType: 2,
+      brokerOrderId: "501",
+      brokerFillId: null,
+      occurredAt: "2026-08-24T04:00:00.000Z",
+      order: {
+        clientOrderId: "cas-buy-111111111111111111111111",
+        state: "PENDING",
+        filledVolume: "0",
+      },
+    });
+    expect(event?.eventKey).toMatch(/^event:[0-9a-f]{64}$/);
+  });
+
+  it("normalizes a partial fill with broker-native volume and scaled commission", async () => {
+    const raw = await fixture("demo-order-partial-fill-v1.json");
+    const event = normalizeDemoExecution(raw, { symbolId: "7" });
+    expect(event).toMatchObject({
+      eventKey: "deal:901",
+      brokerPositionId: "801",
+      order: { state: "PARTIALLY_FILLED", filledVolume: "40" },
+      position: { state: "OPEN", volume: "40", entryPrice: "2001.25" },
+      fill: {
+        brokerFillId: "901",
+        price: "2001.25",
+        volume: "40",
+        commission: "-0.15",
+      },
+    });
+  });
+
+  it("retains scaled close-detail evidence without deriving a trade outcome", async () => {
+    const raw = await fixture("demo-order-filled-v1.json");
+    const deal = structuredClone(raw.deal) as Record<string, unknown>;
+    deal.closePositionDetail = {
+      entryPrice: 2001.25,
+      grossProfit: "1234",
+      swap: "-10",
+      commission: "-20",
+      balance: "1001234",
+      closedVolume: "100",
+      balanceVersion: "42",
+      moneyDigits: 2,
+      pnlConversionFee: "-3",
+      quoteToDepositConversionRate: 1,
+    };
+    const event = normalizeDemoExecution({ ...raw, deal }, { symbolId: "7" });
+    expect(event?.closeDetail).toEqual({
+      entryPrice: "2001.25",
+      grossProfit: "12.34",
+      swap: "-0.1",
+      commission: "-0.2",
+      pnlConversionFee: "-0.03",
+      balance: "10012.34",
+      closedVolume: "100",
+      quoteToDepositConversionRate: "1",
+      balanceVersion: "42",
+    });
+  });
+
+  it("rejects invalid close-detail volume", async () => {
+    const raw = await fixture("demo-order-filled-v1.json");
+    const deal = structuredClone(raw.deal) as Record<string, unknown>;
+    deal.closePositionDetail = {
+      entryPrice: 2001.25,
+      grossProfit: "0",
+      swap: "0",
+      commission: "0",
+      balance: "1000000",
+      closedVolume: "-1",
+      moneyDigits: 2,
+    };
+    expect(() =>
+      normalizeDemoExecution({ ...raw, deal }, { symbolId: "7" }),
+    ).toThrowError("CTRADER_CLOSE_VOLUME_INVALID");
+  });
+
+  it("rejects a fill event that omits its required deal", async () => {
+    const raw = await fixture("demo-order-filled-v1.json");
+    expect(() =>
+      normalizeDemoExecution({ ...raw, deal: null }, { symbolId: "7" }),
+    ).toThrowError("DEMO_EXECUTION_DEAL_MISSING");
+  });
+
+  it("rejects a strategy event for a different broker symbol", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    expect(() => normalizeDemoExecution(raw, { symbolId: "8" })).toThrowError(
+      "DEMO_EXECUTION_SYMBOL_MISMATCH",
+    );
+  });
+
+  it("rejects an execution type that contradicts the broker order state", async () => {
+    const raw = await fixture("demo-order-filled-v1.json");
+    expect(() =>
+      normalizeDemoExecution(
+        { ...raw, executionType: 2, deal: null, position: null },
+        { symbolId: "7" },
+      ),
+    ).toThrowError("DEMO_EXECUTION_ORDER_STATE_MISMATCH");
+  });
+
+  it("retains a partially filled cancellation for reconciliation", async () => {
+    const raw = await fixture("demo-order-partial-fill-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    order.orderStatus = 5;
+    const event = normalizeDemoExecution(
+      {
+        ...raw,
+        executionType: 5,
+        order,
+        position: null,
+        deal: null,
+      },
+      { symbolId: "7" },
+    );
+    expect(event?.order?.state).toBe("PARTIALLY_FILLED");
+  });
+
+  it("ignores events that are not strategy-owned", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    const data = order.tradeData as Record<string, unknown>;
+    order.clientOrderId = "manual-order";
+    data.label = "manual";
+    expect(
+      normalizeDemoExecution({ ...raw, order }, { symbolId: "7" }),
+    ).toBeNull();
+  });
+});
+
+describe("durable demo execution recorder", () => {
+  it("serializes callback persistence before reporting certainty", async () => {
+    const store = new MemoryStore();
+    const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
+    recorder.enqueue(await fixture("demo-order-accepted-v1.json"));
+    recorder.enqueue(await fixture("demo-order-filled-v1.json"));
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: true,
+      reasonCodes: [],
+    });
+    expect(store.events.map((event) => event.eventKey)).toEqual([
+      expect.stringMatching(/^event:/),
+      "deal:902",
+    ]);
+  });
+
+  it("remains fail-closed after a persistence rejection", async () => {
+    const store = new MemoryStore();
+    store.result = {
+      certain: false,
+      reasonCodes: ["DEMO_EXECUTION_LOCAL_INTENT_NOT_FOUND"],
+    };
+    const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
+    recorder.enqueue(await fixture("demo-order-accepted-v1.json"));
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["DEMO_EXECUTION_LOCAL_INTENT_NOT_FOUND"],
+    });
+  });
+});

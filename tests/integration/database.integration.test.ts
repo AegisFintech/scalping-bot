@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import pg from "pg";
@@ -10,6 +12,9 @@ import {
   migrate,
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
+import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
+import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
+import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
 const databaseTest =
@@ -36,6 +41,7 @@ describe("PostgreSQL migrations integration", () => {
         "0003",
         "0004",
         "0005",
+        "0006",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -112,10 +118,293 @@ describe("PostgreSQL migrations integration", () => {
       await expect(
         risk.initializeReconciledBaseline(baselineInput),
       ).rejects.toThrow("DAILY_RISK_BASELINE_ALREADY_EXISTS");
+
+      const symbolId = randomUUID();
+      const strategyVersionId = randomUUID();
+      const analysisId = randomUUID();
+      const orderGroupId = randomUUID();
+      await isolated.query(
+        `INSERT INTO symbols
+          (id, account_id, provider_symbol_id, name, digits, tick_size, tick_value,
+           contract_size, min_volume, max_volume, volume_step, min_stop_distance,
+           metadata_revision, metadata_at, volume_scale)
+         VALUES ($1, $2, '7', 'XAUUSD', 2, 0.01, 0.01, 100, 1, 100000,
+                 1, 0, 'integration', now(), 0.01)`,
+        [symbolId, demoAccountId],
+      );
+      await isolated.query(
+        `INSERT INTO strategy_versions
+          (id, version, code_hash, config_hash, prompt_version, schema_version, feature_version)
+         VALUES ($1, $2, $3, $4, 'system-v1', '1.0', '1.0')`,
+        [
+          strategyVersionId,
+          `integration-${strategyVersionId}`,
+          "c".repeat(64),
+          "d".repeat(64),
+        ],
+      );
+      await isolated.query(
+        `INSERT INTO analysis_runs
+          (id, account_id, symbol_id, strategy_version_id, mode, state, analysis_time, valid_until)
+         VALUES ($1, $2, $3, $4, 'demo', 'ACCEPTED', now(), now() + interval '1 hour')`,
+        [analysisId, demoAccountId, symbolId, strategyVersionId],
+      );
+      await isolated.query(
+        `INSERT INTO order_groups
+          (id, analysis_id, idempotency_key, mode, state, expires_at)
+         VALUES ($1, $2, $3, 'demo', 'ACTIVE', now() + interval '1 hour')`,
+        [orderGroupId, analysisId, `group-${orderGroupId}`],
+      );
+      for (const [side, clientOrderId] of [
+        ["BUY", "cas-buy-111111111111111111111111"],
+        ["SELL", "cas-sell-22222222222222222222222"],
+      ] as const) {
+        await isolated.query(
+          `INSERT INTO orders
+            (id, account_id, order_group_id, side, order_type, state, client_order_id,
+             strategy_owned, strategy_label, idempotency_key, entry_price, stop_loss,
+             take_profit, requested_volume, normalized_volume, expires_at)
+           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true,
+                   'ctrader-ai-scalper:0.1.0', $6, 2001, 1999, 2005, 100, 100,
+                   now() + interval '1 hour')`,
+          [
+            randomUUID(),
+            demoAccountId,
+            orderGroupId,
+            side,
+            clientOrderId,
+            `order-${clientOrderId}`,
+          ],
+        );
+      }
+      const eventFixture = async (name: string): Promise<BrokerExecution> =>
+        JSON.parse(
+          await readFile(
+            path.resolve("tests", "fixtures", "ctrader", name),
+            "utf8",
+          ),
+        ) as BrokerExecution;
+      const store = new PostgresDemoExecutionStore({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+      });
+      const accepted = normalizeDemoExecution(
+        await eventFixture("demo-order-accepted-v1.json"),
+        { symbolId: "7" },
+      );
+      expect(accepted).not.toBeNull();
+      await expect(
+        Promise.all([store.persist(accepted!), store.persist(accepted!)]),
+      ).resolves.toEqual([
+        { certain: true, reasonCodes: [] },
+        { certain: true, reasonCodes: [] },
+      ]);
+      const acceptedRows = await isolated.query<{ count: string }>(
+        "SELECT count(*)::text AS count FROM broker_execution_events WHERE account_id = $1",
+        [demoAccountId],
+      );
+      expect(acceptedRows.rows[0]?.count).toBe("1");
+
+      const partial = normalizeDemoExecution(
+        await eventFixture("demo-order-partial-fill-v1.json"),
+        { symbolId: "7" },
+      );
+      expect(partial).not.toBeNull();
+      await expect(store.persist(partial!)).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED"],
+      });
+      const durableExecution = await isolated.query<{
+        order_state: string;
+        filled_volume: string;
+        group_state: string;
+        fills: string;
+        positions: string;
+      }>(
+        `SELECT o.state AS order_state, o.filled_volume::text,
+                og.state AS group_state,
+                (SELECT count(*)::text FROM fills f WHERE f.order_id = o.id) AS fills,
+                (SELECT count(*)::text FROM positions p WHERE p.order_group_id = og.id) AS positions
+         FROM orders o
+         JOIN order_groups og ON og.id = o.order_group_id
+         WHERE o.account_id = $1 AND o.client_order_id = $2`,
+        [demoAccountId, "cas-buy-111111111111111111111111"],
+      );
+      expect(durableExecution.rows[0]).toEqual({
+        order_state: "PARTIALLY_FILLED",
+        filled_volume: "40.0000000000",
+        group_state: "RECONCILIATION_REQUIRED",
+        fills: "1",
+        positions: "1",
+      });
+
+      const filled = normalizeDemoExecution(
+        await eventFixture("demo-order-filled-v1.json"),
+        { symbolId: "7" },
+      );
+      expect(filled).not.toBeNull();
+      await expect(store.persist(filled!)).resolves.toEqual({
+        certain: true,
+        reasonCodes: [],
+      });
+      const completedExecution = await isolated.query<{
+        order_state: string;
+        filled_volume: string;
+        group_state: string;
+        fills: string;
+        unresolved_partials: string;
+      }>(
+        `SELECT o.state AS order_state, o.filled_volume::text,
+                og.state AS group_state,
+                (SELECT count(*)::text FROM fills f WHERE f.order_id = o.id) AS fills,
+                (SELECT count(*)::text FROM broker_execution_events e
+                 WHERE e.account_id = $1
+                   AND e.reason_codes @> '["DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED"]'::jsonb
+                   AND e.resolved_at IS NULL) AS unresolved_partials
+         FROM orders o
+         JOIN order_groups og ON og.id = o.order_group_id
+         WHERE o.account_id = $1 AND o.client_order_id = $2`,
+        [demoAccountId, "cas-buy-111111111111111111111111"],
+      );
+      expect(completedExecution.rows[0]).toEqual({
+        order_state: "FILLED",
+        filled_volume: "100.0000000000",
+        group_state: "CANCELLING_PEER",
+        fills: "2",
+        unresolved_partials: "0",
+      });
+      await expect(store.persist(partial!)).resolves.toEqual({
+        certain: true,
+        reasonCodes: [],
+      });
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
       await admin.end();
+    }
+  });
+
+  databaseTest("upgrades an existing 0005 order safely to 0006", async () => {
+    const schema = `test_${randomUUID().replaceAll("-", "")}`;
+    const migrationDirectory = await mkdtemp(
+      path.join(os.tmpdir(), "ctrader-migrations-"),
+    );
+    const admin = new pg.Pool({
+      connectionString: databaseConnectionString(connectionString as string),
+      ssl: { rejectUnauthorized: true },
+    });
+    await admin.query(`CREATE SCHEMA "${schema}"`);
+    const url = new URL(connectionString as string);
+    url.searchParams.set("options", `-csearch_path=${schema}`);
+    const isolated = createPool({
+      connectionString: url.toString(),
+      sslMode: "require",
+    });
+    try {
+      for (const file of [
+        "0001_initial.sql",
+        "0002_dashboard_views.sql",
+        "0003_symbol_volume_scale.sql",
+        "0004_daily_risk_net_flows.sql",
+        "0005_paper_account_identity.sql",
+      ]) {
+        await copyFile(
+          path.resolve("migrations", file),
+          path.join(migrationDirectory, file),
+        );
+      }
+      expect(await migrate(isolated, migrationDirectory)).toEqual([
+        "0001",
+        "0002",
+        "0003",
+        "0004",
+        "0005",
+      ]);
+      const accountId = randomUUID();
+      const symbolId = randomUUID();
+      const strategyVersionId = randomUUID();
+      const analysisId = randomUUID();
+      const orderGroupId = randomUUID();
+      const orderId = randomUUID();
+      await isolated.query(
+        `INSERT INTO accounts
+          (id, provider, provider_account_key_hash, environment, account_type, currency)
+         VALUES ($1, 'ctrader', $2, 'demo', 'demo', 'USD')`,
+        [accountId, "e".repeat(64)],
+      );
+      await isolated.query(
+        `INSERT INTO symbols
+          (id, account_id, provider_symbol_id, name, digits, tick_size, tick_value,
+           contract_size, min_volume, max_volume, volume_step, min_stop_distance,
+           metadata_revision, metadata_at, volume_scale)
+         VALUES ($1, $2, '7', 'XAUUSD', 2, 0.01, 0.01, 100, 1, 100000,
+                 1, 0, 'upgrade', now(), 0.01)`,
+        [symbolId, accountId],
+      );
+      await isolated.query(
+        `INSERT INTO strategy_versions
+          (id, version, code_hash, config_hash, prompt_version, schema_version, feature_version)
+         VALUES ($1, $2, $3, $4, 'system-v1', '1.0', '1.0')`,
+        [
+          strategyVersionId,
+          `upgrade-${strategyVersionId}`,
+          "f".repeat(64),
+          "0".repeat(64),
+        ],
+      );
+      await isolated.query(
+        `INSERT INTO analysis_runs
+          (id, account_id, symbol_id, strategy_version_id, mode, state, analysis_time)
+         VALUES ($1, $2, $3, $4, 'demo', 'ACCEPTED', now())`,
+        [analysisId, accountId, symbolId, strategyVersionId],
+      );
+      await isolated.query(
+        `INSERT INTO order_groups
+          (id, analysis_id, idempotency_key, mode, state, expires_at)
+         VALUES ($1, $2, $3, 'demo', 'ACTIVE', now() + interval '1 hour')`,
+        [orderGroupId, analysisId, `upgrade-${orderGroupId}`],
+      );
+      await isolated.query(
+        `INSERT INTO orders
+          (id, order_group_id, side, order_type, state, client_order_id,
+           strategy_label, idempotency_key, entry_price, stop_loss, take_profit,
+           requested_volume, normalized_volume, expires_at)
+         VALUES ($1, $2, 'BUY', 'STOP', 'PENDING', $3,
+                 'ctrader-ai-scalper:upgrade', $4, 2001, 1999, 2005,
+                 100, 100, now() + interval '1 hour')`,
+        [orderId, orderGroupId, `upgrade-${orderId}`, `idempotency-${orderId}`],
+      );
+      await copyFile(
+        path.resolve("migrations", "0006_ctrader_demo_execution_events.sql"),
+        path.join(migrationDirectory, "0006_ctrader_demo_execution_events.sql"),
+      );
+      expect(await migrate(isolated, migrationDirectory)).toEqual(["0006"]);
+      const upgraded = await isolated.query<{ account_id: string }>(
+        "SELECT account_id FROM orders WHERE id = $1",
+        [orderId],
+      );
+      expect(upgraded.rows[0]?.account_id).toBe(accountId);
+      const journal = await isolated.query<{ exists: boolean }>(
+        `SELECT to_regclass('broker_execution_events') IS NOT NULL AS exists`,
+      );
+      expect(journal.rows[0]?.exists).toBe(true);
+      const clientOrderConstraints = await isolated.query<{
+        definition: string;
+      }>(
+        `SELECT pg_get_constraintdef(oid) AS definition
+         FROM pg_constraint
+         WHERE conrelid = 'orders'::regclass AND contype = 'u'
+           AND pg_get_constraintdef(oid) LIKE '%client_order_id%'`,
+      );
+      expect(clientOrderConstraints.rows.map((row) => row.definition)).toEqual([
+        "UNIQUE (account_id, client_order_id)",
+      ]);
+    } finally {
+      await isolated.end();
+      await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
+      await admin.end();
+      await rm(migrationDirectory, { recursive: true, force: true });
     }
   });
 });

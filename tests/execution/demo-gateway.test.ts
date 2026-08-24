@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   CTraderDemoGateway,
@@ -47,6 +47,7 @@ function event(
       },
     },
     position: null,
+    deal: null,
     errorCode: null,
     receivedAt: new Date().toISOString(),
   };
@@ -85,11 +86,51 @@ class MockClient implements CTraderTradingClient {
       executionType: 5,
       order: source,
       position: null,
+      deal: null,
       errorCode: null,
       receivedAt: new Date().toISOString(),
     };
     this.#handler?.(result);
     return Promise.resolve(result);
+  }
+
+  fill(clientOrderId: string): void {
+    const source = this.orders.find(
+      (order) => order.clientOrderId === clientOrderId,
+    );
+    if (source === undefined) throw new Error("missing");
+    source.orderStatus = 2;
+    source.executedVolume = (
+      source.tradeData as Record<string, unknown>
+    ).volume;
+    const data = source.tradeData as Record<string, unknown>;
+    const result: BrokerExecution = {
+      executionType: 3,
+      order: source,
+      position: {
+        positionId: "801",
+        positionStatus: 1,
+        price: 2001.01,
+        tradeData: data,
+      },
+      deal: {
+        dealId: "901",
+        orderId: source.orderId,
+        positionId: "801",
+        volume: data.volume,
+        filledVolume: data.volume,
+        symbolId: data.symbolId,
+        createTimestamp: Date.now(),
+        executionTimestamp: Date.now(),
+        executionPrice: 2001.01,
+        tradeSide: data.tradeSide,
+        dealStatus: 2,
+        label: data.label,
+      },
+      errorCode: null,
+      receivedAt: new Date().toISOString(),
+    };
+    this.#handler?.(result);
   }
 
   reconcileRaw(): Promise<RawReconciliation> {
@@ -133,5 +174,25 @@ describe("cTrader demo gateway", () => {
       gateway.placeOco([command("BUY"), command("SELL")]),
     ).rejects.toThrow("DEMO_SECOND_LEG_FAILED_FIRST_LEG_CANCELLED");
     expect(client.cancelled).toEqual(["101"]);
+  });
+
+  it("cancels the pending peer once after a broker fill", async () => {
+    const client = new MockClient();
+    const gateway = new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    client.fill("client-BUY");
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+    client.fill("client-BUY");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(client.cancelled).toEqual(["102"]);
   });
 });

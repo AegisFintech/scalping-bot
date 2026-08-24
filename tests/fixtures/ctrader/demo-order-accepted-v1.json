@@ -1,0 +1,21 @@
+{
+  "executionType": 2,
+  "order": {
+    "orderId": "501",
+    "orderStatus": 1,
+    "clientOrderId": "cas-buy-111111111111111111111111",
+    "executedVolume": "0",
+    "utcLastUpdateTimestamp": 1787544000000,
+    "tradeData": {
+      "symbolId": "7",
+      "volume": "100",
+      "tradeSide": 1,
+      "openTimestamp": 1787544000000,
+      "label": "ctrader-ai-scalper:0.1.0"
+    }
+  },
+  "position": null,
+  "deal": null,
+  "errorCode": null,
+  "receivedAt": "2026-08-24T04:00:00.100Z"
+}

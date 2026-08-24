@@ -38,6 +38,9 @@ import { AnalysisCoordinator, type CycleResult } from "./coordinator.js";
 import { loadExecutionConfig, safetyConfigHash } from "./config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
 import { CTraderDemoGateway, DEMO_ACKNOWLEDGEMENT } from "./demo-gateway.js";
+import { DurableDemoExecutionRecorder } from "./demo-execution.js";
+import { recoverDemoExecutions } from "./demo-execution-recovery.js";
+import { PostgresDemoExecutionStore } from "./demo-execution-store.js";
 import { DailyRiskStore, tradingDayStart } from "./daily-risk-store.js";
 import { DisabledLiveGateway } from "./live-compatible-gateway.js";
 import {
@@ -345,6 +348,83 @@ async function main(): Promise<void> {
     instanceId: config.instanceId,
     environment: config.appEnv,
   });
+  const executionSymbolId = latestSnapshot.metadata.symbolId;
+  const demoExecutionStore =
+    brokerClient !== null && config.tradingMode === "demo"
+      ? new PostgresDemoExecutionStore({
+          pool,
+          accountId: identity.accountId,
+          symbolId: identity.symbolId,
+        })
+      : null;
+  const demoExecutionRecorder =
+    demoExecutionStore === null
+      ? null
+      : new DurableDemoExecutionRecorder(demoExecutionStore, {
+          symbolId: executionSymbolId,
+        });
+  const unsubscribeDemoExecutions =
+    brokerClient === null || demoExecutionRecorder === null
+      ? null
+      : brokerClient.onExecution((execution) =>
+          demoExecutionRecorder.enqueue(execution),
+        );
+  const runDemoRecovery = async (): Promise<{
+    readonly certain: boolean;
+    readonly reasonCodes: readonly string[];
+  }> => {
+    if (brokerClient === null || demoExecutionStore === null)
+      return { certain: true, reasonCodes: [] };
+    try {
+      return await recoverDemoExecutions({
+        pool,
+        accountId: identity.accountId,
+        symbolId: identity.symbolId,
+        client: brokerClient,
+        store: demoExecutionStore,
+        normalizer: { symbolId: executionSymbolId },
+      });
+    } catch (error) {
+      return {
+        certain: false,
+        reasonCodes: [
+          error instanceof Error
+            ? error.message
+            : "DEMO_EXECUTION_RECOVERY_FAILED",
+        ],
+      };
+    }
+  };
+  let demoRecoveryState = await runDemoRecovery();
+  let demoRecoveryTail: Promise<void> = Promise.resolve();
+  if (!demoRecoveryState.certain) {
+    logger.log("error", {
+      event_name: "demo_execution_recovery_failed",
+      outcome: "failed",
+      reason_code:
+        demoRecoveryState.reasonCodes[0] ?? "DEMO_EXECUTION_RECOVERY_UNCERTAIN",
+    });
+  }
+  let startupChecksPassed = false;
+  const unsubscribeDemoSynchronization =
+    brokerClient === null || demoExecutionStore === null
+      ? null
+      : brokerClient.onSynchronization(() => {
+          demoRecoveryTail = demoRecoveryTail.then(async () => {
+            demoRecoveryState = await runDemoRecovery();
+            startupChecksPassed =
+              config.tradingMode !== "live" && demoRecoveryState.certain;
+            if (!demoRecoveryState.certain) {
+              logger.log("error", {
+                event_name: "demo_execution_recovery_failed",
+                outcome: "failed",
+                reason_code:
+                  demoRecoveryState.reasonCodes[0] ??
+                  "DEMO_EXECUTION_RECOVERY_UNCERTAIN",
+              });
+            }
+          });
+        });
   const performanceContext = new PostgresPerformanceContext({
     pool,
     accountId: identity.accountId,
@@ -413,7 +493,8 @@ async function main(): Promise<void> {
       : { networkInterface: environment.NETWORK_INTERFACE }),
   });
   metrics.start();
-  let startupChecksPassed = config.tradingMode !== "live";
+  startupChecksPassed =
+    config.tradingMode !== "live" && demoRecoveryState.certain;
   let lastCycle: CycleResult | null = null;
   let lastSafetyReasons: readonly string[] = [];
   const dailyRiskTimezone = environment.DAILY_RISK_TIMEZONE ?? "UTC";
@@ -452,6 +533,7 @@ async function main(): Promise<void> {
   };
 
   const safety = async (): Promise<SafetyGateInput> => {
+    await demoRecoveryTail;
     const filesystem = await readFilesystemControls({
       emergencyStopFile: config.emergencyStopFile,
       liveEnablementFile: config.liveEnablementFile,
@@ -481,6 +563,10 @@ async function main(): Promise<void> {
       };
     }
     const external = await gateway.reconcile(config.symbol);
+    const demoExecutionState =
+      demoExecutionRecorder === null
+        ? { certain: true, reasonCodes: [] as readonly string[] }
+        : await demoExecutionRecorder.flush();
     let reconciliationPersisted = true;
     try {
       await trail.reconciliation(external);
@@ -604,6 +690,8 @@ async function main(): Promise<void> {
       reconciliationCertain:
         state.certain &&
         external.certain &&
+        demoRecoveryState.certain &&
+        demoExecutionState.certain &&
         reconciliationPersisted &&
         !databaseReconciliationPending,
       relevantPositionCount: Math.max(
@@ -630,6 +718,8 @@ async function main(): Promise<void> {
       marketDataFresh: true,
       dailyLossLockout: dailyLocked,
       operationalRiskLockout:
+        !demoRecoveryState.certain ||
+        !demoExecutionState.certain ||
         (accountEquityFloor !== null &&
           (!state.certain ||
             new Decimal(state.equity).lt(accountEquityFloor))) ||
@@ -640,7 +730,11 @@ async function main(): Promise<void> {
       deterministicRiskApproved: false,
       spreadSafe: false,
       duplicateFree: external.certain,
-      criticalAuditAvailable: databaseHealthy && reconciliationPersisted,
+      criticalAuditAvailable:
+        databaseHealthy &&
+        reconciliationPersisted &&
+        demoRecoveryState.certain &&
+        demoExecutionState.certain,
     };
   };
 
@@ -700,8 +794,8 @@ async function main(): Promise<void> {
       performanceContext.build(analyticsResponse),
   });
 
-  startupChecksPassed = true;
-  if (config.tradingMode === "live") startupChecksPassed = false;
+  startupChecksPassed =
+    config.tradingMode !== "live" && demoRecoveryState.certain;
   const status = async (): Promise<ExecutionStatus> => {
     const current = await safety();
     const eligibility = evaluateAnalysisEligibility(current);
@@ -908,6 +1002,10 @@ async function main(): Promise<void> {
   const shutdown = async (): Promise<void> => {
     clearInterval(timer);
     metrics.stop();
+    unsubscribeDemoExecutions?.();
+    unsubscribeDemoSynchronization?.();
+    await demoRecoveryTail;
+    await demoExecutionRecorder?.flush();
     if (environment.SHUTDOWN_CANCEL_PENDING !== "false") {
       await maintenance.cancelAll("SERVICE_SHUTDOWN").catch(() => undefined);
     }

@@ -477,10 +477,11 @@ export class CTraderDemoGateway implements ExecutionGateway {
     tracked.updatedAt = execution.receivedAt;
     tracked.reasonCode = reasonCode ?? execution.errorCode;
     if (execution.executionType === 3 || execution.executionType === 11) {
-      const executionPrice = optionalNumberField(
-        execution.order,
-        "executionPrice",
-      );
+      const executionPrice =
+        optionalNumberField(execution.order, "executionPrice") ??
+        (execution.deal === null
+          ? undefined
+          : optionalNumberField(execution.deal, "executionPrice"));
       if (executionPrice === undefined) {
         this.#uncertainReason = "DEMO_FILL_PRICE_MISSING";
         tracked.reasonCode = this.#uncertainReason;

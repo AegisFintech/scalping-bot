@@ -6,33 +6,34 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 
 ## Core tables
 
-| Table                  | Purpose and key constraints                                                                   |
-| ---------------------- | --------------------------------------------------------------------------------------------- |
-| `accounts`             | pseudonymous account key, paper/broker provider and environment; unique provider key hash     |
-| `symbols`              | broker symbol ID/name, digits, tick/contract/volume-scale/margin metadata, revision/freshness |
-| `candle_snapshots`     | account/symbol/analysis timestamp, source skew, completeness; unique analysis/time            |
-| `candles`              | snapshot/timeframe/start/end/OHLCV/quality; unique snapshot/timeframe/start                   |
-| `indicator_snapshots`  | versioned deterministic feature JSON and latest numeric fields                                |
-| `order_book_snapshots` | source/receive times, bid/ask/spread/imbalance/age/discontinuity                              |
-| `order_book_levels`    | snapshot/side/level/price/size; unique snapshot/side/level                                    |
-| `analysis_runs`        | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol   |
-| `model_requests`       | endpoint/model/prompt/schema, redacted payload/hash, latency/status                           |
-| `model_responses`      | redacted raw/parsed payload, provider IDs if non-sensitive, token/status bounds               |
-| `validation_results`   | schema/semantic/risk stage, accepted flag, bounded reason/detail JSON                         |
-| `risk_decisions`       | equity/risk budget/stop/tick/raw/normalized volume, margin/spread, approval/reasons           |
-| `order_groups`         | OCO analysis link, state, expiry, unique idempotency key                                      |
-| `orders`               | group/side/type/state/client/broker ID, prices/volume, ownership, version counters            |
-| `fills`                | deduplicated broker event, order, price/volume/fees/time                                      |
-| `positions`            | current/history broker position state and reconciliation version                              |
-| `trades`               | closed outcome, mode/setup/regime/version and realized results                                |
-| `session_statistics`   | bounded aggregate by account/symbol/session/mode                                              |
-| `setup_statistics`     | aggregate/decay window by tags/regime/direction/hour/depth/vol/confidence/version             |
-| `daily_risk_state`     | timezone/day baseline/current equity, net capital flows, loss utilization, durable lockout    |
-| `service_health`       | service/instance state, dependency reasons and heartbeat                                      |
-| `server_metrics`       | bounded sampled CPU/memory/disk/network/process data                                          |
-| `audit_events`         | append-only correlation IDs, pseudonyms, event/outcome/reason/redacted detail                 |
-| `runtime_controls`     | emergency stop, pause, dashboard acknowledgement and versioned expiry/actor/reason            |
-| `strategy_versions`    | immutable code/config/prompt/schema/feature version hashes                                    |
+| Table                     | Purpose and key constraints                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------- |
+| `accounts`                | pseudonymous account key, paper/broker provider and environment; unique provider key hash     |
+| `symbols`                 | broker symbol ID/name, digits, tick/contract/volume-scale/margin metadata, revision/freshness |
+| `candle_snapshots`        | account/symbol/analysis timestamp, source skew, completeness; unique analysis/time            |
+| `candles`                 | snapshot/timeframe/start/end/OHLCV/quality; unique snapshot/timeframe/start                   |
+| `indicator_snapshots`     | versioned deterministic feature JSON and latest numeric fields                                |
+| `order_book_snapshots`    | source/receive times, bid/ask/spread/imbalance/age/discontinuity                              |
+| `order_book_levels`       | snapshot/side/level/price/size; unique snapshot/side/level                                    |
+| `analysis_runs`           | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol   |
+| `model_requests`          | endpoint/model/prompt/schema, redacted payload/hash, latency/status                           |
+| `model_responses`         | redacted raw/parsed payload, provider IDs if non-sensitive, token/status bounds               |
+| `validation_results`      | schema/semantic/risk stage, accepted flag, bounded reason/detail JSON                         |
+| `risk_decisions`          | equity/risk budget/stop/tick/raw/normalized volume, margin/spread, approval/reasons           |
+| `order_groups`            | OCO analysis link, state, expiry, unique idempotency key                                      |
+| `orders`                  | group/side/type/state/client/broker ID, prices/volume, ownership, version counters            |
+| `fills`                   | deduplicated broker event, order, price/volume/fees/time                                      |
+| `positions`               | current/history broker position state and reconciliation version                              |
+| `trades`                  | closed outcome, mode/setup/regime/version and realized results                                |
+| `broker_execution_events` | deduplicated normalized cTrader callback/recovery evidence and mapping state                  |
+| `session_statistics`      | bounded aggregate by account/symbol/session/mode                                              |
+| `setup_statistics`        | aggregate/decay window by tags/regime/direction/hour/depth/vol/confidence/version             |
+| `daily_risk_state`        | timezone/day baseline/current equity, net capital flows, loss utilization, durable lockout    |
+| `service_health`          | service/instance state, dependency reasons and heartbeat                                      |
+| `server_metrics`          | bounded sampled CPU/memory/disk/network/process data                                          |
+| `audit_events`            | append-only correlation IDs, pseudonyms, event/outcome/reason/redacted detail                 |
+| `runtime_controls`        | emergency stop, pause, dashboard acknowledgement and versioned expiry/actor/reason            |
+| `strategy_versions`       | immutable code/config/prompt/schema/feature version hashes                                    |
 
 ## Transaction boundaries
 
@@ -58,3 +59,11 @@ Migration `0005` widens only the account identity checks to admit the isolated
 `paper` provider/environment/type. It preserves all legacy rows, including any
 previously mixed identity, for audit; operators must select a fresh stable demo
 pseudonym instead of reusing a historically paper-backed key.
+
+Migration `0006` adds account-scoped broker order/position uniqueness, a broker
+update timestamp, position-owned closing fills, and the normalized cTrader event
+journal. It backfills `orders.account_id` through the existing group/analysis
+foreign keys without deleting rows. Rollback is intentionally manual: stop
+execution, verify that no `0006` evidence is required for reconciliation,
+restore the prior constraints/indexes, and remove added objects only after an
+operator-reviewed evidence-retention decision.
