@@ -65,6 +65,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   order/fill/position state, and replays bounded broker history after startup or
   reconnect before restoring readiness.
 - Uses paper, demo, shadow, and live-compatible gateways behind one interface.
+- Samples the typed fresh-quote endpoint once per minute into an idempotent,
+  account/symbol-scoped spread history even while analysis and trading are
+  stopped. The sampler depends only on quote retrieval and persistence; it has
+  no coordinator, model, risk-intent, gateway, or broker-command capability.
 - Shadow gateway cannot submit. The production composition uses a disabled live
   gateway. A separately tested live-compatible decorator exists for future
   review but is not wired to a broker-capable gateway.
@@ -100,6 +104,13 @@ official [cTrader model messages](https://help.ctrader.com/open-api/model-messag
 cTrader also documents in its [Open API FAQ](https://help.ctrader.com/open-api/faq/)
 that a no-tick interval does not produce a trendbar, so an absent bar during an
 open session is not silently treated as a closure.
+
+Adaptive spread observations preserve broker-source, local-receive, and final
+broker-server timestamps plus canonical bid/ask/spread decimals. Source-minute
+uniqueness makes retries and restarts idempotent. Stale, future, malformed,
+crossed, symbol-mismatched, unavailable, and database-failed samples do not
+contribute to history; fewer than the configured minimum observations remains a
+hard rejection.
 
 Broker behavior is expressed by `MarketDataAdapter`, `AccountAdapter`, and `ExecutionGateway`. Gateways accept already normalized command objects; they do not accept raw model output. AI behavior is expressed by `ModelClient`, while local validators are independent of the provider.
 

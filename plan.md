@@ -319,10 +319,14 @@ never justify empty, noisy, unsafe, or misleading commits.
   accumulate genuine timed observations rather than synthesizing history.
 - Dependencies: [issue #20](https://github.com/AegisFintech/scalping-bot/issues/20),
   the typed market quote endpoint, PostgreSQL, and existing adaptive spread logic.
-- Current status: planned. The deployed decimal fix exposes the next expected
-  denial: `SPREAD_HISTORY_MISSING`, with 2 genuine samples against the configured
-  minimum of 30. Percentile protection remains enabled and its minimum has not
-  been lowered.
+- Current status: implementation and focused tests complete on
+  `feat/issue-016-spread-observations`. The deployed decimal fix exposed the
+  expected denial: `SPREAD_HISTORY_MISSING`, with 2 genuine samples against the
+  configured minimum of 30. Percentile protection remains enabled and its
+  minimum has not been lowered. Migration `0007`, a quote-only minute sampler,
+  dedicated adaptive-history query, decimal/timestamp validation, and
+  fresh/upgrade tests passed with the complete required gate suite; remote
+  delivery and stopped deployment remain.
 
 ## Acceptance criteria
 
@@ -388,8 +392,8 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 26 files, 91 tests passed.
-- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-to-`0006` upgrade paths in isolated Neon schemas that were dropped afterward.
+- [x] `npm test`: 27 files, 103 tests passed.
+- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0007` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
 - [x] Ruff format/check, mypy, and pytest: 30 Python tests passed.
@@ -398,6 +402,7 @@ runtime.
 - [x] Secret scan and shell syntax checks passed.
 - [x] `systemd-analyze security --offline=yes` parsed all five services; common sandbox score is 2.8 (`OK`) on systemd 257.
 - [x] Apply reviewed migrations `0001` through `0006` to the configured Neon schema.
+- [ ] Apply reviewed migration `0007` under both emergency stops after PR merge.
 - [ ] Prove encrypted backup and isolated restore for the configured Neon database.
 - [ ] Install a release under `/opt/ctrader-ai-scalper/current` and verify systemd units on Debian/Node 22.
 - [ ] Run supervised cTrader demo-order/shadow, Better Stack delivery/alert, and recovery drills.

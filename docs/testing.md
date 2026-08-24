@@ -16,6 +16,11 @@ Analytics feature-boundary tests also cover high-precision positive and signed
 values, tiny values, canonical zero, `None`, and non-finite rejection. The typed
 HTTP integration asserts the M1 ATR string accepted by deterministic spread risk
 has no more than ten fractional places.
+Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
+history behavior, ten-place percentile output, duplicate/restart idempotency,
+and rejection of stale, future, malformed, crossed, over-precision,
+symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
+`0005`-through-`0007` migration paths exercise the database constraints.
 
 ## Historical limitations
 
@@ -52,14 +57,15 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 91 Node unit
-tests across 26 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 103 Node unit
+tests across 27 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
 analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
-Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
-passed. TLS connectivity and all six migrations passed inside isolated Neon
-schemas, which the tests dropped afterward; migrations `0001` through `0005`
-and `0006` are applied to the configured Neon schema. The post-migration demo
+Node/Python integration plus fresh-schema and `0005`-through-`0007` upgrade tests
+passed. TLS connectivity and all seven migrations passed inside isolated Neon
+schemas, which the tests dropped afterward; migrations `0001` through `0006`
+are applied to the configured Neon schema and `0007` awaits stopped post-merge
+deployment. The prior post-migration demo
 restart reported certain startup recovery with no journal exceptions or local
 execution state. The host used Node 24.18.0; the supported Node 22
 deployment baseline and installed systemd paths still require a Debian release
@@ -121,3 +127,8 @@ and the absolute/ATR checks accepted the stopped five-point spread. Adaptive
 percentile validation remained fail-closed with `SPREAD_HISTORY_MISSING` because
 only 2 of 30 required recent samples existed. No thresholds were changed and
 all execution-state counts remained zero.
+
+ISSUE-016's complete Node, Python, schema, migration, configured integration,
+replay/backtest, dependency-audit, secret, shell, and offline-systemd suite
+passed. Stopped deployment evidence is recorded after the delivery checkpoint
+is merged.

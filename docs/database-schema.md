@@ -14,6 +14,7 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 | `candles`                 | snapshot/timeframe/start/end/OHLCV/quality; unique snapshot/timeframe/start                   |
 | `indicator_snapshots`     | versioned deterministic feature JSON and latest numeric fields                                |
 | `order_book_snapshots`    | source/receive times, bid/ask/spread/imbalance/age/discontinuity                              |
+| `spread_observations`     | fresh quote/server times and exact spread; unique account/symbol UTC source minute            |
 | `order_book_levels`       | snapshot/side/level/price/size; unique snapshot/side/level                                    |
 | `analysis_runs`           | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol   |
 | `model_requests`          | endpoint/model/prompt/schema, redacted payload/hash, latency/status                           |
@@ -67,6 +68,16 @@ foreign keys without deleting rows. Rollback is intentionally manual: stop
 execution, verify that no `0006` evidence is required for reconciliation,
 restore the prior constraints/indexes, and remove added objects only after an
 operator-reviewed evidence-retention decision.
+
+Migration `0007` adds the append-only `spread_observations` risk-history table.
+Database checks require positive non-crossed prices, exact `spread = ask - bid`,
+broker source time no later than broker server time, local receipt no later than
+persistence, and an epoch-minute key matching source time. The unique
+account/symbol/source-minute constraint makes process retries and restarts
+idempotent. Rollback is operator-reviewed and manual: stop execution, preserve
+the risk evidence, verify another approved history source or disable the
+percentile-dependent workflow, then remove the new objects only if evidence
+retention permits.
 
 Migration files are byte-immutable after application. The configured database
 was originally migrated with one trailing blank line in `0001` and `0002`; the

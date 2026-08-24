@@ -13,6 +13,7 @@ const requiredTables = [
   "candles",
   "indicator_snapshots",
   "order_book_snapshots",
+  "spread_observations",
   "order_book_levels",
   "analysis_runs",
   "model_requests",
@@ -64,6 +65,7 @@ describe("migrations", () => {
       "0004_daily_risk_net_flows.sql",
       "0005_paper_account_identity.sql",
       "0006_ctrader_demo_execution_events.sql",
+      "0007_spread_observations.sql",
     ]);
     const sql = (
       await Promise.all(

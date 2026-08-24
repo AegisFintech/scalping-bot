@@ -89,10 +89,18 @@ Adaptive mode evaluates all configured/available dimensions:
 - absolute spread in broker points;
 - spread basis points relative to midpoint;
 - spread/ATR ratio;
-- percentile against recent same-session history with a minimum sample;
+- percentile against recent account/symbol history with a minimum sample;
 - broker-session abnormality and reconnect/discontinuity flags.
 
 Live mode refuses startup if every spread dimension is disabled. Missing ATR/history never turns protection off; an absolute conservative cap or explicit broker-reviewed fallback is required.
+
+The current adaptive history is a bounded 24-hour account/symbol window backed
+by one validated broker-source observation per UTC minute. At least 30 distinct
+minutes are required by the protected demo configuration. Percentiles are
+truncated toward zero to ten fractional places before crossing into risk. Quote
+or database failure, invalid timestamp ordering/freshness, crossed prices, and
+insufficient rows return no percentile and therefore retain
+`SPREAD_HISTORY_MISSING` whenever the percentile gate is configured.
 
 ## Slippage
 
