@@ -208,7 +208,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   notes.
 - Current status: exact historical blobs were recovered from Git. Both files
   differ from `main` only by one trailing blank line; their content hashes match
-  the database ledger. No checksum row has been or will be rewritten.
+  the database ledger. No checksum row has been or will be rewritten. Delivery
+  is tracked in [PR #7](https://github.com/AegisFintech/scalping-bot/pull/7).
 
 ### ISSUE-013 delivery details
 
