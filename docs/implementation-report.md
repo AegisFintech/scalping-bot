@@ -251,6 +251,27 @@ percentile `71.875` with no session abnormality. Execution events, groups,
 orders, active positions, and fills remained zero; no order-capable cycle was
 invoked.
 
+A subsequent fresh acknowledgement authorized one bounded demo cycle. A first
+empty-body request incorrectly declared JSON and Fastify rejected it before the
+coordinator; cleanup restored the database stop and no cycle was recorded. A
+diagnostic then exposed the local dashboard control token in tool output. The
+token was immediately rotated in the protected environment and both execution
+and dashboard consumers restarted; the disclosed value is no longer valid.
+
+The corrected single cycle passed stopped preflight and reached `MODEL_PENDING`,
+then failed closed with `inconsistent types deduced for parameter $1` under
+analysis `ca2c49d7-f133-4a5f-a4e2-b36c5465b8a7`. `PostgresDecisionTrail.model()`
+had reused one PostgreSQL parameter for UUID `model_requests.id` and text
+`request_id`; its transaction rolled back, placement was null, and execution
+events, groups, orders, active positions, and fills remained zero. ISSUE-017
+binds the same generated ID through two distinct typed parameters. The
+configured PostgreSQL regression proves request/response/validity atomic commit,
+payload redaction, and complete rollback after a forced final-update failure.
+Demo enablement and acknowledgement were cleared, both emergency stops were
+restored, and another order-capable cycle requires fresh acknowledgement. The
+complete Node, Python, integration, schema, migration, replay/backtest, security,
+and dependency-audit suite passed for the fix.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

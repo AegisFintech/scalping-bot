@@ -155,6 +155,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)              | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
 | ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)     | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
 | ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
+| ISSUE-017 | in progress | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -190,8 +191,19 @@ never justify empty, noisy, unsafe, or misleading commits.
   before model/intent/placement with `SPREAD_INPUT_INVALID`: M1 ATR crossed the
   service boundary with 27 fractional digits while deterministic risk permits 10. Both post-cycle cleanup calls reconciled, acknowledgements were cleared,
   both emergency stops were restored, and execution-event/group/order/active-
-  position/fill counts remained zero. ISSUE-015 addresses the decimal contract;
-  any later order-capable cycle requires a fresh exact acknowledgement.
+  position/fill counts remained zero. ISSUE-015 addresses the decimal contract.
+  After ISSUE-016 supplied genuine spread history, a third exact acknowledgement
+  authorized one more bounded window. A malformed empty-body HTTP request was
+  rejected before the coordinator and did not consume the cycle; its cleanup
+  restored the database stop. The subsequent single real cycle reached
+  `MODEL_PENDING` and rejected on PostgreSQL's
+  `inconsistent types deduced for parameter $1`, with analysis
+  `ca2c49d7-f133-4a5f-a4e2-b36c5465b8a7` and no placement. The trail reused one
+  bind for UUID `model_requests.id` and text `request_id`; its transaction
+  rolled back. Demo enablement and acknowledgement were cleared, both stops were
+  restored, reconciliation was certain, and execution-event/group/order/active-
+  position/fill counts remained zero. ISSUE-017 tracks the fix; any later
+  order-capable cycle requires a fresh exact acknowledgement.
 
 ### ISSUE-002 delivery details
 
@@ -329,6 +341,22 @@ never justify empty, noisy, unsafe, or misleading commits.
   no session abnormality, and deterministic spread approval. Execution events,
   groups, orders, active positions, and fills all remained zero; no cycle was
   invoked and a later order-capable cycle still requires fresh acknowledgement.
+
+### ISSUE-017 delivery details
+
+- Acceptance criteria: use distinct, unambiguous PostgreSQL parameters for the
+  UUID model-request primary key and text provider request ID while preserving
+  the same generated identifier value; atomically persist model request,
+  response, redacted payloads, and validity; prove successful persistence and
+  transaction rollback with configured PostgreSQL integration tests; retain all
+  redaction, validation, risk, idempotency, and execution gates.
+- Dependencies: [issue #24](https://github.com/AegisFintech/scalping-bot/issues/24),
+  the existing append-only decision trail, and configured isolated-schema tests.
+- Current status: the distinct-bind fix and configured PostgreSQL success/
+  rollback regression pass on `fix/issue-017-model-trail`. The supervised cycle
+  failed closed at `MODEL_PENDING`; no model row, intent, or broker order
+  committed, and the exact acknowledgement is consumed. The complete required
+  gate suite passes; remote delivery and stopped deployment remain.
 
 ## Acceptance criteria
 

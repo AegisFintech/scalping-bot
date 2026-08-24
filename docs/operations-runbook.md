@@ -44,7 +44,10 @@ For the first supervised session, keep `AUTOMATIC_ANALYSIS_ENABLED=false`, set
 position at the current XAUUSD price. The process refuses demo-enabled startup
 when the exact demo acknowledgement or either hard cap is missing. Confirm the
 dashboard reports automatic analysis `OFF`; trigger only one authenticated
-loopback cycle. Immediately reactivate emergency stop after the observation,
+loopback cycle. The cycle endpoint has no request body; omit
+`content-type: application/json` when sending an empty POST, because Fastify
+rejects an empty declared-JSON body before the coordinator runs. Immediately
+reactivate emergency stop after the observation,
 cancel strategy-owned pending orders through the protected control, reconcile,
 and restore `DEMO_TRADING_ENABLED=false` plus an empty acknowledgement before
 leaving the session unattended.
