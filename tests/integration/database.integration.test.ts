@@ -18,6 +18,7 @@ import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/ob
 import { PostgresDecisionTrail } from "../../apps/execution-service/src/postgres-trail.js";
 import { PostgresSpreadObservationStore } from "../../apps/execution-service/src/spread-observations.js";
 import type {
+  MarketSnapshot,
   ModelResponse,
   ReconciliationSnapshot,
 } from "../../packages/contracts/src/index.js";
@@ -73,6 +74,72 @@ function noTradeResponse(
       reason_codes: [],
     },
     data_quality: { acceptable: true, warnings: [] },
+  };
+}
+
+function decisionSnapshot(
+  timestamp: string,
+  bid = "4649.12",
+  ask = "4649.21",
+): MarketSnapshot {
+  return {
+    serverTime: timestamp,
+    capturedAt: timestamp,
+    observedSkewMs: 0,
+    metadata: {
+      symbolId: "integration-symbol",
+      symbolName: "XAUUSD",
+      digits: 2,
+      tickSize: "0.01",
+      tickValue: "0.01",
+      contractSize: "100",
+      volumeScale: "0.01",
+      minVolume: "100",
+      maxVolume: "100000",
+      volumeStep: "100",
+      minStopDistance: "0.1",
+      metadataTime: timestamp,
+    },
+    quote: { bid, ask, sourceTime: timestamp, receivedAt: timestamp },
+    candles: ["M1", "M5", "M15"].map((timeframe) => ({
+      timeframe: timeframe as "M1" | "M5" | "M15",
+      candles: [],
+    })),
+    orderBook: {
+      sourceTime: timestamp,
+      receivedAt: timestamp,
+      bids: [{ price: bid, size: "10" }],
+      asks: [{ price: ask, size: "12" }],
+      complete: true,
+      discontinuity: false,
+      reconnectSequence: 0,
+      aggregates: [
+        {
+          windowMs: 60_000,
+          sampleCount: 1,
+          bidLiquidityChange: "0",
+          askLiquidityChange: "0",
+          additions: 0,
+          removals: 0,
+        },
+        {
+          windowMs: 300_000,
+          sampleCount: 1,
+          bidLiquidityChange: "0",
+          askLiquidityChange: "0",
+          additions: 0,
+          removals: 0,
+        },
+        {
+          windowMs: 900_000,
+          sampleCount: 1,
+          bidLiquidityChange: "0",
+          askLiquidityChange: "0",
+          additions: 0,
+          removals: 0,
+        },
+      ],
+    },
   };
 }
 
@@ -277,6 +344,50 @@ describe("PostgreSQL migrations integration", () => {
         instanceId: "integration-instance",
         environment: "test",
       });
+      await trail.market(
+        analysisId,
+        decisionSnapshot("2026-08-24T00:00:00.000Z"),
+      );
+      const initialMarketIds = await isolated.query<{
+        candle_snapshot_id: string;
+        order_book_snapshot_id: string;
+      }>(
+        `SELECT candle_snapshot_id, order_book_snapshot_id
+         FROM analysis_runs WHERE id = $1`,
+        [analysisId],
+      );
+      await trail.decisionMarket(
+        analysisId,
+        decisionSnapshot("2026-08-24T00:00:10.000Z", "4649.14", "4649.22"),
+      );
+      const refreshedMarket = await isolated.query<{
+        candle_snapshot_id: string;
+        order_book_snapshot_id: string;
+        source_time: Date;
+        order_book_count: string;
+        refresh_audit_count: string;
+      }>(
+        `SELECT ar.candle_snapshot_id, ar.order_book_snapshot_id,
+                obs.source_time,
+                (SELECT count(*)::text FROM order_book_snapshots
+                 WHERE candle_snapshot_id = ar.candle_snapshot_id) AS order_book_count,
+                (SELECT count(*)::text FROM audit_events
+                 WHERE analysis_id = ar.id
+                   AND event_name = 'decision_market_refreshed') AS refresh_audit_count
+         FROM analysis_runs ar
+         JOIN order_book_snapshots obs ON obs.id = ar.order_book_snapshot_id
+         WHERE ar.id = $1`,
+        [analysisId],
+      );
+      expect(refreshedMarket.rows[0]).toMatchObject({
+        candle_snapshot_id: initialMarketIds.rows[0]?.candle_snapshot_id,
+        source_time: new Date("2026-08-24T00:00:10.000Z"),
+        order_book_count: "2",
+        refresh_audit_count: "1",
+      });
+      expect(refreshedMarket.rows[0]?.order_book_snapshot_id).not.toBe(
+        initialMarketIds.rows[0]?.order_book_snapshot_id,
+      );
       await expect(
         trail.model(
           analysisId,
@@ -360,13 +471,11 @@ describe("PostgreSQL migrations integration", () => {
          FROM audit_events WHERE event_name = 'reconciliation_completed'
          LIMIT 1`,
       );
-      expect(reconciliationAudit.rows[0]).toEqual({
-        count: "1",
-        details: expect.objectContaining({
-          certain: true,
-          manual_order_count: 1,
-          strategy_order_count: 0,
-        }),
+      expect(reconciliationAudit.rows[0]?.count).toBe("1");
+      expect(reconciliationAudit.rows[0]?.details).toMatchObject({
+        certain: true,
+        manual_order_count: 1,
+        strategy_order_count: 0,
       });
       const deliveredPayloads: unknown[] = [];
       const successfulOutbox = new PostgresObservabilityOutbox({

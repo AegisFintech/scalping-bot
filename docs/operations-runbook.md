@@ -57,6 +57,14 @@ and unverified in this release. The first closing event is retained but blocks
 new placement with `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until its supervised,
 redacted evidence is reviewed and the trade mapping is implemented/tested.
 
+After every completed model call, the coordinator reacquires the full snapshot.
+`DECISION_MARKET_REFRESH_FAILED`, `DECISION_MARKET_TIME_REGRESSION`,
+`DECISION_SYMBOL_METADATA_CHANGED`, or `DECISION_CANDLE_CONTEXT_CHANGED` is a
+hard rejection, not permission to reuse the pre-model quote. The final spread,
+quote age, depth age, semantic checks, and risk sizing use only the refreshed
+execution state. Investigate repeated context changes or refresh failures; do
+not widen freshness thresholds to accommodate model latency.
+
 ## Adaptive spread-history warm-up
 
 1. Apply migration `0007` and restart the execution service with
@@ -130,8 +138,8 @@ into repository files or logs.
    exact audit row, `analysis_id` for a whole cycle, or by `event_name`,
    `request_id`, `order_group_id`, `outcome`, and `reason_code`. Useful stage
    names include `market_snapshot_persisted`, `analytics_completed`,
-   `model_completed`, `risk_intent_persisted`, `oco_placement_completed`, and
-   `reconciliation_completed`.
+   `model_completed`, `decision_market_refreshed`, `risk_intent_persisted`,
+   `oco_placement_completed`, and `reconciliation_completed`.
 5. Investigate any sustained backlog, repeated `RETRY`, expired `DELIVERING`
    lease, or gap between PostgreSQL and Live Tail. A process crash after remote
    acceptance but before the local checkpoint can produce a duplicate; dedupe

@@ -66,6 +66,7 @@ export interface DecisionTrail {
   }): Promise<void>;
   transition(analysisId: string, transition: AnalysisTransition): Promise<void>;
   market(analysisId: string, snapshot: MarketSnapshot): Promise<void>;
+  decisionMarket(analysisId: string, snapshot: MarketSnapshot): Promise<void>;
   analytics(analysisId: string, response: AnalyticsResponse): Promise<void>;
   model(
     analysisId: string,
@@ -114,6 +115,11 @@ export class InMemoryDecisionTrail implements DecisionTrail {
 
   market(analysisId: string, snapshot: MarketSnapshot): Promise<void> {
     this.events.push({ type: "market", analysisId, snapshot });
+    return Promise.resolve();
+  }
+
+  decisionMarket(analysisId: string, snapshot: MarketSnapshot): Promise<void> {
+    this.events.push({ type: "decision_market", analysisId, snapshot });
     return Promise.resolve();
   }
 
@@ -225,6 +231,61 @@ function m1Atr(response: AnalyticsResponse): string {
   const atr = (m1 as Record<string, unknown>).atr;
   if (typeof atr !== "string") throw new Error("ANALYTICS_M1_ATR_MISSING");
   return atr;
+}
+
+function executionMetadataFingerprint(metadata: SymbolMetadata): string {
+  return JSON.stringify({
+    symbolId: metadata.symbolId,
+    symbolName: metadata.symbolName,
+    digits: metadata.digits,
+    tickSize: metadata.tickSize,
+    tickValue: metadata.tickValue,
+    contractSize: metadata.contractSize,
+    volumeScale: metadata.volumeScale,
+    minVolume: metadata.minVolume,
+    maxVolume: metadata.maxVolume,
+    volumeStep: metadata.volumeStep,
+    minStopDistance: metadata.minStopDistance,
+  });
+}
+
+function candleContextFingerprint(snapshot: MarketSnapshot): string {
+  return JSON.stringify(
+    [...snapshot.candles]
+      .sort((left, right) => left.timeframe.localeCompare(right.timeframe))
+      .map((series) => ({
+        timeframe: series.timeframe,
+        candles: series.candles,
+      })),
+  );
+}
+
+function decisionMarketContextReasons(
+  initial: MarketSnapshot,
+  decision: MarketSnapshot,
+): readonly string[] {
+  const reasons: string[] = [];
+  const initialServerTime = Date.parse(initial.serverTime);
+  const decisionServerTime = Date.parse(decision.serverTime);
+  if (
+    executionMetadataFingerprint(initial.metadata) !==
+    executionMetadataFingerprint(decision.metadata)
+  ) {
+    reasons.push("DECISION_SYMBOL_METADATA_CHANGED");
+  }
+  if (
+    !Number.isFinite(initialServerTime) ||
+    !Number.isFinite(decisionServerTime) ||
+    decisionServerTime < initialServerTime
+  ) {
+    reasons.push("DECISION_MARKET_TIME_REGRESSION");
+  }
+  if (
+    candleContextFingerprint(initial) !== candleContextFingerprint(decision)
+  ) {
+    reasons.push("DECISION_CANDLE_CONTEXT_CHANGED");
+  }
+  return reasons.sort();
 }
 
 export class AnalysisCoordinator {
@@ -344,13 +405,61 @@ export class AnalysisCoordinator {
       );
       await this.#recordTransition(analysisId, machine, "VALIDATING");
 
+      let decisionSnapshot: MarketSnapshot;
+      try {
+        decisionSnapshot = await this.#options.market.snapshot(
+          this.#options.symbol,
+          this.#options.candleCounts,
+          this.#options.orderBookDepth,
+        );
+      } catch {
+        return await reject(["DECISION_MARKET_REFRESH_FAILED"]);
+      }
+      const decisionContextReasons = decisionMarketContextReasons(
+        snapshot,
+        decisionSnapshot,
+      );
+      if (decisionContextReasons.length > 0) {
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          false,
+          decisionContextReasons,
+        );
+        return await reject(decisionContextReasons);
+      }
+      await this.#options.trail.decisionMarket(analysisId, decisionSnapshot);
+
+      const decisionSpreadContext =
+        await this.#options.spreadContext(decisionSnapshot);
+      const decisionSpread = checkSpread({
+        bid: decisionSnapshot.quote.bid,
+        ask: decisionSnapshot.quote.ask,
+        tickSize: decisionSnapshot.metadata.tickSize,
+        atr,
+        maxPoints: this.#options.maxSpreadPoints,
+        maxAtrRatio: this.#options.maxSpreadAtrRatio,
+        observedPercentile: decisionSpreadContext.observedPercentile,
+        maxPercentile: this.#options.maxSpreadPercentile,
+        sessionAbnormal: decisionSpreadContext.sessionAbnormal,
+        liveMode: this.#options.mode === "live",
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "RISK",
+        decisionSpread.approved,
+        decisionSpread.reasonCodes,
+      );
+      if (!decisionSpread.approved)
+        return await reject(decisionSpread.reasonCodes);
+
       const now = new Date();
       const semantic = validateSemantics(model.response, {
         analysisId,
         symbol: this.#options.symbol,
         now,
-        quote: snapshot.quote,
-        metadata: snapshot.metadata,
+        quote: decisionSnapshot.quote,
+        metadata: decisionSnapshot.metadata,
         atr,
         minRiskRewardRatio: this.#options.minRiskRewardRatio,
         minExpirySeconds: this.#options.minExpirySeconds,
@@ -411,13 +520,13 @@ export class AnalysisCoordinator {
       }
 
       const account = await this.#options.account.reconcile(
-        snapshot.metadata.symbolId,
+        decisionSnapshot.metadata.symbolId,
       );
       const risk = await this.#options.risk.evaluate({
         response: model.response,
         account,
-        metadata: snapshot.metadata,
-        quote: snapshot.quote,
+        metadata: decisionSnapshot.metadata,
+        quote: decisionSnapshot.quote,
       });
       await this.#options.trail.validation(
         analysisId,
@@ -429,8 +538,10 @@ export class AnalysisCoordinator {
         return await reject(risk.reasonCodes);
 
       const currentSafety = await this.#options.safety();
-      const quoteAge = Date.now() - Date.parse(snapshot.quote.sourceTime);
-      const bookAge = Date.now() - Date.parse(snapshot.orderBook.sourceTime);
+      const quoteAge =
+        Date.now() - Date.parse(decisionSnapshot.quote.sourceTime);
+      const bookAge =
+        Date.now() - Date.parse(decisionSnapshot.orderBook.sourceTime);
       const placementGate = evaluatePlacementEligibility({
         ...currentSafety,
         aiCircuitOpen: this.#options.model.circuitOpen,

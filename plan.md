@@ -157,6 +157,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
 | ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
 | ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
+| ISSUE-019 | in progress | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -421,6 +422,34 @@ never justify empty, noisy, unsafe, or misleading commits.
   remain zero. No analysis cycle or broker command was run. Post-deployment
   evidence is recorded in
   [PR #31](https://github.com/AegisFintech/scalping-bot/pull/31).
+
+### ISSUE-019 delivery details
+
+- Acceptance criteria: reacquire a complete broker snapshot after every model
+  response; fail closed if retrieval fails, broker time regresses, execution
+  metadata changes, or any completed candle differs from the model context;
+  persist bounded refreshed quote/depth evidence; and run final spread,
+  semantic, deterministic risk, and placement-freshness checks only against the
+  refreshed execution state. Positive and rejection tests plus configured
+  PostgreSQL persistence evidence are required.
+- Dependencies: [issue #32](https://github.com/AegisFintech/scalping-bot/issues/32),
+  the immutable initial snapshot, typed market adapter, deterministic spread and
+  semantic validators, and append-only decision trail.
+- Current status: a later exact acknowledgement authorized one bounded manual
+  cycle. Analysis `70e71671-6052-4ad4-b497-255eb13cb5d8` completed its model
+  call, which returned `NO_TRADE` with unacceptable data quality, session gaps,
+  multi-timeframe conflict, low ADX, elevated M15 volatility, and insufficient
+  setup history. Semantic validation also rejected the pre-model quote as stale
+  after inference. No risk decision, intent, order group, order, fill, or broker
+  command was created; Better Stack delivery completed, cleanup reconciled, the
+  acknowledgement was cleared, demo/automatic analysis were disabled, and both
+  stops were restored. Implementation now reacquires and validates execution
+  state without widening the three-second freshness limits. Formatting, ESLint,
+  TypeScript typecheck/build, 114 Node tests, 10 schema tests, 3 migration tests,
+  all 3 configured integration tests, Ruff format/lint, mypy, 30 Python tests,
+  replay/backtest smoke tests, both dependency audits, secret and shell checks,
+  and all five offline systemd security parses at 2.8 (`OK`) pass. Merge and
+  stopped deployment remain pending.
 
 ## Acceptance criteria
 
