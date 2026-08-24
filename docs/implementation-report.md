@@ -69,7 +69,7 @@ pinned to Node 22 and still needs validation on that runtime.
   fresh/upgrade testing and is applied to the configured Neon schema. The
   stopped migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
-- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 13 tests passed.
+- Ruff format/lint, strict mypy across analytics/dashboard, and Python: 19 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
 - Secret scan and shell syntax checks passed.
@@ -143,6 +143,10 @@ No credentialed shadow session was run in this checkout.
   journal and atomically update order/fill/position state. Bounded startup and
   reconnect history recovery is fail-closed. Closed-trade P/L remains blocked
   until supervised broker evidence confirms commission/swap/conversion signs.
+- Streamlit now renders bounded, mode-labelled operational charts through pure
+  validated builders. Completed-candle, malformed OHLC, enum, numeric, empty,
+  and mode-separation paths are covered; a configured AppTest run rendered four
+  current-data charts without an exception.
 - A quote/deposit currency conversion provider is absent; mismatched currencies
   fail closed.
 - Better Stack rotating/remote structured logging and persistent host/process
