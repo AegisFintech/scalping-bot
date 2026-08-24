@@ -310,3 +310,14 @@ first integration invocation reported its two database cases as skipped because
 `TEST_DATABASE_URL` was absent from that process; the required configured rerun
 explicitly used the protected database URL and passed all 3 tests in isolated
 schemas.
+
+ISSUE-021's decision-inspector checkpoint passed Prettier, ESLint, TypeScript
+typecheck/build, 123 Node tests across 28 files, 10 schema tests, 3 migration
+tests, all 3 configured PostgreSQL integration tests, Ruff format/lint, strict
+mypy across analytics and dashboard code, and 37 Python tests. Replay/backtest
+smoke tests, npm/pip dependency audits, secret scanning, shell syntax, and all
+five offline systemd security parses at 2.8 (`OK`) also passed. A configured
+Streamlit AppTest rendered both a completed model `NO_TRADE` decision and a
+pre-model spread rejection without exceptions; the rejected path showed AI,
+risk, and order stages as `NOT_REACHED`. No analysis cycle or broker command was
+invoked by these read-only tests.

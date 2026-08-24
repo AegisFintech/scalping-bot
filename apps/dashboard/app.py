@@ -20,6 +20,14 @@ from charts import (
     indicators_figure,
     market_quality_figure,
 )
+from decision_inspector import (
+    DecisionViewError,
+    analytics_summary,
+    model_input_summary,
+    model_output_view,
+    safe_audit_detail,
+    stage_state,
+)
 from psycopg.rows import dict_row
 
 st.set_page_config(page_title="cTrader AI Scalper", page_icon="🛑", layout="wide")
@@ -299,24 +307,361 @@ with tabs[3]:
 with tabs[4]:
     try:
         analyses = query(
-            """SELECT ar.analysis_time, ar.mode, ar.state, ar.valid_until,
-                      mr.status AS model_status, mr.parsed_payload,
-                      vr.stage, vr.accepted, vr.reason_codes
+            """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode,
+                      ar.state, ar.valid_until, ar.rejection_reasons
                FROM analysis_runs ar
-               LEFT JOIN model_requests mq ON mq.analysis_id = ar.id
-               LEFT JOIN model_responses mr ON mr.model_request_id = mq.id
-               LEFT JOIN LATERAL (
-                 SELECT stage, accepted, reason_codes FROM validation_results
-                 WHERE analysis_id = ar.id ORDER BY validated_at DESC LIMIT 1
-               ) vr ON true
-               ORDER BY ar.analysis_time DESC LIMIT 20"""
+               JOIN accounts a ON a.id = ar.account_id
+               JOIN symbols s ON s.id = ar.symbol_id
+               WHERE a.environment = %s AND s.name = %s
+               ORDER BY ar.created_at DESC LIMIT 50""",
+            (account_environment, selected_symbol),
         )
-        for analysis in analyses:
-            with st.expander(
-                f"{analysis['analysis_time']} · {analysis['mode']} · {analysis['state']}",
-                expanded=False,
-            ):
-                st.json(analysis)
+        if not analyses:
+            st.info("No analysis runs are available for this account environment and symbol.")
+        else:
+            labels = {
+                str(row["analysis_id"]): (
+                    f"{row['analysis_time']} · {str(row['mode']).upper()} · {row['state']}"
+                )
+                for row in analyses
+            }
+            selected_analysis_id = st.selectbox(
+                "Analysis run",
+                list(labels),
+                format_func=lambda value: labels[str(value)],
+            )
+            detail_rows = query(
+                """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode,
+                          ar.state, ar.valid_until, ar.eligibility_reasons,
+                          ar.rejection_reasons, ar.created_at, ar.updated_at,
+                          sv.version AS strategy_version,
+                          cs.server_time AS snapshot_server_time,
+                          cs.received_at AS snapshot_received_at,
+                          cs.max_skew_ms, cs.complete AS snapshot_complete,
+                          ind.generated_at AS analytics_generated_at,
+                          ind.acceptable AS analytics_acceptable,
+                          ind.rejection_reasons AS analytics_rejection_reasons,
+                          ind.features AS analytics_features,
+                          mq.request_id, mq.api_style, mq.model,
+                          mq.prompt_version, mq.schema_version, mq.payload_mode,
+                          mq.payload_sha256, mq.status AS model_request_status,
+                          mq.attempt_count, mq.requested_at, mq.completed_at,
+                          mq.duration_ms, mq.payload_redacted,
+                          mr.status AS model_response_status, mr.parsed_payload,
+                          mr.input_tokens, mr.output_tokens, mr.received_at AS model_received_at
+                   FROM analysis_runs ar
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   JOIN strategy_versions sv ON sv.id = ar.strategy_version_id
+                   LEFT JOIN candle_snapshots cs ON cs.id = ar.candle_snapshot_id
+                   LEFT JOIN LATERAL (
+                     SELECT generated_at, acceptable, rejection_reasons, features
+                     FROM indicator_snapshots
+                     WHERE candle_snapshot_id = ar.candle_snapshot_id
+                     ORDER BY generated_at DESC LIMIT 1
+                   ) ind ON true
+                   LEFT JOIN LATERAL (
+                     SELECT id, request_id, api_style, model, prompt_version,
+                            schema_version, payload_mode, payload_sha256, status,
+                            attempt_count, requested_at, completed_at, duration_ms,
+                            payload_redacted
+                     FROM model_requests WHERE analysis_id = ar.id
+                     ORDER BY requested_at DESC LIMIT 1
+                   ) mq ON true
+                   LEFT JOIN model_responses mr ON mr.model_request_id = mq.id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   LIMIT 1""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            if len(detail_rows) != 1:
+                raise DecisionViewError("DECISION_VIEW_ANALYSIS_SCOPE_MISMATCH")
+            detail = detail_rows[0]
+            candles = query(
+                """SELECT c.timeframe, count(*)::int AS candle_count,
+                          bool_and(c.complete) AS completed_only,
+                          min(c.start_time) AS first_start_time,
+                          max(c.end_time) AS latest_end_time,
+                          count(*) FILTER (
+                            WHERE c.quality_flags ? 'BROKER_SESSION_GAP_BEFORE'
+                          )::int AS session_gap_markers
+                   FROM analysis_runs ar
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   JOIN candles c ON c.snapshot_id = ar.candle_snapshot_id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   GROUP BY c.timeframe
+                   ORDER BY CASE c.timeframe WHEN 'M1' THEN 1 WHEN 'M5' THEN 2 ELSE 3 END""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            market_snapshots = query(
+                """SELECT ob.source_time, ob.received_at, ob.bid, ob.ask, ob.spread,
+                          ob.weighted_mid, ob.microprice, ob.imbalance_top5,
+                          ob.imbalance_top10, ob.imbalance_top20, ob.age_ms,
+                          ob.complete, ob.discontinuity, ob.reconnect_sequence,
+                          (ob.id = ar.order_book_snapshot_id) AS active_decision_snapshot,
+                          count(obl.id) FILTER (WHERE obl.side = 'BID')::int AS bid_levels,
+                          count(obl.id) FILTER (WHERE obl.side = 'ASK')::int AS ask_levels
+                   FROM analysis_runs ar
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   JOIN order_book_snapshots ob
+                     ON ob.candle_snapshot_id = ar.candle_snapshot_id
+                   LEFT JOIN order_book_levels obl ON obl.snapshot_id = ob.id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   GROUP BY ob.id, ar.order_book_snapshot_id
+                   ORDER BY ob.source_time""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            validations = query(
+                """SELECT vr.validated_at, vr.stage, vr.accepted, vr.reason_codes,
+                          vr.details
+                   FROM validation_results vr
+                   JOIN analysis_runs ar ON ar.id = vr.analysis_id
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   ORDER BY vr.validated_at""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            risk_decisions = query(
+                """SELECT rd.decided_at, rd.side, rd.approved, rd.equity,
+                          rd.risk_percent, rd.risk_budget, rd.entry_price,
+                          rd.stop_loss, rd.stop_distance, rd.raw_volume,
+                          rd.normalized_volume, rd.estimated_margin,
+                          rd.spread_points, rd.spread_atr_ratio, rd.reason_codes
+                   FROM risk_decisions rd
+                   JOIN analysis_runs ar ON ar.id = rd.analysis_id
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   ORDER BY rd.decided_at, rd.side""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            orders = query(
+                """SELECT og.state AS group_state, og.expires_at AS group_expires_at,
+                          og.cancellation_reason, o.side, o.state AS order_state,
+                          o.entry_price, o.stop_loss, o.take_profit,
+                          o.requested_volume, o.normalized_volume, o.filled_volume,
+                          o.expires_at, o.submitted_at, o.updated_at
+                   FROM order_groups og
+                   JOIN analysis_runs ar ON ar.id = og.analysis_id
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   LEFT JOIN orders o ON o.order_group_id = og.id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   ORDER BY o.side NULLS LAST""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            broker_events = query(
+                """SELECT bee.occurred_at, bee.received_at, bee.execution_type,
+                          bee.mapping_state, bee.reason_codes, bee.resolved_at
+                   FROM broker_execution_events bee
+                   JOIN order_groups og ON og.id = bee.order_group_id
+                   JOIN analysis_runs ar ON ar.id = og.analysis_id
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   ORDER BY bee.occurred_at, bee.id""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+            audit_events = query(
+                """SELECT ae.id::text AS event_id, ae.occurred_at, ae.severity,
+                          ae.service, ae.event_name, ae.outcome, ae.reason_code,
+                          ae.request_id, ae.order_group_id, ae.duration_ms,
+                          ae.retry_count, ae.details,
+                          ob.status AS better_stack_status,
+                          ob.attempt_count AS delivery_attempts,
+                          ob.next_attempt_at, ob.delivered_at,
+                          ob.last_error_code AS delivery_error
+                   FROM audit_events ae
+                   JOIN analysis_runs ar ON ar.id = ae.analysis_id
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   LEFT JOIN observability_outbox ob ON ob.audit_event_id = ae.id
+                   WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                   ORDER BY ae.occurred_at, ae.id LIMIT 300""",
+                (selected_analysis_id, account_environment, selected_symbol),
+            )
+
+            parsed_model = detail.get("parsed_payload")
+            model_view = None if parsed_model is None else model_output_view(parsed_model)
+            model_decision = "NOT_REACHED" if model_view is None else str(model_view["decision"])
+            refresh_reached = any(
+                event["event_name"] == "decision_market_refreshed" for event in audit_events
+            )
+            stage_rows = [
+                {
+                    "stage": "Completed market snapshot",
+                    "status": "RECORDED" if detail.get("snapshot_server_time") else "NOT_REACHED",
+                },
+                {
+                    "stage": "Deterministic analytics",
+                    "status": (
+                        "NOT_REACHED"
+                        if detail.get("analytics_generated_at") is None
+                        else "ACCEPTED"
+                        if detail.get("analytics_acceptable") is True
+                        else "REJECTED"
+                    ),
+                },
+                {"stage": "AI model response", "status": model_decision},
+                {
+                    "stage": "Post-model market refresh",
+                    "status": "RECORDED" if refresh_reached else "NOT_REACHED",
+                },
+                {"stage": "Local validation", "status": stage_state(validations)},
+                {"stage": "Deterministic risk sizing", "status": stage_state(risk_decisions)},
+                {
+                    "stage": "Broker order lifecycle",
+                    "status": "RECORDED" if orders or broker_events else "NOT_REACHED",
+                },
+            ]
+
+            st.caption(
+                f"Analysis ID: {detail['analysis_id']} · PostgreSQL is authoritative; "
+                "Better Stack is the correlated delivery mirror."
+            )
+            summary_columns = st.columns(4)
+            summary_columns[0].metric("Run state", str(detail["state"]))
+            summary_columns[1].metric("AI decision", model_decision)
+            summary_columns[2].metric("Validation", stage_state(validations))
+            summary_columns[3].metric(
+                "Broker outcome", "RECORDED" if orders or broker_events else "NOT_REACHED"
+            )
+            if detail.get("rejection_reasons"):
+                st.error(
+                    "Run rejection reasons: "
+                    + ", ".join(str(reason) for reason in detail["rejection_reasons"])
+                )
+            st.subheader("Decision pipeline")
+            st.dataframe(pd.DataFrame(stage_rows), width="stretch", hide_index=True)
+
+            inspector_tabs = st.tabs(
+                ["AI output", "Input & analytics", "Risk & execution", "Audit log"]
+            )
+            with inspector_tabs[0]:
+                st.warning(
+                    "The AI output is a proposal only. Local semantic validation, risk sizing, "
+                    "freshness checks, and mode gates retain execution authority."
+                )
+                if model_view is None:
+                    st.info("AI was not reached for this run; no model response exists.")
+                else:
+                    model_columns = st.columns(3)
+                    model_columns[0].metric("Decision", str(model_view.get("decision", "unknown")))
+                    model_columns[1].metric(
+                        "Market regime", str(model_view.get("market_regime", "unknown"))
+                    )
+                    quality = model_view.get("data_quality")
+                    quality_acceptable = (
+                        quality.get("acceptable") if isinstance(quality, dict) else None
+                    )
+                    model_columns[2].metric(
+                        "AI data quality",
+                        "ACCEPTABLE" if quality_acceptable is True else "REJECTED",
+                    )
+                    st.subheader("Exact parsed and schema-validated AI response")
+                    st.json(model_view)
+                st.caption(
+                    "Raw provider text is intentionally not displayed. The parsed object above "
+                    "is the exact locally validated JSON used by semantic validation."
+                )
+
+            with inspector_tabs[1]:
+                request_metadata = {
+                    key: detail.get(key)
+                    for key in (
+                        "request_id",
+                        "api_style",
+                        "model",
+                        "prompt_version",
+                        "schema_version",
+                        "strategy_version",
+                        "payload_mode",
+                        "payload_sha256",
+                        "model_request_status",
+                        "attempt_count",
+                        "requested_at",
+                        "completed_at",
+                        "duration_ms",
+                        "input_tokens",
+                        "output_tokens",
+                    )
+                }
+                st.subheader("Model request identity and immutable input hash")
+                st.json(request_metadata)
+                if detail.get("payload_redacted") is None:
+                    st.info("Model input was not reached for this run.")
+                else:
+                    st.subheader("Redacted AI input summary")
+                    st.json(model_input_summary(detail["payload_redacted"]))
+                    st.caption(
+                        "Full candle arrays are summarized by count and boundary samples. View "
+                        "the Market tab for completed-candle charts; the request hash above "
+                        "identifies the exact persisted redacted payload."
+                    )
+                st.subheader("Deterministic analytics supplied to the decision path")
+                if detail.get("analytics_features") is None:
+                    st.info("Analytics was not reached for this run.")
+                else:
+                    st.json(analytics_summary(detail["analytics_features"]))
+                st.subheader("Completed-candle coverage")
+                st.dataframe(pd.DataFrame(candles), width="stretch", hide_index=True)
+                st.subheader("Initial and refreshed quote/depth snapshots")
+                st.dataframe(pd.DataFrame(market_snapshots), width="stretch", hide_index=True)
+
+            with inspector_tabs[2]:
+                st.subheader("Local validation results")
+                if validations:
+                    st.dataframe(pd.DataFrame(validations), width="stretch", hide_index=True)
+                else:
+                    st.info("Validation was not reached for this run.")
+                st.subheader("Deterministic risk decisions")
+                if risk_decisions:
+                    st.dataframe(pd.DataFrame(risk_decisions), width="stretch", hide_index=True)
+                else:
+                    st.info("Risk sizing was not reached; no broker volume was calculated.")
+                st.subheader("Order group and strategy-owned orders")
+                if orders:
+                    st.dataframe(pd.DataFrame(orders), width="stretch", hide_index=True)
+                else:
+                    st.info("No order intent or broker order exists for this analysis.")
+                st.subheader("cTrader execution-event mapping")
+                if broker_events:
+                    st.dataframe(pd.DataFrame(broker_events), width="stretch", hide_index=True)
+                else:
+                    st.info("No cTrader execution callback exists for this analysis.")
+
+            with inspector_tabs[3]:
+                st.subheader("Chronological PostgreSQL decision trail")
+                st.caption(
+                    "Use event_id or request_id to find the same event in Better Stack Live Tail."
+                )
+                safe_events = []
+                event_details: dict[str, Any] = {}
+                for event in audit_events:
+                    safe_event = dict(event)
+                    event_id = str(safe_event["event_id"])
+                    event_details[event_id] = safe_audit_detail(safe_event.pop("details"))
+                    safe_events.append(safe_event)
+                if safe_events:
+                    st.dataframe(pd.DataFrame(safe_events), width="stretch", hide_index=True)
+                    event_labels = {
+                        str(event["event_id"]): (
+                            f"{event['occurred_at']} · {event['event_name']} · {event['outcome']}"
+                        )
+                        for event in safe_events
+                    }
+                    selected_event_id = st.selectbox(
+                        "Audit event details",
+                        list(event_details),
+                        format_func=lambda event_id: event_labels[str(event_id)],
+                    )
+                    st.json(event_details[str(selected_event_id)])
+                else:
+                    st.info("No audit events exist for this analysis.")
+    except DecisionViewError as error:
+        st.error(f"Decision inspector rejected unsafe persisted data: {error}")
     except Exception as error:
         st.error(f"AI analysis unavailable: {type(error).__name__}")
 

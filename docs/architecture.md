@@ -102,6 +102,12 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 - Controls call a loopback API with a control token and are audited.
 - The Operations tab shows Better Stack outbox backlog, attempts, errors, and
   recent delivery checkpoints alongside the authoritative audit-event chart.
+- The AI Analysis tab scopes recent analyses to the active account environment
+  and symbol, then correlates completed-candle coverage, bounded indicator and
+  model-input summaries, the exact parsed/schema-validated AI response,
+  refreshed market evidence, local validation/risk, broker outcome, and each
+  PostgreSQL audit event with its Better Stack delivery checkpoint. Missing
+  stages render as not reached rather than successful.
 - Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
 
 ## Typed boundaries

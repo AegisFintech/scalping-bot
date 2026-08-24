@@ -16,6 +16,11 @@ The Streamlit dashboard includes mode-labelled P/L, completed-candle/volume,
 indicator, spread/freshness/depth, daily-risk, execution-journal, audit, and
 server-resource charts. Chart queries are bounded and read-only; malformed or
 forming-candle data is rejected rather than visualized as authoritative.
+The **AI Analysis** tab provides a correlated decision inspector: it separates
+the exact parsed AI JSON from deterministic analytics, post-model market
+refresh, validation/risk, broker outcome, and the PostgreSQL/Better Stack audit
+trail. Full candle arrays, raw provider text, secrets, and broker identifiers
+are deliberately not rendered.
 
 ## Prerequisites
 
