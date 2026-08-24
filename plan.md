@@ -169,6 +169,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
 | ISSUE-024 | complete    | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
 | ISSUE-025 | in progress | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)   | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
+| ISSUE-026 | in progress | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)   | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -697,8 +698,22 @@ never justify empty, noisy, unsafe, or misleading commits.
   ISSUE-024's deployed scheduler, and an empty/certain reconciled demo scope.
 - Current status: implementation is in progress on
   `feat/issue-025-demo-terminal-repeat`. The candidate immutable release identity
-  is `0.1.0-actionable-oco-auto-demo.3`. Partial/multiple closing-deal outcomes
+  was `0.1.0-actionable-oco-auto-demo.3`. Partial/multiple closing-deal outcomes
   remain explicitly unsupported and block repetition rather than being guessed.
+
+### ISSUE-026 delivery details
+
+- Acceptance criteria: preserve the immutable `.3` provenance row registered
+  with the prior daily cap; issue `.4`; prove the PM2 manifest contains no
+  enablement or credentials; inject the intended bounded cap before the first
+  `.4` execution startup; keep database pause/emergency controls active until
+  startup recovery and runtime configuration are verified.
+- Dependencies: [issue #53](https://github.com/AegisFintech/scalping-bot/issues/53),
+  merged ISSUE-025 code, the ignored mode-`0600` demo environment, and both
+  active database controls.
+- Current status: `.3` correctly rejected the later configuration change with
+  `STRATEGY_VERSION_IMMUTABILITY_VIOLATION`; no analysis or order ran. Candidate
+  identity `.4` is under review on `fix/issue-026-repeated-demo-identity`.
 
 ## Acceptance criteria
 

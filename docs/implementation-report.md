@@ -631,8 +631,14 @@ is durably `CLOSED`, `EXPIRED`, or `FAILED`; it does not wait for `valid_until`.
 The automatic scheduler can therefore claim a later broker minute after a
 terminal lifecycle while active or uncertain state still blocks it. Streamlit
 adds durable broker-minute claim history and the sanitized closed-trade outcome.
-Immutable release identity `0.1.0-actionable-oco-auto-demo.3` protects this code
-and the bounded repeated-demo configuration.
+The first stopped PM2 deployment registered immutable release identity
+`0.1.0-actionable-oco-auto-demo.3` with the retained prior daily cap of one.
+Injecting the intended bounded cap of 20 afterward correctly failed with
+`STRATEGY_VERSION_IMMUTABILITY_VIOLATION`. Both database controls remained
+active, the execution API stayed offline, and no cycle or order ran. The
+provenance row is not rewritten; ISSUE-026 assigns
+`0.1.0-actionable-oco-auto-demo.4` and requires the cap to be present before its
+first execution startup.
 
 The pre-merge gate passed formatting, linting, TypeScript typecheck/build, 138
 Node tests across 29 files, 12 schema tests, 3 migration tests, all 3 configured
