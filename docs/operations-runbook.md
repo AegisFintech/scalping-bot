@@ -141,13 +141,16 @@ into repository files or logs.
 2. Read **Decision pipeline** from top to bottom. `NOT_REACHED` means no durable
    evidence exists for that stage; it must never be interpreted as approval.
 3. In **AI output**, inspect the exact parsed and schema-validated model JSON.
-   This is the AI proposal only. The displayed local validation, deterministic
-   risk, and broker stages remain separate execution authorities.
+   Schema 2.0 always contains both conditional stops and has no `NO_TRADE` or
+   leg-enabled switch. These are proposals only—not queued, submitted, accepted,
+   or filled orders. The displayed local validation, deterministic risk, and
+   broker stages remain separate execution authorities.
 4. In **Input & analytics**, verify request/model/prompt/schema/strategy
-   versions, payload mode/hash, completed-candle coverage, indicator summary,
-   and initial/refreshed quote/depth evidence. Full candle arrays are available
-   through bounded Market charts and authorized PostgreSQL investigation, not
-   through a browser JSON dump.
+   versions, payload mode/hash, the hash-verified exact system prompt,
+   completed-candle coverage, indicator summary, execution constraints, and
+   initial/refreshed quote/depth evidence. Select **Show exact redacted user JSON
+   sent to the AI** only when the full persisted input is needed; its object-key
+   order may be normalized by PostgreSQL JSONB.
 5. In **Risk & execution**, distinguish semantic rejection from deterministic
    sizing, recorded order intent, broker order state, and normalized callback
    mapping. An empty section explicitly says the stage was not reached.
@@ -156,10 +159,10 @@ into repository files or logs.
    `analysis_id`, `request_id`, or `order_group_id`; investigate any missing or
    repeatedly retried mirror without modifying the PostgreSQL record.
 
-The inspector deliberately excludes raw provider response text, unbounded/full
-request and candle arrays, credentials, account IDs, and broker IDs. Use a
-reviewed read-only database role for deeper forensics; never broaden the
-dashboard query to expose secret-bearing configuration.
+The inspector deliberately excludes raw provider response text, credentials,
+account IDs, and broker IDs. Exact prompt/input access remains bounded and
+redacted. Use a reviewed read-only database role for deeper forensics; never
+broaden the dashboard query to expose secret-bearing configuration.
 
 ## Better Stack decision-trail monitoring
 

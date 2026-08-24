@@ -50,8 +50,9 @@ async function main(): Promise<void> {
       process.env.AI_API_STYLE === "chat_completions"
         ? "chat_completions"
         : "responses",
-    schemaPath: path.resolve("schemas/model-response-1.0.json"),
-    systemPromptPath: path.resolve("prompts/system-v1.md"),
+    schemaPath: path.resolve("schemas/model-response-2.0.json"),
+    systemPromptPath: path.resolve("prompts/system-v2.md"),
+    promptVersion: "system-v2",
     timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
     maxRetries: Number(process.env.AI_MAX_RETRIES ?? 2),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),

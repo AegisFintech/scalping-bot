@@ -2,7 +2,12 @@
 
 ## Authority
 
-The AI proposes price scenarios only. Deterministic code owns risk percent, volume, broker normalization, exposure, margin, eligibility, precision, freshness, spread/slippage, duplicate prevention, and mode gates. Materially invalid proposals are rejected, never silently corrected.
+The AI always proposes two conditional price scenarios after deterministic
+input eligibility passes. Its confidence, risk flags, regime, and warnings are
+diagnostic only. Deterministic code owns risk percent, volume, broker
+normalization, exposure, margin, eligibility, precision, freshness,
+spread/slippage, duplicate prevention, and mode gates. Materially invalid
+proposals are rejected, never silently corrected.
 
 ## Decimal arithmetic
 
@@ -47,6 +52,7 @@ units must not be treated as whole lots.
 - `reward / risk >= MIN_RISK_REWARD_RATIO`, default `2`.
 - Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
 - Entry/SL/TP/invalidation/expiration must all remain coherent at validation immediately before placement.
+- A mathematically incompatible minimum/maximum stop-distance interval rejects before inference, so the model is never asked for an impossible proposal.
 
 ## Account and exposure checks
 
@@ -112,9 +118,11 @@ Setup statistics are computed over a documented rolling window with exponential
 decay and minimum sample size. Poor recent cohort results reduce contextual
 confidence using bounded reason-coded deltas. The model must echo the
 deterministic adjustment exactly and supply original plus adjusted confidence;
-the validator recomputes the relationship. The adjustment can reject or lower
-confidence but never increase permitted risk or volume. Exact tag-specific cohort
-selection remains a future enhancement.
+the validator recomputes the relationship. Low adjusted confidence remains
+diagnostic and does not suppress an otherwise valid two-leg proposal. A
+mismatched or risk-increasing adjustment is invalid, and the adjustment can
+never increase permitted risk or volume. Exact tag-specific cohort selection
+remains a future enhancement.
 
 ## Fail-closed reason codes
 

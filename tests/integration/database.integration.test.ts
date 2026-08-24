@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -28,35 +28,42 @@ const connectionString = process.env.TEST_DATABASE_URL;
 const databaseTest =
   connectionString === undefined || connectionString === "" ? it.skip : it;
 
-function noTradeResponse(
+function ocoResponse(
   analysisId: string,
   validUntil = "2026-08-24T00:05:00.000Z",
 ): ModelResponse {
-  const disabledOrder = {
-    enabled: false,
-    trigger_price: "1",
-    entry_price: "1",
-    stop_loss: "1",
-    take_profit: "1",
+  const buyOrder = {
+    trigger_price: "3",
+    entry_price: "3",
+    stop_loss: "2",
+    take_profit: "5",
     risk_reward_ratio: "2",
     expires_at: validUntil,
-    invalidation_price: "1",
+    invalidation_price: "2",
+  };
+  const sellOrder = {
+    trigger_price: "1",
+    entry_price: "1",
+    stop_loss: "2",
+    take_profit: "0",
+    risk_reward_ratio: "1",
+    expires_at: validUntil,
+    invalidation_price: "2",
   };
   return {
-    schema_version: "1.0",
+    schema_version: "2.0",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: "2026-08-24T00:00:00.000Z",
     valid_until: validUntil,
-    decision: "NO_TRADE",
     market_regime: "UNCERTAIN",
     waiting_area: {
       lower: "1",
       upper: "2",
-      description_code: "NO_VALID_ZONE",
+      description_code: "IMMEDIATE_DECISION_ZONE",
     },
-    buy_stop: disabledOrder,
-    sell_stop: disabledOrder,
+    buy_stop: buyOrder,
+    sell_stop: sellOrder,
     confidence: {
       overall: 0,
       buy: 0,
@@ -73,9 +80,16 @@ function noTradeResponse(
       confidence_delta: 0,
       reason_codes: [],
     },
-    data_quality: { acceptable: true, warnings: [] },
+    data_quality: { warnings: [] },
   };
 }
+
+const promptContent = "Return a mandatory OCO proposal.";
+const promptArtifact = {
+  version: "system-v2" as const,
+  content: promptContent,
+  sha256: createHash("sha256").update(promptContent).digest("hex"),
+};
 
 function decisionSnapshot(
   timestamp: string,
@@ -167,6 +181,7 @@ describe("PostgreSQL migrations integration", () => {
         "0006",
         "0007",
         "0008",
+        "0009",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -185,6 +200,15 @@ describe("PostgreSQL migrations integration", () => {
         [schema],
       );
       expect(netFlows.rows[0]?.exists).toBe(true);
+      const promptColumn = await isolated.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema = $1 AND table_name = 'model_requests'
+             AND column_name = 'system_prompt_sha256'
+         ) AS exists`,
+        [schema],
+      );
+      expect(promptColumn.rows[0]?.exists).toBe(true);
       await isolated.query(
         `INSERT INTO accounts
           (id, provider, provider_account_key_hash, environment, account_type, currency)
@@ -316,7 +340,7 @@ describe("PostgreSQL migrations integration", () => {
       await isolated.query(
         `INSERT INTO strategy_versions
           (id, version, code_hash, config_hash, prompt_version, schema_version, feature_version)
-         VALUES ($1, $2, $3, $4, 'system-v1', '1.0', '1.0')`,
+         VALUES ($1, $2, $3, $4, 'system-v2', '2.0', '1.0')`,
         [
           strategyVersionId,
           `integration-${strategyVersionId}`,
@@ -338,8 +362,8 @@ describe("PostgreSQL migrations integration", () => {
         mode: "demo",
         apiStyle: "responses",
         model: "integration-model",
-        promptVersion: "system-v1",
-        schemaVersion: "1.0",
+        promptVersion: "system-v2",
+        schemaVersion: "2.0",
         payloadMode: "compact",
         instanceId: "integration-instance",
         environment: "test",
@@ -391,9 +415,10 @@ describe("PostgreSQL migrations integration", () => {
       await expect(
         trail.model(
           analysisId,
-          { schema_version: "1.0", authorization: "must-be-redacted" },
-          noTradeResponse(analysisId),
+          { schema_version: "2.0", authorization: "must-be-redacted" },
+          ocoResponse(analysisId),
           '{"status":"completed"}',
+          promptArtifact,
         ),
       ).resolves.toBeUndefined();
       const modelTrail = await isolated.query<{
@@ -402,6 +427,8 @@ describe("PostgreSQL migrations integration", () => {
         responses: string;
         valid_until: Date | null;
         authorization: string;
+        system_prompt: string;
+        system_prompt_sha256: string;
       }>(
         `SELECT mr.id::text = mr.request_id AS id_matches_request_id,
                 (SELECT count(*)::text FROM model_requests WHERE analysis_id = $1) AS requests,
@@ -409,7 +436,8 @@ describe("PostgreSQL migrations integration", () => {
                  JOIN model_requests mreq ON mreq.id = mres.model_request_id
                  WHERE mreq.analysis_id = $1) AS responses,
                 ar.valid_until,
-                mr.payload_redacted ->> 'authorization' AS authorization
+                mr.payload_redacted ->> 'authorization' AS authorization,
+                mr.system_prompt, mr.system_prompt_sha256
          FROM analysis_runs ar
          JOIN model_requests mr ON mr.analysis_id = ar.id
          WHERE ar.id = $1`,
@@ -421,13 +449,16 @@ describe("PostgreSQL migrations integration", () => {
         responses: "1",
         valid_until: new Date("2026-08-24T00:05:00.000Z"),
         authorization: "[REDACTED]",
+        system_prompt: promptContent,
+        system_prompt_sha256: promptArtifact.sha256,
       });
       await expect(
         trail.model(
           analysisId,
-          { schema_version: "1.0" },
-          noTradeResponse(analysisId, "not-a-timestamp"),
+          { schema_version: "2.0" },
+          ocoResponse(analysisId, "not-a-timestamp"),
           "{}",
+          promptArtifact,
         ),
       ).rejects.toThrow();
       const rolledBackModelTrail = await isolated.query<{
@@ -768,7 +799,7 @@ describe("PostgreSQL migrations integration", () => {
     }
   });
 
-  databaseTest("upgrades 0005 safely through 0008", async () => {
+  databaseTest("upgrades 0005 safely through 0009", async () => {
     const schema = `test_${randomUUID().replaceAll("-", "")}`;
     const migrationDirectory = await mkdtemp(
       path.join(os.tmpdir(), "ctrader-migrations-"),
@@ -842,6 +873,21 @@ describe("PostgreSQL migrations integration", () => {
          VALUES ($1, $2, $3, $4, 'demo', 'ACCEPTED', now())`,
         [analysisId, accountId, symbolId, strategyVersionId],
       );
+      const legacyModelRequestId = randomUUID();
+      await isolated.query(
+        `INSERT INTO model_requests
+          (id, analysis_id, request_id, api_style, model, prompt_version,
+           schema_version, payload_mode, payload_redacted, payload_sha256,
+           status, attempt_count, requested_at, completed_at)
+         VALUES ($1, $2, $3, 'responses', 'legacy-model', 'system-v1', '1.0',
+                 'compact', '{}'::jsonb, $4, 'COMPLETED', 1, now(), now())`,
+        [
+          legacyModelRequestId,
+          analysisId,
+          legacyModelRequestId,
+          "1".repeat(64),
+        ],
+      );
       await isolated.query(
         `INSERT INTO order_groups
           (id, analysis_id, idempotency_key, mode, state, expires_at)
@@ -879,11 +925,42 @@ describe("PostgreSQL migrations integration", () => {
         path.resolve("migrations", "0008_observability_outbox.sql"),
         path.join(migrationDirectory, "0008_observability_outbox.sql"),
       );
+      await copyFile(
+        path.resolve("migrations", "0009_model_prompt_artifacts.sql"),
+        path.join(migrationDirectory, "0009_model_prompt_artifacts.sql"),
+      );
       expect(await migrate(isolated, migrationDirectory)).toEqual([
         "0006",
         "0007",
         "0008",
+        "0009",
       ]);
+      const legacyPrompt = await isolated.query<{
+        system_prompt: string | null;
+        system_prompt_sha256: string | null;
+      }>(
+        `SELECT system_prompt, system_prompt_sha256
+         FROM model_requests WHERE id = $1`,
+        [legacyModelRequestId],
+      );
+      expect(legacyPrompt.rows[0]).toEqual({
+        system_prompt: null,
+        system_prompt_sha256: null,
+      });
+      await expect(
+        isolated.query(
+          `UPDATE model_requests SET system_prompt = 'incomplete' WHERE id = $1`,
+          [legacyModelRequestId],
+        ),
+      ).rejects.toThrow();
+      await expect(
+        isolated.query(
+          `UPDATE model_requests
+           SET prompt_version = 'system-v2', schema_version = '2.0'
+           WHERE id = $1`,
+          [legacyModelRequestId],
+        ),
+      ).rejects.toThrow();
       const upgraded = await isolated.query<{ account_id: string }>(
         "SELECT account_id FROM orders WHERE id = $1",
         [orderId],

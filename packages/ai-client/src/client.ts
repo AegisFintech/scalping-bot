@@ -1,6 +1,10 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-import type { ModelResponse } from "../../contracts/src/index.js";
+import type {
+  ModelPromptArtifact,
+  ModelResponse,
+} from "../../contracts/src/index.js";
 import { ModelResponseValidator } from "../../risk-engine/src/model-validator.js";
 import { record, recordsField } from "../../ctrader-client/src/protocol.js";
 
@@ -13,6 +17,7 @@ export interface AiClientOptions {
   readonly apiStyle: AiApiStyle;
   readonly schemaPath: string;
   readonly systemPromptPath: string;
+  readonly promptVersion: ModelPromptArtifact["version"];
   readonly timeoutMs?: number;
   readonly maxRetries?: number;
   readonly maxOutputTokens?: number;
@@ -36,6 +41,7 @@ export interface AiAnalysisResult {
   readonly latencyMs: number;
   readonly retryCount: number;
   readonly model: string;
+  readonly promptArtifact: ModelPromptArtifact;
 }
 
 function endpoint(baseUrl: string, style: AiApiStyle): string {
@@ -81,6 +87,7 @@ export class OpenAiCompatibleClient {
   readonly #options: AiClientOptions;
   readonly #schema: Record<string, unknown>;
   readonly #systemPrompt: string;
+  readonly #promptArtifact: ModelPromptArtifact;
   readonly #validator: ModelResponseValidator;
   #failureCount = 0;
   #openUntil = 0;
@@ -94,6 +101,17 @@ export class OpenAiCompatibleClient {
       "AI_SCHEMA_INVALID",
     );
     this.#systemPrompt = readFileSync(options.systemPromptPath, "utf8").trim();
+    if (
+      Buffer.byteLength(this.#systemPrompt, "utf8") < 1 ||
+      Buffer.byteLength(this.#systemPrompt, "utf8") > 65_536
+    ) {
+      throw new Error("AI_SYSTEM_PROMPT_SIZE_INVALID");
+    }
+    this.#promptArtifact = {
+      version: options.promptVersion,
+      content: this.#systemPrompt,
+      sha256: createHash("sha256").update(this.#systemPrompt).digest("hex"),
+    };
     this.#validator = new ModelResponseValidator(options.schemaPath);
   }
 
@@ -162,6 +180,7 @@ export class OpenAiCompatibleClient {
           latencyMs: now() - started,
           retryCount: attempt,
           model: this.#options.model,
+          promptArtifact: this.#promptArtifact,
         };
       } catch (error) {
         lastError =
@@ -197,7 +216,7 @@ export class OpenAiCompatibleClient {
         text: {
           format: {
             type: "json_schema",
-            name: "market_analysis_1_0",
+            name: "market_analysis_2_0",
             strict: true,
             schema: this.#schema,
           },
@@ -215,7 +234,7 @@ export class OpenAiCompatibleClient {
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "market_analysis_1_0",
+          name: "market_analysis_2_0",
           strict: true,
           schema: this.#schema,
         },

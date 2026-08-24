@@ -19,8 +19,14 @@ forming-candle data is rejected rather than visualized as authoritative.
 The **AI Analysis** tab provides a correlated decision inspector: it separates
 the exact parsed AI JSON from deterministic analytics, post-model market
 refresh, validation/risk, broker outcome, and the PostgreSQL/Better Stack audit
-trail. Full candle arrays, raw provider text, secrets, and broker identifiers
-are deliberately not rendered.
+trail. Raw provider text, secrets, and broker identifiers are deliberately not
+rendered; full persisted redacted input is available only through an explicit
+operator checkbox.
+New schema 2.0 analyses always return a mandatory buy-stop and sell-stop
+proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
+leg-disable switch. The same tab shows prompt/request/response history, the
+hash-verified system prompt, and an opt-in exact redacted user-message view.
+Generated proposals remain distinct from queued or broker-submitted orders.
 
 ## Prerequisites
 
@@ -86,7 +92,13 @@ or future quote/depth source timestamp fails closed.
 
 ## OpenAI-compatible endpoint
 
-Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style. The Responses style requests strict JSON Schema output where the endpoint supports it; all output is size-limited and validated locally regardless. The system prompt and schema are versioned. AI failure opens a circuit breaker and creates no order.
+Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style.
+The Responses style requests strict JSON Schema output where the endpoint
+supports it; all output is size-limited and validated locally regardless.
+System-v2/schema 2.0 require a buy-stop plus sell-stop proposal whenever the
+model is reached. The exact system prompt/hash is persisted per new request.
+AI or prompt-artifact failure opens a circuit breaker or rejects the cycle and
+creates no order.
 
 ## Better Stack
 

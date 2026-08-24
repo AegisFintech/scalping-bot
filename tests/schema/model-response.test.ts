@@ -13,12 +13,11 @@ const analysisId = "22222222-2222-4222-8222-222222222222";
 
 function response(overrides: Partial<ModelResponse> = {}): ModelResponse {
   return {
-    schema_version: "1.0",
+    schema_version: "2.0",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: "2026-01-01T00:00:00.000Z",
     valid_until: "2026-01-01T00:05:00.000Z",
-    decision: "PLACE_OCO",
     market_regime: "TRENDING",
     waiting_area: {
       lower: "1999.00",
@@ -26,7 +25,6 @@ function response(overrides: Partial<ModelResponse> = {}): ModelResponse {
       description_code: "IMMEDIATE_DECISION_ZONE",
     },
     buy_stop: {
-      enabled: true,
       trigger_price: "2001.20",
       entry_price: "2001.20",
       stop_loss: "1999.20",
@@ -36,7 +34,6 @@ function response(overrides: Partial<ModelResponse> = {}): ModelResponse {
       invalidation_price: "1999.20",
     },
     sell_stop: {
-      enabled: true,
       trigger_price: "1998.80",
       entry_price: "1998.80",
       stop_loss: "2000.80",
@@ -61,14 +58,14 @@ function response(overrides: Partial<ModelResponse> = {}): ModelResponse {
       confidence_delta: 0,
       reason_codes: [],
     },
-    data_quality: { acceptable: true, warnings: [] },
+    data_quality: { warnings: [] },
     ...overrides,
   };
 }
 
 describe("model response schema", () => {
   const validator = new ModelResponseValidator(
-    path.resolve("schemas/model-response-1.0.json"),
+    path.resolve("schemas/model-response-2.0.json"),
   );
 
   it("accepts the exact contract", () => {
@@ -77,7 +74,7 @@ describe("model response schema", () => {
 
   it("uses the strict structured-output schema subset", () => {
     const schema = JSON.parse(
-      readFileSync(path.resolve("schemas/model-response-1.0.json"), "utf8"),
+      readFileSync(path.resolve("schemas/model-response-2.0.json"), "utf8"),
     ) as unknown;
     const visit = (value: unknown): void => {
       if (value === null || typeof value !== "object") return;
@@ -101,6 +98,26 @@ describe("model response schema", () => {
     expect(result.reasonCodes).toContain("MODEL_SCHEMA_INVALID");
   });
 
+  it("rejects legacy NO_TRADE and disabled-leg switches", () => {
+    const legacySwitches = {
+      ...response(),
+      decision: "NO_TRADE",
+      buy_stop: { ...response().buy_stop, enabled: false },
+      sell_stop: { ...response().sell_stop, enabled: false },
+    };
+    const result = validator.parse(JSON.stringify(legacySwitches));
+    expect(result.accepted).toBe(false);
+    expect(result.reasonCodes).toContain("MODEL_SCHEMA_INVALID");
+  });
+
+  it("rejects an AI-controlled data-quality veto", () => {
+    const invalid = {
+      ...response(),
+      data_quality: { acceptable: false, warnings: ["TIMEFRAME_CONFLICT"] },
+    };
+    expect(validator.parse(JSON.stringify(invalid)).accepted).toBe(false);
+  });
+
   it("rejects malformed JSON", () => {
     expect(validator.parse("not-json").reasonCodes).toEqual([
       "MODEL_JSON_INVALID",
@@ -109,8 +126,8 @@ describe("model response schema", () => {
 
   it("rejects duplicate JSON object keys", () => {
     const raw = JSON.stringify(response()).replace(
-      '"schema_version":"1.0"',
-      '"schema_version":"1.0","schema_version":"1.0"',
+      '"schema_version":"2.0"',
+      '"schema_version":"2.0","schema_version":"2.0"',
     );
     expect(validator.parse(raw).reasonCodes).toEqual([
       "MODEL_JSON_DUPLICATE_KEYS",
@@ -151,7 +168,6 @@ describe("model response schema", () => {
     });
     expect(result).toEqual({
       accepted: true,
-      executable: true,
       reasonCodes: [],
     });
   });

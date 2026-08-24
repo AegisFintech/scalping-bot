@@ -20,7 +20,8 @@ Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
 history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
-`0005`-through-`0008` migration paths exercise the database constraints.
+`0005`-through-`0009` migration paths exercise the database constraints,
+including nullable legacy prompt artifacts and paired prompt/hash constraints.
 The configured PostgreSQL integration also executes the production model-trail
 transaction: UUID primary key and text request ID persist through distinct bind
 parameters with the same value, request/response/validity commit together,
@@ -76,14 +77,15 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 123 Node unit
-tests across 28 files, 10 schema tests, 3 static migration tests, Ruff, strict
-mypy across the analytics and dashboard code, 30 Python tests,
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 130 Node unit
+tests across 28 files, 12 schema tests, 3 static migration tests, Ruff, strict
+mypy across the analytics and dashboard code, 40 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
-Node/Python integration plus fresh-schema and `0005`-through-`0008` upgrade tests
-passed. TLS connectivity and all eight migrations passed inside isolated Neon
+Node/Python integration plus fresh-schema and `0005`-through-`0009` upgrade tests
+passed. TLS connectivity and all nine migrations passed inside isolated Neon
 schemas, which the tests dropped afterward; migrations `0001` through `0008`
-are applied to the configured Neon schema under both emergency stops. The
+remain applied to the configured Neon schema under both emergency stops pending
+the post-merge `0009` deployment. The
 post-migration demo
 restart reported certain startup recovery with no journal exceptions or local
 execution state. The host used Node 24.18.0; the supported Node 22
@@ -95,8 +97,10 @@ baseline initialization with empty deal history passed; no demo order
 or live-data shadow session was run. Versioned cTrader demo execution fixtures
 cover accepted, partial-fill, full-fill, rejection, deduplication, peer cancel,
 and restart recovery paths; supervised broker-field validation remains pending.
-A configured-endpoint strict schema probe
-returned a locally validated `NO_TRADE`. The checked-in replay and backtest CLI
+A configured-endpoint system-v2 probe returned both mandatory conditional
+stops, no legacy decision/enable fields, a matching prompt hash, and passed
+deterministic semantic validation. The probe made no database write or broker
+call. The checked-in replay and backtest CLI
 smoke fixtures also completed; the replay fixture intentionally has too little
 history for long-window indicators and is not a trading-quality dataset.
 

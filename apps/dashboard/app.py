@@ -23,8 +23,11 @@ from charts import (
 from decision_inspector import (
     DecisionViewError,
     analytics_summary,
+    exact_model_input_view,
     model_input_summary,
     model_output_view,
+    model_proposal_label,
+    prompt_artifact_view,
     safe_audit_detail,
     stage_state,
 )
@@ -344,7 +347,9 @@ with tabs[4]:
                           ind.features AS analytics_features,
                           mq.request_id, mq.api_style, mq.model,
                           mq.prompt_version, mq.schema_version, mq.payload_mode,
-                          mq.payload_sha256, mq.status AS model_request_status,
+                          mq.payload_sha256, mq.system_prompt,
+                          mq.system_prompt_sha256,
+                          mq.status AS model_request_status,
                           mq.attempt_count, mq.requested_at, mq.completed_at,
                           mq.duration_ms, mq.payload_redacted,
                           mr.status AS model_response_status, mr.parsed_payload,
@@ -362,9 +367,10 @@ with tabs[4]:
                    ) ind ON true
                    LEFT JOIN LATERAL (
                      SELECT id, request_id, api_style, model, prompt_version,
-                            schema_version, payload_mode, payload_sha256, status,
-                            attempt_count, requested_at, completed_at, duration_ms,
-                            payload_redacted
+                            schema_version, payload_mode, payload_sha256,
+                            system_prompt, system_prompt_sha256, status,
+                            attempt_count, requested_at, completed_at,
+                            duration_ms, payload_redacted
                      FROM model_requests WHERE analysis_id = ar.id
                      ORDER BY requested_at DESC LIMIT 1
                    ) mq ON true
@@ -376,6 +382,29 @@ with tabs[4]:
             if len(detail_rows) != 1:
                 raise DecisionViewError("DECISION_VIEW_ANALYSIS_SCOPE_MISMATCH")
             detail = detail_rows[0]
+            prompt_history = query(
+                """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode, ar.state,
+                          mq.prompt_version, mq.schema_version, mq.model,
+                          mq.status AS request_status, mq.payload_sha256,
+                          mr.status AS response_status,
+                          CASE
+                            WHEN mr.parsed_payload->>'schema_version' = '2.0'
+                              THEN 'OCO_PROPOSAL'
+                            ELSE mr.parsed_payload->>'decision'
+                          END AS ai_output
+                   FROM analysis_runs ar
+                   JOIN accounts a ON a.id = ar.account_id
+                   JOIN symbols s ON s.id = ar.symbol_id
+                   LEFT JOIN LATERAL (
+                     SELECT * FROM model_requests
+                     WHERE analysis_id = ar.id
+                     ORDER BY requested_at DESC LIMIT 1
+                   ) mq ON true
+                   LEFT JOIN model_responses mr ON mr.model_request_id = mq.id
+                   WHERE a.environment = %s AND s.name = %s
+                   ORDER BY ar.created_at DESC LIMIT 50""",
+                (account_environment, selected_symbol),
+            )
             candles = query(
                 """SELECT c.timeframe, count(*)::int AS candle_count,
                           bool_and(c.complete) AS completed_only,
@@ -485,7 +514,18 @@ with tabs[4]:
 
             parsed_model = detail.get("parsed_payload")
             model_view = None if parsed_model is None else model_output_view(parsed_model)
-            model_decision = "NOT_REACHED" if model_view is None else str(model_view["decision"])
+            model_proposal = (
+                "NOT_REACHED" if model_view is None else model_proposal_label(model_view)
+            )
+            prompt_view = (
+                None
+                if detail.get("prompt_version") is None
+                else prompt_artifact_view(
+                    detail.get("prompt_version"),
+                    detail.get("system_prompt"),
+                    detail.get("system_prompt_sha256"),
+                )
+            )
             refresh_reached = any(
                 event["event_name"] == "decision_market_refreshed" for event in audit_events
             )
@@ -504,7 +544,7 @@ with tabs[4]:
                         else "REJECTED"
                     ),
                 },
-                {"stage": "AI model response", "status": model_decision},
+                {"stage": "AI model response", "status": model_proposal},
                 {
                     "stage": "Post-model market refresh",
                     "status": "RECORDED" if refresh_reached else "NOT_REACHED",
@@ -521,9 +561,11 @@ with tabs[4]:
                 f"Analysis ID: {detail['analysis_id']} · PostgreSQL is authoritative; "
                 "Better Stack is the correlated delivery mirror."
             )
+            st.subheader("Prompt and response history")
+            st.dataframe(pd.DataFrame(prompt_history), width="stretch", hide_index=True)
             summary_columns = st.columns(4)
             summary_columns[0].metric("Run state", str(detail["state"]))
-            summary_columns[1].metric("AI decision", model_decision)
+            summary_columns[1].metric("AI output", model_proposal)
             summary_columns[2].metric("Validation", stage_state(validations))
             summary_columns[3].metric(
                 "Broker outcome", "RECORDED" if orders or broker_events else "NOT_REACHED"
@@ -541,14 +583,15 @@ with tabs[4]:
             )
             with inspector_tabs[0]:
                 st.warning(
-                    "The AI output is a proposal only. Local semantic validation, risk sizing, "
-                    "freshness checks, and mode gates retain execution authority."
+                    "The AI output is a two-leg conditional proposal, not a queued or broker "
+                    "order. Local semantic validation, risk sizing, freshness checks, and mode "
+                    "gates retain execution authority."
                 )
                 if model_view is None:
                     st.info("AI was not reached for this run; no model response exists.")
                 else:
                     model_columns = st.columns(3)
-                    model_columns[0].metric("Decision", str(model_view.get("decision", "unknown")))
+                    model_columns[0].metric("Proposal", model_proposal)
                     model_columns[1].metric(
                         "Market regime", str(model_view.get("market_regime", "unknown"))
                     )
@@ -557,14 +600,24 @@ with tabs[4]:
                         quality.get("acceptable") if isinstance(quality, dict) else None
                     )
                     model_columns[2].metric(
-                        "AI data quality",
-                        "ACCEPTABLE" if quality_acceptable is True else "REJECTED",
+                        "AI diagnostics",
+                        (
+                            "LEGACY ACCEPTABLE"
+                            if quality_acceptable is True
+                            else "LEGACY SELF-VETO"
+                            if quality_acceptable is False
+                            else "WARNINGS ONLY"
+                        ),
                     )
                     st.subheader("Exact parsed and schema-validated AI response")
                     st.json(model_view)
                 st.caption(
                     "Raw provider text is intentionally not displayed. The parsed object above "
                     "is the exact locally validated JSON used by semantic validation."
+                )
+                st.caption(
+                    "Schema 2.0 has no NO_TRADE result or enabled/disabled leg switch. Older "
+                    "schema 1.0 records remain visible as historical evidence."
                 )
 
             with inspector_tabs[1]:
@@ -579,6 +632,7 @@ with tabs[4]:
                         "strategy_version",
                         "payload_mode",
                         "payload_sha256",
+                        "system_prompt_sha256",
                         "model_request_status",
                         "attempt_count",
                         "requested_at",
@@ -590,6 +644,17 @@ with tabs[4]:
                 }
                 st.subheader("Model request identity and immutable input hash")
                 st.json(request_metadata)
+                st.subheader("System prompt sent to the model")
+                if prompt_view is None:
+                    st.info("System prompt was not reached for this run.")
+                else:
+                    st.json({key: value for key, value in prompt_view.items() if key != "content"})
+                    st.code(prompt_view["content"], language="text")
+                    if prompt_view["provenance"] == "TRACKED_LEGACY_ARTIFACT":
+                        st.warning(
+                            "This legacy request predates per-request prompt persistence. The "
+                            "displayed text is the tracked artifact for its recorded version."
+                        )
                 if detail.get("payload_redacted") is None:
                     st.info("Model input was not reached for this run.")
                 else:
@@ -600,6 +665,16 @@ with tabs[4]:
                         "the Market tab for completed-candle charts; the request hash above "
                         "identifies the exact persisted redacted payload."
                     )
+                    if st.checkbox(
+                        "Show exact redacted user JSON sent to the AI",
+                        value=False,
+                        key=f"exact-model-input-{selected_analysis_id}",
+                    ):
+                        st.json(exact_model_input_view(detail["payload_redacted"]))
+                        st.caption(
+                            "PostgreSQL JSONB may normalize object-key order; values and arrays "
+                            "are the persisted redacted user message."
+                        )
                 st.subheader("Deterministic analytics supplied to the decision path")
                 if detail.get("analytics_features") is None:
                     st.info("Analytics was not reached for this run.")

@@ -7,6 +7,7 @@ import type {
   AnalyticsResponse,
   GatewayOrder,
   MarketSnapshot,
+  ModelPromptArtifact,
   ModelResponse,
   OcoPlacementResult,
   ReconciliationSnapshot,
@@ -27,8 +28,8 @@ export interface PostgresDecisionTrailOptions {
   readonly mode: TradingMode;
   readonly apiStyle: "responses" | "chat_completions";
   readonly model: string;
-  readonly promptVersion: string;
-  readonly schemaVersion: string;
+  readonly promptVersion: ModelPromptArtifact["version"];
+  readonly schemaVersion: ModelResponse["schema_version"];
   readonly payloadMode: "full" | "compact";
   readonly instanceId: string;
   readonly environment: string;
@@ -340,7 +341,18 @@ export class PostgresDecisionTrail implements DecisionTrail {
     requestPayload: Readonly<Record<string, unknown>>,
     response: ModelResponse,
     rawResponse: string,
+    promptArtifact: ModelPromptArtifact,
   ): Promise<void> {
+    if (
+      promptArtifact.version !== this.#options.promptVersion ||
+      Buffer.byteLength(promptArtifact.content, "utf8") < 1 ||
+      Buffer.byteLength(promptArtifact.content, "utf8") > 65_536 ||
+      !/^[0-9a-f]{64}$/.test(promptArtifact.sha256) ||
+      createHash("sha256").update(promptArtifact.content).digest("hex") !==
+        promptArtifact.sha256
+    ) {
+      throw new Error("MODEL_PROMPT_ARTIFACT_INVALID");
+    }
     const requestId = randomUUID();
     const responseId = randomUUID();
     const redactedRequest = safeJson(requestPayload);
@@ -356,8 +368,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
       await client.query(
         `INSERT INTO model_requests
           (id, analysis_id, request_id, api_style, model, prompt_version, schema_version,
-           payload_mode, payload_redacted, payload_sha256, status, attempt_count, requested_at, completed_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10,
+           payload_mode, system_prompt, system_prompt_sha256, payload_redacted,
+           payload_sha256, status, attempt_count, requested_at, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12,
                  'COMPLETED', 1, now(), now())`,
         [
           requestId,
@@ -368,6 +381,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
           this.#options.promptVersion,
           this.#options.schemaVersion,
           this.#options.payloadMode,
+          promptArtifact.content,
+          promptArtifact.sha256,
           redactedRequest,
           createHash("sha256").update(redactedRequest).digest("hex"),
         ],
@@ -398,7 +413,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
       prompt_version: this.#options.promptVersion,
       schema_version: this.#options.schemaVersion,
       payload_mode: this.#options.payloadMode,
-      decision: response.decision,
+      proposal_type: "OCO",
       market_regime: response.market_regime,
       valid_until: response.valid_until,
       data_quality: response.data_quality,

@@ -5,6 +5,8 @@ import re
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
 from decimal import Decimal
+from hashlib import sha256
+from pathlib import Path
 from typing import Any
 
 
@@ -25,6 +27,18 @@ _MAX_STRING_LENGTH = 8_192
 _MAX_MODEL_OUTPUT_BYTES = 256_000
 _MAX_MODEL_INPUT_BYTES = 4_000_000
 _MAX_AUDIT_DETAIL_BYTES = 65_536
+_MAX_PROMPT_BYTES = 65_536
+_MAX_EXACT_COLLECTION_ITEMS = 2_000
+_PROMPT_FILES = {
+    "system-v1": "system-v1.md",
+    "system-v2": "system-v2.md",
+}
+_SECRET_VALUE = re.compile(
+    r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"
+    r"(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password)"
+    r"\s*[:=]\s*[^\s]{8,}|(?:postgres(?:ql)?|https?)://[^\s/:@]+:[^\s@]+@)",
+    re.IGNORECASE,
+)
 
 
 def _json_default(value: object) -> str:
@@ -53,7 +67,12 @@ def _mapping(value: object, reason: str) -> Mapping[str, Any]:
     return value
 
 
-def _safe_value(value: object, *, depth: int = 0) -> Any:
+def _safe_value(
+    value: object,
+    *,
+    depth: int = 0,
+    max_collection_items: int = _MAX_COLLECTION_ITEMS,
+) -> Any:
     if depth > _MAX_DEPTH:
         raise DecisionViewError("DECISION_VIEW_DEPTH_EXCEEDED")
     if value is None or isinstance(value, (bool, int, float)):
@@ -65,7 +84,7 @@ def _safe_value(value: object, *, depth: int = 0) -> Any:
             raise DecisionViewError("DECISION_VIEW_STRING_OVERSIZED")
         return value
     if isinstance(value, Mapping):
-        if len(value) > _MAX_COLLECTION_ITEMS:
+        if len(value) > max_collection_items:
             raise DecisionViewError("DECISION_VIEW_OBJECT_OVERSIZED")
         output: dict[str, Any] = {}
         for raw_key, child in value.items():
@@ -73,13 +92,26 @@ def _safe_value(value: object, *, depth: int = 0) -> Any:
             if len(key) > 128:
                 raise DecisionViewError("DECISION_VIEW_KEY_OVERSIZED")
             output[key] = (
-                "[REDACTED]" if _SENSITIVE_KEY.search(key) else _safe_value(child, depth=depth + 1)
+                "[REDACTED]"
+                if _SENSITIVE_KEY.search(key)
+                else _safe_value(
+                    child,
+                    depth=depth + 1,
+                    max_collection_items=max_collection_items,
+                )
             )
         return output
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
-        if len(value) > _MAX_COLLECTION_ITEMS:
+        if len(value) > max_collection_items:
             raise DecisionViewError("DECISION_VIEW_ARRAY_OVERSIZED")
-        return [_safe_value(child, depth=depth + 1) for child in value]
+        return [
+            _safe_value(
+                child,
+                depth=depth + 1,
+                max_collection_items=max_collection_items,
+            )
+            for child in value
+        ]
     raise DecisionViewError(f"DECISION_VIEW_TYPE_INVALID:{type(value).__name__}")
 
 
@@ -115,9 +147,84 @@ def model_output_view(value: object) -> dict[str, Any]:
     safe = _safe_value(document)
     if not isinstance(safe, dict):  # pragma: no cover - guaranteed by _mapping
         raise DecisionViewError("DECISION_VIEW_MODEL_OUTPUT_INVALID")
-    if safe.get("decision") not in {"PLACE_OCO", "NO_TRADE"}:
+    schema_version = safe.get("schema_version")
+    if schema_version == "1.0" and safe.get("decision") not in {"PLACE_OCO", "NO_TRADE"}:
         raise DecisionViewError("DECISION_VIEW_MODEL_DECISION_INVALID")
+    if schema_version == "2.0":
+        if "decision" in safe:
+            raise DecisionViewError("DECISION_VIEW_MODEL_V2_DECISION_FORBIDDEN")
+        for key in ("buy_stop", "sell_stop"):
+            proposal = safe.get(key)
+            if not isinstance(proposal, dict) or "enabled" in proposal:
+                raise DecisionViewError("DECISION_VIEW_MODEL_V2_PROPOSAL_INVALID")
+    elif schema_version != "1.0":
+        raise DecisionViewError("DECISION_VIEW_MODEL_SCHEMA_VERSION_INVALID")
     return safe
+
+
+def model_proposal_label(value: Mapping[str, Any]) -> str:
+    """Label legacy decisions and mandatory v2 OCO proposals distinctly."""
+
+    if value.get("schema_version") == "2.0":
+        return "OCO_PROPOSAL"
+    decision = value.get("decision")
+    if decision in {"PLACE_OCO", "NO_TRADE"}:
+        return str(decision)
+    raise DecisionViewError("DECISION_VIEW_MODEL_DECISION_INVALID")
+
+
+def exact_model_input_view(value: object) -> dict[str, Any]:
+    """Return exact redacted model JSON with PostgreSQL-normalized object ordering."""
+
+    document = _mapping(value, "DECISION_VIEW_MODEL_INPUT_INVALID")
+    if _document_size(document) > _MAX_MODEL_INPUT_BYTES:
+        raise DecisionViewError("DECISION_VIEW_MODEL_INPUT_OVERSIZED")
+    _reject_sensitive_keys(document)
+    safe = _safe_value(document, max_collection_items=_MAX_EXACT_COLLECTION_ITEMS)
+    if not isinstance(safe, dict):  # pragma: no cover - guaranteed by _mapping
+        raise DecisionViewError("DECISION_VIEW_MODEL_INPUT_INVALID")
+    return safe
+
+
+def prompt_artifact_view(
+    prompt_version: object,
+    persisted_content: object,
+    persisted_sha256: object,
+) -> dict[str, str]:
+    """Return a bounded hash-verified prompt, with an explicit legacy fallback."""
+
+    if not isinstance(prompt_version, str) or prompt_version not in _PROMPT_FILES:
+        raise DecisionViewError("DECISION_VIEW_PROMPT_VERSION_INVALID")
+    if (persisted_content is None) != (persisted_sha256 is None):
+        raise DecisionViewError("DECISION_VIEW_PROMPT_ARTIFACT_INCOMPLETE")
+    if persisted_content is None:
+        if prompt_version != "system-v1":
+            raise DecisionViewError("DECISION_VIEW_PROMPT_ARTIFACT_MISSING")
+        prompt_path = (
+            Path(__file__).resolve().parents[2] / "prompts" / _PROMPT_FILES[prompt_version]
+        )
+        content = prompt_path.read_text(encoding="utf-8").strip()
+        digest = sha256(content.encode("utf-8")).hexdigest()
+        provenance = "TRACKED_LEGACY_ARTIFACT"
+    else:
+        if not isinstance(persisted_content, str) or not isinstance(persisted_sha256, str):
+            raise DecisionViewError("DECISION_VIEW_PROMPT_ARTIFACT_INVALID")
+        content = persisted_content
+        digest = persisted_sha256
+        provenance = "EXACT_PERSISTED_REQUEST_PROMPT"
+    if not 1 <= len(content.encode("utf-8")) <= _MAX_PROMPT_BYTES:
+        raise DecisionViewError("DECISION_VIEW_PROMPT_OVERSIZED")
+    if _SECRET_VALUE.search(content):
+        raise DecisionViewError("DECISION_VIEW_PROMPT_SECRET_REJECTED")
+    calculated = sha256(content.encode("utf-8")).hexdigest()
+    if not re.fullmatch(r"[0-9a-f]{64}", digest) or calculated != digest:
+        raise DecisionViewError("DECISION_VIEW_PROMPT_HASH_MISMATCH")
+    return {
+        "version": prompt_version,
+        "sha256": digest,
+        "provenance": provenance,
+        "content": content,
+    }
 
 
 def _array_digest(value: object, *, include_edges: bool) -> dict[str, Any]:
@@ -173,6 +280,7 @@ def model_input_summary(value: object) -> dict[str, Any]:
         "payload_mode",
         "versions",
         "performance",
+        "execution_constraints",
     ):
         if key in document:
             safe[key] = _safe_value(document[key])

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
@@ -12,7 +14,6 @@ const analysisId = "22222222-2222-4222-8222-222222222222";
 
 function validResponse(): Record<string, unknown> {
   const order = {
-    enabled: false,
     trigger_price: "1",
     entry_price: "1",
     stop_loss: "1",
@@ -22,14 +23,17 @@ function validResponse(): Record<string, unknown> {
     invalidation_price: "1",
   };
   return {
-    schema_version: "1.0",
+    schema_version: "2.0",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: "2026-01-01T00:00:00.000Z",
     valid_until: "2026-01-01T00:05:00.000Z",
-    decision: "NO_TRADE",
     market_regime: "UNCERTAIN",
-    waiting_area: { lower: "1", upper: "2", description_code: "NO_VALID_ZONE" },
+    waiting_area: {
+      lower: "1",
+      upper: "2",
+      description_code: "IMMEDIATE_DECISION_ZONE",
+    },
     buy_stop: order,
     sell_stop: order,
     confidence: {
@@ -48,9 +52,17 @@ function validResponse(): Record<string, unknown> {
       confidence_delta: 0,
       reason_codes: [],
     },
-    data_quality: { acceptable: true, warnings: [] },
+    data_quality: { warnings: [] },
   };
 }
+
+const systemPromptPath = path.resolve("prompts/system-v2.md");
+const systemPrompt = readFileSync(systemPromptPath, "utf8").trim();
+const promptArtifact = {
+  version: "system-v2",
+  content: systemPrompt,
+  sha256: createHash("sha256").update(systemPrompt).digest("hex"),
+};
 
 describe("OpenAI-compatible client", () => {
   it("requests strict structured output and validates locally", async () => {
@@ -87,8 +99,9 @@ describe("OpenAI-compatible client", () => {
       apiKey: "hidden",
       model: "test-model",
       apiStyle: "responses",
-      schemaPath: path.resolve("schemas/model-response-1.0.json"),
-      systemPromptPath: path.resolve("prompts/system-v1.md"),
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath: path.resolve("prompts/system-v2.md"),
+      promptVersion: "system-v2",
       fetchImpl: fetchMock,
     });
     const result = await client.analyze({
@@ -96,7 +109,9 @@ describe("OpenAI-compatible client", () => {
       symbol: "XAUUSD",
       payload: { safe: true },
     });
-    expect(result.response.decision).toBe("NO_TRADE");
+    expect(result.response.buy_stop.entry_price).toBe("1");
+    expect(result.promptArtifact.version).toBe("system-v2");
+    expect(result.promptArtifact.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
@@ -106,8 +121,9 @@ describe("OpenAI-compatible client", () => {
       apiKey: "hidden",
       model: "test-model",
       apiStyle: "responses",
-      schemaPath: path.resolve("schemas/model-response-1.0.json"),
-      systemPromptPath: path.resolve("prompts/system-v1.md"),
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath: path.resolve("prompts/system-v2.md"),
+      promptVersion: "system-v2",
       circuitBreakerFailures: 1,
       maxRetries: 0,
       fetchImpl: vi.fn(() =>
@@ -162,7 +178,9 @@ describe("AI orchestrator HTTP client", () => {
     timeout.name = "TimeoutError";
     const client = new AiOrchestratorHttpClient({
       baseUrl: "http://127.0.0.1:8082",
-      schemaPath: path.resolve("schemas/model-response-1.0.json"),
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
       fetchImpl: vi.fn(() => Promise.reject(timeout)),
     });
 
@@ -176,24 +194,91 @@ describe("AI orchestrator HTTP client", () => {
     const rawResponse = JSON.stringify(validResponse());
     const client = new AiOrchestratorHttpClient({
       baseUrl: "http://127.0.0.1:8082",
-      schemaPath: path.resolve("schemas/model-response-1.0.json"),
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
       fetchImpl: vi.fn(() =>
         Promise.resolve(
-          new Response(JSON.stringify({ rawResponse }), { status: 200 }),
+          new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+            status: 200,
+          }),
         ),
       ),
     });
 
     await expect(
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).resolves.toEqual({ response: validResponse(), rawResponse });
+    ).resolves.toEqual({
+      response: validResponse(),
+      rawResponse,
+      promptArtifact,
+    });
     expect(client.circuitOpen).toBe(false);
+  });
+
+  it("rejects a prompt artifact whose content does not match its hash", async () => {
+    const rawResponse = JSON.stringify(validResponse());
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      fetchImpl: vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              rawResponse,
+              promptArtifact: { ...promptArtifact, sha256: "0".repeat(64) },
+            }),
+            { status: 200 },
+          ),
+        ),
+      ),
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID");
+  });
+
+  it("rejects a self-consistent prompt artifact that is not the tracked prompt", async () => {
+    const rawResponse = JSON.stringify(validResponse());
+    const alteredContent = `${systemPrompt}\nUntracked instruction.`;
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      fetchImpl: vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              rawResponse,
+              promptArtifact: {
+                version: "system-v2",
+                content: alteredContent,
+                sha256: createHash("sha256")
+                  .update(alteredContent)
+                  .digest("hex"),
+              },
+            }),
+            { status: 200 },
+          ),
+        ),
+      ),
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID");
   });
 
   it("normalizes another local transport failure", async () => {
     const client = new AiOrchestratorHttpClient({
       baseUrl: "http://127.0.0.1:8082",
-      schemaPath: path.resolve("schemas/model-response-1.0.json"),
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
       fetchImpl: vi.fn(() => Promise.reject(new TypeError("fetch failed"))),
     });
 

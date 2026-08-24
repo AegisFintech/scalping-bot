@@ -17,7 +17,7 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 | `spread_observations`     | fresh quote/server times and exact spread; unique account/symbol UTC source minute            |
 | `order_book_levels`       | snapshot/side/level/price/size; unique snapshot/side/level                                    |
 | `analysis_runs`           | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol   |
-| `model_requests`          | endpoint/model/prompt/schema, redacted payload/hash, latency/status                           |
+| `model_requests`          | endpoint/model/prompt/schema, exact prompt/hash, redacted payload/hash, latency/status        |
 | `model_responses`         | redacted raw/parsed payload, provider IDs if non-sensitive, token/status bounds               |
 | `validation_results`      | schema/semantic/risk stage, accepted flag, bounded reason/detail JSON                         |
 | `risk_decisions`          | equity/risk budget/stop/tick/raw/normalized volume, margin/spread, approval/reasons           |
@@ -98,3 +98,13 @@ lease expiry, last error code, and delivery time support crash recovery and
 operator monitoring. Rollback is manual and operator-reviewed: stop exporters,
 retain required evidence, remove the trigger/function, and remove the table only
 when the external mirror and retention requirements have been addressed.
+
+Migration `0009` adds nullable paired `system_prompt` and
+`system_prompt_sha256` columns to `model_requests`. Existing schema 1.0 requests
+remain unchanged with both values null; new schema 2.0 requests must persist the exact
+non-secret prompt only after its version, 64 KiB bound, SHA-256 syntax, and hash
+match pass. A database check rejects a partial pair, oversized prompt, or
+malformed hash. Rollback is manual and operator-reviewed: stop AI/execution,
+retain/export required prompt evidence, deploy code that no longer writes or
+reads the columns, and remove the pair plus constraint only if audit-retention
+policy permits.

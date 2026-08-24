@@ -58,8 +58,6 @@ export class OcoRiskEvaluator {
     readonly quote: Quote;
   }): Promise<OcoEvaluation> {
     if (!input.account.certain) return this.#reject("RISK_ACCOUNT_UNCERTAIN");
-    if (input.response.decision !== "PLACE_OCO")
-      return this.#reject("RISK_NO_EXECUTABLE_DECISION");
     try {
       const minimum = input.metadata.minVolume;
       const [buyMinimumMargin, sellMinimumMargin] = await Promise.all([

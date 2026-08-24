@@ -1,10 +1,18 @@
-import type { ModelResponse } from "../../contracts/src/index.js";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+
+import type {
+  ModelPromptArtifact,
+  ModelResponse,
+} from "../../contracts/src/index.js";
 import { ModelResponseValidator } from "../../risk-engine/src/model-validator.js";
 import { record } from "../../ctrader-client/src/protocol.js";
 
 export interface AiOrchestratorHttpClientOptions {
   readonly baseUrl: string;
   readonly schemaPath: string;
+  readonly systemPromptPath: string;
+  readonly promptVersion: ModelPromptArtifact["version"];
   readonly timeoutMs?: number;
   readonly fetchImpl?: typeof fetch;
 }
@@ -41,11 +49,24 @@ export function aiOrchestratorRequestTimeoutMs(input: {
 export class AiOrchestratorHttpClient {
   readonly #options: AiOrchestratorHttpClientOptions;
   readonly #validator: ModelResponseValidator;
+  readonly #expectedPromptArtifact: ModelPromptArtifact;
   #circuitOpen = false;
 
   constructor(options: AiOrchestratorHttpClientOptions) {
     this.#options = options;
     this.#validator = new ModelResponseValidator(options.schemaPath);
+    const content = readFileSync(options.systemPromptPath, "utf8").trim();
+    if (
+      Buffer.byteLength(content, "utf8") < 1 ||
+      Buffer.byteLength(content, "utf8") > 65_536
+    ) {
+      throw new Error("AI_SYSTEM_PROMPT_SIZE_INVALID");
+    }
+    this.#expectedPromptArtifact = {
+      version: options.promptVersion,
+      content,
+      sha256: createHash("sha256").update(content).digest("hex"),
+    };
   }
 
   get circuitOpen(): boolean {
@@ -59,6 +80,7 @@ export class AiOrchestratorHttpClient {
   }): Promise<{
     readonly response: ModelResponse;
     readonly rawResponse: string;
+    readonly promptArtifact: ModelPromptArtifact;
   }> {
     let response: Response;
     try {
@@ -94,6 +116,24 @@ export class AiOrchestratorHttpClient {
     );
     if (typeof envelope.rawResponse !== "string")
       throw new Error("AI_ORCHESTRATOR_RAW_MISSING");
+    const artifact = record(
+      envelope.promptArtifact,
+      "AI_ORCHESTRATOR_PROMPT_ARTIFACT_MISSING",
+    );
+    if (
+      artifact.version !== this.#expectedPromptArtifact.version ||
+      typeof artifact.content !== "string" ||
+      Buffer.byteLength(artifact.content, "utf8") < 1 ||
+      Buffer.byteLength(artifact.content, "utf8") > 65_536 ||
+      typeof artifact.sha256 !== "string" ||
+      !/^[0-9a-f]{64}$/.test(artifact.sha256) ||
+      createHash("sha256").update(artifact.content).digest("hex") !==
+        artifact.sha256 ||
+      artifact.content !== this.#expectedPromptArtifact.content ||
+      artifact.sha256 !== this.#expectedPromptArtifact.sha256
+    ) {
+      throw new Error("AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID");
+    }
     const local = this.#validator.parse(envelope.rawResponse);
     if (!local.accepted || local.response === null) {
       throw new Error(
@@ -107,6 +147,14 @@ export class AiOrchestratorHttpClient {
       throw new Error("AI_ORCHESTRATOR_IDENTITY_MISMATCH");
     }
     this.#circuitOpen = false;
-    return { response: local.response, rawResponse: envelope.rawResponse };
+    return {
+      response: local.response,
+      rawResponse: envelope.rawResponse,
+      promptArtifact: {
+        version: this.#expectedPromptArtifact.version,
+        content: artifact.content,
+        sha256: artifact.sha256,
+      },
+    };
   }
 }

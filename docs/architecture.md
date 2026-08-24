@@ -2,7 +2,11 @@
 
 ## Goals and boundaries
 
-The platform separates uncertain analysis from deterministic authority. AI proposes a waiting area and two conditional scenarios. Deterministic services decide whether the proposal is coherent, eligible, affordable, broker-valid, fresh, unique, and permitted in the current mode.
+The platform separates uncertain analysis from deterministic authority. After
+deterministic input eligibility passes, AI always proposes a waiting area and
+two conditional scenarios. Deterministic services decide whether the proposal
+is coherent, affordable, broker-valid, fresh, unique, and permitted in the
+current mode.
 
 This is a modular monorepo because shared contracts, risk code, migrations, test fixtures, and deployment files must change atomically. Node.js owns stateful external I/O and execution. Python owns numerical analytics and historical simulation. PostgreSQL is the durable coordination/audit boundary.
 
@@ -51,6 +55,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 ### AI orchestrator
 
 - Builds full/compact payloads, applies token/size bounds, and records prompt/model/schema versions.
+- Supplies non-sizing execution constraints—current bid/ask, precision, tick,
+  stop-distance, reward/risk, ATR-distance, and expiry bounds—so the mandatory
+  two-leg proposal is constructed against the same deterministic rules that
+  will validate it.
 - Calls a configurable Responses- or Chat-Completions-compatible endpoint with
   per-attempt timeouts/retries/circuit breaker. The execution caller derives its
   local HTTP deadline from the complete configured retry budget plus bounded
@@ -60,6 +68,8 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   locally. The execution coordinator independently performs semantic and risk
   validation.
 - Treats refusal, incomplete output, extra prose, malformed JSON, endpoint ambiguity, or timeout as `NO_ACTION`.
+- Returns the exact versioned non-secret system prompt and hash over the
+  loopback contract so the execution trail can persist what was actually sent.
 
 ### Execution service
 
@@ -108,6 +118,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   refreshed market evidence, local validation/risk, broker outcome, and each
   PostgreSQL audit event with its Better Stack delivery checkpoint. Missing
   stages render as not reached rather than successful.
+- Prompt history shows prior request/response versions and hashes. Each selected
+  run shows the exact hash-verified system prompt and an operator-controlled
+  view of the exact persisted redacted user JSON. New prompts are persisted per
+  request; legacy versions use an explicit tracked-artifact fallback.
 - Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
 
 ## Typed boundaries
