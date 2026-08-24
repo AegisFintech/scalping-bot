@@ -431,6 +431,36 @@ enablement and acknowledgement were cleared, both stops were restored, and
 orders, fills, active positions, and unresolved broker events remained zero.
 All six correlated audit events reached Better Stack on their first attempt.
 
+The operator later made one exact acknowledgement continuing authorization for
+bounded broker-demo attempts in the current readiness campaign. That scope did
+not authorize real-money live execution or unattended automatic analysis. The
+first two windows completed model calls but spanned M1 completed-bar rollovers;
+analyses `6310314b-6a5f-41b1-9585-6517cd7ca92e` and
+`f9fbb9b4-3835-40d7-ad07-796d43a6dfa6` therefore rejected
+`DECISION_CANDLE_CONTEXT_CHANGED` before deterministic risk or any broker
+command. This was expected immutable-context protection, not permission to
+widen freshness or reuse stale inputs.
+
+A third window was deliberately timed inside one completed-candle interval.
+Its stopped snapshot had complete 600/500/300 candles, continuous four-by-four
+depth, accepted analytics, a 5-point spread at percentile `28.6764705882`, and
+empty durable execution state. Analysis
+`09b34e95-0900-4273-8acf-8d370e2a073c` accepted the post-model market refresh
+and both spread validations. The model returned `NO_TRADE` and marked data
+quality unacceptable for multi-timeframe direction conflict, low M1 volume,
+session-gap history, low trend strength, and no validated edge. Semantic
+validation rejected `MODEL_DATA_QUALITY_REJECTED`; risk decisions, order groups,
+orders, fills, active positions, and unresolved broker events all remained
+zero. All three mandatory stop/cancel/reconciliation cleanups were certain, and
+the deployment returned to disabled demo submission, disabled automatic
+analysis, and both emergency stops active.
+
+This evidence-only checkpoint passed formatting, linting, TypeScript
+typecheck/build, 123 Node tests, 10 schema tests, 3 migration tests, all 3
+configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
+tests, replay/backtest, both dependency audits, secret and shell checks, and all
+five offline systemd security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
