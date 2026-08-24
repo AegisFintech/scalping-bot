@@ -617,7 +617,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   historical runs, the exact prompt/input controls, and zero exceptions. Its
   verification identified and corrected a display-only ambiguity so an old
   schema 1.0 self-veto is explicitly historical rather than labelled as a
-  current two-leg proposal.
+  current two-leg proposal. Follow-up review:
+  [PR #45](https://github.com/AegisFintech/scalping-bot/pull/45).
 
 ## Acceptance criteria
 
