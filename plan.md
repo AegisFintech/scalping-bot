@@ -220,6 +220,23 @@ never justify empty, noisy, unsafe, or misleading commits.
   configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
   tests, replay/backtest smoke tests, both dependency audits, secret and shell
   checks, and all five offline systemd security parses at 2.8 (`OK`).
+  A fifth exact acknowledgement requested automatic demo scheduling. Continuous
+  scheduling remained off because the first supervised order lifecycle is not
+  yet proven. The bounded attempt's stopped preflight again passed at 5 points
+  and percentile `35`; the immediate final quote was 7 points at percentile
+  `49.1803278688`. Analysis `4ae9126d-d324-4b8a-8965-f689b7b479cb` persisted
+  600/500/300 completed candles, accepted analytics and spread validation, and
+  completed an AI request/response. The model returned `NO_TRADE` with
+  `SESSION_GAPS_PRESENT` and `MULTI_TIMEFRAME_DIRECTION_CONFLICT`; semantic
+  validation then rejected `MODEL_DATA_QUALITY_REJECTED` and `QUOTE_STALE`
+  before risk sizing, intent, or placement. Cleanup reconciled successfully,
+  demo enablement and acknowledgement were cleared, both stops were restored,
+  and execution-event/group/order/active-position/fill counts stayed zero. The
+  documentation checkpoint passed formatting, ESLint, TypeScript
+  typecheck/build, 103 Node tests, 10 schema tests, 3 migration tests, all 3
+  configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
+  tests, replay/backtest smoke tests, both dependency audits, secret and shell
+  checks, and all five offline systemd security parses at 2.8 (`OK`).
 
 ### ISSUE-002 delivery details
 

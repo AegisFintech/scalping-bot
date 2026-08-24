@@ -185,3 +185,21 @@ ESLint, TypeScript typecheck/build, 103 Node tests, 10 schema tests, 3 migration
 tests, all 3 configured PostgreSQL integration tests, Ruff format/lint, mypy, 30
 Python tests, replay/backtest smoke tests, both dependency audits, secret and
 shell checks, and all five offline systemd security parses at 2.8 (`OK`).
+
+A fifth exact acknowledgement accompanied a request for automatic demo cycles.
+Automatic scheduling remained disabled because no supervised broker order
+lifecycle has passed. The stopped preflight accepted the complete candle/depth
+snapshot, strict analytics, and a 5-point spread at percentile `35`; the final
+quote was 7 points at percentile `49.1803278688`. Analysis
+`4ae9126d-d324-4b8a-8965-f689b7b479cb` reached the completed AI response but the
+model returned `NO_TRADE` with `SESSION_GAPS_PRESENT` and
+`MULTI_TIMEFRAME_DIRECTION_CONFLICT`. Semantic validation rejected
+`MODEL_DATA_QUALITY_REJECTED` and `QUOTE_STALE` before any risk decision, intent,
+or broker command. Cleanup/reconciliation passed, both stops and disabled demo
+settings were restored, and all execution-state counts remained zero.
+
+The fifth-attempt documentation checkpoint passed formatting, ESLint,
+TypeScript typecheck/build, 103 Node tests, 10 schema tests, 3 migration tests,
+all 3 configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
+tests, replay/backtest smoke tests, both dependency audits, secret and shell
+checks, and all five offline systemd security parses at 2.8 (`OK`).
