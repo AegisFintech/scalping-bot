@@ -227,7 +227,9 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: existing PostgreSQL tables/views, the pandas/Plotly/Streamlit
   lockfile, and the dashboard's loopback/read-only security boundary.
 - Current status: in progress now that ISSUE-012 has made the configured schema
-  and demo journal current.
+  and demo journal current. Pure chart builders, bounded account/symbol queries,
+  completed-candle enforcement, explicit empty/error states, and six positive/
+  rejection-path tests are implemented on `feat/issue-013-streamlit-charts`.
 
 ## Acceptance criteria
 
@@ -293,7 +295,7 @@ runtime.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-to-`0006` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
-- [x] Ruff format/check, mypy, and pytest: 13 Python tests passed.
+- [x] Ruff format/check, mypy, and pytest: 19 Python tests passed.
 - [x] Checked-in replay and conservative backtest CLI smoke commands completed successfully.
 - [x] `pip-audit -r requirements.lock`: no known vulnerabilities.
 - [x] Secret scan and shell syntax checks passed.

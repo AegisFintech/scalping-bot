@@ -67,6 +67,12 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 ### Dashboard
 
 - Streamlit queries read-only views for overview, P/L, performance, market, analysis, orders, risk, operations, and server metrics.
+- Pure Plotly builders validate and visualize completed candles/volume,
+  deterministic indicators, spread/freshness/depth imbalance, mode-separated
+  daily risk, cTrader execution mapping, audit severity, and host resources.
+  Queries are bounded to the current account environment and symbol where the
+  data is trading-specific; chart floating-point conversion is presentation-only
+  and never feeds a decision boundary.
 - Controls call a loopback API with a control token and are audited.
 - Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
 

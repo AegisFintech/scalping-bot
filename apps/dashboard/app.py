@@ -11,6 +11,15 @@ import pandas as pd
 import plotly.express as px
 import psycopg
 import streamlit as st
+from charts import (
+    ChartDataError,
+    audit_events_figure,
+    completed_candles_figure,
+    daily_risk_figure,
+    execution_events_figure,
+    indicators_figure,
+    market_quality_figure,
+)
 from psycopg.rows import dict_row
 
 st.set_page_config(page_title="cTrader AI Scalper", page_icon="🛑", layout="wide")
@@ -72,6 +81,8 @@ except Exception as error:
     }
 
 mode = str(status.get("mode", "unknown")).upper()
+account_environment = str(status.get("accountType", "unknown")).lower()
+selected_symbol = str(status.get("symbol", "unknown"))
 st.title("cTrader AI Scalper Operations")
 if mode == "LIVE":
     st.error("LIVE-COMPATIBLE MODE — order submission remains unavailable in this build")
@@ -116,7 +127,7 @@ with tabs[0]:
             """SELECT symbol, mode, state, analysis_time, valid_until, rejection_reasons
                FROM dashboard_latest_analysis ORDER BY analysis_time DESC LIMIT 10"""
         )
-        st.dataframe(overview, use_container_width=True, hide_index=True)
+        st.dataframe(overview, width="stretch", hide_index=True)
         daily_overview = frame(
             """SELECT trading_day, timezone, baseline_equity, current_equity, net_flows,
                       realized_pnl, unrealized_pnl, loss_percent, locked_out, reconciled_at
@@ -124,7 +135,7 @@ with tabs[0]:
         )
         if not daily_overview.empty:
             st.subheader("Current daily risk")
-            st.dataframe(daily_overview, use_container_width=True, hide_index=True)
+            st.dataframe(daily_overview, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Database overview unavailable: {type(error).__name__}")
     reasons = status.get("reasonCodes", [])
@@ -154,9 +165,9 @@ with tabs[1]:
                 px.line(
                     pnl.sort_values("closed_at"), x="closed_at", y="cumulative_pnl", color="mode"
                 ),
-                use_container_width=True,
+                width="stretch",
             )
-            st.dataframe(pnl, use_container_width=True, hide_index=True)
+            st.dataframe(pnl, width="stretch", hide_index=True)
         period_pnl = frame(
             """SELECT mode, date_trunc('day', closed_at) AS day,
                       count(*) AS trades, sum(realized_pnl - fees) AS net_pnl
@@ -165,7 +176,7 @@ with tabs[1]:
             (start_time, end_time),
         )
         st.subheader("Daily totals")
-        st.dataframe(period_pnl, use_container_width=True, hide_index=True)
+        st.dataframe(period_pnl, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"P/L unavailable: {type(error).__name__}")
 
@@ -183,9 +194,9 @@ with tabs[2]:
                FROM setup_statistics ORDER BY computed_at DESC LIMIT 200"""
         )
         st.subheader("Session performance")
-        st.dataframe(sessions, use_container_width=True, hide_index=True)
+        st.dataframe(sessions, width="stretch", hide_index=True)
         st.subheader("Setup performance")
-        st.dataframe(setups, use_container_width=True, hide_index=True)
+        st.dataframe(setups, width="stretch", hide_index=True)
         grouped = frame(
             """SELECT mode, direction, market_regime, confidence_bucket,
                       count(*) AS trades,
@@ -197,36 +208,88 @@ with tabs[2]:
                ORDER BY mode, trades DESC"""
         )
         st.subheader("Direction, regime, and confidence buckets")
-        st.dataframe(grouped, use_container_width=True, hide_index=True)
+        st.dataframe(grouped, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Performance unavailable: {type(error).__name__}")
 
 with tabs[3]:
     try:
+        timeframe_column, sample_column = st.columns(2)
+        selected_timeframe = timeframe_column.selectbox(
+            "Completed candle timeframe", ["M1", "M5", "M15"], index=0
+        )
+        chart_samples = sample_column.slider(
+            "Chart samples", min_value=50, max_value=600, value=300, step=50
+        )
         market = frame(
-            """SELECT source_time, received_at, bid, ask, spread, weighted_mid, microprice,
+            """WITH target_symbol AS (
+                 SELECT s.id FROM symbols s
+                 JOIN accounts a ON a.id = s.account_id
+                 WHERE a.environment = %s AND s.name = %s
+                 ORDER BY s.metadata_at DESC LIMIT 1
+               )
+               SELECT source_time, received_at, bid, ask, spread, weighted_mid, microprice,
                       imbalance_top5, imbalance_top10, imbalance_top20, age_ms,
                       complete, discontinuity, reconnect_sequence
-               FROM order_book_snapshots ORDER BY source_time DESC LIMIT 100"""
+               FROM order_book_snapshots
+               WHERE symbol_id = (SELECT id FROM target_symbol)
+               ORDER BY source_time DESC LIMIT %s""",
+            (account_environment, selected_symbol, chart_samples),
         )
         indicators = frame(
-            """SELECT generated_at, atr, ema_fast, ema_slow, acceptable, rejection_reasons
-               FROM indicator_snapshots ORDER BY generated_at DESC LIMIT 100"""
+            """WITH target_symbol AS (
+                 SELECT s.id FROM symbols s
+                 JOIN accounts a ON a.id = s.account_id
+                 WHERE a.environment = %s AND s.name = %s
+                 ORDER BY s.metadata_at DESC LIMIT 1
+               )
+               SELECT i.generated_at, i.atr, i.ema_fast, i.ema_slow,
+                      i.acceptable, i.rejection_reasons
+               FROM indicator_snapshots i
+               JOIN candle_snapshots cs ON cs.id = i.candle_snapshot_id
+               WHERE cs.symbol_id = (SELECT id FROM target_symbol)
+               ORDER BY i.generated_at DESC LIMIT %s""",
+            (account_environment, selected_symbol, chart_samples),
         )
-        st.subheader("Depth and freshness")
-        st.dataframe(market, use_container_width=True, hide_index=True)
-        st.subheader("Indicators")
-        st.dataframe(indicators, use_container_width=True, hide_index=True)
         candles = frame(
-            """SELECT c.timeframe, c.start_time, c.end_time, c.open, c.high, c.low,
+            """WITH target_snapshot AS (
+                 SELECT cs.id FROM candle_snapshots cs
+                 JOIN symbols s ON s.id = cs.symbol_id
+                 JOIN accounts a ON a.id = cs.account_id
+                 WHERE a.environment = %s AND s.name = %s
+                 ORDER BY cs.analysis_time DESC LIMIT 1
+               )
+               SELECT c.timeframe, c.start_time, c.end_time, c.open, c.high, c.low,
                       c.close, c.volume, c.complete, c.quality_flags
                FROM candles c
-               JOIN candle_snapshots cs ON cs.id = c.snapshot_id
-               WHERE cs.id = (SELECT id FROM candle_snapshots ORDER BY analysis_time DESC LIMIT 1)
-               ORDER BY c.timeframe, c.start_time DESC LIMIT 1500"""
+               WHERE c.snapshot_id = (SELECT id FROM target_snapshot)
+                 AND c.timeframe = %s AND c.complete = true
+               ORDER BY c.start_time DESC LIMIT %s""",
+            (account_environment, selected_symbol, selected_timeframe, chart_samples),
         )
+        candle_chart = completed_candles_figure(candles, selected_timeframe)
+        if candle_chart is None:
+            st.info("No completed candles are available for this account/symbol/timeframe.")
+        else:
+            st.plotly_chart(candle_chart, width="stretch")
+        indicator_chart = indicators_figure(indicators)
+        if indicator_chart is None:
+            st.info("No chartable deterministic indicator history is available.")
+        else:
+            st.plotly_chart(indicator_chart, width="stretch")
+        quality_chart = market_quality_figure(market)
+        if quality_chart is None:
+            st.info("No spread/depth freshness samples are available.")
+        else:
+            st.plotly_chart(quality_chart, width="stretch")
+        st.subheader("Depth and freshness")
+        st.dataframe(market, width="stretch", hide_index=True)
+        st.subheader("Indicators")
+        st.dataframe(indicators, width="stretch", hide_index=True)
         st.subheader("Latest completed candle snapshot")
-        st.dataframe(candles, use_container_width=True, hide_index=True)
+        st.dataframe(candles, width="stretch", hide_index=True)
+    except ChartDataError as error:
+        st.error(f"Market chart rejected invalid persisted data: {error}")
     except Exception as error:
         st.error(f"Market data unavailable: {type(error).__name__}")
 
@@ -269,23 +332,62 @@ with tabs[5]:
                FROM positions ORDER BY updated_at DESC LIMIT 500"""
         )
         st.subheader("Orders")
-        st.dataframe(orders, use_container_width=True, hide_index=True)
+        st.dataframe(orders, width="stretch", hide_index=True)
         st.subheader("Positions")
-        st.dataframe(positions, use_container_width=True, hide_index=True)
+        st.dataframe(positions, width="stretch", hide_index=True)
         fills = frame(
-            """SELECT f.occurred_at, o.side, f.price, f.volume, f.commission,
-                      o.client_order_id
-               FROM fills f JOIN orders o ON o.id = f.order_id
+            """SELECT f.occurred_at, COALESCE(o.side, p.side) AS side,
+                      f.price, f.volume, f.commission, o.client_order_id
+               FROM fills f
+               LEFT JOIN orders o ON o.id = f.order_id
+               LEFT JOIN positions p ON p.id = f.position_id
                ORDER BY f.occurred_at DESC LIMIT 1000"""
         )
         st.subheader("Fills")
-        st.dataframe(fills, use_container_width=True, hide_index=True)
+        st.dataframe(fills, width="stretch", hide_index=True)
+        execution_events = frame(
+            """WITH target_symbol AS (
+                 SELECT s.id FROM symbols s
+                 JOIN accounts a ON a.id = s.account_id
+                 WHERE a.environment = %s AND s.name = %s
+                 ORDER BY s.metadata_at DESC LIMIT 1
+               )
+               SELECT occurred_at, mapping_state, execution_type, reason_codes
+               FROM broker_execution_events
+               WHERE symbol_id = (SELECT id FROM target_symbol)
+               ORDER BY occurred_at DESC LIMIT 1000""",
+            (account_environment, selected_symbol),
+        )
+        execution_chart = execution_events_figure(execution_events)
+        if execution_chart is None:
+            st.info("No cTrader execution events have been journaled for this scope.")
+        else:
+            st.plotly_chart(execution_chart, width="stretch")
+        st.subheader("Execution-event journal")
+        st.dataframe(execution_events, width="stretch", hide_index=True)
+    except ChartDataError as error:
+        st.error(f"Execution chart rejected invalid persisted data: {error}")
     except Exception as error:
         st.error(f"Orders/positions unavailable: {type(error).__name__}")
 
 with tabs[6]:
     try:
-        daily = frame("SELECT * FROM dashboard_daily_risk ORDER BY trading_day DESC LIMIT 30")
+        daily = frame(
+            """WITH target_account AS (
+                 SELECT s.account_id FROM symbols s
+                 JOIN accounts a ON a.id = s.account_id
+                 WHERE a.environment = %s AND s.name = %s
+                 ORDER BY s.metadata_at DESC LIMIT 1
+               )
+               SELECT dr.trading_day, %s AS mode, dr.timezone, dr.baseline_equity,
+                      dr.current_equity, dr.net_flows, dr.realized_pnl,
+                      dr.unrealized_pnl, dr.loss_percent, dr.locked_out,
+                      dr.lockout_reason, dr.reconciled_at
+               FROM dashboard_daily_risk dr
+               WHERE dr.account_id = (SELECT account_id FROM target_account)
+               ORDER BY dr.trading_day DESC LIMIT 90""",
+            (account_environment, selected_symbol, mode.lower()),
+        )
         decisions = frame(
             """SELECT decided_at, side, approved, risk_percent, risk_budget, raw_volume,
                       normalized_volume, estimated_margin, spread_points,
@@ -293,16 +395,23 @@ with tabs[6]:
                FROM risk_decisions ORDER BY decided_at DESC LIMIT 500"""
         )
         st.subheader("Daily risk lockout")
-        st.dataframe(daily, use_container_width=True, hide_index=True)
+        risk_chart = daily_risk_figure(daily)
+        if risk_chart is None:
+            st.info("No daily-risk history is available for this account scope.")
+        else:
+            st.plotly_chart(risk_chart, width="stretch")
+        st.dataframe(daily, width="stretch", hide_index=True)
         st.subheader("Deterministic decisions")
-        st.dataframe(decisions, use_container_width=True, hide_index=True)
+        st.dataframe(decisions, width="stretch", hide_index=True)
         rejected = frame(
             """SELECT validated_at, stage, reason_codes
                FROM validation_results WHERE accepted = false
                ORDER BY validated_at DESC LIMIT 500"""
         )
         st.subheader("Rejected decisions")
-        st.dataframe(rejected, use_container_width=True, hide_index=True)
+        st.dataframe(rejected, width="stretch", hide_index=True)
+    except ChartDataError as error:
+        st.error(f"Risk chart rejected invalid persisted data: {error}")
     except Exception as error:
         st.error(f"Risk data unavailable: {type(error).__name__}")
 
@@ -313,14 +422,24 @@ with tabs[7]:
                       heartbeat_at, started_at FROM service_health ORDER BY service, instance_id"""
         )
         events = frame(
-            """SELECT occurred_at, severity, service, event_name, outcome, reason_code,
+            """SELECT occurred_at, severity, trading_mode, service, event_name,
+                      outcome, reason_code,
                       duration_ms, retry_count FROM audit_events
-               ORDER BY occurred_at DESC LIMIT 500"""
+               WHERE trading_mode = %s AND (symbol = %s OR symbol IS NULL)
+               ORDER BY occurred_at DESC LIMIT 500""",
+            (mode.lower(), selected_symbol),
         )
         st.subheader("Service health")
-        st.dataframe(health, use_container_width=True, hide_index=True)
+        st.dataframe(health, width="stretch", hide_index=True)
         st.subheader("Recent operational events")
-        st.dataframe(events, use_container_width=True, hide_index=True)
+        audit_chart = audit_events_figure(events)
+        if audit_chart is None:
+            st.info("No operational audit events are available.")
+        else:
+            st.plotly_chart(audit_chart, width="stretch")
+        st.dataframe(events, width="stretch", hide_index=True)
+    except ChartDataError as error:
+        st.error(f"Operations chart rejected invalid persisted data: {error}")
     except Exception as error:
         st.error(f"Operations unavailable: {type(error).__name__}")
 
@@ -337,18 +456,16 @@ with tabs[8]:
             st.info("No server metrics have been sampled yet.")
         else:
             metrics = metrics.sort_values("captured_at")
-            st.plotly_chart(
-                px.line(metrics, x="captured_at", y="cpu_percent"), use_container_width=True
-            )
+            st.plotly_chart(px.line(metrics, x="captured_at", y="cpu_percent"), width="stretch")
             st.plotly_chart(
                 px.line(
                     metrics,
                     x="captured_at",
                     y=["memory_used_bytes", "memory_available_bytes", "process_memory_bytes"],
                 ),
-                use_container_width=True,
+                width="stretch",
             )
-            st.dataframe(metrics.tail(100), use_container_width=True, hide_index=True)
+            st.dataframe(metrics.tail(100), width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Server metrics unavailable: {type(error).__name__}")
 
@@ -361,12 +478,12 @@ with tabs[9]:
     reason = st.text_area("Reason", max_chars=1000)
     confirmed = st.checkbox("I confirm this control action and understand it is audited")
     mode_columns = st.columns(3)
-    mode_columns[0].button("Paper mode", disabled=True, use_container_width=True)
-    mode_columns[1].button("Demo mode", disabled=True, use_container_width=True)
-    mode_columns[2].button("Shadow mode", disabled=True, use_container_width=True)
+    mode_columns[0].button("Paper mode", disabled=True, width="stretch")
+    mode_columns[1].button("Demo mode", disabled=True, width="stretch")
+    mode_columns[2].button("Shadow mode", disabled=True, width="stretch")
     st.caption("Mode changes require a reviewed environment change and service restart.")
     col1, col2, col3 = st.columns(3)
-    if col1.button("ACTIVATE EMERGENCY STOP", type="primary", use_container_width=True):
+    if col1.button("ACTIVATE EMERGENCY STOP", type="primary", width="stretch"):
         if confirmed and actor and reason:
             ok, message = control(
                 "/v1/controls/emergency-stop",
@@ -375,12 +492,7 @@ with tabs[9]:
             (st.success if ok else st.error)(message)
         else:
             st.warning("Identity, reason, and confirmation are required")
-    if (
-        col2.button("Pause new analyses", use_container_width=True)
-        and confirmed
-        and actor
-        and reason
-    ):
+    if col2.button("Pause new analyses", width="stretch") and confirmed and actor and reason:
         ok, message = control(
             "/v1/controls/pause-analyses",
             {"enabled": True, "actor": actor, "reason": reason},
@@ -393,12 +505,7 @@ with tabs[9]:
                 {"enabled": False, "actor": actor, "reason": reason},
             )
             (st.success if ok else st.error)(message)
-    if (
-        col3.button("Cancel strategy pending", use_container_width=True)
-        and confirmed
-        and actor
-        and reason
-    ):
+    if col3.button("Cancel strategy pending", width="stretch") and confirmed and actor and reason:
         ok, message = control(
             "/v1/controls/cancel-pending",
             {"actor": actor, "reason": reason},

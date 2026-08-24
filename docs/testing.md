@@ -50,7 +50,7 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 80 Node unit
 tests across 25 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
-analytics and dashboard code, 13 Python tests,
+analytics and dashboard code, 19 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
 passed. TLS connectivity and all six migrations passed inside isolated Neon
@@ -70,3 +70,7 @@ A configured-endpoint strict schema probe
 returned a locally validated `NO_TRADE`. The checked-in replay and backtest CLI
 smoke fixtures also completed; the replay fixture intentionally has too little
 history for long-window indicators and is not a trading-quality dataset.
+
+A configured Streamlit `AppTest` run completed without an exception and rendered
+four charts from current data; its visible error/warning elements were the
+expected demo emergency-stop and disabled-submission banners.

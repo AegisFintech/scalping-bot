@@ -12,6 +12,11 @@ Supported delivery modes are replay, backtest, paper, cTrader demo, and shadow. 
 
 Node.js services handle cTrader, scheduling, AI calls, validation/risk, order lifecycle, APIs, logs, and metrics. A typed FastAPI service provides deterministic Python analytics and replay/backtest behavior. Streamlit reads Neon PostgreSQL and calls protected localhost controls. See `docs/architecture.md` and `docs/data-flow.md`.
 
+The Streamlit dashboard includes mode-labelled P/L, completed-candle/volume,
+indicator, spread/freshness/depth, daily-risk, execution-journal, audit, and
+server-resource charts. Chart queries are bounded and read-only; malformed or
+forming-candle data is rejected rather than visualized as authoritative.
+
 ## Prerequisites
 
 - Debian 13+
