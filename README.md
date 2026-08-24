@@ -54,7 +54,10 @@ mkdir -p .runtime logs
 touch .runtime/emergency-stop
 ```
 
-Keep `EMERGENCY_STOP=true`, `LIVE_TRADING_ENABLED=false`, `SHADOW_MODE=true`, and the live acknowledgement empty during development. Production systemd uses a root-owned `EnvironmentFile` outside the repository.
+Keep `EMERGENCY_STOP=true`, `AUTOMATIC_ANALYSIS_ENABLED=false`,
+`LIVE_TRADING_ENABLED=false`, `SHADOW_MODE=true`, and the live acknowledgement
+empty during development. Production systemd uses a root-owned
+`EnvironmentFile` outside the repository.
 
 ## Neon setup and migrations
 
@@ -155,6 +158,12 @@ history, and no existing baseline. It never places an order. See
 Migration `0006` and a clean durable cTrader execution-event recovery are also
 mandatory before demo submission. Closed-trade outcome mapping remains
 fail-closed pending supervised broker-field validation.
+Automatic analysis defaults off, while reconciliation, expiry, cancellation,
+and safety maintenance continue. Demo submission refuses startup unless the
+exact acknowledgement, a positive `MAX_ORDERS_PER_DAY`, and a positive
+per-position `MAX_POSITION_NOTIONAL` are all configured. Keep the automatic
+gate off and use one authenticated loopback cycle for the first supervised
+session.
 
 ## Tests and quality gates
 

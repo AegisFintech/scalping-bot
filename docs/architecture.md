@@ -98,6 +98,13 @@ dedicated database provider/environment/type and cannot share broker demo/live
 daily-risk or performance history. A demo process cannot select a live endpoint;
 a shadow process cannot construct a submitting gateway.
 
+The scheduler's analysis gate is independent from reconciliation and order
+maintenance. `AUTOMATIC_ANALYSIS_ENABLED` defaults false, so a supervised demo
+can use an authenticated single-cycle request while expiry, cancellation, and
+reconciliation continue. Broker demo submission additionally refuses startup
+without the exact demo acknowledgement, a positive daily order-group limit, and
+a positive per-position notional cap.
+
 ## Live safety gates
 
 Any future submitting live composition must require: `TRADING_MODE=live`;

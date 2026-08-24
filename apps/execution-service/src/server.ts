@@ -12,6 +12,7 @@ export interface ExecutionStatus {
   readonly accountType: string;
   readonly emergencyStopped: boolean;
   readonly pauseNewAnalyses: boolean;
+  readonly automaticAnalysisEnabled: boolean;
   readonly tradingEnabled: boolean;
   readonly startupChecksPassed: boolean;
   readonly lastCycle: CycleResult | null;

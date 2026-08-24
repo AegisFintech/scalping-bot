@@ -133,14 +133,13 @@ On startup/reconnect, stop new analyses; load unresolved intents; fetch broker p
 
 ## Development issue backlog
 
-Remote issue links are pending a rotated GitHub credential. These identifiers
-remain stable when the corresponding GitHub issues are created. Mandatory phase
-ordering applies: supervised demo and shadow evidence precede any broker-capable
-live implementation.
+Remote issue links are added as each bounded issue starts. These identifiers
+remain stable. Mandatory phase ordering applies: supervised demo and shadow
+evidence precede any broker-capable live implementation.
 
 | ID        | Status      | Issue                                                                                                                      | Acceptance summary                                                                                            |
 | --------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| ISSUE-001 | pending     | Supervised cTrader demo order lifecycle                                                                                    | Depends on ISSUE-002; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit     |
+| ISSUE-001 | in progress | [Supervised cTrader demo order lifecycle](https://github.com/AegisFintech/scalping-bot/issues/11)                          | Bounded manual session; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit   |
 | ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)     | Callback journal/order/fill/position recovery implemented; closed-trade mapping awaits supervised evidence    |
 | ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                      | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
 | ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                 | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
@@ -152,12 +151,30 @@ live implementation.
 | ISSUE-010 | blocked     | Supervised live canary authorization                                                                                       | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
 | ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
 | ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)     | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
-| ISSUE-013 | in progress | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
+| ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
 required checks, reviews, and safety sequencing pass. Contribution-count targets
 never justify empty, noisy, unsafe, or misleading commits.
+
+### ISSUE-001 delivery details
+
+- Acceptance criteria: the first cTrader demo order session is manual,
+  authenticated, capped at one daily OCO group and a reviewed per-position
+  notional, and followed immediately by emergency stop, strategy-owned pending
+  cancellation, reconciliation, and redacted event review. Uncertain evidence
+  blocks another placement.
+- Dependencies: [issue #3](https://github.com/AegisFintech/scalping-bot/issues/3),
+  configured demo services, clean migration/journal state, current symbol/risk
+  evidence, and the operator's exact demo acknowledgement.
+- Current status: automatic analysis now defaults off independently of
+  reconciliation/maintenance. Demo-enabled startup requires the exact
+  acknowledgement, a positive daily order-group limit, and a positive
+  per-position notional cap. Status and Streamlit expose the automatic-analysis
+  state. These guardrails are in progress on
+  `feat/issue-001-supervised-demo-guardrails`; submission and emergency stop
+  remain unchanged.
 
 ### ISSUE-002 delivery details
 
@@ -294,7 +311,7 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 25 files, 80 tests passed.
+- [x] `npm test`: 25 files, 82 tests passed.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-to-`0006` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.

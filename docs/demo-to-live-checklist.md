@@ -41,6 +41,10 @@ Demo broker order placement is separately disabled by default. It requires
 `I_UNDERSTAND_DEMO_ORDERS_USE_A_BROKER_DEMO_ACCOUNT`; neither setting affects live gates.
 The initial demo baseline preflight must be performed before enabling those
 settings, under `EMERGENCY_STOP=true`, and places no order.
+Demo-enabled startup also requires a positive `MAX_ORDERS_PER_DAY` and positive
+`MAX_POSITION_NOTIONAL`. The first supervised session keeps
+`AUTOMATIC_ANALYSIS_ENABLED=false`, uses one authenticated manual cycle, and
+reactivates emergency stop before reconciliation and evidence review.
 
 - [ ] `TRADING_MODE=live`.
 - [ ] `LIVE_TRADING_ENABLED=true`.

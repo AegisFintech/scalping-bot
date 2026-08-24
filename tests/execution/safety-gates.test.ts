@@ -9,6 +9,7 @@ import { DisabledLiveGateway } from "../../apps/execution-service/src/live-compa
 import {
   LIVE_ACKNOWLEDGEMENT,
   LIVE_FILE_STATEMENT,
+  evaluateAutomaticAnalysisEligibility,
   evaluatePlacementEligibility,
   readFilesystemControls,
   type SafetyGateInput,
@@ -60,6 +61,60 @@ describe("execution safety gates", () => {
       liveTradingEnabled: false,
       demoTradingEnabled: false,
       emergencyStop: true,
+      automaticAnalysisEnabled: false,
+    });
+  });
+
+  it("requires explicit bounded configuration before demo submission", () => {
+    const enabled = {
+      TRADING_MODE: "demo",
+      DEMO_TRADING_ENABLED: "true",
+      DEMO_TRADING_ACKNOWLEDGEMENT:
+        "I_UNDERSTAND_DEMO_ORDERS_USE_A_BROKER_DEMO_ACCOUNT",
+    };
+    expect(() => loadExecutionConfig(enabled)).toThrow(
+      "CONFIG_DEMO_ORDER_LIMIT_REQUIRED",
+    );
+    expect(() =>
+      loadExecutionConfig({ ...enabled, MAX_ORDERS_PER_DAY: "1" }),
+    ).toThrow("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
+    expect(() =>
+      loadExecutionConfig({
+        ...enabled,
+        MAX_ORDERS_PER_DAY: "1",
+        MAX_POSITION_NOTIONAL: "0",
+      }),
+    ).toThrow("CONFIG_DECIMAL_INVALID:MAX_POSITION_NOTIONAL");
+    expect(
+      loadExecutionConfig({
+        ...enabled,
+        MAX_ORDERS_PER_DAY: "1",
+        MAX_POSITION_NOTIONAL: "5500",
+      }),
+    ).toMatchObject({
+      demoTradingEnabled: true,
+      maxOrdersPerDay: 1,
+      maxPositionNotional: "5500",
+      automaticAnalysisEnabled: false,
+    });
+    expect(() =>
+      loadExecutionConfig({
+        ...enabled,
+        DEMO_TRADING_ACKNOWLEDGEMENT: "incorrect",
+        MAX_ORDERS_PER_DAY: "1",
+        MAX_POSITION_NOTIONAL: "5500",
+      }),
+    ).toThrow("CONFIG_DEMO_ACKNOWLEDGEMENT_REQUIRED");
+  });
+
+  it("keeps scheduler analysis off unless independently enabled", () => {
+    expect(evaluateAutomaticAnalysisEligibility(safeInput(), false)).toEqual({
+      allowed: false,
+      reasonCodes: ["AUTOMATIC_ANALYSIS_DISABLED"],
+    });
+    expect(evaluateAutomaticAnalysisEligibility(safeInput(), true)).toEqual({
+      allowed: true,
+      reasonCodes: [],
     });
   });
 
