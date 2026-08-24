@@ -292,6 +292,27 @@ strategy-owned cancellation, and reconciliation succeeded. Demo enablement and
 acknowledgement were cleared, the environment stop was restored, and execution
 events, groups, orders, active positions, and fills remained zero.
 
+A later fresh acknowledgement requested automatic demo trading. Automatic
+scheduling was not enabled because ISSUE-001 still lacks a successful first
+supervised broker order lifecycle. One bounded attempt was allowed: its stopped
+preflight passed at a 5-point spread/35th percentile and its final quote passed
+at 7 points/`49.1803278688`. Analysis
+`4ae9126d-d324-4b8a-8965-f689b7b479cb` persisted 600/500/300 completed candles,
+accepted analytics and deterministic spread validation, and completed the AI
+request/response. The model returned `NO_TRADE`, marked data quality false with
+`SESSION_GAPS_PRESENT` and `MULTI_TIMEFRAME_DIRECTION_CONFLICT`, and semantic
+validation rejected `MODEL_DATA_QUALITY_REJECTED` plus `QUOTE_STALE`. No risk
+decision, intent, or order command was created. Cleanup/reconciliation passed,
+demo enablement and acknowledgement were cleared, both stops were restored, and
+all execution-state counts remained zero.
+
+The accompanying observability check found the Streamlit health endpoint ready
+and its PostgreSQL views able to show the completed candles, indicators, parsed
+AI JSON, validations, order state, and correlated audit transitions. Better
+Stack delivery is currently disabled and has no ingestion host or source token;
+the implemented remote transport covers execution-service structured logger
+events, not the complete PostgreSQL decision trail.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
