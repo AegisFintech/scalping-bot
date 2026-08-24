@@ -134,6 +134,23 @@ reuse of the prior strategy version after the safety-config hash changed; the
 PM2 release identity is therefore advanced to the immutable
 `0.1.0-demo-guardrails.1` version rather than altering stored provenance.
 
+The versioned process then started with certain recovery. Protected local demo
+settings now cap the session at one daily OCO group, 5,500 USD per position,
+0.001% setup risk, 1% margin usage, and a 10-point absolute spread; automatic
+analysis remains off. At the preflight quote, minimum native volume `100` with
+volume scale `0.01` represented one XAU unit and about 4,645 USD notional, so the
+notional cap permits only that minimum step at the observed price. This must be
+rechecked immediately before authorization. Only one current 6-point spread was
+observed and no 24-hour persisted demo spread sample existed, so the 10-point
+cap is deliberately provisional rather than broker-reviewed evidence.
+
+After restart, status reported demo mode, startup checks passed, trading
+disabled, automatic analysis off, and environment emergency stop active. An
+authenticated manual cycle rejected with `EMERGENCY_STOP_ENV` and no placement;
+the demo execution journal, order, active-position, and fill counts remained
+zero. Streamlit health returned `ok` and its configured AppTest rendered four
+charts with no exception.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

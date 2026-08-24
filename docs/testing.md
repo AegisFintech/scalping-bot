@@ -84,3 +84,10 @@ The supervised-demo scheduler/cap checkpoint adds positive and rejection tests
 for manual-by-default analysis and for the exact acknowledgement, daily
 order-group limit, and per-position notional limit required by demo-enabled
 startup. The full gate rerun above passed with demo submission still disabled.
+
+The immutable guardrail release was reloaded after the prior-version reuse was
+correctly rejected. Execution readiness returned ready with trading false; an
+authenticated cycle under environment emergency stop returned `REJECTED`,
+`EMERGENCY_STOP_ENV`, and no placement. Demo journal/order/active-position/fill
+counts stayed zero. Dashboard health returned `ok`, and its configured AppTest
+rendered four charts with zero exceptions.

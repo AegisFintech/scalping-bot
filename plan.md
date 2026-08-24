@@ -172,15 +172,17 @@ never justify empty, noisy, unsafe, or misleading commits.
   reconciliation/maintenance. Demo-enabled startup requires the exact
   acknowledgement, a positive daily order-group limit, and a positive
   per-position notional cap. Status and Streamlit expose the automatic-analysis
-  state. These guardrails are in progress on
-  `feat/issue-001-supervised-demo-guardrails` and proposed in
-  [PR #12](https://github.com/AegisFintech/scalping-bot/pull/12); submission and
-  emergency stop remain unchanged. Deployment then failed closed on the
-  expected strategy-version immutability check after the cap/config hash
-  changed. A new immutable `0.1.0-demo-guardrails.1` release identity is being
-  delivered in
+  state. The guardrails were merged in
+  [PR #12](https://github.com/AegisFintech/scalping-bot/pull/12). Deployment then
+  failed closed on the expected strategy-version immutability check after the
+  cap/config hash changed. The new immutable
+  `0.1.0-demo-guardrails.1` release identity was merged in
   [PR #13](https://github.com/AegisFintech/scalping-bot/pull/13); no provenance
-  row is rewritten.
+  row was rewritten. The deployed process now reports startup recovery passed,
+  automatic analysis off, demo trading disabled, and environment emergency stop
+  active. A stopped authenticated cycle rejected with `EMERGENCY_STOP_ENV`; the
+  demo journal/order/active-position/fill counts remain zero. Awaiting the
+  operator's exact demo acknowledgement before the supervised enablement window.
 
 ### ISSUE-002 delivery details
 
