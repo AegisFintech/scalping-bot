@@ -64,6 +64,128 @@ describe("risk engine", () => {
     });
   });
 
+  it("normalizes volume downward to the configured notional cap", () => {
+    const result = sizePosition({
+      equity: "10000",
+      availableMargin: "10000",
+      baseRiskPercent: "1",
+      maxRiskPercent: "5",
+      entryPrice: "2000",
+      stopLoss: "1999",
+      estimatedMarginPerVolume: "1",
+      currentMargin: "0",
+      maxMarginUsagePercent: "30",
+      maxPositionNotional: "10000",
+      metadata,
+    });
+
+    expect(result).toMatchObject({
+      approved: true,
+      rawVolume: "100",
+      normalizedVolume: "5",
+      maximumLoss: "5",
+    });
+  });
+
+  it("accepts the exact minimum-volume notional boundary", () => {
+    const result = sizePosition({
+      equity: "10000",
+      availableMargin: "10000",
+      baseRiskPercent: "1",
+      maxRiskPercent: "5",
+      entryPrice: "2000",
+      stopLoss: "1999",
+      estimatedMarginPerVolume: "1",
+      currentMargin: "0",
+      maxMarginUsagePercent: "30",
+      maxPositionNotional: "2000",
+      metadata,
+    });
+
+    expect(result).toMatchObject({ approved: true, normalizedVolume: "1" });
+  });
+
+  it("rejects when the notional cap cannot support broker minimum volume", () => {
+    const result = sizePosition({
+      equity: "10000",
+      availableMargin: "10000",
+      baseRiskPercent: "1",
+      maxRiskPercent: "5",
+      entryPrice: "2000",
+      stopLoss: "1999",
+      estimatedMarginPerVolume: "1",
+      currentMargin: "0",
+      maxMarginUsagePercent: "30",
+      maxPositionNotional: "1999.99",
+      metadata,
+    });
+
+    expect(result).toMatchObject({
+      approved: false,
+      reasonCodes: ["RISK_NOTIONAL_EXCEEDED"],
+      normalizedVolume: null,
+    });
+  });
+
+  it("caps the observed demo XAUUSD risk volume to one broker step", () => {
+    const result = sizePosition({
+      equity: "1000000",
+      availableMargin: "1000000",
+      baseRiskPercent: "0.0005",
+      maxRiskPercent: "0.001",
+      entryPrice: "4650.10",
+      stopLoss: "4647.80",
+      estimatedMarginPerVolume: "0.01",
+      currentMargin: "0",
+      maxMarginUsagePercent: "1",
+      maxPositionNotional: "5500",
+      metadata: {
+        ...metadata,
+        tickValue: "0.0001",
+        contractSize: "100",
+        volumeScale: "0.01",
+        minVolume: "100",
+        maxVolume: "1000000",
+        volumeStep: "100",
+      },
+    });
+
+    expect(result).toMatchObject({
+      approved: true,
+      normalizedVolume: "100",
+      maximumLoss: "2.3",
+    });
+  });
+
+  it("still rejects broker minimum volume above the configured loss budget", () => {
+    const result = sizePosition({
+      equity: "1000000",
+      availableMargin: "1000000",
+      baseRiskPercent: "0.0005",
+      maxRiskPercent: "0.001",
+      entryPrice: "4650.10",
+      stopLoss: "4645.00",
+      estimatedMarginPerVolume: "0.01",
+      currentMargin: "0",
+      maxMarginUsagePercent: "1",
+      maxPositionNotional: "5500",
+      metadata: {
+        ...metadata,
+        tickValue: "0.0001",
+        contractSize: "100",
+        volumeScale: "0.01",
+        minVolume: "100",
+        maxVolume: "1000000",
+        volumeStep: "100",
+      },
+    });
+
+    expect(result).toMatchObject({
+      approved: false,
+      reasonCodes: ["RISK_VOLUME_BELOW_MIN"],
+    });
+  });
+
   it("locks at the daily threshold", () => {
     expect(
       dailyLoss({

@@ -169,7 +169,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
 | ISSUE-024 | complete    | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
 | ISSUE-025 | in progress | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)   | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
-| ISSUE-026 | in progress | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)   | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
+| ISSUE-026 | complete    | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)   | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
+| ISSUE-027 | in progress | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -711,9 +712,26 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #53](https://github.com/AegisFintech/scalping-bot/issues/53),
   merged ISSUE-025 code, the ignored mode-`0600` demo environment, and both
   active database controls.
-- Current status: `.3` correctly rejected the later configuration change with
+- Current status: complete through
+  [PR #54](https://github.com/AegisFintech/scalping-bot/pull/54). `.3` correctly rejected the later configuration change with
   `STRATEGY_VERSION_IMMUTABILITY_VIOLATION`; no analysis or order ran. Candidate
-  identity `.4` is under review on `fix/issue-026-repeated-demo-identity`.
+  identity `.4` started under both database controls with cap 20 already
+  present, passed startup recovery, and was released only after the broker and
+  database scopes were certain and empty.
+
+### ISSUE-027 delivery details
+
+- Acceptance criteria: when risk-based volume exceeds the positive configured
+  notional cap, floor it to the largest broker volume step satisfying both
+  ceilings; never round up; recompute loss, margin, and notional; retain the
+  existing below-minimum risk rejection; reject a notional cap below broker
+  minimum; add observed-XAUUSD, boundary, and rejection tests; deploy stopped
+  under a new immutable identity.
+- Dependencies: [issue #55](https://github.com/AegisFintech/scalping-bot/issues/55),
+  current broker metadata, ISSUE-026 deployment, and both active database controls.
+- Current status: in progress on `fix/issue-027-notional-volume-cap` with
+  candidate identity `0.1.0-actionable-oco-auto-demo.5`. No configured risk,
+  notional, margin, spread, freshness, or reconciliation ceiling is increased.
 
 ## Acceptance criteria
 
@@ -780,7 +798,7 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 29 files, 138 tests passed.
+- [x] `npm test`: 29 files, 143 tests passed.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0010` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 12 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
