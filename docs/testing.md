@@ -74,3 +74,8 @@ history for long-window indicators and is not a trading-quality dataset.
 A configured Streamlit `AppTest` run completed without an exception and rendered
 four charts from current data; its visible error/warning elements were the
 expected demo emergency-stop and disabled-submission banners.
+
+After PR #9 merged, `scalper-dashboard` was restarted from `main`. The local
+Streamlit health endpoint returned `ok`; the configured AppTest again rendered
+four charts with zero exceptions. Execution status remained `demo` with startup
+checks passed, trading disabled, and emergency stop active.

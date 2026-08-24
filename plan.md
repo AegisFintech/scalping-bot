@@ -226,11 +226,13 @@ never justify empty, noisy, unsafe, or misleading commits.
   positive and rejection-path tests.
 - Dependencies: existing PostgreSQL tables/views, the pandas/Plotly/Streamlit
   lockfile, and the dashboard's loopback/read-only security boundary.
-- Current status: in progress now that ISSUE-012 has made the configured schema
-  and demo journal current. Pure chart builders, bounded account/symbol queries,
+- Current status: complete. Pure chart builders, bounded account/symbol queries,
   completed-candle enforcement, explicit empty/error states, and six positive/
-  rejection-path tests are implemented on `feat/issue-013-streamlit-charts` and
-  proposed in [PR #9](https://github.com/AegisFintech/scalping-bot/pull/9).
+  rejection-path tests were merged in
+  [PR #9](https://github.com/AegisFintech/scalping-bot/pull/9). The dashboard was
+  restarted from `main`; its health endpoint returned `ok`, and a configured
+  AppTest rendered four charts with no exception. Execution remained in demo
+  mode with submission disabled and emergency stop active throughout.
 
 ## Acceptance criteria
 
