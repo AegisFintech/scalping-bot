@@ -67,3 +67,9 @@ foreign keys without deleting rows. Rollback is intentionally manual: stop
 execution, verify that no `0006` evidence is required for reconciliation,
 restore the prior constraints/indexes, and remove added objects only after an
 operator-reviewed evidence-retention decision.
+
+Migration files are byte-immutable after application. The configured database
+was originally migrated with one trailing blank line in `0001` and `0002`; the
+repository preserves those exact recovered bytes and pins their SHA-256 values
+in migration tests. Operators must never rewrite a ledger checksum to bypass a
+mismatch.

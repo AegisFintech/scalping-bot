@@ -150,6 +150,8 @@ live implementation.
 | ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                    | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
 | ISSUE-010 | blocked     | Supervised live canary authorization                                                                                       | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
 | ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
+| ISSUE-012 | in progress | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)     | Exact historical bytes/checksums restored; apply `0006` stopped; verify journal and fail-closed runtime       |
+| ISSUE-013 | pending     | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                     | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -193,6 +195,32 @@ never justify empty, noisy, unsafe, or misleading commits.
   integration tests (including isolated-schema migration), npm audit, Ruff
   format/lint, mypy, 13 Python tests, pip-audit, replay, conservative backtest,
   secret scan, and `git diff --check` passed.
+
+### ISSUE-012 delivery details
+
+- Acceptance criteria: restore the exact historically applied bytes for
+  migrations `0001` and `0002` without changing SQL semantics, prove their
+  SHA-256 values match the configured migration ledger, keep unknown checksum
+  drift rejected, apply `0006` transactionally under emergency stop, and verify
+  a clean execution journal/recovery state without submitting an order.
+- Dependencies: [PR #4](https://github.com/AegisFintech/scalping-bot/pull/4),
+  recovered Git blobs, configured database access, and migration `0006` rollback
+  notes.
+- Current status: exact historical blobs were recovered from Git. Both files
+  differ from `main` only by one trailing blank line; their content hashes match
+  the database ledger. No checksum row has been or will be rewritten.
+
+### ISSUE-013 delivery details
+
+- Acceptance criteria: add bounded, mode-labelled, read-only Plotly charts for
+  completed candles/indicators, spread/depth freshness, daily risk/equity,
+  execution lifecycle, and rejection/health trends. Empty, stale, malformed, or
+  unavailable data must render an explicit safe state; transformations require
+  positive and rejection-path tests.
+- Dependencies: existing PostgreSQL tables/views, the pandas/Plotly/Streamlit
+  lockfile, and the dashboard's loopback/read-only security boundary.
+- Current status: pending ISSUE-012 so the configured schema and demo journal
+  are current before dashboard queries expand.
 
 ## Acceptance criteria
 
@@ -254,9 +282,9 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 25 files, 79 tests passed.
+- [x] `npm test`: 25 files, 80 tests passed.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-to-`0006` upgrade paths in isolated Neon schemas that were dropped afterward.
-- [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 2 static migration tests passed.
+- [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
 - [x] Ruff format/check, mypy, and pytest: 13 Python tests passed.
 - [x] Checked-in replay and conservative backtest CLI smoke commands completed successfully.

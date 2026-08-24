@@ -444,3 +444,4 @@ CREATE TABLE runtime_controls (
 CREATE UNIQUE INDEX one_active_runtime_control
   ON runtime_controls (control_key, scope)
   WHERE revoked_at IS NULL;
+
