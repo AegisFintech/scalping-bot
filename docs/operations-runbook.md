@@ -133,6 +133,34 @@ reconnects. In systemd this path belongs under `/var/lib/ctrader-ai-scalper`, no
 the repository. Refresh failure changes readiness to false. Never write tokens
 into repository files or logs.
 
+## Streamlit AI decision inspection
+
+1. Open **AI Analysis** and select the analysis timestamp/state within the
+   current mode/account-environment/symbol banner. Copy its `analysis_id` when
+   correlating another system.
+2. Read **Decision pipeline** from top to bottom. `NOT_REACHED` means no durable
+   evidence exists for that stage; it must never be interpreted as approval.
+3. In **AI output**, inspect the exact parsed and schema-validated model JSON.
+   This is the AI proposal only. The displayed local validation, deterministic
+   risk, and broker stages remain separate execution authorities.
+4. In **Input & analytics**, verify request/model/prompt/schema/strategy
+   versions, payload mode/hash, completed-candle coverage, indicator summary,
+   and initial/refreshed quote/depth evidence. Full candle arrays are available
+   through bounded Market charts and authorized PostgreSQL investigation, not
+   through a browser JSON dump.
+5. In **Risk & execution**, distinguish semantic rejection from deterministic
+   sizing, recorded order intent, broker order state, and normalized callback
+   mapping. An empty section explicitly says the stage was not reached.
+6. In **Audit log**, follow chronological authoritative PostgreSQL events and
+   their per-event Better Stack status. Search Live Tail using `event_id`,
+   `analysis_id`, `request_id`, or `order_group_id`; investigate any missing or
+   repeatedly retried mirror without modifying the PostgreSQL record.
+
+The inspector deliberately excludes raw provider response text, unbounded/full
+request and candle arrays, credentials, account IDs, and broker IDs. Use a
+reviewed read-only database role for deeper forensics; never broaden the
+dashboard query to expose secret-bearing configuration.
+
 ## Better Stack decision-trail monitoring
 
 1. Create a Logs source in Better Stack and place its HTTPS ingest URL and

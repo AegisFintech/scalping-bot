@@ -13,7 +13,8 @@ Date: 2026-08-24
   daily-risk lockout, OCO intents/orders, paper fills/positions/trades, audit
   events, health, and server metrics.
 - Streamlit operations dashboard with mode labeling, market/analysis/risk/order
-  views, system metrics, and token-protected loopback controls.
+  views, a correlated AI decision inspector, system metrics, and
+  token-protected loopback controls.
 - Paper, disabled-by-default cTrader demo, structurally non-submitting shadow,
   and dormant live-compatible interfaces. Production live composition uses
   `DisabledLiveGateway` and fails its startup readiness check.
@@ -460,6 +461,35 @@ typecheck/build, 123 Node tests, 10 schema tests, 3 migration tests, all 3
 configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
 tests, replay/backtest, both dependency audits, secret and shell checks, and all
 five offline systemd security parses at 2.8 (`OK`).
+
+## Correlated Streamlit decision inspector
+
+ISSUE-021 replaces the shallow AI-analysis row dump with a bounded read-only
+inspector scoped to the dashboard's current account environment and symbol.
+For a selected analysis it shows the pipeline state; completed-candle coverage;
+initial and refreshed quote/depth records; deterministic analytics; request,
+model, prompt, schema, strategy, payload mode, and immutable request hash; the
+exact parsed/schema-validated AI JSON; every semantic/risk result; order and
+cTrader callback state; and the chronological PostgreSQL audit trail with each
+Better Stack delivery checkpoint.
+
+The view does not change execution behavior or database contracts. Full candle
+arrays, returns/pivot arrays, the full request, raw provider response text,
+credentials, account IDs, and broker IDs are not rendered. Pure helpers retain
+decimal strings, summarize array counts/boundaries, recursively redact audit
+details, reject sensitive keys in model output, enforce display bounds, and
+label missing validation/risk/order stages `NOT_REACHED`. Configured Streamlit
+AppTest rendered both a complete model `NO_TRADE` path and a pre-model spread
+rejection with zero exceptions; the latter explicitly showed AI, risk, and
+order stages as not reached.
+
+The complete checkpoint passed Prettier, ESLint, TypeScript typecheck/build,
+123 Node tests across 28 files, 10 schema tests, 3 migration tests, all 3
+configured PostgreSQL integration tests, Ruff format/lint, strict mypy across
+analytics and dashboard code, 37 Python tests, replay/backtest smoke tests,
+npm/pip dependency audits, secret scanning, shell syntax, and all five offline
+systemd security parses at 2.8 (`OK`). No analysis cycle or broker command was
+run.
 
 ## Shadow-mode setup
 

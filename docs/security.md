@@ -25,6 +25,15 @@ and analysis/request/group correlation remains visible. Treat Better Stack
 access and retention as sensitive operational metadata even though credentials
 are excluded.
 
+The Streamlit decision inspector displays the complete parsed model object only
+after defensive size, shape, depth, and sensitive-key checks. It never renders
+raw provider text or the full persisted model request. Model-input and analytics
+candle/return/pivot arrays are reduced to bounded counts and boundary samples;
+the exact redacted request remains identifiable by its SHA-256 hash. Audit
+details are independently bounded and recursively redacted. Any malformed,
+oversized, or sensitive parsed model document is rejected from display rather
+than partially trusted.
+
 ## Supply chain
 
 Pin direct/transitive dependencies in lockfiles, use deterministic installs, run
