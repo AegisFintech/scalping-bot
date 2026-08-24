@@ -43,7 +43,11 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
   share a row or daily-risk baseline with cTrader demo/live identities.
 - One-time late demo baseline initialization inserts `daily_risk_state` and its
   audit event in the same serializable transaction and refuses replacement.
-- Snapshot raw rows and analysis linkage commit together before analytics/model work.
+- Initial candle/depth rows and analysis linkage commit together before
+  analytics/model work. A post-model refresh may append a second depth snapshot
+  and atomically move only the analysis depth pointer; the immutable initial
+  candles remain the model context and must compare exactly with the refreshed
+  completed-candle context.
 - Accepted validation and risk decisions commit before order intent.
 - OCO group plus both client order intents/idempotency keys commit before gateway calls.
 - Each broker callback is inserted/deduplicated and its state transition commits atomically.

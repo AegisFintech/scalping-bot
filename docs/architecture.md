@@ -60,6 +60,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 ### Execution service
 
 - Owns cycle eligibility, deterministic risk, gateway selection, OCO state, expiry, cancellation, and reconciliation.
+- After model inference, reacquires the full market snapshot. The completed
+  candle context and execution metadata must still exactly match the model
+  input; otherwise the cycle rejects. The refreshed quote and depth are
+  persisted and drive final spread, semantic, risk, and placement-freshness
+  checks.
 - Writes intent and idempotency state transactionally before broker calls.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or

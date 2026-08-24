@@ -40,12 +40,17 @@ the temporary fail-closed daily-risk reason.
 7. Query bounded session/setup statistics and calculate deterministic confidence adjustment.
 8. Build a full or compact, size-bounded, versioned model request.
 9. Call the AI endpoint with timeout/retries/circuit breaker.
-10. Size-limit, parse, JSON-Schema validate, and semantically validate the output.
-11. Run deterministic spread, stop, precision, daily loss, volume, margin, exposure, and duplicate checks.
-12. Persist the entire decision trail and outcome transactionally.
-13. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
+10. Size-limit, parse, and JSON-Schema validate the output.
+11. Reacquire completed candles, metadata, quote, and depth. Reject if the
+    completed-candle context or execution metadata changed during inference, or
+    if broker time regressed; persist the refreshed quote/depth evidence.
+12. Re-run spread protection, then semantically validate and run deterministic
+    stop, precision, daily loss, volume, margin, exposure, freshness, and
+    duplicate checks against the refreshed execution state.
+13. Persist the entire decision trail and outcome transactionally.
+14. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
     submit; shadow cannot; live is deliberately unwired in this release.
-14. Record each before/after transition and reconcile external state.
+15. Record each before/after transition and reconcile external state.
 
 Each newly inserted `audit_events` row creates one outbox row in the same
 database transaction. The execution service later sends a bounded redacted

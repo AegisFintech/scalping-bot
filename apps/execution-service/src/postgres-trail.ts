@@ -135,7 +135,6 @@ export class PostgresDecisionTrail implements DecisionTrail {
 
   async market(analysisId: string, snapshot: MarketSnapshot): Promise<void> {
     const candleSnapshotId = randomUUID();
-    const orderBookId = randomUUID();
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
@@ -175,86 +174,11 @@ export class PostgresDecisionTrail implements DecisionTrail {
           );
         }
       }
-      const bid = snapshot.orderBook.bids[0]?.price ?? null;
-      const ask = snapshot.orderBook.asks[0]?.price ?? null;
-      const spread =
-        bid === null || ask === null
-          ? null
-          : canonical(new Decimal(ask).minus(bid));
-      const weightedMid =
-        bid === null || ask === null
-          ? null
-          : canonical(new Decimal(bid).plus(ask).div(2));
-      const bestBidSize = snapshot.orderBook.bids[0]?.size;
-      const bestAskSize = snapshot.orderBook.asks[0]?.size;
-      const topSize =
-        bestBidSize === undefined || bestAskSize === undefined
-          ? new Decimal(0)
-          : new Decimal(bestBidSize).plus(bestAskSize);
-      const microprice =
-        bid === null ||
-        ask === null ||
-        bestBidSize === undefined ||
-        bestAskSize === undefined ||
-        topSize.eq(0)
-          ? null
-          : canonical(
-              new Decimal(ask)
-                .mul(bestBidSize)
-                .plus(new Decimal(bid).mul(bestAskSize))
-                .div(topSize),
-            );
-      const age =
-        Date.parse(snapshot.serverTime) -
-        Date.parse(snapshot.orderBook.sourceTime);
-      await client.query(
-        `INSERT INTO order_book_snapshots
-          (id, account_id, symbol_id, candle_snapshot_id, source_time, received_at, age_ms,
-           bid, ask, spread, weighted_mid, microprice, imbalance_top5, imbalance_top10,
-           imbalance_top20, complete, discontinuity, reconnect_sequence, aggregates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                 $15, $16, $17, $18, $19::jsonb)`,
-        [
-          orderBookId,
-          this.#options.accountId,
-          this.#options.symbolId,
-          candleSnapshotId,
-          snapshot.orderBook.sourceTime,
-          snapshot.orderBook.receivedAt,
-          Math.max(0, age),
-          bid,
-          ask,
-          spread,
-          weightedMid,
-          microprice,
-          depthImbalance(snapshot, 5),
-          depthImbalance(snapshot, 10),
-          depthImbalance(snapshot, 20),
-          snapshot.orderBook.complete,
-          snapshot.orderBook.discontinuity,
-          snapshot.orderBook.reconnectSequence,
-          safeJson({ windows: snapshot.orderBook.aggregates }),
-        ],
+      const orderBookId = await this.#persistOrderBook(
+        client,
+        candleSnapshotId,
+        snapshot,
       );
-      for (const [side, levels] of [
-        ["BID", snapshot.orderBook.bids],
-        ["ASK", snapshot.orderBook.asks],
-      ] as const) {
-        for (const [index, level] of levels.entries()) {
-          await client.query(
-            `INSERT INTO order_book_levels (id, snapshot_id, side, level_index, price, size)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-              randomUUID(),
-              orderBookId,
-              side,
-              index + 1,
-              level.price,
-              level.size,
-            ],
-          );
-        }
-      }
       await client.query(
         `UPDATE analysis_runs
          SET candle_snapshot_id = $2, order_book_snapshot_id = $3, analysis_time = $4, updated_at = now()
@@ -288,6 +212,69 @@ export class PostgresDecisionTrail implements DecisionTrail {
           series.candles.every((candle) => candle.complete),
         ),
         order_book: {
+          bid_levels: snapshot.orderBook.bids.length,
+          ask_levels: snapshot.orderBook.asks.length,
+          complete: snapshot.orderBook.complete,
+          discontinuity: snapshot.orderBook.discontinuity,
+          reconnect_sequence: snapshot.orderBook.reconnectSequence,
+        },
+      },
+    );
+  }
+
+  async decisionMarket(
+    analysisId: string,
+    snapshot: MarketSnapshot,
+  ): Promise<void> {
+    const client = await this.#options.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const analysis = await client.query<{
+        candle_snapshot_id: string | null;
+      }>(
+        `SELECT candle_snapshot_id FROM analysis_runs WHERE id = $1 FOR UPDATE`,
+        [analysisId],
+      );
+      const candleSnapshotId = analysis.rows[0]?.candle_snapshot_id;
+      if (candleSnapshotId === null || candleSnapshotId === undefined) {
+        throw new Error("TRAIL_CANDLE_SNAPSHOT_MISSING");
+      }
+      const orderBookId = await this.#persistOrderBook(
+        client,
+        candleSnapshotId,
+        snapshot,
+      );
+      await client.query(
+        `UPDATE analysis_runs
+         SET order_book_snapshot_id = $2, updated_at = now()
+         WHERE id = $1`,
+        [analysisId, orderBookId],
+      );
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+    await this.#audit(
+      analysisId,
+      "decision_market_refreshed",
+      "accepted",
+      null,
+      {
+        server_time: snapshot.serverTime,
+        captured_at: snapshot.capturedAt,
+        observed_skew_ms: snapshot.observedSkewMs,
+        quote: {
+          source_time: snapshot.quote.sourceTime,
+          received_at: snapshot.quote.receivedAt,
+          bid: snapshot.quote.bid,
+          ask: snapshot.quote.ask,
+        },
+        order_book: {
+          source_time: snapshot.orderBook.sourceTime,
+          received_at: snapshot.orderBook.receivedAt,
           bid_levels: snapshot.orderBook.bids.length,
           ask_levels: snapshot.orderBook.asks.length,
           complete: snapshot.orderBook.complete,
@@ -870,6 +857,88 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
       }
     }
+  }
+
+  async #persistOrderBook(
+    client: pg.PoolClient,
+    candleSnapshotId: string,
+    snapshot: MarketSnapshot,
+  ): Promise<string> {
+    const orderBookId = randomUUID();
+    const bid = snapshot.orderBook.bids[0]?.price ?? null;
+    const ask = snapshot.orderBook.asks[0]?.price ?? null;
+    const spread =
+      bid === null || ask === null
+        ? null
+        : canonical(new Decimal(ask).minus(bid));
+    const weightedMid =
+      bid === null || ask === null
+        ? null
+        : canonical(new Decimal(bid).plus(ask).div(2));
+    const bestBidSize = snapshot.orderBook.bids[0]?.size;
+    const bestAskSize = snapshot.orderBook.asks[0]?.size;
+    const topSize =
+      bestBidSize === undefined || bestAskSize === undefined
+        ? new Decimal(0)
+        : new Decimal(bestBidSize).plus(bestAskSize);
+    const microprice =
+      bid === null ||
+      ask === null ||
+      bestBidSize === undefined ||
+      bestAskSize === undefined ||
+      topSize.eq(0)
+        ? null
+        : canonical(
+            new Decimal(ask)
+              .mul(bestBidSize)
+              .plus(new Decimal(bid).mul(bestAskSize))
+              .div(topSize),
+          );
+    const age =
+      Date.parse(snapshot.serverTime) -
+      Date.parse(snapshot.orderBook.sourceTime);
+    await client.query(
+      `INSERT INTO order_book_snapshots
+        (id, account_id, symbol_id, candle_snapshot_id, source_time, received_at, age_ms,
+         bid, ask, spread, weighted_mid, microprice, imbalance_top5, imbalance_top10,
+         imbalance_top20, complete, discontinuity, reconnect_sequence, aggregates)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+               $15, $16, $17, $18, $19::jsonb)`,
+      [
+        orderBookId,
+        this.#options.accountId,
+        this.#options.symbolId,
+        candleSnapshotId,
+        snapshot.orderBook.sourceTime,
+        snapshot.orderBook.receivedAt,
+        Math.max(0, age),
+        bid,
+        ask,
+        spread,
+        weightedMid,
+        microprice,
+        depthImbalance(snapshot, 5),
+        depthImbalance(snapshot, 10),
+        depthImbalance(snapshot, 20),
+        snapshot.orderBook.complete,
+        snapshot.orderBook.discontinuity,
+        snapshot.orderBook.reconnectSequence,
+        safeJson({ windows: snapshot.orderBook.aggregates }),
+      ],
+    );
+    for (const [side, levels] of [
+      ["BID", snapshot.orderBook.bids],
+      ["ASK", snapshot.orderBook.asks],
+    ] as const) {
+      for (const [index, level] of levels.entries()) {
+        await client.query(
+          `INSERT INTO order_book_levels (id, snapshot_id, side, level_index, price, size)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [randomUUID(), orderBookId, side, index + 1, level.price, level.size],
+        );
+      }
+    }
+    return orderBookId;
   }
 
   async #audit(

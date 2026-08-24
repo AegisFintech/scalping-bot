@@ -29,7 +29,7 @@ The repository was initially empty. The implementation added:
 - runtime applications under `apps/`;
 - shared TypeScript packages under `packages/`;
 - Python analytics/replay/backtest modules under `python/`;
-- seven ordered SQL migrations under `migrations/`;
+- eight ordered SQL migrations under `migrations/`;
 - strict model schema and prompt under `schemas/` and `prompts/`;
 - operational documentation under `docs/`;
 - Debian scripts/units under `scripts/` and `systemd/`;
@@ -58,15 +58,15 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 27 files, 103 tests passed.
+- Node unit: 28 files, 114 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
-  (3 tests total), including fresh migration and `0005`-through-`0007` upgrade paths.
+  (3 tests total), including fresh migration and `0005`-through-`0008` upgrade paths.
   The temporary schemas were dropped afterward.
 - JSON Schema: 10 tests passed, plus a real configured-endpoint structured-output
   probe that returned a locally validated, identity-matched `NO_TRADE`.
 - Migration structure/safety: 3 tests passed, including pinned historical
-  `0001`/`0002` byte checksums; migrations through `0007` passed isolated
-  fresh/upgrade testing. The configured Neon schema is at `0007`; the stopped
+  `0001`/`0002` byte checksums; migrations through `0008` passed isolated
+  fresh/upgrade testing. The configured Neon schema is at `0008`; the stopped
   migration/restart check found an empty journal/order/position/fill
   state and certain startup recovery. Backup/restore remains pending.
 - Ruff format/lint, strict mypy across analytics/dashboard, and Python: 30 tests passed.
@@ -349,6 +349,29 @@ configured AppTest rendered seven charts plus the Better Stack delivery section
 with zero exceptions. Demo submission and automatic analysis stayed disabled,
 all execution-state counts remained zero, and no analysis cycle or broker
 command was run.
+
+## Decision-time market refresh
+
+A subsequent bounded manual demo cycle completed model inference after the
+three-second quote freshness window. Analysis
+`70e71671-6052-4ad4-b497-255eb13cb5d8` was correctly rejected for
+`MODEL_DATA_QUALITY_REJECTED` and `QUOTE_STALE`; the model itself returned
+`NO_TRADE` with session-gap, multi-timeframe conflict, low-ADX, elevated-M15-
+volatility, and insufficient-sample warnings. It produced no risk decision,
+intent, order group, order, fill, or broker command. The acknowledgement was
+consumed and cleared, cleanup reconciled, Better Stack delivery completed, and
+demo/automatic analysis were disabled under both restored stops.
+
+ISSUE-019 keeps the strict freshness limit and instead reacquires a complete
+market snapshot immediately after model persistence. A changed candle context,
+changed execution metadata, failed refresh, or regressed broker time rejects
+the cycle. The refreshed quote and order book are appended to PostgreSQL and
+become the sole inputs to final spread, semantic, risk, and placement-freshness
+checks; the original persisted candles remain the immutable model context. The
+new immutable release identity is `0.1.0-decision-refresh.1` so deployment does
+not rewrite prior code/config provenance. This enables another supervised demo
+attempt after a fresh exact acknowledgement; it does not authorize scheduling
+or guarantee that market/model/risk conditions will produce an order.
 
 ## Shadow-mode setup
 

@@ -34,6 +34,13 @@ historical audit backfill. The configured PostgreSQL integration verifies that
 post-migration audit inserts enqueue exactly once and that the same event ID
 survives a retry.
 
+Decision-time market refresh tests simulate model latency and prove that a new
+snapshot is required before semantic or execution checks. They cover refresh
+failure, regressed broker time, changed completed candles, changed
+execution metadata, a stale refreshed quote, a widened final spread, refreshed
+risk input, stale refreshed depth, and PostgreSQL persistence that retains the
+original candle context while advancing the analysis depth pointer.
+
 ## Historical limitations
 
 Candles do not reconstruct tick paths. Same-bar ordering is unknowable without tick data. Historical depth may be unavailable and synthetic depth is not equivalent. Simulated fills differ from broker fills; spread, latency, rejection, slippage, commission, swap, and liquidity need conservative modeling. Model/prompt/schema/feature changes create distinct experiment versions. Leakage/look-ahead tests are mandatory. Historical performance does not guarantee profit.
@@ -69,9 +76,9 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 105 Node unit
-tests across 28 files, 10 schema tests, 3 static migration tests, Ruff, strict mypy across the
-analytics and dashboard code, 30 Python tests,
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 114 Node unit
+tests across 28 files, 10 schema tests, 3 static migration tests, Ruff, strict
+mypy across the analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-through-`0008` upgrade tests
 passed. TLS connectivity and all eight migrations passed inside isolated Neon
@@ -220,3 +227,12 @@ TypeScript typecheck/build, 103 Node tests, 10 schema tests, 3 migration tests,
 all 3 configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
 tests, replay/backtest smoke tests, both dependency audits, secret and shell
 checks, and all five offline systemd security parses at 2.8 (`OK`).
+
+ISSUE-019's decision-time refresh checkpoint passed formatting, ESLint,
+TypeScript typecheck/build, 114 Node tests across 28 files, 10 schema tests, 3
+migration tests, all 3 configured integration tests, Ruff format/lint, mypy, 30
+Python tests, replay/backtest smoke tests, npm/pip dependency audits, secret and
+shell checks, and all five offline systemd security parses at 2.8 (`OK`). The
+PostgreSQL test verified that refreshed depth is appended and linked while the
+original model candle snapshot remains unchanged. No credentialed cycle or
+broker command was run for this checkpoint.
