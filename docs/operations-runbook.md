@@ -47,6 +47,15 @@ maps by broker order ID and that readiness clears after terminal evidence. If
 readiness stays uncertain, keep both stops active and investigate the retained
 journal; do not restart merely to erase a reason or edit journal rows.
 
+Search Better Stack for `event_name=demo_execution_callback_failed`. Its
+`reason_code`, `stage`, execution/order enum values, and field-presence booleans
+are deliberately sufficient to classify the adapter boundary but never include
+the raw callback, label, client/broker IDs, account identity, or database error
+text. An unrecognized exception is reduced to
+`DEMO_EXECUTION_NORMALIZATION_FAILED` or
+`DEMO_EXECUTION_PERSISTENCE_FAILED`. Keep both controls active until a bounded
+tested adapter correction has reconciled the retained broker/local state.
+
 For the first supervised session, keep `AUTOMATIC_ANALYSIS_ENABLED=false`, set
 `MAX_ORDERS_PER_DAY=1`, and configure a broker-reviewed positive
 `MAX_POSITION_NOTIONAL` that permits no more than the intended minimum-volume

@@ -396,11 +396,27 @@ async function main(): Promise<void> {
           symbolId: identity.symbolId,
         })
       : null;
+  let latestDemoExecutionReasonCodes: readonly string[] = [];
   const demoExecutionRecorder =
     demoExecutionStore === null
       ? null
       : new DurableDemoExecutionRecorder(demoExecutionStore, {
           symbolId: executionSymbolId,
+          onFailure: (failure) => {
+            logger.log("error", {
+              event_name: "demo_execution_callback_failed",
+              outcome: "blocked",
+              reason_code: failure.reasonCode,
+              stage: failure.stage,
+              execution_type: failure.executionType,
+              order_status: failure.orderStatus,
+              has_order: failure.hasOrder,
+              has_position: failure.hasPosition,
+              has_deal: failure.hasDeal,
+              has_client_order_id: failure.hasClientOrderId,
+              has_order_label: failure.hasOrderLabel,
+            });
+          },
         });
   const unsubscribeDemoExecutions =
     brokerClient === null || demoExecutionRecorder === null
@@ -587,6 +603,7 @@ async function main(): Promise<void> {
       demoExecutionRecorder === null
         ? { certain: true, reasonCodes: [] as readonly string[] }
         : await demoExecutionRecorder.flush();
+    latestDemoExecutionReasonCodes = demoExecutionState.reasonCodes;
     let reconciliationPersisted = true;
     try {
       await trail.reconciliation(external);
@@ -835,7 +852,13 @@ async function main(): Promise<void> {
               : ["DEMO_ACKNOWLEDGEMENT_INVALID"]),
           ]
         : [];
-    lastSafetyReasons = [...eligibility.reasonCodes, ...modeReasons].sort();
+    lastSafetyReasons = [
+      ...new Set([
+        ...eligibility.reasonCodes,
+        ...modeReasons,
+        ...latestDemoExecutionReasonCodes,
+      ]),
+    ].sort();
     return {
       mode: config.tradingMode,
       symbol: config.symbol,

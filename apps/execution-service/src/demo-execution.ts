@@ -79,6 +79,19 @@ export interface DemoExecutionStore {
 export interface DemoExecutionNormalizerOptions {
   readonly symbolId: string;
   readonly strategyLabelPrefix?: string;
+  readonly onFailure?: (failure: DemoExecutionFailureSummary) => void;
+}
+
+export interface DemoExecutionFailureSummary {
+  readonly reasonCode: string;
+  readonly stage: "NORMALIZE" | "PERSIST" | "READINESS";
+  readonly executionType: number | null;
+  readonly orderStatus: number | null;
+  readonly hasOrder: boolean;
+  readonly hasPosition: boolean;
+  readonly hasDeal: boolean;
+  readonly hasClientOrderId: boolean;
+  readonly hasOrderLabel: boolean;
 }
 
 function isoTimestamp(value: number, reason: string): string {
@@ -325,6 +338,49 @@ function hash(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+function safeIntegerField(
+  object: Record<string, unknown> | null,
+  key: string,
+): number | null {
+  if (object === null) return null;
+  const value = object[key];
+  if (typeof value === "number" && Number.isSafeInteger(value)) return value;
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    const parsed = Number(value);
+    if (Number.isSafeInteger(parsed)) return parsed;
+  }
+  return null;
+}
+
+function hasNonEmptyString(
+  object: Record<string, unknown> | null,
+  key: string,
+): boolean {
+  return (
+    object !== null && typeof object[key] === "string" && object[key] !== ""
+  );
+}
+
+function hasOrderLabel(order: Record<string, unknown> | null): boolean {
+  if (order === null) return false;
+  const data = order.tradeData;
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    !Array.isArray(data) &&
+    hasNonEmptyString(data as Record<string, unknown>, "label")
+  );
+}
+
+function failureReason(error: unknown, fallback: string): string {
+  if (!(error instanceof Error)) return fallback;
+  return /^(?:CTRADER|DEMO)_[A-Z0-9_]+(?::[A-Za-z][A-Za-z0-9_]*)?$/.test(
+    error.message,
+  )
+    ? error.message
+    : fallback;
+}
+
 export function normalizeDemoExecution(
   execution: BrokerExecution,
   options: DemoExecutionNormalizerOptions,
@@ -470,20 +526,67 @@ export class DurableDemoExecutionRecorder {
     this.#pending.push(execution);
   }
 
+  #recordFailure(
+    reasonCode: string,
+    stage: DemoExecutionFailureSummary["stage"],
+    execution: BrokerExecution | null,
+  ): void {
+    const added = !this.#reasonCodes.has(reasonCode);
+    this.#reasonCodes.add(reasonCode);
+    if (!added || this.#options.onFailure === undefined) return;
+    try {
+      this.#options.onFailure({
+        reasonCode,
+        stage,
+        executionType:
+          execution !== null && Number.isSafeInteger(execution.executionType)
+            ? execution.executionType
+            : null,
+        orderStatus: safeIntegerField(execution?.order ?? null, "orderStatus"),
+        hasOrder: execution?.order !== null && execution?.order !== undefined,
+        hasPosition:
+          execution?.position !== null && execution?.position !== undefined,
+        hasDeal: execution?.deal !== null && execution?.deal !== undefined,
+        hasClientOrderId: hasNonEmptyString(
+          execution?.order ?? null,
+          "clientOrderId",
+        ),
+        hasOrderLabel: hasOrderLabel(execution?.order ?? null),
+      });
+    } catch {
+      // Diagnostic delivery cannot change the fail-closed recorder outcome.
+    }
+  }
+
   async #drain(): Promise<void> {
     while (this.#pending.length > 0) {
       const execution = this.#pending.shift()!;
+      let normalized: DemoExecutionEvent | null;
       try {
-        const normalized = normalizeDemoExecution(execution, this.#options);
-        if (normalized === null) continue;
-        const result = await this.#store.persist(normalized);
-        if (!result.certain && result.reasonCodes.length === 0)
-          this.#reasonCodes.add("DEMO_EXECUTION_PERSISTENCE_UNCERTAIN");
+        normalized = normalizeDemoExecution(execution, this.#options);
       } catch (error) {
-        this.#reasonCodes.add(
-          error instanceof Error
-            ? error.message
-            : "DEMO_EXECUTION_PERSISTENCE_FAILED",
+        this.#recordFailure(
+          failureReason(error, "DEMO_EXECUTION_NORMALIZATION_FAILED"),
+          "NORMALIZE",
+          execution,
+        );
+        continue;
+      }
+      if (normalized === null) continue;
+      try {
+        const result = await this.#store.persist(normalized);
+        if (!result.certain && result.reasonCodes.length === 0) {
+          this.#recordFailure(
+            "DEMO_EXECUTION_PERSISTENCE_UNCERTAIN",
+            "PERSIST",
+            execution,
+          );
+        }
+      } catch (error) {
+        this.#recordFailure(
+          failureReason(error, "DEMO_EXECUTION_PERSISTENCE_FAILED"),
+          "PERSIST",
+          execution,
         );
       }
     }
@@ -500,7 +603,7 @@ export class DurableDemoExecutionRecorder {
     try {
       persisted = await this.#store.readiness();
     } catch {
-      this.#reasonCodes.add("DEMO_EXECUTION_READINESS_FAILED");
+      this.#recordFailure("DEMO_EXECUTION_READINESS_FAILED", "READINESS", null);
       persisted = { certain: false, reasonCodes: [] };
     }
     const reasonCodes = new Set([

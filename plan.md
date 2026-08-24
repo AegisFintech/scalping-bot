@@ -172,6 +172,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-026 | complete    | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)   | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
 | ISSUE-027 | complete    | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
 | ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)     | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
+| ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -766,6 +767,34 @@ never justify empty, noisy, unsafe, or misleading commits.
   replay/backtest smoke tests, npm/pip audits with zero known vulnerabilities,
   secret and shell checks, and all five offline systemd security parses at 2.8
   (`OK`).
+
+### ISSUE-029 delivery details
+
+- Acceptance criteria: expose a stable sanitized recorder reason, processing
+  stage, execution type/status, and field-presence booleans in operational logs
+  and status without retaining raw callbacks or identifiers; identify and
+  normalize the observed strategy-owned broker callback without weakening
+  ownership, symbol, state, or reconciliation validation; persist/deduplicate
+  accepted callbacks; retain malformed/ambiguous evidence as fail-closed; and
+  prove terminal expiry releases readiness plus a later automatic broker-minute
+  claim under the same PID.
+- Dependencies: [issue #59](https://github.com/AegisFintech/scalping-bot/issues/59),
+  ISSUE-028's `.6` broker evidence, active database controls, and a new
+  immutable release identity for every protected configuration change.
+- Current status: `.6` automatically placed broker-accepted demo OCO group
+  `639eefab-6bba-4316-abfa-03595dbb984f` at 10:48:36 UTC. Both pending legs and
+  the accepted analysis expired terminally at 10:49 UTC, but PID `2470326`
+  retained `OPERATIONAL_RISK_LOCKOUT` and `RECONCILIATION_UNCERTAIN` with zero
+  broker journal rows/unresolved rows and only 2 of 20 daily groups. This proves
+  a pre-persistence callback exception remains. Both database controls were
+  reactivated. Candidate `.7` emits only sanitized structural failure evidence;
+  it does not clear or bypass the failure and issue #59 remains open until the
+  observed shape is fixed and repeated successfully. The observation release
+  passes Prettier, ESLint, TypeScript typecheck/build, 148 Node tests across 29
+  files, 12 schema tests, 3 migration tests, all 3 configured
+  isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19 source files,
+  43 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
+  audits, secret/shell checks, and five offline systemd parses at 2.8 (`OK`).
 
 ## Acceptance criteria
 
