@@ -256,6 +256,31 @@ never justify empty, noisy, unsafe, or misleading commits.
   integration, schema/migration, 30-Python-test, replay/backtest, dependency,
   secret, shell, and offline-systemd gate suite. Evidence is recorded in
   [PR #38](https://github.com/AegisFintech/scalping-bot/pull/38).
+  The operator then explicitly scoped one exact acknowledgement as continuing
+  authorization for bounded broker-demo attempts during the current demo-
+  readiness campaign; it does not authorize real-money live trading or
+  unattended automatic analysis. Three further supervised windows retained
+  the one-group/notional caps and mandatory stop/cancel/reconciliation. Analyses
+  `6310314b-6a5f-41b1-9585-6517cd7ca92e` and
+  `f9fbb9b4-3835-40d7-ad07-796d43a6dfa6` each completed a model request but
+  crossed a completed M1 rollover, so the immutable decision-context check
+  rejected `DECISION_CANDLE_CONTEXT_CHANGED` before risk intent or placement.
+  A third attempt was timed inside one completed-candle window: analysis
+  `09b34e95-0900-4273-8acf-8d370e2a073c` accepted strict analytics, both spread
+  checks, and the refreshed market context. The model returned `NO_TRADE` with
+  unacceptable data quality because M1 direction conflicted with M5/M15, trend
+  strength/volume were low, session gaps were present, and no validated edge
+  existed. Semantic validation rejected `MODEL_DATA_QUALITY_REJECTED`; no risk
+  decision, order group, broker command, fill, position, or unresolved event
+  was created. Each cleanup was certain and restored both emergency stops plus
+  disabled demo/automatic scheduling. Automatic analysis remains off until a
+  supervised broker order lifecycle passes without weakening market or model
+  validation. The evidence checkpoint passed Prettier, ESLint, TypeScript
+  typecheck/build, 123 Node tests, 10 schema tests, 3 migration tests, all 3
+  configured PostgreSQL integration tests, Ruff format/lint, mypy, 30 Python
+  tests, replay/backtest, both dependency audits, secret and shell checks, and
+  all five offline systemd security parses at 2.8 (`OK`). Evidence is tracked
+  in [PR #39](https://github.com/AegisFintech/scalping-bot/pull/39).
 
 ### ISSUE-002 delivery details
 
@@ -585,7 +610,7 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 28 files, 105 tests passed.
+- [x] `npm test`: 28 files, 123 tests passed.
 - [x] `npm run test:integration`: 3 passed, including fresh and `0005`-through-`0008` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 3 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.

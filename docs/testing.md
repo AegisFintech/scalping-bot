@@ -275,3 +275,38 @@ broker command. The stop trap, cancellation/reconciliation, environment reset,
 zero execution-state checks, and all six first-attempt Better Stack deliveries
 passed. The complete required Node/Python/integration/schema/migration,
 replay/backtest, dependency, secret, shell, and systemd gate suite also passed.
+
+The operator subsequently granted continuing authorization for bounded demo-
+only attempts in the current supervised readiness campaign. It did not enable
+automatic analysis or real-money live execution. A stopped preflight accepted
+600/500/300 completed candles, four levels per depth side, strict analytics,
+zero daily loss, current caps, empty durable execution state, and an 8-point
+spread at percentile `56.8181818181`. Analyses
+`6310314b-6a5f-41b1-9585-6517cd7ca92e` and
+`f9fbb9b4-3835-40d7-ad07-796d43a6dfa6` began at UTC second 41/42 and completed
+after the next minute boundary. Both model calls completed, then immutable
+post-model validation correctly rejected `DECISION_CANDLE_CONTEXT_CHANGED`;
+neither reached risk intent or placement.
+
+A third attempt used a fresh eligible snapshot at UTC second 05: 5 spread
+points, percentile `28.6764705882`, accepted analytics, complete depth, and no
+durable broker state. Analysis `09b34e95-0900-4273-8acf-8d370e2a073c` stayed
+inside that candle window, accepted the refreshed decision market and both
+spread checks, then rejected semantically with `MODEL_DATA_QUALITY_REJECTED`.
+The completed model response was `NO_TRADE`; its bounded warnings reported
+multi-timeframe conflict, low M1 volume, and session gaps, while risk flags
+reported low trend strength and no validated edge. The result contained zero
+risk decisions, groups, orders, fills, active positions, or unresolved broker
+events. Every window ended with the database stop, strategy-owned cancellation,
+certain reconciliation, disabled demo submission, disabled automation, and the
+environment stop restored.
+
+The continuing-session evidence checkpoint passed Prettier, ESLint, TypeScript
+typecheck/build, 123 Node tests across 28 files, 10 schema tests, 3 migration
+tests, all 3 configured PostgreSQL integration tests, Ruff format/lint, mypy,
+30 Python tests, replay/backtest smoke tests, npm/pip audits, secret scanning,
+shell syntax, and all five offline systemd security parses at 2.8 (`OK`). The
+first integration invocation reported its two database cases as skipped because
+`TEST_DATABASE_URL` was absent from that process; the required configured rerun
+explicitly used the protected database URL and passed all 3 tests in isolated
+schemas.
