@@ -769,6 +769,32 @@ source files, 43 Python tests, replay/backtest smoke tests, npm/pip audits with
 zero known vulnerabilities, secret/shell checks, and all five offline systemd
 security parses at 2.8 (`OK`).
 
+Deployed `.8` PID `2473046` received a real HTTP 503 at 11:10:38 UTC. It stayed
+blocked for the configured interval, half-opened automatically at 11:15:37, and
+claimed broker minute 11:16 without restart. That probe received another 503,
+reopened, and again half-opened at 11:21:43. Broker minute 11:22 then completed
+the AI/risk path and automatically placed OCO group
+`cb2eb248-34ce-4af8-8116-fb6650883bcc`, proving repeated caller recovery.
+
+The `.7` diagnostic boundary identified the remaining callback failure without
+raw payloads: execution type 2 (`ORDER_ACCEPTED`), order status 1 (pending),
+order/client ID/strategy label present, position present, and no deal, with
+`CTRADER_FIELD_INVALID:price`. Official cTrader fields permit `position.price`
+to be absent. Because pending acceptance has no deal and does not establish a
+position, ISSUE-029's `.9` candidate validates ownership/symbol and persists the
+accepted order while ignoring only that acceptance-time position placeholder.
+Fill and partial-fill events continue to require authoritative deal evidence
+and a priced position. The pending `.8` OCO was cancelled through the audited
+emergency control; both orders, group, and analysis became terminal before code
+changes began.
+
+The complete `.9` suite passes Prettier, ESLint, TypeScript typecheck/build, 156
+Node tests across 29 files, 12 JSON Schema tests, 3 static migration tests, all
+3 configured isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19
+source files, 43 Python tests, replay/backtest smoke tests, npm/pip audits with
+zero known vulnerabilities, secret/shell checks, and all five offline systemd
+security parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

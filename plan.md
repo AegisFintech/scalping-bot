@@ -173,7 +173,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-027 | complete    | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
 | ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)     | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
 | ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
-| ISSUE-030 | in progress | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
+| ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -796,6 +796,17 @@ never justify empty, noisy, unsafe, or misleading commits.
   isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19 source files,
   43 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
   audits, secret/shell checks, and five offline systemd parses at 2.8 (`OK`).
+  Deployed `.8` later captured the exact failure as a sanitized
+  `ORDER_ACCEPTED`/pending event with an order, client ID, label, and an attached
+  position but no deal; normalization failed only because that acceptance-time
+  position placeholder omitted optional `price`. Candidate `.9` ignores the
+  placeholder only for non-deal ORDER_ACCEPTED while continuing to require a
+  priced position for fill and partial-fill executions. Its complete suite
+  passes Prettier, ESLint, TypeScript typecheck/build, 156 Node tests across 29
+  files, 12 schema tests, 3 migration tests, all 3 configured
+  isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19 source files,
+  43 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
+  audits, secret/shell checks, and five offline systemd parses at 2.8 (`OK`).
 
 ### ISSUE-030 delivery details
 
@@ -808,18 +819,18 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #61](https://github.com/AegisFintech/scalping-bot/issues/61),
   the existing provider-side 300-second breaker, ISSUE-024 broker-minute claims,
   `.7` observation deployment, and active database controls.
-- Current status: `.7` broker minute 11:01 UTC received
-  `AI_ORCHESTRATOR_HTTP_ERROR:503`. The execution HTTP client set a permanent
-  boolean while its safety gate prevented the later request needed to clear it,
-  proving a restart-only deadlock. Both database controls were reactivated with
-  an empty terminal scope. Candidate `.8` uses the unchanged configured reset
-  duration and a clock-controlled half-open boundary; it does not bypass the
-  provider breaker or change same-interval retry behavior. The complete suite
-  passes Prettier, ESLint, TypeScript typecheck/build, 154 Node tests across 29
-  files, 12 schema tests, 3 migration tests, all 3 configured
+- Current status: complete through
+  [PR #62](https://github.com/AegisFintech/scalping-bot/pull/62). `.7` broker
+  minute 11:01 UTC exposed the restart-only boolean deadlock. `.8` passed the
+  complete suite: Prettier, ESLint, TypeScript typecheck/build, 154 Node tests
+  across 29 files, 12 schema tests, 3 migration tests, all 3 configured
   isolated-PostgreSQL tests, Ruff format/lint, strict mypy over 19 source files,
   43 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
   audits, secret/shell checks, and five offline systemd parses at 2.8 (`OK`).
+  Deployed PID `2473046` received a real 503 at 11:10:38 UTC, remained blocked
+  through the configured cooldown, half-opened automatically at 11:15:37, and
+  claimed broker minute 11:16 without restart. A second 503 reopened it, and it
+  again half-opened at 11:21:43 before broker minute 11:22 placed an OCO.
 
 ## Acceptance criteria
 

@@ -389,6 +389,11 @@ reason and structural booleans; a free-form persistence exception must collapse
 to a stable generic reason. Assertions explicitly forbid the fixture's client
 identifier, strategy label, malformed value, and database error text in the
 diagnostic summary.
+The credentialed `.8` callback showed `ORDER_ACCEPTED`, pending order, order
+identity/label present, position present, no deal, and
+`CTRADER_FIELD_INVALID:price`. Positive unit and configured PostgreSQL tests now
+map that exact unpriced acceptance placeholder without creating a position;
+the paired rejection test proves a fill still requires a priced position.
 
 ISSUE-030 adds deterministic-clock tests for the execution caller circuit. They
 assert no HTTP request occurs before the reset boundary, an exact-boundary

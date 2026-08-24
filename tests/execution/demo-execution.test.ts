@@ -65,6 +65,43 @@ describe("cTrader demo execution normalization", () => {
     });
   });
 
+  it("ignores an unpriced position placeholder on pending order acceptance", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const position = {
+      positionId: "801",
+      positionStatus: 1,
+      tradeData: {
+        symbolId: "7",
+        volume: "0",
+        tradeSide: 1,
+        label: "ctrader-ai-scalper:0.1.0",
+      },
+    };
+
+    const event = normalizeDemoExecution(
+      { ...raw, position },
+      { symbolId: "7" },
+    );
+
+    expect(event).toMatchObject({
+      executionType: 2,
+      brokerOrderId: "501",
+      brokerPositionId: null,
+      position: null,
+      order: { state: "PENDING" },
+    });
+  });
+
+  it("still requires a priced position on a fill execution", async () => {
+    const raw = await fixture("demo-order-filled-v1.json");
+    const position = structuredClone(raw.position) as Record<string, unknown>;
+    delete position.price;
+
+    expect(() =>
+      normalizeDemoExecution({ ...raw, position }, { symbolId: "7" }),
+    ).toThrow("CTRADER_FIELD_INVALID:price");
+  });
+
   it("normalizes a partial fill with broker-native volume and scaled commission", async () => {
     const raw = await fixture("demo-order-partial-fill-v1.json");
     const event = normalizeDemoExecution(raw, { symbolId: "7" });

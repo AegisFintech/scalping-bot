@@ -47,6 +47,12 @@ maps by broker order ID and that readiness clears after terminal evidence. If
 readiness stays uncertain, keep both stops active and investigate the retained
 journal; do not restart merely to erase a reason or edit journal rows.
 
+The observed demo server also attaches a position placeholder without `price`
+to pending `ORDER_ACCEPTED` events. This is not a fill: it has no deal and must
+not create a local position. The order acceptance is still journaled and mapped.
+An unpriced position on `ORDER_FILLED` or `ORDER_PARTIAL_FILL` remains invalid
+and blocking.
+
 Search Better Stack for `event_name=demo_execution_callback_failed`. Its
 `reason_code`, `stage`, execution/order enum values, and field-presence booleans
 are deliberately sufficient to classify the adapter boundary but never include
