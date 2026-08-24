@@ -646,6 +646,32 @@ PostgreSQL integration tests, Ruff, strict mypy, 43 Python tests,
 replay/backtest, npm/pip dependency audits, secret and shell checks, and all five
 offline systemd security parses at 2.8 (`OK`).
 
+PR #54 preserved `.3` and deployed `.4` with the intended daily cap present
+before the first execution startup. Startup recovery passed under the database
+pause and emergency stop; active groups, orders, positions, and unresolved
+broker events were all zero. The deployed Streamlit AppTest rendered the new
+automatic-cycle and terminal-trade sections with zero exceptions. After release,
+broker minutes 10:16 through 10:21 UTC repeated without operator action. They
+terminated on spread, minimum-risk volume, stale quote, moved-entry semantics,
+or notional volume as recorded in PostgreSQL; no order was submitted.
+
+## Downward notional volume normalization
+
+The 10:21 cycle showed both legs had loss-budget-valid raw volume but exceeded
+the configured per-position notional if submitted at that size. ISSUE-027 floors
+the positive notional ceiling to broker-native volume steps and takes the lower
+of risk-normalized, notional-normalized, and broker-maximum volume. It then
+recomputes maximum loss, margin, and final notional. A cap below broker minimum
+still rejects, as does raw risk volume below broker minimum. This cannot increase
+volume or any configured ceiling. Immutable candidate identity
+`0.1.0-actionable-oco-auto-demo.5` protects the behavior.
+
+The complete pre-merge gate passed format/lint/typecheck/build, 143 Node tests
+across 29 files, 12 schema tests, 3 migration tests, all 3 configured PostgreSQL
+integration tests, Ruff, strict mypy, 43 Python tests, replay/backtest, npm/pip
+dependency audits, secret/shell checks, and all five offline systemd security
+parses at 2.8 (`OK`).
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

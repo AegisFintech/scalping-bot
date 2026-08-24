@@ -368,3 +368,9 @@ journaled conflicting-outcome rejection, missing-detail and partial-close
 rejection reasons, immediate terminal analysis release, and sanitized Streamlit
 display preserving decimal strings. Malformed or sensitive display data is
 rejected.
+
+ISSUE-027 adds risk-engine cases for downward notional normalization, exact
+minimum-volume notional boundary, a cap below broker minimum, the observed demo
+XAUUSD metadata/price/volume scale, and preservation of the below-minimum loss
+budget rejection. The approved paths assert the final volume and maximum loss;
+the implementation never rounds volume upward.

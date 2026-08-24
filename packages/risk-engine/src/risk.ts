@@ -100,10 +100,25 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
     const rawVolume = riskBudget.div(lossPerVolume);
     if (rawVolume.lt(minVolume)) return reject("RISK_VOLUME_BELOW_MIN");
     const steps = rawVolume.minus(minVolume).div(volumeStep).floor();
-    const normalized = Decimal.min(
+    let normalized = Decimal.min(
       minVolume.plus(steps.mul(volumeStep)),
       maxVolume,
     );
+    if (input.maxPositionNotional !== null) {
+      const maxNotional = decimal(input.maxPositionNotional);
+      const rawNotionalVolume = maxNotional.div(entry.mul(volumeScale));
+      if (rawNotionalVolume.lt(minVolume))
+        return reject("RISK_NOTIONAL_EXCEEDED");
+      const notionalSteps = rawNotionalVolume
+        .minus(minVolume)
+        .div(volumeStep)
+        .floor();
+      const notionalVolume = Decimal.min(
+        minVolume.plus(notionalSteps.mul(volumeStep)),
+        maxVolume,
+      );
+      normalized = Decimal.min(normalized, notionalVolume);
+    }
     if (normalized.gt(rawVolume) || normalized.lt(minVolume))
       return reject("RISK_VOLUME_NORMALIZATION_INVALID");
     const maximumLoss = normalized.mul(lossPerVolume);
@@ -118,11 +133,14 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
       totalMargin.div(equity).mul(100).gt(decimal(input.maxMarginUsagePercent))
     )
       return reject("RISK_MARGIN_USAGE_EXCEEDED");
-    if (input.maxPositionNotional !== null) {
-      const notional = entry.mul(normalized).mul(volumeScale);
-      if (notional.gt(decimal(input.maxPositionNotional)))
-        return reject("RISK_NOTIONAL_EXCEEDED");
-    }
+    if (
+      input.maxPositionNotional !== null &&
+      entry
+        .mul(normalized)
+        .mul(volumeScale)
+        .gt(decimal(input.maxPositionNotional))
+    )
+      return reject("RISK_NOTIONAL_EXCEEDED");
     return {
       approved: true,
       reasonCodes: [],

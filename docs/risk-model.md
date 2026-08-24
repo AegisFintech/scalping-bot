@@ -29,10 +29,18 @@ risk_budget = max(0, account_equity * risk_fraction)
 stop_ticks = abs(entry - stop_loss) / tick_size
 loss_per_volume_unit = stop_ticks * tick_value_per_volume_unit
 raw_volume = risk_budget / loss_per_volume_unit
-normalized_volume = floor((raw_volume - min_volume) / volume_step) * volume_step + min_volume
+risk_normalized_volume = floor((raw_volume - min_volume) / volume_step) * volume_step + min_volume
+notional_raw_volume = max_position_notional / (entry_price * broker_volume_scale)
+notional_normalized_volume = floor((notional_raw_volume - min_volume) / volume_step) * volume_step + min_volume
+normalized_volume = min(risk_normalized_volume, notional_normalized_volume, max_volume)
 ```
 
-The result is rejected if metadata is missing/non-positive, raw volume is below the minimum, normalized volume exceeds raw volume/risk budget/maximum volume, or broker units are unclear. Normalize down only. Recalculate realized maximum loss after normalization and reject any ceiling breach.
+The notional branch is used only when a positive cap is configured. The result
+is rejected if metadata is missing/non-positive, raw risk volume is below the
+minimum, the notional cap cannot support the minimum, normalized volume exceeds
+raw volume/risk budget/maximum/notional volume, or broker units are unclear.
+Normalize down only. Recalculate realized maximum loss, margin, and notional
+after normalization and reject any ceiling breach.
 
 Tick value currency conversion and contract semantics must come from current
 broker metadata/account currency. The adapter currently supports a matching
@@ -57,7 +65,8 @@ units must not be treated as whole lots.
 ## Account and exposure checks
 
 Reject when equity is missing/below floor; margin data is stale; estimated margin
-exceeds available margin or configured usage; notional exceeds cap;
+exceeds available margin or configured usage; the notional cap cannot support
+broker minimum volume or remains exceeded after downward normalization;
 symbol/account currency conversion is unknown; open/pending counts exceed
 limits; or any relevant state is uncertain. The configured setup risk is split
 across the two OCO legs. Their normalized maximum losses are then added and must
