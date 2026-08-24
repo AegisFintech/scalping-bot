@@ -74,11 +74,10 @@ tests across 28 files, 10 schema tests, 3 static migration tests, Ruff, strict m
 analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
 Node/Python integration plus fresh-schema and `0005`-through-`0008` upgrade tests
-passed. TLS connectivity and all seven migrations passed inside isolated Neon
-schemas, which the tests dropped afterward; migrations `0001` through `0007`
-are applied to the configured Neon schema under both emergency stops. Migration
-`0008` passed isolated fresh/upgrade tests and awaits the stopped post-merge
-deployment. The post-migration demo
+passed. TLS connectivity and all eight migrations passed inside isolated Neon
+schemas, which the tests dropped afterward; migrations `0001` through `0008`
+are applied to the configured Neon schema under both emergency stops. The
+post-migration demo
 restart reported certain startup recovery with no journal exceptions or local
 execution state. The host used Node 24.18.0; the supported Node 22
 deployment baseline and installed systemd paths still require a Debian release
@@ -97,6 +96,16 @@ history for long-window indicators and is not a trading-quality dataset.
 A configured Streamlit `AppTest` run completed without an exception and rendered
 four charts from current data; its visible error/warning elements were the
 expected demo emergency-stop and disabled-submission banners.
+
+After PR #30 merged, migration `0008` was applied and the execution/dashboard
+processes restarted while demo submission and automatic analysis were disabled
+under both emergency stops. The startup reconciliation audit event was retried
+once after a rejected HTTPS attempt, then reached `DELIVERED` on attempt two
+with no remaining backlog. A configured Streamlit AppTest rendered seven charts
+and the Better Stack delivery section with zero exceptions. Execution remained
+ready but unable to trade, and broker execution events, order groups, orders,
+active positions, and fills remained zero. No analysis cycle or broker command
+was run.
 
 After PR #9 merged, `scalper-dashboard` was restarted from `main`. The local
 Streamlit health endpoint returned `ok`; the configured AppTest again rendered
