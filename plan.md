@@ -459,6 +459,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   two rejected Better Stack attempts to `DELIVERED` on attempt three with zero
   backlog. No cycle or broker command was invoked after deployment. Another
   order-capable supervised cycle still requires a fresh exact acknowledgement.
+  Deployment evidence is recorded in
+  [PR #34](https://github.com/AegisFintech/scalping-bot/pull/34).
 
 ## Acceptance criteria
 
