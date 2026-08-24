@@ -549,7 +549,11 @@ the database or contact cTrader. Configured Streamlit AppTest rendered 11
 historical runs, prompt history, exact prompt/input controls, and zero
 exceptions. A follow-up display-only correction explicitly labels the selected
 schema 1.0 self-veto as historical instead of calling it a current two-leg
-proposal.
+proposal. That correction merged in PR #45 as `1fec8fe`; only the dashboard was
+reloaded. Final health checks passed, configured AppTest showed the historical
+notice, prompt/input controls, 11 history options, and zero exceptions, and the
+execution service remained stopped with no order, fill, active-position, or
+broker execution-event state.
 
 ## Shadow-mode setup
 
