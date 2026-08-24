@@ -39,7 +39,9 @@ the temporary fail-closed daily-risk reason.
 6. Call the typed analytics API; persist features and data-quality findings.
 7. Query bounded session/setup statistics and calculate deterministic confidence adjustment.
 8. Build a full or compact, size-bounded, versioned model request.
-9. Call the AI endpoint with timeout/retries/circuit breaker.
+9. Call the AI endpoint with per-attempt timeout/retries/circuit breaker. The
+   execution-to-orchestrator deadline covers every configured attempt plus
+   bounded grace; invalid or timer-overflowing budgets reject startup.
 10. Size-limit, parse, and JSON-Schema validate the output.
 11. Reacquire completed candles, metadata, quote, and depth. Reject if the
     completed-candle context or execution metadata changed during inference, or

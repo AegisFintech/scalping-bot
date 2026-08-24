@@ -7,7 +7,10 @@ import { pathToFileURL } from "node:url";
 import { Decimal } from "decimal.js";
 
 import { AnalyticsHttpClient } from "../../../packages/analytics-client/src/client.js";
-import { AiOrchestratorHttpClient } from "../../../packages/ai-client/src/http-client.js";
+import {
+  AiOrchestratorHttpClient,
+  aiOrchestratorRequestTimeoutMs,
+} from "../../../packages/ai-client/src/http-client.js";
 import type {
   AccountAdapter,
   AccountState,
@@ -336,12 +339,17 @@ async function main(): Promise<void> {
       `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
     timeoutMs: 15_000,
   });
+  const aiProviderTimeoutMs = integer(environment, "AI_TIMEOUT_MS", 30_000);
+  const aiMaxRetries = integer(environment, "AI_MAX_RETRIES", 2);
   const model = new AiOrchestratorHttpClient({
     baseUrl:
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-1.0.json"),
-    timeoutMs: integer(environment, "AI_TIMEOUT_MS", 30_000) + 5_000,
+    timeoutMs: aiOrchestratorRequestTimeoutMs({
+      providerTimeoutMs: aiProviderTimeoutMs,
+      maxRetries: aiMaxRetries,
+    }),
   });
   const risk = new OcoRiskEvaluator({
     marginEstimator: margin,

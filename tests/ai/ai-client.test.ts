@@ -3,6 +3,10 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { OpenAiCompatibleClient } from "../../packages/ai-client/src/client.js";
+import {
+  AiOrchestratorHttpClient,
+  aiOrchestratorRequestTimeoutMs,
+} from "../../packages/ai-client/src/http-client.js";
 
 const analysisId = "22222222-2222-4222-8222-222222222222";
 
@@ -121,5 +125,81 @@ describe("OpenAI-compatible client", () => {
     await expect(
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
     ).rejects.toThrow("AI_CIRCUIT_OPEN");
+  });
+});
+
+describe("AI orchestrator HTTP client", () => {
+  it("budgets the complete configured provider retry window", () => {
+    expect(
+      aiOrchestratorRequestTimeoutMs({
+        providerTimeoutMs: 30_000,
+        maxRetries: 2,
+      }),
+    ).toBe(95_000);
+    expect(
+      aiOrchestratorRequestTimeoutMs({
+        providerTimeoutMs: 30_000,
+        maxRetries: 0,
+        graceMs: 1_000,
+      }),
+    ).toBe(31_000);
+  });
+
+  it.each([
+    { providerTimeoutMs: 0, maxRetries: 0 },
+    { providerTimeoutMs: 1.5, maxRetries: 0 },
+    { providerTimeoutMs: 30_000, maxRetries: -1 },
+    { providerTimeoutMs: 30_000, maxRetries: 0.5 },
+    { providerTimeoutMs: 1_000_000_000, maxRetries: 2 },
+  ])("rejects an unsafe timeout budget: %j", (input) => {
+    expect(() => aiOrchestratorRequestTimeoutMs(input)).toThrow(
+      "AI_TIMEOUT_BUDGET_INVALID",
+    );
+  });
+
+  it("normalizes a local orchestrator timeout and opens the circuit", async () => {
+    const timeout = new Error("The operation was aborted due to timeout");
+    timeout.name = "TimeoutError";
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-1.0.json"),
+      fetchImpl: vi.fn(() => Promise.reject(timeout)),
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_TIMEOUT");
+    expect(client.circuitOpen).toBe(true);
+  });
+
+  it("accepts a completed locally validated orchestrator response", async () => {
+    const rawResponse = JSON.stringify(validResponse());
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-1.0.json"),
+      fetchImpl: vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ rawResponse }), { status: 200 }),
+        ),
+      ),
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).resolves.toEqual({ response: validResponse(), rawResponse });
+    expect(client.circuitOpen).toBe(false);
+  });
+
+  it("normalizes another local transport failure", async () => {
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-1.0.json"),
+      fetchImpl: vi.fn(() => Promise.reject(new TypeError("fetch failed"))),
+    });
+
+    await expect(
+      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
+    ).rejects.toThrow("AI_ORCHESTRATOR_UNAVAILABLE");
+    expect(client.circuitOpen).toBe(true);
   });
 });

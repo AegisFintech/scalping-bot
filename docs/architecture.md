@@ -51,7 +51,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 ### AI orchestrator
 
 - Builds full/compact payloads, applies token/size bounds, and records prompt/model/schema versions.
-- Calls a configurable Responses- or Chat-Completions-compatible endpoint with timeouts/retries/circuit breaker.
+- Calls a configurable Responses- or Chat-Completions-compatible endpoint with
+  per-attempt timeouts/retries/circuit breaker. The execution caller derives its
+  local HTTP deadline from the complete configured retry budget plus bounded
+  response-processing grace, so it cannot abandon a legitimate in-process
+  retry early.
 - Requests JSON Schema output when supported and validates the response schema
   locally. The execution coordinator independently performs semantic and risk
   validation.
@@ -65,6 +69,9 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   input; otherwise the cycle rejects. The refreshed quote and depth are
   persisted and drive final spread, semantic, risk, and placement-freshness
   checks.
+- Rejects invalid/overflowing AI timeout budgets at startup. A local AI timeout
+  or transport loss becomes a stable reason code and opens the execution-side
+  circuit; it cannot create a model row, risk intent, or order command.
 - Writes intent and idempotency state transactionally before broker calls.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or

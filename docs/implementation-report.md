@@ -58,7 +58,7 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 28 files, 114 tests passed.
+- Node unit: 28 files, 123 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
   (3 tests total), including fresh migration and `0005`-through-`0008` upgrade paths.
   The temporary schemas were dropped afterward.
@@ -384,6 +384,29 @@ positions, fills, and unresolved broker events remain zero. The startup audit
 was rejected twice by Better Stack, then the bounded outbox retry delivered it
 on attempt three and returned backlog to zero. No cycle or broker command was
 run after deployment.
+
+## AI timeout-budget coordination
+
+A fresh acknowledgement opened one bounded manual demo window only after the
+stopped preflight accepted complete 600/500/300 candles, continuous depth,
+strict analytics, a 9-point spread at percentile `63.5514018691`, current risk
+and caps, and empty execution state. Analysis
+`672f21d7-d7dd-462b-8ec0-9854602dd4a1` reached `MODEL_PENDING` and then failed
+closed because execution's 35-second local HTTP deadline expired while the AI
+orchestrator was configured to permit up to three 30-second provider attempts.
+The mandatory stop trap fired, strategy cancellation/reconciliation was
+certain, and demo enablement/acknowledgement were cleared under both restored
+stops. No model row, risk decision, intent, order, fill, active position, or
+unresolved broker event exists; all eight analysis audit events were delivered
+to Better Stack.
+
+ISSUE-020 derives the local deadline from the full retry budget plus five
+seconds of bounded grace, rejects invalid or platform-unsafe timer budgets at
+startup, and maps timeout/abort and other transport failures to stable
+`AI_ORCHESTRATOR_TIMEOUT`/`AI_ORCHESTRATOR_UNAVAILABLE` codes while opening the
+caller circuit. The new immutable release identity is
+`0.1.0-ai-timeout-budget.1`. This corrects coordination; it does not extend any
+market freshness limit or authorize another demo window.
 
 ## Shadow-mode setup
 

@@ -158,6 +158,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
 | ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
 | ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
+| ISSUE-020 | in progress | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -461,6 +462,39 @@ never justify empty, noisy, unsafe, or misleading commits.
   order-capable supervised cycle still requires a fresh exact acknowledgement.
   Deployment evidence is recorded in
   [PR #34](https://github.com/AegisFintech/scalping-bot/pull/34).
+
+### ISSUE-020 delivery details
+
+- Acceptance criteria: derive the execution-to-orchestrator HTTP timeout from
+  all configured provider attempts plus bounded grace; reject nonpositive,
+  fractional, unsafe, or timer-overflowing budgets at startup; normalize local
+  timeout/transport failures to stable reason codes and open the caller circuit;
+  and prove positive, timeout, failure, and invalid-budget paths without
+  weakening market refresh, risk, reconciliation, audit, or idempotency gates.
+- Dependencies: [issue #35](https://github.com/AegisFintech/scalping-bot/issues/35),
+  the provider client's per-attempt timeout/retry policy, the local typed HTTP
+  boundary, and immutable release provenance.
+- Current status: a fresh exact acknowledgement authorized one capped manual
+  window after a stopped preflight accepted complete 600/500/300 candles,
+  continuous depth, analytics, a 9-point spread at percentile
+  `63.5514018691`, configured caps, daily risk, and empty durable execution
+  state. Analysis `672f21d7-d7dd-462b-8ec0-9854602dd4a1` then rejected in
+  `MODEL_PENDING` because execution allowed only 35 seconds while the local AI
+  service was configured for as many as three 30-second provider attempts. The
+  database stop trap fired, cancellation/reconciliation was certain, the
+  acknowledgement and enablement were cleared, and both stops were restored.
+  The analysis retained its snapshot, analytics, validation, and transitions;
+  model requests, risk decisions, groups, orders, fills, active positions, and
+  unresolved events remained zero, while all eight correlated audit events
+  reached Better Stack. The full retry budget, startup bounds, stable transport
+  reasons, and circuit behavior are implemented under immutable identity
+  `0.1.0-ai-timeout-budget.1`. Formatting, ESLint, TypeScript typecheck/build,
+  123 Node tests, 10 schema tests, 3 migration tests, all 3 configured
+  integration tests, Ruff format/lint, mypy, 30 Python tests, replay/backtest,
+  both dependency audits, secret and shell checks, and all five offline systemd
+  security parses at 2.8 (`OK`) pass. Review, merge, and stopped deployment
+  remain pending in
+  [PR #36](https://github.com/AegisFintech/scalping-bot/pull/36).
 
 ## Acceptance criteria
 

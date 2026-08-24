@@ -24,8 +24,8 @@ function service(name, overrides = {}) {
     env: {
       NODE_ENV: "production",
       APP_ENV: "production",
-      STRATEGY_VERSION: "0.1.0-decision-refresh.1",
-      CODE_VERSION: "0.1.0-decision-refresh.1",
+      STRATEGY_VERSION: "0.1.0-ai-timeout-budget.1",
+      CODE_VERSION: "0.1.0-ai-timeout-budget.1",
     },
     ...overrides,
   };

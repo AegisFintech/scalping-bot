@@ -111,6 +111,11 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
 - **cTrader disconnect:** stop scheduling; retain/mark stale data; reconnect with bounded jitter; refresh token if appropriate; reconcile before ready.
 - **stale market/depth:** reject cycle; cancel context-dependent strategy pending orders if policy permits; verify subscription, clock, and reconnect flags.
 - **invalid AI burst:** open circuit breaker; preserve redacted samples/hashes; verify model/prompt/schema/provider; do not loosen validation.
+- **AI orchestrator timeout:** treat `AI_ORCHESTRATOR_TIMEOUT` as a hard stop.
+  Verify provider latency and configured `AI_TIMEOUT_MS`/`AI_MAX_RETRIES`; the
+  local caller must budget all attempts and must not be shortened below the
+  derived total. Restart only after confirming no in-flight request and keeping
+  trading stopped.
 - **reconciliation failure:** block account/symbol; query broker state; resolve labels/idempotency; never resubmit an uncertain command.
 - **daily loss lockout:** cancel pending strategy orders; monitor/document existing positions under approved policy; reset only next configured day after reconciliation.
 - **database failure:** block new order commands; keep broker reconciliation attempts and buffered local critical logs; recover DB and reconcile.

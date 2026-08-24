@@ -76,7 +76,7 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 114 Node unit
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 123 Node unit
 tests across 28 files, 10 schema tests, 3 static migration tests, Ruff, strict
 mypy across the analytics and dashboard code, 30 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
@@ -236,6 +236,18 @@ shell checks, and all five offline systemd security parses at 2.8 (`OK`). The
 PostgreSQL test verified that refreshed depth is appended and linked while the
 original model candle snapshot remains unchanged. No credentialed cycle or
 broker command was run for this checkpoint.
+
+AI timeout-budget tests cover the configured three-attempt total, zero-retry
+mode, nonpositive/fractional/overflowing budgets, a valid locally revalidated
+response, normalized timeout and transport failures, and execution-side circuit
+opening. The supervised failure that motivated them persisted no model request,
+risk decision, intent, order, fill, position, or unresolved broker event.
+
+ISSUE-020's complete checkpoint passed formatting, ESLint, TypeScript
+typecheck/build, 123 Node tests across 28 files, 10 schema tests, 3 migration
+tests, all 3 configured integration tests, Ruff format/lint, mypy, 30 Python
+tests, replay/backtest smoke tests, npm/pip dependency audits, secret and shell
+checks, and all five offline systemd security parses at 2.8 (`OK`).
 
 PR #33 merged as `21312cb`. The merged execution build started under immutable
 strategy/code identity `0.1.0-decision-refresh.1` with demo and automatic
