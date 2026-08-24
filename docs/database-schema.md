@@ -52,6 +52,12 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 - Accepted validation and risk decisions commit before order intent.
 - OCO group plus both client order intents/idempotency keys commit before gateway calls.
 - Each broker callback is inserted/deduplicated and its state transition commits atomically.
+- Placement callbacks drain only after returned broker order IDs commit. If a
+  strategy-labelled callback omits its client order ID, the committed broker ID
+  is the fallback key; absence or ambiguity of both keys remains blocking.
+- Demo callback readiness is the current set of journal rows that are unmapped,
+  conflicting, or contain unresolved reasons. Resolved partial-fill evidence is
+  retained for audit but no longer blocks after the final fill commits.
 - A supported fully closed demo position, its terminal state, signed broker
   money outcome, and one immutable `trades` row commit in the same transaction.
   A conflicting second outcome is journaled as `CONFLICT` and cannot overwrite it.

@@ -213,6 +213,7 @@ export interface CoordinatorOptions {
   readonly gateway: ExecutionGateway;
   readonly trail: DecisionTrail;
   readonly safety: () => Promise<SafetyGateInput>;
+  readonly flushExecutionEvents?: () => Promise<void>;
   readonly performance: (
     analytics: AnalyticsResponse,
   ) => Promise<Readonly<Record<string, unknown>>>;
@@ -621,6 +622,7 @@ export class AnalysisCoordinator {
       await this.#options.trail.intent(analysisId, risk);
       const placement = await this.#options.gateway.placeOco(risk.commands);
       await this.#options.trail.placement(analysisId, placement);
+      await this.#options.flushExecutionEvents?.();
       await this.#recordTransition(analysisId, machine, "ACCEPTED");
       return { analysisId, outcome: "PLACED", reasonCodes: [], placement };
     } catch (error) {

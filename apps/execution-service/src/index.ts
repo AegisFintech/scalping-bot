@@ -810,6 +810,13 @@ async function main(): Promise<void> {
     gateway,
     trail,
     safety,
+    ...(demoExecutionRecorder === null
+      ? {}
+      : {
+          flushExecutionEvents: async () => {
+            await demoExecutionRecorder.flush();
+          },
+        }),
     performance: (analyticsResponse) =>
       performanceContext.build(analyticsResponse),
   });

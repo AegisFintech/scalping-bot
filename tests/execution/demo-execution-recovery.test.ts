@@ -79,6 +79,10 @@ class RecoveryStore implements DemoExecutionStore {
     this.events.push(event);
     return Promise.resolve({ certain: true, reasonCodes: [] });
   }
+
+  readiness(): Promise<{ certain: boolean; reasonCodes: readonly string[] }> {
+    return Promise.resolve({ certain: true, reasonCodes: [] });
+  }
 }
 
 describe("cTrader demo execution restart recovery", () => {

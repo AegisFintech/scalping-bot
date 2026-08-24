@@ -374,3 +374,11 @@ minimum-volume notional boundary, a cap below broker minimum, the observed demo
 XAUUSD metadata/price/volume scale, and preservation of the below-minimum loss
 budget rejection. The approved paths assert the final volume and maximum loss;
 the implementation never rounds volume upward.
+
+ISSUE-028 adds coordinator ordering coverage proving broker callbacks flush only
+after placement persistence, normalization coverage for strategy-labelled
+acceptances without a client order ID, recorder coverage proving enqueue does
+not race persistence, and durable readiness coverage proving a resolved partial
+fill clears without restart. Configured PostgreSQL coverage additionally proves
+broker-ID-only matching, duplicate-event idempotency, unresolved blocking,
+final-fill resolution, and conflicting-outcome blocking.

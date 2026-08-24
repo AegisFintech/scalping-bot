@@ -791,11 +791,16 @@ describe("PostgreSQL migrations integration", () => {
         accountId: demoAccountId,
         symbolId,
       });
-      const accepted = normalizeDemoExecution(
-        await eventFixture("demo-order-accepted-v1.json"),
-        { symbolId: "7" },
+      await isolated.query(
+        `UPDATE orders SET broker_order_id = '501'
+         WHERE account_id = $1 AND client_order_id = $2`,
+        [demoAccountId, "cas-buy-111111111111111111111111"],
       );
+      const acceptedRaw = await eventFixture("demo-order-accepted-v1.json");
+      delete (acceptedRaw.order as Record<string, unknown>).clientOrderId;
+      const accepted = normalizeDemoExecution(acceptedRaw, { symbolId: "7" });
       expect(accepted).not.toBeNull();
+      expect(accepted?.clientOrderId).toBeNull();
       await expect(
         Promise.all([store.persist(accepted!), store.persist(accepted!)]),
       ).resolves.toEqual([
@@ -807,6 +812,10 @@ describe("PostgreSQL migrations integration", () => {
         [demoAccountId],
       );
       expect(acceptedRows.rows[0]?.count).toBe("1");
+      await expect(store.readiness()).resolves.toEqual({
+        certain: true,
+        reasonCodes: [],
+      });
 
       const partial = normalizeDemoExecution(
         await eventFixture("demo-order-partial-fill-v1.json"),
@@ -839,6 +848,10 @@ describe("PostgreSQL migrations integration", () => {
         group_state: "RECONCILIATION_REQUIRED",
         fills: "1",
         positions: "1",
+      });
+      await expect(store.readiness()).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED"],
       });
 
       const filled = normalizeDemoExecution(
@@ -875,6 +888,10 @@ describe("PostgreSQL migrations integration", () => {
         group_state: "CANCELLING_PEER",
         fills: "2",
         unresolved_partials: "0",
+      });
+      await expect(store.readiness()).resolves.toEqual({
+        certain: true,
+        reasonCodes: [],
       });
       await expect(store.persist(partial!)).resolves.toEqual({
         certain: true,
@@ -961,6 +978,10 @@ describe("PostgreSQL migrations integration", () => {
       expect(conflictingOutcome.rows[0]).toEqual({
         mapping_state: "CONFLICT",
         reason_codes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+      await expect(restartedStore.readiness()).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
       });
 
       await isolated.query(

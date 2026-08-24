@@ -39,6 +39,14 @@ missing local intent, missing full-close detail, partial/multiple close, or
 conflicting trade outcome requires emergency stop plus operator reconciliation.
 Never delete journal rows to clear readiness.
 
+During OCO submission, cTrader may deliver an acceptance callback before the
+placement request returns and may omit the client order ID. The execution
+service queues that callback, commits both returned broker order IDs with the
+local intents, and only then drains the callback journal. Confirm the callback
+maps by broker order ID and that readiness clears after terminal evidence. If
+readiness stays uncertain, keep both stops active and investigate the retained
+journal; do not restart merely to erase a reason or edit journal rows.
+
 For the first supervised session, keep `AUTOMATIC_ANALYSIS_ENABLED=false`, set
 `MAX_ORDERS_PER_DAY=1`, and configure a broker-reviewed positive
 `MAX_POSITION_NOTIONAL` that permits no more than the intended minimum-volume
