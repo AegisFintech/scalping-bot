@@ -31,6 +31,17 @@ Run formatting, linting, TypeScript type checks, Node tests, Python formatting/l
 
 ## GitHub delivery discipline
 
+- After every completed user-requested repository update that changes tracked
+  files, inspect the diff and staged diff, run the secret scan and applicable
+  quality gates, create a coherent commit on the issue branch, and push it
+  before handoff. This applies to documentation-only updates too; a successful
+  handoff must not leave the completed update only in the working tree or in an
+  unpushed local commit.
+- If authentication, authorization, network availability, branch protection,
+  or another remote failure prevents the required commit or push, preserve the
+  local work, do not claim successful delivery, and report the exact blocker
+  and required operator action. Never bypass review or expose credentials to
+  satisfy this rule.
 - Represent planned development as bounded issues in `plan.md` with an identifier,
   acceptance criteria, dependencies, and current status. Add the GitHub issue or
   pull-request link after it exists remotely.
@@ -40,10 +51,12 @@ Run formatting, linting, TypeScript type checks, Node tests, Python formatting/l
 - Commit coherent, reviewable checkpoints that build or document an intentional
   state. Do not commit every shell command, broken intermediate state, generated
   runtime data, or trivial changes solely to inflate contribution activity.
-- Push after meaningful checkpoints and before handoff. Merge only after the
-  issue acceptance criteria and applicable quality gates pass. Automatic merge
-  is permitted only when explicitly authorized, branch protection permits it,
-  and all required checks/reviews are successful.
+- Push after meaningful checkpoints and before handoff. After each successful
+  push, open or update the issue pull request and enable automatic merge. The
+  operator has explicitly authorized automatic merge for qualifying updates in
+  this repository. Merge only after the issue acceptance criteria, applicable
+  quality gates, branch protection, and all required checks/reviews pass; never
+  bypass a protection or failed check.
 - Never place a PAT in a remote URL, command argument, issue, pull request, log,
   or tracked file. Keep a rotated least-privilege token only in the ignored,
   mode-`0600` local environment or an approved credential store.
