@@ -321,3 +321,9 @@ Streamlit AppTest rendered both a completed model `NO_TRADE` decision and a
 pre-model spread rejection without exceptions; the rejected path showed AI,
 risk, and order stages as `NOT_REACHED`. No analysis cycle or broker command was
 invoked by these read-only tests.
+
+After PR #41 merged as `d64114a`, `scalper-dashboard` restarted from `main`.
+The local Streamlit health endpoint returned `ok`, and the same configured
+model/pre-model AppTest paths passed after deployment. Execution remained in
+demo mode with trading and automatic analysis disabled, startup checks passed,
+and the emergency stop active.
