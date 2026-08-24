@@ -97,6 +97,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   returned broker IDs commit, then may use that broker ID as a fallback when a
   strategy-labelled cTrader event omits its client order ID. Readiness is
   recalculated from current unresolved journal evidence after each drain.
+  A non-deal `ORDER_ACCEPTED` event establishes only its pending order; an
+  optional unpriced cTrader position placeholder on that event is not persisted
+  as an opened position. Fill and partial-fill events still require their deal
+  plus a fully normalized, priced position.
   Callback failures expose only a stable allowlisted reason, processing stage,
   numeric event/status enums, and field-presence booleans; raw callbacks,
   labels, client IDs, broker IDs, and database error text are never logged.

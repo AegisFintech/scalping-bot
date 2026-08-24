@@ -798,9 +798,25 @@ describe("PostgreSQL migrations integration", () => {
       );
       const acceptedRaw = await eventFixture("demo-order-accepted-v1.json");
       delete (acceptedRaw.order as Record<string, unknown>).clientOrderId;
-      const accepted = normalizeDemoExecution(acceptedRaw, { symbolId: "7" });
+      const accepted = normalizeDemoExecution(
+        {
+          ...acceptedRaw,
+          position: {
+            positionId: "801",
+            positionStatus: 1,
+            tradeData: {
+              symbolId: "7",
+              volume: "0",
+              tradeSide: 1,
+              label: "ctrader-ai-scalper:integration",
+            },
+          },
+        },
+        { symbolId: "7" },
+      );
       expect(accepted).not.toBeNull();
       expect(accepted?.clientOrderId).toBeNull();
+      expect(accepted?.position).toBeNull();
       await expect(
         Promise.all([store.persist(accepted!), store.persist(accepted!)]),
       ).resolves.toEqual([

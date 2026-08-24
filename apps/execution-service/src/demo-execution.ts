@@ -431,8 +431,13 @@ export function normalizeDemoExecution(
       : normalizeOrder(order, receivedAt, execution.errorCode);
   if (normalizedOrder !== null)
     assertExecutionOrderState(execution.executionType, normalizedOrder.state);
+  // cTrader may attach an unpriced position placeholder to ORDER_ACCEPTED.
+  // Acceptance establishes only the pending order; a position becomes
+  // authoritative when a fill/partial-fill execution carries its deal.
   const normalizedPosition =
-    position === null ? null : normalizePosition(position, receivedAt);
+    position === null || (execution.executionType === 2 && deal === null)
+      ? null
+      : normalizePosition(position, receivedAt);
   const brokerOrderId =
     normalizedOrder?.brokerOrderId ??
     (deal === null ? null : stringField(deal, "orderId"));

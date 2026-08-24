@@ -80,6 +80,10 @@ is marked accepted. A strategy-labelled callback that omits its client order ID
 may therefore match the durable local intent by broker order ID. Runtime
 readiness is recalculated from unresolved journal rows after every drain, so a
 final fill can resolve earlier partial-fill evidence without a restart.
+Some cTrader servers attach an unpriced position placeholder to a pending
+`ORDER_ACCEPTED` event. Because that event has no deal and does not establish a
+fill, only its order is mapped; position creation remains exclusive to a fill or
+partial-fill event carrying authoritative priced position/deal evidence.
 Pagination, missing local intent, duplicate-key conflicts, partial fills,
 unknown fields/states, or persistence failure make reconciliation uncertain and
 block placement.
