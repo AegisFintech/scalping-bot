@@ -58,13 +58,15 @@ Local host: Node 24.18.0/npm 11.16.0, Python 3.13.5, systemd 257. Deployment is
 pinned to Node 22 and still needs validation on that runtime.
 
 - Prettier, ESLint, TypeScript typecheck, and TypeScript build passed.
-- Node unit: 23 files, 63 tests passed.
+- Node unit: 25 files, 79 tests passed.
 - Node integration: typed Node/Python and isolated Neon migration tests passed
-  (2 tests total). The temporary schema was dropped afterward.
+  (3 tests total), including fresh migration and `0005`-to-`0006` upgrade paths.
+  The temporary schemas were dropped afterward.
 - JSON Schema: 10 tests passed, plus a real configured-endpoint structured-output
   probe that returned a locally validated, identity-matched `NO_TRADE`.
-- Migration structure/safety: 2 tests passed; migrations `0001` through `0005`
-  are applied to the configured Neon schema. Backup/restore remains pending.
+- Migration structure/safety: 2 tests passed; migration `0006` passed isolated
+  fresh/upgrade testing while `0001` through `0005` remain applied to the
+  configured Neon schema. Backup/restore remains pending.
 - Ruff format/lint, strict mypy across analytics/dashboard, and Python: 13 tests passed.
 - Checked-in replay and backtest CLI smoke scenarios completed.
 - npm audit and pip-audit reported no known vulnerabilities.
@@ -135,13 +137,17 @@ No credentialed shadow session was run in this checkout.
 - Live broker order submission is not wired and cannot be enabled by
   configuration.
 - Demo order submission defaults off and needs a separate exact acknowledgement.
+- Demo execution callbacks now enter a normalized, deduplicated PostgreSQL
+  journal and atomically update order/fill/position state. Bounded startup and
+  reconnect history recovery is fail-closed. Closed-trade P/L remains blocked
+  until supervised broker evidence confirms commission/swap/conversion signs.
 - A quote/deposit currency conversion provider is absent; mismatched currencies
   fail closed.
 - Better Stack rotating/remote structured logging and persistent host/process
   metrics currently run in execution-service only. OTLP export and the optional
   Better Stack heartbeat URL are not implemented.
-- Rich demo broker fill/position/trade persistence awaits supervised event-field
-  validation; reconciliation counts still fail closed.
+- Demo closed-trade persistence awaits supervised event-field validation;
+  unresolved callback/recovery evidence and reconciliation counts fail closed.
 - Remote dashboard access depends on the externally managed Cloudflare Access
   application; the repository deliberately bundles no identity provider.
 

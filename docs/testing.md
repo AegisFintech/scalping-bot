@@ -48,19 +48,23 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
-On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 63 Node unit
-tests across 23 files, 10 schema tests, 2 static migration tests, Ruff, strict mypy across the
+On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 79 Node unit
+tests across 25 files, 10 schema tests, 2 static migration tests, Ruff, strict mypy across the
 analytics and dashboard code, 13 Python tests,
 npm audit, pip-audit, shell syntax, and secret scanning passed. The typed
-Node/Python integration passed. TLS connectivity and all five migrations passed
-inside an isolated Neon schema, which the test dropped afterward; migrations
-`0001` through `0005` were also applied to the configured Neon schema. The host used Node 24.18.0; the supported Node 22
+Node/Python integration plus fresh-schema and `0005`-to-`0006` upgrade tests
+passed. TLS connectivity and all six migrations passed inside isolated Neon
+schemas, which the tests dropped afterward; migrations `0001` through `0005`
+remain applied to the configured Neon schema. The host used Node 24.18.0; the supported Node 22
 deployment baseline and installed systemd paths still require a Debian release
 validation. Offline systemd security parsing passed for all five units with a
 2.8 (`OK`) common sandbox score on systemd 257. Credentialed cTrader demo auth,
 token renewal, market data, empty-state reconciliation, and audited daily-risk
 baseline initialization with empty deal history passed; no demo order
-or live-data shadow session was run. A configured-endpoint strict schema probe
+or live-data shadow session was run. Versioned cTrader demo execution fixtures
+cover accepted, partial-fill, full-fill, rejection, deduplication, peer cancel,
+and restart recovery paths; supervised broker-field validation remains pending.
+A configured-endpoint strict schema probe
 returned a locally validated `NO_TRADE`. The checked-in replay and backtest CLI
 smoke fixtures also completed; the replay fixture intentionally has too little
 history for long-window indicators and is not a trading-quality dataset.

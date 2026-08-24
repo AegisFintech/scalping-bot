@@ -442,12 +442,13 @@ export class PostgresDecisionTrail implements DecisionTrail {
       for (const command of evaluation.commands) {
         await client.query(
           `INSERT INTO orders
-            (id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
+            (id, account_id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
              strategy_label, idempotency_key, entry_price, stop_loss, take_profit,
              requested_volume, normalized_volume, expires_at)
-           VALUES ($1, $2, $3, 'STOP', 'INTENT', $4, true, $5, $6, $7, $8, $9, $10, $10, $11)`,
+           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12)`,
           [
             randomUUID(),
+            this.#options.accountId,
             command.orderGroupId,
             command.side,
             command.clientOrderId,

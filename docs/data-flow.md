@@ -47,6 +47,15 @@ the temporary fail-closed daily-risk reason.
     submit; shadow cannot; live is deliberately unwired in this release.
 14. Record each before/after transition and reconcile external state.
 
+cTrader demo execution callbacks are independently normalized into a
+credential-free versioned record, serialized through a durable PostgreSQL event
+journal, and applied atomically to order/fill/position state. Deal IDs provide
+fill idempotency; non-deal events use a normalized payload hash. Startup and
+reconnect replay bounded broker order/deal history for unresolved local intents.
+Pagination, missing local intent, duplicate-key conflicts, partial fills,
+unknown fields/states, or persistence failure make reconciliation uncertain and
+block placement.
+
 ## Timestamp rules
 
 Every candle has source start/end timestamps and must be closed at or before the authoritative analysis time. Snapshot records include broker/server time, collector receive time, order-book source time, analysis time, and calculated maximum skew/age. Local wall time is diagnostic only. Future timestamps beyond tolerance are invalid.

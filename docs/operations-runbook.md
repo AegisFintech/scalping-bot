@@ -27,6 +27,22 @@
 5. Recheck status and audit rows. This preflight does not authorize demo orders;
    demo submission remains a later supervised checklist step.
 
+## Demo execution-event preflight
+
+Before setting `DEMO_TRADING_ENABLED=true`, verify migration `0006` is applied
+and the execution service reports successful startup recovery. Inspect
+`broker_execution_events` for any `UNMATCHED`/`CONFLICT` row or non-empty
+`reason_codes` with `resolved_at IS NULL`; any such evidence blocks the session.
+A final fill retains and resolves earlier partial-fill evidence instead of
+deleting it. An unresolved partial fill, unknown state, history pagination,
+missing local intent, or closed-trade mapping pending requires emergency stop
+plus operator reconciliation. Never delete journal rows to clear readiness.
+
+Closing-deal commission, swap, and conversion-fee signs remain broker-specific
+and unverified in this release. The first closing event is retained but blocks
+new placement with `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until its supervised,
+redacted evidence is reviewed and the trade mapping is implemented/tested.
+
 ## Emergency stop
 
 Any one of these activates stop: `EMERGENCY_STOP=true`, presence of the sentinel file, or active database runtime control. Dashboard emergency stop writes the database control and audit event. Activation stops new analyses/orders and initiates safe cancellation of strategy-owned pending orders. It does not blindly close open positions or cancel manual orders.

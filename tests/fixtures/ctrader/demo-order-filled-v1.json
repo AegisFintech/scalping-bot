@@ -1,0 +1,51 @@
+{
+  "executionType": 3,
+  "order": {
+    "orderId": "501",
+    "orderStatus": 2,
+    "clientOrderId": "cas-buy-111111111111111111111111",
+    "executedVolume": "100",
+    "executionPrice": 2001.3,
+    "utcLastUpdateTimestamp": 1787544061000,
+    "tradeData": {
+      "symbolId": "7",
+      "volume": "100",
+      "tradeSide": 1,
+      "openTimestamp": 1787544000000,
+      "label": "ctrader-ai-scalper:0.1.0"
+    }
+  },
+  "position": {
+    "positionId": "801",
+    "positionStatus": 1,
+    "price": 2001.28,
+    "stopLoss": 1999.25,
+    "takeProfit": 2005.25,
+    "utcLastUpdateTimestamp": 1787544061000,
+    "tradeData": {
+      "symbolId": "7",
+      "volume": "100",
+      "tradeSide": 1,
+      "openTimestamp": 1787544060000,
+      "label": "ctrader-ai-scalper:0.1.0"
+    }
+  },
+  "deal": {
+    "dealId": "902",
+    "orderId": "501",
+    "positionId": "801",
+    "volume": "60",
+    "filledVolume": "60",
+    "symbolId": "7",
+    "createTimestamp": 1787544061000,
+    "executionTimestamp": 1787544061000,
+    "executionPrice": 2001.3,
+    "tradeSide": 1,
+    "dealStatus": 2,
+    "commission": "-20",
+    "moneyDigits": 2,
+    "label": "ctrader-ai-scalper:0.1.0"
+  },
+  "errorCode": null,
+  "receivedAt": "2026-08-24T04:01:01.100Z"
+}

@@ -31,6 +31,7 @@ const requiredTables = [
   "audit_events",
   "runtime_controls",
   "strategy_versions",
+  "broker_execution_events",
 ];
 
 describe("migrations", () => {
@@ -42,11 +43,15 @@ describe("migrations", () => {
       "0003_symbol_volume_scale.sql",
       "0004_daily_risk_net_flows.sql",
       "0005_paper_account_identity.sql",
+      "0006_ctrader_demo_execution_events.sql",
     ]);
-    const sql = await readFile(
-      path.join(directory, "0001_initial.sql"),
-      "utf8",
-    );
+    const sql = (
+      await Promise.all(
+        (await migrationFiles(directory)).map((file) =>
+          readFile(path.join(directory, file), "utf8"),
+        ),
+      )
+    ).join("\n");
     for (const table of requiredTables)
       expect(sql).toContain(`CREATE TABLE ${table}`);
   });

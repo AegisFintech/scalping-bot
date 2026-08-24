@@ -61,10 +61,23 @@ export interface RawReconciliation {
   readonly orders: readonly Record<string, unknown>[];
 }
 
+export interface RawOrderHistory {
+  readonly receivedAt: string;
+  readonly orders: readonly Record<string, unknown>[];
+  readonly hasMore: boolean;
+}
+
+export interface RawDealHistory {
+  readonly receivedAt: string;
+  readonly deals: readonly Record<string, unknown>[];
+  readonly hasMore: boolean;
+}
+
 export interface BrokerExecution {
   readonly executionType: number;
   readonly order: Record<string, unknown> | null;
   readonly position: Record<string, unknown> | null;
+  readonly deal: Record<string, unknown> | null;
   readonly errorCode: string | null;
   readonly receivedAt: string;
 }
@@ -128,6 +141,7 @@ const EXTERNAL_BALANCE_OPERATIONS = new Set([
 ]);
 
 type ExecutionHandler = (execution: BrokerExecution) => void;
+type SynchronizationHandler = () => void;
 
 interface QuoteState {
   bid?: string | undefined;
@@ -232,6 +246,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   readonly #subscribedSpots = new Set<string>();
   readonly #subscribedDepth = new Set<string>();
   readonly #executionHandlers = new Set<ExecutionHandler>();
+  readonly #synchronizationHandlers = new Set<SynchronizationHandler>();
   #accountId: string | null = null;
   #depositAssetId: string | null = null;
   #permissionScope: number | null = null;
@@ -263,6 +278,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       for (const symbolId of spots) await this.#subscribeSpot(symbolId);
       for (const symbolId of depths) await this.#subscribeDepth(symbolId);
       await this.reconcileRaw();
+      for (const handler of this.#synchronizationHandlers) handler();
     });
   }
 
@@ -309,13 +325,19 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     to: Date,
     maxRows = 1,
   ): Promise<DealHistorySummary> {
+    const response = await this.dealHistoryRaw(from, to, maxRows);
+    return normalizeDealHistory(response.deals, response.hasMore, from, to);
+  }
+
+  async dealHistoryRaw(
+    from: Date,
+    to: Date,
+    maxRows = 1_000,
+  ): Promise<RawDealHistory> {
     this.#requireAuthenticated();
-    const fromMs = from.getTime();
-    const toMs = to.getTime();
     normalizeDealHistory([], false, from, to);
-    if (!Number.isSafeInteger(maxRows) || maxRows < 1 || maxRows > 1_000) {
+    if (!Number.isSafeInteger(maxRows) || maxRows < 1 || maxRows > 1_000)
       throw new Error("CTRADER_DEAL_HISTORY_MAX_ROWS_INVALID");
-    }
     const response = await this.#transport.request(
       CTraderPayload.DEAL_LIST_REQ,
       {
@@ -323,23 +345,53 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
           this.accountId,
           "CTRADER_ACCOUNT_ID_INVALID",
         ),
-        fromTimestamp: fromMs,
-        toTimestamp: toMs,
+        fromTimestamp: from.getTime(),
+        toTimestamp: to.getTime(),
         maxRows,
       },
       [CTraderPayload.DEAL_LIST_RES],
     );
-    return normalizeDealHistory(
-      recordsField(response.payload, "deal"),
-      response.payload.hasMore,
-      from,
-      to,
+    if (typeof response.payload.hasMore !== "boolean")
+      throw new Error("CTRADER_DEAL_HISTORY_HAS_MORE_INVALID");
+    return {
+      receivedAt: new Date().toISOString(),
+      deals: recordsField(response.payload, "deal"),
+      hasMore: response.payload.hasMore,
+    };
+  }
+
+  async orderHistoryRaw(from: Date, to: Date): Promise<RawOrderHistory> {
+    this.#requireAuthenticated();
+    normalizeDealHistory([], false, from, to);
+    const response = await this.#transport.request(
+      CTraderPayload.ORDER_LIST_REQ,
+      {
+        ctidTraderAccountId: protocolInteger(
+          this.accountId,
+          "CTRADER_ACCOUNT_ID_INVALID",
+        ),
+        fromTimestamp: from.getTime(),
+        toTimestamp: to.getTime(),
+      },
+      [CTraderPayload.ORDER_LIST_RES],
     );
+    if (typeof response.payload.hasMore !== "boolean")
+      throw new Error("CTRADER_ORDER_HISTORY_HAS_MORE_INVALID");
+    return {
+      receivedAt: new Date().toISOString(),
+      orders: recordsField(response.payload, "order"),
+      hasMore: response.payload.hasMore,
+    };
   }
 
   onExecution(handler: ExecutionHandler): () => void {
     this.#executionHandlers.add(handler);
     return () => this.#executionHandlers.delete(handler);
+  }
+
+  onSynchronization(handler: SynchronizationHandler): () => void {
+    this.#synchronizationHandlers.add(handler);
+    return () => this.#synchronizationHandlers.delete(handler);
   }
 
   async connect(): Promise<void> {
@@ -880,10 +932,15 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       message.payload.position === undefined
         ? null
         : record(message.payload.position, "CTRADER_POSITION_INVALID");
+    const deal =
+      message.payload.deal === undefined
+        ? null
+        : record(message.payload.deal, "CTRADER_DEAL_INVALID");
     return {
       executionType: numberField(message.payload, "executionType"),
       order,
       position,
+      deal,
       errorCode: optionalStringField(message.payload, "errorCode") ?? null,
       receivedAt: new Date().toISOString(),
     };

@@ -137,24 +137,42 @@ remain stable when the corresponding GitHub issues are created. Mandatory phase
 ordering applies: supervised demo and shadow evidence precede any broker-capable
 live implementation.
 
-| ID        | Status   | Issue                                                                                                                      | Acceptance summary                                                                                            |
-| --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| ISSUE-001 | pending  | Supervised cTrader demo order lifecycle                                                                                    | Place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit                           |
-| ISSUE-002 | pending  | Complete durable demo fill, position, and trade event mapping                                                              | Versioned event fixtures; duplicate/partial/race tests; reconciled database state                             |
-| ISSUE-003 | pending  | Credentialed live-data shadow rollout                                                                                      | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
-| ISSUE-004 | pending  | Broker-specific XAUUSD risk and execution parameter review                                                                 | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
-| ISSUE-005 | pending  | Neon backup, restore, outage, and least-privilege role drill                                                               | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
-| ISSUE-006 | pending  | Debian Node 22 least-privilege systemd release validation                                                                  | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                                |
-| ISSUE-007 | pending  | Cross-service structured logging, metrics, heartbeats, and alert drills                                                    | Better Stack delivery/redaction and required failure alerts exercised                                         |
-| ISSUE-008 | pending  | Cloudflare Access policy, session, CSRF, and audit-retention review                                                        | Authorized identities only; controls protected; access/audit evidence retained                                |
-| ISSUE-009 | blocked  | Broker-capable live execution composition and independent safety review                                                    | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
-| ISSUE-010 | blocked  | Supervised live canary authorization                                                                                       | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
-| ISSUE-011 | complete | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
+| ID        | Status      | Issue                                                                                                                      | Acceptance summary                                                                                            |
+| --------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| ISSUE-001 | pending     | Supervised cTrader demo order lifecycle                                                                                    | Depends on ISSUE-002; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit     |
+| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)     | Callback journal/order/fill/position recovery implemented; closed-trade mapping awaits supervised evidence    |
+| ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                      | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
+| ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                 | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
+| ISSUE-005 | pending     | Neon backup, restore, outage, and least-privilege role drill                                                               | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
+| ISSUE-006 | pending     | Debian Node 22 least-privilege systemd release validation                                                                  | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                                |
+| ISSUE-007 | pending     | Cross-service structured logging, metrics, heartbeats, and alert drills                                                    | Better Stack delivery/redaction and required failure alerts exercised                                         |
+| ISSUE-008 | pending     | Cloudflare Access policy, session, CSRF, and audit-retention review                                                        | Authorized identities only; controls protected; access/audit evidence retained                                |
+| ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                    | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
+| ISSUE-010 | blocked     | Supervised live canary authorization                                                                                       | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
+| ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1) | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
 required checks, reviews, and safety sequencing pass. Contribution-count targets
 never justify empty, noisy, unsafe, or misleading commits.
+
+### ISSUE-002 delivery details
+
+- Acceptance criteria: every strategy-owned cTrader execution callback is
+  normalized without account credentials, durably deduplicated with its state
+  transition, and recovered from bounded order/deal history after startup or
+  reconnect; missing, conflicting, paginated, partial, unknown, or unmatched
+  evidence blocks further placement. Versioned positive and rejection fixtures,
+  OCO peer-cancel tests, and both fresh/upgrade migration tests are required.
+- Dependencies: official cTrader execution/order/deal/position contracts, the
+  existing disabled-by-default demo gateway, migration `0006`, and supervised
+  broker evidence for closing-deal commission/P&L signs.
+- Current status: callback journal plus order/fill/position mapping and restart/
+  reconnect recovery are implemented on `feat/issue-002-demo-event-lifecycle`.
+  Closing events are intentionally reason-coded
+  `DEMO_TRADE_OUTCOME_MAPPING_PENDING` until supervised demo evidence confirms
+  broker-specific money fields. Migration `0006` passed fresh and `0005` upgrade
+  tests but is not yet applied to the configured database.
 
 ### ISSUE-011 delivery details
 
@@ -198,11 +216,13 @@ never justify empty, noisy, unsafe, or misleading commits.
   persists host/process metrics. The other APIs expose health endpoints and
   systemd journals; OTLP export and Better Stack heartbeat-URL delivery remain
   unimplemented.
-- Paper fills/positions/trades are durable. Rich demo fill/position/trade
-  persistence still depends on completing broker-event mapping in a supervised
-  demo integration.
-- PostgreSQL TLS connectivity, isolated-schema migration tests, and migrations
-  `0001` through `0005` on the configured Neon schema passed. Backup/restore and
+- Paper fills/positions/trades are durable. Demo callbacks now have a durable,
+  deduplicated event journal with order/fill/position mapping and bounded restart
+  recovery. Closed-trade P/L remains blocked pending supervised validation of
+  the broker's commission, swap, and conversion-fee signs.
+- PostgreSQL TLS connectivity and isolated-schema tests through migration `0006`
+  passed; the configured Neon schema remains at `0005` pending review/application
+  of `0006`. Backup/restore and
   Node 22 Debian deployment have not been exercised. The remote dashboard
   hostname returns a Cloudflare Access redirect, but its long-term policy and
   audit retention still require operator review.
@@ -232,8 +252,8 @@ remains pinned to Node 22; the newer local Node result is not evidence for that
 runtime.
 
 - [x] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
-- [x] `npm test`: 23 files, 63 tests passed.
-- [x] `npm run test:integration`: 2 passed, including all five migrations in an isolated Neon schema that was dropped afterward.
+- [x] `npm test`: 25 files, 79 tests passed.
+- [x] `npm run test:integration`: 3 passed, including fresh and `0005`-to-`0006` upgrade paths in isolated Neon schemas that were dropped afterward.
 - [x] `npm run test:schemas`: 10 passed; `npm run test:migrations`: 2 static migration tests passed.
 - [x] `npm audit --audit-level=high`: 0 vulnerabilities.
 - [x] Ruff format/check, mypy, and pytest: 13 Python tests passed.

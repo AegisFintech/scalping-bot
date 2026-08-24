@@ -125,7 +125,12 @@ export class CTraderJsonTransport {
     payload: Record<string, unknown>,
     expectedPayloadTypes: readonly number[],
   ): Promise<CTraderEnvelope> {
-    await this.#rateLimit(payloadType === CTraderPayload.GET_TRENDBARS_REQ);
+    await this.#rateLimit(
+      payloadType === CTraderPayload.GET_TRENDBARS_REQ ||
+        payloadType === CTraderPayload.DEAL_LIST_REQ ||
+        payloadType === CTraderPayload.CASH_FLOW_HISTORY_LIST_REQ ||
+        payloadType === CTraderPayload.ORDER_LIST_REQ,
+    );
     const clientMsgId = randomUUID();
     return new Promise<CTraderEnvelope>((resolve, reject) => {
       const timeout = setTimeout(() => {
