@@ -1220,7 +1220,21 @@ never justify empty, noisy, unsafe, or misleading commits.
   secret scan, shell/PM2 syntax, and five offline systemd parses at 2.8 (`OK`).
   Release `.19` and its exact local campaign configuration await review/merge
   and deployment under a durable analysis pause. No live mode or authority
-  changes are in scope.
+  changes are in scope. PR #89 merged as `b18322b`. The prior `.18` position
+  closed and periodic recovery left zero active groups, orders, positions, or
+  unresolved broker events; a restart under the durable pause cleared only the
+  known process-local malformed-terminal-callback latch. Release `.19` then
+  started ready with campaign progress `0 / 100`, `MAX_ORDERS_PER_DAY=103`
+  (three existing trading-day groups plus 100), and a healthy Streamlit
+  campaign progress bar. The audited pause was cleared at 12:07 SGT. The 12:08
+  automatic cycle completed the first durable external-AI response and advanced
+  progress to `1 / 100`; its later placement recheck rejected
+  `PLACEMENT_CANDLE_CONTEXT_CHANGED`, so it created no order. This correctly
+  consumes one requested analysis result while preserving the fresh-candle
+  placement gate. The campaign remains automatic with 99 results remaining and
+  will persist a pause at 100 for review. ISSUE-041 is complete; rollout
+  evidence is tracked by
+  [PR #90](https://github.com/AegisFintech/scalping-bot/pull/90).
 
 ## Acceptance criteria
 
