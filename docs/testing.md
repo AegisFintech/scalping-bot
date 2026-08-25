@@ -122,6 +122,14 @@ five offline systemd security parses at 2.8 (`OK`) passed. New failure coverage
 retains a fill-slippage latch for uncertain or mismatched terminal evidence;
 the success path releases it only for the same terminal group and a certain
 cryptographic closing-deal proof.
+PR #100 then deployed `.21` under an audited analysis pause with zero active or
+unresolved broker state. Startup reported only `ANALYSES_PAUSED`, and deployed
+AppTest showed the exact closed BUY result. After pause release, status was
+eligible and the next broker minute was claimed automatically. Its AI call
+returned orchestrator HTTP 503, so no campaign slot/order was created; AppTest
+then showed `WAITING_FOR_AI` and the human GMT+8 automatic retry time with zero
+exceptions. This validates scheduling/cooldown observability, not the external
+provider's availability or forecast accuracy.
 
 On 2026-08-25, ISSUE-042 passed Prettier, ESLint, TypeScript typecheck/build,
 204 Node tests across 35 files, 14 schema tests, 3 static migration tests, and

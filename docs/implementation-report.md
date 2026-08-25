@@ -1516,3 +1516,27 @@ security parses at 2.8 (`OK`). The AppTest headline against the unchanged `.20`
 runtime was `RIGHT NOW: BUY demo trade closed — no order or position is active`.
 The `.20` process was not restarted before review and remained fail-closed on
 the retained slippage event.
+
+PR #100 merged as `844fb02`. Before rollout, the durable analysis pause was
+enabled and status/SQL confirmed campaign `6 / 100`, one latest terminal
+`CLOSED` group, and zero active groups, orders, positions, or unresolved
+execution events. The ignored mode-`0600` environment's reviewed carry-forward
+baseline was changed from four to six. All five PM2 services loaded immutable
+release `.21` in dependency order; startup checks passed with only
+`ANALYSES_PAUSED`, campaign baseline six plus zero current-release completions,
+and the exact durable LONG result (`-4.6500000000` realized P/L,
+`-0.2800000000` fees). The prior in-memory slippage latch was no longer present.
+
+Deployed AppTest rendered 35 dataframes with zero exceptions and showed `RIGHT
+NOW: BUY demo trade closed — no order or position is active` plus `AUTOMATION
+STATUS: PAUSED`. After the pause was released, status became eligible with no
+reason codes. The scheduler claimed the 13:57 GMT+8 broker-minute cycle without
+manual triggering. That cycle ended `REJECTED` because the local AI orchestrator
+returned HTTP 503; it produced no completed external-AI response, did not
+consume a campaign slot, and created no broker order. The automatic circuit
+cooldown is eligible at 25 Aug 2026, 14:03:08 GMT+8. A second deployed AppTest
+rendered 36 dataframes with zero exceptions and showed the same closed-trade
+headline, `AUTOMATION STATUS: WAITING_FOR_AI`, the human GMT+8 retry time, and
+the no-restart guidance. Automation and demo authority remain enabled; the
+scheduler will half-open automatically. This is demo operational evidence, not
+a profitability claim. ISSUE-045 is complete.

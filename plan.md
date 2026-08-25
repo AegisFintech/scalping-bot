@@ -187,7 +187,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-042 | complete    | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
 | ISSUE-043 | complete    | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
 | ISSUE-044 | complete    | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
-| ISSUE-045 | in progress | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
+| ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1353,8 +1353,9 @@ last updated: 25 Aug 2026, 13:30:10 GMT+8`. ISSUE-044 is complete.
 - Dependencies: [issue #99](https://github.com/AegisFintech/scalping-bot/issues/99),
   ISSUE-042 terminal-evidence recovery, ISSUE-044 GMT+8 presentation, and the
   existing managed-setup status projection.
-- Current status: implementation is in progress on
-  `issue-045-human-closed-lifecycle`. The observed setup is durably `CLOSED`:
+- Current status: implemented on `issue-045-human-closed-lifecycle` and merged
+  in [PR #100](https://github.com/AegisFintech/scalping-bot/pull/100). The
+  observed setup is durably `CLOSED`:
   the BUY order filled, its SELL peer cancelled, the BUY position closed at
   25 Aug 2026, 13:30:10 GMT+8, and PostgreSQL recorded demo realized P/L
   `-4.6500000000` plus fees `-0.2800000000`. No unresolved execution-journal
@@ -1372,8 +1373,21 @@ last updated: 25 Aug 2026, 13:30:10 GMT+8`. ISSUE-044 is complete.
   Ruff format/lint, strict mypy over 21 source files, 68 Python tests, configured
   Streamlit AppTest with 35 dataframes and zero exceptions, replay/backtest
   smoke tests, zero-vulnerability npm/pip audits, tracked-file secret scan,
-  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). The running `.20`
-  execution service has not been restarted or otherwise altered before merge.
+  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Release `.21` was
+  deployed under an audited analysis pause after confirming zero active groups,
+  orders, positions, and unresolved execution events. Startup passed with the
+  reviewed campaign baseline `6`, zero `.21` completions, and only
+  `ANALYSES_PAUSED`; the stale slippage latch was absent. Deployed AppTest had
+  zero exceptions and displayed `RIGHT NOW: BUY demo trade closed — no order or
+position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
+  Releasing the pause returned status to eligible with no reason codes, and the
+  next 13:57 GMT+8 broker minute was claimed automatically. Its external-AI
+  call returned local orchestrator HTTP 503, so no order was created and the
+  durable campaign remains `6 / 100`. The dashboard now separately reports
+  `AUTOMATION STATUS: WAITING_FOR_AI` and the automatic retry at 25 Aug 2026,
+  14:03:08 GMT+8; no process restart or manual control is required. This proves
+  closed-lifecycle release and scheduler continuation, not forecast accuracy or
+  profitability. ISSUE-045 is complete.
 
 ## Acceptance criteria
 
