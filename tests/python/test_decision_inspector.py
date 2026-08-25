@@ -91,6 +91,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert changed["title"] == "Account state changed after sizing"
     assert context["title"] == "Final pre-order recheck rejected this cycle"
 
+    broker_price = reason_code_view("CTRADER_FIELD_INVALID:price")
+    assert broker_price["title"] == "Broker execution omitted a required price"
+    assert "locked out" in broker_price["next_action"]
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(

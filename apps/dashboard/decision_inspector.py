@@ -233,6 +233,13 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "between deterministic sizing and the final placement check.",
         "No order was sent. The next cycle reconciles and sizes from the new account state.",
     ),
+    "CTRADER_FIELD_INVALID:price": (
+        "Broker execution omitted a required price",
+        "A new fill or position event lacked a valid positive price, so reconciliation cannot "
+        "assume its state.",
+        "New analysis is locked out. Inspect sanitized callback structure and broker history; "
+        "do not infer or invent the missing price.",
+    ),
 }
 
 _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (

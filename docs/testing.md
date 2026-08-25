@@ -54,6 +54,10 @@ post-model account-state rejection before risk intent.
 Compact-payload configuration tests prove the 60/36/24 raw-tail defaults leave
 the 600/500/300 analytics histories unchanged, accept explicit positive bounded
 overrides, and reject zero, fractional, or history-exceeding values at startup.
+Runtime fill-idempotency tests persist a complete deal, repeat the same deal
+with its contextual position price omitted, and prove no second store mutation
+or lockout occurs. A different deal ID—or the same ID after uncertain
+persistence—with the missing price remains a tested fail-closed error.
 
 ## Historical limitations
 

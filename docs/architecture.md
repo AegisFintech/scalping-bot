@@ -119,6 +119,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   Callback failures expose only a stable allowlisted reason, processing stage,
   numeric event/status enums, and field-presence booleans; raw callbacks,
   labels, client IDs, broker IDs, and database error text are never logged.
+  Within one process, a broker deal ID is remembered only after certain durable
+  persistence. An exact repeated deal can then be discarded before strict
+  contextual-position normalization; a new or first malformed deal remains
+  fail-closed, and PostgreSQL uniqueness/recovery remain authoritative.
 - Uses paper, demo, shadow, and live-compatible gateways behind one interface.
 - Samples the typed fresh-quote endpoint once per minute into an idempotent,
   account/symbol-scoped spread history even while analysis and trading are

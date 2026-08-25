@@ -210,6 +210,11 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
   to clear the circuit; the Overview shows the automatic retry time. Investigate
   a breaker that repeatedly reopens.
 - **reconciliation failure:** block account/symbol; query broker state; resolve labels/idempotency; never resubmit an uncertain command.
+- **`CTRADER_FIELD_INVALID:price`:** a new fill/position callback omitted a
+  required price. New cycles remain locked. Correlate the sanitized execution
+  type and field-presence log with broker history; never invent the value. An
+  exact duplicate of a certainly persisted deal is ignored before this check,
+  so the reason indicates a first/new event or a prior uncertain persistence.
 - **daily loss lockout:** cancel pending strategy orders; monitor/document existing positions under approved policy; reset only next configured day after reconciliation.
 - **database failure:** block new order commands; keep broker reconciliation attempts and buffered local critical logs; recover DB and reconcile.
 - **resource pressure/low disk:** emergency stop if durability/freshness is threatened; rotate/preserve audit logs; restore capacity.
