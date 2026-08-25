@@ -1141,8 +1141,39 @@ never justify empty, noisy, unsafe, or misleading commits.
   tests, isolated-schema Streamlit AppTest with zero exceptions and 19
   dataframes, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
   tracked-file secret scan, shell/PM2 syntax, and five offline systemd parses.
-  Deployment still waits for merge, reviewed migration application, certain
-  terminal broker reconciliation, and an audited analysis pause.
+  PR #84 merged as `6c6650e`; migration `0012` and release `.17` deployed under
+  the audited pause with certain empty startup reconciliation. The provider and
+  deployed typed path accept image/schema 2.1, and Streamlit is healthy.
+  ISSUE-039 is complete. The observed stale PM2 caller timeout is bounded
+  separately by ISSUE-040 rather than mutating `.17` provenance.
+
+### ISSUE-040 delivery details
+
+- Acceptance criteria: preserve the already-registered `.17` provenance;
+  register a new immutable release identity for the configured 60-second AI
+  provider timeout; restart only under the durable analysis pause; require
+  certain empty startup reconciliation; and prove an automatic image-backed
+  request can complete and persist schema 2.1/chart evidence within the caller
+  budget before normal automation resumes.
+- Dependencies: [issue #85](https://github.com/AegisFintech/scalping-bot/issues/85),
+  ISSUE-039/PR #84, release `.17`, the configured `AI_TIMEOUT_MS=60000`, and
+  migration `0012`.
+- Current status: release `.18` is implemented on
+  `issue-040-ai-timeout-release` through
+  [PR #86](https://github.com/AegisFintech/scalping-bot/pull/86). The direct provider image probe took 54.2
+  seconds. The first deployed `.17` image cycle reached AI but the execution
+  caller retained stale PM2 `AI_TIMEOUT_MS=30000` and timed out. Attempting to
+  change that configuration under `.17` correctly triggered
+  `STRATEGY_VERSION_IMMUTABILITY_VIOLATION`; no order was placed. The database
+  analysis pause remains active while `.18` versions the corrected timeout.
+  Pre-merge gates pass: Prettier, ESLint, TypeScript typecheck/build, 191 Node
+  tests across 33 files, 14 schema tests, 3 static migration tests, all 3
+  configured isolated-PostgreSQL integration tests, Ruff format/lint, strict
+  mypy over 17 Python source files, 53 Python tests, configured Streamlit
+  AppTest with zero exceptions and 23 dataframes, replay/backtest smoke tests,
+  zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
+  and five offline systemd parses at 2.8 (`OK`). Deployment and the automatic
+  image-backed proof cycle wait for merge.
 
 ## Acceptance criteria
 

@@ -1237,3 +1237,33 @@ schema Streamlit AppTest rendered 19 dataframes with zero exceptions.
 Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the tracked-file
 secret scan, shell/PM2 syntax, and all five offline systemd security parses also
 passed.
+
+PR #84 merged as `6c6650e`; migration `0012` applied and release `.17`
+restarted analytics, AI, execution, and Streamlit under a durable analysis
+pause. Startup recovery found the prior demo group/position closed with one
+trade and no unresolved events. A paused manual cycle rejected before market or
+AI work, and the deployed dashboard rendered without exceptions. After the
+pause was released, automatic broker minutes resumed. The first minute that
+reached the new image path ended at `AI_ORCHESTRATOR_TIMEOUT`: PM2 still held an
+obsolete 30-second execution-caller timeout while `.env` and the provider path
+used 60 seconds. The earlier provider-only probe's 54.2-second latency explains
+the mismatch.
+
+Changing the timeout under `.17` correctly failed the immutable strategy
+configuration check, so no unversioned behavior was accepted and no order was
+placed. ISSUE-040 registers release `.18`, updates the sample timeout to 60
+seconds, and deploys it under a renewed database analysis pause before the next
+automatic proof cycle.
+
+The `.18` change is tracked by
+[PR #86](https://github.com/AegisFintech/scalping-bot/pull/86). Its pre-merge
+gate run passed Prettier, ESLint, TypeScript
+typecheck/build, 191 Node tests across 33 files, 14 schema tests, 3 static
+migration tests, and all 3 configured isolated-PostgreSQL integration tests.
+Ruff format/lint, strict mypy over 17 Python source files, and 53 Python tests
+passed. Configured Streamlit AppTest rendered 23 dataframes with zero
+exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the
+tracked-file secret scan, shell/PM2 syntax, and all five offline systemd parses
+at 2.8 (`OK`) passed. The durable analysis pause remains active until the
+merged release starts with certain reconciliation and completes an automatic
+image-backed schema 2.1 cycle within the corrected caller budget.
