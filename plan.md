@@ -1496,7 +1496,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   pending broker stops. Both expired cleanly and the next analysis started six
   seconds later. A subsequent endpoint 503 exposed a separate execution-side
   circuit-threshold defect, which is outside this completed broker-lifecycle
-  issue and is tracked next.
+  issue and is tracked next. Rollout evidence is reviewed in
+  [PR #110](https://github.com/AegisFintech/scalping-bot/pull/110).
 
 ## Acceptance criteria
 

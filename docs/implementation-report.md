@@ -1704,3 +1704,5 @@ invalidate the recovered broker lifecycle.
 
 Implementation review and merge are tracked by
 [PR #109](https://github.com/AegisFintech/scalping-bot/pull/109).
+Rollout evidence is reviewed in
+[PR #110](https://github.com/AegisFintech/scalping-bot/pull/110).
