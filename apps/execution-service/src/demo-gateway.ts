@@ -346,6 +346,36 @@ export class CTraderDemoGateway implements ExecutionGateway {
     }
   }
 
+  acknowledgeCertainTerminalRecovery(input: {
+    readonly orderGroupId: string;
+    readonly terminalProofKey: string;
+    readonly certain: boolean;
+  }): void {
+    if (
+      input.orderGroupId.length === 0 ||
+      !/^terminal:[0-9a-f]{64}$/.test(input.terminalProofKey)
+    ) {
+      throw new Error("DEMO_GATEWAY_TERMINAL_RECOVERY_ACK_INVALID");
+    }
+    if (
+      !input.certain ||
+      this.#uncertainReason !== "DEMO_FILL_SLIPPAGE_EXCEEDED"
+    )
+      return;
+    const group = [...this.#groups.values()].find(
+      (candidate) => candidate.orderGroupId === input.orderGroupId,
+    );
+    if (
+      group === undefined ||
+      group.orders.some((order) =>
+        ["UNKNOWN", "PENDING", "PARTIALLY_FILLED"].includes(order.state),
+      )
+    ) {
+      return;
+    }
+    this.#uncertainReason = null;
+  }
+
   #assertPlacementEnabled(commands: readonly PendingOrderCommand[]): void {
     if (!this.#options.placementEnabled)
       throw new Error("DEMO_ORDER_PLACEMENT_DISABLED");

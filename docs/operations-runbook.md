@@ -160,10 +160,24 @@ responses or relax any independent order, risk, reconciliation, or safety gate.
 
 Overview obtains the current/latest managed setup from the execution service's
 exact configured account and symbol scope without displaying account IDs. It
-labels whether the rows are active or terminal history and shows order/position
-side, state, entry, SL, TP, volume, expiry, and update time. `UNAVAILABLE` is not
-an empty state: inspect Orders & Positions and the execution journal and do not
-assume there is no broker exposure.
+leads with a plain **RIGHT NOW** summary that distinguishes pending broker
+orders, an open position, terminal history, idle state, and unknown exposure.
+It shows order/position side, state, entry, SL, TP, volume, expiry, and update
+time. A durably closed trade additionally shows direction, realized demo P/L,
+fees, and close time. `UNAVAILABLE` or an inconsistent active/terminal
+projection is not an empty state: inspect Orders & Positions and the execution
+journal and do not assume there is no broker exposure.
+
+The generic `RECONCILIATION_UNCERTAIN` gate remains visible together with any
+bounded source reason reported by the account, gateway, terminal recovery,
+event recorder, database group, or audit persistence. For example,
+`DEMO_FILL_SLIPPAGE_EXCEEDED` means the broker fill exceeded the configured
+point or basis-point ceiling; it does not mean the position was left unmanaged.
+That event-specific in-memory latch can clear only when PostgreSQL supplies an
+exact terminal proof for the same order group, the terminal recorder is
+certain, and the group's tracked legs are terminal. A mismatched group,
+uncertain recovery, active/unknown leg, unresolved journal row, open durable
+position, or failed audit write continues to block the next cycle.
 
 Streamlit renders operator-facing timestamps in Asia/Singapore as
 `DD Mon YYYY, HH:MM:SS GMT+8`. This conversion applies only to captions,

@@ -117,6 +117,15 @@ close evidence stays blocking.
 Pagination, missing local intent, duplicate-key conflicts, partial fills,
 unknown fields/states, or persistence failure make reconciliation uncertain and
 block placement.
+The execution status preserves both this generic reconciliation gate and its
+bounded source reason instead of collapsing an observed fill-slippage,
+terminal-recovery, database-group, or audit-persistence failure into one opaque
+message. If an entry fill breaches the configured slippage ceiling, the gateway
+keeps its event-specific latch while the position is managed. Only a
+cryptographic terminal proof from the durable closing deal for the same local
+order group can acknowledge that latch, and the independent database,
+journal, position, order, and safety gates are still evaluated before another
+analysis or placement.
 An exact deal callback may also repeat with less contextual position detail.
 The in-process recorder skips it before normalization only when that same deal
 ID previously normalized and persisted with a certain result. A different deal,

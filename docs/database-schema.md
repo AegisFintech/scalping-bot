@@ -157,3 +157,9 @@ and Streamlit verifies them again before display. Rollback is manual and
 operator-reviewed: pause analysis, retain/export chart evidence, deploy code
 that no longer sends or reads images, and only then remove the table if audit
 retention policy permits.
+
+The read-only managed-setup status projection joins the selected active or
+latest terminal `order_groups` row to its strategy-owned `orders`, at most one
+`positions` row, and at most one `trades` row. Decimal P/L and fee values remain
+text at the HTTP boundary. Multiple active groups, positions, or trade outcomes
+make the projection unavailable rather than selecting an arbitrary record.

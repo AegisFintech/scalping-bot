@@ -143,6 +143,26 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "The system cannot prove that positions and orders are in a safe known state.",
         "Inspect the execution journal and broker state before clearing any control.",
     ),
+    "DEMO_FILL_SLIPPAGE_EXCEEDED": (
+        "The demo fill exceeded the configured slippage limit",
+        "The broker filled the entry farther from the requested stop price than the configured "
+        "point or basis-point ceiling permits.",
+        "The trade remains managed to its terminal outcome. After exact broker and durable "
+        "terminal evidence agree, the scheduler releases this event-specific block automatically.",
+    ),
+    "RECONCILIATION_AUDIT_PERSISTENCE_FAILED": (
+        "The latest broker reconciliation was not durably recorded",
+        "Broker state was fetched, but the required PostgreSQL reconciliation trail could not be "
+        "confirmed.",
+        "Restore PostgreSQL audit persistence; automation remains blocked until a later "
+        "reconciliation is recorded.",
+    ),
+    "DATABASE_RECONCILIATION_PENDING": (
+        "A durable order group still requires reconciliation",
+        "PostgreSQL contains a strategy group whose terminal broker outcome is not yet certain.",
+        "Wait for automatic broker-history recovery and inspect the execution journal if it "
+        "persists.",
+    ),
     "ACCOUNT_NOT_RECONCILED": (
         "Account reconciliation is incomplete",
         "New analysis waits until broker and local account state agree.",
@@ -538,6 +558,206 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         "operator_action": operator_action,
         "retry_at": retry_at,
         "reasons": reason_views,
+    }
+
+
+_ACTIVE_ORDER_STATES = {
+    "INTENT",
+    "SUBMITTING",
+    "PENDING",
+    "PARTIALLY_FILLED",
+    "CANCEL_PENDING",
+    "UNKNOWN",
+}
+_ACTIVE_POSITION_STATES = {"OPEN", "CLOSING", "RECONCILIATION_PENDING", "UNKNOWN"}
+_TERMINAL_ORDER_STATES = {"FILLED", "CANCELLED", "EXPIRED", "REJECTED"}
+_GENERIC_RECONCILIATION_REASONS = {
+    "RECONCILIATION_UNCERTAIN",
+    "OPERATIONAL_RISK_LOCKOUT",
+}
+
+
+def _plain_decimal(value: object) -> str:
+    try:
+        number = Decimal(str(value))
+    except Exception:
+        return "Unavailable"
+    if not number.is_finite():
+        return "Unavailable"
+    rendered = format(number, "f")
+    if "." in rendered:
+        rendered = rendered.rstrip("0").rstrip(".")
+    return "0" if rendered in {"", "-0"} else rendered
+
+
+def _next_automation_action(automation: Mapping[str, Any]) -> str:
+    state = str(automation.get("state", "UNKNOWN"))
+    if state == "READY":
+        return "Automatic analysis will start at the next eligible broker M1 window."
+    if state == "ACTIVE_CYCLE_OR_SETUP":
+        return "The current analysis or broker lifecycle will finish before another one starts."
+    reason_rows = automation.get("reasons", [])
+    if isinstance(reason_rows, Sequence) and not isinstance(reason_rows, (str, bytes)):
+        valid_rows = [row for row in reason_rows if isinstance(row, Mapping)]
+        preferred = next(
+            (
+                row
+                for row in valid_rows
+                if str(row.get("code")) not in _GENERIC_RECONCILIATION_REASONS
+            ),
+            valid_rows[0] if valid_rows else None,
+        )
+        if preferred is not None:
+            return (
+                f"Next analysis is blocked: {preferred.get('title', 'Unknown condition')}. "
+                f"{preferred.get('next_action', 'Inspect the reason details below.')}"
+            )
+    return str(
+        automation.get(
+            "operator_action", "Review the automation status before expecting a new cycle."
+        )
+    )
+
+
+def broker_lifecycle_view(
+    status: Mapping[str, Any], automation: Mapping[str, Any] | None = None
+) -> dict[str, str]:
+    """Summarize what is actually live at the broker and what happens next."""
+
+    automation_view = automation_status_view(status) if automation is None else automation
+    managed = status.get("managedSetup")
+    unavailable = {
+        "state": "UNKNOWN",
+        "headline": "Broker state is unavailable — exposure is unknown",
+        "detail": (
+            "The dashboard cannot prove whether a strategy order or position is active. "
+            "Do not treat old rows as current broker state."
+        ),
+        "next_action": (
+            "Check the execution service, Orders & Positions, and the execution journal."
+        ),
+        "severity": "error",
+    }
+    if not isinstance(managed, Mapping):
+        return unavailable
+    setup_status = str(managed.get("status", "UNAVAILABLE"))
+    if setup_status == "UNAVAILABLE":
+        return unavailable
+    if setup_status == "NONE":
+        return {
+            "state": "IDLE",
+            "headline": "No strategy order or trade is active",
+            "detail": "No managed demo setup has been created for this account and symbol.",
+            "next_action": _next_automation_action(automation_view),
+            "severity": "info",
+        }
+    if setup_status not in {"ACTIVE", "LATEST_TERMINAL"}:
+        return unavailable
+
+    raw_orders = managed.get("orders", [])
+    if not isinstance(raw_orders, Sequence) or isinstance(raw_orders, (str, bytes)):
+        return unavailable
+    if any(not isinstance(order, Mapping) for order in raw_orders):
+        return unavailable
+    orders = list(raw_orders)
+    position = managed.get("position")
+    if position is not None and not isinstance(position, Mapping):
+        return unavailable
+    active_orders = [order for order in orders if str(order.get("state")) in _ACTIVE_ORDER_STATES]
+    active_position = (
+        position
+        if isinstance(position, Mapping) and str(position.get("state")) in _ACTIVE_POSITION_STATES
+        else None
+    )
+
+    if setup_status == "ACTIVE":
+        if active_position is not None:
+            side = str(active_position.get("side", "Unknown")).upper()
+            state = str(active_position.get("state", "UNKNOWN")).replace("_", " ").lower()
+            return {
+                "state": "TRADE_ACTIVE",
+                "headline": f"{side} demo trade is {state}",
+                "detail": (
+                    "The broker is managing this position. Its entry, stop loss, and take profit "
+                    "are listed below."
+                ),
+                "next_action": (
+                    "No action is required; automatic analysis waits for the position to close "
+                    "and reconcile."
+                ),
+                "severity": "warning",
+            }
+        if active_orders:
+            count = len(active_orders)
+            sides = ", ".join(str(order.get("side", "unknown")).upper() for order in active_orders)
+            noun = "stop order is" if count == 1 else "stop orders are"
+            return {
+                "state": "ORDERS_WAITING",
+                "headline": f"{count} demo {noun} waiting at the broker",
+                "detail": f"Active sides: {sides}. No strategy position is currently open.",
+                "next_action": (
+                    "No action is required; the broker waits for a stop to fill or for the setup "
+                    "to expire."
+                ),
+                "severity": "warning",
+            }
+        return {
+            "state": "RECONCILING",
+            "headline": "The current broker setup is being reconciled",
+            "detail": (
+                "The group is active but no certainly active order or position can be displayed."
+            ),
+            "next_action": _next_automation_action(automation_view),
+            "severity": "warning",
+        }
+
+    if active_orders or active_position is not None:
+        return unavailable
+    group_state = str(managed.get("groupState", "UNKNOWN")).upper()
+    if any(str(order.get("state")) not in _TERMINAL_ORDER_STATES for order in orders):
+        return unavailable
+    if group_state == "CLOSED" and (
+        not isinstance(position, Mapping) or str(position.get("state")) != "CLOSED"
+    ):
+        return unavailable
+    side = (
+        str(position.get("side", "Unknown")).upper() if isinstance(position, Mapping) else "Unknown"
+    )
+    if group_state == "CLOSED":
+        headline = f"{side} demo trade closed — no order or position is active"
+    elif group_state == "EXPIRED":
+        headline = "The previous stop orders expired — no trade is active"
+    elif group_state == "FAILED":
+        headline = "The previous setup ended — no order or position is active"
+    else:
+        return unavailable
+
+    details: list[str] = []
+    if orders:
+        details.append(
+            "; ".join(
+                f"{str(order.get('side', 'Unknown')).upper()} order "
+                f"{str(order.get('state', 'UNKNOWN')).replace('_', ' ').lower()}"
+                for order in orders
+            )
+        )
+    trade = managed.get("trade")
+    if trade is not None:
+        if not isinstance(trade, Mapping):
+            return unavailable
+        details.append(
+            "Durable demo result: realized P/L "
+            f"{_plain_decimal(trade.get('realizedPnl'))}; fees "
+            f"{_plain_decimal(trade.get('fees'))}"
+        )
+    if not details:
+        details.append("The latest managed group is terminal history, not a working broker setup")
+    return {
+        "state": f"SETUP_{group_state}",
+        "headline": headline,
+        "detail": ". ".join(details) + ".",
+        "next_action": _next_automation_action(automation_view),
+        "severity": "info",
     }
 
 

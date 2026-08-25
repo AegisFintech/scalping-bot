@@ -1470,3 +1470,49 @@ was not interrupted. Dashboard health passed. The deployed-source AppTest
 again rendered 35 dataframes with zero exceptions and verified 4,985 timestamp
 cells. Its Overview caption read `Group expires: 25 Aug 2026, 13:37:03 GMT+8 ·
 last updated: 25 Aug 2026, 13:30:10 GMT+8`. ISSUE-044 is complete.
+
+## Human-readable closed demo lifecycle and terminal slippage recovery
+
+ISSUE-045 is tracked by
+[issue #99](https://github.com/AegisFintech/scalping-bot/issues/99). The
+observed `.20` setup is durably closed: the BUY stop requested at
+`4646.6000000000` filled at `4646.9100000000`, its SELL peer cancelled, and the
+BUY position closed at 25 Aug 2026, 13:30:10 GMT+8. PostgreSQL records realized
+demo P/L `-4.6500000000`, fees `-0.2800000000`, and no unresolved execution
+journal row. The 31-tick difference at the broker's `0.0100000000` tick exceeded
+the configured five-point slippage limit, so the unchanged running process
+correctly blocked replacement risk but exposed only the generic
+`RECONCILIATION_UNCERTAIN` reason.
+
+Release `.21` adds a read-only terminal trade result to the managed-setup HTTP
+projection and a plain **RIGHT NOW** Streamlit state. The Overview now answers
+separately whether a broker order is waiting, a trade is open, a setup is
+closed/expired/failed history, nothing exists, or exposure is unknown. A closed
+trade states that no strategy order or position is active, shows durable
+direction/P&L/fees/close time, and names the next automatic action. Bounded
+reconciliation source reasons are retained beside the generic fail-closed gate,
+including fill slippage, audit persistence, and a durable group awaiting
+reconciliation.
+
+The slippage latch is not cleared merely because time passed or the broker no
+longer displays a position. The terminal-evidence transaction now returns the
+exact local order-group ID paired with its cryptographic closing-deal proof.
+The in-memory demo gateway accepts that acknowledgement only when recovery and
+the recorder are certain, the proof is syntactically valid, the same tracked
+group exists, and both tracked legs are terminal. Mismatched groups, uncertain
+proof, active/unknown legs, unresolved journal evidence, local active state, or
+other safety failures remain blocking. Focused TypeScript and Python tests cover
+the retained/released latch plus active, pending, closed, idle, unavailable,
+malformed, and inconsistent dashboard projections. Full pre-merge and rollout
+evidence is recorded after the required gates complete.
+
+Pre-merge gates passed: Prettier, ESLint, TypeScript typecheck/build, 209 Node
+tests across 35 files, 14 schema tests, 3 migration tests, all 3 configured
+PostgreSQL/HTTP integration tests, Ruff formatting/lint, strict mypy over 21
+source files, 68 Python tests, configured Streamlit AppTest with 35 dataframes
+and zero exceptions, replay/backtest smoke tests, zero-vulnerability npm/pip
+audits, tracked-file secret scan, shell/PM2 syntax, and five offline systemd
+security parses at 2.8 (`OK`). The AppTest headline against the unchanged `.20`
+runtime was `RIGHT NOW: BUY demo trade closed — no order or position is active`.
+The `.20` process was not restarted before review and remained fail-closed on
+the retained slippage event.

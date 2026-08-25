@@ -288,6 +288,7 @@ async function main(): Promise<void> {
   let brokerClient: CTraderClient | null = null;
   let paperGateway: PaperGateway | null = null;
   let paperAccount: PaperAccountAdapter | null = null;
+  let demoGateway: CTraderDemoGateway | null = null;
   if (config.tradingMode === "paper") {
     paperAccount = new PaperAccountAdapter({
       equity: environment.PAPER_ACCOUNT_EQUITY ?? "10000",
@@ -325,7 +326,7 @@ async function main(): Promise<void> {
     account = brokerClient;
     margin = new CTraderMarginEstimator(brokerClient);
     if (config.tradingMode === "demo") {
-      gateway = new CTraderDemoGateway({
+      demoGateway = new CTraderDemoGateway({
         client: brokerClient,
         symbolId: localMetadata.symbolId,
         symbolName: localMetadata.symbolName,
@@ -339,6 +340,7 @@ async function main(): Promise<void> {
         maxSlippagePoints: environment.MAX_SLIPPAGE_POINTS ?? "5",
         maxSlippageBps: environment.MAX_SLIPPAGE_BPS ?? "2",
       });
+      gateway = demoGateway;
     } else if (config.tradingMode === "shadow") {
       gateway = new ShadowGateway();
     } else {
@@ -425,6 +427,7 @@ async function main(): Promise<void> {
         })
       : null;
   let latestDemoExecutionReasonCodes: readonly string[] = [];
+  let latestSafetyDetailReasonCodes: readonly string[] = [];
   const demoExecutionRecorder =
     demoExecutionStore === null
       ? null
@@ -499,12 +502,20 @@ async function main(): Promise<void> {
         );
         const recorderState = await demoExecutionRecorder.flush();
         latestDemoExecutionReasonCodes = recorderState.reasonCodes;
-        return {
+        const finalRecovery = {
           certain: result.certain && recorderState.certain,
           reasonCodes: [
             ...new Set([...result.reasonCodes, ...recorderState.reasonCodes]),
           ].sort(),
         };
+        if (demoGateway !== null && terminal.terminalOrderGroupId !== null) {
+          demoGateway.acknowledgeCertainTerminalRecovery({
+            orderGroupId: terminal.terminalOrderGroupId,
+            terminalProofKey: terminal.terminalProofKey,
+            certain: finalRecovery.certain,
+          });
+        }
+        return finalRecovery;
       }
       return {
         certain: result.certain && recorderBeforeRecovery.certain,
@@ -797,6 +808,20 @@ async function main(): Promise<void> {
     } catch {
       databaseHealthy = false;
     }
+    latestSafetyDetailReasonCodes = [
+      ...new Set([
+        ...(state.certain ? [] : state.reasonCodes),
+        ...(external.certain ? [] : external.reasonCodes),
+        ...(demoRecoveryState.certain ? [] : demoRecoveryState.reasonCodes),
+        ...(demoExecutionState.certain ? [] : demoExecutionState.reasonCodes),
+        ...(reconciliationPersisted
+          ? []
+          : ["RECONCILIATION_AUDIT_PERSISTENCE_FAILED"]),
+        ...(databaseReconciliationPending
+          ? ["DATABASE_RECONCILIATION_PENDING"]
+          : []),
+      ]),
+    ].sort();
     return {
       tradingMode: config.tradingMode,
       liveTradingEnabled: config.liveTradingEnabled,
@@ -966,6 +991,7 @@ async function main(): Promise<void> {
         ...eligibility.reasonCodes,
         ...modeReasons,
         ...latestDemoExecutionReasonCodes,
+        ...latestSafetyDetailReasonCodes,
       ]),
     ].sort();
     return {

@@ -75,6 +75,7 @@ export interface DemoExecutionPersistenceResult {
 
 export interface DemoTerminalEvidenceReconciliationResult extends DemoExecutionPersistenceResult {
   readonly terminalProofKey: string | null;
+  readonly terminalOrderGroupId: string | null;
   readonly resolvedEventCount: number;
 }
 
