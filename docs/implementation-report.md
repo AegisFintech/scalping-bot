@@ -1393,3 +1393,26 @@ parses at 2.8 (`OK`). Runtime remained unchanged on `.19`; status still showed
 `4 / 100` and the expected callback-conflict lockout before merge/deployment.
 Implementation is proposed in
 [PR #92](https://github.com/AegisFintech/scalping-bot/pull/92).
+
+PR #92 merged as `cc15df7`. Before rollout, the durable pause was enabled and
+the exact `.19` scope was rechecked at four completed responses, zero active
+groups, and one unresolved callback conflict. The ignored mode-`0600` local
+environment was set to baseline four, and all five PM2 services loaded `.20`.
+One initial execution start raced the simultaneously reloading market-data
+listener and received a loopback connection refusal; PM2 retried automatically
+and the next PID started ready. Under pause, status reported baseline `4`,
+release completed `0`, total `4 / 100`, and only `ANALYSES_PAUSED`. PostgreSQL
+reported zero active groups, zero unresolved execution events, one retained and
+resolved conflict row, and one `.20` strategy identity. Overview displayed the
+old BUY order as `CANCELLED`, SELL order as `FILLED`, and SELL position as
+`CLOSED` terminal history with exact entry/SL/TP levels.
+
+The pause was then released. Status reported automatic analysis and demo
+trading enabled with no blocking reasons. The next eligible broker M1 window
+started a fresh automatic cycle, completed the external-AI response, and
+advanced the campaign to `5 / 100` (`1` on `.20` plus baseline `4`). Semantic
+validation rejected `DOWNSIDE_TARGETS_INVALID`, created no order, and returned
+the service to ready with no blocking reason. This proves scheduler recovery
+and campaign continuation, not forecast accuracy or profitability. ISSUE-043
+adds operator-readable guidance for that exact target-map rejection without
+changing its fail-closed behavior.

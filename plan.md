@@ -184,7 +184,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-039 | complete    | [Send deterministic completed-candle charts to the external AI](https://github.com/AegisFintech/scalping-bot/issues/83)           | Hash-linked image plus numeric context; strict technical-map contract; durable dashboard provenance           |
 | ISSUE-040 | complete    | [Register the image-analysis timeout as a new immutable release](https://github.com/AegisFintech/scalping-bot/issues/85)          | Versioned 60-second caller budget; paused deployment; completed automatic multimodal proof                    |
 | ISSUE-041 | complete    | [Run a bounded 100-completed-analysis demo campaign](https://github.com/AegisFintech/scalping-bot/issues/88)                      | Durable scoped counter; dashboard progress; audited automatic pause at the boundary                           |
-| ISSUE-042 | in progress | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
+| ISSUE-042 | complete    | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
+| ISSUE-043 | in progress | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1270,8 +1271,38 @@ never justify empty, noisy, unsafe, or misleading commits.
   tests, Ruff format/lint, strict mypy over 20 source files, 55 Python tests,
   configured Streamlit AppTest with zero exceptions, replay/backtest smoke
   tests, zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2
-  syntax, and five offline systemd security parses at 2.8 (`OK`). Automatic
-  analysis remains blocked before the merge and paused deployment.
+  syntax, and five offline systemd security parses at 2.8 (`OK`). PR #92 merged
+  as `cc15df7`. Release `.20` deployed under the durable pause with campaign
+  baseline `4`, release count `0`, zero active managed groups, and zero
+  unresolved events; the retained conflict now references its exact terminal
+  resolution evidence. Overview showed the latest BUY/SELL orders and SELL
+  position as terminal history. After release, the next M1 cycle reached the
+  external AI and advanced the campaign to `5 / 100`; its malformed descending
+  target map was rejected without an order. Automation remained healthy and
+  eligible for the next minute. ISSUE-042 is complete.
+
+### ISSUE-043 delivery details
+
+- Acceptance criteria: explain `UPSIDE_TARGETS_INVALID` and
+  `DOWNSIDE_TARGETS_INVALID` in plain language, including entry-side,
+  tick-alignment, and strict target-order requirements; state that no order was
+  sent and automatic analysis will request a fresh proposal; cover both codes
+  with tests; and deploy only the dashboard without restarting execution or
+  changing trading authority.
+- Dependencies: [issue #93](https://github.com/AegisFintech/scalping-bot/issues/93),
+  ISSUE-042 release `.20`, and the existing reason-code inspector.
+- Current status: implementation is in progress on
+  `issue-043-target-guidance` through
+  [PR #94](https://github.com/AegisFintech/scalping-bot/pull/94). The trigger was
+  the first healthy `.20` automatic response, which advanced the campaign to
+  `5 / 100` and then rejected `DOWNSIDE_TARGETS_INVALID` before order intent.
+  Both target-map reason explanations and tests are implemented. The full gate
+  suite remains green: 204 Node tests across 35 files, 14 schema tests, 3
+  migration tests, all 3 configured PostgreSQL integration tests, 55 Python
+  tests, strict formatting/lint/type checks, configured Streamlit AppTest,
+  replay/backtest smoke tests, zero-vulnerability audits, secret/shell/PM2
+  checks, and five systemd parses at 2.8 (`OK`). Dashboard-only deployment
+  awaits merge.
 
 ## Acceptance criteria
 
