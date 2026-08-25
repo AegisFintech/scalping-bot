@@ -1297,3 +1297,34 @@ zero exceptions, including the exact prompt/response history. Normal automation
 remains enabled and will re-arm only after the terminal deal is reconciled.
 This rollout evidence is tracked by
 [PR #87](https://github.com/AegisFintech/scalping-bot/pull/87).
+
+## Bounded 100-analysis demo campaign
+
+ISSUE-041 adds an optional restart-safe automatic campaign boundary without
+changing live authority or any model/risk contract. A positive
+`AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` counts distinct analyses having both a
+durable completed model request and completed response for the current account,
+symbol, and immutable strategy release. The default zero is unbounded and does
+not enable automation. The scheduler checks the PostgreSQL count before a
+broker-minute claim and after each cycle. Missing or invalid progress fails
+closed; result 100 may finish its existing validation/placement path, then the
+service durably pauses new analyses before result 101. Order maintenance,
+callbacks, expiry, TP/SL handling, and reconciliation continue.
+
+Streamlit exposes the target, completed and remaining counts, progress, and a
+plain-language completed-for-review state. Unit tests cover disabled, running,
+exact-limit, overrun, malformed, unavailable, pause, and reconstruction paths;
+the configured PostgreSQL integration test proves a newly constructed campaign
+counter sees the previously committed completed response. Release `.19`
+isolates the campaign count and configuration from `.18` history. Deployment
+will occur under a durable analysis pause and configure an exact 100-result
+limit plus a compatible independent daily OCO-group ceiling.
+
+The `.19` pre-merge gate run passed Prettier, ESLint, TypeScript
+typecheck/build, 198 Node tests across 34 files, 14 schema tests, 3 static
+migration tests, and all 3 configured isolated-PostgreSQL integration tests.
+Ruff format/lint, strict mypy over 17 Python source files, and 55 Python tests
+passed. Configured Streamlit AppTest rendered 34 dataframes with zero
+exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the
+tracked-file secret scan, shell/PM2 syntax, and all five offline systemd parses
+at 2.8 (`OK`) passed.

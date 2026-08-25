@@ -113,6 +113,14 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   committed before the cycle, so restarts cannot issue a second model request
   for that interval. Provider failure retries on the next fresh interval; the
   post-model completed-candle identity check remains unchanged.
+- Optionally bounds an automatic campaign by distinct durable completed model
+  responses for the exact account, symbol, and immutable strategy release.
+  Pre-model rejection and failed/unavailable provider attempts do not consume a
+  slot. The scheduler checks PostgreSQL before every claim and again after each
+  cycle. Result 100 may finish its normal validation and placement, after which
+  the service persists `PAUSE_NEW_ANALYSES`; no later result can start when the
+  count is unavailable or at its limit. Broker callback processing, expiry,
+  cancellation, position management, and reconciliation continue while paused.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or
   reconnect before restoring readiness. Placement callbacks queue until the
@@ -170,6 +178,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   retain the authoritative reason code alongside plain-language impact and
   operator action. Broker-minute history shows UTC and Asia/Singapore time so a
   bounded cooldown is not mistaken for a stopped process.
+- A configured completed-analysis campaign shows its immutable-release target,
+  durable completed count, remaining count, progress bar, and explicit
+  `CAMPAIGN_COMPLETE` review state. An unavailable or invalid count is displayed
+  as a fail-closed scheduler condition rather than zero progress.
 - Prompt history shows prior request/response versions and hashes. Each selected
   run defaults to the newest durable AI request and prominently shows the exact
   hash-verified system prompt with the exact persisted redacted user JSON. New

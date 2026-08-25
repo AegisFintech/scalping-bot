@@ -20,6 +20,7 @@ export interface ExecutionConfig {
   readonly liveEnablementFile: string;
   readonly pauseNewAnalyses: boolean;
   readonly automaticAnalysisEnabled: boolean;
+  readonly automaticAnalysisCompletedLimit: number;
   readonly automaticAnalysisStartWindowSeconds: number;
   readonly symbol: string;
   readonly accountKey: string;
@@ -157,6 +158,19 @@ export function loadExecutionConfig(
       false,
       "AUTOMATIC_ANALYSIS_ENABLED",
     ),
+    automaticAnalysisCompletedLimit: (() => {
+      const value = integerValue(
+        environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,
+        0,
+        "AUTOMATIC_ANALYSIS_COMPLETED_LIMIT",
+      );
+      if (value > 10_000) {
+        throw new Error(
+          "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_LIMIT",
+        );
+      }
+      return value;
+    })(),
     automaticAnalysisStartWindowSeconds: (() => {
       const value = integerValue(
         environment.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS,
@@ -228,6 +242,7 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         maxOrdersPerDay: config.maxOrdersPerDay,
         maxPositionNotional: config.maxPositionNotional,
         automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+        automaticAnalysisCompletedLimit: config.automaticAnalysisCompletedLimit,
         automaticAnalysisStartWindowSeconds:
           config.automaticAnalysisStartWindowSeconds,
       }),

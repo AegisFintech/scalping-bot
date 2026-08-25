@@ -43,6 +43,10 @@ import {
   evaluateAutomaticAnalysisWindow,
   PostgresAutomaticAnalysisSchedule,
 } from "./automatic-analysis-schedule.js";
+import {
+  enforceAutomaticAnalysisCampaign,
+  PostgresAutomaticAnalysisCampaign,
+} from "./automatic-analysis-campaign.js";
 import { loadExecutionConfig, safetyConfigHash } from "./config.js";
 import { compactTailCounts } from "./analytics-config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
@@ -393,6 +397,13 @@ async function main(): Promise<void> {
     pool,
     accountId: identity.accountId,
     symbolId: identity.symbolId,
+  });
+  const automaticAnalysisCampaign = new PostgresAutomaticAnalysisCampaign({
+    pool,
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+    strategyVersionId: identity.strategyVersionId,
+    configuredLimit: config.automaticAnalysisCompletedLimit,
   });
   const demoExecutionStore =
     brokerClient !== null && config.tradingMode === "demo"
@@ -857,6 +868,25 @@ async function main(): Promise<void> {
     config.tradingMode !== "live" && demoRecoveryState.certain;
   const status = async (): Promise<ExecutionStatus> => {
     const current = await safety();
+    const campaign = await automaticAnalysisCampaign
+      .progress()
+      .catch((error) => ({
+        enabled: config.automaticAnalysisCompletedLimit > 0,
+        limit:
+          config.automaticAnalysisCompletedLimit > 0
+            ? config.automaticAnalysisCompletedLimit
+            : null,
+        completed: null,
+        remaining: null,
+        complete: false,
+        allowed: false,
+        reasonCodes: [
+          error instanceof Error &&
+          error.message === "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID"
+            ? error.message
+            : "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE",
+        ],
+      }));
     const eligibility = evaluateAnalysisEligibility(current);
     const modeReasons =
       config.tradingMode === "demo"
@@ -884,6 +914,14 @@ async function main(): Promise<void> {
         current.databaseEmergencyStop,
       pauseNewAnalyses: current.pauseNewAnalyses,
       automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+      automaticAnalysisCampaign: {
+        enabled: campaign.enabled,
+        limit: campaign.limit,
+        completed: campaign.completed,
+        remaining: campaign.remaining,
+        complete: campaign.complete,
+        reasonCodes: campaign.reasonCodes,
+      },
       aiCircuitOpenUntil: model.circuitOpenUntil,
       tradingEnabled:
         eligibility.allowed &&
@@ -1017,6 +1055,24 @@ async function main(): Promise<void> {
   });
 
   let ticking = false;
+  let automaticCampaignPausePersisted = false;
+  const persistAutomaticCampaignPause = async (): Promise<void> => {
+    if (automaticCampaignPausePersisted) return;
+    await controls.setControl({
+      key: "PAUSE_NEW_ANALYSES",
+      scope: config.instanceId,
+      enabled: true,
+      actor: "automatic-analysis-campaign",
+      reason: `Configured campaign completed ${config.automaticAnalysisCompletedLimit} durable external-AI analyses; paused for review`,
+    });
+    automaticCampaignPausePersisted = true;
+    logger.log("info", {
+      event_name: "automatic_analysis_campaign_completed",
+      outcome: "paused",
+      completed: config.automaticAnalysisCompletedLimit,
+      limit: config.automaticAnalysisCompletedLimit,
+    });
+  };
   const tick = async (): Promise<void> => {
     if (ticking) return;
     ticking = true;
@@ -1054,6 +1110,15 @@ async function main(): Promise<void> {
           config.automaticAnalysisEnabled,
         ).allowed
       ) {
+        const campaignBefore = await automaticAnalysisCampaign.progress();
+        if (
+          !(await enforceAutomaticAnalysisCampaign(
+            campaignBefore,
+            persistAutomaticCampaignPause,
+          ))
+        ) {
+          return;
+        }
         const quote = await marketClient.quote(config.symbol);
         const window = evaluateAutomaticAnalysisWindow({
           serverTime: quote.serverTime,
@@ -1097,6 +1162,10 @@ async function main(): Promise<void> {
                 : { reason_code: lastCycle.reasonCodes[0] }),
               interval_start: window.intervalStart,
             });
+            await enforceAutomaticAnalysisCampaign(
+              await automaticAnalysisCampaign.progress(),
+              persistAutomaticCampaignPause,
+            );
           }
         }
       }

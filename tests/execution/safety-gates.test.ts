@@ -62,8 +62,28 @@ describe("execution safety gates", () => {
       demoTradingEnabled: false,
       emergencyStop: true,
       automaticAnalysisEnabled: false,
+      automaticAnalysisCompletedLimit: 0,
       automaticAnalysisStartWindowSeconds: 10,
     });
+  });
+
+  it("bounds the durable completed-analysis campaign limit", () => {
+    expect(
+      loadExecutionConfig({ AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "100" })
+        .automaticAnalysisCompletedLimit,
+    ).toBe(100);
+    expect(
+      loadExecutionConfig({ AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "10000" })
+        .automaticAnalysisCompletedLimit,
+    ).toBe(10_000);
+    expect(() =>
+      loadExecutionConfig({ AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "10001" }),
+    ).toThrow("CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_LIMIT");
+    for (const value of ["-1", "1.5"]) {
+      expect(() =>
+        loadExecutionConfig({ AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: value }),
+      ).toThrow("CONFIG_INTEGER_INVALID:AUTOMATIC_ANALYSIS_COMPLETED_LIMIT");
+    }
   });
 
   it("bounds the automatic broker-M1 start window", () => {

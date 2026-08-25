@@ -13,6 +13,7 @@ import {
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
+import { PostgresAutomaticAnalysisCampaign } from "../../apps/execution-service/src/automatic-analysis-campaign.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
 import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
@@ -474,6 +475,19 @@ describe("PostgreSQL migrations integration", () => {
         instanceId: "integration-instance",
         environment: "test",
       });
+      const analysisCampaign = new PostgresAutomaticAnalysisCampaign({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+        strategyVersionId,
+        configuredLimit: 1,
+      });
+      await expect(analysisCampaign.progress()).resolves.toMatchObject({
+        completed: 0,
+        remaining: 1,
+        complete: false,
+        allowed: true,
+      });
       await trail.market(
         analysisId,
         decisionSnapshot("2026-08-24T00:00:00.000Z"),
@@ -606,6 +620,21 @@ describe("PostgreSQL migrations integration", () => {
         authorization: "[REDACTED]",
         system_prompt: promptContent,
         system_prompt_sha256: promptArtifact.sha256,
+      });
+      await expect(
+        new PostgresAutomaticAnalysisCampaign({
+          pool: isolated,
+          accountId: demoAccountId,
+          symbolId,
+          strategyVersionId,
+          configuredLimit: 1,
+        }).progress(),
+      ).resolves.toMatchObject({
+        completed: 1,
+        remaining: 0,
+        complete: true,
+        allowed: false,
+        reasonCodes: ["AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE"],
       });
       await expect(
         trail.model(

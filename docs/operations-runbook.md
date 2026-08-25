@@ -137,6 +137,26 @@ state is active or uncertain. A rejected analysis may retry on a later broker
 minute. An accepted analysis becomes terminal only after its group closes,
 expires, or fails; only then can a later broker minute start the next cycle.
 
+For a bounded review campaign, set `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` to the
+number of completed external-AI results required. Zero leaves the campaign
+boundary disabled. The durable count is scoped to the exact account, symbol,
+and immutable strategy release and requires both a completed model request and
+completed response. A spread/data rejection or failed provider call does not
+consume a slot. The service queries the count before each broker-minute claim;
+database failure or malformed progress blocks the scheduler. After the final
+result finishes normal validation/placement, the service writes an audited
+`PAUSE_NEW_ANALYSES` control. Existing pending orders and positions remain under
+normal expiry, callback, TP/SL, and reconciliation handling. Start another
+campaign only with a reviewed new release/config hash so the prior count cannot
+be silently reset.
+
+`MAX_ORDERS_PER_DAY` currently counts created OCO order groups, not individual
+BUY/SELL legs. Size that independent daily ceiling for the campaign plus any
+groups already created in the configured trading day. It remains a separate
+lockout: increasing it does not override the completed-analysis campaign,
+daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
+gates.
+
 Prompt `system-v5` tells the endpoint that the execution service preserves its
 entry and stop loss but halves the distance from entry to take profit. It asks
 for twice the configured effective minimum R:R and supplies the maximum stop
