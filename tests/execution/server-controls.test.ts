@@ -27,6 +27,7 @@ function server(
         emergencyStopped: true,
         pauseNewAnalyses: false,
         automaticAnalysisEnabled: false,
+        aiCircuitOpenUntil: null,
         tradingEnabled: false,
         startupChecksPassed: true,
         lastCycle: null,

@@ -96,6 +96,10 @@ export class AiOrchestratorHttpClient {
     return this.#openUntil > (this.#options.now ?? Date.now)();
   }
 
+  get circuitOpenUntil(): string | null {
+    return this.circuitOpen ? new Date(this.#openUntil).toISOString() : null;
+  }
+
   #openCircuit(): void {
     this.#openUntil =
       (this.#options.now ?? Date.now)() +
