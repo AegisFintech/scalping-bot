@@ -1569,3 +1569,33 @@ replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
 secret scan, shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Rollout
 evidence will be recorded after merge. Implementation is proposed in
 [PR #103](https://github.com/AegisFintech/scalping-bot/pull/103).
+
+PR #103 merged as `b00cc05`. New analyses were paused for rollout while the
+existing SELL demo position remained under the unchanged `.21` process. cTrader
+had acknowledged its broker-generated closing order and supplied the closing
+deal at 25 Aug 2026, 14:23:11 GMT+8; PostgreSQL then recorded the terminal SHORT
+with realized demo P/L `-3.0700000000`, fees `-0.2800000000`, zero active
+groups/orders/positions, and zero unresolved execution events. No active broker
+lifecycle was restarted.
+
+The ignored mode-`0600` environment's reviewed campaign baseline advanced from
+six to ten. All five PM2 services loaded `.22` in dependency order. The first
+execution start raced the newly restarted market-data listener and received a
+loopback refusal; its configured PM2 retry then started online and ready. Every
+health endpoint passed. Under pause, status reported certain startup, baseline
+ten, zero current-release completions, and only `ANALYSES_PAUSED`. The new
+endpoint returned exact `NONE` with no identifiers because no position was
+open. Configured Streamlit AppTest rendered 35 dataframes and 23 metrics with
+zero exceptions, including the new panel's no-open-trade state.
+
+Releasing the audited pause restored automatic analysis, demo broker authority,
+and empty reason codes. The next broker-minute cycle reached the external AI,
+advanced the campaign to `11 / 100`, and rejected `BUY_ENTRY_TOO_CLOSE` without
+creating an order. The following broker minute rejected
+`SPREAD_POINTS_EXCEEDED` before inference and did not consume a campaign slot.
+This proves automatic scheduler continuation and the deployed monitor's safe
+empty state. The broker-valued `AVAILABLE` path remains covered by exact
+cTrader-normalization, SQL, HTTP-contract, and Streamlit failure-path tests and
+will appear automatically on the next certainly reconciled open position; no
+trade was forced for display verification. These are demo operational results,
+not profitability evidence. ISSUE-046 is complete.
