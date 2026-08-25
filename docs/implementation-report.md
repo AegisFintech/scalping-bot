@@ -1330,3 +1330,24 @@ passed. Configured Streamlit AppTest rendered 34 dataframes with zero
 exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the
 tracked-file secret scan, shell/PM2 syntax, and all five offline systemd parses
 at 2.8 (`OK`) passed.
+
+PR #89 merged as `b18322b`. Before deployment, the prior `.18` demo position
+had closed. Periodic recovery showed zero active groups, orders, positions, and
+unresolved execution events, although its malformed terminal callback had left
+the known process-local `CTRADER_FIELD_INVALID:price` latch. New analyses were
+durably paused, then execution was deleted/recreated as `.19`; certain startup
+reconciliation cleared only that transient latch. The process reported the
+configured 100-result limit and an independent daily OCO-group cap of 103,
+representing three already-created trading-day groups plus the requested 100.
+
+Under pause, status and PostgreSQL both reported release `.19`, campaign
+progress `0 / 100`, and no active or unresolved broker state. Streamlit AppTest
+rendered 34 dataframes, 19 metrics, one campaign progress element, and zero
+exceptions. The pause was cleared with an audited reason at 12:07
+Asia/Singapore. The 12:08 automatic broker minute completed the first durable
+external-AI response and advanced the campaign to `1 / 100`. Its subsequent
+fresh-market placement gate rejected `PLACEMENT_CANDLE_CONTEXT_CHANGED`, so no
+order was created. The completed model response correctly consumes a campaign
+slot; the unchanged candle-context gate correctly prevents stale placement.
+The scheduler continues automatically with 99 completed responses remaining
+and will write the review pause at 100.
