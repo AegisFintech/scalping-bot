@@ -1125,7 +1125,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   ISSUE-038 release `.16`, the typed analytics/AI HTTP boundaries, immutable
   `system-v4`/schema 2.0 history, and the protected cTrader demo environment.
 - Current status: implementation is in progress on
-  `issue-039-hybrid-chart-analysis`. Analytics response 1.1, deterministic
+  `issue-039-hybrid-chart-analysis` through
+  [PR #84](https://github.com/AegisFintech/scalping-bot/pull/84). Analytics response 1.1, deterministic
   completed-candle PNG rendering, prompt `system-v5`, strict schema 2.1,
   technical-map semantic linkage, migration `0012`, typed multimodal transport,
   durable chart provenance, Streamlit display, documentation, and positive plus
