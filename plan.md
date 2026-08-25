@@ -1455,6 +1455,7 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   rejected/no-order results, 5 closed demo losses, and 1 pending-stop setup.
   This is a read-only dashboard projection; it cannot change analysis,
   execution, risk, reconciliation, or broker state.
+- Delivery: [PR #106](https://github.com/AegisFintech/scalping-bot/pull/106).
 
 ## Acceptance criteria
 

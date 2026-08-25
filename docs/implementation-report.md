@@ -1633,4 +1633,5 @@ audits, tracked-file secret scan, shell/PM2 syntax, and five offline systemd
 security parses at 2.8 (`OK`). Configured AppTest rendered 40 dataframes and 36
 metrics with zero exceptions and matched the live durable 14/100 campaign
 snapshot. These are display and lifecycle-integrity results, not trading or
-profitability evidence.
+profitability evidence. Implementation is proposed in
+[PR #106](https://github.com/AegisFintech/scalping-bot/pull/106).
