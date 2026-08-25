@@ -127,6 +127,10 @@ rendered 35 dataframes with zero exceptions and Overview labeled the prior
 setup as terminal history. After release, the next automatic M1 cycle completed
 an external-AI response, advanced the campaign to `5 / 100`, and safely
 rejected an invalid downside-target sequence without creating an order.
+PR #94 then merged the reason guidance and restarted only Streamlit; execution
+PID `2522098` remained unchanged. Dashboard health and AppTest passed. The
+unchanged automatic loop advanced to `6 / 100`, placed a new pending demo OCO,
+and Overview rendered both exact legs under `ACTIVE MANAGED SETUP`.
 
 On 2026-08-25, ISSUE-041 passed Prettier, ESLint, TypeScript typecheck/build,
 198 Node tests across 34 files, 14 schema tests, 3 static migration tests, and

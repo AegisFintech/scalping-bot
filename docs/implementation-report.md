@@ -1416,3 +1416,22 @@ the service to ready with no blocking reason. This proves scheduler recovery
 and campaign continuation, not forecast accuracy or profitability. ISSUE-043
 adds operator-readable guidance for that exact target-map rejection without
 changing its fail-closed behavior.
+
+PR #94 merged as `799c3fc`. Only the Streamlit PM2 process was restarted;
+execution PID `2522098` remained online and unchanged. Dashboard health passed,
+and configured AppTest rendered 35 dataframes with zero exceptions. The new
+guidance describes the observed downside-target rejection as a target not
+below the sell entry, off broker tick, or not strictly descending, followed by
+a fresh automatic request rather than an operator bypass.
+
+While that dashboard-only update was delivered, the unchanged `.20` loop
+completed another external-AI response and advanced the campaign to `6 / 100`.
+This cycle passed validation and placed a new demo OCO. The final evidence
+snapshot showed no position yet and two active pending orders: BUY entry
+`4646.6000000000`, SL `4642.6000000000`, TP `4654.6000000000`; SELL entry
+`4641.1000000000`, SL `4645.1000000000`, TP `4633.1000000000`; both expiring at
+`2026-08-25T05:37:03.364Z`. Overview rendered
+`SYSTEM STATUS: ACTIVE_CYCLE_OR_SETUP` and `ACTIVE MANAGED SETUP`, correctly
+explaining that automatic analysis waits while the broker manages those stops.
+All five PM2 services were online on `.20`. These are broker-demo results, not
+live-money or profitability evidence.
