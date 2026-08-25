@@ -32,6 +32,7 @@ from decision_inspector import (
     model_output_authority_notice,
     model_output_view,
     model_proposal_label,
+    open_position_monitor_view,
     prompt_artifact_view,
     reason_code_view,
     safe_audit_detail,
@@ -96,6 +97,48 @@ def control(path: str, payload: dict[str, object]) -> tuple[bool, str]:
         return response.is_success, response.text
     except httpx.HTTPError as error:
         return False, str(error)
+
+
+@st.fragment(run_every="2s")
+def live_open_trade_panel() -> None:
+    st.subheader("Live open trade")
+    try:
+        monitor = open_position_monitor_view(api_get("/v1/open-position-monitor"))
+    except (httpx.HTTPError, RuntimeError, DecisionViewError, ValueError):
+        st.warning(
+            "Live broker price and P/L are unavailable. The dashboard will retry in 2 seconds; "
+            "no value is estimated."
+        )
+        return
+    if monitor["status"] == "NONE":
+        st.info("No strategy-owned trade is currently open at the broker.")
+        return
+    if monitor["status"] == "UNAVAILABLE":
+        st.warning(
+            "An open-trade value cannot be shown safely right now. "
+            f"Reason: {monitor['reasonCode']}. The dashboard will retry in 2 seconds."
+        )
+        return
+
+    currency = monitor["accountCurrency"]
+    side = monitor["side"]
+    mark_side = "bid" if side == "BUY" else "ask"
+    columns = st.columns(6)
+    columns[0].metric(f"Current close price ({mark_side})", monitor["markPrice"])
+    columns[1].metric("Broker net unrealized P/L", f"{monitor['netUnrealizedPnl']} {currency}")
+    columns[2].metric("Broker gross unrealized P/L", f"{monitor['grossUnrealizedPnl']} {currency}")
+    columns[3].metric("Commission recorded so far", f"{monitor['recordedCommission']} {currency}")
+    columns[4].metric("Live bid", monitor["bid"])
+    columns[5].metric("Live ask", monitor["ask"])
+    st.caption(
+        f"Open side: {side} · quote: {format_gmt8_timestamp(monitor['quoteSourceTime'])} · "
+        f"broker P/L captured: {format_gmt8_timestamp(monitor['pnlCapturedAt'])} · "
+        "refreshes every 2 seconds"
+    )
+    st.caption(
+        "P/L is reported by cTrader. Commission is the durable amount recorded so far; "
+        "the final realized P/L and total fees are authoritative only after the trade closes."
+    )
 
 
 try:
@@ -198,6 +241,8 @@ with tabs[0]:
     else:
         st.info(broker_message)
     st.markdown(f"**What happens next:** {broker_view['next_action']}")
+
+    live_open_trade_panel()
 
     st.subheader(f"AUTOMATION STATUS: {automation_view['state']}")
     state_message = f"{automation_view['headline']} — {automation_view['detail']}"

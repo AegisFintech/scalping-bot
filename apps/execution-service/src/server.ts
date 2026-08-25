@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 
+import type { OpenPositionMonitor } from "../../../packages/contracts/src/index.js";
 import type { RuntimeControlStore } from "../../../packages/database/src/runtime-controls.js";
 import type { AnalysisCoordinator, CycleResult } from "./coordinator.js";
 import type { OrderMaintenance } from "./order-maintenance.js";
@@ -43,6 +44,7 @@ export interface ExecutionServerOptions {
   readonly configHash: string;
   readonly mode: string;
   readonly status: () => Promise<ExecutionStatus>;
+  readonly openPositionMonitor?: () => Promise<OpenPositionMonitor>;
   readonly updateLastCycle: (result: CycleResult) => void;
   readonly initializeDailyRiskBaseline?: (input: {
     readonly actor: string;
@@ -102,6 +104,15 @@ export function createExecutionServer(
           .send({ status: "not_ready", reason_codes: status.reasonCodes });
   });
   app.get("/v1/status", () => options.status());
+  app.get("/v1/open-position-monitor", async (_request, reply) => {
+    if (options.openPositionMonitor === undefined) {
+      return reply.code(404).send({
+        status: "UNAVAILABLE",
+        reasonCode: "OPEN_POSITION_MONITOR_DISABLED",
+      });
+    }
+    return reply.send(await options.openPositionMonitor());
+  });
   app.get("/metrics", async (_request, reply) => {
     if (options.metrics === undefined)
       return reply.code(404).send({ error: "METRICS_DISABLED" });

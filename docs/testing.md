@@ -58,6 +58,12 @@ Runtime fill-idempotency tests persist a complete deal, repeat the same deal
 with its contextual position price omitted, and prove no second store mutation
 or lockout occurs. A different deal ID—or the same ID after uncertain
 persistence—with the missing price remains a tested fail-closed error.
+Open-position monitor tests cover exact cTrader money scaling, internal broker
+position matching, long-at-bid and short-at-ask marks, persisted signed
+commission, zero-position short-circuiting, bounded HTTP output, and sanitized
+Streamlit validation. Missing or duplicate broker P/L, multiple active
+positions, uncertain durable state, symbol mismatch, malformed money, and
+unexpected display fields all fail unavailable without an inferred value.
 Periodic recovery-runner tests prove a normal attempt is cadence-limited, a
 broker synchronization can force a refresh, concurrent timer/reconnect calls
 share one attempt, and a thrown broker/history operation becomes a stable

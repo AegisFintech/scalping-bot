@@ -66,6 +66,10 @@ import {
   type MarginEstimator,
 } from "./oco-risk-evaluator.js";
 import { OrderMaintenance } from "./order-maintenance.js";
+import {
+  PostgresOpenPositionMonitor,
+  unavailableOpenPositionMonitor,
+} from "./open-position-monitor.js";
 import { PostgresObservabilityOutbox } from "./observability-outbox.js";
 import { PaperAccountAdapter, LinearMarginEstimator } from "./paper-account.js";
 import { PaperGateway } from "./paper-gateway.js";
@@ -418,6 +422,20 @@ async function main(): Promise<void> {
     symbolId: identity.symbolId,
     mode: config.tradingMode,
   });
+  const openPositionMonitor =
+    brokerClient === null
+      ? null
+      : new PostgresOpenPositionMonitor({
+          pool,
+          accountId: identity.accountId,
+          symbolId: identity.symbolId,
+          mode: config.tradingMode,
+          providerSymbolId: executionSymbolId,
+          symbolName: config.symbol,
+          quote: () => marketClient.quote(config.symbol),
+          pnl: (brokerPositionId) =>
+            brokerClient.positionUnrealizedPnl(brokerPositionId),
+        });
   const demoExecutionStore =
     brokerClient !== null && config.tradingMode === "demo"
       ? new PostgresDemoExecutionStore({
@@ -1140,6 +1158,17 @@ async function main(): Promise<void> {
     configHash,
     mode: config.tradingMode,
     status,
+    openPositionMonitor: async () => {
+      if (openPositionMonitor === null) {
+        return {
+          status: "UNAVAILABLE",
+          reasonCode: "OPEN_POSITION_MONITOR_UNSUPPORTED_MODE",
+        };
+      }
+      return await openPositionMonitor
+        .read()
+        .catch(unavailableOpenPositionMonitor);
+    },
     updateLastCycle: (result) => {
       lastCycle = result;
     },

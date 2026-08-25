@@ -20,6 +20,7 @@ from apps.dashboard.decision_inspector import (
     model_output_authority_notice,
     model_output_view,
     model_proposal_label,
+    open_position_monitor_view,
     prompt_artifact_view,
     reason_code_view,
     safe_audit_detail,
@@ -620,3 +621,49 @@ def test_trade_outcome_view_rejects_sensitive_or_malformed_data() -> None:
     }
     with pytest.raises(DecisionViewError, match="DECIMAL_INVALID"):
         trade_outcome_view(malformed)
+
+
+def test_open_position_monitor_view_preserves_exact_broker_values() -> None:
+    view = open_position_monitor_view(
+        {
+            "status": "AVAILABLE",
+            "side": "BUY",
+            "accountCurrency": "USD",
+            "bid": "4641.2",
+            "ask": "4641.4",
+            "markPrice": "4641.2",
+            "grossUnrealizedPnl": "3.2",
+            "netUnrealizedPnl": "2.75",
+            "recordedCommission": "-0.3",
+            "quoteSourceTime": "2026-08-25T04:00:00.000Z",
+            "quoteReceivedAt": "2026-08-25T04:00:00.050Z",
+            "pnlCapturedAt": "2026-08-25T04:00:00.060Z",
+        }
+    )
+
+    assert view["markPrice"] == "4641.2"
+    assert view["netUnrealizedPnl"] == "2.75"
+    assert view["recordedCommission"] == "-0.3"
+
+
+def test_open_position_monitor_view_handles_none_and_rejects_malformed_data() -> None:
+    assert open_position_monitor_view({"status": "NONE"}) == {"status": "NONE"}
+    with pytest.raises(DecisionViewError, match="FIELDS_INVALID"):
+        open_position_monitor_view({"status": "AVAILABLE", "broker_position_id": "must-not-render"})
+    with pytest.raises(DecisionViewError, match="DECIMAL_INVALID"):
+        open_position_monitor_view(
+            {
+                "status": "AVAILABLE",
+                "side": "SELL",
+                "accountCurrency": "USD",
+                "bid": "NaN",
+                "ask": "4641.4",
+                "markPrice": "4641.4",
+                "grossUnrealizedPnl": "3.2",
+                "netUnrealizedPnl": "2.75",
+                "recordedCommission": "-0.3",
+                "quoteSourceTime": "2026-08-25T04:00:00.000Z",
+                "quoteReceivedAt": "2026-08-25T04:00:00.050Z",
+                "pnlCapturedAt": "2026-08-25T04:00:00.060Z",
+            }
+        )

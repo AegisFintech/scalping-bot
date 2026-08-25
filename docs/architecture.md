@@ -143,6 +143,12 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   account/symbol-scoped spread history even while analysis and trading are
   stopped. The sampler depends only on quote retrieval and persistence; it has
   no coordinator, model, risk-intent, gateway, or broker-command capability.
+- Exposes a separate read-only open-position monitor for the dashboard. It
+  requires exactly one durable, strategy-owned `OPEN` position in the configured
+  account/symbol/mode scope, matches that position to cTrader's per-position
+  unrealized-P/L response, and combines it with the typed fresh quote and
+  persisted fill commission. It returns no account or broker identifiers and
+  has no path to the coordinator, risk engine, or broker commands.
 - Mirrors newly inserted audit events through a durable PostgreSQL outbox. The
   exporter claims rows with leases, sends bounded redacted summaries with
   stable correlation/event IDs, and retries with bounded backoff. Better Stack
@@ -178,6 +184,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   retain the authoritative reason code alongside plain-language impact and
   operator action. Broker-minute history shows UTC and Asia/Singapore time so a
   bounded cooldown is not mistaken for a stopped process.
+- A two-second Streamlit fragment shows an open trade's current bid/ask,
+  side-correct close mark (bid for BUY, ask for SELL), and cTrader-reported
+  gross/net unrealized P/L. Persisted commission incurred so far is shown
+  separately. Missing, ambiguous, mismatched, malformed, or unreconciled
+  evidence renders unavailable and is never estimated.
 - A configured completed-analysis campaign shows its immutable-release target,
   durable completed count, remaining count, progress bar, and explicit
   `CAMPAIGN_COMPLETE` review state. An unavailable or invalid count is displayed

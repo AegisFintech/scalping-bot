@@ -4,10 +4,12 @@ import type { RuntimeControlStore } from "../../packages/database/src/runtime-co
 import type { AnalysisCoordinator } from "../../apps/execution-service/src/coordinator.js";
 import type { OrderMaintenance } from "../../apps/execution-service/src/order-maintenance.js";
 import { createExecutionServer } from "../../apps/execution-service/src/server.js";
+import type { OpenPositionMonitor } from "../../packages/contracts/src/index.js";
 
 function server(
   mode: string,
   initialize: () => Promise<{ tradingDay: string; timezone: string }>,
+  openPositionMonitor?: () => Promise<OpenPositionMonitor>,
 ) {
   return createExecutionServer({
     coordinator: {} as AnalysisCoordinator,
@@ -54,6 +56,7 @@ function server(
       }),
     updateLastCycle: () => undefined,
     initializeDailyRiskBaseline: initialize,
+    ...(openPositionMonitor === undefined ? {} : { openPositionMonitor }),
   });
 }
 
@@ -107,6 +110,54 @@ describe("demo baseline control", () => {
     expect(initialize).toHaveBeenCalledWith({
       actor: "operator",
       reason: "emergency-stopped preflight",
+    });
+    await app.close();
+  });
+});
+
+describe("open position monitor route", () => {
+  it("returns the bounded read-only monitor without authentication", async () => {
+    const read = vi.fn(() =>
+      Promise.resolve<OpenPositionMonitor>({
+        status: "AVAILABLE",
+        side: "BUY",
+        accountCurrency: "USD",
+        bid: "4641.2",
+        ask: "4641.4",
+        markPrice: "4641.2",
+        grossUnrealizedPnl: "3.2",
+        netUnrealizedPnl: "2.75",
+        recordedCommission: "-0.3",
+        quoteSourceTime: "2026-08-25T04:00:00.000Z",
+        quoteReceivedAt: "2026-08-25T04:00:00.050Z",
+        pnlCapturedAt: "2026-08-25T04:00:00.060Z",
+      }),
+    );
+    const app = server("demo", vi.fn(), read);
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/open-position-monitor",
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      status: "AVAILABLE",
+      markPrice: "4641.2",
+      netUnrealizedPnl: "2.75",
+    });
+    expect(read).toHaveBeenCalledOnce();
+    await app.close();
+  });
+
+  it("reports disabled instead of inferring data when no monitor exists", async () => {
+    const app = server("paper", vi.fn());
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/open-position-monitor",
+    });
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      status: "UNAVAILABLE",
+      reasonCode: "OPEN_POSITION_MONITOR_DISABLED",
     });
     await app.close();
   });

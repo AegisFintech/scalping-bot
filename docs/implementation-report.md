@@ -1540,3 +1540,32 @@ headline, `AUTOMATION STATUS: WAITING_FOR_AI`, the human GMT+8 retry time, and
 the no-restart guidance. Automation and demo authority remain enabled; the
 scheduler will half-open automatically. This is demo operational evidence, not
 a profitability claim. ISSUE-045 is complete.
+
+## Live open-position price, P/L, and commission monitor
+
+ISSUE-046 is tracked by
+[issue #102](https://github.com/AegisFintech/scalping-bot/issues/102). Release
+`.22` adds a display-only execution endpoint and a two-second Streamlit Overview
+fragment for the one exact strategy-owned open position. The endpoint combines
+the typed fresh market quote, cTrader's exact per-position gross/net unrealized
+P/L response, and already persisted fill commission. BUY positions use bid and
+SELL positions use ask as the current close mark. Decimal values remain strings
+through service and dashboard boundaries, timestamps render in GMT+8, and no
+account, order, fill, or broker position identifier is exposed.
+
+The monitor is intentionally outside the coordinator and broker-command path.
+No position produces `NONE`; multiple positions, non-`OPEN` active state,
+missing internal broker identity, missing/duplicate cTrader P/L, quote or symbol
+mismatch, malformed money, or invalid time produces `UNAVAILABLE`. No price or
+P/L is estimated. Commission is explicitly incurred-to-date and signed; the
+durable terminal trade remains authoritative for final realized P/L and fees.
+Focused TypeScript and Python tests cover both sides, exact scaling, bounded
+output, zero-state short circuit, and the rejection paths. Pre-merge gates pass:
+Prettier, ESLint, TypeScript typecheck/build, 221 Node tests across 37 files, 16
+JSON Schema tests, 3 migration tests, all 3 configured PostgreSQL/HTTP
+integration tests, Ruff format/lint, strict mypy over 21 source files, 70 Python
+tests, configured Streamlit AppTest with 35 dataframes and zero exceptions,
+replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
+secret scan, shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Rollout
+evidence will be recorded after merge. Implementation is proposed in
+[PR #103](https://github.com/AegisFintech/scalping-bot/pull/103).

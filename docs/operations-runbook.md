@@ -168,6 +168,25 @@ fees, and close time. `UNAVAILABLE` or an inconsistent active/terminal
 projection is not an empty state: inspect Orders & Positions and the execution
 journal and do not assume there is no broker exposure.
 
+When the strategy has one certainly reconciled open broker position, Overview's
+**Live open trade** panel refreshes every two seconds. **Current close price** is
+the executable side used to close now: bid for a BUY/long and ask for a
+SELL/short. Gross and net unrealized P/L come directly from cTrader's
+per-position response and are labelled in the durable account currency.
+**Commission recorded so far** is the signed sum of durable fill commissions
+already received for that position/order group; a negative value is a charge.
+Do not subtract it from net P/L again. Closing commission or other terminal
+charges may not exist yet, so the immutable `trades.realized_pnl` and `fees`
+record after close remains the final authority.
+
+`NONE` means no strategy-owned active position was found in this exact scope.
+`UNAVAILABLE` is deliberately different: ambiguous positions, an uncertain
+position state, missing broker identity, cTrader P/L failure, market quote
+failure, symbol mismatch, malformed decimals, or invalid timestamps produce no
+estimated display value. Inspect Orders & Positions, execution logs, and the
+broker before intervening. This monitor is telemetry only; its polling cannot
+start, stop, resize, place, cancel, or close a trade.
+
 The generic `RECONCILIATION_UNCERTAIN` gate remains visible together with any
 bounded source reason reported by the account, gateway, terminal recovery,
 event recorder, database group, or audit persistence. For example,
