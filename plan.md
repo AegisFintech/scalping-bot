@@ -1173,7 +1173,22 @@ never justify empty, noisy, unsafe, or misleading commits.
   AppTest with zero exceptions and 23 dataframes, replay/backtest smoke tests,
   zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
   and five offline systemd parses at 2.8 (`OK`). Deployment and the automatic
-  image-backed proof cycle wait for merge.
+  image-backed proof cycle wait for merge. PR #86 merged as `5738787`. The
+  stopped execution process was replaced under the durable analysis pause;
+  PM2 then reported `.18` and `AI_TIMEOUT_MS=60000`. Startup was ready with
+  certain reconciliation and zero active groups, orders, positions, or
+  unresolved execution events. After the audited pause release, the 11:45 SGT
+  minute safely rejected an excessive spread. The 11:46 SGT automatic minute
+  persisted a hash-verified 1600x1200 chart, the exact hash-verified
+  `system-v5` prompt, and a completed schema 2.1 response after a measured
+  38,819 ms model round trip. All semantic/risk validations and both side risk
+  decisions passed. The demo OCO was placed; SELL filled and BUY was cancelled.
+  The resulting protected SELL position is awaiting its broker TP/SL deal, so
+  the active-position interlock correctly prevents a duplicate cycle. A
+  post-run Streamlit AppTest rendered 34 dataframes with zero exceptions.
+  Normal automation is enabled, the AI circuit is closed, and ISSUE-040 is
+  complete. Deployment evidence is tracked by
+  [PR #87](https://github.com/AegisFintech/scalping-bot/pull/87).
 
 ## Acceptance criteria
 

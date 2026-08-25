@@ -1267,3 +1267,33 @@ tracked-file secret scan, shell/PM2 syntax, and all five offline systemd parses
 at 2.8 (`OK`) passed. The durable analysis pause remains active until the
 merged release starts with certain reconciliation and completes an automatic
 image-backed schema 2.1 cycle within the corrected caller budget.
+
+PR #86 merged as `5738787`. Execution was deleted and recreated under the
+durable analysis pause so no inherited PM2 environment survived; the new
+process reported release `.18` and `AI_TIMEOUT_MS=60000`. Its startup endpoint
+was ready, PostgreSQL registered `.18`, and reconciliation showed zero active
+groups, orders, positions, or unresolved execution events. The pause was then
+released through the authenticated audited control API. Status reported demo
+automatic analysis and trading enabled, no emergency stop, no open AI circuit,
+and no blocking reasons.
+
+The 11:45 Asia/Singapore automatic cycle persisted its chart but correctly
+stopped before AI on absolute and percentile spread limits. The 11:46 cycle
+passed those gates, persisted a 65,785-byte 1600x1200 PNG whose bytes matched
+its SHA-256, and supplied it with the persisted `system-v5` prompt whose bytes
+matched its recorded hash. The transition audit measured 38,819 ms from
+`MODEL_PENDING` to `VALIDATING`, within the corrected timeout. The completed
+schema 2.1 response linked BUY entry/confirmation at 4642.00 with first target
+4652.00 and SELL entry/confirmation at 4631.80 with first target 4623.40. All
+recorded semantic/risk validations and both side risk decisions were accepted.
+
+The coordinator placed the demo OCO. Its SELL stop filled and its BUY peer was
+cancelled; the protected SELL position remained open awaiting the
+broker-generated TP/SL deal at the evidence checkpoint. During that state the
+service exposes `RELEVANT_POSITION_EXISTS` and
+`DEMO_CLOSING_ORDER_AWAITING_DEAL`, preventing a duplicate analysis or order as
+intended. A post-cycle configured Streamlit AppTest rendered 34 dataframes with
+zero exceptions, including the exact prompt/response history. Normal automation
+remains enabled and will re-arm only after the terminal deal is reconciled.
+This rollout evidence is tracked by
+[PR #87](https://github.com/AegisFintech/scalping-bot/pull/87).
