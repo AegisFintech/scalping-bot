@@ -185,7 +185,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-040 | complete    | [Register the image-analysis timeout as a new immutable release](https://github.com/AegisFintech/scalping-bot/issues/85)          | Versioned 60-second caller budget; paused deployment; completed automatic multimodal proof                    |
 | ISSUE-041 | complete    | [Run a bounded 100-completed-analysis demo campaign](https://github.com/AegisFintech/scalping-bot/issues/88)                      | Durable scoped counter; dashboard progress; audited automatic pause at the boundary                           |
 | ISSUE-042 | complete    | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
-| ISSUE-043 | in progress | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
+| ISSUE-043 | complete    | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1301,8 +1301,13 @@ never justify empty, noisy, unsafe, or misleading commits.
   migration tests, all 3 configured PostgreSQL integration tests, 55 Python
   tests, strict formatting/lint/type checks, configured Streamlit AppTest,
   replay/backtest smoke tests, zero-vulnerability audits, secret/shell/PM2
-  checks, and five systemd parses at 2.8 (`OK`). Dashboard-only deployment
-  awaits merge.
+  checks, and five systemd parses at 2.8 (`OK`). PR #94 merged as `799c3fc`.
+  Only `scalper-dashboard` restarted; execution PID `2522098` stayed online and
+  unchanged. Dashboard health and AppTest passed with Overview showing
+  `ACTIVE_CYCLE_OR_SETUP` and `ACTIVE MANAGED SETUP`. The automatic demo loop had
+  already advanced to `6 / 100` and placed a new two-leg pending OCO, whose
+  exact entry, SL, TP, expiry, and state are visible on Overview. ISSUE-043 is
+  complete.
 
 ## Acceptance criteria
 
