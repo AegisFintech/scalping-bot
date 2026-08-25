@@ -11,6 +11,8 @@ describe("automatic completed-AI analysis campaign", () => {
     expect(evaluateAutomaticAnalysisCampaign(12, 0)).toEqual({
       enabled: false,
       limit: null,
+      baseline: 0,
+      releaseCompleted: 12,
       completed: 12,
       remaining: null,
       complete: false,
@@ -20,6 +22,8 @@ describe("automatic completed-AI analysis campaign", () => {
     expect(evaluateAutomaticAnalysisCampaign(99, 100)).toEqual({
       enabled: true,
       limit: 100,
+      baseline: 0,
+      releaseCompleted: 99,
       completed: 99,
       remaining: 1,
       complete: false,
@@ -38,6 +42,20 @@ describe("automatic completed-AI analysis campaign", () => {
         reasonCodes: ["AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE"],
       });
     }
+  });
+
+  it("carries forward only an explicit reviewed baseline", () => {
+    expect(evaluateAutomaticAnalysisCampaign(2, 100, 4)).toMatchObject({
+      baseline: 4,
+      releaseCompleted: 2,
+      completed: 6,
+      remaining: 94,
+      allowed: true,
+    });
+    expect(evaluateAutomaticAnalysisCampaign(0, 100, 101)).toMatchObject({
+      allowed: false,
+      reasonCodes: ["AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID"],
+    });
   });
 
   it("fails closed on invalid progress", () => {
@@ -90,13 +108,20 @@ describe("automatic completed-AI analysis campaign", () => {
       symbolId: "symbol",
       strategyVersionId: "strategy",
       configuredLimit: 100,
+      completedBaseline: 4,
     };
     await expect(
       new PostgresAutomaticAnalysisCampaign(input).progress(),
-    ).resolves.toMatchObject({ completed: 42, remaining: 58, allowed: true });
+    ).resolves.toMatchObject({
+      baseline: 4,
+      releaseCompleted: 42,
+      completed: 46,
+      remaining: 54,
+      allowed: true,
+    });
     await expect(
       new PostgresAutomaticAnalysisCampaign(input).progress(),
-    ).resolves.toMatchObject({ completed: 42, remaining: 58, allowed: true });
+    ).resolves.toMatchObject({ completed: 46, remaining: 54, allowed: true });
     expect(query).toHaveBeenCalledTimes(2);
     expect(query.mock.calls[0]?.[1]).toEqual(["account", "symbol", "strategy"]);
   });

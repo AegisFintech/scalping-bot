@@ -1352,3 +1352,44 @@ slot; the unchanged candle-context gate correctly prevents stale placement.
 The scheduler continues automatically with 99 completed responses remaining
 and will write the review pause at 100. This rollout evidence is tracked by
 [PR #90](https://github.com/AegisFintech/scalping-bot/pull/90).
+
+## Terminal callback recovery and operator-readable Overview
+
+ISSUE-042 is tracked by
+[issue #91](https://github.com/AegisFintech/scalping-bot/issues/91). During the
+`.19` campaign the count reached `4 / 100`. The latest OCO then completed at the
+broker and bounded history recovery durably closed its order group, position,
+and trade with no active local order or position. An earlier same-key callback
+payload conflict and a process-local invalid-price callback nevertheless kept
+readiness blocked.
+
+Release `.20` adds a narrow terminal-evidence reconciliation. It retains the
+conflicting journal row and may mark only
+`DEMO_BROKER_EVENT_KEY_CONFLICT` resolved when the exact same demo group has
+two strategy-owned terminal orders, one strategy-owned closed position and
+trade, and a later mapped broker-created SL/TP deal with complete fill and
+close details. The resolution references that terminal event. Recorder failure
+checkpoints acknowledge only failures preceding a new certain terminal proof;
+later failures and repeated/uncertain proofs remain blocking. No schema,
+precision, freshness, deterministic risk, reconciliation, ownership, or mode
+gate is removed.
+
+The execution status now includes a read-only current/latest managed setup
+projection scoped internally by the configured account and symbol. Overview
+prominently states the automation state and immediate operator action, shows
+whether the setup is active or terminal history, and lists exact order/position
+entry, SL, TP, volume, expiry, and update time without exposing broker or
+account identifiers. A reviewed completed-analysis baseline is separately
+validated, hashed, and displayed so `.20` can continue from the four durable
+`.19` results instead of silently resetting the requested campaign.
+
+Pre-merge gates passed: Prettier, ESLint, TypeScript typecheck/build, 204 Node
+tests across 35 files, 14 schema tests, 3 static migration tests, all 3
+configured isolated-PostgreSQL integration tests, Ruff format/lint, strict mypy
+over 20 source files, 55 Python tests, configured Streamlit AppTest with zero
+exceptions, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+tracked-file secret scan, shell/PM2 syntax, and five offline systemd security
+parses at 2.8 (`OK`). Runtime remained unchanged on `.19`; status still showed
+`4 / 100` and the expected callback-conflict lockout before merge/deployment.
+Implementation is proposed in
+[PR #92](https://github.com/AegisFintech/scalping-bot/pull/92).

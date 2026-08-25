@@ -5,6 +5,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import type { RuntimeControlStore } from "../../../packages/database/src/runtime-controls.js";
 import type { AnalysisCoordinator, CycleResult } from "./coordinator.js";
 import type { OrderMaintenance } from "./order-maintenance.js";
+import type { ManagedSetupOverview } from "./managed-setup-overview.js";
 
 export interface ExecutionStatus {
   readonly mode: string;
@@ -16,11 +17,14 @@ export interface ExecutionStatus {
   readonly automaticAnalysisCampaign: {
     readonly enabled: boolean;
     readonly limit: number | null;
+    readonly baseline: number;
+    readonly releaseCompleted: number | null;
     readonly completed: number | null;
     readonly remaining: number | null;
     readonly complete: boolean;
     readonly reasonCodes: readonly string[];
   };
+  readonly managedSetup: ManagedSetupOverview;
   readonly aiCircuitOpenUntil: string | null;
   readonly tradingEnabled: boolean;
   readonly startupChecksPassed: boolean;

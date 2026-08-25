@@ -263,6 +263,14 @@ Failure of any gate returns structured denial reason codes and emits an audit ev
 
 PostgreSQL transactions establish intent before side effects. Broker callbacks are inserted with unique event/idempotency keys. Entry and broker-created closing-order identities remain distinct even when cTrader reuses a client order ID; closing children map through the durable broker position and resolve only from exact terminal deal evidence. On any uncertain network result, the service records `RECONCILIATION_REQUIRED` instead of retrying submission blindly. Startup, reconnect, and throttled same-process reconciliation compare unresolved local intent with bounded broker order/deal/position history and block cycles until certainty is restored. Timer and reconnect attempts are serialized; a missing, ambiguous, paginated, multiple, or invalid terminal result remains fail-closed.
 
+A same-key callback payload conflict remains preserved as `CONFLICT`. It may be
+marked resolved only when the same strategy-owned demo group is durably closed
+with exactly two terminal OCO orders, one closed position and trade, and a later
+mapped broker-generated SL/TP fill carrying complete close details. The
+terminal event key is retained as the resolution evidence. A process-local
+callback failure is acknowledged only once for a new certain terminal proof;
+callbacks recorded after that recovery checkpoint remain blocking.
+
 ## Dependency rationale
 
 - TypeScript: type-safe external orchestration and protocol handling.

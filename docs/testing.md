@@ -63,6 +63,11 @@ broker synchronization can force a refresh, concurrent timer/reconnect calls
 share one attempt, and a thrown broker/history operation becomes a stable
 fail-closed reason. Existing recovery tests prove an exact reconstructed SL/TP
 deal closes a disappeared position while missing closing-order evidence blocks.
+Recorder tests prove a new certain terminal proof clears only failures that
+precede its checkpoint, while a repeated proof, an uncertain recovery, and a
+later callback remain fail closed. Isolated PostgreSQL tests retain the
+conflicting event payload, link its resolution to the later terminal SL/TP
+event, and refuse to resolve a different trade-outcome conflict.
 
 Hybrid-analysis tests render the exact accepted completed-candle/EMA/ATR input
 twice and require byte-identical PNG/hash output, reject forming candles without
@@ -105,6 +110,16 @@ Fixtures use clearly fictional account IDs and inert illustrative prices. No rea
 Record exact commands, versions, pass/fail/skip counts, duration, and skipped external tests. A demo test skipped for missing credentials is not a pass and does not block mock/paper implementation; it remains a live-readiness blocker.
 
 ## Latest local result
+
+On 2026-08-25, ISSUE-042 passed Prettier, ESLint, TypeScript typecheck/build,
+204 Node tests across 35 files, 14 schema tests, 3 static migration tests, and
+all 3 configured isolated-PostgreSQL integration tests. Ruff format/lint,
+strict mypy over 20 source files, and 55 Python tests passed. Configured
+Streamlit AppTest had zero exceptions. Replay/backtest smoke tests, npm/pip
+audits with zero known vulnerabilities, tracked-file secret scan, shell/PM2
+syntax, and all five offline systemd parses at 2.8 (`OK`) passed. Before
+deployment, runtime remained on `.19`, campaign progress remained `4 / 100`,
+and the known callback conflict kept new trading disabled.
 
 On 2026-08-25, ISSUE-041 passed Prettier, ESLint, TypeScript typecheck/build,
 198 Node tests across 34 files, 14 schema tests, 3 static migration tests, and

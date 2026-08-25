@@ -1165,6 +1165,49 @@ describe("PostgreSQL migrations integration", () => {
         closing_order: true,
         unresolved: "0",
       });
+      const duplicateFilledRaw = await eventFixture(
+        "demo-order-filled-v1.json",
+      );
+      (duplicateFilledRaw.position as Record<string, unknown>).takeProfit =
+        2006.25;
+      const duplicateFilled = normalizeDemoExecution(duplicateFilledRaw, {
+        symbolId: "7",
+      });
+      await expect(store.persist(duplicateFilled!)).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_BROKER_EVENT_KEY_CONFLICT"],
+      });
+      await expect(store.readiness()).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_BROKER_EVENT_KEY_CONFLICT"],
+      });
+      const terminalReconciliation = await store.reconcileTerminalEvidence();
+      expect(terminalReconciliation).toMatchObject({
+        certain: true,
+        reasonCodes: [],
+        resolvedEventCount: 1,
+      });
+      expect(terminalReconciliation.terminalProofKey).toMatch(
+        /^terminal:[0-9a-f]{64}$/,
+      );
+      const retainedConflict = await isolated.query<{
+        mapping_state: string;
+        reason_codes: string[];
+        resolved: boolean;
+        resolution_event_key: string | null;
+      }>(
+        `SELECT mapping_state, reason_codes, resolved_at IS NOT NULL AS resolved,
+                resolution_event_key
+         FROM broker_execution_events
+         WHERE account_id = $1 AND broker_event_key = $2`,
+        [demoAccountId, duplicateFilled!.eventKey],
+      );
+      expect(retainedConflict.rows[0]).toEqual({
+        mapping_state: "CONFLICT",
+        reason_codes: ["DEMO_BROKER_EVENT_KEY_CONFLICT"],
+        resolved: true,
+        resolution_event_key: closed!.eventKey,
+      });
       const restartedStore = new PostgresDemoExecutionStore({
         pool: isolated,
         accountId: demoAccountId,
@@ -1206,6 +1249,13 @@ describe("PostgreSQL migrations integration", () => {
       await expect(restartedStore.readiness()).resolves.toEqual({
         certain: false,
         reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+      await expect(
+        restartedStore.reconcileTerminalEvidence(),
+      ).resolves.toMatchObject({
+        certain: false,
+        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+        resolvedEventCount: 0,
       });
 
       await isolated.query(

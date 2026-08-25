@@ -181,6 +181,10 @@ evidence precede any broker-capable live implementation.
 | ISSUE-036 | complete    | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)    | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
 | ISSUE-037 | complete    | [Deduplicate repeated cTrader fill callbacks before strict normalization](https://github.com/AegisFintech/scalping-bot/issues/78) | Skip only certainly persisted duplicate deal IDs; keep new malformed deals fail-closed                        |
 | ISSUE-038 | complete    | [Recover missed cTrader terminal deals automatically without restart](https://github.com/AegisFintech/scalping-bot/issues/80)     | Throttled serialized history recovery; exact terminal evidence releases next cycle                            |
+| ISSUE-039 | complete    | [Send deterministic completed-candle charts to the external AI](https://github.com/AegisFintech/scalping-bot/issues/83)           | Hash-linked image plus numeric context; strict technical-map contract; durable dashboard provenance           |
+| ISSUE-040 | complete    | [Register the image-analysis timeout as a new immutable release](https://github.com/AegisFintech/scalping-bot/issues/85)          | Versioned 60-second caller budget; paused deployment; completed automatic multimodal proof                    |
+| ISSUE-041 | complete    | [Run a bounded 100-completed-analysis demo campaign](https://github.com/AegisFintech/scalping-bot/issues/88)                      | Durable scoped counter; dashboard progress; audited automatic pause at the boundary                           |
+| ISSUE-042 | in progress | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1235,6 +1239,39 @@ never justify empty, noisy, unsafe, or misleading commits.
   will persist a pause at 100 for review. ISSUE-041 is complete; rollout
   evidence is tracked by
   [PR #90](https://github.com/AegisFintech/scalping-bot/pull/90).
+
+### ISSUE-042 delivery details
+
+- Acceptance criteria: only exact and certain terminal cTrader-history recovery
+  for the same managed order group may resolve its stale callback-conflict
+  evidence; preserve the original journal row and payload; acknowledge only
+  process-local callback failures that existed before that recovery checkpoint;
+  keep concurrent, ambiguous, incomplete, active, manual, unrelated-account,
+  and unrelated-symbol state fail closed; show a plain-language automation
+  state and operator action on Overview; show the scoped active pending
+  orders/position or latest managed setup with exact entry, SL, TP, expiry,
+  state, and update time; explicitly preserve the four completed `.19`
+  campaign analyses across the immutable bug-fix release; and pass positive,
+  rejection, concurrency, dashboard, database, and full completion gates.
+- Dependencies: [issue #91](https://github.com/AegisFintech/scalping-bot/issues/91),
+  ISSUE-041/release `.19`, periodic bounded history recovery, the durable demo
+  execution journal, and the protected cTrader demo environment.
+- Current status: implementation is in progress on
+  `issue-042-terminal-recovery-overview` through
+  [PR #92](https://github.com/AegisFintech/scalping-bot/pull/92). At diagnosis time the latest managed
+  group, orders, trade, and position were durably terminal with no active local
+  exposure, but one earlier same-key callback conflict and a process-local
+  invalid-price callback remained blocking. Campaign progress is `4 / 100`.
+  The terminal-evidence reconciliation, recorder checkpoint, exact scoped
+  managed-setup status, prominent Overview action, reviewed campaign baseline,
+  and immutable `.20` release are implemented. Pre-merge gates pass: Prettier,
+  ESLint, TypeScript typecheck/build, 204 Node tests across 35 files, 14 schema
+  tests, 3 migration tests, all 3 configured isolated-PostgreSQL integration
+  tests, Ruff format/lint, strict mypy over 20 source files, 55 Python tests,
+  configured Streamlit AppTest with zero exceptions, replay/backtest smoke
+  tests, zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2
+  syntax, and five offline systemd security parses at 2.8 (`OK`). Automatic
+  analysis remains blocked before the merge and paused deployment.
 
 ## Acceptance criteria
 

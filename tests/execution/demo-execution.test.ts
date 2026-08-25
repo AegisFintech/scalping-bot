@@ -411,6 +411,69 @@ describe("durable demo execution recorder", () => {
     );
   });
 
+  it("acknowledges only failures preceding a new certain terminal proof", async () => {
+    const store = new MemoryStore();
+    const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
+    const filled = await fixture("demo-order-filled-v1.json");
+    const malformedPosition = structuredClone(filled.position) as Record<
+      string,
+      unknown
+    >;
+    delete malformedPosition.price;
+    const firstDeal = structuredClone(filled.deal) as Record<string, unknown>;
+    firstDeal.dealId = "malformed-before-recovery";
+    recorder.enqueue({
+      ...filled,
+      position: malformedPosition,
+      deal: firstDeal,
+    });
+    await expect(recorder.flush()).resolves.toMatchObject({ certain: false });
+    const checkpoint = recorder.failureCheckpoint();
+
+    const accepted = await fixture("demo-order-accepted-v1.json");
+    const malformedOrder = structuredClone(accepted.order) as Record<
+      string,
+      unknown
+    >;
+    malformedOrder.utcLastUpdateTimestamp = "invalid";
+    recorder.enqueue({ ...accepted, order: malformedOrder });
+    recorder.acknowledgeCertainTerminalRecovery(
+      checkpoint,
+      "terminal:proof-one",
+      { certain: true, reasonCodes: [] },
+    );
+
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["CTRADER_FIELD_INVALID:utcLastUpdateTimestamp"],
+    });
+    recorder.acknowledgeCertainTerminalRecovery(
+      recorder.failureCheckpoint(),
+      "terminal:proof-one",
+      { certain: true, reasonCodes: [] },
+    );
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["CTRADER_FIELD_INVALID:utcLastUpdateTimestamp"],
+    });
+
+    recorder.acknowledgeCertainTerminalRecovery(
+      recorder.failureCheckpoint(),
+      "terminal:proof-two",
+      { certain: false, reasonCodes: ["RECONCILIATION_UNCERTAIN"] },
+    );
+    await expect(recorder.flush()).resolves.toMatchObject({ certain: false });
+    recorder.acknowledgeCertainTerminalRecovery(
+      recorder.failureCheckpoint(),
+      "terminal:proof-two",
+      { certain: true, reasonCodes: [] },
+    );
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: true,
+      reasonCodes: [],
+    });
+  });
+
   it("does not remember a deal after uncertain persistence", async () => {
     const store = new MemoryStore();
     store.result = {

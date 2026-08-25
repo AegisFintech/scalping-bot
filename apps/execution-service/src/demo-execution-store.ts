@@ -7,6 +7,7 @@ import type {
   DemoExecutionEvent,
   DemoExecutionPersistenceResult,
   DemoExecutionStore,
+  DemoTerminalEvidenceReconciliationResult,
 } from "./demo-execution.js";
 import type { GatewayOrder } from "../../../packages/contracts/src/index.js";
 
@@ -99,6 +100,122 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       certain: result.rows.length === 0,
       reasonCodes: [...reasons].sort(),
     };
+  }
+
+  async reconcileTerminalEvidence(): Promise<DemoTerminalEvidenceReconciliationResult> {
+    const client = await this.#options.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+        [
+          `${this.#options.accountId}:${this.#options.symbolId}:terminal-evidence`,
+        ],
+      );
+      const result = await client.query<{
+        resolved_event_count: string;
+        terminal_proof_hash: string | null;
+      }>(
+        `WITH terminal_proofs AS MATERIALIZED (
+           SELECT DISTINCT ON (terminal.order_group_id)
+                  terminal.order_group_id,
+                  terminal.broker_event_key,
+                  terminal.payload_hash,
+                  terminal.occurred_at
+           FROM broker_execution_events terminal
+           JOIN order_groups og ON og.id = terminal.order_group_id
+           JOIN analysis_runs ar ON ar.id = og.analysis_id
+           JOIN positions p ON p.id = terminal.position_id
+           JOIN trades t ON t.order_group_id = og.id AND t.position_id = p.id
+           WHERE terminal.account_id = $1 AND terminal.symbol_id = $2
+             AND ar.account_id = $1 AND ar.symbol_id = $2
+             AND og.mode = 'demo' AND og.state = 'CLOSED'
+             AND terminal.mapping_state = 'MAPPED'
+             AND jsonb_array_length(terminal.reason_codes) = 0
+             AND terminal.execution_type IN (3, 11)
+             AND terminal.broker_order_type = 4
+             AND terminal.closing_order = true
+             AND terminal.broker_fill_id IS NOT NULL
+             AND terminal.normalized_payload -> 'fill' <> 'null'::jsonb
+             AND terminal.normalized_payload -> 'closeDetail' <> 'null'::jsonb
+             AND p.account_id = $1 AND p.symbol_id = $2
+             AND p.state = 'CLOSED' AND p.strategy_owned = true
+             AND p.closed_at = terminal.occurred_at
+             AND EXISTS (
+               SELECT 1 FROM fills terminal_fill
+               WHERE terminal_fill.position_id = p.id
+                 AND terminal_fill.broker_fill_id = terminal.broker_fill_id
+                 AND terminal_fill.occurred_at = terminal.occurred_at
+             )
+             AND (SELECT count(*) FROM positions gp
+                  WHERE gp.order_group_id = og.id) = 1
+             AND (SELECT count(*) FROM orders goi
+                  WHERE goi.order_group_id = og.id) = 2
+             AND (SELECT count(*) FROM orders filled_order
+                  WHERE filled_order.order_group_id = og.id
+                    AND filled_order.state = 'FILLED') = 1
+             AND (SELECT count(*) FROM orders peer_order
+                  WHERE peer_order.order_group_id = og.id
+                    AND peer_order.state IN ('CANCELLED','EXPIRED','REJECTED')) = 1
+             AND NOT EXISTS (
+               SELECT 1 FROM orders active_order
+               WHERE active_order.order_group_id = og.id
+                 AND (active_order.strategy_owned = false OR active_order.state IN
+                   ('INTENT','SUBMITTING','PENDING','PARTIALLY_FILLED',
+                    'CANCEL_PENDING','UNKNOWN'))
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM positions active_position
+               WHERE active_position.order_group_id = og.id
+                 AND (active_position.strategy_owned = false OR active_position.state <>
+                   'CLOSED')
+             )
+           ORDER BY terminal.order_group_id, terminal.occurred_at DESC,
+                    terminal.id DESC
+         ), resolved AS (
+           UPDATE broker_execution_events blocked
+           SET resolved_at = proof.occurred_at,
+               resolution_event_key = proof.broker_event_key
+           FROM terminal_proofs proof
+           WHERE blocked.account_id = $1 AND blocked.symbol_id = $2
+             AND blocked.order_group_id = proof.order_group_id
+             AND blocked.mapping_state = 'CONFLICT'
+             AND blocked.reason_codes =
+                 '["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb
+             AND blocked.resolved_at IS NULL
+             AND blocked.occurred_at <= proof.occurred_at
+           RETURNING blocked.id
+         )
+         SELECT (SELECT count(*)::text FROM resolved) AS resolved_event_count,
+                (SELECT payload_hash FROM terminal_proofs
+                 ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
+                   AS terminal_proof_hash`,
+        [this.#options.accountId, this.#options.symbolId],
+      );
+      const resolvedText = result.rows[0]?.resolved_event_count;
+      const terminalProofHash = result.rows[0]?.terminal_proof_hash ?? null;
+      if (
+        resolvedText === undefined ||
+        !/^(?:0|[1-9][0-9]*)$/.test(resolvedText) ||
+        (terminalProofHash !== null &&
+          !/^[0-9a-f]{64}$/.test(terminalProofHash))
+      ) {
+        throw new Error("DEMO_TERMINAL_EVIDENCE_RESULT_INVALID");
+      }
+      await client.query("COMMIT");
+      const readiness = await this.readiness();
+      return {
+        ...readiness,
+        terminalProofKey:
+          terminalProofHash === null ? null : `terminal:${terminalProofHash}`,
+        resolvedEventCount: Number(resolvedText),
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async persist(

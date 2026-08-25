@@ -61,6 +61,7 @@ def test_automation_status_explains_ai_cooldown_as_automatic_retry() -> None:
     assert view["state"] == "WAITING_FOR_AI"
     assert "retry automatically" in view["detail"]
     assert view["retry_at"] == "2026-08-25T01:02:00.000Z"
+    assert "No action required" in view["operator_action"]
     assert view["reasons"][0]["code"] == "AI_CIRCUIT_OPEN"
     assert "No restart" in view["reasons"][0]["next_action"]
 
@@ -132,6 +133,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     recovery = reason_code_view("DEMO_EXECUTION_RECOVERY_RUN_FAILED")
     assert recovery["title"] == "Automatic broker-history recovery failed"
     assert "without requiring a restart" in recovery["next_action"]
+
+    conflict = reason_code_view("DEMO_BROKER_EVENT_KEY_CONFLICT")
+    assert conflict["title"] == "Two broker callbacks disagreed about the same event"
+    assert "No manual clearing is required" in conflict["next_action"]
 
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:

@@ -73,6 +73,11 @@ export interface DemoExecutionPersistenceResult {
   readonly reasonCodes: readonly string[];
 }
 
+export interface DemoTerminalEvidenceReconciliationResult extends DemoExecutionPersistenceResult {
+  readonly terminalProofKey: string | null;
+  readonly resolvedEventCount: number;
+}
+
 export interface DemoExecutionStore {
   persist(event: DemoExecutionEvent): Promise<DemoExecutionPersistenceResult>;
   readiness(): Promise<DemoExecutionPersistenceResult>;
@@ -550,7 +555,9 @@ export class DurableDemoExecutionRecorder {
   readonly #options: DemoExecutionNormalizerOptions;
   #tail: Promise<void> = Promise.resolve();
   readonly #pending: BrokerExecution[] = [];
-  #reasonCodes = new Set<string>();
+  readonly #reasonCodes = new Map<string, number>();
+  #failureSequence = 0;
+  readonly #acknowledgedTerminalProofKeys = new Set<string>();
   readonly #persistedBrokerFillIds = new Set<string>();
 
   constructor(
@@ -570,8 +577,9 @@ export class DurableDemoExecutionRecorder {
     stage: DemoExecutionFailureSummary["stage"],
     execution: BrokerExecution | null,
   ): void {
+    this.#failureSequence += 1;
     const added = !this.#reasonCodes.has(reasonCode);
-    this.#reasonCodes.add(reasonCode);
+    this.#reasonCodes.set(reasonCode, this.#failureSequence);
     if (!added || this.#options.onFailure === undefined) return;
     try {
       this.#options.onFailure({
@@ -594,6 +602,35 @@ export class DurableDemoExecutionRecorder {
       });
     } catch {
       // Diagnostic delivery cannot change the fail-closed recorder outcome.
+    }
+  }
+
+  failureCheckpoint(): number {
+    return this.#failureSequence;
+  }
+
+  acknowledgeCertainTerminalRecovery(
+    checkpoint: number,
+    terminalProofKey: string,
+    recovery: DemoExecutionPersistenceResult,
+  ): void {
+    if (
+      !Number.isSafeInteger(checkpoint) ||
+      checkpoint < 0 ||
+      checkpoint > this.#failureSequence ||
+      terminalProofKey.length === 0
+    ) {
+      throw new Error("DEMO_EXECUTION_RECOVERY_ACK_INVALID");
+    }
+    if (
+      !recovery.certain ||
+      this.#acknowledgedTerminalProofKeys.has(terminalProofKey)
+    ) {
+      return;
+    }
+    this.#acknowledgedTerminalProofKeys.add(terminalProofKey);
+    for (const [reasonCode, sequence] of this.#reasonCodes) {
+      if (sequence <= checkpoint) this.#reasonCodes.delete(reasonCode);
     }
   }
 
@@ -662,7 +699,7 @@ export class DurableDemoExecutionRecorder {
       persisted = { certain: false, reasonCodes: [] };
     }
     const reasonCodes = new Set([
-      ...this.#reasonCodes,
+      ...this.#reasonCodes.keys(),
       ...persisted.reasonCodes,
     ]);
     return {

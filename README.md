@@ -210,6 +210,9 @@ session. A later explicitly authorized campaign can set
 `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` to a positive durable result count; the
 scheduler then pauses new analyses at that immutable-release boundary while
 continuing broker lifecycle maintenance.
+`AUTOMATIC_ANALYSIS_COMPLETED_BASELINE` must normally remain zero; it exists
+only to carry a separately verified durable count through a reviewed immutable
+bug-fix release and is displayed separately on Overview.
 
 ## Tests and quality gates
 
