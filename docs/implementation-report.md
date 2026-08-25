@@ -1687,8 +1687,22 @@ zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 checks,
 and five offline systemd security parses. A disposable migrated schema replayed
 the exact retained conflict into two closed positions and two immutable trades,
 closed the group, resolved all journal evidence, and returned certain terminal
-proof before the schema was dropped. Stopped rollout evidence will be recorded
-after merge.
+proof before the schema was dropped.
+
+After merge, new analyses were paused and migration `0013` was applied before
+the execution process restarted as immutable release `.23`. Startup recovery
+closed the exact retained group with two filled orders, one closed BUY and one
+closed SELL position, two trades, combined realized P/L `-10.09`, fees `-0.56`,
+and zero unresolved execution events. The only startup blocker was the explicit
+deployment pause. The configured Streamlit AppTest rendered 39 dataframes, 37
+metrics, and 15 tabs with zero exceptions. After the pause was released, the
+first automatic analysis durably recorded its external request/response, was
+accepted, and placed both demo stops. They expired normally at 20:39 GMT+8 and
+the next analysis began six seconds later. That next call returned HTTP 503 and
+exposed a separate execution-client circuit threshold defect; it does not
+invalidate the recovered broker lifecycle.
 
 Implementation review and merge are tracked by
 [PR #109](https://github.com/AegisFintech/scalping-bot/pull/109).
+Rollout evidence is reviewed in
+[PR #110](https://github.com/AegisFintech/scalping-bot/pull/110).

@@ -190,7 +190,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
 | ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
 | ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
-| ISSUE-048 | in progress | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
+| ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1485,7 +1485,19 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   replay/backtest, zero-vulnerability dependency audits, secret/shell/PM2
   checks, and five systemd parses. An isolated clone of the exact retained
   conflict recovered to two closed positions, two trades, zero unresolved
-  evidence, and certain terminal proof under migration `0013`.
+  evidence, and certain terminal proof under migration `0013`. After
+  [PR #109](https://github.com/AegisFintech/scalping-bot/pull/109) merged,
+  automation was paused, migration `0013` applied, and release `.23` recovered
+  the observed group to `CLOSED`: two filled orders, one closed BUY and one
+  closed SELL position, two immutable trades, combined realized P/L `-10.09`,
+  fees `-0.56`, and zero unresolved journal events. Startup then reported only
+  `ANALYSES_PAUSED`; the configured dashboard AppTest had zero exceptions.
+  Releasing the pause produced one accepted external-AI analysis and two
+  pending broker stops. Both expired cleanly and the next analysis started six
+  seconds later. A subsequent endpoint 503 exposed a separate execution-side
+  circuit-threshold defect, which is outside this completed broker-lifecycle
+  issue and is tracked next. Rollout evidence is reviewed in
+  [PR #110](https://github.com/AegisFintech/scalping-bot/pull/110).
 
 ## Acceptance criteria
 
