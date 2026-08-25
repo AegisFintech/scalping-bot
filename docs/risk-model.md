@@ -10,10 +10,16 @@ spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
 The one explicitly configured execution transform is TP-distance division by
-two. Prompt `system-v4` asks for at least twice the effective minimum R:R. The
+two. Prompt `system-v5` asks for at least twice the effective minimum R:R. The
 coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
 recomputes R:R, and rejects an off-tick result without rounding. The original
 endpoint response and effective values remain separately auditable.
+
+Schema 2.1 does not grant the chart or model execution authority. Deterministic
+semantics require each OCO entry to equal its technical-map confirmation price
+and each effective midpoint TP to equal the first corresponding target. A
+mismatch, off-tick zone/target, or directionally unordered target rejects; code
+does not invent or substitute a technical level.
 
 Before inference, reconciled equity and the configured setup-risk percent are
 split across the two race-exposed OCO legs. The service floors the affordable

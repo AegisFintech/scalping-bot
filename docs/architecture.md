@@ -49,6 +49,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 - FastAPI with Pydantic request/response models.
 - Uses `Decimal` for prices at boundaries and explicit numeric conversions for indicators.
 - Normalizes candles, validates completeness/order, computes deterministic features and bounded statistics.
+- Renders one bounded 1600x1200 PNG from the exact accepted M15/M5/M1
+  completed candles and their per-candle EMA/ATR series. The response carries
+  the bytes, SHA-256, dimensions, renderer version, candle counts, and last
+  candle times; a rejected analysis carries no partial image.
 - Runs replay/backtest through the same feature API.
 - Never holds broker credentials or submits orders.
 
@@ -59,11 +63,14 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v4` tells the endpoint that execution will preserve entry/SL
+- Prompt `system-v5` tells the endpoint that execution will preserve entry/SL
   and halve TP distance. It supplies a doubled proposal R:R minimum plus a
   non-sizing maximum stop distance derived from reconciled equity, configured
   setup risk, broker tick value, and broker minimum volume. No account money,
   budget, volume, or identity crosses the endpoint boundary.
+- Sends the deterministic image as high-detail multimodal content beside the
+  compact numeric JSON. The numeric message contains only hash/provenance
+  metadata for the image, not duplicated base64 bytes.
 - Calls a configurable Responses- or Chat-Completions-compatible endpoint with
   per-attempt timeouts/retries/circuit breaker. The execution caller derives its
   local HTTP deadline from the complete configured retry budget plus bounded
@@ -169,6 +176,8 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   prompts are persisted per completed request; a run without one is explicitly
   labelled as having no durable AI request record, and legacy versions use an
   explicit tracked-artifact fallback.
+- The selected run also displays the exact hash-verified chart artifact that
+  accompanied the numeric request and the schema 2.1 technical map.
 - Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
 
 ## Typed boundaries

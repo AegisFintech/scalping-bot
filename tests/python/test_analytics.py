@@ -105,6 +105,22 @@ def test_analytics_builds_required_features() -> None:
     assert len(timeframes["M1"]["raw_tail"]) == 10
     assert len(timeframes["M1"]["full_candles"]) == 40
     assert timeframes["M1"]["full_candles"][-1]["ema_fast"] is not None
+    assert response.schema_version == "1.1"
+    assert response.chart is not None
+    assert response.chart.completed_candles_only is True
+    assert response.chart.candle_counts == {"M1": 26, "M5": 26, "M15": 26}
+    assert len(response.chart.data_base64) < 1_398_104
+
+
+def test_analysis_chart_is_deterministic_for_the_exact_same_completed_snapshot() -> None:
+    request = AnalyticsRequest.model_validate(request_payload())
+    first = analyze(request, now=request.analysis_time)
+    second = analyze(request, now=request.analysis_time)
+
+    assert first.chart is not None
+    assert second.chart is not None
+    assert first.chart.sha256 == second.chart.sha256
+    assert first.chart.data_base64 == second.chart.data_base64
 
 
 def test_forming_candle_fails_closed() -> None:
@@ -114,6 +130,7 @@ def test_forming_candle_fails_closed() -> None:
     assert not response.acceptable
     assert "M1_FORMING_CANDLE" in response.rejection_reasons
     assert response.features == {}
+    assert response.chart is None
 
 
 def test_extra_request_field_is_rejected() -> None:

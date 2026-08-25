@@ -11,12 +11,27 @@ import type {
 
 function response(): ModelResponse {
   return {
-    schema_version: "2.0",
+    schema_version: "2.1",
     analysis_id: "22222222-2222-4222-8222-222222222222",
     symbol: "XAUUSD",
     generated_at: "2026-08-25T00:00:00.000Z",
     valid_until: "2026-08-25T00:05:00.000Z",
     market_regime: "RANGING",
+    technical_map: {
+      decision_zone: { lower: "1999", upper: "2001" },
+      resistance_zones: [{ lower: "2000", upper: "2001" }],
+      support_zones: [{ lower: "1999", upper: "2000" }],
+      bullish_confirmation: {
+        price: "2001",
+        condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE",
+      },
+      bearish_confirmation: {
+        price: "1999",
+        condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
+      },
+      upside_targets: ["2003"],
+      downside_targets: ["1997"],
+    },
     waiting_area: {
       lower: "1999",
       upper: "2001",

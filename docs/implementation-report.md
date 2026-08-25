@@ -1193,3 +1193,47 @@ emergency stop or risk lockout, fresh data, empty reconciled relevant broker
 state, current metadata, valid AI output, deterministic risk approval, and
 healthy critical audit persistence. Nothing should enable those gates
 automatically.
+
+## Deterministic hybrid chart analysis
+
+ISSUE-039 adds analytics response 1.1, prompt `system-v5`, and model response
+schema 2.1. Analytics renders a deterministic 1600x1200 PNG from the exact
+accepted M15/M5/M1 completed candles and per-candle EMA/ATR values. The PNG is
+bounded to 1 MiB and carries its SHA-256, renderer version, dimensions, candle
+counts, and latest end times. A quality or render rejection returns no partial
+image. The compact numeric payload retains its existing features and adds only
+the image provenance; the typed AI request attaches the bytes as high-detail
+multimodal content for both Responses and Chat-Completions styles.
+
+The schema 2.1 technical map records the immediate decision zone,
+support/resistance zones, buffered bullish/bearish confirmation prices, and
+ordered targets. Deterministic semantics require waiting-area equality, entry
+equality with the corresponding confirmation, tick-aligned zones/targets, and
+exact equality between each first target and the configured post-transform
+broker TP. Existing sizing, volume, precision, freshness, spread, account,
+reconciliation, daily-loss, idempotency, emergency-stop, and mode gates remain
+unchanged.
+
+Migration `0012` stores one bounded chart artifact per analysis. The analytics
+client, AI client, PostgreSQL trail, and Streamlit inspector independently
+verify PNG signature/IHDR dimensions and SHA-256. Streamlit displays the exact
+image beside the exact persisted prompt and redacted numeric JSON, followed by
+the parsed technical map and effective OCO comparison.
+
+A provider-only probe used the configured endpoint and the durable 10:56
+Asia/Singapore numeric snapshot plus its newly rendered image. It completed in
+54.2 seconds with strict schema 2.1; no database intent or broker call was made.
+The returned buy/sell entries exactly equalled their named confirmation prices,
+and the configured midpoint transform resolved exactly to the first
+upside/downside targets. This proves transport/structured-output compatibility,
+not forecast accuracy or profitability. Deployment remains gated on merge,
+migration review, a durable analysis pause, and certain empty broker state.
+
+The pre-merge gate run passed Prettier, ESLint, TypeScript typecheck/build, 191
+Node tests across 33 files, 14 schema tests, 3 static migration tests, and all 3
+configured isolated-PostgreSQL integration tests. Ruff format/lint, strict mypy
+over 20 Python source files, and 53 Python tests passed. A migrated isolated
+schema Streamlit AppTest rendered 19 dataframes with zero exceptions.
+Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the tracked-file
+secret scan, shell/PM2 syntax, and all five offline systemd security parses also
+passed.

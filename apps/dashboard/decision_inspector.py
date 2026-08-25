@@ -28,6 +28,7 @@ _MAX_MODEL_OUTPUT_BYTES = 256_000
 _MAX_MODEL_INPUT_BYTES = 4_000_000
 _MAX_AUDIT_DETAIL_BYTES = 65_536
 _MAX_PROMPT_BYTES = 65_536
+_MAX_CHART_BYTES = 1_048_576
 _MAX_EXACT_COLLECTION_ITEMS = 2_000
 _TRADE_OUTCOME_FIELDS = {
     "mode",
@@ -49,6 +50,7 @@ _PROMPT_FILES = {
     "system-v2": "system-v2.md",
     "system-v3": "system-v3.md",
     "system-v4": "system-v4.md",
+    "system-v5": "system-v5.md",
 }
 _SECRET_VALUE = re.compile(
     r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"
@@ -572,13 +574,15 @@ def model_output_view(value: object) -> dict[str, Any]:
     schema_version = safe.get("schema_version")
     if schema_version == "1.0" and safe.get("decision") not in {"PLACE_OCO", "NO_TRADE"}:
         raise DecisionViewError("DECISION_VIEW_MODEL_DECISION_INVALID")
-    if schema_version == "2.0":
+    if schema_version in {"2.0", "2.1"}:
         if "decision" in safe:
             raise DecisionViewError("DECISION_VIEW_MODEL_V2_DECISION_FORBIDDEN")
         for key in ("buy_stop", "sell_stop"):
             proposal = safe.get(key)
             if not isinstance(proposal, dict) or "enabled" in proposal:
                 raise DecisionViewError("DECISION_VIEW_MODEL_V2_PROPOSAL_INVALID")
+        if schema_version == "2.1" and not isinstance(safe.get("technical_map"), dict):
+            raise DecisionViewError("DECISION_VIEW_MODEL_V2_TECHNICAL_MAP_INVALID")
     elif schema_version != "1.0":
         raise DecisionViewError("DECISION_VIEW_MODEL_SCHEMA_VERSION_INVALID")
     return safe
@@ -587,7 +591,7 @@ def model_output_view(value: object) -> dict[str, Any]:
 def model_proposal_label(value: Mapping[str, Any]) -> str:
     """Label legacy decisions and mandatory v2 OCO proposals distinctly."""
 
-    if value.get("schema_version") == "2.0":
+    if value.get("schema_version") in {"2.0", "2.1"}:
         return "OCO_PROPOSAL"
     decision = value.get("decision")
     if decision in {"PLACE_OCO", "NO_TRADE"}:
@@ -600,9 +604,11 @@ def model_output_authority_notice(value: Mapping[str, Any] | None) -> str:
 
     if value is None:
         return "AI was not reached for this run; no model proposal exists."
-    if value.get("schema_version") == "2.0":
+    if value.get("schema_version") in {"2.0", "2.1"}:
+        schema_version = str(value.get("schema_version"))
         return (
-            "The schema 2.0 AI output is a two-leg conditional proposal, not a queued "
+            f"The schema {schema_version} AI output is a two-leg conditional proposal, "
+            "not a queued "
             "or broker order. Local semantic validation, risk sizing, freshness checks, "
             "and mode gates retain execution authority."
         )
@@ -613,6 +619,52 @@ def model_output_authority_notice(value: Mapping[str, Any] | None) -> str:
             "schema 2.0 proposal contract."
         )
     raise DecisionViewError("DECISION_VIEW_MODEL_SCHEMA_VERSION_INVALID")
+
+
+def analysis_chart_view(value: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Verify a persisted model chart before returning bounded display data."""
+
+    raw = value.get("chart_image_bytes")
+    if raw is None:
+        return None
+    if isinstance(raw, memoryview):
+        image = raw.tobytes()
+    elif isinstance(raw, bytes):
+        image = raw
+    else:
+        raise DecisionViewError("DECISION_VIEW_CHART_BYTES_INVALID")
+    if not 33 <= len(image) <= _MAX_CHART_BYTES:
+        raise DecisionViewError("DECISION_VIEW_CHART_SIZE_INVALID")
+    width = value.get("chart_width")
+    height = value.get("chart_height")
+    digest = value.get("chart_sha256")
+    if (
+        value.get("chart_renderer_version") != "completed-candles-ema-atr-v1"
+        or value.get("chart_mime_type") != "image/png"
+        or width != 1600
+        or height != 1200
+        or not isinstance(digest, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", digest)
+        or image[:8] != bytes.fromhex("89504e470d0a1a0a")
+        or image[12:16] != b"IHDR"
+        or int.from_bytes(image[16:20], "big") != width
+        or int.from_bytes(image[20:24], "big") != height
+        or sha256(image).hexdigest() != digest
+    ):
+        raise DecisionViewError("DECISION_VIEW_CHART_INTEGRITY_INVALID")
+    metadata = _mapping(value.get("chart_source_metadata"), "DECISION_VIEW_CHART_METADATA_INVALID")
+    if _document_size(metadata) > 16_384:
+        raise DecisionViewError("DECISION_VIEW_CHART_METADATA_OVERSIZED")
+    _reject_sensitive_keys(metadata)
+    return {
+        "image_bytes": image,
+        "sha256": digest,
+        "renderer_version": value.get("chart_renderer_version"),
+        "mime_type": value.get("chart_mime_type"),
+        "width": width,
+        "height": height,
+        "source_metadata": _safe_value(metadata),
+    }
 
 
 def take_profit_transform_view(

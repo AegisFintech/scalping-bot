@@ -188,14 +188,46 @@ class AnalyticsRequest(ApiModel):
         return self
 
 
+class AnalysisChart(ApiModel):
+    renderer_version: Literal["completed-candles-ema-atr-v1"] = Field(alias="rendererVersion")
+    mime_type: Literal["image/png"] = Field(alias="mimeType")
+    width: Literal[1600]
+    height: Literal[1200]
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    data_base64: str = Field(alias="dataBase64", min_length=12, max_length=1_398_104)
+    completed_candles_only: Literal[True] = Field(alias="completedCandlesOnly")
+    candle_counts: dict[Literal["M1", "M5", "M15"], int] = Field(alias="candleCounts")
+    latest_end_times: dict[Literal["M1", "M5", "M15"], str] = Field(alias="latestEndTimes")
+
+    @model_validator(mode="after")
+    def complete_timeframes(self) -> AnalysisChart:
+        expected = {"M1", "M5", "M15"}
+        if set(self.candle_counts) != expected or set(self.latest_end_times) != expected:
+            raise ValueError("chart metadata must cover M1, M5, and M15")
+        if any(count < 1 or count > 100 for count in self.candle_counts.values()):
+            raise ValueError("chart candle counts must be bounded")
+        for timestamp in self.latest_end_times.values():
+            parsed = datetime.fromisoformat(timestamp)
+            if parsed.tzinfo is None:
+                raise ValueError("chart timestamps require timezones")
+        return self
+
+
 class AnalyticsResponse(ApiModel):
-    schema_version: Literal["1.0"] = Field(alias="schemaVersion", default="1.0")
+    schema_version: Literal["1.1"] = Field(alias="schemaVersion", default="1.1")
     request_id: UUID = Field(alias="requestId")
     analysis_id: UUID = Field(alias="analysisId")
     generated_at: datetime = Field(alias="generatedAt")
     acceptable: bool
     rejection_reasons: list[str] = Field(alias="rejectionReasons", max_length=64)
     features: dict[str, object]
+    chart: AnalysisChart | None
+
+    @model_validator(mode="after")
+    def chart_matches_acceptability(self) -> AnalyticsResponse:
+        if self.acceptable != (self.chart is not None):
+            raise ValueError("accepted analytics must contain exactly one chart")
+        return self
 
 
 class PerformanceOutcome(ApiModel):

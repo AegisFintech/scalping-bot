@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 import type {
+  AnalysisChartArtifact,
   ModelPromptArtifact,
   ModelResponse,
 } from "../../contracts/src/index.js";
@@ -110,6 +111,7 @@ export class AiOrchestratorHttpClient {
     readonly analysisId: string;
     readonly symbol: string;
     readonly payload: Readonly<Record<string, unknown>>;
+    readonly chart: AnalysisChartArtifact;
   }): Promise<{
     readonly response: ModelResponse;
     readonly rawResponse: string;

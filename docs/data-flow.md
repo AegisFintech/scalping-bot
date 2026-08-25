@@ -36,13 +36,16 @@ the temporary fail-closed daily-risk reason.
 3. Capture top-N depth near the same logical timestamp and freeze immutable inputs.
 4. Persist raw snapshot timestamps, skew, completeness, and reconnect flags.
 5. Reject excessive age/skew/discontinuity.
-6. Call the typed analytics API; persist features and data-quality findings.
+6. Call the typed analytics API; persist features, data-quality findings, and
+   the hash-verified deterministic completed-candle EMA/ATR PNG.
 7. Query bounded session/setup statistics and calculate deterministic confidence adjustment.
 8. Build a full or compact, size-bounded, versioned model request containing
    the non-sizing execution constraints needed for valid conditional levels.
    Reconcile account state and derive the maximum whole-tick stop distance that
    broker minimum volume can afford under half the setup-risk budget; send only
    that distance, never equity, budget, volume, or account identity.
+   Include bounded chart provenance in the JSON and attach the exact PNG as a
+   separate multimodal content item; both share the same SHA-256.
 9. Call the AI endpoint with per-attempt timeout/retries/circuit breaker. The
    execution-to-orchestrator deadline covers every configured attempt plus
    bounded grace; invalid or timer-overflowing budgets reject startup.
@@ -51,7 +54,7 @@ the temporary fail-closed daily-risk reason.
    half-opens only at the exact expiry boundary; the scheduler can then use a
    later fresh broker minute without restarting execution.
 10. Size-limit, parse, and JSON-Schema validate the mandatory two-leg proposal.
-    Schema 2.0 contains no `NO_TRADE`, leg-enabled switch, or model-controlled
+    Schemas 2.0/2.1 contain no `NO_TRADE`, leg-enabled switch, or model-controlled
     data-eligibility veto.
 11. Reacquire completed candles, metadata, quote, and depth. Reject if the
     completed-candle context or execution metadata changed during inference, or
@@ -60,6 +63,8 @@ the temporary fail-closed daily-risk reason.
     the immutable AI proposal at the pre-transform R:R; derive each effective
     TP as the Decimal midpoint from entry to AI TP; reject an off-tick midpoint;
     then validate the effective proposal at the configured execution R:R.
+    For schema 2.1, prove that the entries equal the chart-derived confirmation
+    prices and that each effective TP equals the first returned technical target.
     Reconcile account state again and reject an unchanged endpoint SL above the
     current affordable maximum. Run stop, precision, daily loss, volume, margin,
     exposure, and duplicate checks.

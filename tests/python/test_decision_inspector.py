@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import io
 from datetime import UTC, datetime
 from decimal import Decimal
 from hashlib import sha256
 
 import pytest
+from PIL import Image
 
 from apps.dashboard.decision_inspector import (
     DecisionViewError,
+    analysis_chart_view,
     analytics_summary,
     automation_status_view,
     exact_model_input_view,
@@ -23,6 +26,24 @@ from apps.dashboard.decision_inspector import (
     take_profit_transform_view,
     trade_outcome_view,
 )
+
+
+def chart_row() -> dict[str, object]:
+    output = io.BytesIO()
+    Image.new("RGB", (1600, 1200), "black").save(output, format="PNG")
+    image = output.getvalue()
+    return {
+        "chart_image_bytes": image,
+        "chart_renderer_version": "completed-candles-ema-atr-v1",
+        "chart_mime_type": "image/png",
+        "chart_width": 1600,
+        "chart_height": 1200,
+        "chart_sha256": sha256(image).hexdigest(),
+        "chart_source_metadata": {
+            "completed_candles_only": True,
+            "candle_counts": {"M1": 80, "M5": 60, "M15": 48},
+        },
+    }
 
 
 def test_automation_status_explains_ai_cooldown_as_automatic_retry() -> None:
@@ -42,6 +63,19 @@ def test_automation_status_explains_ai_cooldown_as_automatic_retry() -> None:
     assert view["retry_at"] == "2026-08-25T01:02:00.000Z"
     assert view["reasons"][0]["code"] == "AI_CIRCUIT_OPEN"
     assert "No restart" in view["reasons"][0]["next_action"]
+
+
+def test_analysis_chart_is_hash_and_dimension_verified() -> None:
+    row = chart_row()
+    view = analysis_chart_view(row)
+
+    assert view is not None
+    assert view["image_bytes"] == row["chart_image_bytes"]
+    assert view["source_metadata"]["completed_candles_only"] is True
+
+    row["chart_sha256"] = "0" * 64
+    with pytest.raises(DecisionViewError, match="CHART_INTEGRITY_INVALID"):
+        analysis_chart_view(row)
 
 
 def test_automation_status_keeps_emergency_stop_and_unknown_reasons_fail_closed() -> None:

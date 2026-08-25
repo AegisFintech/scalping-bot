@@ -137,7 +137,7 @@ state is active or uncertain. A rejected analysis may retry on a later broker
 minute. An accepted analysis becomes terminal only after its group closes,
 expires, or fails; only then can a later broker minute start the next cycle.
 
-Prompt `system-v4` tells the endpoint that the execution service preserves its
+Prompt `system-v5` tells the endpoint that the execution service preserves its
 entry and stop loss but halves the distance from entry to take profit. It asks
 for twice the configured effective minimum R:R and supplies the maximum stop
 distance affordable at broker minimum volume. That derived field contains no
@@ -150,6 +150,10 @@ broker-minute cycle history** for the exact hash-verified prompt, persisted
 redacted user JSON, parsed schema-validated AI response, post-model refresh,
 validation/risk results, scheduler outcome, order events, and terminal demo
 trade outcome.
+The same selected analysis shows the exact hash-verified M15/M5/M1 image sent
+beside the numeric JSON. Confirm its renderer version, completed-candle flag,
+candle counts, latest candle times, and SHA-256 before comparing the schema 2.1
+technical map to the effective OCO table.
 For runs that pass sizing but reject near intent, inspect the two
 `decision_market_refreshed` events: `POST_MODEL` is the first execution context
 and `PRE_PLACEMENT` is the snapshot reacquired after margin work. A
@@ -253,13 +257,16 @@ into repository files or logs.
 3. Read **Decision pipeline** from top to bottom. `NOT_REACHED` means no durable
    evidence exists for that stage; it must never be interpreted as approval.
 4. In **AI output**, inspect the exact parsed and schema-validated model JSON.
-   Schema 2.0 always contains both conditional stops and has no `NO_TRADE` or
+   Schemas 2.0 and 2.1 always contain both conditional stops and have no `NO_TRADE` or
    leg-enabled switch. These are proposals only—not queued, submitted, accepted,
    or filled orders. The displayed local validation, deterministic risk, and
    broker stages remain separate execution authorities.
    The **AI proposal → effective OCO levels** table shows endpoint entry/SL/TP
    beside the audited effective midpoint TP and both R:R values. Absence of that
    table means the transform stage was not reached.
+   For schema 2.1, verify that the stop entries equal the technical-map
+   confirmation prices and the effective TPs equal the first upside/downside
+   targets.
 5. In **Input & analytics**, verify request/model/prompt/schema/strategy
    versions, payload mode/hash, the hash-verified exact system prompt,
    completed-candle coverage, indicator summary, execution constraints, and

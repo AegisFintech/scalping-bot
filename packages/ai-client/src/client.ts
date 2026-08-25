@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 import type {
+  AnalysisChartArtifact,
   ModelPromptArtifact,
   ModelResponse,
 } from "../../contracts/src/index.js";
@@ -33,6 +34,7 @@ export interface AiAnalysisRequest {
   readonly analysisId: string;
   readonly symbol: string;
   readonly payload: Readonly<Record<string, unknown>>;
+  readonly chart: AnalysisChartArtifact;
 }
 
 export interface AiAnalysisResult {
@@ -83,6 +85,28 @@ function retryableStatus(status: number): boolean {
   return status === 408 || status === 429 || status >= 500;
 }
 
+function chartDataUrl(chart: AnalysisChartArtifact): string {
+  const bytes = Buffer.from(chart.dataBase64, "base64");
+  if (
+    chart.mimeType !== "image/png" ||
+    chart.rendererVersion !== "completed-candles-ema-atr-v1" ||
+    chart.completedCandlesOnly !== true ||
+    chart.width !== 1600 ||
+    chart.height !== 1200 ||
+    bytes.length < 33 ||
+    bytes.length > 1_048_576 ||
+    bytes.toString("base64") !== chart.dataBase64 ||
+    !bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")) ||
+    bytes.subarray(12, 16).toString("ascii") !== "IHDR" ||
+    bytes.readUInt32BE(16) !== chart.width ||
+    bytes.readUInt32BE(20) !== chart.height ||
+    createHash("sha256").update(bytes).digest("hex") !== chart.sha256
+  ) {
+    throw new Error("AI_CHART_INVALID");
+  }
+  return `data:image/png;base64,${chart.dataBase64}`;
+}
+
 export class OpenAiCompatibleClient {
   readonly #options: AiClientOptions;
   readonly #schema: Record<string, unknown>;
@@ -129,7 +153,13 @@ export class OpenAiCompatibleClient {
     ) {
       throw new Error("AI_REQUEST_OVERSIZED");
     }
-    const body = this.#requestBody(payloadText);
+    const body = this.#requestBody(payloadText, chartDataUrl(request.chart));
+    if (
+      Buffer.byteLength(JSON.stringify(body), "utf8") >
+      (this.#options.maxRequestBytes ?? 5_600_000)
+    ) {
+      throw new Error("AI_REQUEST_OVERSIZED");
+    }
     const maxRetries = this.#options.maxRetries ?? 0;
     const started = now();
     let lastError: Error = new Error("AI_REQUEST_FAILED");
@@ -197,7 +227,7 @@ export class OpenAiCompatibleClient {
     throw lastError;
   }
 
-  #requestBody(payloadText: string): Record<string, unknown> {
+  #requestBody(payloadText: string, imageUrl: string): Record<string, unknown> {
     const maxOutputTokens = this.#options.maxOutputTokens ?? 3_000;
     const temperature = this.#options.temperature ?? 0;
     if (this.#options.apiStyle === "responses") {
@@ -210,13 +240,16 @@ export class OpenAiCompatibleClient {
           },
           {
             role: "user",
-            content: [{ type: "input_text", text: payloadText }],
+            content: [
+              { type: "input_text", text: payloadText },
+              { type: "input_image", image_url: imageUrl, detail: "high" },
+            ],
           },
         ],
         text: {
           format: {
             type: "json_schema",
-            name: "market_analysis_2_0",
+            name: "market_analysis_2_1",
             strict: true,
             schema: this.#schema,
           },
@@ -229,12 +262,21 @@ export class OpenAiCompatibleClient {
       model: this.#options.model,
       messages: [
         { role: "system", content: this.#systemPrompt },
-        { role: "user", content: payloadText },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: payloadText },
+            {
+              type: "image_url",
+              image_url: { url: imageUrl, detail: "high" },
+            },
+          ],
+        },
       ],
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "market_analysis_2_0",
+          name: "market_analysis_2_1",
           strict: true,
           schema: this.#schema,
         },

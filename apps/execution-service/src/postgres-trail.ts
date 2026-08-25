@@ -296,33 +296,95 @@ export class PostgresDecisionTrail implements DecisionTrail {
     if (snapshotId === undefined)
       throw new Error("TRAIL_CANDLE_SNAPSHOT_MISSING");
     const m1 = timeframeFeatures(response, "M1");
-    await this.#options.pool.query(
-      `INSERT INTO indicator_snapshots
-        (id, candle_snapshot_id, feature_version, generated_at, atr, ema_fast, ema_slow,
-         features, acceptable, rejection_reasons)
-       VALUES ($1, $2, '1.0', $3, $4, $5, $6, $7::jsonb, $8, $9::jsonb)`,
-      [
-        randomUUID(),
-        snapshotId,
-        response.generatedAt,
-        typeof m1.atr === "string" ? m1.atr : null,
-        typeof m1.ema_fast === "string" ? m1.ema_fast : null,
-        typeof m1.ema_slow === "string" ? m1.ema_slow : null,
-        safeJson(response.features),
-        response.acceptable,
-        JSON.stringify(response.rejectionReasons),
-      ],
-    );
+    const client = await this.#options.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO indicator_snapshots
+          (id, candle_snapshot_id, feature_version, generated_at, atr, ema_fast, ema_slow,
+           features, acceptable, rejection_reasons)
+         VALUES ($1, $2, '1.1', $3, $4, $5, $6, $7::jsonb, $8, $9::jsonb)`,
+        [
+          randomUUID(),
+          snapshotId,
+          response.generatedAt,
+          typeof m1.atr === "string" ? m1.atr : null,
+          typeof m1.ema_fast === "string" ? m1.ema_fast : null,
+          typeof m1.ema_slow === "string" ? m1.ema_slow : null,
+          safeJson(response.features),
+          response.acceptable,
+          JSON.stringify(response.rejectionReasons),
+        ],
+      );
+      if (response.chart !== null) {
+        const bytes = Buffer.from(response.chart.dataBase64, "base64");
+        if (
+          bytes.length < 33 ||
+          bytes.length > 1_048_576 ||
+          bytes.toString("base64") !== response.chart.dataBase64 ||
+          !bytes
+            .subarray(0, 8)
+            .equals(Buffer.from("89504e470d0a1a0a", "hex")) ||
+          bytes.subarray(12, 16).toString("ascii") !== "IHDR" ||
+          bytes.readUInt32BE(16) !== response.chart.width ||
+          bytes.readUInt32BE(20) !== response.chart.height ||
+          createHash("sha256").update(bytes).digest("hex") !==
+            response.chart.sha256
+        ) {
+          throw new Error("TRAIL_ANALYSIS_CHART_INVALID");
+        }
+        await client.query(
+          `INSERT INTO analysis_chart_artifacts
+            (id, analysis_id, renderer_version, mime_type, width, height,
+             image_sha256, image_bytes, source_metadata)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
+          [
+            randomUUID(),
+            analysisId,
+            response.chart.rendererVersion,
+            response.chart.mimeType,
+            response.chart.width,
+            response.chart.height,
+            response.chart.sha256,
+            bytes,
+            safeJson({
+              completed_candles_only: response.chart.completedCandlesOnly,
+              candle_counts: response.chart.candleCounts,
+              latest_end_times: response.chart.latestEndTimes,
+            }),
+          ],
+        );
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
     await this.#audit(
       analysisId,
       "analytics_completed",
       response.acceptable ? "accepted" : "rejected",
       response.rejectionReasons[0] ?? null,
       {
-        feature_version: "1.0",
+        feature_version: "1.1",
         generated_at: response.generatedAt,
         acceptable: response.acceptable,
         reason_codes: response.rejectionReasons,
+        chart:
+          response.chart === null
+            ? null
+            : {
+                renderer_version: response.chart.rendererVersion,
+                mime_type: response.chart.mimeType,
+                width: response.chart.width,
+                height: response.chart.height,
+                sha256: response.chart.sha256,
+                completed_candles_only: response.chart.completedCandlesOnly,
+                candle_counts: response.chart.candleCounts,
+                latest_end_times: response.chart.latestEndTimes,
+              },
         m1: {
           atr: typeof m1.atr === "string" ? m1.atr : null,
           ema_fast: typeof m1.ema_fast === "string" ? m1.ema_fast : null,

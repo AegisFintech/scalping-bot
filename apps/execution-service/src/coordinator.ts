@@ -5,6 +5,7 @@ import { Decimal } from "decimal.js";
 import type {
   AccountAdapter,
   AccountState,
+  AnalysisChartArtifact,
   AnalyticsConfig,
   AnalyticsRequest,
   AnalyticsResponse,
@@ -65,6 +66,7 @@ export interface ModelProvider {
     readonly analysisId: string;
     readonly symbol: string;
     readonly payload: Readonly<Record<string, unknown>>;
+    readonly chart: AnalysisChartArtifact;
   }): Promise<{
     readonly response: ModelResponse;
     readonly rawResponse: string;
@@ -215,8 +217,8 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v4";
-  readonly schemaVersion: "2.0";
+  readonly promptVersion: "system-v5";
+  readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
   readonly minExpirySeconds: number;
@@ -420,6 +422,8 @@ export class AnalysisCoordinator {
       await this.#options.trail.analytics(analysisId, analytics);
       if (!analytics.acceptable)
         return await reject(analytics.rejectionReasons);
+      if (analytics.chart === null)
+        return await reject(["ANALYTICS_CHART_MISSING"]);
       const atr = m1Atr(analytics);
       const spreadContext = await this.#options.spreadContext(snapshot);
       const spread: SpreadDecision = checkSpread({
@@ -503,6 +507,7 @@ export class AnalysisCoordinator {
         promptVersion: this.#options.promptVersion,
         schemaVersion: this.#options.schemaVersion,
         strategyVersion: this.#options.strategyVersion,
+        chart: analytics.chart,
         executionConstraints: {
           currentBid: snapshot.quote.bid,
           currentAsk: snapshot.quote.ask,
@@ -524,6 +529,7 @@ export class AnalysisCoordinator {
         analysisId,
         symbol: this.#options.symbol,
         payload,
+        chart: analytics.chart,
       });
       if (model.promptArtifact.version !== this.#options.promptVersion) {
         return await reject(["MODEL_PROMPT_VERSION_MISMATCH"]);
@@ -666,6 +672,7 @@ export class AnalysisCoordinator {
       const proposalSemantic = validateSemantics(model.response, {
         ...semanticContext,
         minRiskRewardRatio: minimumProposalRiskRewardRatio,
+        takeProfitDistanceDivisor: TAKE_PROFIT_DISTANCE_DIVISOR,
       });
       await this.#options.trail.validation(
         analysisId,
@@ -701,6 +708,7 @@ export class AnalysisCoordinator {
       const effectiveSemantic = validateSemantics(transformed.response, {
         ...semanticContext,
         minRiskRewardRatio: this.#options.minRiskRewardRatio,
+        takeProfitDistanceDivisor: "1",
       });
       await this.#options.trail.validation(
         analysisId,
@@ -843,6 +851,7 @@ export class AnalysisCoordinator {
       const placementProposalSemantic = validateSemantics(model.response, {
         ...placementSemanticContext,
         minRiskRewardRatio: minimumProposalRiskRewardRatio,
+        takeProfitDistanceDivisor: TAKE_PROFIT_DISTANCE_DIVISOR,
       });
       await this.#options.trail.validation(
         analysisId,
@@ -863,6 +872,7 @@ export class AnalysisCoordinator {
         {
           ...placementSemanticContext,
           minRiskRewardRatio: this.#options.minRiskRewardRatio,
+          takeProfitDistanceDivisor: "1",
         },
       );
       await this.#options.trail.validation(

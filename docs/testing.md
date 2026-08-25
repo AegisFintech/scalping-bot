@@ -20,7 +20,7 @@ Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
 history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
-`0005`-through-`0011` migration paths exercise the database constraints,
+`0005`-through-`0012` migration paths exercise the database constraints,
 including nullable legacy prompt artifacts and paired prompt/hash constraints.
 The configured PostgreSQL integration also executes the production model-trail
 transaction: UUID primary key and text request ID persist through distinct bind
@@ -64,6 +64,13 @@ share one attempt, and a thrown broker/history operation becomes a stable
 fail-closed reason. Existing recovery tests prove an exact reconstructed SL/TP
 deal closes a disappeared position while missing closing-order evidence blocks.
 
+Hybrid-analysis tests render the exact accepted completed-candle/EMA/ATR input
+twice and require byte-identical PNG/hash output, reject forming candles without
+a partial chart, validate PNG signature/IHDR/size/hash across Node boundaries,
+cover Responses and Chat-Completions image content, enforce strict schema 2.1
+technical-map linkage, persist one bounded chart artifact in an isolated
+PostgreSQL schema, and verify Streamlit rechecks bytes before display.
+
 ## Historical limitations
 
 Candles do not reconstruct tick paths. Same-bar ordering is unknowable without tick data. Historical depth may be unavailable and synthetic depth is not equivalent. Simulated fills differ from broker fills; spread, latency, rejection, slippage, commission, swap, and liquidity need conservative modeling. Model/prompt/schema/feature changes create distinct experiment versions. Leakage/look-ahead tests are mandatory. Historical performance does not guarantee profit.
@@ -98,6 +105,17 @@ Fixtures use clearly fictional account IDs and inert illustrative prices. No rea
 Record exact commands, versions, pass/fail/skip counts, duration, and skipped external tests. A demo test skipped for missing credentials is not a pass and does not block mock/paper implementation; it remains a live-readiness blocker.
 
 ## Latest local result
+
+On 2026-08-25, ISSUE-039 passed Prettier, ESLint, TypeScript typecheck/build,
+191 Node tests across 33 files, 14 schema tests, 3 static migration tests, and
+all 3 configured isolated-PostgreSQL integration tests through migration
+`0012`. Ruff format/lint, strict mypy over 20 Python source files, and 53 Python
+tests passed. A migrated isolated-schema Streamlit AppTest rendered 19
+dataframes with zero exceptions. Replay/backtest smoke tests, npm/pip audits
+with zero known vulnerabilities, tracked-file secret scan, shell/PM2 syntax,
+and five offline systemd parses passed. A provider-only real-image probe
+completed strict schema 2.1 in 54.2 seconds without a database intent or broker
+call; it proves multimodal compatibility, not forecast accuracy.
 
 On 2026-08-24, formatting, ESLint, TypeScript typecheck/build, 136 Node unit
 tests across 29 files, 12 schema tests, 3 static migration tests, Ruff, strict
