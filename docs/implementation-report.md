@@ -1350,4 +1350,5 @@ fresh-market placement gate rejected `PLACEMENT_CANDLE_CONTEXT_CHANGED`, so no
 order was created. The completed model response correctly consumes a campaign
 slot; the unchanged candle-context gate correctly prevents stale placement.
 The scheduler continues automatically with 99 completed responses remaining
-and will write the review pause at 100.
+and will write the review pause at 100. This rollout evidence is tracked by
+[PR #90](https://github.com/AegisFintech/scalping-bot/pull/90).

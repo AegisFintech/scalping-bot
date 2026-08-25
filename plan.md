@@ -1232,7 +1232,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   `PLACEMENT_CANDLE_CONTEXT_CHANGED`, so it created no order. This correctly
   consumes one requested analysis result while preserving the fresh-candle
   placement gate. The campaign remains automatic with 99 results remaining and
-  will persist a pause at 100 for review. ISSUE-041 is complete.
+  will persist a pause at 100 for review. ISSUE-041 is complete; rollout
+  evidence is tracked by
+  [PR #90](https://github.com/AegisFintech/scalping-bot/pull/90).
 
 ## Acceptance criteria
 
