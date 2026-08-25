@@ -675,26 +675,39 @@ def broker_lifecycle_view(
     if any(not isinstance(order, Mapping) for order in raw_orders):
         return unavailable
     orders = list(raw_orders)
-    position = managed.get("position")
-    if position is not None and not isinstance(position, Mapping):
+    raw_positions = managed.get("positions")
+    if raw_positions is None:
+        legacy_position = managed.get("position")
+        raw_positions = [] if legacy_position is None else [legacy_position]
+    if not isinstance(raw_positions, Sequence) or isinstance(raw_positions, (str, bytes)):
         return unavailable
+    if any(not isinstance(position, Mapping) for position in raw_positions):
+        return unavailable
+    positions = list(raw_positions)
     active_orders = [order for order in orders if str(order.get("state")) in _ACTIVE_ORDER_STATES]
-    active_position = (
-        position
-        if isinstance(position, Mapping) and str(position.get("state")) in _ACTIVE_POSITION_STATES
-        else None
-    )
+    active_positions = [
+        position for position in positions if str(position.get("state")) in _ACTIVE_POSITION_STATES
+    ]
 
     if setup_status == "ACTIVE":
-        if active_position is not None:
-            side = str(active_position.get("side", "Unknown")).upper()
-            state = str(active_position.get("state", "UNKNOWN")).replace("_", " ").lower()
+        if active_positions:
+            sides = ", ".join(
+                str(position.get("side", "Unknown")).upper() for position in active_positions
+            )
+            states = ", ".join(
+                str(position.get("state", "UNKNOWN")).replace("_", " ").lower()
+                for position in active_positions
+            )
             return {
                 "state": "TRADE_ACTIVE",
-                "headline": f"{side} demo trade is {state}",
+                "headline": (
+                    f"{sides} demo trade is {states}"
+                    if len(active_positions) == 1
+                    else f"{len(active_positions)} demo trades are active ({sides})"
+                ),
                 "detail": (
-                    "The broker is managing this position. Its entry, stop loss, and take profit "
-                    "are listed below."
+                    "The broker is managing the displayed position evidence. Entries, stop "
+                    "losses, and take profits are listed below."
                 ),
                 "next_action": (
                     "No action is required; automatic analysis waits for the position to close "
@@ -726,20 +739,22 @@ def broker_lifecycle_view(
             "severity": "warning",
         }
 
-    if active_orders or active_position is not None:
+    if active_orders or active_positions:
         return unavailable
     group_state = str(managed.get("groupState", "UNKNOWN")).upper()
     if any(str(order.get("state")) not in _TERMINAL_ORDER_STATES for order in orders):
         return unavailable
     if group_state == "CLOSED" and (
-        not isinstance(position, Mapping) or str(position.get("state")) != "CLOSED"
+        not positions or any(str(position.get("state")) != "CLOSED" for position in positions)
     ):
         return unavailable
-    side = (
-        str(position.get("side", "Unknown")).upper() if isinstance(position, Mapping) else "Unknown"
-    )
+    sides = ", ".join(str(position.get("side", "Unknown")).upper() for position in positions)
     if group_state == "CLOSED":
-        headline = f"{side} demo trade closed — no order or position is active"
+        headline = (
+            f"{sides} demo trade closed — no order or position is active"
+            if len(positions) == 1
+            else f"{len(positions)} demo trades closed ({sides}) — nothing remains active"
+        )
     elif group_state == "EXPIRED":
         headline = "The previous stop orders expired — no trade is active"
     elif group_state == "FAILED":
@@ -756,14 +771,30 @@ def broker_lifecycle_view(
                 for order in orders
             )
         )
-    trade = managed.get("trade")
-    if trade is not None:
-        if not isinstance(trade, Mapping):
+    raw_trades = managed.get("trades")
+    if raw_trades is None:
+        legacy_trade = managed.get("trade")
+        raw_trades = [] if legacy_trade is None else [legacy_trade]
+    if not isinstance(raw_trades, Sequence) or isinstance(raw_trades, (str, bytes)):
+        return unavailable
+    if any(not isinstance(trade, Mapping) for trade in raw_trades):
+        return unavailable
+    trades = list(raw_trades)
+    if trades:
+        if group_state == "CLOSED" and len(trades) != len(positions):
+            return unavailable
+        try:
+            total_pnl = sum(
+                (Decimal(str(trade.get("realizedPnl"))) for trade in trades), Decimal(0)
+            )
+            total_fees = sum((Decimal(str(trade.get("fees"))) for trade in trades), Decimal(0))
+        except (ArithmeticError, TypeError, ValueError):
+            return unavailable
+        if not total_pnl.is_finite() or not total_fees.is_finite():
             return unavailable
         details.append(
-            "Durable demo result: realized P/L "
-            f"{_plain_decimal(trade.get('realizedPnl'))}; fees "
-            f"{_plain_decimal(trade.get('fees'))}"
+            f"Durable demo result across {len(trades)} trade(s): realized P/L "
+            f"{_plain_decimal(total_pnl)}; fees {_plain_decimal(total_fees)}"
         )
     if not details:
         details.append("The latest managed group is terminal history, not a working broker setup")
@@ -1241,21 +1272,36 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
         or isinstance(position_count, bool)
         or not isinstance(trade_count, int)
         or isinstance(trade_count, bool)
-        or position_count not in {0, 1}
-        or trade_count not in {0, 1}
+        or position_count not in {0, 1, 2}
+        or trade_count not in {0, 1, 2}
+        or trade_count > position_count
     ):
         raise DecisionViewError("DECISION_VIEW_HISTORY_LIFECYCLE_AMBIGUOUS")
 
     triggered_side = "—"
     realized_pnl = "—"
     fees = "—"
-    if trade_count == 1:
+    if position_count > trade_count:
+        side = row.get("position_side")
+        state = row.get("position_state")
+        if side not in {"BUY", "SELL", "BOTH"}:
+            raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_SIDE_INVALID")
+        triggered_side = "BUY + SELL" if side == "BOTH" else str(side)
+        if state in {"OPEN", "CLOSING"}:
+            return "TRADE OPEN", triggered_side, realized_pnl, fees
+        if state in {"UNKNOWN", "RECONCILIATION_PENDING"}:
+            return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
+        raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_OUTCOME_MISSING")
+
+    if trade_count > 0:
         if row.get("trade_closed_at") is None:
             raise DecisionViewError("DECISION_VIEW_HISTORY_TRADE_NOT_CLOSED")
         direction = row.get("trade_direction")
-        if direction not in {"LONG", "SHORT"}:
+        if direction not in {"LONG", "SHORT", "BOTH"}:
             raise DecisionViewError("DECISION_VIEW_HISTORY_TRADE_DIRECTION_INVALID")
-        triggered_side = "BUY" if direction == "LONG" else "SELL"
+        triggered_side = (
+            "BUY" if direction == "LONG" else "SELL" if direction == "SHORT" else "BUY + SELL"
+        )
         realized_pnl = _history_decimal(
             row.get("realized_pnl"), "DECISION_VIEW_HISTORY_PNL_INVALID"
         )
@@ -1268,26 +1314,14 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
             fees,
         )
 
-    if position_count == 1:
-        side = row.get("position_side")
-        state = row.get("position_state")
-        if side not in {"BUY", "SELL"}:
-            raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_SIDE_INVALID")
-        triggered_side = str(side)
-        if state in {"OPEN", "CLOSING"}:
-            return "TRADE OPEN", triggered_side, realized_pnl, fees
-        if state in {"UNKNOWN", "RECONCILIATION_PENDING"}:
-            return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
-        raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_OUTCOME_MISSING")
-
     buy_state = row.get("buy_order_state")
     sell_state = row.get("sell_order_state")
     filled = [
         side for side, state in (("BUY", buy_state), ("SELL", sell_state)) if state == "FILLED"
     ]
     if len(filled) > 1:
-        raise DecisionViewError("DECISION_VIEW_HISTORY_DUAL_FILL_AMBIGUOUS")
-    if filled:
+        triggered_side = "BUY + SELL"
+    elif filled:
         triggered_side = filled[0]
 
     group_state = row.get("group_state")
@@ -1416,6 +1450,23 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
     closed_rows = [row for row in output if str(row["result"]).startswith("CLOSED ")]
     pnl_total = sum((Decimal(str(row["realized_pnl"])) for row in closed_rows), Decimal(0))
     fee_total = sum((Decimal(str(row["fees"])) for row in closed_rows), Decimal(0))
+    rejection_code_sets = [
+        {reason for reason in row.get("rejection_reasons", []) if isinstance(reason, str)}
+        for row in rows
+    ]
+    context_invalidated = sum(
+        any("CANDLE_CONTEXT_CHANGED" in reason for reason in reasons)
+        for reasons in rejection_code_sets
+    )
+    dependency_failures = sum(
+        any("HTTP_ERROR" in reason or "REFRESH_FAILED" in reason for reason in reasons)
+        for reasons in rejection_code_sets
+    )
+    spread_skips = sum(
+        any(reason.startswith("SPREAD_") for reason in reasons) for reasons in rejection_code_sets
+    )
+    classified = context_invalidated + dependency_failures + spread_skips
+    rejected_no_order = sum(row["result"] == "REJECTED — NO ORDER" for row in output)
     return {
         "rows": output,
         "analysis_ids": analysis_ids,
@@ -1430,6 +1481,10 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
             "break_even": break_even,
             "realized_pnl": _history_decimal(pnl_total, "DECISION_VIEW_HISTORY_PNL_TOTAL_INVALID"),
             "fees": _history_decimal(fee_total, "DECISION_VIEW_HISTORY_FEES_TOTAL_INVALID"),
+            "context_invalidated": context_invalidated,
+            "dependency_failures": dependency_failures,
+            "spread_skips": spread_skips,
+            "other_rejections": max(0, rejected_no_order - classified),
         },
     }
 

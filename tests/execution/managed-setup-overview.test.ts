@@ -91,6 +91,8 @@ describe("managed setup Overview projection", () => {
       groupExpiresAt: null,
       groupUpdatedAt: null,
       orders: [],
+      positions: [],
+      trades: [],
       position: null,
       trade: null,
     });
@@ -110,6 +112,7 @@ describe("managed setup Overview projection", () => {
       ],
       trades: [
         {
+          position_id: "position-1",
           direction: "LONG",
           realized_pnl: "-4.6500000000",
           fees: "-0.2800000000",
@@ -119,6 +122,7 @@ describe("managed setup Overview projection", () => {
       ],
       positions: [
         {
+          id: "position-1",
           side: "BUY",
           state: "CLOSED",
           entry_price: "4646.9100000000",
@@ -156,7 +160,11 @@ describe("managed setup Overview projection", () => {
           updated_at: now,
         },
       ],
-      positions: [{ updated_at: now }, { updated_at: now }],
+      positions: [
+        { updated_at: now },
+        { updated_at: now },
+        { updated_at: now },
+      ],
     });
 
     await expect(read.read()).rejects.toThrow(
@@ -194,6 +202,7 @@ describe("managed setup Overview projection", () => {
       ],
       trades: [
         {
+          position_id: "position-1",
           direction: "LONG",
           realized_pnl: "1",
           fees: "0",
@@ -201,8 +210,17 @@ describe("managed setup Overview projection", () => {
           closed_at: now,
         },
         {
+          position_id: "position-2",
           direction: "LONG",
           realized_pnl: "2",
+          fees: "0",
+          opened_at: now,
+          closed_at: now,
+        },
+        {
+          position_id: "position-3",
+          direction: "SHORT",
+          realized_pnl: "3",
           fees: "0",
           opened_at: now,
           closed_at: now,
@@ -212,6 +230,79 @@ describe("managed setup Overview projection", () => {
 
     await expect(read.read()).rejects.toThrow("MANAGED_SETUP_TRADE_AMBIGUOUS");
     expect(query).toHaveBeenCalledWith("ROLLBACK");
+  });
+
+  it("returns both exact terminal outcomes after a genuine OCO double fill", async () => {
+    const firstOpen = new Date("2026-08-25T09:50:02.433Z");
+    const firstClose = new Date("2026-08-25T09:56:09.066Z");
+    const secondOpen = new Date("2026-08-25T10:00:07.719Z");
+    const secondClose = new Date("2026-08-25T10:42:12.418Z");
+    const { read } = overviewWithRows({
+      groups: [
+        {
+          id: "group",
+          state: "CLOSED",
+          expires_at: secondClose,
+          updated_at: secondClose,
+        },
+      ],
+      positions: [
+        {
+          id: "position-2",
+          side: "SELL",
+          state: "CLOSED",
+          entry_price: "4635.79",
+          stop_loss: null,
+          take_profit: null,
+          volume: "0",
+          opened_at: secondOpen,
+          closed_at: secondClose,
+          updated_at: secondClose,
+        },
+        {
+          id: "position-1",
+          side: "BUY",
+          state: "CLOSED",
+          entry_price: "4641.05",
+          stop_loss: null,
+          take_profit: null,
+          volume: "0",
+          opened_at: firstOpen,
+          closed_at: firstClose,
+          updated_at: firstClose,
+        },
+      ],
+      trades: [
+        {
+          position_id: "position-2",
+          direction: "SHORT",
+          realized_pnl: "-5.11",
+          fees: "-0.28",
+          opened_at: secondOpen,
+          closed_at: secondClose,
+        },
+        {
+          position_id: "position-1",
+          direction: "LONG",
+          realized_pnl: "-4.98",
+          fees: "-0.28",
+          opened_at: firstOpen,
+          closed_at: firstClose,
+        },
+      ],
+    });
+
+    await expect(read.read()).resolves.toMatchObject({
+      status: "LATEST_TERMINAL",
+      groupState: "CLOSED",
+      position: null,
+      trade: null,
+      positions: [{ side: "SELL" }, { side: "BUY" }],
+      trades: [
+        { direction: "SHORT", realizedPnl: "-5.11" },
+        { direction: "LONG", realizedPnl: "-4.98" },
+      ],
+    });
   });
 
   it("rejects a closed group without a matching position and trade", async () => {

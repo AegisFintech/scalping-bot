@@ -45,6 +45,8 @@ function server(
           groupExpiresAt: null,
           groupUpdatedAt: null,
           orders: [],
+          positions: [],
+          trades: [],
           position: null,
           trade: null,
         },

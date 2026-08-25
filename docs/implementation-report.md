@@ -1649,3 +1649,46 @@ immediately eligible. No execution, market-data, analytics, AI, order, or
 broker process restarted. ISSUE-047 is complete.
 Rollout evidence is proposed in
 [PR #107](https://github.com/AegisFintech/scalping-bot/pull/107).
+
+## OCO double-fill recovery and rejection reduction
+
+[ISSUE-048](https://github.com/AegisFintech/scalping-bot/issues/108) addresses
+the observed 25 Aug 2026 demo lifecycle in which the BUY
+stop filled, its SELL peer cancellation did not complete, and that peer later
+filled as a distinct position. PostgreSQL correctly retained the second exact
+closing callback but the former one-trade-per-group constraint labelled it
+`DEMO_TRADE_OUTCOME_CONFLICT`, leaving recovery fail-closed after the broker had
+no remaining exposure.
+
+Maintenance now retries a strategy-owned pending peer as soon as a sibling is
+durably filled instead of waiting for group expiry. Migration `0013` changes
+the immutable outcome key from order group to exact non-null position. The
+store still rejects a different outcome for the same position, while a retained
+double-fill conflict can be replayed only when its exact position, entry fill,
+closing fill, full-close money/volume detail, two terminal order legs, and empty
+broker state agree. The conflict row is retained and resolved by terminal proof;
+it is never deleted. Managed setup and Analysis History now show up to both
+positions and trade outcomes, including combined P/L/fees, rather than becoming
+ambiguous or hiding one side.
+
+Separately, the market-data client makes one bounded retry after an HTTP 503.
+Only a newly schema/freshness-validated snapshot is accepted; retry exhaustion
+keeps the cycle rejected. Streamlit separates context invalidation, temporary
+dependency failures, spread skips, and other proposal rejections. Spread,
+completed-candle context, semantic, risk, and reconciliation rules are
+unchanged.
+
+Pre-merge gates passed: Prettier, ESLint, TypeScript typecheck/build, 226 Node
+tests across 38 files, 16 schema tests, 3 migration tests, all 3 configured
+PostgreSQL/HTTP integration tests, Ruff format/lint, strict mypy over 21 source
+files, 75 Python tests, configured Streamlit AppTest with 39 dataframes/40
+metrics/15 tabs and zero exceptions, replay/backtest smoke tests,
+zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 checks,
+and five offline systemd security parses. A disposable migrated schema replayed
+the exact retained conflict into two closed positions and two immutable trades,
+closed the group, resolved all journal evidence, and returned certain terminal
+proof before the schema was dropped. Stopped rollout evidence will be recorded
+after merge.
+
+Implementation review and merge are tracked by
+[PR #109](https://github.com/AegisFintech/scalping-bot/pull/109).

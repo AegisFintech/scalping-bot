@@ -99,6 +99,8 @@ const quoteSnapshotSchema = z
 export interface MarketDataHttpClientOptions {
   readonly baseUrl: string;
   readonly timeoutMs?: number;
+  readonly maxRetries?: number;
+  readonly retryDelayMs?: number;
   readonly fetchImpl?: typeof fetch;
 }
 
@@ -113,7 +115,45 @@ export class MarketDataHttpClient {
     if (target.username !== "" || target.password !== "") {
       throw new Error("MARKET_DATA_BASE_URL_CREDENTIALS_FORBIDDEN");
     }
+    if (
+      !Number.isSafeInteger(options.maxRetries ?? 0) ||
+      (options.maxRetries ?? 0) < 0 ||
+      (options.maxRetries ?? 0) > 3 ||
+      !Number.isSafeInteger(options.retryDelayMs ?? 250) ||
+      (options.retryDelayMs ?? 250) < 0 ||
+      (options.retryDelayMs ?? 250) > 5_000
+    ) {
+      throw new Error("MARKET_DATA_RETRY_CONFIG_INVALID");
+    }
     this.#options = options;
+  }
+
+  async #request(
+    path: string,
+    body: unknown,
+    errorPrefix: string,
+  ): Promise<Response> {
+    const maxRetries = this.#options.maxRetries ?? 0;
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      const response = await (this.#options.fetchImpl ?? fetch)(
+        new URL(path, this.#options.baseUrl),
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(this.#options.timeoutMs ?? 15_000),
+        },
+      );
+      if (response.ok) return response;
+      if (response.status !== 503 || attempt === maxRetries) {
+        throw new Error(`${errorPrefix}:${response.status}`);
+      }
+      const delayMs = this.#options.retryDelayMs ?? 250;
+      if (delayMs > 0) {
+        await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+    throw new Error(`${errorPrefix}:RETRY_EXHAUSTED`);
   }
 
   async snapshot(
@@ -121,17 +161,11 @@ export class MarketDataHttpClient {
     counts: Readonly<Record<Timeframe, number>>,
     depth: number,
   ): Promise<MarketSnapshot> {
-    const response = await (this.#options.fetchImpl ?? fetch)(
-      new URL("/v1/snapshot", this.#options.baseUrl),
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ symbol, counts, depth }),
-        signal: AbortSignal.timeout(this.#options.timeoutMs ?? 15_000),
-      },
+    const response = await this.#request(
+      "/v1/snapshot",
+      { symbol, counts, depth },
+      "MARKET_DATA_HTTP_ERROR",
     );
-    if (!response.ok)
-      throw new Error(`MARKET_DATA_HTTP_ERROR:${response.status}`);
     const parsed = snapshotSchema.parse(await response.json());
     if (parsed.metadata.symbolName !== symbol)
       throw new Error("MARKET_DATA_SYMBOL_MISMATCH");
@@ -142,17 +176,11 @@ export class MarketDataHttpClient {
   }
 
   async quote(symbol: string): Promise<z.infer<typeof quoteSnapshotSchema>> {
-    const response = await (this.#options.fetchImpl ?? fetch)(
-      new URL("/v1/quote", this.#options.baseUrl),
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ symbol }),
-        signal: AbortSignal.timeout(this.#options.timeoutMs ?? 15_000),
-      },
+    const response = await this.#request(
+      "/v1/quote",
+      { symbol },
+      "MARKET_QUOTE_HTTP_ERROR",
     );
-    if (!response.ok)
-      throw new Error(`MARKET_QUOTE_HTTP_ERROR:${response.status}`);
     const parsed = quoteSnapshotSchema.parse(await response.json());
     if (parsed.metadata.symbolName !== symbol)
       throw new Error("MARKET_QUOTE_SYMBOL_MISMATCH");

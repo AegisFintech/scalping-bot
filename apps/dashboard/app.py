@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from typing import Any
 from urllib.parse import urlparse
 
@@ -294,8 +295,13 @@ with tabs[0]:
             "last updated: "
             f"{format_gmt8_timestamp(managed_setup.get('groupUpdatedAt'))}"
         )
-        managed_trade = managed_setup.get("trade")
-        if isinstance(managed_trade, dict):
+        managed_trades = managed_setup.get("trades")
+        if not isinstance(managed_trades, list):
+            legacy_trade = managed_setup.get("trade")
+            managed_trades = [legacy_trade] if isinstance(legacy_trade, dict) else []
+        managed_trades = [trade for trade in managed_trades if isinstance(trade, dict)]
+        if len(managed_trades) == 1:
+            managed_trade = managed_trades[0]
             trade_columns = st.columns(4)
             trade_columns[0].metric(
                 "Closed demo direction", str(managed_trade.get("direction", "unknown"))
@@ -306,6 +312,30 @@ with tabs[0]:
             trade_columns[2].metric("Fees", str(managed_trade.get("fees", "unavailable")))
             trade_columns[3].metric(
                 "Closed at", format_gmt8_timestamp(managed_trade.get("closedAt"))
+            )
+        elif len(managed_trades) > 1:
+            total_pnl: Decimal | None
+            total_fees: Decimal | None
+            try:
+                total_pnl = sum(
+                    (Decimal(str(trade.get("realizedPnl"))) for trade in managed_trades),
+                    Decimal(0),
+                )
+                total_fees = sum(
+                    (Decimal(str(trade.get("fees"))) for trade in managed_trades),
+                    Decimal(0),
+                )
+            except (InvalidOperation, TypeError, ValueError):
+                total_pnl = total_fees = None
+            trade_columns = st.columns(3)
+            trade_columns[0].metric("Closed demo trades", len(managed_trades))
+            trade_columns[1].metric(
+                "Combined realized demo P/L",
+                format(total_pnl, "f") if total_pnl is not None else "unavailable",
+            )
+            trade_columns[2].metric(
+                "Combined fees",
+                format(total_fees, "f") if total_fees is not None else "unavailable",
             )
         setup_rows: list[dict[str, object]] = []
         managed_orders = managed_setup.get("orders", [])
@@ -325,21 +355,25 @@ with tabs[0]:
                             "updated_at": order.get("updatedAt"),
                         }
                     )
-        managed_position = managed_setup.get("position")
-        if isinstance(managed_position, dict):
-            setup_rows.append(
-                {
-                    "record": "POSITION",
-                    "side": managed_position.get("side"),
-                    "state": managed_position.get("state"),
-                    "entry": managed_position.get("entryPrice"),
-                    "stop_loss": managed_position.get("stopLoss"),
-                    "take_profit": managed_position.get("takeProfit"),
-                    "volume": managed_position.get("volume"),
-                    "expires_at": None,
-                    "updated_at": managed_position.get("updatedAt"),
-                }
-            )
+        managed_positions = managed_setup.get("positions")
+        if not isinstance(managed_positions, list):
+            legacy_position = managed_setup.get("position")
+            managed_positions = [legacy_position] if isinstance(legacy_position, dict) else []
+        for managed_position in managed_positions:
+            if isinstance(managed_position, dict):
+                setup_rows.append(
+                    {
+                        "record": "POSITION",
+                        "side": managed_position.get("side"),
+                        "state": managed_position.get("state"),
+                        "entry": managed_position.get("entryPrice"),
+                        "stop_loss": managed_position.get("stopLoss"),
+                        "take_profit": managed_position.get("takeProfit"),
+                        "volume": managed_position.get("volume"),
+                        "expires_at": None,
+                        "updated_at": managed_position.get("updatedAt"),
+                    }
+                )
         if setup_rows:
             display_dataframe(pd.DataFrame(setup_rows), width="stretch", hide_index=True)
         else:
@@ -765,7 +799,7 @@ with tabs[4]:
                    JOIN accounts a ON a.id = ar.account_id
                    JOIN symbols s ON s.id = ar.symbol_id
                    WHERE ar.id = %s AND a.environment = %s AND s.name = %s
-                   ORDER BY t.closed_at DESC LIMIT 1""",
+                   ORDER BY t.closed_at DESC LIMIT 2""",
                 (selected_analysis_id, account_environment, selected_symbol),
             )
             trade_outcomes = [trade_outcome_view(row) for row in trade_rows]
@@ -1236,19 +1270,31 @@ with tabs[5]:
                      ON sell.order_group_id = og.id AND sell.side = 'SELL'
                     AND sell.strategy_owned = true
                    LEFT JOIN LATERAL (
-                     SELECT count(*) OVER ()::int AS position_count,
-                            p.side, p.state, p.opened_at, p.closed_at
+                     SELECT count(*)::int AS position_count,
+                            CASE WHEN count(DISTINCT p.side) = 1 THEN min(p.side)
+                                 WHEN count(*) > 1 THEN 'BOTH' END AS side,
+                            CASE WHEN bool_or(p.state IN ('OPEN','CLOSING')) THEN 'OPEN'
+                                 WHEN bool_or(p.state IN
+                                   ('UNKNOWN','RECONCILIATION_PENDING'))
+                                   THEN 'RECONCILIATION_PENDING'
+                                 WHEN bool_and(p.state = 'CLOSED') THEN 'CLOSED'
+                            END AS state,
+                            min(p.opened_at) AS opened_at,
+                            max(p.closed_at) AS closed_at
                      FROM positions p
                      WHERE p.order_group_id = og.id AND p.strategy_owned = true
-                     ORDER BY p.updated_at DESC LIMIT 1
                    ) position ON true
                    LEFT JOIN LATERAL (
-                     SELECT count(*) OVER ()::int AS trade_count,
-                            t.direction, t.realized_pnl, t.fees,
-                            t.opened_at, t.closed_at
+                     SELECT count(*)::int AS trade_count,
+                            CASE WHEN count(DISTINCT t.direction) = 1
+                                   THEN min(t.direction)
+                                 WHEN count(*) > 1 THEN 'BOTH' END AS direction,
+                            sum(t.realized_pnl) AS realized_pnl,
+                            sum(t.fees) AS fees,
+                            min(t.opened_at) AS opened_at,
+                            max(t.closed_at) AS closed_at
                      FROM trades t
                      WHERE t.order_group_id = og.id
-                     ORDER BY t.closed_at DESC LIMIT 1
                    ) trade ON true
                    ORDER BY recent.created_at""",
                 (
@@ -1283,6 +1329,17 @@ with tabs[5]:
                 help="Signed cTrader result already includes terminal fees.",
             )
             result_columns[4].metric("Terminal fees", summary["fees"])
+            st.caption(
+                "Rejected means no broker order was placed. These categories separate "
+                "slow/stale context and temporary dependencies from model-level output."
+            )
+            rejection_columns = st.columns(4)
+            rejection_columns[0].metric("Context invalidated", summary["context_invalidated"])
+            rejection_columns[1].metric(
+                "Temporary dependency failures", summary["dependency_failures"]
+            )
+            rejection_columns[2].metric("Spread safety skips", summary["spread_skips"])
+            rejection_columns[3].metric("Other proposal rejections", summary["other_rejections"])
 
             history_frame = pd.DataFrame(history["rows"])
             outcome_columns = [

@@ -73,8 +73,10 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
   conflicting, or contain unresolved reasons. Resolved partial-fill evidence is
   retained for audit but no longer blocks after the final fill commits.
 - A supported fully closed demo position, its terminal state, signed broker
-  money outcome, and one immutable `trades` row commit in the same transaction.
-  A conflicting second outcome is journaled as `CONFLICT` and cannot overwrite it.
+  money outcome, and one immutable position-owned `trades` row commit in the
+  same transaction. A second OCO leg that genuinely fills owns a distinct
+  position and may therefore retain its own outcome. A second outcome for the
+  same position is journaled as `CONFLICT` and cannot overwrite it.
 - Cancellation intent commits before cancel call; result/reconciliation commits afterward.
 
 ## Retention and access
@@ -170,11 +172,24 @@ operator-reviewed: pause analysis, retain/export chart evidence, deploy code
 that no longer sends or reads images, and only then remove the table if audit
 retention policy permits.
 
+Migration `0013` replaces the one-trade-per-OCO-group constraint with a unique
+non-null `trades.position_id` index. This preserves one immutable outcome per
+exact position while allowing the two bounded OCO legs to both be represented
+after a broker cancellation race. It does not backfill or delete evidence;
+runtime recovery must still prove the matching fill, close detail, position,
+trade, two terminal order legs, empty broker state, and resolved journal. A
+rollback may restore group uniqueness only after analysis/demo submission is
+paused and every group is proven to contain at most one trade. A retained
+double-fill group requires an operator-reviewed application/data rollback and
+cannot be contracted without losing evidence.
+
 The read-only managed-setup status projection joins the selected active or
-latest terminal `order_groups` row to its strategy-owned `orders`, at most one
-`positions` row, and at most one `trades` row. Decimal P/L and fee values remain
-text at the HTTP boundary. Multiple active groups, positions, or trade outcomes
-make the projection unavailable rather than selecting an arbitrary record.
+latest terminal `order_groups` row to its strategy-owned orders and up to the
+two exact OCO positions/trades. It returns bounded arrays and retains the legacy
+singular fields only when exactly one result exists. Decimal P/L and fee values
+remain text at the HTTP boundary. More than two outcomes, an unmatched trade,
+or multiple active groups makes the projection unavailable rather than
+selecting an arbitrary record.
 
 The open-position monitor adds no table or mutable state. It selects at most one
 active strategy-owned `positions` row in the exact account/symbol/mode scope and

@@ -278,6 +278,37 @@ def test_broker_lifecycle_prioritizes_live_position_then_pending_orders() -> Non
     assert pending["detail"] == "Active sides: BUY, SELL. No strategy position is currently open."
 
 
+def test_broker_lifecycle_reports_both_terminal_oco_positions() -> None:
+    view = broker_lifecycle_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "reasonCodes": [],
+            "managedSetup": {
+                "status": "LATEST_TERMINAL",
+                "groupState": "CLOSED",
+                "orders": [
+                    {"side": "BUY", "state": "FILLED"},
+                    {"side": "SELL", "state": "FILLED"},
+                ],
+                "positions": [
+                    {"side": "BUY", "state": "CLOSED"},
+                    {"side": "SELL", "state": "CLOSED"},
+                ],
+                "trades": [
+                    {"direction": "LONG", "realizedPnl": "-4.98", "fees": "-0.28"},
+                    {"direction": "SHORT", "realizedPnl": "-5.11", "fees": "-0.28"},
+                ],
+                "position": None,
+                "trade": None,
+            },
+        }
+    )
+
+    assert view["state"] == "SETUP_CLOSED"
+    assert view["headline"] == ("2 demo trades closed (BUY, SELL) — nothing remains active")
+    assert "realized P/L -10.09; fees -0.56" in view["detail"]
+
+
 def test_broker_lifecycle_idle_state_says_when_automation_runs_next() -> None:
     view = broker_lifecycle_view(
         {
@@ -825,6 +856,10 @@ def test_analysis_history_distinguishes_non_trades_and_terminal_results() -> Non
         "break_even": 0,
         "realized_pnl": "1.5",
         "fees": "-0.55",
+        "context_invalidated": 0,
+        "dependency_failures": 0,
+        "spread_skips": 0,
+        "other_rejections": 1,
     }
 
 
@@ -832,13 +867,16 @@ def test_analysis_history_fails_count_and_marks_ambiguous_evidence_unavailable()
     with pytest.raises(DecisionViewError, match="COUNT_MISMATCH"):
         analysis_history_view([history_row()], 2)
 
-    ambiguous = history_row(position_count=2)
+    ambiguous = history_row(position_count=3)
     view = analysis_history_view([ambiguous], 1)
     assert view["rows"][0]["result"] == "EVIDENCE UNAVAILABLE"
     assert "LIFECYCLE_AMBIGUOUS" in view["rows"][0]["reasons"]
     assert view["summary"]["losses"] == 0
 
     incomplete_trade = history_row(
+        position_count=1,
+        position_side="BUY",
+        position_state="CLOSED",
         trade_count=1,
         trade_direction="LONG",
         realized_pnl="5",
@@ -848,6 +886,39 @@ def test_analysis_history_fails_count_and_marks_ambiguous_evidence_unavailable()
     assert view["rows"][0]["result"] == "EVIDENCE UNAVAILABLE"
     assert "TRADE_NOT_CLOSED" in view["rows"][0]["reasons"]
     assert view["summary"]["wins"] == 0
+
+
+def test_analysis_history_sums_a_genuine_double_fill_outcome() -> None:
+    double_fill = history_row(
+        analysis_state="EXPIRED",
+        rejection_reasons=[],
+        group_state="CLOSED",
+        group_expires_at="2026-08-25T10:04:04.000Z",
+        buy_order_state="FILLED",
+        buy_order_entry="4640.4",
+        buy_order_stop_loss="4636.61",
+        buy_order_take_profit="4647.98",
+        sell_order_state="FILLED",
+        sell_order_entry="4635.8",
+        sell_order_stop_loss="4640.4",
+        sell_order_take_profit="4626.6",
+        position_count=2,
+        position_side="BOTH",
+        position_state="CLOSED",
+        trade_count=2,
+        trade_direction="BOTH",
+        realized_pnl="-10.09",
+        fees="-0.56",
+        trade_closed_at="2026-08-25T10:42:12.418Z",
+    )
+
+    view = analysis_history_view([double_fill], 1)
+
+    assert view["rows"][0]["result"] == "CLOSED LOSS"
+    assert view["rows"][0]["triggered_side"] == "BUY + SELL"
+    assert view["rows"][0]["realized_pnl"] == "-10.09"
+    assert view["summary"]["losses"] == 1
+    assert view["summary"]["realized_pnl"] == "-10.09"
 
 
 def test_analysis_history_rejects_duplicate_identity_and_sanitizes_bad_model_data() -> None:

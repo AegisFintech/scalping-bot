@@ -20,7 +20,7 @@ Spread-observation tests cover exact decimal/minute derivation, 29-versus-30
 history behavior, ten-place percentile output, duplicate/restart idempotency,
 and rejection of stale, future, malformed, crossed, over-precision,
 symbol-mismatched, unavailable, and database-invalid evidence. Fresh and
-`0005`-through-`0012` migration paths exercise the database constraints,
+`0005`-through-`0013` migration paths exercise the database constraints,
 including nullable legacy prompt artifacts and paired prompt/hash constraints.
 The configured PostgreSQL integration also executes the production model-trail
 transaction: UUID primary key and text request ID persist through distinct bind
@@ -116,6 +116,21 @@ Fixtures use clearly fictional account IDs and inert illustrative prices. No rea
 Record exact commands, versions, pass/fail/skip counts, duration, and skipped external tests. A demo test skipped for missing credentials is not a pass and does not block mock/paper implementation; it remains a live-readiness blocker.
 
 ## Latest local result
+
+On 2026-08-25, ISSUE-048 passed Prettier, ESLint, TypeScript typecheck/build,
+226 Node tests across 38 files, 16 JSON Schema tests, 3 static migration tests,
+and all 3 configured isolated-PostgreSQL/HTTP integration tests through
+migration `0013`. Ruff format/lint, strict mypy over 21 source files, and 75
+Python tests passed. Configured Streamlit AppTest rendered 39 dataframes, 40
+metrics, 15 tabs, and zero exceptions. Replay/backtest smoke tests,
+zero-vulnerability npm/pip audits, the tracked-file secret scan, shell/PM2
+syntax, and all five offline systemd security parses passed. A disposable
+schema cloned only the affected retained demo lifecycle: migration `0013` plus
+the new store replay produced two closed positions, two retained trades, a
+`CLOSED` group, zero unresolved journal rows, and certain terminal proof. The
+schema was dropped afterward. `systemd-analyze verify` separately reported the
+expected absent future `/opt/ctrader-ai-scalper/current` executables on this
+source-tree host; unit parsing/security checks passed.
 
 On 2026-08-25, ISSUE-047 passed Prettier, ESLint, TypeScript typecheck/build,
 221 Node tests across 37 files, 16 JSON Schema tests, 3 migration tests, and all

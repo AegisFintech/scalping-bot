@@ -35,6 +35,28 @@ export class OrderMaintenance {
            )
          )`,
     );
+    const filledPeer = await this.#pool.query<{
+      client_order_id: string;
+      order_group_id: string;
+      analysis_id: string;
+    }>(
+      `SELECT o.client_order_id, o.order_group_id, og.analysis_id
+       FROM orders o
+       JOIN order_groups og ON og.id = o.order_group_id
+       WHERE o.strategy_owned = true
+         AND o.state IN ('PENDING', 'CANCEL_PENDING')
+         AND EXISTS (
+           SELECT 1 FROM orders filled
+           WHERE filled.order_group_id = o.order_group_id
+             AND filled.id <> o.id
+             AND filled.strategy_owned = true
+             AND filled.state = 'FILLED'
+         )`,
+    );
+    if (filledPeer.rows.length > 0) {
+      await this.#cancelRows(filledPeer.rows, "OCO_PEER_FILLED");
+    }
+
     const result = await this.#pool.query<{
       client_order_id: string;
       order_group_id: string;
