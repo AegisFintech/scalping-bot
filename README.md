@@ -110,8 +110,9 @@ Compact mode computes indicators from the full configured 600/500/300 completed
 M1/M5/M15 histories but sends only the newest 60/36/24 raw candles alongside
 those indicators. `MODEL_COMPACT_RAW_TAIL_1M`, `_5M`, and `_15M` may override
 the tails with positive counts no larger than the collected history.
-AI or prompt-artifact failure opens a circuit breaker or rejects the cycle and
-creates no order.
+AI or prompt-artifact failure rejects the cycle and creates no order. Repeated
+transient AI timeout, transport, or HTTP 503 failures open the circuit only at
+the configured positive threshold; a validated response resets the count.
 
 ## Better Stack
 

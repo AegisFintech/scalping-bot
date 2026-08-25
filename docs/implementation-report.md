@@ -1706,3 +1706,27 @@ Implementation review and merge are tracked by
 [PR #109](https://github.com/AegisFintech/scalping-bot/pull/109).
 Rollout evidence is reviewed in
 [PR #110](https://github.com/AegisFintech/scalping-bot/pull/110).
+
+## Execution-side AI circuit threshold
+
+[ISSUE-049](https://github.com/AegisFintech/scalping-bot/issues/111) corrects
+the execution caller's one-failure circuit behavior observed after the `.23`
+rollout. The local AI service already used
+`AI_CIRCUIT_BREAKER_FAILURES`, but its execution-side HTTP caller opened the
+full five-minute cooldown after the first HTTP 503. The caller now receives and
+validates the same configured positive threshold. Timeout, transport, and HTTP
+503 failures increment it; other HTTP rejections do not. Every failed analysis
+still rejects immediately with no request record, risk intent, or order, while
+a sub-threshold failure permits the next fresh broker-minute attempt. A fully
+validated response resets the transient count. The existing cooldown and exact
+half-open boundary remain unchanged after the threshold is reached.
+
+Tests cover invalid thresholds, two sub-threshold 503s, the exact third-failure
+opening boundary, no extra HTTP call while open, reset after a fully validated
+response, non-counting HTTP 400, timeout/transport normalization, cooldown, and
+half-open recovery. Pre-merge gates passed: Prettier, ESLint, TypeScript
+typecheck/build, 232 Node tests across 38 files, 16 schema tests, 3 migration
+tests, all 3 configured integration tests, Ruff format/lint, strict mypy over 21
+source files, 75 Python tests, configured Streamlit AppTest with zero
+exceptions, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+tracked-file secret scan, and shell/PM2/systemd checks.

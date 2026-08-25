@@ -101,12 +101,15 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   Off-tick midpoints reject without broker-price rounding. Deterministic sizing
   uses the unchanged endpoint entry/SL and the gateway receives the validated
   effective TP.
-- Rejects invalid/overflowing AI timeout budgets at startup. A local AI timeout
-  or transport loss becomes a stable reason code and opens the execution-side
-  circuit; it cannot create a model row, risk intent, or order command. The
-  caller circuit stays closed for the configured provider reset interval, then
-  half-opens at the exact boundary so a later broker minute can probe without a
-  process restart. A repeated transient failure reopens it.
+- Rejects invalid/overflowing AI timeout and circuit-threshold configuration at
+  startup. A local AI timeout, transport loss, or HTTP 503 becomes a stable
+  reason code and cannot create a model row, risk intent, or order command.
+  Consecutive transient failures open the execution-side circuit only at the
+  configured threshold; one failed cycle is still rejected immediately, but a
+  sub-threshold failure does not suppress the next fresh broker-minute attempt.
+  A locally validated success resets the count. Once open, the caller circuit
+  blocks for the configured reset interval, then half-opens at the exact
+  boundary; another threshold-reaching transient failure reopens it.
 - Writes intent and idempotency state transactionally before broker calls.
 - Starts automatic cycles only in a configured opening window of the broker's
   M1 interval. A PostgreSQL claim keyed by account, symbol, and broker minute is

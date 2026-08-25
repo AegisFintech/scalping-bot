@@ -261,6 +261,22 @@ describe("AI orchestrator HTTP client", () => {
     expect(aiOrchestratorCircuitResetMs(300)).toBe(300_000);
   });
 
+  it.each([0, -1, 0.5])(
+    "rejects an invalid caller circuit failure threshold: %s",
+    (circuitBreakerFailures) => {
+      expect(
+        () =>
+          new AiOrchestratorHttpClient({
+            baseUrl: "http://127.0.0.1:8082",
+            schemaPath: path.resolve("schemas/model-response-2.0.json"),
+            systemPromptPath,
+            promptVersion: "system-v2",
+            circuitBreakerFailures,
+          }),
+      ).toThrow("AI_CIRCUIT_FAILURE_THRESHOLD_INVALID");
+    },
+  );
+
   it("budgets the complete configured provider retry window", () => {
     expect(
       aiOrchestratorRequestTimeoutMs({
@@ -302,6 +318,99 @@ describe("AI orchestrator HTTP client", () => {
 
     await expect(client.analyze(analysisRequest)).rejects.toThrow(
       "AI_ORCHESTRATOR_TIMEOUT",
+    );
+    expect(client.circuitOpen).toBe(true);
+  });
+
+  it("opens only after the configured transient failure threshold", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response("unavailable", { status: 503 })),
+    );
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      circuitBreakerFailures: 3,
+      fetchImpl: fetchMock,
+    });
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await expect(client.analyze(analysisRequest)).rejects.toThrow(
+        "AI_ORCHESTRATOR_HTTP_ERROR:503",
+      );
+      expect(client.circuitOpen).toBe(false);
+    }
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
+    expect(client.circuitOpen).toBe(true);
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_CIRCUIT_OPEN",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("resets the transient failure count after a validated success", async () => {
+    const rawResponse = JSON.stringify(validResponse());
+    const fetchMock = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(new Response("unavailable", { status: 503 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValue(new Response("unavailable", { status: 503 }));
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      circuitBreakerFailures: 2,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
+    expect(client.circuitOpen).toBe(false);
+    await expect(client.analyze(analysisRequest)).resolves.toMatchObject({
+      response: { analysis_id: analysisId },
+    });
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
+    expect(client.circuitOpen).toBe(false);
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
+    expect(client.circuitOpen).toBe(true);
+  });
+
+  it("does not count a non-transient HTTP rejection", async () => {
+    const fetchMock = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(new Response("bad request", { status: 400 }))
+      .mockResolvedValue(new Response("unavailable", { status: 503 }));
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      circuitBreakerFailures: 2,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:400",
+    );
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
+    expect(client.circuitOpen).toBe(false);
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
     );
     expect(client.circuitOpen).toBe(true);
   });
