@@ -1477,7 +1477,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   migration `0013`.
 - Current status: implementation is complete on
   `issue-048-demo-oco-double-fill-recovery` and tracked by
-  [issue #108](https://github.com/AegisFintech/scalping-bot/issues/108).
+  [issue #108](https://github.com/AegisFintech/scalping-bot/issues/108) and
+  [PR #109](https://github.com/AegisFintech/scalping-bot/pull/109).
   Pre-merge gates pass: Prettier, ESLint, typecheck/build, 226 Node tests across
   38 files, 16 schema tests, 3 migration tests, all 3 configured integration
   tests, Ruff/mypy/75 Python tests, configured AppTest with zero exceptions,

@@ -1689,3 +1689,6 @@ the exact retained conflict into two closed positions and two immutable trades,
 closed the group, resolved all journal evidence, and returned certain terminal
 proof before the schema was dropped. Stopped rollout evidence will be recorded
 after merge.
+
+Implementation review and merge are tracked by
+[PR #109](https://github.com/AegisFintech/scalping-bot/pull/109).
