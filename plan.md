@@ -1514,7 +1514,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   lifecycle recovery.
 - Current status: implementation is in progress on
   `issue-049-ai-circuit-threshold`, tracked by
-  [issue #111](https://github.com/AegisFintech/scalping-bot/issues/111).
+  [issue #111](https://github.com/AegisFintech/scalping-bot/issues/111) and
+  [PR #112](https://github.com/AegisFintech/scalping-bot/pull/112).
   Pre-merge gates pass: Prettier, ESLint, TypeScript typecheck/build, 232 Node
   tests across 38 files, 16 schema tests, 3 migration tests, all 3 configured
   integration tests, Ruff/mypy/75 Python tests, configured AppTest with zero

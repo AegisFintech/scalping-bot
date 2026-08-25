@@ -1730,3 +1730,6 @@ tests, all 3 configured integration tests, Ruff format/lint, strict mypy over 21
 source files, 75 Python tests, configured Streamlit AppTest with zero
 exceptions, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
 tracked-file secret scan, and shell/PM2/systemd checks.
+
+Implementation review and merge are tracked by
+[PR #112](https://github.com/AegisFintech/scalping-bot/pull/112).
