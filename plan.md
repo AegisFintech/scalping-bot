@@ -1206,7 +1206,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   pause control, automatic broker-minute schedule, and protected cTrader demo
   environment.
 - Current status: implementation is complete on
-  `issue-041-100-analysis-campaign`. The requested campaign is defined as 100
+  `issue-041-100-analysis-campaign` through
+  [PR #89](https://github.com/AegisFintech/scalping-bot/pull/89). The requested campaign is defined as 100
   completed model responses; pre-AI market/data/spread rejection and provider
   failure do not consume a slot. The current 20-group daily ceiling is too low
   for the requested campaign and will be replaced at deployment by the current

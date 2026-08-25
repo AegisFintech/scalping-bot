@@ -1300,8 +1300,10 @@ This rollout evidence is tracked by
 
 ## Bounded 100-analysis demo campaign
 
-ISSUE-041 adds an optional restart-safe automatic campaign boundary without
-changing live authority or any model/risk contract. A positive
+ISSUE-041 is tracked by
+[PR #89](https://github.com/AegisFintech/scalping-bot/pull/89) and adds an
+optional restart-safe automatic campaign boundary without changing live
+authority or any model/risk contract. A positive
 `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` counts distinct analyses having both a
 durable completed model request and completed response for the current account,
 symbol, and immutable strategy release. The default zero is unbounded and does
