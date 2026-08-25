@@ -45,10 +45,12 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 - One-time late demo baseline initialization inserts `daily_risk_state` and its
   audit event in the same serializable transaction and refuses replacement.
 - Initial candle/depth rows and analysis linkage commit together before
-  analytics/model work. A post-model refresh may append a second depth snapshot
-  and atomically move only the analysis depth pointer; the immutable initial
-  candles remain the model context and must compare exactly with the refreshed
-  completed-candle context.
+  analytics/model work. Post-model and pre-placement refreshes may append later
+  depth snapshots and atomically move only the analysis depth pointer; the
+  immutable initial candles remain the model context and must compare exactly
+  with every refreshed completed-candle context. Their audit details identify
+  `POST_MODEL` versus `PRE_PLACEMENT`, and the active pointer selects the final
+  evidence used for freshness.
 - Accepted validation and risk decisions commit before order intent.
 - The immutable model response stores endpoint levels. Bounded semantic
   validation details separately store the TP-distance divisor plus original and
@@ -57,6 +59,10 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 - Risk-stage validation details retain the pre-model and post-model
   `max_affordable_stop_distance` without persisting an endpoint-facing equity,
   money-budget, or volume field.
+- Pre-placement validation details retain the final risk-constraint, account
+  reconciliation, market-context, spread, and original/effective semantic
+  scopes. No new migration is required because these remain inside the existing
+  bounded validation/audit JSON contracts.
 - OCO group plus both client order intents/idempotency keys commit before gateway calls.
 - Each broker callback is inserted/deduplicated and its state transition commits atomically.
 - Placement callbacks drain only after returned broker order IDs commit. If a

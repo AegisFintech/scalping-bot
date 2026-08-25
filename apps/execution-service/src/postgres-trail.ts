@@ -226,6 +226,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
   async decisionMarket(
     analysisId: string,
     snapshot: MarketSnapshot,
+    refreshPhase: "POST_MODEL" | "PRE_PLACEMENT" = "POST_MODEL",
   ): Promise<void> {
     const client = await this.#options.pool.connect();
     try {
@@ -264,6 +265,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
       "accepted",
       null,
       {
+        refresh_phase: refreshPhase,
         server_time: snapshot.serverTime,
         captured_at: snapshot.capturedAt,
         observed_skew_ms: snapshot.observedSkewMs,

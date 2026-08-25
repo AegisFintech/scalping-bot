@@ -473,12 +473,19 @@ describe("PostgreSQL migrations integration", () => {
         analysisId,
         decisionSnapshot("2026-08-24T00:00:10.000Z", "4649.14", "4649.22"),
       );
+      await trail.decisionMarket(
+        analysisId,
+        decisionSnapshot("2026-08-24T00:00:11.000Z", "4649.15", "4649.23"),
+        "PRE_PLACEMENT",
+      );
       const refreshedMarket = await isolated.query<{
         candle_snapshot_id: string;
         order_book_snapshot_id: string;
         source_time: Date;
         order_book_count: string;
         refresh_audit_count: string;
+        post_model_refresh_count: string;
+        pre_placement_refresh_count: string;
       }>(
         `SELECT ar.candle_snapshot_id, ar.order_book_snapshot_id,
                 obs.source_time,
@@ -486,7 +493,15 @@ describe("PostgreSQL migrations integration", () => {
                  WHERE candle_snapshot_id = ar.candle_snapshot_id) AS order_book_count,
                 (SELECT count(*)::text FROM audit_events
                  WHERE analysis_id = ar.id
-                   AND event_name = 'decision_market_refreshed') AS refresh_audit_count
+                   AND event_name = 'decision_market_refreshed') AS refresh_audit_count,
+                (SELECT count(*)::text FROM audit_events
+                 WHERE analysis_id = ar.id
+                   AND event_name = 'decision_market_refreshed'
+                   AND details->>'refresh_phase' = 'POST_MODEL') AS post_model_refresh_count,
+                (SELECT count(*)::text FROM audit_events
+                 WHERE analysis_id = ar.id
+                   AND event_name = 'decision_market_refreshed'
+                   AND details->>'refresh_phase' = 'PRE_PLACEMENT') AS pre_placement_refresh_count
          FROM analysis_runs ar
          JOIN order_book_snapshots obs ON obs.id = ar.order_book_snapshot_id
          WHERE ar.id = $1`,
@@ -494,9 +509,11 @@ describe("PostgreSQL migrations integration", () => {
       );
       expect(refreshedMarket.rows[0]).toMatchObject({
         candle_snapshot_id: initialMarketIds.rows[0]?.candle_snapshot_id,
-        source_time: new Date("2026-08-24T00:00:10.000Z"),
-        order_book_count: "2",
-        refresh_audit_count: "1",
+        source_time: new Date("2026-08-24T00:00:11.000Z"),
+        order_book_count: "3",
+        refresh_audit_count: "2",
+        post_model_refresh_count: "1",
+        pre_placement_refresh_count: "1",
       });
       expect(refreshedMarket.rows[0]?.order_book_snapshot_id).not.toBe(
         initialMarketIds.rows[0]?.order_book_snapshot_id,

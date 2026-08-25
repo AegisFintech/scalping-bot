@@ -35,12 +35,13 @@ historical audit backfill. The configured PostgreSQL integration verifies that
 post-migration audit inserts enqueue exactly once and that the same event ID
 survives a retry.
 
-Decision-time market refresh tests simulate model latency and prove that a new
-snapshot is required before semantic or execution checks. They cover refresh
-failure, regressed broker time, changed completed candles, changed
-execution metadata, a stale refreshed quote, a widened final spread, refreshed
-risk input, stale refreshed depth, and PostgreSQL persistence that retains the
-original candle context while advancing the analysis depth pointer.
+Decision-time market refresh tests simulate model and margin latency and prove
+that snapshots are required both after inference and immediately before intent.
+They cover refresh failure, regressed broker time, changed completed candles,
+changed execution metadata/account state, stale quotes/depth, widened spread,
+proposal invalidation at the final quote, refreshed risk input, and PostgreSQL
+persistence that retains the original candle context while advancing the
+analysis depth pointer with distinct refresh phases.
 
 TP-transform tests prove exact Decimal midpoint calculations for buy and sell,
 unchanged endpoint entry/SL, recomputed R:R, doubled pre-transform request

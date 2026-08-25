@@ -33,6 +33,14 @@ Fewer than one affordable tick rejects before the endpoint. The downstream
 position-sizing calculation remains authoritative and can still reject on newer
 account state, margin, notional, or any other risk ceiling.
 
+After sizing and broker margin estimation, the account is reconciled again. Any
+change to equity, balance, available margin, exposure, pending/fill/cancel, or
+certainty state rejects the cycle rather than reusing a decision calculated on
+older state. A final market snapshot must preserve the completed candles and
+execution metadata; spread and both original/effective proposal semantics are
+rechecked against its quote. Freshness thresholds are not extended—the final
+quote and depth replace the older timestamps at the placement gate.
+
 ## Decimal arithmetic
 
 Inputs arrive as canonical decimal strings and are parsed with arbitrary-precision decimal libraries. Binary floating-point is not used to compare execution levels or money. A price is valid only when `price / tick_size` is integral at broker precision.

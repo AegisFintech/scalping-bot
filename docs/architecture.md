@@ -84,6 +84,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   input; otherwise the cycle rejects. The refreshed quote and depth are
   persisted and drive final spread, semantic, risk, and placement-freshness
   checks.
+- After margin estimation and deterministic sizing, reconciles account state
+  again and rejects any changed money/exposure/order certainty. It then
+  reacquires a final market snapshot, requires the same completed candles and
+  execution metadata, and repeats spread plus original/effective semantics.
+  Only this final quote/depth drives the unchanged placement freshness gate.
 - Keeps the parsed endpoint JSON immutable, records a separate Decimal TP
   midpoint transform, and validates both the original and effective proposal.
   Off-tick midpoints reject without broker-price rounding. Deterministic sizing

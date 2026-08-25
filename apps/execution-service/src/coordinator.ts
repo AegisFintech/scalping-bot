@@ -80,7 +80,11 @@ export interface DecisionTrail {
   }): Promise<void>;
   transition(analysisId: string, transition: AnalysisTransition): Promise<void>;
   market(analysisId: string, snapshot: MarketSnapshot): Promise<void>;
-  decisionMarket(analysisId: string, snapshot: MarketSnapshot): Promise<void>;
+  decisionMarket(
+    analysisId: string,
+    snapshot: MarketSnapshot,
+    refreshPhase?: "POST_MODEL" | "PRE_PLACEMENT",
+  ): Promise<void>;
   analytics(analysisId: string, response: AnalyticsResponse): Promise<void>;
   model(
     analysisId: string,
@@ -138,8 +142,17 @@ export class InMemoryDecisionTrail implements DecisionTrail {
     return Promise.resolve();
   }
 
-  decisionMarket(analysisId: string, snapshot: MarketSnapshot): Promise<void> {
-    this.events.push({ type: "decision_market", analysisId, snapshot });
+  decisionMarket(
+    analysisId: string,
+    snapshot: MarketSnapshot,
+    refreshPhase: "POST_MODEL" | "PRE_PLACEMENT" = "POST_MODEL",
+  ): Promise<void> {
+    this.events.push({
+      type: "decision_market",
+      analysisId,
+      snapshot,
+      refreshPhase,
+    });
     return Promise.resolve();
   }
 
@@ -297,32 +310,47 @@ function candleContextFingerprint(snapshot: MarketSnapshot): string {
   );
 }
 
-function decisionMarketContextReasons(
+function marketContextReasons(
   initial: MarketSnapshot,
-  decision: MarketSnapshot,
+  refreshed: MarketSnapshot,
+  phase: "DECISION" | "PLACEMENT",
 ): readonly string[] {
   const reasons: string[] = [];
   const initialServerTime = Date.parse(initial.serverTime);
-  const decisionServerTime = Date.parse(decision.serverTime);
+  const refreshedServerTime = Date.parse(refreshed.serverTime);
   if (
     executionMetadataFingerprint(initial.metadata) !==
-    executionMetadataFingerprint(decision.metadata)
+    executionMetadataFingerprint(refreshed.metadata)
   ) {
-    reasons.push("DECISION_SYMBOL_METADATA_CHANGED");
+    reasons.push(`${phase}_SYMBOL_METADATA_CHANGED`);
   }
   if (
     !Number.isFinite(initialServerTime) ||
-    !Number.isFinite(decisionServerTime) ||
-    decisionServerTime < initialServerTime
+    !Number.isFinite(refreshedServerTime) ||
+    refreshedServerTime < initialServerTime
   ) {
-    reasons.push("DECISION_MARKET_TIME_REGRESSION");
+    reasons.push(`${phase}_MARKET_TIME_REGRESSION`);
   }
   if (
-    candleContextFingerprint(initial) !== candleContextFingerprint(decision)
+    candleContextFingerprint(initial) !== candleContextFingerprint(refreshed)
   ) {
-    reasons.push("DECISION_CANDLE_CONTEXT_CHANGED");
+    reasons.push(`${phase}_CANDLE_CONTEXT_CHANGED`);
   }
   return reasons.sort();
+}
+
+function accountExecutionFingerprint(account: AccountState): string {
+  return JSON.stringify({
+    certain: account.certain,
+    equity: account.equity,
+    balance: account.balance,
+    availableMargin: account.availableMargin,
+    relevantPositionCount: account.relevantPositionCount,
+    relevantPendingOrderCount: account.relevantPendingOrderCount,
+    hasPartialFill: account.hasPartialFill,
+    hasCancellationPending: account.hasCancellationPending,
+    reasonCodes: [...account.reasonCodes].sort(),
+  });
 }
 
 export class AnalysisCoordinator {
@@ -519,9 +547,10 @@ export class AnalysisCoordinator {
       } catch {
         return await reject(["DECISION_MARKET_REFRESH_FAILED"]);
       }
-      const decisionContextReasons = decisionMarketContextReasons(
+      const decisionContextReasons = marketContextReasons(
         snapshot,
         decisionSnapshot,
+        "DECISION",
       );
       if (decisionContextReasons.length > 0) {
         await this.#options.trail.validation(
@@ -532,7 +561,11 @@ export class AnalysisCoordinator {
         );
         return await reject(decisionContextReasons);
       }
-      await this.#options.trail.decisionMarket(analysisId, decisionSnapshot);
+      await this.#options.trail.decisionMarket(
+        analysisId,
+        decisionSnapshot,
+        "POST_MODEL",
+      );
 
       const decisionSpreadContext =
         await this.#options.spreadContext(decisionSnapshot);
@@ -698,21 +731,169 @@ export class AnalysisCoordinator {
       if (!risk.approved || risk.commands === null)
         return await reject(risk.reasonCodes);
 
+      const placementAccount = await this.#options.account.reconcile(
+        decisionSnapshot.metadata.symbolId,
+      );
+      const placementRiskConstraints = this.#options.risk.proposalConstraints({
+        account: placementAccount,
+        metadata: decisionSnapshot.metadata,
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "RISK",
+        placementRiskConstraints.approved,
+        placementRiskConstraints.reasonCodes,
+        {
+          validation_scope: "PRE_PLACEMENT_RISK_CONSTRAINTS",
+          max_affordable_stop_distance:
+            placementRiskConstraints.maxStopDistance,
+        },
+      );
+      if (
+        !placementRiskConstraints.approved ||
+        placementRiskConstraints.maxStopDistance === null
+      ) {
+        return await reject(placementRiskConstraints.reasonCodes);
+      }
+      if (
+        accountExecutionFingerprint(account) !==
+        accountExecutionFingerprint(placementAccount)
+      ) {
+        const reasons = ["PLACEMENT_ACCOUNT_STATE_CHANGED"];
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          false,
+          reasons,
+          { validation_scope: "PRE_PLACEMENT_ACCOUNT_RECONCILIATION" },
+        );
+        return await reject(reasons);
+      }
+
+      let placementSnapshot: MarketSnapshot;
+      try {
+        placementSnapshot = await this.#options.market.snapshot(
+          this.#options.symbol,
+          this.#options.candleCounts,
+          this.#options.orderBookDepth,
+        );
+      } catch {
+        const reasons = ["PLACEMENT_MARKET_REFRESH_FAILED"];
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          false,
+          reasons,
+          { validation_scope: "PRE_PLACEMENT_MARKET_REFRESH" },
+        );
+        return await reject(reasons);
+      }
+      const placementContextReasons = marketContextReasons(
+        decisionSnapshot,
+        placementSnapshot,
+        "PLACEMENT",
+      );
+      if (placementContextReasons.length > 0) {
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          false,
+          placementContextReasons,
+          { validation_scope: "PRE_PLACEMENT_MARKET_CONTEXT" },
+        );
+        return await reject(placementContextReasons);
+      }
+      await this.#options.trail.decisionMarket(
+        analysisId,
+        placementSnapshot,
+        "PRE_PLACEMENT",
+      );
+
+      const placementSpreadContext =
+        await this.#options.spreadContext(placementSnapshot);
+      const placementSpread = checkSpread({
+        bid: placementSnapshot.quote.bid,
+        ask: placementSnapshot.quote.ask,
+        tickSize: placementSnapshot.metadata.tickSize,
+        atr,
+        maxPoints: this.#options.maxSpreadPoints,
+        maxAtrRatio: this.#options.maxSpreadAtrRatio,
+        observedPercentile: placementSpreadContext.observedPercentile,
+        maxPercentile: this.#options.maxSpreadPercentile,
+        sessionAbnormal: placementSpreadContext.sessionAbnormal,
+        liveMode: this.#options.mode === "live",
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "RISK",
+        placementSpread.approved,
+        placementSpread.reasonCodes,
+        { validation_scope: "PRE_PLACEMENT_SPREAD" },
+      );
+      if (!placementSpread.approved)
+        return await reject(placementSpread.reasonCodes);
+
+      const placementSemanticContext = {
+        ...semanticContext,
+        now: new Date(),
+        quote: placementSnapshot.quote,
+        metadata: placementSnapshot.metadata,
+        maxAffordableStopDistance: placementRiskConstraints.maxStopDistance,
+      };
+      const placementProposalSemantic = validateSemantics(model.response, {
+        ...placementSemanticContext,
+        minRiskRewardRatio: minimumProposalRiskRewardRatio,
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "SEMANTIC",
+        placementProposalSemantic.accepted,
+        placementProposalSemantic.reasonCodes,
+        {
+          validation_scope: "PRE_PLACEMENT_AI_PROPOSAL",
+          required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
+          take_profit_distance_divisor: TAKE_PROFIT_DISTANCE_DIVISOR,
+        },
+      );
+      if (!placementProposalSemantic.accepted)
+        return await reject(placementProposalSemantic.reasonCodes);
+
+      const placementEffectiveSemantic = validateSemantics(
+        transformed.response,
+        {
+          ...placementSemanticContext,
+          minRiskRewardRatio: this.#options.minRiskRewardRatio,
+        },
+      );
+      await this.#options.trail.validation(
+        analysisId,
+        "SEMANTIC",
+        placementEffectiveSemantic.accepted,
+        placementEffectiveSemantic.reasonCodes,
+        {
+          validation_scope: "PRE_PLACEMENT_EFFECTIVE_PROPOSAL",
+          required_min_risk_reward_ratio: this.#options.minRiskRewardRatio,
+          proposal_transform: transformed.details,
+        },
+      );
+      if (!placementEffectiveSemantic.accepted)
+        return await reject(placementEffectiveSemantic.reasonCodes);
+
       const currentSafety = await this.#options.safety();
       const quoteAge =
-        Date.now() - Date.parse(decisionSnapshot.quote.sourceTime);
+        Date.now() - Date.parse(placementSnapshot.quote.sourceTime);
       const bookAge =
-        Date.now() - Date.parse(decisionSnapshot.orderBook.sourceTime);
+        Date.now() - Date.parse(placementSnapshot.orderBook.sourceTime);
       const placementGate = evaluatePlacementEligibility({
         ...currentSafety,
         aiCircuitOpen: this.#options.model.circuitOpen,
-        relevantPositionCount: account.relevantPositionCount,
-        relevantPendingOrderCount: account.relevantPendingOrderCount,
-        partialFillPresent: account.hasPartialFill,
-        cancellationPending: account.hasCancellationPending,
+        relevantPositionCount: placementAccount.relevantPositionCount,
+        relevantPendingOrderCount: placementAccount.relevantPendingOrderCount,
+        partialFillPresent: placementAccount.hasPartialFill,
+        cancellationPending: placementAccount.hasCancellationPending,
         previousAnalysisExpired: true,
         accountReconciled: true,
-        reconciliationCertain: account.certain,
+        reconciliationCertain: placementAccount.certain,
         marketDataFresh:
           quoteAge >= 0 && quoteAge <= this.#options.maxQuoteAgeMs,
         orderBookFresh:

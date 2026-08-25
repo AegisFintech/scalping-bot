@@ -141,6 +141,13 @@ broker-minute cycle history** for the exact hash-verified prompt, persisted
 redacted user JSON, parsed schema-validated AI response, post-model refresh,
 validation/risk results, scheduler outcome, order events, and terminal demo
 trade outcome.
+For runs that pass sizing but reject near intent, inspect the two
+`decision_market_refreshed` events: `POST_MODEL` is the first execution context
+and `PRE_PLACEMENT` is the snapshot reacquired after margin work. A
+`PLACEMENT_*` reason means account/candle/metadata/time changed or the final
+refresh was unavailable; the service did not reuse stale evidence or submit an
+order. `BUY_ENTRY_TOO_CLOSE`, `SELL_ENTRY_TOO_CLOSE`, spread, quote-age, and
+depth-age reasons can also arise from this final revalidation.
 PostgreSQL remains authoritative. Better Stack receives correlated bounded
 events and the direct `automatic_analysis_interval_claimed` scheduler event;
 the matching `automatic_analysis_interval_completed` event contains the cycle

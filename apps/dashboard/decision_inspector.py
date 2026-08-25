@@ -221,6 +221,18 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "No endpoint call or order is made; review broker metadata and configured risk without "
         "bypassing the limit.",
     ),
+    "PLACEMENT_MARKET_REFRESH_FAILED": (
+        "Final market refresh was unavailable",
+        "The service could not reacquire quote, depth, completed candles, and metadata after "
+        "risk and margin work.",
+        "No order was sent. The automatic scheduler starts with new data on a later minute.",
+    ),
+    "PLACEMENT_ACCOUNT_STATE_CHANGED": (
+        "Account state changed after sizing",
+        "Equity, margin, exposure, pending-order, fill, cancellation, or certainty state changed "
+        "between deterministic sizing and the final placement check.",
+        "No order was sent. The next cycle reconciles and sizes from the new account state.",
+    ),
 }
 
 _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (
@@ -260,6 +272,16 @@ _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (
             "response.",
             "No order was sent. The scheduler obtains a completely new snapshot on a later "
             "eligible minute.",
+        ),
+    ),
+    (
+        "PLACEMENT_",
+        (
+            "Final pre-order recheck rejected this cycle",
+            "Market or account state changed, regressed, or could not be refreshed immediately "
+            "before broker intent.",
+            "No order was sent. Inspect the final refresh and validation rows; a later broker "
+            "minute starts from new data.",
         ),
     ),
     (
