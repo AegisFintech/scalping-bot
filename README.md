@@ -237,6 +237,12 @@ npm audit --audit-level=high
 
 Open `http://127.0.0.1:8501`. Keep it on loopback or place it behind an authenticated TLS reverse proxy. Mutating controls require `DASHBOARD_CONTROL_TOKEN`, are audited, and do not substitute for live filesystem/environment gates.
 
+The **Analysis History** tab is the campaign ledger: it shows every counted
+durable AI response, original/effective/placed BUY and SELL levels, no-order or
+broker lifecycle, and closed demo win/loss results. It also exposes the selected
+run's redacted prompt/response and execution evidence without account or broker
+identifiers.
+
 ## systemd installation
 
 ```bash

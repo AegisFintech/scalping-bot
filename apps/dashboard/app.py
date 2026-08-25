@@ -23,6 +23,7 @@ from charts import (
 from decision_inspector import (
     DecisionViewError,
     analysis_chart_view,
+    analysis_history_view,
     analytics_summary,
     automation_status_view,
     broker_lifecycle_view,
@@ -179,6 +180,7 @@ tabs = st.tabs(
         "Performance",
         "Market",
         "AI Analysis",
+        "Analysis History",
         "Orders & Positions",
         "Risk",
         "Operations",
@@ -1077,6 +1079,351 @@ with tabs[4]:
         st.error(f"AI analysis unavailable: {type(error).__name__}")
 
 with tabs[5]:
+    st.subheader("100-analysis campaign history")
+    st.caption(
+        "One row equals one durable completed external-AI response counted by the campaign. "
+        "A rejected analysis or expired stop is not a loss; WIN/LOSS is assigned only after "
+        "PostgreSQL contains a durable closed demo trade."
+    )
+    try:
+        campaign = status.get("automaticAnalysisCampaign")
+        completed_count = campaign.get("completed") if isinstance(campaign, dict) else None
+        campaign_limit = campaign.get("limit") if isinstance(campaign, dict) else None
+        campaign_baseline = campaign.get("baseline") if isinstance(campaign, dict) else None
+        release_completed = campaign.get("releaseCompleted") if isinstance(campaign, dict) else None
+        if (
+            not isinstance(completed_count, int)
+            or isinstance(completed_count, bool)
+            or not 0 <= completed_count <= 100
+            or not isinstance(campaign_baseline, int)
+            or isinstance(campaign_baseline, bool)
+            or not isinstance(release_completed, int)
+            or isinstance(release_completed, bool)
+            or campaign_baseline < 0
+            or release_completed < 0
+            or campaign_baseline + release_completed != completed_count
+        ):
+            raise DecisionViewError("DECISION_VIEW_HISTORY_CAMPAIGN_COUNT_INVALID")
+        history_rows = (
+            []
+            if completed_count == 0
+            else query(
+                """WITH target_symbol AS (
+                     SELECT s.id
+                     FROM symbols s
+                     JOIN accounts a ON a.id = s.account_id
+                     WHERE a.environment = %s AND s.name = %s
+                     ORDER BY s.metadata_at DESC LIMIT 1
+                   ), current_strategy AS (
+                     SELECT sv.id
+                     FROM strategy_versions sv
+                     ORDER BY sv.created_at DESC, sv.id DESC
+                     LIMIT 1
+                   ), release_rows AS (
+                     SELECT ar.id, ar.created_at
+                     FROM analysis_runs ar
+                     WHERE ar.symbol_id = (SELECT id FROM target_symbol)
+                       AND ar.strategy_version_id = (SELECT id FROM current_strategy)
+                       AND EXISTS (
+                         SELECT 1
+                         FROM model_requests mq
+                         JOIN model_responses mr ON mr.model_request_id = mq.id
+                         WHERE mq.analysis_id = ar.id
+                           AND mq.status = 'COMPLETED'
+                           AND mr.status = 'COMPLETED'
+                       )
+                     ORDER BY ar.created_at DESC
+                     LIMIT %s
+                   ), baseline_rows AS (
+                     SELECT ar.id, ar.created_at
+                     FROM analysis_runs ar
+                     WHERE ar.symbol_id = (SELECT id FROM target_symbol)
+                       AND ar.strategy_version_id <> (SELECT id FROM current_strategy)
+                       AND EXISTS (
+                         SELECT 1
+                         FROM model_requests mq
+                         JOIN model_responses mr ON mr.model_request_id = mq.id
+                         WHERE mq.analysis_id = ar.id
+                           AND mq.status = 'COMPLETED'
+                           AND mr.status = 'COMPLETED'
+                       )
+                     ORDER BY ar.created_at DESC
+                     LIMIT %s
+                   ), recent AS (
+                     SELECT id, created_at FROM release_rows
+                     UNION ALL
+                     SELECT id, created_at FROM baseline_rows
+                   )
+                   SELECT ar.id::text AS analysis_id, ar.analysis_time,
+                          ar.mode, ar.state AS analysis_state, ar.valid_until,
+                          ar.rejection_reasons, ar.created_at, ar.updated_at,
+                          sv.version AS strategy_version,
+                          model.request_id, model.model, model.prompt_version,
+                          model.schema_version, model.payload_mode,
+                          model.payload_sha256, model.system_prompt,
+                          model.system_prompt_sha256, model.payload_redacted,
+                          model.model_request_status, model.model_response_status,
+                          model.parsed_payload, model.requested_at,
+                          model.completed_at, model.model_received_at,
+                          transform.effective_buy_entry,
+                          transform.effective_buy_stop_loss,
+                          transform.effective_buy_take_profit,
+                          transform.effective_sell_entry,
+                          transform.effective_sell_stop_loss,
+                          transform.effective_sell_take_profit,
+                          og.state AS group_state,
+                          og.expires_at AS group_expires_at,
+                          og.cancellation_reason,
+                          buy.state AS buy_order_state,
+                          buy.entry_price::text AS buy_order_entry,
+                          buy.stop_loss::text AS buy_order_stop_loss,
+                          buy.take_profit::text AS buy_order_take_profit,
+                          sell.state AS sell_order_state,
+                          sell.entry_price::text AS sell_order_entry,
+                          sell.stop_loss::text AS sell_order_stop_loss,
+                          sell.take_profit::text AS sell_order_take_profit,
+                          COALESCE(position.position_count, 0)::int AS position_count,
+                          position.side AS position_side,
+                          position.state AS position_state,
+                          position.opened_at AS position_opened_at,
+                          position.closed_at AS position_closed_at,
+                          COALESCE(trade.trade_count, 0)::int AS trade_count,
+                          trade.direction AS trade_direction,
+                          trade.realized_pnl::text AS realized_pnl,
+                          trade.fees::text AS fees,
+                          trade.opened_at AS trade_opened_at,
+                          trade.closed_at AS trade_closed_at
+                   FROM recent
+                   JOIN analysis_runs ar ON ar.id = recent.id
+                   JOIN strategy_versions sv ON sv.id = ar.strategy_version_id
+                   JOIN LATERAL (
+                     SELECT mq.request_id, mq.model, mq.prompt_version,
+                            mq.schema_version, mq.payload_mode, mq.payload_sha256,
+                            mq.system_prompt, mq.system_prompt_sha256,
+                            mq.payload_redacted, mq.status AS model_request_status,
+                            mr.status AS model_response_status, mr.parsed_payload,
+                            mq.requested_at, mq.completed_at,
+                            mr.received_at AS model_received_at
+                     FROM model_requests mq
+                     JOIN model_responses mr ON mr.model_request_id = mq.id
+                     WHERE mq.analysis_id = ar.id
+                       AND mq.status = 'COMPLETED' AND mr.status = 'COMPLETED'
+                     ORDER BY mq.requested_at DESC LIMIT 1
+                   ) model ON true
+                   LEFT JOIN LATERAL (
+                     SELECT vr.details->'proposal_transform'->'buy'->>'entry_price'
+                              AS effective_buy_entry,
+                            vr.details->'proposal_transform'->'buy'->>'stop_loss'
+                              AS effective_buy_stop_loss,
+                            vr.details->'proposal_transform'->'buy'->>'effective_take_profit'
+                              AS effective_buy_take_profit,
+                            vr.details->'proposal_transform'->'sell'->>'entry_price'
+                              AS effective_sell_entry,
+                            vr.details->'proposal_transform'->'sell'->>'stop_loss'
+                              AS effective_sell_stop_loss,
+                            vr.details->'proposal_transform'->'sell'->>'effective_take_profit'
+                              AS effective_sell_take_profit
+                     FROM validation_results vr
+                     WHERE vr.analysis_id = ar.id
+                       AND vr.details->>'validation_scope' = 'TAKE_PROFIT_TRANSFORM'
+                     ORDER BY vr.validated_at DESC LIMIT 1
+                   ) transform ON true
+                   LEFT JOIN order_groups og ON og.analysis_id = ar.id
+                   LEFT JOIN orders buy
+                     ON buy.order_group_id = og.id AND buy.side = 'BUY'
+                    AND buy.strategy_owned = true
+                   LEFT JOIN orders sell
+                     ON sell.order_group_id = og.id AND sell.side = 'SELL'
+                    AND sell.strategy_owned = true
+                   LEFT JOIN LATERAL (
+                     SELECT count(*) OVER ()::int AS position_count,
+                            p.side, p.state, p.opened_at, p.closed_at
+                     FROM positions p
+                     WHERE p.order_group_id = og.id AND p.strategy_owned = true
+                     ORDER BY p.updated_at DESC LIMIT 1
+                   ) position ON true
+                   LEFT JOIN LATERAL (
+                     SELECT count(*) OVER ()::int AS trade_count,
+                            t.direction, t.realized_pnl, t.fees,
+                            t.opened_at, t.closed_at
+                     FROM trades t
+                     WHERE t.order_group_id = og.id
+                     ORDER BY t.closed_at DESC LIMIT 1
+                   ) trade ON true
+                   ORDER BY recent.created_at""",
+                (
+                    account_environment,
+                    selected_symbol,
+                    release_completed + 1,
+                    campaign_baseline,
+                ),
+            )
+        )
+        history = analysis_history_view(history_rows, completed_count)
+        summary = history["summary"]
+        if completed_count == 0:
+            st.info("No completed external-AI analysis has been counted in this campaign yet.")
+        else:
+            summary_columns = st.columns(5)
+            summary_columns[0].metric(
+                "Completed AI analyses",
+                f"{summary['completed_ai_analyses']} / {campaign_limit or 100}",
+            )
+            summary_columns[1].metric("Order groups created", summary["orders_created"])
+            summary_columns[2].metric("Pending stop setups", summary["pending_stops"])
+            summary_columns[3].metric("Expired without trade", summary["expired_without_trade"])
+            summary_columns[4].metric("Open trades", summary["open_trades"])
+            result_columns = st.columns(5)
+            result_columns[0].metric("Closed wins", summary["wins"])
+            result_columns[1].metric("Closed losses", summary["losses"])
+            result_columns[2].metric("Break-even", summary["break_even"])
+            result_columns[3].metric(
+                "Terminal realized demo P/L",
+                summary["realized_pnl"],
+                help="Signed cTrader result already includes terminal fees.",
+            )
+            result_columns[4].metric("Terminal fees", summary["fees"])
+
+            history_frame = pd.DataFrame(history["rows"])
+            outcome_columns = [
+                "analysis_number",
+                "analysis_time",
+                "result",
+                "triggered_side",
+                "analysis_state",
+                "reasons",
+                "order_expires_at",
+                "realized_pnl",
+                "fees",
+                "trade_closed_at",
+                "evidence_status",
+            ]
+            level_columns = [
+                "analysis_number",
+                "level_source",
+                "ai_buy_entry",
+                "ai_buy_sl",
+                "ai_buy_tp",
+                "execution_buy_entry",
+                "execution_buy_sl",
+                "execution_buy_tp",
+                "ai_sell_entry",
+                "ai_sell_sl",
+                "ai_sell_tp",
+                "execution_sell_entry",
+                "execution_sell_sl",
+                "execution_sell_tp",
+            ]
+            st.subheader("Outcome ledger")
+            display_dataframe(history_frame[outcome_columns], width="stretch", hide_index=True)
+            st.subheader("AI proposal versus effective/placed levels")
+            display_dataframe(history_frame[level_columns], width="stretch", hide_index=True)
+            st.caption(
+                "EFFECTIVE LEVELS — NOT PLACED means TP transformation was recorded but no "
+                "broker order group was created. PLACED ORDER LEVELS are the exact durable "
+                "order intents and their current broker lifecycle state is shown above."
+            )
+
+            history_labels: dict[int, str] = {
+                int(row["analysis_number"]): (
+                    f"#{row['analysis_number']} · "
+                    f"{format_gmt8_timestamp(row['analysis_time'])} · {row['result']}"
+                )
+                for row in history["rows"]
+            }
+            selected_number = st.selectbox(
+                "Analysis details",
+                list(history_labels),
+                index=len(history_labels) - 1,
+                format_func=lambda value: history_labels[int(value)],
+            )
+            selected_index = int(selected_number) - 1
+            selected_view = history["rows"][selected_index]
+            selected = history_rows[selected_index]
+            detail_columns = st.columns(4)
+            detail_columns[0].metric("Result", selected_view["result"])
+            detail_columns[1].metric("Triggered side", selected_view["triggered_side"])
+            detail_columns[2].metric("Level source", selected_view["level_source"])
+            detail_columns[3].metric("Evidence", selected_view["evidence_status"])
+            st.write(f"Reason/status: {selected_view['reasons']}")
+
+            selected_levels = pd.DataFrame(
+                [
+                    {
+                        "side": side.upper(),
+                        "ai_entry": selected_view[f"ai_{side}_entry"],
+                        "ai_stop_loss": selected_view[f"ai_{side}_sl"],
+                        "ai_take_profit": selected_view[f"ai_{side}_tp"],
+                        "effective_or_placed_entry": selected_view[f"execution_{side}_entry"],
+                        "effective_or_placed_stop_loss": selected_view[f"execution_{side}_sl"],
+                        "effective_or_placed_take_profit": selected_view[f"execution_{side}_tp"],
+                    }
+                    for side in ("buy", "sell")
+                ]
+            )
+            display_dataframe(selected_levels, width="stretch", hide_index=True)
+
+            if selected_view["evidence_status"] == "CERTAIN":
+                with st.expander("Exact prompt, user JSON, and AI response"):
+                    prompt = prompt_artifact_view(
+                        selected.get("prompt_version"),
+                        selected.get("system_prompt"),
+                        selected.get("system_prompt_sha256"),
+                    )
+                    st.code(prompt["content"], language="text")
+                    st.json({key: value for key, value in prompt.items() if key != "content"})
+                    st.subheader("Persisted redacted user message")
+                    st.json(exact_model_input_view(selected.get("payload_redacted")))
+                    st.subheader("Parsed and schema-validated AI response")
+                    st.json(model_output_view(selected.get("parsed_payload")))
+                with st.expander("Validation and broker execution evidence"):
+                    validation_history = frame(
+                        """SELECT vr.validated_at, vr.stage, vr.accepted,
+                                  vr.reason_codes
+                           FROM validation_results vr
+                           JOIN analysis_runs ar ON ar.id = vr.analysis_id
+                           JOIN symbols s ON s.id = ar.symbol_id
+                           JOIN accounts a ON a.id = ar.account_id
+                           WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                           ORDER BY vr.validated_at""",
+                        (
+                            selected["analysis_id"],
+                            account_environment,
+                            selected_symbol,
+                        ),
+                    )
+                    execution_history = frame(
+                        """SELECT bee.occurred_at, bee.received_at,
+                                  bee.execution_type, bee.mapping_state,
+                                  bee.reason_codes, bee.resolved_at
+                           FROM broker_execution_events bee
+                           JOIN order_groups og ON og.id = bee.order_group_id
+                           JOIN analysis_runs ar ON ar.id = og.analysis_id
+                           JOIN symbols s ON s.id = ar.symbol_id
+                           JOIN accounts a ON a.id = ar.account_id
+                           WHERE ar.id = %s AND a.environment = %s AND s.name = %s
+                           ORDER BY bee.occurred_at""",
+                        (
+                            selected["analysis_id"],
+                            account_environment,
+                            selected_symbol,
+                        ),
+                    )
+                    st.subheader("Validation")
+                    display_dataframe(validation_history, width="stretch", hide_index=True)
+                    st.subheader("Broker execution journal")
+                    display_dataframe(execution_history, width="stretch", hide_index=True)
+            else:
+                st.warning(
+                    "Selected history evidence is malformed or ambiguous. Exact detail is "
+                    "withheld instead of presenting a guessed lifecycle."
+                )
+    except DecisionViewError as error:
+        st.error(f"Analysis history rejected unsafe or ambiguous evidence: {error}")
+    except Exception as error:
+        st.error(f"Analysis history unavailable: {type(error).__name__}")
+
+with tabs[6]:
     try:
         orders = frame(
             """SELECT o.updated_at, og.mode, og.state AS group_state, o.side, o.state,
@@ -1129,7 +1476,7 @@ with tabs[5]:
     except Exception as error:
         st.error(f"Orders/positions unavailable: {type(error).__name__}")
 
-with tabs[6]:
+with tabs[7]:
     try:
         daily = frame(
             """WITH target_account AS (
@@ -1174,7 +1521,7 @@ with tabs[6]:
     except Exception as error:
         st.error(f"Risk data unavailable: {type(error).__name__}")
 
-with tabs[7]:
+with tabs[8]:
     try:
         health = frame(
             """SELECT service, instance_id, state, dependency_status, reason_codes,
@@ -1225,7 +1572,7 @@ with tabs[7]:
     except Exception as error:
         st.error(f"Operations unavailable: {type(error).__name__}")
 
-with tabs[8]:
+with tabs[9]:
     try:
         metrics = frame(
             """SELECT captured_at, cpu_percent, load_1, load_5, load_15,
@@ -1251,7 +1598,7 @@ with tabs[8]:
     except Exception as error:
         st.error(f"Server metrics unavailable: {type(error).__name__}")
 
-with tabs[9]:
+with tabs[10]:
     st.error(
         "Controls affect new analysis/order eligibility. They never create the manual "
         "live enablement file."

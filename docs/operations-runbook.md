@@ -361,6 +361,24 @@ account IDs, and broker IDs. Exact prompt/input access remains bounded and
 redacted. Use a reviewed read-only database role for deeper forensics; never
 broaden the dashboard query to expose secret-bearing configuration.
 
+## Streamlit campaign analysis history
+
+Open **Analysis History** for the operator-level 100-analysis ledger. The
+oldest retained campaign result is numbered 1 and the newest defaults in the
+details selector. Read **Outcome ledger** for rejected/no-order, pending-stop,
+expired/no-trade, open-trade, and terminal closed outcomes. Only `CLOSED WIN`,
+`CLOSED LOSS`, and `CLOSED BREAK-EVEN` come from a durable broker trade; a
+rejection or unfilled expiry does not count as a loss.
+
+Use **AI proposal versus effective/placed levels** for both BUY and SELL entry,
+SL, and TP. `EFFECTIVE LEVELS — NOT PLACED` means the midpoint-TP transform was
+audited but broker intent was never created. `PLACED ORDER LEVELS` means the
+displayed values are the durable order intents. Select a row to open its exact
+hash-verified prompt, persisted redacted user JSON, parsed AI response,
+validation trail, and broker execution journal. `EVIDENCE UNAVAILABLE` is an
+intentional fail-closed display result: inspect PostgreSQL/reconciliation and
+do not infer a win, loss, or lifecycle from partial evidence.
+
 ## Better Stack decision-trail monitoring
 
 1. Create a Logs source in Better Stack and place its HTTPS ingest URL and

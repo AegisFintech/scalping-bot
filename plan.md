@@ -189,6 +189,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-044 | complete    | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
 | ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
 | ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
+| ISSUE-047 | in progress | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1432,6 +1433,28 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   inference. The scheduler remains automatic. ISSUE-046 is complete.
   Rollout evidence is proposed in
   [PR #104](https://github.com/AegisFintech/scalping-bot/pull/104).
+
+### ISSUE-047 delivery details
+
+- Acceptance criteria: add a scoped Streamlit **Analysis History** tab with one
+  chronologically numbered row per durable completed external-AI response in
+  the active 100-analysis campaign; show the AI BUY/SELL entry, SL, and original
+  TP beside the effective or actually placed OCO levels; classify rejected/no
+  order, pending stops, expired, failed, open trade, closed win/loss/break-even,
+  and unavailable evidence distinctly; show terminal realized demo P/L and fees
+  without counting rejection or expiry as a loss; and provide selected-run
+  prompt, parsed response, reasons, and sanitized execution evidence. Scope all
+  data to the running account environment and symbol, preserve Decimal strings,
+  display GMT+8 times, and test valid plus malformed/ambiguous paths.
+- Dependencies: [issue #105](https://github.com/AegisFintech/scalping-bot/issues/105),
+  ISSUE-041 campaign progress, ISSUE-044 GMT+8 presentation, ISSUE-045 terminal
+  trade projection, and the existing immutable prompt/model/order/trade trail.
+- Current status: implementation and all pre-merge completion gates passed on
+  `issue-047-analysis-outcome-history`; pull-request review/delivery remains.
+  The configured AppTest matched the durable 14/100 campaign snapshot with 8
+  rejected/no-order results, 5 closed demo losses, and 1 pending-stop setup.
+  This is a read-only dashboard projection; it cannot change analysis,
+  execution, risk, reconciliation, or broker state.
 
 ## Acceptance criteria
 

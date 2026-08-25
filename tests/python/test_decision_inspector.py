@@ -11,6 +11,7 @@ from PIL import Image
 from apps.dashboard.decision_inspector import (
     DecisionViewError,
     analysis_chart_view,
+    analysis_history_view,
     analytics_summary,
     automation_status_view,
     broker_lifecycle_view,
@@ -667,3 +668,200 @@ def test_open_position_monitor_view_handles_none_and_rejects_malformed_data() ->
                 "pnlCapturedAt": "2026-08-25T04:00:00.060Z",
             }
         )
+
+
+def history_row(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "analysis_id": "11111111-1111-4111-8111-111111111111",
+        "analysis_time": "2026-08-25T04:00:00.000Z",
+        "analysis_state": "REJECTED",
+        "rejection_reasons": ["BUY_ENTRY_TOO_CLOSE"],
+        "cancellation_reason": None,
+        "parsed_payload": {
+            "schema_version": "2.1",
+            "technical_map": {},
+            "buy_stop": {
+                "entry_price": "4653.80",
+                "stop_loss": "4651.80",
+                "take_profit": "4661.80",
+            },
+            "sell_stop": {
+                "entry_price": "4648.70",
+                "stop_loss": "4650.70",
+                "take_profit": "4639.70",
+            },
+        },
+        "effective_buy_entry": "4653.8",
+        "effective_buy_stop_loss": "4651.8",
+        "effective_buy_take_profit": "4657.8",
+        "effective_sell_entry": "4648.7",
+        "effective_sell_stop_loss": "4650.7",
+        "effective_sell_take_profit": "4644.2",
+        "group_state": None,
+        "group_expires_at": None,
+        "buy_order_state": None,
+        "buy_order_entry": None,
+        "buy_order_stop_loss": None,
+        "buy_order_take_profit": None,
+        "sell_order_state": None,
+        "sell_order_entry": None,
+        "sell_order_stop_loss": None,
+        "sell_order_take_profit": None,
+        "position_count": 0,
+        "position_side": None,
+        "position_state": None,
+        "trade_count": 0,
+        "trade_direction": None,
+        "realized_pnl": None,
+        "fees": None,
+        "trade_closed_at": None,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_analysis_history_distinguishes_non_trades_and_terminal_results() -> None:
+    pending = history_row(
+        analysis_id="22222222-2222-4222-8222-222222222222",
+        analysis_time="2026-08-25T04:01:00.000Z",
+        analysis_state="ACCEPTED",
+        rejection_reasons=[],
+        group_state="ACTIVE",
+        group_expires_at="2026-08-25T04:16:00.000Z",
+        buy_order_state="PENDING",
+        buy_order_entry="4653.8000000000",
+        buy_order_stop_loss="4651.8000000000",
+        buy_order_take_profit="4657.8000000000",
+        sell_order_state="PENDING",
+        sell_order_entry="4648.7000000000",
+        sell_order_stop_loss="4650.7000000000",
+        sell_order_take_profit="4644.2000000000",
+    )
+    expired = history_row(
+        analysis_id="33333333-3333-4333-8333-333333333333",
+        analysis_time="2026-08-25T04:02:00.000Z",
+        analysis_state="EXPIRED",
+        rejection_reasons=[],
+        group_state="EXPIRED",
+        group_expires_at="2026-08-25T04:17:00.000Z",
+        cancellation_reason="ORDER_EXPIRED",
+        buy_order_state="EXPIRED",
+        buy_order_entry="4653.8",
+        buy_order_stop_loss="4651.8",
+        buy_order_take_profit="4657.8",
+        sell_order_state="EXPIRED",
+        sell_order_entry="4648.7",
+        sell_order_stop_loss="4650.7",
+        sell_order_take_profit="4644.2",
+    )
+    win = history_row(
+        analysis_id="44444444-4444-4444-8444-444444444444",
+        analysis_time="2026-08-25T04:03:00.000Z",
+        analysis_state="EXPIRED",
+        rejection_reasons=[],
+        group_state="CLOSED",
+        group_expires_at="2026-08-25T04:18:00.000Z",
+        buy_order_state="FILLED",
+        buy_order_entry="4653.8",
+        buy_order_stop_loss="4651.8",
+        buy_order_take_profit="4657.8",
+        sell_order_state="CANCELLED",
+        sell_order_entry="4648.7",
+        sell_order_stop_loss="4650.7",
+        sell_order_take_profit="4644.2",
+        position_count=1,
+        position_side="BUY",
+        position_state="CLOSED",
+        trade_count=1,
+        trade_direction="LONG",
+        realized_pnl="5.00",
+        fees="-0.30",
+        trade_closed_at="2026-08-25T04:05:00.000Z",
+    )
+    loss = history_row(
+        analysis_id="55555555-5555-4555-8555-555555555555",
+        analysis_time="2026-08-25T04:04:00.000Z",
+        analysis_state="EXPIRED",
+        rejection_reasons=[],
+        group_state="CLOSED",
+        group_expires_at="2026-08-25T04:19:00.000Z",
+        buy_order_state="CANCELLED",
+        buy_order_entry="4653.8",
+        buy_order_stop_loss="4651.8",
+        buy_order_take_profit="4657.8",
+        sell_order_state="FILLED",
+        sell_order_entry="4648.7",
+        sell_order_stop_loss="4650.7",
+        sell_order_take_profit="4644.2",
+        position_count=1,
+        position_side="SELL",
+        position_state="CLOSED",
+        trade_count=1,
+        trade_direction="SHORT",
+        realized_pnl="-3.50",
+        fees="-0.25",
+        trade_closed_at="2026-08-25T04:06:00.000Z",
+    )
+
+    view = analysis_history_view([history_row(), pending, expired, win, loss], 5)
+
+    assert [row["result"] for row in view["rows"]] == [
+        "REJECTED — NO ORDER",
+        "STOPS PENDING",
+        "EXPIRED — NO TRADE",
+        "CLOSED WIN",
+        "CLOSED LOSS",
+    ]
+    assert view["rows"][0]["level_source"] == "EFFECTIVE LEVELS — NOT PLACED"
+    assert view["rows"][1]["level_source"] == "PLACED ORDER LEVELS"
+    assert view["summary"] == {
+        "completed_ai_analyses": 5,
+        "orders_created": 4,
+        "pending_stops": 1,
+        "expired_without_trade": 1,
+        "open_trades": 0,
+        "wins": 1,
+        "losses": 1,
+        "break_even": 0,
+        "realized_pnl": "1.5",
+        "fees": "-0.55",
+    }
+
+
+def test_analysis_history_fails_count_and_marks_ambiguous_evidence_unavailable() -> None:
+    with pytest.raises(DecisionViewError, match="COUNT_MISMATCH"):
+        analysis_history_view([history_row()], 2)
+
+    ambiguous = history_row(position_count=2)
+    view = analysis_history_view([ambiguous], 1)
+    assert view["rows"][0]["result"] == "EVIDENCE UNAVAILABLE"
+    assert "LIFECYCLE_AMBIGUOUS" in view["rows"][0]["reasons"]
+    assert view["summary"]["losses"] == 0
+
+    incomplete_trade = history_row(
+        trade_count=1,
+        trade_direction="LONG",
+        realized_pnl="5",
+        fees="-0.3",
+    )
+    view = analysis_history_view([incomplete_trade], 1)
+    assert view["rows"][0]["result"] == "EVIDENCE UNAVAILABLE"
+    assert "TRADE_NOT_CLOSED" in view["rows"][0]["reasons"]
+    assert view["summary"]["wins"] == 0
+
+
+def test_analysis_history_rejects_duplicate_identity_and_sanitizes_bad_model_data() -> None:
+    with pytest.raises(DecisionViewError, match="ANALYSIS_ID_INVALID"):
+        analysis_history_view([history_row(), history_row()], 2)
+
+    unsafe = history_row(
+        parsed_payload={
+            "schema_version": "2.1",
+            "technical_map": {},
+            "buy_stop": {"broker_position_id": "must-not-render"},
+            "sell_stop": {},
+        }
+    )
+    view = analysis_history_view([unsafe], 1)
+    assert view["rows"][0]["evidence_status"] == "UNAVAILABLE"
+    assert all("must-not-render" not in str(value) for value in view["rows"][0].values())
