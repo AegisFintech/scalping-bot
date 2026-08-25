@@ -310,12 +310,14 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
   Verify provider latency and configured `AI_TIMEOUT_MS`/`AI_MAX_RETRIES`; the
   automatic demo loop requires zero same-interval retries. The local caller
   must budget the single attempt and must not be shortened below the derived
-  total. The execution caller circuit uses the configured
+  total. Each timeout, connection failure, or HTTP 503 rejects its own cycle.
+  The execution caller opens only after
+  `AI_CIRCUIT_BREAKER_FAILURES` consecutive transient failures; a fully
+  validated response resets that count. Once open, it uses
   `AI_CIRCUIT_BREAKER_RESET_SECONDS`, blocks throughout that cooldown, and
   automatically half-opens for a later broker minute at the exact boundary.
-  A repeated timeout, connection failure, or 503 reopens it. Do not restart just
-  to clear the circuit; the Overview shows the automatic retry time. Investigate
-  a breaker that repeatedly reopens.
+  Do not restart just to clear the circuit; the Overview shows the automatic
+  retry time. Investigate a breaker that repeatedly reopens.
 - **reconciliation failure:** block account/symbol; query broker state; resolve labels/idempotency; never resubmit an uncertain command.
 - **`CTRADER_FIELD_INVALID:price`:** a new fill/position callback omitted a
   required price. New cycles remain locked. Correlate the sanitized execution

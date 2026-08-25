@@ -117,6 +117,17 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
+On 2026-08-25, ISSUE-049 passed Prettier, ESLint, TypeScript typecheck/build,
+232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
+3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,
+strict mypy over 21 source files, and 75 Python tests passed. The configured
+Streamlit AppTest rendered 41 dataframes, 40 metrics, 15 tabs, and zero
+exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the
+tracked-file secret scan, and shell/PM2/systemd checks passed. Circuit tests
+cover invalid thresholds, sub-threshold HTTP 503s, the exact opening boundary,
+validated-response reset, non-transient HTTP rejection, timeout/transport,
+cooldown, and half-open recovery.
+
 On 2026-08-25, ISSUE-048 passed Prettier, ESLint, TypeScript typecheck/build,
 226 Node tests across 38 files, 16 JSON Schema tests, 3 static migration tests,
 and all 3 configured isolated-PostgreSQL/HTTP integration tests through

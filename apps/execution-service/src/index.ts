@@ -377,6 +377,11 @@ async function main(): Promise<void> {
     circuitResetMs: aiOrchestratorCircuitResetMs(
       integer(environment, "AI_CIRCUIT_BREAKER_RESET_SECONDS", 300),
     ),
+    circuitBreakerFailures: integer(
+      environment,
+      "AI_CIRCUIT_BREAKER_FAILURES",
+      3,
+    ),
   });
   const risk = new OcoRiskEvaluator({
     marginEstimator: margin,

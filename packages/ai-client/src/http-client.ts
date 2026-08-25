@@ -16,6 +16,7 @@ export interface AiOrchestratorHttpClientOptions {
   readonly promptVersion: ModelPromptArtifact["version"];
   readonly timeoutMs?: number;
   readonly circuitResetMs?: number;
+  readonly circuitBreakerFailures?: number;
   readonly now?: () => number;
   readonly fetchImpl?: typeof fetch;
 }
@@ -66,6 +67,7 @@ export class AiOrchestratorHttpClient {
   readonly #options: AiOrchestratorHttpClientOptions;
   readonly #validator: ModelResponseValidator;
   readonly #expectedPromptArtifact: ModelPromptArtifact;
+  #transientFailureCount = 0;
   #openUntil = 0;
 
   constructor(options: AiOrchestratorHttpClientOptions) {
@@ -76,6 +78,10 @@ export class AiOrchestratorHttpClient {
       resetMs > MAX_TIMER_DELAY_MS
     ) {
       throw new Error("AI_CIRCUIT_RESET_INVALID");
+    }
+    const failureThreshold = options.circuitBreakerFailures ?? 1;
+    if (!Number.isSafeInteger(failureThreshold) || failureThreshold < 1) {
+      throw new Error("AI_CIRCUIT_FAILURE_THRESHOLD_INVALID");
     }
     this.#options = options;
     this.#validator = new ModelResponseValidator(options.schemaPath);
@@ -107,6 +113,15 @@ export class AiOrchestratorHttpClient {
       (this.#options.circuitResetMs ?? 300_000);
   }
 
+  #recordTransientFailure(): void {
+    this.#transientFailureCount += 1;
+    if (
+      this.#transientFailureCount >= (this.#options.circuitBreakerFailures ?? 1)
+    ) {
+      this.#openCircuit();
+    }
+  }
+
   async analyze(request: {
     readonly analysisId: string;
     readonly symbol: string;
@@ -133,7 +148,7 @@ export class AiOrchestratorHttpClient {
         },
       );
     } catch (error) {
-      this.#openCircuit();
+      this.#recordTransientFailure();
       if (
         error instanceof Error &&
         (error.name === "TimeoutError" || error.name === "AbortError")
@@ -143,7 +158,7 @@ export class AiOrchestratorHttpClient {
       throw new Error("AI_ORCHESTRATOR_UNAVAILABLE", { cause: error });
     }
     if (!response.ok) {
-      if (response.status === 503) this.#openCircuit();
+      if (response.status === 503) this.#recordTransientFailure();
       throw new Error(`AI_ORCHESTRATOR_HTTP_ERROR:${response.status}`);
     }
     const envelope = record(
@@ -182,6 +197,7 @@ export class AiOrchestratorHttpClient {
     ) {
       throw new Error("AI_ORCHESTRATOR_IDENTITY_MISMATCH");
     }
+    this.#transientFailureCount = 0;
     this.#openUntil = 0;
     return {
       response: local.response,

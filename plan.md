@@ -191,6 +191,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
 | ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
 | ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
+| ISSUE-049 | in progress | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1498,6 +1499,28 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   circuit-threshold defect, which is outside this completed broker-lifecycle
   issue and is tracked next. Rollout evidence is reviewed in
   [PR #110](https://github.com/AegisFintech/scalping-bot/pull/110).
+
+### ISSUE-049 delivery details
+
+- Acceptance criteria: pass the configured positive integer AI circuit failure
+  threshold into the execution-side orchestrator client; count only timeout,
+  transport, and HTTP 503 failures; reject every failed cycle immediately;
+  open the existing bounded cooldown only at the threshold; reset the count
+  only after a locally validated response; preserve the exact half-open reset
+  boundary; reject invalid startup configuration; do not retry an old candle or
+  weaken freshness/model validation; and deploy as a new immutable release.
+- Dependencies: ISSUE-030 automatic circuit reset, ISSUE-040 caller timeout
+  budget, ISSUE-041 bounded automatic campaign, and ISSUE-048 clean broker
+  lifecycle recovery.
+- Current status: implementation is in progress on
+  `issue-049-ai-circuit-threshold`, tracked by
+  [issue #111](https://github.com/AegisFintech/scalping-bot/issues/111) and
+  [PR #112](https://github.com/AegisFintech/scalping-bot/pull/112).
+  Pre-merge gates pass: Prettier, ESLint, TypeScript typecheck/build, 232 Node
+  tests across 38 files, 16 schema tests, 3 migration tests, all 3 configured
+  integration tests, Ruff/mypy/75 Python tests, configured AppTest with zero
+  exceptions, replay/backtest, zero-vulnerability dependency audits, tracked
+  secret scan, and shell/PM2/systemd checks.
 
 ## Acceptance criteria
 
