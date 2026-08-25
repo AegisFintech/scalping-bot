@@ -224,6 +224,20 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "broker precision cannot represent exactly.",
         "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
     ),
+    "UPSIDE_TARGETS_INVALID": (
+        "AI upside targets are not usable as buy objectives",
+        "At least one upside target is not above the buy entry, is off the broker tick, or is "
+        "not strictly higher than the preceding target.",
+        "No order was sent. The automatic scheduler requests a completely fresh market snapshot "
+        "and AI proposal on a later eligible broker minute.",
+    ),
+    "DOWNSIDE_TARGETS_INVALID": (
+        "AI downside targets are not usable as sell objectives",
+        "At least one downside target is not below the sell entry, is off the broker tick, or is "
+        "not strictly lower than the preceding target.",
+        "No order was sent. The automatic scheduler requests a completely fresh market snapshot "
+        "and AI proposal on a later eligible broker minute.",
+    ),
     "BUY_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME": (
         "Buy stop exceeds minimum-volume risk budget",
         "The endpoint buy SL is farther from entry than the current configured per-leg budget "

@@ -138,6 +138,12 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert conflict["title"] == "Two broker callbacks disagreed about the same event"
     assert "No manual clearing is required" in conflict["next_action"]
 
+    upside = reason_code_view("UPSIDE_TARGETS_INVALID")
+    downside = reason_code_view("DOWNSIDE_TARGETS_INVALID")
+    assert "above the buy entry" in upside["meaning"]
+    assert "below the sell entry" in downside["meaning"]
+    assert "fresh market snapshot" in downside["next_action"]
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(

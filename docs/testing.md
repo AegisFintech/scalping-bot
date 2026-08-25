@@ -120,6 +120,13 @@ audits with zero known vulnerabilities, tracked-file secret scan, shell/PM2
 syntax, and all five offline systemd parses at 2.8 (`OK`) passed. Before
 deployment, runtime remained on `.19`, campaign progress remained `4 / 100`,
 and the known callback conflict kept new trading disabled.
+Post-merge deployment under the durable pause then reported `.20`, campaign
+`4 / 100`, zero active groups, zero unresolved events, and one retained
+resolved conflict linked to terminal evidence. Configured Streamlit AppTest
+rendered 35 dataframes with zero exceptions and Overview labeled the prior
+setup as terminal history. After release, the next automatic M1 cycle completed
+an external-AI response, advanced the campaign to `5 / 100`, and safely
+rejected an invalid downside-target sequence without creating an order.
 
 On 2026-08-25, ISSUE-041 passed Prettier, ESLint, TypeScript typecheck/build,
 198 Node tests across 34 files, 14 schema tests, 3 static migration tests, and
