@@ -84,6 +84,13 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert "minimum-volume risk budget" in affordability["title"]
     assert "No order was sent" in affordability["next_action"]
 
+    unavailable = reason_code_view("PLACEMENT_MARKET_REFRESH_FAILED")
+    changed = reason_code_view("PLACEMENT_ACCOUNT_STATE_CHANGED")
+    context = reason_code_view("PLACEMENT_CANDLE_CONTEXT_CHANGED")
+    assert unavailable["title"] == "Final market refresh was unavailable"
+    assert changed["title"] == "Account state changed after sizing"
+    assert context["title"] == "Final pre-order recheck rejected this cycle"
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(

@@ -624,6 +624,7 @@ describe("analysis coordinator", () => {
         snapshot: vi
           .fn()
           .mockResolvedValueOnce(initial)
+          .mockImplementationOnce(() => Promise.resolve(snapshot()))
           .mockImplementationOnce(() => Promise.resolve(snapshot())),
       };
       const trail = new InMemoryDecisionTrail();
@@ -649,10 +650,18 @@ describe("analysis coordinator", () => {
         outcome: "PLACED",
         reasonCodes: [],
       });
-      expect(market.snapshot).toHaveBeenCalledTimes(2);
-      expect(trail.events).toContainEqual(
-        expect.objectContaining({ type: "decision_market" }),
-      );
+      expect(market.snapshot).toHaveBeenCalledTimes(3);
+      expect(
+        trail.events.filter(
+          (event) =>
+            event !== null &&
+            typeof event === "object" &&
+            (event as Record<string, unknown>).type === "decision_market",
+        ),
+      ).toEqual([
+        expect.objectContaining({ refreshPhase: "POST_MODEL" }),
+        expect.objectContaining({ refreshPhase: "PRE_PLACEMENT" }),
+      ]);
     } finally {
       vi.useRealTimers();
     }
@@ -863,6 +872,7 @@ describe("analysis coordinator", () => {
         snapshot: vi
           .fn()
           .mockResolvedValueOnce(initial)
+          .mockResolvedValueOnce(refreshed)
           .mockResolvedValueOnce(refreshed),
       },
       model: {
@@ -920,6 +930,7 @@ describe("analysis coordinator", () => {
           snapshot: vi
             .fn()
             .mockResolvedValueOnce(initial)
+            .mockResolvedValueOnce(snapshot())
             .mockResolvedValueOnce(refreshed),
         },
         model: {
@@ -967,5 +978,211 @@ describe("analysis coordinator", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("refreshes again after slow risk work instead of reusing a stale quote", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-08-24T08:00:00.000Z"));
+      const initial = snapshot();
+      const market = {
+        snapshot: vi
+          .fn()
+          .mockResolvedValueOnce(initial)
+          .mockImplementationOnce(() => Promise.resolve(snapshot()))
+          .mockImplementationOnce(() => Promise.resolve(snapshot())),
+      };
+      const place = vi.fn((pending: readonly PendingOrderCommand[]) =>
+        Promise.resolve({
+          orderGroupId: pending[0]?.orderGroupId ?? "missing",
+          idempotentReplay: false,
+          orders: [],
+        }),
+      );
+      const configured = options({
+        market,
+        model: {
+          circuitOpen: false,
+          analyze: vi.fn((request: { readonly analysisId: string }) => {
+            vi.setSystemTime(new Date("2026-08-24T08:00:10.000Z"));
+            return Promise.resolve({
+              response: ocoProposal(request.analysisId),
+              rawResponse: "{}",
+              promptArtifact: promptArtifact(),
+            });
+          }),
+        },
+        risk: {
+          proposalConstraints: () => proposalRiskConstraints(),
+          evaluate: (input) => {
+            vi.setSystemTime(new Date("2026-08-24T08:00:15.000Z"));
+            return Promise.resolve({
+              approved: true,
+              reasonCodes: [],
+              risk: null,
+              commands: commands(input.response.analysis_id),
+              equity: "10000",
+              perLegRiskPercent: "0.5",
+            });
+          },
+        },
+        gateway: {
+          kind: "paper",
+          canSubmitToBroker: false,
+          placeOco: place,
+          cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+          reconcile: () => Promise.reject(new Error("not used")),
+        },
+      });
+
+      await expect(
+        new AnalysisCoordinator(configured).runOnce(),
+      ).resolves.toMatchObject({ outcome: "PLACED", reasonCodes: [] });
+      expect(market.snapshot).toHaveBeenCalledTimes(3);
+      expect(place).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("fails closed when the pre-placement market refresh is unavailable", async () => {
+    const market = {
+      snapshot: vi
+        .fn()
+        .mockResolvedValueOnce(snapshot())
+        .mockResolvedValueOnce(snapshot())
+        .mockRejectedValueOnce(new Error("network")),
+    };
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const trail = new InMemoryDecisionTrail();
+    const configured = options({
+      market,
+      trail,
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["PLACEMENT_MARKET_REFRESH_FAILED"],
+    });
+    expect(place).not.toHaveBeenCalled();
+    expect(trail.events).toContainEqual(
+      expect.objectContaining({
+        type: "validation",
+        accepted: false,
+        reasons: ["PLACEMENT_MARKET_REFRESH_FAILED"],
+        details: { validation_scope: "PRE_PLACEMENT_MARKET_REFRESH" },
+      }),
+    );
+  });
+
+  it("rejects account risk or exposure changes after sizing", async () => {
+    const reconcile = vi
+      .fn()
+      .mockResolvedValueOnce(accountState())
+      .mockResolvedValueOnce(accountState())
+      .mockResolvedValueOnce({
+        ...accountState(),
+        availableMargin: "9999",
+      });
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const configured = options({
+      account: { authenticate: () => Promise.resolve(), reconcile },
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["PLACEMENT_ACCOUNT_STATE_CHANGED"],
+    });
+    expect(reconcile).toHaveBeenCalledTimes(3);
+    expect(place).not.toHaveBeenCalled();
+  });
+
+  it("rejects a proposal that is no longer valid at the final quote", async () => {
+    const stable = snapshot();
+    const moved: MarketSnapshot = {
+      ...stable,
+      quote: { ...stable.quote, bid: "2000.85", ask: "2000.95" },
+      orderBook: {
+        ...stable.orderBook,
+        bids: [{ price: "2000.85", size: "1" }],
+        asks: [{ price: "2000.95", size: "1" }],
+      },
+    };
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const configured = options({
+      market: {
+        snapshot: vi
+          .fn()
+          .mockResolvedValueOnce(stable)
+          .mockResolvedValueOnce(stable)
+          .mockResolvedValueOnce(moved),
+      },
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["BUY_ENTRY_TOO_CLOSE"],
+    });
+    expect(place).not.toHaveBeenCalled();
+  });
+
+  it("rejects changed execution metadata at the final refresh", async () => {
+    const stable = snapshot();
+    const changed: MarketSnapshot = {
+      ...stable,
+      metadata: { ...stable.metadata, minStopDistance: "0.2" },
+    };
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const configured = options({
+      market: {
+        snapshot: vi
+          .fn()
+          .mockResolvedValueOnce(stable)
+          .mockResolvedValueOnce(stable)
+          .mockResolvedValueOnce(changed),
+      },
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["PLACEMENT_SYMBOL_METADATA_CHANGED"],
+    });
+    expect(place).not.toHaveBeenCalled();
   });
 });

@@ -176,7 +176,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
 | ISSUE-032 | complete    | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)      | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
 | ISSUE-033 | complete    | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
-| ISSUE-034 | in progress | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)         | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
+| ISSUE-034 | complete    | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)         | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
+| ISSUE-035 | in progress | [Refresh and revalidate market immediately before demo intent](https://github.com/AegisFintech/scalping-bot/issues/74)          | Final market/account refresh; repeat spread/semantics; preserve freshness without raising limits              |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -951,18 +952,52 @@ never justify empty, noisy, unsafe, or misleading commits.
   ISSUE-033's deployed `system-v3` prompt, current broker symbol metadata,
   reconciled account equity, deterministic OCO sizing, and the protected demo
   environment.
-- Current status: implementation is in progress on
-  `issue-034-affordable-stop-constraint`. Prompt `system-v4`, the whole-tick
+- Current status: complete through
+  [PR #73](https://github.com/AegisFintech/scalping-bot/pull/73), merged as
+  `b07022a`. Prompt `system-v4`, the whole-tick
   affordability calculation, pre/post-model reconciliation, payload exclusion,
   semantic enforcement, reason guidance, and tests are implemented. New
-  automatic analyses remain paused to avoid repeated paid endpoint calls until
-  merge/deployment. The full pre-merge suite passes: Prettier, ESLint,
+  affordability calculation deployed as `.12`. The supervised automatic 10:11
+  GMT+8 cycle persisted a completed `system-v4` request whose two unchanged SL
+  distances were within the supplied `4.99` ceiling. Both proposal and
+  effective semantic stages passed at 4:1 and 2:1 respectively, deterministic
+  sizing passed, and no below-minimum-volume rejection remained. It later
+  rejected on quote freshness after margin work, which is bounded separately by
+  ISSUE-035. The full pre-merge suite passed: Prettier, ESLint,
   TypeScript typecheck/build, 171 Node tests across 30 files, 13 schema tests, 3
   migration tests, all 3 configured isolated-PostgreSQL integration tests,
   Ruff, strict mypy over 19 source files, 51 Python tests, configured Streamlit
   AppTest, replay/backtest, zero-vulnerability npm/pip audits, secret/shell
   checks, and five offline systemd parses at 2.8 (`OK`). Existing maintenance
-  and reconciliation remain active.
+  and reconciliation remained active throughout deployment.
+
+### ISSUE-035 delivery details
+
+- Acceptance criteria: after deterministic sizing/margin work, reconcile the
+  account again and reject any changed risk/exposure state; reacquire a final
+  broker snapshot; require unchanged completed candles and execution metadata;
+  repeat spread and original/effective semantic validation against that final
+  quote; use only the final quote/depth timestamps for placement freshness; and
+  prove both a slow-risk positive path and fail-closed refresh/state-change
+  paths without increasing any freshness threshold.
+- Dependencies: [issue #74](https://github.com/AegisFintech/scalping-bot/issues/74),
+  ISSUE-034 release `.12`, the typed market-data API, reconciled account state,
+  and existing proposal/risk/placement gates.
+- Current status: implementation is in progress on
+  `issue-035-final-placement-refresh`. The final refresh/account comparison,
+  repeated spread/semantics, phase-labelled PostgreSQL trail, dashboard reason
+  guidance, release `.13`, documentation, and positive/rejection tests are
+  implemented. New automatic analyses are paused after a supervised `.12`
+  cycle proved the endpoint response, affordability checks, TP transform, and
+  sizing all passed but the post-model quote aged beyond the existing
+  three-second placement limit during margin estimation. Pre-merge gates pass:
+  Prettier, ESLint, TypeScript typecheck/build, 176 Node tests across 30 files,
+  13 schema tests, 3 migration tests, all 3 configured isolated-PostgreSQL
+  integration tests, Ruff format/lint, strict mypy over 16 Python source files,
+  51 Python tests, configured Streamlit AppTest with zero exceptions and 32
+  dataframes, replay/backtest, zero-vulnerability npm/pip audits, tracked-file
+  secret scan, shell/PM2 syntax, and all five offline systemd parses at 2.8
+  (`OK`). Merge and supervised rollout evidence remain.
 
 ## Acceptance criteria
 

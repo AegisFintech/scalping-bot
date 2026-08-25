@@ -62,11 +62,17 @@ the temporary fail-closed daily-risk reason.
     then validate the effective proposal at the configured execution R:R.
     Reconcile account state again and reject an unchanged endpoint SL above the
     current affordable maximum. Run stop, precision, daily loss, volume, margin,
-    exposure, freshness, and duplicate checks before recording intent.
-13. Persist the entire decision trail and outcome transactionally.
-14. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
+    exposure, and duplicate checks.
+13. After sizing/margin work, reconcile the account once more and reject any
+    changed equity, balance, available margin, exposure, pending/fill/cancel, or
+    certainty state. Reacquire market state again, require unchanged completed
+    candles/metadata and non-regressed broker time, persist the refresh phase,
+    and repeat spread plus original/effective semantic validation. Only the
+    final quote/depth timestamps feed the unchanged placement freshness gate.
+14. Persist the entire decision trail and outcome transactionally.
+15. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
     submit; shadow cannot; live is deliberately unwired in this release.
-15. Record each before/after transition and reconcile external state.
+16. Record each before/after transition and reconcile external state.
 
 Each newly inserted `audit_events` row creates one outbox row in the same
 database transaction. The execution service later sends a bounded redacted

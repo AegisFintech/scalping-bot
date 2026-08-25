@@ -30,6 +30,10 @@ Prompt `system-v4` exposes the configured TP-distance division by two plus the
 non-sizing maximum stop distance affordable at broker minimum volume. The
 dashboard shows endpoint and effective TP/R:R side by side; generated proposals
 remain distinct from queued or broker-submitted orders.
+After deterministic margin/sizing work, execution reconciles the account and
+reacquires market state once more. It rejects changed account/candle/metadata,
+rechecks spread and both proposal forms, and uses only that final quote/depth
+for the unchanged placement-freshness limits.
 
 ## Prerequisites
 

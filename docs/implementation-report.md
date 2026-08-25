@@ -960,8 +960,44 @@ Replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
 secret scan, shell/PM2 syntax checks, and all five offline systemd security
 parses at 2.8 (`OK`) passed. No migration is required because the payload is a
 versioned request artifact and the existing bounded validation-detail contract
-stores the derived constraint. Merge and stopped rollout evidence remain before
-ISSUE-034 is complete.
+stores the derived constraint. PR #73 merged as `b07022a`; release `.12`
+registered `system-v4`/schema 2.0 and restarted healthy under an audited pause.
+The endpoint needed longer than the prior 30-second operational timeout, so the
+ignored mode-0600 environment now uses 60 seconds; no risk or execution gate
+changed. The supervised automatic 10:11 GMT+8 cycle then completed a durable
+request with `max_affordable_stop_distance=4.99`. Both returned stop distances
+were within it; proposal 4:1 semantics, TP midpoint 2:1 semantics, and sizing
+all passed. ISSUE-034 is complete.
+
+## ISSUE-035 final pre-placement refresh
+
+That `.12` cycle still rejected `MARKET_DATA_STALE` at the placement gate. The
+post-model quote was fresh when validated, but deterministic broker margin work
+consumed the remaining three-second freshness budget. Reusing it would be
+unsafe, while increasing the freshness threshold would weaken the documented
+contract.
+
+Issue [#74](https://github.com/AegisFintech/scalping-bot/issues/74) therefore
+adds a second, explicitly labelled `PRE_PLACEMENT` refresh after sizing. Account
+state is reconciled first and any changed equity, balance, margin, exposure,
+pending/fill/cancel, or certainty evidence rejects. The final snapshot must
+preserve completed candles and execution metadata; spread and both immutable AI
+proposal/effective TP semantics run again. Only its quote/depth ages drive the
+unchanged placement gate. Unit tests cover slow-margin success, unavailable
+final market data, changed account state, and a trigger invalidated by the final
+quote. PostgreSQL integration records both refresh phases while retaining the
+original candle context. No migration is required because the existing bounded
+audit and validation detail JSON owns the new phase/scope evidence.
+
+The 2026-08-25 pre-merge suite passed Prettier, ESLint, TypeScript typecheck and
+build, 176 Node tests across 30 files, 13 JSON Schema/semantic tests, 3 static
+migration tests, and all 3 configured isolated-PostgreSQL integration tests.
+Ruff format/lint, strict mypy over 16 Python source files, and 51 Python tests
+passed. Configured Streamlit AppTest rendered 32 dataframes with zero
+exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+tracked-file secret scan, shell/PM2 syntax checks, and all five offline systemd
+security parses at 2.8 (`OK`) passed. Merge and supervised `.13` rollout
+evidence remain before ISSUE-035 is complete.
 
 ## Shadow-mode setup
 
