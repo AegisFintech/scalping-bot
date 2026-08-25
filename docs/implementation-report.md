@@ -1255,7 +1255,9 @@ placed. ISSUE-040 registers release `.18`, updates the sample timeout to 60
 seconds, and deploys it under a renewed database analysis pause before the next
 automatic proof cycle.
 
-The `.18` pre-merge gate run passed Prettier, ESLint, TypeScript
+The `.18` change is tracked by
+[PR #86](https://github.com/AegisFintech/scalping-bot/pull/86). Its pre-merge
+gate run passed Prettier, ESLint, TypeScript
 typecheck/build, 191 Node tests across 33 files, 14 schema tests, 3 static
 migration tests, and all 3 configured isolated-PostgreSQL integration tests.
 Ruff format/lint, strict mypy over 17 Python source files, and 53 Python tests

@@ -1159,7 +1159,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   ISSUE-039/PR #84, release `.17`, the configured `AI_TIMEOUT_MS=60000`, and
   migration `0012`.
 - Current status: release `.18` is implemented on
-  `issue-040-ai-timeout-release`. The direct provider image probe took 54.2
+  `issue-040-ai-timeout-release` through
+  [PR #86](https://github.com/AegisFintech/scalping-bot/pull/86). The direct provider image probe took 54.2
   seconds. The first deployed `.17` image cycle reached AI but the execution
   caller retained stale PM2 `AI_TIMEOUT_MS=30000` and timed out. Attempting to
   change that configuration under `.17` correctly triggered
