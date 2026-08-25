@@ -128,10 +128,12 @@ state is active or uncertain. A rejected analysis may retry on a later broker
 minute. An accepted analysis becomes terminal only after its group closes,
 expires, or fails; only then can a later broker minute start the next cycle.
 
-Prompt `system-v3` tells the endpoint that the execution service preserves its
+Prompt `system-v4` tells the endpoint that the execution service preserves its
 entry and stop loss but halves the distance from entry to take profit. It asks
-for twice the configured effective minimum R:R so the midpoint remains eligible.
-An off-tick midpoint is rejected without rounding and the next eligible broker
+for twice the configured effective minimum R:R and supplies the maximum stop
+distance affordable at broker minimum volume. That derived field contains no
+equity, budget, volume, or account identity. An off-tick midpoint or returned
+stop above the current limit is rejected without correction, and a later broker
 minute starts a fresh cycle after the rejection becomes terminal.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic

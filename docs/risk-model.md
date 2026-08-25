@@ -10,10 +10,28 @@ spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
 The one explicitly configured execution transform is TP-distance division by
-two. Prompt `system-v3` asks for at least twice the effective minimum R:R. The
+two. Prompt `system-v4` asks for at least twice the effective minimum R:R. The
 coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
 recomputes R:R, and rejects an off-tick result without rounding. The original
 endpoint response and effective values remain separately auditable.
+
+Before inference, reconciled equity and the configured setup-risk percent are
+split across the two race-exposed OCO legs. The service floors the affordable
+loss budget at broker minimum volume to whole ticks and sends only the resulting
+maximum stop distance to the endpoint. It never sends equity, money budget,
+volume, or account identity. The same constraint is recomputed after inference;
+lower equity or changed metadata can only reject the unchanged endpoint SL.
+
+```text
+per_leg_budget = equity * setup_risk_percent / 100 / 2
+loss_per_tick_at_minimum = tick_value * min_volume
+affordable_ticks = floor(per_leg_budget / loss_per_tick_at_minimum)
+max_affordable_stop_distance = affordable_ticks * tick_size
+```
+
+Fewer than one affordable tick rejects before the endpoint. The downstream
+position-sizing calculation remains authoritative and can still reject on newer
+account state, margin, notional, or any other risk ceiling.
 
 ## Decimal arithmetic
 

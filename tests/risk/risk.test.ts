@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   checkSpread,
   dailyLoss,
+  maximumAffordableStopDistance,
   performanceAdjustment,
   sizeOcoPair,
   sizePosition,
@@ -24,6 +25,42 @@ const metadata = {
 };
 
 describe("risk engine", () => {
+  it("floors the broker-minimum affordable OCO stop distance to whole ticks", () => {
+    const result = maximumAffordableStopDistance({
+      equity: "10000",
+      setupRiskPercent: "1",
+      maxRiskPercent: "5",
+      metadata: {
+        ...metadata,
+        minVolume: "100",
+      },
+    });
+
+    expect(result).toEqual({
+      approved: true,
+      reasonCodes: [],
+      maxStopDistance: "0.5",
+    });
+  });
+
+  it("rejects before inference when even one tick at minimum volume is unaffordable", () => {
+    const result = maximumAffordableStopDistance({
+      equity: "100",
+      setupRiskPercent: "1",
+      maxRiskPercent: "5",
+      metadata: {
+        ...metadata,
+        minVolume: "100",
+      },
+    });
+
+    expect(result).toEqual({
+      approved: false,
+      reasonCodes: ["RISK_MIN_VOLUME_UNAFFORDABLE"],
+      maxStopDistance: null,
+    });
+  });
+
   it("rounds volume down and stays within budget", () => {
     const result = sizePosition({
       equity: "10000",

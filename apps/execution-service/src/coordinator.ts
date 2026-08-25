@@ -28,7 +28,10 @@ import {
   buildModelPayload,
   type ModelPayloadMode,
 } from "../../ai-orchestrator/src/payload.js";
-import type { OcoEvaluation } from "./oco-risk-evaluator.js";
+import type {
+  OcoEvaluation,
+  OcoProposalRiskConstraints,
+} from "./oco-risk-evaluator.js";
 import {
   halveTakeProfitDistances,
   proposalMinimumRiskRewardRatio,
@@ -98,6 +101,10 @@ export interface DecisionTrail {
 }
 
 export interface OcoRiskProvider {
+  proposalConstraints(input: {
+    readonly account: AccountState;
+    readonly metadata: SymbolMetadata;
+  }): OcoProposalRiskConstraints;
   evaluate(input: {
     readonly response: ModelResponse;
     readonly account: AccountState;
@@ -195,7 +202,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v3";
+  readonly promptVersion: "system-v4";
   readonly schemaVersion: "2.0";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -411,12 +418,38 @@ export class AnalysisCoordinator {
         snapshot,
         this.#options.minStopDistancePoints,
       );
+      const proposalAccount = await this.#options.account.reconcile(
+        snapshot.metadata.symbolId,
+      );
+      const proposalRiskConstraints = this.#options.risk.proposalConstraints({
+        account: proposalAccount,
+        metadata: snapshot.metadata,
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "RISK",
+        proposalRiskConstraints.approved,
+        proposalRiskConstraints.reasonCodes,
+        {
+          validation_scope: "MODEL_RISK_CONSTRAINTS",
+          max_affordable_stop_distance: proposalRiskConstraints.maxStopDistance,
+        },
+      );
+      if (
+        !proposalRiskConstraints.approved ||
+        proposalRiskConstraints.maxStopDistance === null
+      ) {
+        return await reject(proposalRiskConstraints.reasonCodes);
+      }
       const minimumProposalRiskRewardRatio = proposalMinimumRiskRewardRatio(
         this.#options.minRiskRewardRatio,
       );
       if (
         minimumStopDistance.gt(
-          decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
+          Decimal.min(
+            decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
+            decimal(proposalRiskConstraints.maxStopDistance),
+          ),
         )
       ) {
         const reasons = ["MODEL_PROPOSAL_CONSTRAINTS_UNSATISFIABLE"];
@@ -452,6 +485,7 @@ export class AnalysisCoordinator {
           minRiskRewardRatio: minimumProposalRiskRewardRatio,
           effectiveMinRiskRewardRatio: this.#options.minRiskRewardRatio,
           takeProfitDistanceDivisor: TAKE_PROFIT_DISTANCE_DIVISOR,
+          maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
           orderExpiryMinSeconds: this.#options.minExpirySeconds,
           orderExpiryMaxSeconds: this.#options.maxExpirySeconds,
@@ -523,6 +557,30 @@ export class AnalysisCoordinator {
       if (!decisionSpread.approved)
         return await reject(decisionSpread.reasonCodes);
 
+      const account = await this.#options.account.reconcile(
+        decisionSnapshot.metadata.symbolId,
+      );
+      const currentRiskConstraints = this.#options.risk.proposalConstraints({
+        account,
+        metadata: decisionSnapshot.metadata,
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "RISK",
+        currentRiskConstraints.approved,
+        currentRiskConstraints.reasonCodes,
+        {
+          validation_scope: "POST_MODEL_RISK_CONSTRAINTS",
+          max_affordable_stop_distance: currentRiskConstraints.maxStopDistance,
+        },
+      );
+      if (
+        !currentRiskConstraints.approved ||
+        currentRiskConstraints.maxStopDistance === null
+      ) {
+        return await reject(currentRiskConstraints.reasonCodes);
+      }
+
       const now = new Date();
       const semanticContext = {
         analysisId,
@@ -534,6 +592,7 @@ export class AnalysisCoordinator {
         minExpirySeconds: this.#options.minExpirySeconds,
         maxExpirySeconds: this.#options.maxExpirySeconds,
         maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
+        maxAffordableStopDistance: currentRiskConstraints.maxStopDistance,
         minStopDistancePoints: this.#options.minStopDistancePoints,
         maxQuoteAgeMs: this.#options.maxQuoteAgeMs,
         maxMetadataAgeMs: this.#options.maxMetadataAgeMs,
@@ -624,9 +683,6 @@ export class AnalysisCoordinator {
       if (!effectiveSemantic.accepted)
         return await reject(effectiveSemantic.reasonCodes);
 
-      const account = await this.#options.account.reconcile(
-        decisionSnapshot.metadata.symbolId,
-      );
       const risk = await this.#options.risk.evaluate({
         response: transformed.response,
         account,

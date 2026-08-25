@@ -46,6 +46,10 @@ TP-transform tests prove exact Decimal midpoint calculations for buy and sell,
 unchanged endpoint entry/SL, recomputed R:R, doubled pre-transform request
 minimum, off-tick rejection without rounding, risk receipt of effective levels,
 durable validation details, and bounded Streamlit comparison rendering.
+Minimum-volume affordability tests prove per-leg OCO budget splitting,
+whole-tick downward flooring, below-one-tick rejection before inference,
+non-sizing payload exclusion, exact semantic enforcement, and changed
+post-model account-state rejection before risk intent.
 
 ## Historical limitations
 
