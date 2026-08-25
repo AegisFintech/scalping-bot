@@ -58,6 +58,11 @@ Runtime fill-idempotency tests persist a complete deal, repeat the same deal
 with its contextual position price omitted, and prove no second store mutation
 or lockout occurs. A different deal ID—or the same ID after uncertain
 persistence—with the missing price remains a tested fail-closed error.
+Periodic recovery-runner tests prove a normal attempt is cadence-limited, a
+broker synchronization can force a refresh, concurrent timer/reconnect calls
+share one attempt, and a thrown broker/history operation becomes a stable
+fail-closed reason. Existing recovery tests prove an exact reconstructed SL/TP
+deal closes a disappeared position while missing closing-order evidence blocks.
 
 ## Historical limitations
 

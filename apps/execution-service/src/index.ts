@@ -49,6 +49,7 @@ import { CTraderMarginEstimator } from "./ctrader-margin.js";
 import { CTraderDemoGateway, DEMO_ACKNOWLEDGEMENT } from "./demo-gateway.js";
 import { DurableDemoExecutionRecorder } from "./demo-execution.js";
 import { recoverDemoExecutions } from "./demo-execution-recovery.js";
+import { DemoExecutionRecoveryRunner } from "./demo-execution-recovery-runner.js";
 import { PostgresDemoExecutionStore } from "./demo-execution-store.js";
 import { DailyRiskStore, tradingDayStart } from "./daily-risk-store.js";
 import { DisabledLiveGateway } from "./live-compatible-gateway.js";
@@ -455,8 +456,34 @@ async function main(): Promise<void> {
       };
     }
   };
-  let demoRecoveryState = await runDemoRecovery();
-  let demoRecoveryTail: Promise<void> = Promise.resolve();
+  const demoRecoveryIntervalSeconds = integer(
+    environment,
+    "DEMO_EXECUTION_RECOVERY_INTERVAL_SECONDS",
+    15,
+  );
+  const demoRecoveryRunner = new DemoExecutionRecoveryRunner({
+    recover: runDemoRecovery,
+    intervalMs: demoRecoveryIntervalSeconds * 1_000,
+  });
+  let demoRecoveryState = await demoRecoveryRunner.run(true);
+  const refreshDemoRecovery = async (force = false): Promise<void> => {
+    const previousAttemptCount = demoRecoveryRunner.attemptCount;
+    demoRecoveryState = await demoRecoveryRunner.run(force);
+    startupChecksPassed =
+      config.tradingMode !== "live" && demoRecoveryState.certain;
+    if (
+      !demoRecoveryState.certain &&
+      demoRecoveryRunner.attemptCount > previousAttemptCount
+    ) {
+      logger.log("error", {
+        event_name: "demo_execution_recovery_failed",
+        outcome: "failed",
+        reason_code:
+          demoRecoveryState.reasonCodes[0] ??
+          "DEMO_EXECUTION_RECOVERY_UNCERTAIN",
+      });
+    }
+  };
   if (!demoRecoveryState.certain) {
     logger.log("error", {
       event_name: "demo_execution_recovery_failed",
@@ -470,20 +497,7 @@ async function main(): Promise<void> {
     brokerClient === null || demoExecutionStore === null
       ? null
       : brokerClient.onSynchronization(() => {
-          demoRecoveryTail = demoRecoveryTail.then(async () => {
-            demoRecoveryState = await runDemoRecovery();
-            startupChecksPassed =
-              config.tradingMode !== "live" && demoRecoveryState.certain;
-            if (!demoRecoveryState.certain) {
-              logger.log("error", {
-                event_name: "demo_execution_recovery_failed",
-                outcome: "failed",
-                reason_code:
-                  demoRecoveryState.reasonCodes[0] ??
-                  "DEMO_EXECUTION_RECOVERY_UNCERTAIN",
-              });
-            }
-          });
+          void refreshDemoRecovery(true);
         });
   const performanceContext = new PostgresPerformanceContext({
     pool,
@@ -574,7 +588,7 @@ async function main(): Promise<void> {
   };
 
   const safety = async (): Promise<SafetyGateInput> => {
-    await demoRecoveryTail;
+    demoRecoveryState = await demoRecoveryRunner.settled();
     const filesystem = await readFilesystemControls({
       emergencyStopFile: config.emergencyStopFile,
       liveEnablementFile: config.liveEnablementFile,
@@ -1007,6 +1021,7 @@ async function main(): Promise<void> {
     if (ticking) return;
     ticking = true;
     try {
+      await refreshDemoRecovery();
       await maintenance.expireAndReconcile();
       if (paperGateway !== null && paperAccount !== null) {
         const quote = await marketClient.quote(config.symbol);
@@ -1181,7 +1196,7 @@ async function main(): Promise<void> {
     metrics.stop();
     unsubscribeDemoExecutions?.();
     unsubscribeDemoSynchronization?.();
-    await demoRecoveryTail;
+    await demoRecoveryRunner.settled();
     await demoExecutionRecorder?.flush();
     if (environment.SHUTDOWN_CANCEL_PENDING !== "false") {
       await maintenance.cancelAll("SERVICE_SHUTDOWN").catch(() => undefined);

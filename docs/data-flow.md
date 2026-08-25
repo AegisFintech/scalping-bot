@@ -103,10 +103,12 @@ broker-created SL/TP close has its own broker order ID and may inherit the entry
 client ID; schema `1.1` journals it as a closing child attached to the durable
 position without changing the entry order. Its acceptance remains unresolved
 until an exact closing deal supplies the terminal position and P/L evidence.
-Restart recovery matches known entries by exact broker order ID and can rebuild
-a disappeared terminal position from its durable local entry plus the exact
-broker closing order/deal. Missing, ambiguous, or multiple close evidence stays
-blocking.
+Recovery at startup, broker reconnect, and a bounded 15-second running cadence
+matches known entries by exact broker order ID and can rebuild a disappeared
+terminal position from its durable local entry plus the exact broker closing
+order/deal. Scheduled and reconnect attempts serialize. A still-open broker
+position remains open; missing, ambiguous, paginated, multiple, or invalid
+close evidence stays blocking.
 Pagination, missing local intent, duplicate-key conflicts, partial fills,
 unknown fields/states, or persistence failure make reconciliation uncertain and
 block placement.

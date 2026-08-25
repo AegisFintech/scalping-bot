@@ -1065,6 +1065,44 @@ Streamlit AppTest rendered 34 dataframes with zero exceptions. Replay/backtest,
 zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
 and all five offline systemd security parses at 2.8 (`OK`) passed.
 
+PR [#79](https://github.com/AegisFintech/scalping-bot/pull/79) merged as
+`8fead83ed2b071653415d8d80abbb2e76fb7b041`. Broker reconciliation then showed
+that the sell position had already closed at its stop loss and that no broker
+position or order remained; the terminal callback had not reached the durable
+journal. Analyses were durably paused, release `.15` deployed, and bounded
+startup recovery mapped the exact closing order/deal. The local position and
+group became `CLOSED`, and the demo trade recorded −3.27 realized P/L including
+−0.28 fees. Startup checks passed with no unresolved broker state. The corrected
+60/36/24 compact-tail values are loaded in the running process. ISSUE-037 is
+complete.
+
+## ISSUE-038 automatic running terminal recovery
+
+The stop-loss evidence proved that callback-only lifecycle progress is not
+sufficient for continuous automation: cTrader history contained the exact
+terminal closing order/deal, but the same running process retained an open local
+position until startup recovery ran. Operator restarts must not be part of the
+automatic trading loop.
+
+Issue [#80](https://github.com/AegisFintech/scalping-bot/issues/80) therefore
+runs the existing bounded history recovery before scheduler safety evaluation,
+at a default 15-second cadence configurable only from 5 through 300 seconds.
+Broker-reconnect refreshes and timer attempts share one in-flight operation. A
+unique complete closing order/deal can atomically close the position, trade, and
+group; open broker state or missing, ambiguous, paginated, multiple, invalid,
+or failed evidence remains blocking. Release `.16` adds the serialized runner,
+stable dashboard explanation, sample configuration, and positive, throttle,
+concurrency, invalid-configuration, and thrown-recovery tests. Automatic demo
+analysis remains durably paused pending merge and stopped-state rollout.
+
+The 2026-08-25 pre-merge suite passed Prettier, ESLint, TypeScript typecheck and
+build, 185 Node tests across 32 files, 13 schema tests, 3 migration tests, and
+all 3 configured isolated-PostgreSQL integration tests. Ruff format/lint,
+strict mypy over 19 Python source files, and 51 Python tests passed. Configured
+Streamlit AppTest rendered 34 dataframes with zero exceptions. Replay/backtest,
+zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
+and all five offline systemd security parses at 2.8 (`OK`) passed.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
