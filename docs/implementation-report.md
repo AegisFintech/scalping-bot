@@ -868,6 +868,23 @@ systemd security parses also passed. The host used Node 24.18.0; Node 22 remains
 the supported deployment baseline. Delivery is tracked in
 [PR #68](https://github.com/AegisFintech/scalping-bot/pull/68).
 
+PR #68 merged as `aabeffc2`. Deployment briefly activated the audited database
+analysis pause, confirmed no analysis remained in progress, rebuilt from merged
+`main`, and restarted only execution and Streamlit. Execution PID `2487239`
+reported demo mode, automatic analysis enabled, startup checks passed, the new
+`aiCircuitOpenUntil` status field, and the expected pause reason. Dashboard PID
+`2487252` returned healthy; configured AppTest rendered the plain-language
+automation state, exact system message, and exact redacted user JSON with zero
+exceptions. The pause was then cleared with an audited reason. Status returned
+trading eligible with no emergency stop or reason codes.
+
+At 01:16:01 UTC (09:16:01 Singapore), the restarted scheduler claimed the next
+broker minute without operator invocation. It completed at 01:16:07 with a
+terminal deterministic spread rejection (`SPREAD_PERCENTILE_EXCEEDED` and
+`SPREAD_POINTS_EXCEEDED`) before AI, order intent, or order group creation. This
+is post-deployment evidence that the automatic loop resumed while preserving
+fail-closed behavior; it is not a trade or profitability result.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

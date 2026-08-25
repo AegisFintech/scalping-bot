@@ -174,7 +174,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)     | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
 | ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
 | ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
-| ISSUE-032 | in progress | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)      | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
+| ISSUE-032 | complete    | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)      | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -881,7 +881,9 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #67](https://github.com/AegisFintech/scalping-bot/issues/67),
   ISSUE-030's deterministic cooldown, ISSUE-022's prompt artifacts, and the
   existing PostgreSQL/Better Stack decision trail.
-- Current status: the pre-merge candidate passes the complete required suite:
+- Current status: complete through
+  [PR #68](https://github.com/AegisFintech/scalping-bot/pull/68), merged as
+  `aabeffc2`. The candidate passed the complete required suite:
   Prettier, ESLint, TypeScript typecheck/build, 161 Node tests, 12 schema tests,
   3 migration tests, all 3 configured isolated-PostgreSQL tests, Ruff, strict
   mypy over 19 source files, 49 Python tests, configured Streamlit AppTest,
@@ -890,8 +892,13 @@ never justify empty, noisy, unsafe, or misleading commits.
   claiming automatic intervals after midnight; external-AI 503s caused bounded
   cooldown gaps and later half-open recovery, not a scheduler shutdown.
   Completed post-midnight model requests contain both the hash-verified prompt
-  and redacted user JSON. Delivery is under review in
-  [PR #68](https://github.com/AegisFintech/scalping-bot/pull/68).
+  and redacted user JSON. The merged execution/dashboard deployment used an
+  audited temporary analysis pause, restarted healthy as PIDs `2487239` and
+  `2487252`, rendered both exact request messages with zero Streamlit
+  exceptions, and resumed with no emergency stop or reason codes. Broker minute
+  01:16 UTC (09:16 Singapore) was claimed automatically and rejected terminally
+  on deterministic spread limits before AI or orders, proving same-deployment
+  scheduling resumed without weakening the gate.
 
 ## Acceptance criteria
 
