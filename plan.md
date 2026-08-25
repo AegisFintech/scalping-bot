@@ -890,7 +890,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   claiming automatic intervals after midnight; external-AI 503s caused bounded
   cooldown gaps and later half-open recovery, not a scheduler shutdown.
   Completed post-midnight model requests contain both the hash-verified prompt
-  and redacted user JSON.
+  and redacted user JSON. Delivery is under review in
+  [PR #68](https://github.com/AegisFintech/scalping-bot/pull/68).
 
 ## Acceptance criteria
 

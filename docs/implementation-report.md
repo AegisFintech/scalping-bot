@@ -865,7 +865,8 @@ rendered the current database with the automation explanation and exact-request
 section visible and zero exceptions. Replay/backtest smoke tests, npm/pip audits
 with zero known vulnerabilities, secret and shell checks, and all five offline
 systemd security parses also passed. The host used Node 24.18.0; Node 22 remains
-the supported deployment baseline.
+the supported deployment baseline. Delivery is tracked in
+[PR #68](https://github.com/AegisFintech/scalping-bot/pull/68).
 
 ## Shadow-mode setup
 
