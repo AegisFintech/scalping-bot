@@ -1458,6 +1458,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   SELL stops are currently pending, so new placement eligibility is correctly
   false until that active setup finishes. This read-only dashboard projection
   did not change analysis, execution, risk, reconciliation, or broker state.
+  Rollout evidence is recorded in
+  [PR #107](https://github.com/AegisFintech/scalping-bot/pull/107).
 
 ## Acceptance criteria
 

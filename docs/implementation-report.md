@@ -1647,3 +1647,5 @@ Execution status remained demo, automatic analysis remained enabled, and the
 existing BUY/SELL pending orders remained the only reasons a new order was not
 immediately eligible. No execution, market-data, analytics, AI, order, or
 broker process restarted. ISSUE-047 is complete.
+Rollout evidence is proposed in
+[PR #107](https://github.com/AegisFintech/scalping-bot/pull/107).
