@@ -20,6 +20,7 @@ from apps.dashboard.decision_inspector import (
     reason_code_view,
     safe_audit_detail,
     stage_state,
+    take_profit_transform_view,
     trade_outcome_view,
 )
 
@@ -74,6 +75,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert view["code"] == "SELL_ENTRY_TOO_CLOSE"
     assert view["title"] == "Sell proposal failed deterministic validation"
     assert "No sell order was sent" in view["next_action"]
+
+    midpoint = reason_code_view("BUY_TP_MIDPOINT_NOT_ON_TICK")
+    assert "off the broker tick" in midpoint["title"]
+    assert "No order was rounded" in midpoint["next_action"]
 
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
@@ -147,6 +152,68 @@ def test_missing_model_output_notice_does_not_imply_a_proposal_exists() -> None:
     assert model_output_authority_notice(None) == (
         "AI was not reached for this run; no model proposal exists."
     )
+
+
+def test_take_profit_transform_view_shows_original_and_effective_levels() -> None:
+    rows = take_profit_transform_view(
+        [
+            {
+                "details": {
+                    "validation_scope": "TAKE_PROFIT_TRANSFORM",
+                    "proposal_transform": {
+                        "code": "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2",
+                        "divisor": "2",
+                        "buy": {
+                            "entry_price": "2001",
+                            "stop_loss": "2000",
+                            "original_take_profit": "2005",
+                            "effective_take_profit": "2003",
+                            "original_risk_reward_ratio": "4",
+                            "effective_risk_reward_ratio": "2",
+                        },
+                        "sell": {
+                            "entry_price": "1999",
+                            "stop_loss": "2000",
+                            "original_take_profit": "1995",
+                            "effective_take_profit": "1997",
+                            "original_risk_reward_ratio": "4",
+                            "effective_risk_reward_ratio": "2",
+                        },
+                    },
+                }
+            }
+        ]
+    )
+
+    assert rows[0] == {
+        "side": "BUY",
+        "entry_price": "2001",
+        "stop_loss": "2000",
+        "ai_take_profit": "2005",
+        "effective_take_profit": "2003",
+        "ai_risk_reward_ratio": "4",
+        "effective_risk_reward_ratio": "2",
+    }
+    assert rows[1]["side"] == "SELL"
+
+
+def test_take_profit_transform_view_rejects_malformed_audit_details() -> None:
+    with pytest.raises(DecisionViewError, match="TP_TRANSFORM_LEG_INVALID"):
+        take_profit_transform_view(
+            [
+                {
+                    "details": {
+                        "validation_scope": "TAKE_PROFIT_TRANSFORM",
+                        "proposal_transform": {
+                            "code": "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2",
+                            "divisor": "2",
+                            "buy": {},
+                            "sell": {},
+                        },
+                    }
+                }
+            ]
+        )
 
 
 def test_model_input_summary_counts_but_does_not_render_candle_arrays() -> None:
@@ -248,6 +315,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
+    current = prompt_artifact_view("system-v3", content, digest)
+    assert current["version"] == "system-v3"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

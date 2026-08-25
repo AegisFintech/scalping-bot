@@ -885,6 +885,46 @@ terminal deterministic spread rejection (`SPREAD_PERCENTILE_EXCEEDED` and
 is post-deployment evidence that the automatic loop resumed while preserving
 fail-closed behavior; it is not a trade or profitability result.
 
+## ISSUE-033 endpoint TP midpoint
+
+Issue [#70](https://github.com/AegisFintech/scalping-bot/issues/70) versions the
+current endpoint instructions as `system-v3`. The exact request tells the model
+that execution will preserve entry and stop loss while dividing TP distance by
+two. It supplies a proposal minimum R:R equal to twice the configured effective
+minimum, preventing a valid 2:1 execution target from being requested as only a
+2:1 pre-transform target and then reduced below policy.
+
+The schema-validated endpoint JSON remains immutable in `model_responses`.
+After the post-model market refresh, the coordinator validates that original
+proposal, computes each TP midpoint with Decimal arithmetic, rejects rather than
+rounds an off-tick midpoint, recomputes R:R, and validates the effective proposal
+before deterministic sizing. `validation_results.details` and the corresponding
+redacted audit event retain the divisor plus both original/effective TP and R:R
+values. Streamlit displays that comparison immediately under the exact AI
+output. The gateway still receives only normalized commands after freshness,
+spread, daily-loss, exposure, reconciliation, idempotency, mode, and risk gates.
+No database migration is required: prompt versions are unconstrained text and
+the existing bounded `validation_results.details` JSONB contract already owns
+stage-specific deterministic evidence.
+
+The existing broker-minute scheduler and terminal lifecycle are unchanged: an
+active/uncertain OCO or position blocks another cycle; expiry, placement failure,
+or a fully reconciled TP/SL closure releases a later fresh broker minute. Live
+broker composition remains unwired, and no default demo/live enablement was
+added.
+
+The 2026-08-25 pre-merge suite passed Prettier, ESLint, TypeScript typecheck and
+build, 165 Node tests across 30 files, 12 JSON Schema tests, 3 static migration
+tests, and all 3 configured isolated-PostgreSQL integration tests, including the
+new durable transform/audit-detail assertion. Ruff format/lint, strict mypy over
+19 source files, and 51 Python tests passed. Configured Streamlit AppTest rendered
+30 dataframes with zero exceptions. Replay/backtest smoke tests, zero-vulnerability
+npm/pip audits, tracked-file secret scan, shell/PM2 syntax checks, and all five
+offline systemd security parses at 2.8 (`OK`) passed. The host used Node 24.18.0,
+npm 11.16.0, and Python 3.13.5; Node 22 remains the supported deployment
+baseline. Merge and stopped rollout evidence remain required before ISSUE-033 is
+complete.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account

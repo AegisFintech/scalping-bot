@@ -30,6 +30,11 @@ import {
 } from "../../ai-orchestrator/src/payload.js";
 import type { OcoEvaluation } from "./oco-risk-evaluator.js";
 import {
+  halveTakeProfitDistances,
+  proposalMinimumRiskRewardRatio,
+  TAKE_PROFIT_DISTANCE_DIVISOR,
+} from "./proposal-transform.js";
+import {
   evaluateAnalysisEligibility,
   evaluatePlacementEligibility,
   type SafetyGateInput,
@@ -86,6 +91,7 @@ export interface DecisionTrail {
     stage: "SEMANTIC" | "RISK" | "LIVE_GATE",
     accepted: boolean,
     reasons: readonly string[],
+    details?: Readonly<Record<string, unknown>>,
   ): Promise<void>;
   intent(analysisId: string, evaluation: OcoEvaluation): Promise<void>;
   placement(analysisId: string, result: OcoPlacementResult): Promise<void>;
@@ -158,6 +164,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
     stage: "SEMANTIC" | "RISK" | "LIVE_GATE",
     accepted: boolean,
     reasons: readonly string[],
+    details: Readonly<Record<string, unknown>> = {},
   ): Promise<void> {
     this.events.push({
       type: "validation",
@@ -165,6 +172,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
       stage,
       accepted,
       reasons,
+      details,
     });
     return Promise.resolve();
   }
@@ -187,7 +195,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v2";
+  readonly promptVersion: "system-v3";
   readonly schemaVersion: "2.0";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -403,6 +411,9 @@ export class AnalysisCoordinator {
         snapshot,
         this.#options.minStopDistancePoints,
       );
+      const minimumProposalRiskRewardRatio = proposalMinimumRiskRewardRatio(
+        this.#options.minRiskRewardRatio,
+      );
       if (
         minimumStopDistance.gt(
           decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
@@ -438,7 +449,9 @@ export class AnalysisCoordinator {
           digits: snapshot.metadata.digits,
           brokerMinStopDistance: snapshot.metadata.minStopDistance,
           configuredMinStopDistance: canonical(minimumStopDistance),
-          minRiskRewardRatio: this.#options.minRiskRewardRatio,
+          minRiskRewardRatio: minimumProposalRiskRewardRatio,
+          effectiveMinRiskRewardRatio: this.#options.minRiskRewardRatio,
+          takeProfitDistanceDivisor: TAKE_PROFIT_DISTANCE_DIVISOR,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
           orderExpiryMinSeconds: this.#options.minExpirySeconds,
           orderExpiryMaxSeconds: this.#options.maxExpirySeconds,
@@ -511,14 +524,13 @@ export class AnalysisCoordinator {
         return await reject(decisionSpread.reasonCodes);
 
       const now = new Date();
-      const semantic = validateSemantics(model.response, {
+      const semanticContext = {
         analysisId,
         symbol: this.#options.symbol,
         now,
         quote: decisionSnapshot.quote,
         metadata: decisionSnapshot.metadata,
         atr,
-        minRiskRewardRatio: this.#options.minRiskRewardRatio,
         minExpirySeconds: this.#options.minExpirySeconds,
         maxExpirySeconds: this.#options.maxExpirySeconds,
         maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
@@ -558,20 +570,65 @@ export class AnalysisCoordinator {
             },
           };
         })(),
+      };
+      const proposalSemantic = validateSemantics(model.response, {
+        ...semanticContext,
+        minRiskRewardRatio: minimumProposalRiskRewardRatio,
       });
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",
-        semantic.accepted,
-        semantic.reasonCodes,
+        proposalSemantic.accepted,
+        proposalSemantic.reasonCodes,
+        {
+          validation_scope: "AI_PROPOSAL",
+          required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
+          take_profit_distance_divisor: TAKE_PROFIT_DISTANCE_DIVISOR,
+        },
       );
-      if (!semantic.accepted) return await reject(semantic.reasonCodes);
+      if (!proposalSemantic.accepted)
+        return await reject(proposalSemantic.reasonCodes);
+
+      const transformed = halveTakeProfitDistances(
+        model.response,
+        decisionSnapshot.metadata,
+      );
+      await this.#options.trail.validation(
+        analysisId,
+        "SEMANTIC",
+        transformed.accepted,
+        transformed.reasonCodes,
+        {
+          validation_scope: "TAKE_PROFIT_TRANSFORM",
+          proposal_transform: transformed.details,
+        },
+      );
+      if (!transformed.accepted || transformed.response === null)
+        return await reject(transformed.reasonCodes);
+
+      const effectiveSemantic = validateSemantics(transformed.response, {
+        ...semanticContext,
+        minRiskRewardRatio: this.#options.minRiskRewardRatio,
+      });
+      await this.#options.trail.validation(
+        analysisId,
+        "SEMANTIC",
+        effectiveSemantic.accepted,
+        effectiveSemantic.reasonCodes,
+        {
+          validation_scope: "EFFECTIVE_BROKER_PROPOSAL",
+          required_min_risk_reward_ratio: this.#options.minRiskRewardRatio,
+          proposal_transform: transformed.details,
+        },
+      );
+      if (!effectiveSemantic.accepted)
+        return await reject(effectiveSemantic.reasonCodes);
 
       const account = await this.#options.account.reconcile(
         decisionSnapshot.metadata.symbolId,
       );
       const risk = await this.#options.risk.evaluate({
-        response: model.response,
+        response: transformed.response,
         account,
         metadata: decisionSnapshot.metadata,
         quote: decisionSnapshot.quote,

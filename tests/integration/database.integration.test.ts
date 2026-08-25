@@ -565,6 +565,56 @@ describe("PostgreSQL migrations integration", () => {
         requests: "1",
         responses: "1",
       });
+      const transformDetails = {
+        validation_scope: "TAKE_PROFIT_TRANSFORM",
+        proposal_transform: {
+          code: "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2",
+          divisor: "2",
+          buy: {
+            entry_price: "2001",
+            stop_loss: "2000",
+            original_take_profit: "2005",
+            effective_take_profit: "2003",
+            original_risk_reward_ratio: "4",
+            effective_risk_reward_ratio: "2",
+          },
+          sell: {
+            entry_price: "1999",
+            stop_loss: "2000",
+            original_take_profit: "1995",
+            effective_take_profit: "1997",
+            original_risk_reward_ratio: "4",
+            effective_risk_reward_ratio: "2",
+          },
+        },
+      };
+      await trail.validation(
+        analysisId,
+        "SEMANTIC",
+        true,
+        [],
+        transformDetails,
+      );
+      const storedTransform = await isolated.query<{
+        details: Record<string, unknown>;
+        audit_details: Record<string, unknown>;
+      }>(
+        `SELECT vr.details,
+                (SELECT ae.details FROM audit_events ae
+                 WHERE ae.analysis_id = vr.analysis_id
+                   AND ae.event_name = 'validation_completed'
+                   AND ae.details ->> 'validation_scope' = 'TAKE_PROFIT_TRANSFORM'
+                 ORDER BY ae.occurred_at DESC LIMIT 1) AS audit_details
+         FROM validation_results vr
+         WHERE vr.analysis_id = $1 AND vr.stage = 'SEMANTIC'
+           AND vr.details ->> 'validation_scope' = 'TAKE_PROFIT_TRANSFORM'
+         ORDER BY vr.validated_at DESC LIMIT 1`,
+        [analysisId],
+      );
+      expect(storedTransform.rows[0]?.details).toEqual(transformDetails);
+      expect(storedTransform.rows[0]?.audit_details).toMatchObject(
+        transformDetails,
+      );
       const reconciliation: ReconciliationSnapshot = {
         asOf: "2026-08-24T00:09:00.000Z",
         certain: true,

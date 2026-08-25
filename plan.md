@@ -175,6 +175,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
 | ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
 | ISSUE-032 | complete    | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)      | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
+| ISSUE-033 | in progress | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -899,6 +900,32 @@ never justify empty, noisy, unsafe, or misleading commits.
   01:16 UTC (09:16 Singapore) was claimed automatically and rejected terminally
   on deterministic spread limits before AI or orders, proving same-deployment
   scheduling resumed without weakening the gate.
+
+### ISSUE-033 delivery details
+
+- Acceptance criteria: transform each schema-2.0 take-profit with Decimal
+  arithmetic to the midpoint between its entry and proposed TP; preserve the
+  endpoint entry and stop loss; require the transformed price to remain
+  side-correct, tick-aligned, semantically valid, and deterministically sized;
+  persist and display the original proposal beside the effective broker intent;
+  retain schema, freshness, spread, daily-loss, exposure, reconciliation,
+  idempotency, demo acknowledgement, and live-disabled gates; and prove the
+  automatic cycle remains blocked by active/uncertain strategy state and resumes
+  only after expiry, failure, or full closure is durably reconciled.
+- Dependencies: [issue #70](https://github.com/AegisFintech/scalping-bot/issues/70),
+  schema 2.0, the post-model refresh boundary, deterministic risk sizing,
+  cTrader OCO lifecycle recovery, and the existing PostgreSQL/Streamlit decision
+  trail.
+- Current status: implementation is in progress on
+  `issue-033-endpoint-tp-midpoint`. Prompt `system-v3`, the Decimal midpoint
+  transform, original/effective validation trail, and Streamlit comparison are
+  implemented. Pre-merge gates pass: Prettier, ESLint, TypeScript
+  typecheck/build, 165 Node tests across 30 files, 12 schema tests, 3 migration
+  tests, all 3 configured isolated-PostgreSQL integration tests, Ruff, strict
+  mypy over 19 source files, 51 Python tests, configured Streamlit AppTest,
+  replay/backtest, zero-vulnerability npm/pip audits, secret/shell checks, and
+  five offline systemd parses at 2.8 (`OK`). No model-selected volume, bypassed
+  risk gate, live execution authority, or default enablement is in scope.
 
 ## Acceptance criteria
 

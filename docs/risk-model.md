@@ -9,6 +9,12 @@ normalization, exposure, margin, eligibility, precision, freshness,
 spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
+The one explicitly configured execution transform is TP-distance division by
+two. Prompt `system-v3` asks for at least twice the effective minimum R:R. The
+coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
+recomputes R:R, and rejects an off-tick result without rounding. The original
+endpoint response and effective values remain separately auditable.
+
 ## Decimal arithmetic
 
 Inputs arrive as canonical decimal strings and are parsed with arbitrary-precision decimal libraries. Binary floating-point is not used to compare execution levels or money. A price is valid only when `price / tick_size` is integral at broker precision.
@@ -58,6 +64,9 @@ units must not be treated as whole lots.
 - Buy: `stop_loss < entry < take_profit`; buy-stop trigger/entry is above current ask plus broker distance.
 - Sell: `take_profit < entry < stop_loss`; sell-stop trigger/entry is below current bid minus broker distance.
 - `reward / risk >= MIN_RISK_REWARD_RATIO`, default `2`.
+- Before TP transformation, the endpoint proposal must satisfy twice that
+  minimum; after transformation, the effective broker proposal must still
+  satisfy the configured minimum.
 - Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
 - Entry/SL/TP/invalidation/expiration must all remain coherent at validation immediately before placement.
 - A mathematically incompatible minimum/maximum stop-distance interval rejects before inference, so the model is never asked for an impossible proposal.

@@ -153,7 +153,7 @@ export interface ModelResponse {
 }
 
 export interface ModelPromptArtifact {
-  readonly version: "system-v2";
+  readonly version: "system-v2" | "system-v3";
   readonly content: string;
   readonly sha256: string;
 }

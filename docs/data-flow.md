@@ -53,9 +53,12 @@ the temporary fail-closed daily-risk reason.
 11. Reacquire completed candles, metadata, quote, and depth. Reject if the
     completed-candle context or execution metadata changed during inference, or
     if broker time regressed; persist the refreshed quote/depth evidence.
-12. Re-run spread protection, then semantically validate and run deterministic
+12. Re-run spread protection against the refreshed execution state. Validate
+    the immutable AI proposal at the pre-transform R:R; derive each effective
+    TP as the Decimal midpoint from entry to AI TP; reject an off-tick midpoint;
+    then validate the effective proposal at the configured execution R:R. Run
     stop, precision, daily loss, volume, margin, exposure, freshness, and
-    duplicate checks against the refreshed execution state.
+    duplicate checks before recording intent.
 13. Persist the entire decision trail and outcome transactionally.
 14. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
     submit; shadow cannot; live is deliberately unwired in this release.

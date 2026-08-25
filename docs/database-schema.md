@@ -50,6 +50,10 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
   candles remain the model context and must compare exactly with the refreshed
   completed-candle context.
 - Accepted validation and risk decisions commit before order intent.
+- The immutable model response stores endpoint levels. Bounded semantic
+  validation details separately store the TP-distance divisor plus original and
+  effective TP/R:R values, including transform rejection evidence before any
+  order intent exists.
 - OCO group plus both client order intents/idempotency keys commit before gateway calls.
 - Each broker callback is inserted/deduplicated and its state transition commits atomically.
 - Placement callbacks drain only after returned broker order IDs commit. If a

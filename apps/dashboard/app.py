@@ -35,6 +35,7 @@ from decision_inspector import (
     reason_code_view,
     safe_audit_detail,
     stage_state,
+    take_profit_transform_view,
     trade_outcome_view,
 )
 from psycopg.rows import dict_row
@@ -615,6 +616,7 @@ with tabs[4]:
             model_proposal = (
                 "NOT_REACHED" if model_view is None else model_proposal_label(model_view)
             )
+            transformed_levels = take_profit_transform_view(validations)
             prompt_view = (
                 None
                 if detail.get("prompt_version") is None
@@ -753,6 +755,24 @@ with tabs[4]:
                     )
                     st.subheader("Exact parsed and schema-validated AI response")
                     st.json(model_view)
+                    st.subheader("AI proposal → effective OCO levels")
+                    if transformed_levels:
+                        st.dataframe(
+                            pd.DataFrame(transformed_levels),
+                            width="stretch",
+                            hide_index=True,
+                        )
+                        st.caption(
+                            "Entry and stop loss are unchanged. Effective take profit is the "
+                            "exact midpoint between entry and the AI take profit. These effective "
+                            "levels still require semantic, freshness, reconciliation, and "
+                            "deterministic risk approval before broker submission."
+                        )
+                    else:
+                        st.info(
+                            "The TP transform was not reached for this run, so no effective "
+                            "broker levels exist."
+                        )
                 st.caption(
                     "Raw provider text is intentionally not displayed. The parsed object above "
                     "is the exact locally validated JSON used by semantic validation."
