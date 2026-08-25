@@ -1733,3 +1733,15 @@ tracked-file secret scan, and shell/PM2/systemd checks.
 
 Implementation review and merge are tracked by
 [PR #112](https://github.com/AegisFintech/scalping-bot/pull/112).
+
+Deployment did not interrupt the active `.23` order group. Its BUY filled and
+the repaired maintenance path cancelled the SELL peer; the BUY later closed to
+one immutable trade with realized P/L `-3.14`, fees `-0.28`, and zero unresolved
+execution events. With no broker exposure, analyses remained paused while
+release `.24` started with a campaign baseline of 42. Startup passed with only
+`ANALYSES_PAUSED`; the AI circuit was closed, execution/dashboard health
+returned HTTP 200, and configured AppTest rendered 39 dataframes, 37 metrics,
+and 15 tabs with zero exceptions. After unpause, the first `.24` automatic
+cycle recorded one completed external request/response, reached `ACCEPTED`,
+advanced the campaign to 43/100, and placed both pending demo stops. No AI
+cooldown was active.
