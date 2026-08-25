@@ -1463,3 +1463,10 @@ AppTest, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
 tracked-file secret scan, shell/PM2 checks, and five systemd parses at 2.8
 (`OK`). Implementation is proposed in
 [PR #97](https://github.com/AegisFintech/scalping-bot/pull/97).
+
+PR #97 merged as `b27b66f`. Only `scalper-dashboard` restarted; execution PID
+`2522098` remained online and unchanged, so the active broker-demo lifecycle
+was not interrupted. Dashboard health passed. The deployed-source AppTest
+again rendered 35 dataframes with zero exceptions and verified 4,985 timestamp
+cells. Its Overview caption read `Group expires: 25 Aug 2026, 13:37:03 GMT+8 ·
+last updated: 25 Aug 2026, 13:30:10 GMT+8`. ISSUE-044 is complete.
