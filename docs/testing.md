@@ -117,6 +117,18 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
+On 2026-08-25, ISSUE-047 passed Prettier, ESLint, TypeScript typecheck/build,
+221 Node tests across 37 files, 16 JSON Schema tests, 3 migration tests, and all
+3 configured isolated-PostgreSQL integration tests. Ruff format/lint, strict
+mypy over 21 source files, and 73 Python tests passed. Replay/backtest smoke
+tests, zero-vulnerability npm/pip audits, the tracked-file secret scan,
+shell/PM2 syntax, and all five offline systemd security parses at 2.8 (`OK`)
+passed. The configured Streamlit AppTest rendered 40 dataframes and 36 metrics
+with zero exceptions; its Analysis History projection matched the live durable
+campaign snapshot at 14/100 and classified 8 rejected/no-order results, 5
+durable closed demo losses, and 1 pending-stop setup. This verifies read-only
+lifecycle presentation, not forecast quality or profitability.
+
 On 2026-08-25, ISSUE-045 passed Prettier, ESLint, TypeScript typecheck/build,
 209 Node tests across 35 files, 14 schema tests, 3 migration tests, and all 3
 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,

@@ -1601,3 +1601,37 @@ trade was forced for display verification. These are demo operational results,
 not profitability evidence. ISSUE-046 is complete.
 Rollout evidence is proposed in
 [PR #104](https://github.com/AegisFintech/scalping-bot/pull/104).
+
+## Consolidated analysis outcome history
+
+ISSUE-047 adds a read-only **Analysis History** Streamlit tab for the bounded
+100-completed-response demo campaign. The ledger is scoped to the active
+account environment and symbol and reconstructs the runtime's reviewed
+prior-release baseline separately from current-release completions. It rejects
+a count mismatch, including a completion racing the status snapshot, instead
+of silently shifting the ledger. Original endpoint BUY/SELL entry, SL, and TP are
+shown beside audited effective midpoint TPs or exact persisted order intents.
+Rejected, expired, failed, pending, open, and reconciliation-required states
+remain distinct. Only one durable closed `trades` row can produce a signed
+WIN/LOSS/BREAK-EVEN result, realized P/L, and fees; malformed or multiple
+lifecycle records render `EVIDENCE UNAVAILABLE`.
+
+The selected row provides the exact hash-verified prompt, persisted redacted
+user JSON, parsed/schema-validated response, validation history, and sanitized
+broker execution journal. The implementation adds no migration or execution
+path and never selects private endpoint, account, broker, or credential fields.
+Focused tests cover rejection, pending stops, unfilled expiry, closed long and
+short outcomes, count/identity mismatch, incomplete terminal evidence,
+ambiguous lifecycle rows, and unsafe model data. Pre-merge completion checks and
+rollout evidence are recorded below after they run.
+
+Pre-merge gates passed: Prettier, ESLint, TypeScript typecheck/build, 221 Node
+tests across 37 files, 16 schema tests, 3 migration tests, all 3 configured
+PostgreSQL integration tests, Ruff format/lint, strict mypy over 21 source
+files, 73 Python tests, replay/backtest smoke tests, zero-vulnerability npm/pip
+audits, tracked-file secret scan, shell/PM2 syntax, and five offline systemd
+security parses at 2.8 (`OK`). Configured AppTest rendered 40 dataframes and 36
+metrics with zero exceptions and matched the live durable 14/100 campaign
+snapshot. These are display and lifecycle-integrity results, not trading or
+profitability evidence. Implementation is proposed in
+[PR #106](https://github.com/AegisFintech/scalping-bot/pull/106).

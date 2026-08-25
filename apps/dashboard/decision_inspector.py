@@ -1120,6 +1120,320 @@ def open_position_monitor_view(value: object) -> dict[str, str]:
     return {key: str(document[key]) for key in _OPEN_POSITION_MONITOR_FIELDS}
 
 
+def _history_decimal(value: object, reason: str, *, positive: bool = False) -> str:
+    if not isinstance(value, (str, Decimal)):
+        raise DecisionViewError(reason)
+    text = format(value, "f") if isinstance(value, Decimal) else value
+    if _MONITOR_DECIMAL.fullmatch(text) is None:
+        raise DecisionViewError(reason)
+    number = Decimal(text)
+    if not number.is_finite() or (positive and number <= 0):
+        raise DecisionViewError(reason)
+    rendered = format(number, "f")
+    if "." in rendered:
+        rendered = rendered.rstrip("0").rstrip(".")
+    return "0" if rendered in {"", "-0"} else rendered
+
+
+def _history_reasons(value: object, cancellation_reason: object) -> str:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_REASONS_INVALID")
+    reasons: list[str] = []
+    for reason in value:
+        if (
+            not isinstance(reason, str)
+            or not 1 <= len(reason) <= 160
+            or re.fullmatch(r"[A-Z0-9_:.-]+", reason) is None
+            or _SECRET_VALUE.search(reason)
+        ):
+            raise DecisionViewError("DECISION_VIEW_HISTORY_REASONS_INVALID")
+        reasons.append(reason)
+    if cancellation_reason is not None:
+        if (
+            not isinstance(cancellation_reason, str)
+            or not 1 <= len(cancellation_reason) <= 160
+            or re.fullmatch(r"[A-Z0-9_:.-]+", cancellation_reason) is None
+            or _SECRET_VALUE.search(cancellation_reason)
+        ):
+            raise DecisionViewError("DECISION_VIEW_HISTORY_REASONS_INVALID")
+        reasons.append(cancellation_reason)
+    return ", ".join(dict.fromkeys(reasons)) if reasons else "—"
+
+
+def _history_timestamp(value: object, reason: str) -> datetime:
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as error:
+            raise DecisionViewError(reason) from error
+    else:
+        raise DecisionViewError(reason)
+    if parsed.tzinfo is None:
+        raise DecisionViewError(reason)
+    return parsed
+
+
+def _history_model_levels(value: object) -> dict[str, str]:
+    model = model_output_view(value)
+    if model.get("schema_version") not in {"2.0", "2.1"}:
+        raise DecisionViewError("DECISION_VIEW_HISTORY_MODEL_VERSION_UNSUPPORTED")
+    levels: dict[str, str] = {}
+    for side in ("buy", "sell"):
+        leg = model.get(f"{side}_stop")
+        if not isinstance(leg, Mapping):
+            raise DecisionViewError("DECISION_VIEW_HISTORY_MODEL_LEG_INVALID")
+        for source, target in (
+            ("entry_price", "entry"),
+            ("stop_loss", "sl"),
+            ("take_profit", "tp"),
+        ):
+            levels[f"ai_{side}_{target}"] = _history_decimal(
+                leg.get(source),
+                "DECISION_VIEW_HISTORY_MODEL_PRICE_INVALID",
+                positive=True,
+            )
+    return levels
+
+
+def _history_execution_levels(row: Mapping[str, Any]) -> tuple[str, dict[str, str]]:
+    order_present = any(row.get(f"{side}_order_state") is not None for side in ("buy", "sell"))
+    values: dict[str, str] = {}
+    for side in ("buy", "sell"):
+        source_state = row.get(f"{side}_order_state")
+        if order_present and not isinstance(source_state, str):
+            raise DecisionViewError("DECISION_VIEW_HISTORY_ORDER_PAIR_INCOMPLETE")
+        for source, target in (
+            ("entry", "entry"),
+            ("stop_loss", "sl"),
+            ("take_profit", "tp"),
+        ):
+            value = row.get(
+                f"{side}_order_{source}" if order_present else f"effective_{side}_{source}"
+            )
+            if value is None:
+                if order_present:
+                    raise DecisionViewError("DECISION_VIEW_HISTORY_ORDER_LEVEL_INVALID")
+                values[f"execution_{side}_{target}"] = "—"
+            else:
+                values[f"execution_{side}_{target}"] = _history_decimal(
+                    value,
+                    "DECISION_VIEW_HISTORY_EXECUTION_PRICE_INVALID",
+                    positive=True,
+                )
+    if order_present:
+        return "PLACED ORDER LEVELS", values
+    transformed = any(value != "—" for value in values.values())
+    if transformed and not all(value != "—" for value in values.values()):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_EFFECTIVE_LEVELS_INCOMPLETE")
+    return (
+        "EFFECTIVE LEVELS — NOT PLACED" if transformed else "NOT REACHED",
+        values,
+    )
+
+
+def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
+    position_count = row.get("position_count")
+    trade_count = row.get("trade_count")
+    if (
+        not isinstance(position_count, int)
+        or isinstance(position_count, bool)
+        or not isinstance(trade_count, int)
+        or isinstance(trade_count, bool)
+        or position_count not in {0, 1}
+        or trade_count not in {0, 1}
+    ):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_LIFECYCLE_AMBIGUOUS")
+
+    triggered_side = "—"
+    realized_pnl = "—"
+    fees = "—"
+    if trade_count == 1:
+        if row.get("trade_closed_at") is None:
+            raise DecisionViewError("DECISION_VIEW_HISTORY_TRADE_NOT_CLOSED")
+        direction = row.get("trade_direction")
+        if direction not in {"LONG", "SHORT"}:
+            raise DecisionViewError("DECISION_VIEW_HISTORY_TRADE_DIRECTION_INVALID")
+        triggered_side = "BUY" if direction == "LONG" else "SELL"
+        realized_pnl = _history_decimal(
+            row.get("realized_pnl"), "DECISION_VIEW_HISTORY_PNL_INVALID"
+        )
+        fees = _history_decimal(row.get("fees"), "DECISION_VIEW_HISTORY_FEES_INVALID")
+        pnl = Decimal(realized_pnl)
+        return (
+            "CLOSED WIN" if pnl > 0 else "CLOSED LOSS" if pnl < 0 else "CLOSED BREAK-EVEN",
+            triggered_side,
+            realized_pnl,
+            fees,
+        )
+
+    if position_count == 1:
+        side = row.get("position_side")
+        state = row.get("position_state")
+        if side not in {"BUY", "SELL"}:
+            raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_SIDE_INVALID")
+        triggered_side = str(side)
+        if state in {"OPEN", "CLOSING"}:
+            return "TRADE OPEN", triggered_side, realized_pnl, fees
+        if state in {"UNKNOWN", "RECONCILIATION_PENDING"}:
+            return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
+        raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_OUTCOME_MISSING")
+
+    buy_state = row.get("buy_order_state")
+    sell_state = row.get("sell_order_state")
+    filled = [
+        side for side, state in (("BUY", buy_state), ("SELL", sell_state)) if state == "FILLED"
+    ]
+    if len(filled) > 1:
+        raise DecisionViewError("DECISION_VIEW_HISTORY_DUAL_FILL_AMBIGUOUS")
+    if filled:
+        triggered_side = filled[0]
+
+    group_state = row.get("group_state")
+    if group_state is None:
+        analysis_state = row.get("analysis_state")
+        if analysis_state == "REJECTED":
+            return "REJECTED — NO ORDER", triggered_side, realized_pnl, fees
+        if analysis_state == "EXPIRED":
+            return "ANALYSIS EXPIRED — NO ORDER", triggered_side, realized_pnl, fees
+        if analysis_state in {
+            "PENDING",
+            "COLLECTING",
+            "FEATURED",
+            "MODEL_PENDING",
+            "VALIDATING",
+            "ACCEPTED",
+        }:
+            return "ANALYSIS IN PROGRESS", triggered_side, realized_pnl, fees
+        raise DecisionViewError("DECISION_VIEW_HISTORY_ANALYSIS_STATE_INVALID")
+    if not isinstance(group_state, str):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_GROUP_STATE_INVALID")
+    if group_state in {"INTENT_RECORDED", "SUBMITTING", "ACTIVE"}:
+        return "STOPS PENDING", triggered_side, realized_pnl, fees
+    if group_state in {"ONE_FILLED", "CANCELLING_PEER"}:
+        return "FILL / PEER CANCELLING", triggered_side, realized_pnl, fees
+    if group_state == "EXPIRED":
+        return "EXPIRED — NO TRADE", triggered_side, realized_pnl, fees
+    if group_state == "FAILED":
+        return "FAILED — NO TRADE", triggered_side, realized_pnl, fees
+    if group_state == "RECONCILIATION_REQUIRED":
+        return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
+    raise DecisionViewError("DECISION_VIEW_HISTORY_GROUP_OUTCOME_MISSING")
+
+
+def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int) -> dict[str, Any]:
+    """Build a bounded campaign ledger without converting non-trades into losses."""
+
+    if (
+        not isinstance(expected_count, int)
+        or isinstance(expected_count, bool)
+        or not 0 <= expected_count <= 100
+        or len(rows) != expected_count
+    ):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_COUNT_MISMATCH")
+
+    output: list[dict[str, Any]] = []
+    analysis_ids: list[str] = []
+    seen: set[str] = set()
+    previous_analysis_time: datetime | None = None
+    for index, row in enumerate(rows, start=1):
+        analysis_id = row.get("analysis_id")
+        if (
+            not isinstance(analysis_id, str)
+            or re.fullmatch(
+                r"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+                analysis_id,
+            )
+            is None
+            or analysis_id in seen
+        ):
+            raise DecisionViewError("DECISION_VIEW_HISTORY_ANALYSIS_ID_INVALID")
+        seen.add(analysis_id)
+        analysis_ids.append(analysis_id)
+        try:
+            analysis_time = _history_timestamp(
+                row.get("analysis_time"), "DECISION_VIEW_HISTORY_TIME_INVALID"
+            )
+            if previous_analysis_time is not None and analysis_time < previous_analysis_time:
+                raise DecisionViewError("DECISION_VIEW_HISTORY_ORDER_INVALID")
+            previous_analysis_time = analysis_time
+            if row.get("group_expires_at") is not None:
+                _history_timestamp(
+                    row.get("group_expires_at"),
+                    "DECISION_VIEW_HISTORY_EXPIRY_INVALID",
+                )
+            if row.get("trade_closed_at") is not None:
+                _history_timestamp(
+                    row.get("trade_closed_at"),
+                    "DECISION_VIEW_HISTORY_CLOSE_TIME_INVALID",
+                )
+            model_levels = _history_model_levels(row.get("parsed_payload"))
+            level_source, execution_levels = _history_execution_levels(row)
+            outcome, triggered_side, realized_pnl, fees = _history_outcome(row)
+            reasons = _history_reasons(row.get("rejection_reasons"), row.get("cancellation_reason"))
+            evidence_status = "CERTAIN"
+        except DecisionViewError as error:
+            model_levels = {
+                f"ai_{side}_{field}": "Unavailable"
+                for side in ("buy", "sell")
+                for field in ("entry", "sl", "tp")
+            }
+            execution_levels = {
+                f"execution_{side}_{field}": "Unavailable"
+                for side in ("buy", "sell")
+                for field in ("entry", "sl", "tp")
+            }
+            level_source = "UNAVAILABLE"
+            outcome = "EVIDENCE UNAVAILABLE"
+            triggered_side = "—"
+            realized_pnl = "—"
+            fees = "—"
+            reasons = str(error)
+            evidence_status = "UNAVAILABLE"
+        output.append(
+            {
+                "analysis_number": index,
+                "analysis_time": row.get("analysis_time"),
+                "result": outcome,
+                "triggered_side": triggered_side,
+                "analysis_state": str(row.get("analysis_state", "UNAVAILABLE")),
+                "reasons": reasons,
+                "level_source": level_source,
+                **model_levels,
+                **execution_levels,
+                "order_expires_at": row.get("group_expires_at"),
+                "realized_pnl": realized_pnl,
+                "fees": fees,
+                "trade_closed_at": row.get("trade_closed_at"),
+                "evidence_status": evidence_status,
+            }
+        )
+
+    wins = sum(row["result"] == "CLOSED WIN" for row in output)
+    losses = sum(row["result"] == "CLOSED LOSS" for row in output)
+    break_even = sum(row["result"] == "CLOSED BREAK-EVEN" for row in output)
+    closed_rows = [row for row in output if str(row["result"]).startswith("CLOSED ")]
+    pnl_total = sum((Decimal(str(row["realized_pnl"])) for row in closed_rows), Decimal(0))
+    fee_total = sum((Decimal(str(row["fees"])) for row in closed_rows), Decimal(0))
+    return {
+        "rows": output,
+        "analysis_ids": analysis_ids,
+        "summary": {
+            "completed_ai_analyses": len(output),
+            "orders_created": sum(row.get("group_state") is not None for row in rows),
+            "pending_stops": sum(row["result"] == "STOPS PENDING" for row in output),
+            "expired_without_trade": sum(row["result"] == "EXPIRED — NO TRADE" for row in output),
+            "open_trades": sum(row["result"] == "TRADE OPEN" for row in output),
+            "wins": wins,
+            "losses": losses,
+            "break_even": break_even,
+            "realized_pnl": _history_decimal(pnl_total, "DECISION_VIEW_HISTORY_PNL_TOTAL_INVALID"),
+            "fees": _history_decimal(fee_total, "DECISION_VIEW_HISTORY_FEES_TOTAL_INVALID"),
+        },
+    }
+
+
 def prompt_artifact_view(
     prompt_version: object,
     persisted_content: object,

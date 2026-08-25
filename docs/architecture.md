@@ -179,6 +179,13 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 - The AI output view places endpoint entry/SL/TP and effective midpoint TP side
   by side, including original/effective R:R, even when later risk sizing or
   broker placement is not reached.
+- The Analysis History tab projects the active campaign's reviewed carry-forward
+  plus current-release durable completed model responses into a chronological
+  ledger. It cross-checks their sum against the runtime snapshot and keeps rejected and
+  expired no-order results separate from broker outcomes, and labels WIN, LOSS,
+  or BREAK-EVEN only from an immutable closed `trades` row. A second table keeps
+  original AI levels beside effective transformed or persisted order levels;
+  ambiguous lifecycle evidence is withheld rather than guessed.
 - The Overview distinguishes scheduler enablement from immediate order
   eligibility. Temporary AI cooldowns show their exact automatic retry time and
   retain the authoritative reason code alongside plain-language impact and

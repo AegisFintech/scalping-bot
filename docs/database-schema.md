@@ -79,6 +79,18 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 
 ## Retention and access
 
+The read-only Analysis History projection requires no migration. It scopes
+`analysis_runs` to the selected account environment and symbol, selects only
+durable completed `model_requests` plus `model_responses`, reconstructs the
+reviewed prior-release baseline separately from current-release results, and
+joins existing validation, OCO order, position, and trade evidence. An extra
+current-release row is queried only to detect a concurrent count change and
+reject the display; the configured campaign count otherwise bounds the result
+to at most 100 rows. Closed-trade signed
+`realized_pnl` is the outcome authority; rejection and expiry rows are never
+converted into losses. Broker/account identifiers and raw provider text are
+not selected.
+
 Audit, order, fill, position, trade, and risk records follow regulatory/operational retention chosen by the operator. High-volume raw depth/candle/server metrics can be partitioned/expired only through reviewed migrations/jobs that retain decision-linked evidence. Dashboard roles should not read secret-bearing configuration; runtime controls require dedicated mutation privileges.
 
 ## Migration policy
