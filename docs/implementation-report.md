@@ -1635,3 +1635,15 @@ metrics with zero exceptions and matched the live durable 14/100 campaign
 snapshot. These are display and lifecycle-integrity results, not trading or
 profitability evidence. Implementation is proposed in
 [PR #106](https://github.com/AegisFintech/scalping-bot/pull/106).
+
+PR #106 merged as `f504d90`. The rollout restarted only
+`scalper-dashboard`; its PID changed from `2534066` to `2537448`, while
+`scalper-execution` stayed online and unchanged on PID `2534106`. Streamlit
+health returned `ok`, and the deployed-source configured AppTest again rendered
+40 dataframes and 36 metrics with zero exceptions. Its history tables exactly
+matched campaign progress 14/100: 8 rejected/no-order analyses, 5 closed demo
+losses backed by immutable trade rows, and 1 active pending-stop setup.
+Execution status remained demo, automatic analysis remained enabled, and the
+existing BUY/SELL pending orders remained the only reasons a new order was not
+immediately eligible. No execution, market-data, analytics, AI, order, or
+broker process restarted. ISSUE-047 is complete.

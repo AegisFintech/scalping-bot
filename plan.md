@@ -189,7 +189,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-044 | complete    | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
 | ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
 | ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
-| ISSUE-047 | in progress | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
+| ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1449,13 +1449,15 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
 - Dependencies: [issue #105](https://github.com/AegisFintech/scalping-bot/issues/105),
   ISSUE-041 campaign progress, ISSUE-044 GMT+8 presentation, ISSUE-045 terminal
   trade projection, and the existing immutable prompt/model/order/trade trail.
-- Current status: implementation and all pre-merge completion gates passed on
-  `issue-047-analysis-outcome-history`; pull-request review/delivery remains.
-  The configured AppTest matched the durable 14/100 campaign snapshot with 8
-  rejected/no-order results, 5 closed demo losses, and 1 pending-stop setup.
-  This is a read-only dashboard projection; it cannot change analysis,
-  execution, risk, reconciliation, or broker state.
-- Delivery: [PR #106](https://github.com/AegisFintech/scalping-bot/pull/106).
+- Current status: [PR #106](https://github.com/AegisFintech/scalping-bot/pull/106)
+  merged as `f504d90` after all completion gates passed. Only
+  `scalper-dashboard` restarted; `scalper-execution` stayed online on PID
+  `2534106`. Health and configured AppTest passed against the durable 14/100
+  snapshot with 8 rejected/no-order results, 5 closed demo losses, and 1
+  pending-stop setup. Automatic demo analysis remains enabled; both BUY and
+  SELL stops are currently pending, so new placement eligibility is correctly
+  false until that active setup finishes. This read-only dashboard projection
+  did not change analysis, execution, risk, reconciliation, or broker state.
 
 ## Acceptance criteria
 
