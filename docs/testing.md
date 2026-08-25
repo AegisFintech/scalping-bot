@@ -132,6 +132,17 @@ schema was dropped afterward. `systemd-analyze verify` separately reported the
 expected absent future `/opt/ctrader-ai-scalper/current` executables on this
 source-tree host; unit parsing/security checks passed.
 
+The stopped `.23` rollout applied migration `0013` and recovered the observed
+group to two filled orders, two closed positions, two immutable trades,
+combined realized P/L `-10.09`, fees `-0.56`, and zero unresolved events.
+Startup status contained only the explicit `ANALYSES_PAUSED` blocker. Execution
+readiness and Streamlit health returned HTTP 200; the configured post-deploy
+AppTest rendered 39 dataframes, 37 metrics, and 15 tabs with zero exceptions.
+After unpause, the first automatic cycle recorded one completed external model
+request/response, reached `ACCEPTED`, and placed both demo stops. Both expired
+cleanly; a new automatic analysis began six seconds later. Its external HTTP
+503 exposed a separate one-failure circuit-opening defect for follow-up.
+
 On 2026-08-25, ISSUE-047 passed Prettier, ESLint, TypeScript typecheck/build,
 221 Node tests across 37 files, 16 JSON Schema tests, 3 migration tests, and all
 3 configured isolated-PostgreSQL integration tests. Ruff format/lint, strict
