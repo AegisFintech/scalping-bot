@@ -240,6 +240,12 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "New analysis is locked out. Inspect sanitized callback structure and broker history; "
         "do not infer or invent the missing price.",
     ),
+    "DEMO_EXECUTION_RECOVERY_RUN_FAILED": (
+        "Automatic broker-history recovery failed",
+        "The scheduled reconciliation attempt could not prove the demo execution state.",
+        "New analysis remains locked. Check cTrader and PostgreSQL health; the service retries "
+        "on its bounded recovery cadence without requiring a restart.",
+    ),
 }
 
 _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (

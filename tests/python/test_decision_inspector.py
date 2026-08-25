@@ -95,6 +95,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert broker_price["title"] == "Broker execution omitted a required price"
     assert "locked out" in broker_price["next_action"]
 
+    recovery = reason_code_view("DEMO_EXECUTION_RECOVERY_RUN_FAILED")
+    assert recovery["title"] == "Automatic broker-history recovery failed"
+    assert "without requiring a restart" in recovery["next_action"]
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(

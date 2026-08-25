@@ -53,6 +53,15 @@ not create a local position. The order acceptance is still journaled and mapped.
 An unpriced position on `ORDER_FILLED` or `ORDER_PARTIAL_FILL` remains invalid
 and blocking.
 
+The running execution service rechecks unresolved local demo state against
+bounded broker history every 15 seconds by default. This is the normal recovery
+path when a terminal callback is missed; an exact closing order/deal can close
+the durable position, trade, and group without a restart. Timer and reconnect
+attempts serialize. `DEMO_EXECUTION_RECOVERY_RUN_FAILED` or any specific
+`DEMO_RECOVERY_*` reason keeps new analysis locked and retries later; never edit
+the journal or infer a terminal result. Configure
+`DEMO_EXECUTION_RECOVERY_INTERVAL_SECONDS` only from 5 through 300 seconds.
+
 cTrader may create a distinct `STOP_LOSS_TAKE_PROFIT` closing order after an
 entry fills and retain the entry's client order ID. Confirm the journal records
 `broker_order_type=4` and `closing_order=true` without replacing the entry's

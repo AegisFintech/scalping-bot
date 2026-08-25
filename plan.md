@@ -179,7 +179,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-034 | complete    | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)           | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
 | ISSUE-035 | complete    | [Refresh and revalidate market immediately before demo intent](https://github.com/AegisFintech/scalping-bot/issues/74)            | Final market/account refresh; repeat spread/semantics; preserve freshness without raising limits              |
 | ISSUE-036 | in progress | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)    | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
-| ISSUE-037 | in progress | [Deduplicate repeated cTrader fill callbacks before strict normalization](https://github.com/AegisFintech/scalping-bot/issues/78) | Skip only certainly persisted duplicate deal IDs; keep new malformed deals fail-closed                        |
+| ISSUE-037 | complete    | [Deduplicate repeated cTrader fill callbacks before strict normalization](https://github.com/AegisFintech/scalping-bot/issues/78) | Skip only certainly persisted duplicate deal IDs; keep new malformed deals fail-closed                        |
+| ISSUE-038 | in progress | [Recover missed cTrader terminal deals automatically without restart](https://github.com/AegisFintech/scalping-bot/issues/80)     | Throttled serialized history recovery; exact terminal evidence releases next cycle                            |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1048,7 +1049,7 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #78](https://github.com/AegisFintech/scalping-bot/issues/78),
   the `.14` supervised cTrader callback evidence, durable execution store, and
   existing normalized deal-id idempotency.
-- Current status: implementation is in progress on
+- Current status: implementation completed on
   `issue-037-runtime-fill-dedup`. The first sell fill mapped durably, then cTrader
   repeated execution type 3 with order/position/deal present but without the
   open-position price. Normalization failed before database deduplication and
@@ -1061,8 +1062,40 @@ never justify empty, noisy, unsafe, or misleading commits.
   format/lint, strict mypy over 16 Python source files, 51 Python tests,
   configured Streamlit AppTest with zero exceptions and 34 dataframes,
   replay/backtest, zero-vulnerability npm/pip audits, tracked-file secret scan,
-  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). Merge is
-  ready; deployment remains deferred until the active position is terminal.
+  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). PR
+  [#79](https://github.com/AegisFintech/scalping-bot/pull/79) merged as
+  `8fead83ed2b071653415d8d80abbb2e76fb7b041`. Read-only broker reconciliation
+  then proved the position had closed by stop loss with no remaining broker
+  position or order. Analyses were durably paused before `.15` deployment;
+  startup recovery mapped the exact closing order/deal, closed the local
+  position/group, and persisted the demo trade. Startup checks passed and no
+  broker state remained. ISSUE-037 is complete.
+
+### ISSUE-038 delivery details
+
+- Acceptance criteria: while the process remains online, run existing bounded
+  durable/broker execution recovery on a 5–300-second configurable cadence;
+  serialize cadence and broker-synchronization attempts; let only an exact
+  single terminal order/deal close local state and release a later cycle; keep
+  open, missing, ambiguous, paginated, multiple, invalid, or failed evidence
+  blocking; and prove positive, cadence, concurrency, and failure behavior.
+- Dependencies: [issue #80](https://github.com/AegisFintech/scalping-bot/issues/80),
+  ISSUE-037 release `.15`, existing bounded startup recovery, the durable demo
+  journal, and broker order/deal history.
+- Current status: implementation is in progress on
+  `issue-038-periodic-demo-recovery`. Release `.16` invokes the existing
+  recovery before scheduler safety evaluation at a default 15-second cadence;
+  reconnect can force the same serialized runner. Thrown recovery and invalid
+  clock/configuration remain fail-closed. Sample configuration,
+  operator/dashboard documentation, and positive/throttle/concurrency/failure
+  tests are implemented. Pre-merge gates pass: Prettier, ESLint, TypeScript
+  typecheck/build, 185 Node tests across 32 files, 13 schema tests, 3 migration
+  tests, all 3 configured isolated-PostgreSQL integration tests, Ruff
+  format/lint, strict mypy over 19 Python source files, 51 Python tests,
+  configured Streamlit AppTest with zero exceptions and 34 dataframes,
+  replay/backtest, zero-vulnerability npm/pip audits, tracked-file secret scan,
+  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). Automatic
+  analysis remains durably paused pending merge and stopped-state rollout.
 
 ## Acceptance criteria
 
