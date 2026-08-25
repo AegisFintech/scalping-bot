@@ -25,6 +25,7 @@ import type {
   ReconciliationSnapshot,
 } from "../../packages/contracts/src/index.js";
 import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
+import { analysisChart } from "../helpers/analysis-chart.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
 const databaseTest =
@@ -53,12 +54,27 @@ function ocoResponse(
     invalidation_price: "2",
   };
   return {
-    schema_version: "2.0",
+    schema_version: "2.1",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: "2026-08-24T00:00:00.000Z",
     valid_until: validUntil,
     market_regime: "UNCERTAIN",
+    technical_map: {
+      decision_zone: { lower: "1", upper: "2" },
+      resistance_zones: [{ lower: "2", upper: "3" }],
+      support_zones: [{ lower: "1", upper: "2" }],
+      bullish_confirmation: {
+        price: "3",
+        condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE",
+      },
+      bearish_confirmation: {
+        price: "1",
+        condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
+      },
+      upside_targets: ["4"],
+      downside_targets: ["0"],
+    },
     waiting_area: {
       lower: "1",
       upper: "2",
@@ -186,6 +202,7 @@ describe("PostgreSQL migrations integration", () => {
         "0009",
         "0010",
         "0011",
+        "0012",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -452,7 +469,7 @@ describe("PostgreSQL migrations integration", () => {
         apiStyle: "responses",
         model: "integration-model",
         promptVersion: "system-v2",
-        schemaVersion: "2.0",
+        schemaVersion: "2.1",
         payloadMode: "compact",
         instanceId: "integration-instance",
         environment: "test",
@@ -461,6 +478,38 @@ describe("PostgreSQL migrations integration", () => {
         analysisId,
         decisionSnapshot("2026-08-24T00:00:00.000Z"),
       );
+      const chart = analysisChart();
+      await trail.analytics(analysisId, {
+        schemaVersion: "1.1",
+        requestId: randomUUID(),
+        analysisId,
+        generatedAt: "2026-08-24T00:00:01.000Z",
+        acceptable: true,
+        rejectionReasons: [],
+        features: {
+          timeframes: {
+            M1: { atr: "1", ema_fast: "2", ema_slow: "3" },
+            M5: {},
+            M15: {},
+          },
+        },
+        chart,
+      });
+      const persistedChart = await isolated.query<{
+        image_sha256: string;
+        byte_count: number;
+        completed_only: boolean;
+      }>(
+        `SELECT image_sha256, octet_length(image_bytes) AS byte_count,
+                (source_metadata->>'completed_candles_only')::boolean AS completed_only
+         FROM analysis_chart_artifacts WHERE analysis_id = $1`,
+        [analysisId],
+      );
+      expect(persistedChart.rows[0]).toEqual({
+        image_sha256: chart.sha256,
+        byte_count: Buffer.from(chart.dataBase64, "base64").length,
+        completed_only: true,
+      });
       const initialMarketIds = await isolated.query<{
         candle_snapshot_id: string;
         order_book_snapshot_id: string;
@@ -1066,7 +1115,7 @@ describe("PostgreSQL migrations integration", () => {
         fees: "-0.3500000000",
         model_version: "integration-model",
         prompt_version: "system-v2",
-        schema_version: "2.0",
+        schema_version: "2.1",
         strategy_version: `integration-${strategyVersionId}`,
       });
       const closingEvidence = await isolated.query<{

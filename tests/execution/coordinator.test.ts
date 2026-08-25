@@ -16,6 +16,7 @@ import type {
   ModelResponse,
   PendingOrderCommand,
 } from "../../packages/contracts/src/index.js";
+import { analysisChart } from "../helpers/analysis-chart.js";
 
 function safety(): SafetyGateInput {
   return {
@@ -58,7 +59,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v4",
+    version: "system-v5",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -68,12 +69,27 @@ function ocoProposal(analysisId: string): ModelResponse {
   const now = Date.now();
   const expiresAt = new Date(now + 60_000).toISOString();
   return {
-    schema_version: "2.0",
+    schema_version: "2.1",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: new Date(now).toISOString(),
     valid_until: expiresAt,
     market_regime: "UNCERTAIN",
+    technical_map: {
+      decision_zone: { lower: "1999", upper: "2001" },
+      resistance_zones: [{ lower: "2000.5", upper: "2001" }],
+      support_zones: [{ lower: "1999", upper: "1999.5" }],
+      bullish_confirmation: {
+        price: "2001",
+        condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE",
+      },
+      bearish_confirmation: {
+        price: "1999",
+        condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
+      },
+      upside_targets: ["2003"],
+      downside_targets: ["1997"],
+    },
     waiting_area: {
       lower: "1999",
       upper: "2001",
@@ -258,8 +274,8 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v4",
-    schemaVersion: "2.0",
+    promptVersion: "system-v5",
+    schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
     minExpirySeconds: 15,
@@ -278,7 +294,7 @@ function options(
     analytics: {
       analyze: vi.fn((request: AnalyticsRequest) =>
         Promise.resolve({
-          schemaVersion: "1.0" as const,
+          schemaVersion: "1.1" as const,
           requestId: request.requestId,
           analysisId: request.analysisId,
           generatedAt: new Date().toISOString(),
@@ -293,6 +309,7 @@ function options(
             order_book: {},
             spread_atr_ratio_m1: "0.04",
           },
+          chart: analysisChart(),
         }),
       ),
     },
@@ -451,7 +468,7 @@ describe("analysis coordinator", () => {
     expect(place).not.toHaveBeenCalled();
   });
 
-  it("rejects an off-tick TP midpoint before risk or placement", async () => {
+  it("rejects a TP that no longer derives the AI primary target", async () => {
     const riskEvaluate = vi.fn(() =>
       Promise.reject(new Error("must not evaluate risk")),
     );
@@ -492,7 +509,7 @@ describe("analysis coordinator", () => {
       new AnalysisCoordinator(configured).runOnce(),
     ).resolves.toMatchObject({
       outcome: "REJECTED",
-      reasonCodes: ["BUY_TP_MIDPOINT_NOT_ON_TICK"],
+      reasonCodes: ["BUY_PRIMARY_TARGET_MISMATCH"],
     });
     expect(riskEvaluate).not.toHaveBeenCalled();
     expect(place).not.toHaveBeenCalled();

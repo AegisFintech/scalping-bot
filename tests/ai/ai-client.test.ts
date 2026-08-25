@@ -10,8 +10,15 @@ import {
   aiOrchestratorCircuitResetMs,
   aiOrchestratorRequestTimeoutMs,
 } from "../../packages/ai-client/src/http-client.js";
+import { analysisChart } from "../helpers/analysis-chart.js";
 
 const analysisId = "22222222-2222-4222-8222-222222222222";
+const analysisRequest = {
+  analysisId,
+  symbol: "XAUUSD",
+  payload: {},
+  chart: analysisChart(),
+};
 
 function validResponse(): Record<string, unknown> {
   const order = {
@@ -74,6 +81,17 @@ describe("OpenAI-compatible client", () => {
         const body = JSON.parse(init.body) as Record<string, unknown>;
         const text = body.text as { format: { strict: boolean } };
         expect(text.format.strict).toBe(true);
+        const input = body.input as Array<{
+          role: string;
+          content: Array<Record<string, unknown>>;
+        }>;
+        expect(input[1]?.content.map((item) => item.type)).toEqual([
+          "input_text",
+          "input_image",
+        ]);
+        expect(String(input[1]?.content[1]?.image_url)).toMatch(
+          /^data:image\/png;base64,/,
+        );
         expect(init?.headers).toMatchObject({ authorization: "Bearer hidden" });
         return Promise.resolve(
           new Response(
@@ -106,14 +124,78 @@ describe("OpenAI-compatible client", () => {
       fetchImpl: fetchMock,
     });
     const result = await client.analyze({
-      analysisId,
-      symbol: "XAUUSD",
+      ...analysisRequest,
       payload: { safe: true },
     });
     expect(result.response.buy_stop.entry_price).toBe("1");
     expect(result.promptArtifact.version).toBe("system-v2");
     expect(result.promptArtifact.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("sends the same chart through chat-completions multimodal content", async () => {
+    const fetchMock = vi.fn(
+      (_url: string | URL | Request, init?: RequestInit) => {
+        if (typeof init?.body !== "string")
+          throw new Error("expected JSON body");
+        const body = JSON.parse(init.body) as {
+          messages: Array<{
+            role: string;
+            content: string | Array<Record<string, unknown>>;
+          }>;
+        };
+        const content = body.messages[1]?.content;
+        expect(
+          Array.isArray(content) ? content.map((item) => item.type) : [],
+        ).toEqual(["text", "image_url"]);
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              choices: [
+                { message: { content: JSON.stringify(validResponse()) } },
+              ],
+            }),
+            { status: 200 },
+          ),
+        );
+      },
+    );
+    const client = new OpenAiCompatibleClient({
+      baseUrl: "https://ai.example.invalid/v1",
+      apiKey: "hidden",
+      model: "test-model",
+      apiStyle: "chat_completions",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath: path.resolve("prompts/system-v2.md"),
+      promptVersion: "system-v2",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.analyze(analysisRequest)).resolves.toMatchObject({
+      response: { analysis_id: analysisId },
+    });
+  });
+
+  it("rejects a mismatched chart hash before contacting the provider", async () => {
+    const fetchMock = vi.fn();
+    const client = new OpenAiCompatibleClient({
+      baseUrl: "https://ai.example.invalid/v1",
+      apiKey: "hidden",
+      model: "test-model",
+      apiStyle: "responses",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath: path.resolve("prompts/system-v2.md"),
+      promptVersion: "system-v2",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(
+      client.analyze({
+        ...analysisRequest,
+        chart: { ...analysisRequest.chart, sha256: "0".repeat(64) },
+      }),
+    ).rejects.toThrow("AI_CHART_INVALID");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("opens the circuit after a configured invalid response threshold", async () => {
@@ -135,13 +217,13 @@ describe("OpenAI-compatible client", () => {
         ),
       ),
     });
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("MODEL_JSON_INVALID");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "MODEL_JSON_INVALID",
+    );
     expect(client.circuitOpen).toBe(true);
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_CIRCUIT_OPEN");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_CIRCUIT_OPEN",
+    );
   });
 
   it("defaults to one provider attempt so a retry uses a fresh scheduler interval", async () => {
@@ -158,9 +240,9 @@ describe("OpenAI-compatible client", () => {
       promptVersion: "system-v2",
       fetchImpl: fetchMock,
     });
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_HTTP_ERROR:503");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_HTTP_ERROR:503",
+    );
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 });
@@ -218,9 +300,9 @@ describe("AI orchestrator HTTP client", () => {
       fetchImpl: vi.fn(() => Promise.reject(timeout)),
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_TIMEOUT");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_TIMEOUT",
+    );
     expect(client.circuitOpen).toBe(true);
   });
 
@@ -245,23 +327,23 @@ describe("AI orchestrator HTTP client", () => {
       fetchImpl: fetchMock,
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_HTTP_ERROR:503");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
     expect(client.circuitOpen).toBe(true);
     expect(client.circuitOpenUntil).toBe("1970-01-01T00:00:06.000Z");
     clock = 5_999;
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_CIRCUIT_OPEN");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_CIRCUIT_OPEN",
+    );
     expect(fetchMock).toHaveBeenCalledOnce();
 
     clock = 6_000;
     expect(client.circuitOpen).toBe(false);
     expect(client.circuitOpenUntil).toBeNull();
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).resolves.toMatchObject({ response: { analysis_id: analysisId } });
+    await expect(client.analyze(analysisRequest)).resolves.toMatchObject({
+      response: { analysis_id: analysisId },
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(client.circuitOpen).toBe(false);
   });
@@ -282,13 +364,13 @@ describe("AI orchestrator HTTP client", () => {
       fetchImpl: fetchMock,
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_HTTP_ERROR:503");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_HTTP_ERROR:503",
+    );
     clock = 15_000;
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_UNAVAILABLE");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_UNAVAILABLE",
+    );
     expect(client.circuitOpen).toBe(true);
     clock = 19_999;
     expect(client.circuitOpen).toBe(true);
@@ -312,9 +394,7 @@ describe("AI orchestrator HTTP client", () => {
       ),
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).resolves.toEqual({
+    await expect(client.analyze(analysisRequest)).resolves.toEqual({
       response: validResponse(),
       rawResponse,
       promptArtifact,
@@ -342,9 +422,9 @@ describe("AI orchestrator HTTP client", () => {
       ),
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID",
+    );
   });
 
   it("rejects a self-consistent prompt artifact that is not the tracked prompt", async () => {
@@ -374,9 +454,9 @@ describe("AI orchestrator HTTP client", () => {
       ),
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_PROMPT_ARTIFACT_INVALID",
+    );
   });
 
   it("normalizes another local transport failure", async () => {
@@ -388,9 +468,9 @@ describe("AI orchestrator HTTP client", () => {
       fetchImpl: vi.fn(() => Promise.reject(new TypeError("fetch failed"))),
     });
 
-    await expect(
-      client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
-    ).rejects.toThrow("AI_ORCHESTRATOR_UNAVAILABLE");
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_UNAVAILABLE",
+    );
     expect(client.circuitOpen).toBe(true);
   });
 });

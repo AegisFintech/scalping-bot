@@ -23,6 +23,7 @@ from charts import (
 )
 from decision_inspector import (
     DecisionViewError,
+    analysis_chart_view,
     analytics_summary,
     automation_status_view,
     exact_model_input_view,
@@ -418,7 +419,14 @@ with tabs[4]:
                           mq.attempt_count, mq.requested_at, mq.completed_at,
                           mq.duration_ms, mq.payload_redacted,
                           mr.status AS model_response_status, mr.parsed_payload,
-                          mr.input_tokens, mr.output_tokens, mr.received_at AS model_received_at
+                          mr.input_tokens, mr.output_tokens, mr.received_at AS model_received_at,
+                          ac.renderer_version AS chart_renderer_version,
+                          ac.mime_type AS chart_mime_type,
+                          ac.width AS chart_width, ac.height AS chart_height,
+                          ac.image_sha256 AS chart_sha256,
+                          ac.image_bytes AS chart_image_bytes,
+                          ac.source_metadata AS chart_source_metadata,
+                          ac.created_at AS chart_created_at
                    FROM analysis_runs ar
                    JOIN accounts a ON a.id = ar.account_id
                    JOIN symbols s ON s.id = ar.symbol_id
@@ -440,6 +448,7 @@ with tabs[4]:
                      ORDER BY requested_at DESC LIMIT 1
                    ) mq ON true
                    LEFT JOIN model_responses mr ON mr.model_request_id = mq.id
+                   LEFT JOIN analysis_chart_artifacts ac ON ac.analysis_id = ar.id
                    WHERE ar.id = %s AND a.environment = %s AND s.name = %s
                    LIMIT 1""",
                 (selected_analysis_id, account_environment, selected_symbol),
@@ -447,13 +456,14 @@ with tabs[4]:
             if len(detail_rows) != 1:
                 raise DecisionViewError("DECISION_VIEW_ANALYSIS_SCOPE_MISMATCH")
             detail = detail_rows[0]
+            chart_view = analysis_chart_view(detail)
             prompt_history = query(
                 """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode, ar.state,
                           mq.prompt_version, mq.schema_version, mq.model,
                           mq.status AS request_status, mq.payload_sha256,
                           mr.status AS response_status,
                           CASE
-                            WHEN mr.parsed_payload->>'schema_version' = '2.0'
+                            WHEN mr.parsed_payload->>'schema_version' IN ('2.0', '2.1')
                               THEN 'OCO_PROPOSAL'
                             ELSE mr.parsed_payload->>'decision'
                           END AS ai_output
@@ -706,6 +716,19 @@ with tabs[4]:
                         "PostgreSQL JSONB may normalize object-key order; values and arrays are "
                         "the persisted redacted user message."
                     )
+            st.subheader("Exact completed-candle chart supplied to the AI")
+            if chart_view is None:
+                st.info("No durable chart artifact exists for this analysis run.")
+            else:
+                st.image(
+                    chart_view["image_bytes"],
+                    caption=(
+                        "Hash-verified deterministic M15/M5/M1 completed-candle chart with "
+                        "fast EMA, slow EMA, and ATR."
+                    ),
+                    width="stretch",
+                )
+                st.json({key: value for key, value in chart_view.items() if key != "image_bytes"})
             st.subheader("Prompt and response history")
             st.dataframe(pd.DataFrame(prompt_history), width="stretch", hide_index=True)
             st.subheader("Automatic broker-minute cycle history")
@@ -778,7 +801,8 @@ with tabs[4]:
                     "is the exact locally validated JSON used by semantic validation."
                 )
                 st.caption(
-                    "Schema 2.0 has no NO_TRADE result or enabled/disabled leg switch. Older "
+                    "Schemas 2.0 and 2.1 have no NO_TRADE result or enabled/disabled leg "
+                    "switch. Older "
                     "schema 1.0 records remain visible as historical evidence."
                 )
 

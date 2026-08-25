@@ -1,5 +1,6 @@
+import { createHash, randomUUID } from "node:crypto";
+
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
 
 import type {
   AnalyticsRequest,
@@ -8,17 +9,57 @@ import type {
   PerformanceSummary,
 } from "../../contracts/src/index.js";
 
+const chartSchema = z
+  .object({
+    rendererVersion: z.literal("completed-candles-ema-atr-v1"),
+    mimeType: z.literal("image/png"),
+    width: z.literal(1600),
+    height: z.literal(1200),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    dataBase64: z
+      .string()
+      .min(12)
+      .max(1_398_104)
+      .regex(/^[A-Za-z0-9+/]+={0,2}$/),
+    completedCandlesOnly: z.literal(true),
+    candleCounts: z
+      .object({
+        M1: z.number().int().min(1).max(100),
+        M5: z.number().int().min(1).max(100),
+        M15: z.number().int().min(1).max(100),
+      })
+      .strict(),
+    latestEndTimes: z
+      .object({
+        M1: z.string().datetime({ offset: true }),
+        M5: z.string().datetime({ offset: true }),
+        M15: z.string().datetime({ offset: true }),
+      })
+      .strict(),
+  })
+  .strict();
+
 const analyticsResponseSchema = z
   .object({
-    schemaVersion: z.literal("1.0"),
+    schemaVersion: z.literal("1.1"),
     requestId: z.string().uuid(),
     analysisId: z.string().uuid(),
     generatedAt: z.string().datetime({ offset: true }),
     acceptable: z.boolean(),
     rejectionReasons: z.array(z.string().max(128)).max(64),
     features: z.record(z.string(), z.unknown()),
+    chart: chartSchema.nullable(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (value.acceptable !== (value.chart !== null)) {
+      context.addIssue({
+        code: "custom",
+        path: ["chart"],
+        message: "accepted analytics must contain exactly one chart",
+      });
+    }
+  });
 const signedDecimal = z
   .string()
   .regex(/^-?(0|[1-9][0-9]{0,15})(\.[0-9]{1,10})?$/);
@@ -78,6 +119,21 @@ export class AnalyticsHttpClient {
       parsed.analysisId !== request.analysisId
     ) {
       throw new Error("ANALYTICS_RESPONSE_IDENTITY_MISMATCH");
+    }
+    if (parsed.chart !== null) {
+      const bytes = Buffer.from(parsed.chart.dataBase64, "base64");
+      if (
+        bytes.length < 33 ||
+        bytes.length > 1_048_576 ||
+        bytes.toString("base64") !== parsed.chart.dataBase64 ||
+        !bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")) ||
+        bytes.subarray(12, 16).toString("ascii") !== "IHDR" ||
+        bytes.readUInt32BE(16) !== parsed.chart.width ||
+        bytes.readUInt32BE(20) !== parsed.chart.height ||
+        createHash("sha256").update(bytes).digest("hex") !== parsed.chart.sha256
+      ) {
+        throw new Error("ANALYTICS_CHART_INVALID");
+      }
     }
     return parsed;
   }

@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { buildModelPayload } from "../../apps/ai-orchestrator/src/payload.js";
+import { analysisChart } from "../helpers/analysis-chart.js";
+
+const chart = analysisChart();
 
 const common = {
   analysisId: "22222222-2222-4222-8222-222222222222",
@@ -31,9 +34,10 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v2",
-  schemaVersion: "2.0" as const,
+  promptVersion: "system-v5",
+  schemaVersion: "2.1" as const,
   strategyVersion: "test",
+  chart,
   executionConstraints: {
     currentBid: "1999.9",
     currentAsk: "2000.1",
@@ -88,11 +92,28 @@ describe("model payload builder", () => {
     });
   });
 
+  it("links the numeric request to the exact completed-candle image", () => {
+    const payload = buildModelPayload({ ...common, mode: "compact" });
+    expect(payload.chart).toEqual({
+      renderer_version: chart.rendererVersion,
+      mime_type: "image/png",
+      width: 1600,
+      height: 1200,
+      sha256: chart.sha256,
+      completed_candles_only: true,
+      candle_counts: chart.candleCounts,
+      latest_end_times: chart.latestEndTimes,
+    });
+    expect(JSON.stringify(payload)).not.toContain(chart.dataBase64);
+  });
+
   it("versions the TP transform instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v4.md", "utf8");
+    const prompt = readFileSync("prompts/system-v5.md", "utf8");
     expect(prompt).toContain("take_profit_distance_divisor");
     expect(prompt).toContain("effective_min_risk_reward_ratio");
-    expect(prompt).toContain("derived midpoint remains exactly");
+    expect(prompt).toContain("derived target remains exactly");
     expect(prompt).toContain("max_affordable_stop_distance");
+    expect(prompt).toContain("attached deterministic PNG");
+    expect(prompt).toContain("technical_map.bullish_confirmation.price");
   });
 });

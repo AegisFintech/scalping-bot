@@ -149,7 +149,15 @@ describe("Node to Python analytics integration", () => {
     });
     const result = await client.analyze(request());
     expect(result.acceptable).toBe(true);
+    expect(result.schemaVersion).toBe("1.1");
     expect(result.analysisId).toBe("22222222-2222-4222-8222-222222222222");
+    expect(result.chart).toMatchObject({
+      rendererVersion: "completed-candles-ema-atr-v1",
+      mimeType: "image/png",
+      width: 1600,
+      height: 1200,
+      completedCandlesOnly: true,
+    });
     const timeframes = result.features.timeframes as Record<
       string,
       Record<string, unknown>

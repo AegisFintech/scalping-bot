@@ -76,13 +76,26 @@ export interface AnalyticsConfig {
 }
 
 export interface AnalyticsResponse {
-  readonly schemaVersion: "1.0";
+  readonly schemaVersion: "1.1";
   readonly requestId: string;
   readonly analysisId: string;
   readonly generatedAt: IsoTimestamp;
   readonly acceptable: boolean;
   readonly rejectionReasons: readonly string[];
   readonly features: Readonly<Record<string, unknown>>;
+  readonly chart: AnalysisChartArtifact | null;
+}
+
+export interface AnalysisChartArtifact {
+  readonly rendererVersion: "completed-candles-ema-atr-v1";
+  readonly mimeType: "image/png";
+  readonly width: 1600;
+  readonly height: 1200;
+  readonly sha256: string;
+  readonly dataBase64: string;
+  readonly completedCandlesOnly: true;
+  readonly candleCounts: Readonly<Record<Timeframe, number>>;
+  readonly latestEndTimes: Readonly<Record<Timeframe, IsoTimestamp>>;
 }
 
 export interface PerformanceOutcome {
@@ -117,13 +130,28 @@ export interface ModelOrderProposal {
 }
 
 export interface ModelResponse {
-  readonly schema_version: "2.0";
+  readonly schema_version: "2.1";
   readonly analysis_id: string;
   readonly symbol: string;
   readonly generated_at: IsoTimestamp;
   readonly valid_until: IsoTimestamp;
   readonly market_regime:
     "TRENDING" | "RANGING" | "BREAKOUT" | "VOLATILE" | "QUIET" | "UNCERTAIN";
+  readonly technical_map: {
+    readonly decision_zone: TechnicalZone;
+    readonly resistance_zones: readonly TechnicalZone[];
+    readonly support_zones: readonly TechnicalZone[];
+    readonly bullish_confirmation: {
+      readonly price: DecimalString;
+      readonly condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE";
+    };
+    readonly bearish_confirmation: {
+      readonly price: DecimalString;
+      readonly condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT";
+    };
+    readonly upside_targets: readonly DecimalString[];
+    readonly downside_targets: readonly DecimalString[];
+  };
   readonly waiting_area: {
     readonly lower: DecimalString;
     readonly upper: DecimalString;
@@ -153,9 +181,14 @@ export interface ModelResponse {
 }
 
 export interface ModelPromptArtifact {
-  readonly version: "system-v2" | "system-v3" | "system-v4";
+  readonly version: "system-v2" | "system-v3" | "system-v4" | "system-v5";
   readonly content: string;
   readonly sha256: string;
+}
+
+export interface TechnicalZone {
+  readonly lower: DecimalString;
+  readonly upper: DecimalString;
 }
 
 export interface SymbolMetadata {

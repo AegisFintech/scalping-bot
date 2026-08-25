@@ -167,6 +167,7 @@ export interface SemanticContext {
   readonly metadata: SymbolMetadata;
   readonly atr: string;
   readonly minRiskRewardRatio: string;
+  readonly takeProfitDistanceDivisor?: "1" | "2";
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
   readonly maxStopDistanceAtr: string;
@@ -355,6 +356,85 @@ export function validateSemantics(
   )
     reasons.push("ORDER_EXPIRY_AFTER_VALIDITY");
   try {
+    const tickSize = decimal(context.metadata.tickSize);
+    const zones = [
+      response.technical_map.decision_zone,
+      ...response.technical_map.resistance_zones,
+      ...response.technical_map.support_zones,
+    ];
+    if (
+      zones.some(
+        (zone) =>
+          decimal(zone.lower).gte(decimal(zone.upper)) ||
+          !isTickAligned(decimal(zone.lower), tickSize) ||
+          !isTickAligned(decimal(zone.upper), tickSize),
+      )
+    ) {
+      reasons.push("TECHNICAL_ZONE_INVALID");
+    }
+    if (
+      !decimal(response.waiting_area.lower).eq(
+        decimal(response.technical_map.decision_zone.lower),
+      ) ||
+      !decimal(response.waiting_area.upper).eq(
+        decimal(response.technical_map.decision_zone.upper),
+      )
+    ) {
+      reasons.push("WAITING_AREA_DECISION_ZONE_MISMATCH");
+    }
+    if (
+      !decimal(response.buy_stop.entry_price).eq(
+        decimal(response.technical_map.bullish_confirmation.price),
+      )
+    ) {
+      reasons.push("BUY_CONFIRMATION_ENTRY_MISMATCH");
+    }
+    if (
+      !decimal(response.sell_stop.entry_price).eq(
+        decimal(response.technical_map.bearish_confirmation.price),
+      )
+    ) {
+      reasons.push("SELL_CONFIRMATION_ENTRY_MISMATCH");
+    }
+    const buyEntry = decimal(response.buy_stop.entry_price);
+    const sellEntry = decimal(response.sell_stop.entry_price);
+    const upside = response.technical_map.upside_targets.map((value) =>
+      decimal(value),
+    );
+    const downside = response.technical_map.downside_targets.map((value) =>
+      decimal(value),
+    );
+    if (
+      upside.some(
+        (target, index) =>
+          !target.gt(buyEntry) ||
+          !isTickAligned(target, tickSize) ||
+          (index > 0 && !target.gt(upside[index - 1]!)),
+      )
+    ) {
+      reasons.push("UPSIDE_TARGETS_INVALID");
+    }
+    if (
+      downside.some(
+        (target, index) =>
+          !target.lt(sellEntry) ||
+          !isTickAligned(target, tickSize) ||
+          (index > 0 && !target.lt(downside[index - 1]!)),
+      )
+    ) {
+      reasons.push("DOWNSIDE_TARGETS_INVALID");
+    }
+    const divisor = decimal(context.takeProfitDistanceDivisor ?? "1");
+    const effectiveBuyTarget = buyEntry.plus(
+      decimal(response.buy_stop.take_profit).minus(buyEntry).div(divisor),
+    );
+    const effectiveSellTarget = sellEntry.plus(
+      decimal(response.sell_stop.take_profit).minus(sellEntry).div(divisor),
+    );
+    if (!effectiveBuyTarget.eq(upside[0]!))
+      reasons.push("BUY_PRIMARY_TARGET_MISMATCH");
+    if (!effectiveSellTarget.eq(downside[0]!))
+      reasons.push("SELL_PRIMARY_TARGET_MISMATCH");
     checkLeg("BUY", response.buy_stop, context, reasons);
     checkLeg("SELL", response.sell_stop, context, reasons);
   } catch {

@@ -6,13 +6,14 @@ import { pathToFileURL } from "node:url";
 import Fastify, { type FastifyInstance } from "fastify";
 
 import { OpenAiCompatibleClient } from "../../../packages/ai-client/src/client.js";
+import type { AnalysisChartArtifact } from "../../../packages/contracts/src/index.js";
 
 export interface AiServerOptions {
   readonly client: OpenAiCompatibleClient;
 }
 
 export function createAiServer(options: AiServerOptions): FastifyInstance {
-  const app = Fastify({ logger: false, bodyLimit: 4_100_000 });
+  const app = Fastify({ logger: false, bodyLimit: 5_600_000 });
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", (_request, reply) => {
     if (options.client.circuitOpen)
@@ -26,6 +27,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
       analysisId: string;
       symbol: string;
       payload: Record<string, unknown>;
+      chart: AnalysisChartArtifact;
     };
   }>("/v1/analyze", async (request, reply) => {
     try {
@@ -50,9 +52,9 @@ async function main(): Promise<void> {
       process.env.AI_API_STYLE === "chat_completions"
         ? "chat_completions"
         : "responses",
-    schemaPath: path.resolve("schemas/model-response-2.0.json"),
-    systemPromptPath: path.resolve("prompts/system-v4.md"),
-    promptVersion: "system-v4",
+    schemaPath: path.resolve("schemas/model-response-2.1.json"),
+    systemPromptPath: path.resolve("prompts/system-v5.md"),
+    promptVersion: "system-v5",
     timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
     maxRetries: Number(process.env.AI_MAX_RETRIES ?? 0),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),

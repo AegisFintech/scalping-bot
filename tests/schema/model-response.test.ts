@@ -13,12 +13,27 @@ const analysisId = "22222222-2222-4222-8222-222222222222";
 
 function response(overrides: Partial<ModelResponse> = {}): ModelResponse {
   return {
-    schema_version: "2.0",
+    schema_version: "2.1",
     analysis_id: analysisId,
     symbol: "XAUUSD",
     generated_at: "2026-01-01T00:00:00.000Z",
     valid_until: "2026-01-01T00:05:00.000Z",
     market_regime: "TRENDING",
+    technical_map: {
+      decision_zone: { lower: "1999.00", upper: "2001.00" },
+      resistance_zones: [{ lower: "2000.50", upper: "2001.20" }],
+      support_zones: [{ lower: "1998.80", upper: "1999.50" }],
+      bullish_confirmation: {
+        price: "2001.20",
+        condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE",
+      },
+      bearish_confirmation: {
+        price: "1998.80",
+        condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
+      },
+      upside_targets: ["2005.20"],
+      downside_targets: ["1994.80"],
+    },
     waiting_area: {
       lower: "1999.00",
       upper: "2001.00",
@@ -65,7 +80,7 @@ function response(overrides: Partial<ModelResponse> = {}): ModelResponse {
 
 describe("model response schema", () => {
   const validator = new ModelResponseValidator(
-    path.resolve("schemas/model-response-2.0.json"),
+    path.resolve("schemas/model-response-2.1.json"),
   );
 
   it("accepts the exact contract", () => {
@@ -74,7 +89,7 @@ describe("model response schema", () => {
 
   it("uses the strict structured-output schema subset", () => {
     const schema = JSON.parse(
-      readFileSync(path.resolve("schemas/model-response-2.0.json"), "utf8"),
+      readFileSync(path.resolve("schemas/model-response-2.1.json"), "utf8"),
     ) as unknown;
     const visit = (value: unknown): void => {
       if (value === null || typeof value !== "object") return;
@@ -126,8 +141,8 @@ describe("model response schema", () => {
 
   it("rejects duplicate JSON object keys", () => {
     const raw = JSON.stringify(response()).replace(
-      '"schema_version":"2.0"',
-      '"schema_version":"2.0","schema_version":"2.0"',
+      '"schema_version":"2.1"',
+      '"schema_version":"2.1","schema_version":"2.1"',
     );
     expect(validator.parse(raw).reasonCodes).toEqual([
       "MODEL_JSON_DUPLICATE_KEYS",
@@ -161,6 +176,7 @@ describe("model response schema", () => {
       },
       atr: "5.00",
       minRiskRewardRatio: "2",
+      takeProfitDistanceDivisor: "1",
       minExpirySeconds: 15,
       maxExpirySeconds: 1800,
       maxStopDistanceAtr: "3",
@@ -170,6 +186,53 @@ describe("model response schema", () => {
       accepted: true,
       reasonCodes: [],
     });
+  });
+
+  it("rejects technical levels that do not own executable entries and targets", () => {
+    const invalid = response({
+      technical_map: {
+        ...response().technical_map,
+        bullish_confirmation: {
+          price: "2001.30",
+          condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE",
+        },
+        downside_targets: ["1994.79"],
+      },
+    });
+    const result = validateSemantics(invalid, {
+      analysisId,
+      symbol: "XAUUSD",
+      now: new Date("2026-01-01T00:00:00.000Z"),
+      quote: {
+        bid: "1999.90",
+        ask: "2000.10",
+        sourceTime: "2026-01-01T00:00:00.000Z",
+        receivedAt: "2026-01-01T00:00:00.000Z",
+      },
+      metadata: {
+        symbolId: "1",
+        symbolName: "XAUUSD",
+        digits: 2,
+        tickSize: "0.01",
+        tickValue: "0.01",
+        contractSize: "100",
+        volumeScale: "0.01",
+        minVolume: "1",
+        maxVolume: "100000",
+        volumeStep: "1",
+        minStopDistance: "0.10",
+        metadataTime: "2026-01-01T00:00:00.000Z",
+      },
+      atr: "5.00",
+      minRiskRewardRatio: "2",
+      takeProfitDistanceDivisor: "1",
+      minExpirySeconds: 15,
+      maxExpirySeconds: 1800,
+      maxStopDistanceAtr: "3",
+      maxQuoteAgeMs: 3000,
+    });
+    expect(result.reasonCodes).toContain("BUY_CONFIRMATION_ENTRY_MISMATCH");
+    expect(result.reasonCodes).toContain("SELL_PRIMARY_TARGET_MISMATCH");
   });
 
   it("rejects endpoint stops above the current broker-minimum affordability limit", () => {

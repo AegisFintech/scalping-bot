@@ -1,13 +1,13 @@
-# Model Contract 2.0
+# Model Contract 2.1
 
 ## Purpose
 
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.0.json`. Prompt `system-v4` is current; immutable
-`system-v1`/`system-v2`/`system-v3` prompts and schema 1.0 remain available to
-interpret historical runs.
+`schemas/model-response-2.1.json`. Prompt `system-v5` is current; immutable
+earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
+historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
 are strings, original and adjusted confidence values are bounded integers,
 arrays and strings are length-limited, and timestamps use ISO-8601 formats.
@@ -16,7 +16,9 @@ arrays and strings are length-limited, and timestamps use ISO-8601 formats.
 
 The versioned system prompt tells the model to:
 
-- analyze supplied completed candles, indicators, session, depth, spread, quality, and bounded performance context;
+- analyze the supplied deterministic completed-candle EMA/ATR image together
+  with its exact numeric candles, indicators, session, depth, spread, quality,
+  and bounded performance context;
 - describe possible structure/SMC interpretations as uncertain evidence, not objective facts;
 - output JSON only, matching the supplied schema;
 - return a waiting area and one mandatory buy-stop and sell-stop proposal with
@@ -26,6 +28,10 @@ The versioned system prompt tells the model to:
 - never calculate or suggest final position size or exceed deterministic policy;
 - always return both conditional proposals after deterministic input eligibility
   has passed, including when evidence is conflicting or confidence is low.
+- return a technical map with a decision zone, support/resistance zones, exact
+  buffered breakout/breakdown confirmation prices, and ordered targets. The OCO
+  entries must equal those confirmation prices, and each effective midpoint TP
+  must equal the first corresponding target.
 - provide the pre-transform reward distance required by the supplied proposal
   R:R. The request says that execution preserves entry/SL and divides TP
   distance by two, supplies both proposal and effective minimum R:R values, and
@@ -36,7 +42,7 @@ The versioned system prompt tells the model to:
 
 ## Mandatory proposal
 
-Contract 2.0 has no decision field, no `NO_TRADE` value, and no per-leg enabled
+Contracts 2.0 and 2.1 have no decision field, no `NO_TRADE` value, and no per-leg enabled
 switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
@@ -89,6 +95,12 @@ deterministic performance-adjustment consistency; margin/sizing
 feasibility; and inactive lockouts. Data quality was already accepted by the
 deterministic analytics boundary before the model request.
 
+Schema 2.1 additionally requires every technical zone and target to be
+tick-aligned and directionally ordered. `waiting_area` must equal
+`technical_map.decision_zone`; each stop entry must equal its named confirmation
+price; and the proposal/effective validation phases independently prove that
+the configured TP transform resolves to the first technical target.
+
 `risk_reward_ratio` must agree with recomputed price distances within strict
 Decimal tolerance at each stage. Material discrepancies reject the response.
 Semantic failures and transform details are persisted as reason-coded
@@ -116,6 +128,11 @@ Payloads are redacted and size-bounded before transport. The exact non-secret
 versioned system prompt and its SHA-256 are persisted for each new request. The
 execution-side client requires both to match the local tracked artifact, not
 merely a self-consistent hash or version label.
+The analytics image is bounded to 1 MiB and validated as a 1600x1200 PNG at the
+analytics client, AI client, persistence boundary, and dashboard display. Its
+SHA-256 and provenance are included in the numeric message. The base64 bytes
+travel in the typed loopback AI call and provider multimodal content, while
+PostgreSQL stores one durable bytea artifact per analysis.
 legacy requests retain their recorded prompt version and use an explicitly
 labelled tracked-artifact fallback in Streamlit. Full redacted user JSON and
 the parsed response are restricted to the authenticated dashboard/database

@@ -1109,6 +1109,40 @@ never justify empty, noisy, unsafe, or misleading commits.
   cycle reached the endpoint, passed validation, finished `ACCEPTED`, and
   placed/mapped one pending BUY and one pending SELL. ISSUE-038 is complete.
 
+### ISSUE-039 delivery details
+
+- Acceptance criteria: generate a bounded deterministic PNG from the exact
+  accepted M15/M5/M1 completed candles and per-candle EMA/ATR analytics; send
+  its hash-linked bytes together with compact numeric JSON through both
+  supported OpenAI-compatible API styles; fail closed on a missing, malformed,
+  oversized, or mismatched chart; version the strict response contract with a
+  technical map whose confirmation levels own OCO entries and whose primary
+  targets equal the post-transform broker take-profits; persist image bytes and
+  provenance in PostgreSQL; expose the exact chart and technical map in the
+  correlated Streamlit history; and retain every existing precision,
+  freshness, reconciliation, risk, idempotency, mode, and execution gate.
+- Dependencies: [issue #83](https://github.com/AegisFintech/scalping-bot/issues/83),
+  ISSUE-038 release `.16`, the typed analytics/AI HTTP boundaries, immutable
+  `system-v4`/schema 2.0 history, and the protected cTrader demo environment.
+- Current status: implementation is in progress on
+  `issue-039-hybrid-chart-analysis`. Analytics response 1.1, deterministic
+  completed-candle PNG rendering, prompt `system-v5`, strict schema 2.1,
+  technical-map semantic linkage, migration `0012`, typed multimodal transport,
+  durable chart provenance, Streamlit display, documentation, and positive plus
+  rejection tests are implemented. A provider-only request using the durable
+  10:56 Asia/Singapore snapshot and newly rendered chart completed in 54.2
+  seconds with schema 2.1; both entries matched their confirmation levels and
+  both effective midpoint TPs matched their first technical targets. It made no
+  database intent or broker call. Pre-merge gates pass: Prettier, ESLint,
+  TypeScript typecheck/build, 191 Node tests across 33 files, 14 schema tests, 3
+  static migration tests, all 3 configured isolated-PostgreSQL integration
+  tests, Ruff format/lint, strict mypy over 20 Python source files, 53 Python
+  tests, isolated-schema Streamlit AppTest with zero exceptions and 19
+  dataframes, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+  tracked-file secret scan, shell/PM2 syntax, and five offline systemd parses.
+  Deployment still waits for merge, reviewed migration application, certain
+  terminal broker reconciliation, and an audited analysis pause.
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.

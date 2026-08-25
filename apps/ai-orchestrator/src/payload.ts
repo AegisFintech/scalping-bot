@@ -9,8 +9,18 @@ export interface ModelPayloadInput {
   readonly analyticsFeatures: Readonly<Record<string, unknown>>;
   readonly performanceContext: Readonly<Record<string, unknown>>;
   readonly promptVersion: string;
-  readonly schemaVersion: "2.0";
+  readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
+  readonly chart: {
+    readonly rendererVersion: "completed-candles-ema-atr-v1";
+    readonly mimeType: "image/png";
+    readonly width: 1600;
+    readonly height: 1200;
+    readonly sha256: string;
+    readonly completedCandlesOnly: true;
+    readonly candleCounts: Readonly<Record<"M1" | "M5" | "M15", number>>;
+    readonly latestEndTimes: Readonly<Record<"M1" | "M5" | "M15", string>>;
+  };
   readonly executionConstraints: {
     readonly currentBid: string;
     readonly currentAsk: string;
@@ -88,6 +98,16 @@ export function buildModelPayload(
       ),
       order_book: input.analyticsFeatures.order_book,
       spread_atr_ratio_m1: input.analyticsFeatures.spread_atr_ratio_m1,
+    },
+    chart: {
+      renderer_version: input.chart.rendererVersion,
+      mime_type: input.chart.mimeType,
+      width: input.chart.width,
+      height: input.chart.height,
+      sha256: input.chart.sha256,
+      completed_candles_only: input.chart.completedCandlesOnly,
+      candle_counts: input.chart.candleCounts,
+      latest_end_times: input.chart.latestEndTimes,
     },
     execution_constraints: {
       current_bid: input.executionConstraints.currentBid,

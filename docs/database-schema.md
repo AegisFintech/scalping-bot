@@ -19,6 +19,7 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
 | `analysis_runs`                | mode/state/expiry, versions, eligibility and rejection codes; one active per account/symbol    |
 | `automatic_analysis_intervals` | durable broker-M1 scheduler claim and terminal cycle correlation; unique account/symbol/minute |
 | `model_requests`               | endpoint/model/prompt/schema, exact prompt/hash, redacted payload/hash, latency/status         |
+| `analysis_chart_artifacts`     | one bounded completed-candle PNG per analysis, SHA-256, renderer, dimensions, provenance       |
 | `model_responses`              | redacted raw/parsed payload, provider IDs if non-sensitive, token/status bounds                |
 | `validation_results`           | schema/semantic/risk stage, accepted flag, bounded reason/detail JSON                          |
 | `risk_decisions`               | equity/risk budget/stop/tick/raw/normalized volume, margin/spread, approval/reasons            |
@@ -147,3 +148,12 @@ server-created SL/TP closing child from the original strategy entry even when
 the child inherits its client order ID. Existing `1.0` rows remain valid and
 unchanged. Rollback requires stopped execution, complete reconciliation, and
 retention/export of `1.1` evidence before the columns or constraint are removed.
+
+Migration `0012` adds one `analysis_chart_artifacts` row per analysis. Database
+checks bound the bytes to 1 MiB, require a PNG signature, fixed 1600x1200
+metadata, renderer version, SHA-256 syntax, and bounded JSON provenance. The
+application verifies the actual digest and PNG IHDR dimensions before insert
+and Streamlit verifies them again before display. Rollback is manual and
+operator-reviewed: pause analysis, retain/export chart evidence, deploy code
+that no longer sends or reads images, and only then remove the table if audit
+retention policy permits.

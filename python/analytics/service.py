@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from python.analytics.chart import ChartRenderError, render_analysis_chart
 from python.analytics.models import AnalyticsRequest, AnalyticsResponse
 from python.features import build_features
 
@@ -74,8 +75,13 @@ def quality_reasons(request: AnalyticsRequest) -> list[str]:
 def analyze(request: AnalyticsRequest, now: datetime | None = None) -> AnalyticsResponse:
     reasons = quality_reasons(request)
     features: dict[str, object] = {}
+    chart = None
     if not reasons:
         features = build_features(request)
+        try:
+            chart = render_analysis_chart(request, features)
+        except ChartRenderError:
+            reasons.append("ANALYSIS_CHART_RENDER_FAILED")
     return AnalyticsResponse(
         request_id=request.request_id,
         analysis_id=request.analysis_id,
@@ -83,4 +89,5 @@ def analyze(request: AnalyticsRequest, now: datetime | None = None) -> Analytics
         acceptable=not reasons,
         rejection_reasons=reasons,
         features=features,
+        chart=chart,
     )
