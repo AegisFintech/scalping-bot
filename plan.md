@@ -1322,8 +1322,18 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #96](https://github.com/AegisFintech/scalping-bot/issues/96),
   ISSUE-043, the current Streamlit status projection, and Python `zoneinfo`.
 - Current status: implementation is in progress on
-  `issue-044-gmt8-dashboard-time`. The active demo OCO and execution service
-  remain untouched.
+  `issue-044-gmt8-dashboard-time` through
+  [PR #97](https://github.com/AegisFintech/scalping-bot/pull/97). The shared
+  display conversion, complete dataframe routing, selectors, captions, docs,
+  and tests are implemented. Pre-merge gates pass: Prettier, ESLint, TypeScript
+  typecheck/build, 204 Node tests across 35 files, 14 schema tests, 3 migration
+  tests, all 3 configured PostgreSQL integration tests, Ruff format/lint,
+  strict mypy over 21 source files, 60 Python tests, configured Streamlit
+  AppTest with 35 dataframes and zero exceptions, replay/backtest smoke tests,
+  zero-vulnerability npm/pip audits, secret/shell/PM2 checks, and five systemd
+  parses at 2.8 (`OK`). AppTest checked 4,985 rendered timestamp cells. The
+  active demo OCO and execution service remain untouched; dashboard-only
+  deployment awaits merge.
 
 ## Acceptance criteria
 

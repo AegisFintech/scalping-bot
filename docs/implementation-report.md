@@ -1456,3 +1456,10 @@ and a configured AppTest rendered 35 dataframes with zero exceptions. The
 Overview example changed from `2026-08-25T05:37:03.364Z` to `25 Aug 2026,
 13:37:03 GMT+8`; 4,985 timestamp-table cells were checked for the standardized
 display form. The active demo OCO and execution process were not changed.
+The full pre-merge gate suite passed: 204 Node tests across 35 files, 14 schema
+tests, 3 migration tests, all 3 configured PostgreSQL integration tests, strict
+formatting/lint/type checks, 60 Python tests across 21 source files, configured
+AppTest, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+tracked-file secret scan, shell/PM2 checks, and five systemd parses at 2.8
+(`OK`). Implementation is proposed in
+[PR #97](https://github.com/AegisFintech/scalping-bot/pull/97).
