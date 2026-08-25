@@ -106,6 +106,10 @@ System-v4/schema 2.0 require a buy-stop plus sell-stop proposal whenever the
 model is reached and tell the endpoint how the downstream TP midpoint is
 validated and how far its unchanged stop may be from entry. The exact system
 prompt/hash is persisted per new request.
+Compact mode computes indicators from the full configured 600/500/300 completed
+M1/M5/M15 histories but sends only the newest 60/36/24 raw candles alongside
+those indicators. `MODEL_COMPACT_RAW_TAIL_1M`, `_5M`, and `_15M` may override
+the tails with positive counts no larger than the collected history.
 AI or prompt-artifact failure opens a circuit breaker or rejects the cycle and
 creates no order.
 

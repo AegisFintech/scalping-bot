@@ -51,6 +51,9 @@ Minimum-volume affordability tests prove per-leg OCO budget splitting,
 whole-tick downward flooring, below-one-tick rejection before inference,
 non-sizing payload exclusion, exact semantic enforcement, and changed
 post-model account-state rejection before risk intent.
+Compact-payload configuration tests prove the 60/36/24 raw-tail defaults leave
+the 600/500/300 analytics histories unchanged, accept explicit positive bounded
+overrides, and reject zero, fractional, or history-exceeding values at startup.
 
 ## Historical limitations
 

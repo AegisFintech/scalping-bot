@@ -44,6 +44,7 @@ import {
   PostgresAutomaticAnalysisSchedule,
 } from "./automatic-analysis-schedule.js";
 import { loadExecutionConfig, safetyConfigHash } from "./config.js";
+import { compactTailCounts } from "./analytics-config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
 import { CTraderDemoGateway, DEMO_ACKNOWLEDGEMENT } from "./demo-gateway.js";
 import { DurableDemoExecutionRecorder } from "./demo-execution.js";
@@ -797,11 +798,7 @@ async function main(): Promise<void> {
       bollingerStddev: environment.BOLLINGER_STDDEV ?? "2",
       swingPivotLeft: integer(environment, "SWING_PIVOT_LEFT", 3),
       swingPivotRight: integer(environment, "SWING_PIVOT_RIGHT", 3),
-      compactTail: {
-        M1: integer(environment, "MODEL_COMPACT_RAW_TAIL_1M", 180),
-        M5: integer(environment, "MODEL_COMPACT_RAW_TAIL_5M", 100),
-        M15: integer(environment, "MODEL_COMPACT_RAW_TAIL_15M", 50),
-      },
+      compactTail: compactTailCounts(environment, candleCounts),
       expectedCounts: candleCounts,
     },
     modelPayloadMode:

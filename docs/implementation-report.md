@@ -999,6 +999,34 @@ tracked-file secret scan, shell/PM2 syntax checks, and all five offline systemd
 security parses at 2.8 (`OK`) passed. Merge and supervised `.13` rollout
 evidence remain before ISSUE-035 is complete.
 
+## ISSUE-036 compact endpoint tails
+
+A supervised `.13` compact request serialized to roughly 71 KB. About 61 KB
+(87%) was duplicated raw candle arrays: 180 M1, 100 M5, and 50 M15 bars. The
+deterministic analytics service had already computed every indicator/statistic
+from the full 600/500/300 completed-candle histories. The next external call
+exceeded the 60-second budget; longer inference also increases the chance that
+a conditional entry is crossed before post-model validation.
+
+Issue [#76](https://github.com/AegisFintech/scalping-bot/issues/76) changes only
+compact raw-tail defaults to 60/36/24. Full analytics history, derived features,
+order-book/performance context, execution constraints, strict response schema,
+and every downstream gate remain unchanged. Explicit overrides must be positive
+integers no larger than collected history or startup rejects. Release `.14`
+versions this model-input change; unit tests cover defaults, bounded overrides,
+and fail-closed invalid configuration.
+
+Applying the new tails to the exact prior durable request estimates 31,687
+serialized bytes versus 70,953, a 55.3% reduction before HTTP-envelope overhead.
+The 2026-08-25 pre-merge suite passed Prettier, ESLint, TypeScript typecheck and
+build, 179 Node tests across 31 files, 13 schema tests, 3 migration tests, and
+all 3 configured isolated-PostgreSQL integration tests. Ruff format/lint,
+strict mypy over 16 Python source files, and 51 Python tests passed. Configured
+Streamlit AppTest rendered 31 dataframes with zero exceptions. Replay/backtest,
+zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
+and all five offline systemd security parses at 2.8 (`OK`) passed. Merge and
+supervised `.14` size/latency evidence remain before ISSUE-036 is complete.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
