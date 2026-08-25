@@ -1257,12 +1257,21 @@ never justify empty, noisy, unsafe, or misleading commits.
   ISSUE-041/release `.19`, periodic bounded history recovery, the durable demo
   execution journal, and the protected cTrader demo environment.
 - Current status: implementation is in progress on
-  `issue-042-terminal-recovery-overview`. At diagnosis time the latest managed
+  `issue-042-terminal-recovery-overview` through
+  [PR #92](https://github.com/AegisFintech/scalping-bot/pull/92). At diagnosis time the latest managed
   group, orders, trade, and position were durably terminal with no active local
   exposure, but one earlier same-key callback conflict and a process-local
   invalid-price callback remained blocking. Campaign progress is `4 / 100`.
-  Automatic analysis remains blocked while the fix is developed and deployed
-  under the durable pause.
+  The terminal-evidence reconciliation, recorder checkpoint, exact scoped
+  managed-setup status, prominent Overview action, reviewed campaign baseline,
+  and immutable `.20` release are implemented. Pre-merge gates pass: Prettier,
+  ESLint, TypeScript typecheck/build, 204 Node tests across 35 files, 14 schema
+  tests, 3 migration tests, all 3 configured isolated-PostgreSQL integration
+  tests, Ruff format/lint, strict mypy over 20 source files, 55 Python tests,
+  configured Streamlit AppTest with zero exceptions, replay/backtest smoke
+  tests, zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2
+  syntax, and five offline systemd security parses at 2.8 (`OK`). Automatic
+  analysis remains blocked before the merge and paused deployment.
 
 ## Acceptance criteria
 
