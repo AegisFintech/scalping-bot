@@ -13,6 +13,14 @@ export interface ExecutionStatus {
   readonly emergencyStopped: boolean;
   readonly pauseNewAnalyses: boolean;
   readonly automaticAnalysisEnabled: boolean;
+  readonly automaticAnalysisCampaign: {
+    readonly enabled: boolean;
+    readonly limit: number | null;
+    readonly completed: number | null;
+    readonly remaining: number | null;
+    readonly complete: boolean;
+    readonly reasonCodes: readonly string[];
+  };
   readonly aiCircuitOpenUntil: string | null;
   readonly tradingEnabled: boolean;
   readonly startupChecksPassed: boolean;

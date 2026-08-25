@@ -77,6 +77,25 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "The scheduler is running maintenance but will not start analysis cycles.",
         "Enable automatic analysis through reviewed configuration when intended.",
     ),
+    "AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE": (
+        "Completed-analysis campaign reached its limit",
+        "The configured number of durable external-AI analyses is complete. New analyses are "
+        "paused while order maintenance and reconciliation continue.",
+        "Review the campaign in Streamlit and PostgreSQL before starting a separately versioned "
+        "campaign.",
+    ),
+    "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE": (
+        "Completed-analysis campaign progress is unavailable",
+        "The scheduler cannot prove the durable completed count, so it will not start another "
+        "analysis.",
+        "Restore PostgreSQL access and verify the strategy-scoped count; do not bypass the "
+        "campaign boundary.",
+    ),
+    "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID": (
+        "Completed-analysis campaign progress is invalid",
+        "The configured limit or durable count could not be interpreted safely.",
+        "Correct the configuration or durable-state fault before resuming analysis.",
+    ),
     "EMERGENCY_STOP_ENV": (
         "Environment emergency stop is active",
         "The process configuration blocks new analyses and orders.",
@@ -387,6 +406,19 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(raw_reasons, Sequence) and not isinstance(raw_reasons, (str, bytes))
         else ["STATUS_REASON_CODES_INVALID"]
     )
+    campaign = status.get("automaticAnalysisCampaign")
+    if isinstance(campaign, Mapping):
+        raw_campaign_reasons = campaign.get("reasonCodes", [])
+        if isinstance(raw_campaign_reasons, Sequence) and not isinstance(
+            raw_campaign_reasons, (str, bytes)
+        ):
+            reasons.extend(str(reason) for reason in raw_campaign_reasons)
+        else:
+            reasons.append("AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID")
+        campaign_complete = campaign.get("complete") is True
+    else:
+        campaign_complete = False
+    reasons = list(dict.fromkeys(reasons))
     reason_set = set(reasons)
     automatic = status.get("automaticAnalysisEnabled") is True
     paused = status.get("pauseNewAnalyses") is True
@@ -401,6 +433,16 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         state, headline, severity = "OFF", "Automatic analysis is off", "info"
         detail = (
             "The process can maintain existing state, but it will not start scheduled analyses."
+        )
+    elif campaign_complete:
+        state, headline, severity = (
+            "CAMPAIGN_COMPLETE",
+            "Completed-analysis campaign is ready for review",
+            "success",
+        )
+        detail = (
+            "The configured durable external-AI result limit was reached; no next analysis will "
+            "start while maintenance and reconciliation continue."
         )
     elif paused or "ANALYSES_PAUSED" in reason_set:
         state, headline, severity = "PAUSED", "Automatic analysis is paused", "warning"

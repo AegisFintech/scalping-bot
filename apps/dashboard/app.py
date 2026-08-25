@@ -145,6 +145,29 @@ with tabs[0]:
     columns[3].metric(
         "Automatic analysis", "ON" if status.get("automaticAnalysisEnabled") else "OFF"
     )
+    campaign = status.get("automaticAnalysisCampaign")
+    if isinstance(campaign, dict) and campaign.get("enabled") is True:
+        st.subheader("Completed external-AI analysis campaign")
+        campaign_columns = st.columns(4)
+        campaign_columns[0].metric("Target", str(campaign.get("limit", "unknown")))
+        campaign_columns[1].metric("Completed", str(campaign.get("completed", "unavailable")))
+        campaign_columns[2].metric("Remaining", str(campaign.get("remaining", "unavailable")))
+        campaign_columns[3].metric(
+            "Campaign state", "COMPLETE" if campaign.get("complete") is True else "RUNNING"
+        )
+        campaign_limit = campaign.get("limit")
+        campaign_completed = campaign.get("completed")
+        if (
+            isinstance(campaign_limit, int)
+            and campaign_limit > 0
+            and isinstance(campaign_completed, int)
+            and campaign_completed >= 0
+        ):
+            bounded_completed = min(campaign_completed, campaign_limit)
+            st.progress(
+                bounded_completed / campaign_limit,
+                text=f"{bounded_completed} of {campaign_limit} completed AI analyses",
+            )
     st.subheader("What automation is doing now")
     state_message = f"{automation_view['headline']} — {automation_view['detail']}"
     if automation_view["severity"] == "error":
@@ -363,7 +386,7 @@ with tabs[4]:
                JOIN accounts a ON a.id = ar.account_id
                JOIN symbols s ON s.id = ar.symbol_id
                WHERE a.environment = %s AND s.name = %s
-               ORDER BY ar.created_at DESC LIMIT 50""",
+               ORDER BY ar.created_at DESC LIMIT 100""",
             (account_environment, selected_symbol),
         )
         if not analyses:
@@ -477,7 +500,7 @@ with tabs[4]:
                    ) mq ON true
                    LEFT JOIN model_responses mr ON mr.model_request_id = mq.id
                    WHERE a.environment = %s AND s.name = %s
-                   ORDER BY ar.created_at DESC LIMIT 50""",
+                   ORDER BY ar.created_at DESC LIMIT 100""",
                 (account_environment, selected_symbol),
             )
             automatic_history = query(

@@ -206,7 +206,10 @@ and safety maintenance continue. Demo submission refuses startup unless the
 exact acknowledgement, a positive `MAX_ORDERS_PER_DAY`, and a positive
 per-position `MAX_POSITION_NOTIONAL` are all configured. Keep the automatic
 gate off and use one authenticated loopback cycle for the first supervised
-session.
+session. A later explicitly authorized campaign can set
+`AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` to a positive durable result count; the
+scheduler then pauses new analyses at that immutable-release boundary while
+continuing broker lifecycle maintenance.
 
 ## Tests and quality gates
 

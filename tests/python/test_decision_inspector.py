@@ -147,6 +147,55 @@ def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> N
     assert "cycle or setup is already active" in view["headline"]
 
 
+def test_automation_status_prioritizes_completed_campaign_review_over_pause() -> None:
+    view = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "pauseNewAnalyses": True,
+            "emergencyStopped": False,
+            "reasonCodes": ["ANALYSES_PAUSED"],
+            "automaticAnalysisCampaign": {
+                "enabled": True,
+                "limit": 100,
+                "completed": 100,
+                "remaining": 0,
+                "complete": True,
+                "reasonCodes": ["AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE"],
+            },
+        }
+    )
+
+    assert view["state"] == "CAMPAIGN_COMPLETE"
+    assert view["severity"] == "success"
+    assert "ready for review" in view["headline"]
+    assert {reason["code"] for reason in view["reasons"]} == {
+        "ANALYSES_PAUSED",
+        "AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE",
+    }
+
+
+def test_automation_status_fails_closed_when_campaign_progress_is_unavailable() -> None:
+    view = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "pauseNewAnalyses": False,
+            "emergencyStopped": False,
+            "reasonCodes": [],
+            "automaticAnalysisCampaign": {
+                "enabled": True,
+                "limit": 100,
+                "completed": None,
+                "remaining": None,
+                "complete": False,
+                "reasonCodes": ["AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE"],
+            },
+        }
+    )
+
+    assert view["state"] == "SAFETY_BLOCKED"
+    assert view["reasons"][0]["code"] == ("AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE")
+
+
 def test_analysis_selection_prefers_latest_durable_ai_request_with_safe_fallback() -> None:
     assert (
         latest_ai_request_index(

@@ -1190,6 +1190,38 @@ never justify empty, noisy, unsafe, or misleading commits.
   complete. Deployment evidence is tracked by
   [PR #87](https://github.com/AegisFintech/scalping-bot/pull/87).
 
+### ISSUE-041 delivery details
+
+- Acceptance criteria: count only distinct durable completed external-AI
+  analyses for the configured account, symbol, and immutable strategy release;
+  show completed and remaining campaign progress; fail closed when progress is
+  unavailable; allow analysis 100 to finish normal validation/placement; then
+  persist an audited analysis pause before analysis 101 while continuing
+  expiry, callback processing, and reconciliation; retain every existing
+  schema, semantic, freshness, spread, precision, exposure, daily-loss, and
+  deterministic risk gate; and cover positive, boundary, restart-durability,
+  invalid-configuration, and database-failure paths.
+- Dependencies: [issue #88](https://github.com/AegisFintech/scalping-bot/issues/88),
+  ISSUE-040/release `.18`, the durable model-request trail, runtime analysis
+  pause control, automatic broker-minute schedule, and protected cTrader demo
+  environment.
+- Current status: implementation is complete on
+  `issue-041-100-analysis-campaign` through
+  [PR #89](https://github.com/AegisFintech/scalping-bot/pull/89). The requested campaign is defined as 100
+  completed model responses; pre-AI market/data/spread rejection and provider
+  failure do not consume a slot. The current 20-group daily ceiling is too low
+  for the requested campaign and will be replaced at deployment by the current
+  trading-day group count plus 100. Pre-merge gates pass: Prettier, ESLint,
+  TypeScript typecheck/build, 198 Node tests across 34 files, 14 schema tests, 3
+  static migration tests, all 3 configured isolated-PostgreSQL integration
+  tests, Ruff format/lint, strict mypy over 17 Python source files, 55 Python
+  tests, configured Streamlit AppTest with zero exceptions and 34 dataframes,
+  replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
+  secret scan, shell/PM2 syntax, and five offline systemd parses at 2.8 (`OK`).
+  Release `.19` and its exact local campaign configuration await review/merge
+  and deployment under a durable analysis pause. No live mode or authority
+  changes are in scope.
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.
