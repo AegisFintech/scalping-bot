@@ -1292,9 +1292,17 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #93](https://github.com/AegisFintech/scalping-bot/issues/93),
   ISSUE-042 release `.20`, and the existing reason-code inspector.
 - Current status: implementation is in progress on
-  `issue-043-target-guidance`. The trigger was the first healthy `.20`
-  automatic response, which advanced the campaign to `5 / 100` and then
-  rejected `DOWNSIDE_TARGETS_INVALID` before order intent.
+  `issue-043-target-guidance` through
+  [PR #94](https://github.com/AegisFintech/scalping-bot/pull/94). The trigger was
+  the first healthy `.20` automatic response, which advanced the campaign to
+  `5 / 100` and then rejected `DOWNSIDE_TARGETS_INVALID` before order intent.
+  Both target-map reason explanations and tests are implemented. The full gate
+  suite remains green: 204 Node tests across 35 files, 14 schema tests, 3
+  migration tests, all 3 configured PostgreSQL integration tests, 55 Python
+  tests, strict formatting/lint/type checks, configured Streamlit AppTest,
+  replay/backtest smoke tests, zero-vulnerability audits, secret/shell/PM2
+  checks, and five systemd parses at 2.8 (`OK`). Dashboard-only deployment
+  awaits merge.
 
 ## Acceptance criteria
 
