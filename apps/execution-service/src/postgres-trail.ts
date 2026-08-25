@@ -427,11 +427,12 @@ export class PostgresDecisionTrail implements DecisionTrail {
     stage: "SEMANTIC" | "RISK" | "LIVE_GATE",
     accepted: boolean,
     reasons: readonly string[],
+    details: Readonly<Record<string, unknown>> = {},
   ): Promise<void> {
     await this.#options.pool.query(
       `INSERT INTO validation_results
-        (id, analysis_id, model_response_id, stage, accepted, reason_codes, validated_at)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, now())`,
+        (id, analysis_id, model_response_id, stage, accepted, reason_codes, details, validated_at)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, now())`,
       [
         randomUUID(),
         analysisId,
@@ -439,6 +440,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
         stage,
         accepted,
         JSON.stringify(reasons),
+        safeJson(details),
       ],
     );
     await this.#audit(
@@ -446,7 +448,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
       "validation_completed",
       accepted ? "accepted" : "rejected",
       reasons[0] ?? null,
-      { stage, reason_codes: reasons },
+      { ...details, stage, reason_codes: reasons },
     );
   }
 

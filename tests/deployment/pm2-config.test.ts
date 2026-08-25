@@ -53,12 +53,12 @@ describe("PM2 deployment configuration", () => {
     expect(
       config.apps.every(
         (app) =>
-          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.10",
+          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.11",
       ),
     ).toBe(true);
     expect(
       config.apps.every(
-        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.10",
+        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.11",
       ),
     ).toBe(true);
   });

@@ -128,6 +128,12 @@ state is active or uncertain. A rejected analysis may retry on a later broker
 minute. An accepted analysis becomes terminal only after its group closes,
 expires, or fails; only then can a later broker minute start the next cycle.
 
+Prompt `system-v3` tells the endpoint that the execution service preserves its
+entry and stop loss but halves the distance from entry to take profit. It asks
+for twice the configured effective minimum R:R so the midpoint remains eligible.
+An off-tick midpoint is rejected without rounding and the next eligible broker
+minute starts a fresh cycle after the rejection becomes terminal.
+
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted
 redacted user JSON, parsed schema-validated AI response, post-model refresh,
@@ -228,6 +234,9 @@ into repository files or logs.
    leg-enabled switch. These are proposals only—not queued, submitted, accepted,
    or filled orders. The displayed local validation, deterministic risk, and
    broker stages remain separate execution authorities.
+   The **AI proposal → effective OCO levels** table shows endpoint entry/SL/TP
+   beside the audited effective midpoint TP and both R:R values. Absence of that
+   table means the transform stage was not reached.
 5. In **Input & analytics**, verify request/model/prompt/schema/strategy
    versions, payload mode/hash, the hash-verified exact system prompt,
    completed-candle coverage, indicator summary, execution constraints, and

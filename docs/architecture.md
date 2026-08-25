@@ -59,6 +59,9 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
+- Prompt `system-v3` tells the endpoint that execution will preserve entry/SL
+  and halve TP distance. It supplies a doubled proposal R:R minimum so the
+  configured effective minimum remains satisfied after that transform.
 - Calls a configurable Responses- or Chat-Completions-compatible endpoint with
   per-attempt timeouts/retries/circuit breaker. The execution caller derives its
   local HTTP deadline from the complete configured retry budget plus bounded
@@ -79,6 +82,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   input; otherwise the cycle rejects. The refreshed quote and depth are
   persisted and drive final spread, semantic, risk, and placement-freshness
   checks.
+- Keeps the parsed endpoint JSON immutable, records a separate Decimal TP
+  midpoint transform, and validates both the original and effective proposal.
+  Off-tick midpoints reject without broker-price rounding. Deterministic sizing
+  uses the unchanged endpoint entry/SL and the gateway receives the validated
+  effective TP.
 - Rejects invalid/overflowing AI timeout budgets at startup. A local AI timeout
   or transport loss becomes a stable reason code and opens the execution-side
   circuit; it cannot create a model row, risk intent, or order command. The
@@ -136,6 +144,9 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   refreshed market evidence, local validation/risk, broker outcome, and each
   PostgreSQL audit event with its Better Stack delivery checkpoint. Missing
   stages render as not reached rather than successful.
+- The AI output view places endpoint entry/SL/TP and effective midpoint TP side
+  by side, including original/effective R:R, even when later risk sizing or
+  broker placement is not reached.
 - The Overview distinguishes scheduler enablement from immediate order
   eligibility. Temporary AI cooldowns show their exact automatic retry time and
   retain the authoritative reason code alongside plain-language impact and

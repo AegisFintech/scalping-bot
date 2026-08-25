@@ -26,7 +26,9 @@ New schema 2.0 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Generated proposals remain distinct from queued or broker-submitted orders.
+Prompt `system-v3` also exposes the configured TP-distance division by two. The
+dashboard shows endpoint and effective TP/R:R side by side; generated proposals
+remain distinct from queued or broker-submitted orders.
 
 ## Prerequisites
 
@@ -95,8 +97,9 @@ or future quote/depth source timestamp fails closed.
 Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style.
 The Responses style requests strict JSON Schema output where the endpoint
 supports it; all output is size-limited and validated locally regardless.
-System-v2/schema 2.0 require a buy-stop plus sell-stop proposal whenever the
-model is reached. The exact system prompt/hash is persisted per new request.
+System-v3/schema 2.0 require a buy-stop plus sell-stop proposal whenever the
+model is reached and tell the endpoint how the downstream TP midpoint is
+validated. The exact system prompt/hash is persisted per new request.
 AI or prompt-artifact failure opens a circuit breaker or rejects the cycle and
 creates no order.
 

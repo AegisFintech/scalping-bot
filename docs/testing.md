@@ -42,6 +42,11 @@ execution metadata, a stale refreshed quote, a widened final spread, refreshed
 risk input, stale refreshed depth, and PostgreSQL persistence that retains the
 original candle context while advancing the analysis depth pointer.
 
+TP-transform tests prove exact Decimal midpoint calculations for buy and sell,
+unchanged endpoint entry/SL, recomputed R:R, doubled pre-transform request
+minimum, off-tick rejection without rounding, risk receipt of effective levels,
+durable validation details, and bounded Streamlit comparison rendering.
+
 ## Historical limitations
 
 Candles do not reconstruct tick paths. Same-bar ordering is unknowable without tick data. Historical depth may be unavailable and synthetic depth is not equivalent. Simulated fills differ from broker fills; spread, latency, rejection, slippage, commission, swap, and liquidity need conservative modeling. Model/prompt/schema/feature changes create distinct experiment versions. Leakage/look-ahead tests are mandatory. Historical performance does not guarantee profit.

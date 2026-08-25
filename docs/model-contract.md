@@ -5,8 +5,9 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.0.json`; the immutable 1.0 schema and system prompt
-remain only to interpret historical runs.
+`schemas/model-response-2.0.json`. Prompt `system-v3` is current; immutable
+`system-v1`/`system-v2` prompts and schema 1.0 remain available to interpret
+historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
 are strings, original and adjusted confidence values are bounded integers,
 arrays and strings are length-limited, and timestamps use ISO-8601 formats.
@@ -25,6 +26,10 @@ The versioned system prompt tells the model to:
 - never calculate or suggest final position size or exceed deterministic policy;
 - always return both conditional proposals after deterministic input eligibility
   has passed, including when evidence is conflicting or confidence is low.
+- provide the pre-transform reward distance required by the supplied proposal
+  R:R. The request says that execution preserves entry/SL and divides TP
+  distance by two, supplies both proposal and effective minimum R:R values, and
+  requires an even whole-tick TP distance so the midpoint stays tick-aligned.
 
 ## Mandatory proposal
 
@@ -32,6 +37,12 @@ Contract 2.0 has no decision field, no `NO_TRADE` value, and no per-leg enabled
 switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
+
+For `system-v3` requests, the exact parsed response remains immutable. The
+execution coordinator separately derives each effective TP as
+`entry + (proposed_tp - entry) / 2`, recomputes the diagnostic R:R, and records
+both original and effective values in validation details. Entry and SL are not
+changed. An off-tick midpoint or invalid Decimal rejects rather than rounding.
 
 Deterministic analytics owns input/data eligibility before inference. Model
 warnings, risk flags, regime, and confidence remain visible diagnostics but
@@ -62,7 +73,10 @@ Reject:
 
 ## Semantic validation
 
-The validation pipeline requires exact symbol and analysis ID; plausible
+The validation pipeline first validates the exact AI proposal against the
+pre-transform minimum R:R, then validates the audited TP transform, and finally
+validates the effective proposal against the configured execution minimum R:R.
+Both proposal stages require exact symbol and analysis ID; plausible
 `generated_at`; future `valid_until` within expiry policy; leg expirations that
 match and do not exceed `valid_until`; ordered waiting bounds; side-correct
 entry/SL/TP; entry beyond current bid/ask and broker distance; minimum R:R;
@@ -71,7 +85,10 @@ limits; deterministic performance-adjustment consistency; margin/sizing
 feasibility; and inactive lockouts. Data quality was already accepted by the
 deterministic analytics boundary before the model request.
 
-`risk_reward_ratio` must agree with recomputed price distances within strict Decimal tolerance. Material discrepancies reject the response. Semantic failures are persisted as reason-coded validation results and create no order.
+`risk_reward_ratio` must agree with recomputed price distances within strict
+Decimal tolerance at each stage. Material discrepancies reject the response.
+Semantic failures and transform details are persisted as reason-coded
+validation results and create no order.
 
 The request includes current bid/ask, digits, tick size, broker/configured
 minimum stop distance, minimum reward-to-risk, maximum ATR stop distance, and

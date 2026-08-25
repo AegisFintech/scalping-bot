@@ -47,6 +47,7 @@ _TRADE_OUTCOME_FIELDS = {
 _PROMPT_FILES = {
     "system-v1": "system-v1.md",
     "system-v2": "system-v2.md",
+    "system-v3": "system-v3.md",
 }
 _SECRET_VALUE = re.compile(
     r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"
@@ -188,6 +189,18 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "The required demo-only acknowledgement is not active in the running process.",
         "Set the exact acknowledgement only for an intended broker-demo session and restart "
         "safely.",
+    ),
+    "BUY_TP_MIDPOINT_NOT_ON_TICK": (
+        "Buy TP midpoint is off the broker tick",
+        "Halving the distance from the buy entry to the AI take profit produced a price the "
+        "broker precision cannot represent exactly.",
+        "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "SELL_TP_MIDPOINT_NOT_ON_TICK": (
+        "Sell TP midpoint is off the broker tick",
+        "Halving the distance from the sell entry to the AI take profit produced a price the "
+        "broker precision cannot represent exactly.",
+        "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
     ),
 }
 
@@ -546,6 +559,56 @@ def model_output_authority_notice(value: Mapping[str, Any] | None) -> str:
             "schema 2.0 proposal contract."
         )
     raise DecisionViewError("DECISION_VIEW_MODEL_SCHEMA_VERSION_INVALID")
+
+
+def take_profit_transform_view(
+    validations: Sequence[Mapping[str, Any]],
+) -> list[dict[str, str]]:
+    """Return the audited AI-to-effective TP comparison, if that stage ran."""
+
+    for validation in reversed(validations):
+        details = validation.get("details")
+        if not isinstance(details, Mapping):
+            continue
+        if details.get("validation_scope") != "TAKE_PROFIT_TRANSFORM":
+            continue
+        transform = details.get("proposal_transform")
+        if not isinstance(transform, Mapping):
+            raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
+        _reject_sensitive_keys(transform)
+        if (
+            transform.get("code") != "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
+            or transform.get("divisor") != "2"
+        ):
+            raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
+        output: list[dict[str, str]] = []
+        for side in ("buy", "sell"):
+            leg = transform.get(side)
+            if not isinstance(leg, Mapping):
+                raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
+            keys = (
+                "entry_price",
+                "stop_loss",
+                "original_take_profit",
+                "effective_take_profit",
+                "original_risk_reward_ratio",
+                "effective_risk_reward_ratio",
+            )
+            if any(not isinstance(leg.get(key), str) for key in keys):
+                raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
+            output.append(
+                {
+                    "side": side.upper(),
+                    "entry_price": str(leg["entry_price"]),
+                    "stop_loss": str(leg["stop_loss"]),
+                    "ai_take_profit": str(leg["original_take_profit"]),
+                    "effective_take_profit": str(leg["effective_take_profit"]),
+                    "ai_risk_reward_ratio": str(leg["original_risk_reward_ratio"]),
+                    "effective_risk_reward_ratio": str(leg["effective_risk_reward_ratio"]),
+                }
+            )
+        return output
+    return []
 
 
 def exact_model_input_view(value: object) -> dict[str, Any]:

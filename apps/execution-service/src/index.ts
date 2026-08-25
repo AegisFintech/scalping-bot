@@ -267,7 +267,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v2",
+    promptVersion: "system-v3",
     schemaVersion: "2.0",
     featureVersion: "1.0",
   });
@@ -351,8 +351,8 @@ async function main(): Promise<void> {
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-2.0.json"),
-    systemPromptPath: path.resolve("prompts/system-v2.md"),
-    promptVersion: "system-v2",
+    systemPromptPath: path.resolve("prompts/system-v3.md"),
+    promptVersion: "system-v3",
     timeoutMs: aiOrchestratorRequestTimeoutMs({
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
@@ -380,7 +380,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v2",
+    promptVersion: "system-v3",
     schemaVersion: "2.0",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -806,7 +806,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v2",
+    promptVersion: "system-v3",
     schemaVersion: "2.0",
     strategyVersion,
     minRiskRewardRatio: environment.MIN_RISK_REWARD_RATIO ?? "2",

@@ -58,7 +58,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v2",
+    version: "system-v3",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -83,8 +83,8 @@ function ocoProposal(analysisId: string): ModelResponse {
       trigger_price: "2001",
       entry_price: "2001",
       stop_loss: "2000",
-      take_profit: "2003",
-      risk_reward_ratio: "2",
+      take_profit: "2005",
+      risk_reward_ratio: "4",
       expires_at: expiresAt,
       invalidation_price: "2000",
     },
@@ -92,8 +92,8 @@ function ocoProposal(analysisId: string): ModelResponse {
       trigger_price: "1999",
       entry_price: "1999",
       stop_loss: "2000",
-      take_profit: "1997",
-      risk_reward_ratio: "2",
+      take_profit: "1995",
+      risk_reward_ratio: "4",
       expires_at: expiresAt,
       invalidation_price: "2000",
     },
@@ -250,7 +250,7 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v2",
+    promptVersion: "system-v3",
     schemaVersion: "2.0",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
@@ -308,7 +308,19 @@ function options(
           approved: true,
           reasonCodes: [],
           risk: null,
-          commands: commands(input.response.analysis_id),
+          commands: (() => {
+            const pending = commands(input.response.analysis_id);
+            return [
+              {
+                ...pending[0],
+                takeProfit: input.response.buy_stop.take_profit,
+              },
+              {
+                ...pending[1],
+                takeProfit: input.response.sell_stop.take_profit,
+              },
+            ] as [PendingOrderCommand, PendingOrderCommand];
+          })(),
           equity: "10000",
           perLegRiskPercent: "0.5",
         }),
@@ -336,10 +348,48 @@ function options(
 
 describe("analysis coordinator", () => {
   it("carries a mandatory two-leg proposal through deterministic placement", async () => {
-    const configured = options();
+    const place = vi.fn(
+      (submitted: readonly [PendingOrderCommand, PendingOrderCommand]) =>
+        Promise.resolve({
+          orderGroupId: submitted[0].orderGroupId,
+          idempotentReplay: false,
+          orders: [],
+        }),
+    );
+    const trail = new InMemoryDecisionTrail();
+    const configured = options({
+      trail,
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
     const result = await new AnalysisCoordinator(configured).runOnce();
     expect(result.outcome).toBe("PLACED");
     expect(result.placement).not.toBeNull();
+    const submitted = place.mock.calls[0]?.[0];
+    expect(submitted?.[0]).toMatchObject({ side: "BUY", takeProfit: "2003" });
+    expect(submitted?.[1]).toMatchObject({ side: "SELL", takeProfit: "1997" });
+    expect(
+      trail.events.some((event) => {
+        if (event === null || typeof event !== "object") return false;
+        const details = (event as Record<string, unknown>).details;
+        if (details === null || typeof details !== "object") return false;
+        const transform = (details as Record<string, unknown>)
+          .proposal_transform;
+        return (
+          (details as Record<string, unknown>).validation_scope ===
+            "TAKE_PROFIT_TRANSFORM" &&
+          transform !== null &&
+          typeof transform === "object" &&
+          (transform as Record<string, unknown>).code ===
+            "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
+        );
+      }),
+    ).toBe(true);
   });
 
   it("flushes broker callbacks only after placement persistence", async () => {
@@ -389,6 +439,50 @@ describe("analysis coordinator", () => {
       outcome: "REJECTED",
       reasonCodes: ["MODEL_PROMPT_VERSION_MISMATCH"],
     });
+    expect(place).not.toHaveBeenCalled();
+  });
+
+  it("rejects an off-tick TP midpoint before risk or placement", async () => {
+    const riskEvaluate = vi.fn(() =>
+      Promise.reject(new Error("must not evaluate risk")),
+    );
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const configured = options({
+      model: {
+        circuitOpen: false,
+        analyze: vi.fn((request: { readonly analysisId: string }) => {
+          const proposal = ocoProposal(request.analysisId);
+          return Promise.resolve({
+            response: {
+              ...proposal,
+              buy_stop: {
+                ...proposal.buy_stop,
+                take_profit: "2005.01",
+                risk_reward_ratio: "4.01",
+              },
+            },
+            rawResponse: "{}",
+            promptArtifact: promptArtifact(),
+          });
+        }),
+      },
+      risk: { evaluate: riskEvaluate },
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["BUY_TP_MIDPOINT_NOT_ON_TICK"],
+    });
+    expect(riskEvaluate).not.toHaveBeenCalled();
     expect(place).not.toHaveBeenCalled();
   });
 
@@ -702,9 +796,10 @@ describe("analysis coordinator", () => {
     await expect(
       new AnalysisCoordinator(configured).runOnce(),
     ).resolves.toMatchObject({ outcome: "PLACED" });
-    expect(riskEvaluate).toHaveBeenCalledWith(
-      expect.objectContaining({ quote: refreshed.quote }),
-    );
+    const riskInput = riskEvaluate.mock.calls[0]?.[0];
+    expect(riskInput?.quote).toEqual(refreshed.quote);
+    expect(riskInput?.response.buy_stop.take_profit).toBe("2003");
+    expect(riskInput?.response.sell_stop.take_profit).toBe("1997");
     expect(place).toHaveBeenCalledOnce();
   });
 

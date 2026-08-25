@@ -19,6 +19,8 @@ export interface ModelPayloadInput {
     readonly brokerMinStopDistance: string;
     readonly configuredMinStopDistance: string;
     readonly minRiskRewardRatio: string;
+    readonly effectiveMinRiskRewardRatio: string;
+    readonly takeProfitDistanceDivisor: "2";
     readonly maxStopDistanceAtr: string;
     readonly orderExpiryMinSeconds: number;
     readonly orderExpiryMaxSeconds: number;
@@ -96,6 +98,10 @@ export function buildModelPayload(
       configured_min_stop_distance:
         input.executionConstraints.configuredMinStopDistance,
       min_risk_reward_ratio: input.executionConstraints.minRiskRewardRatio,
+      effective_min_risk_reward_ratio:
+        input.executionConstraints.effectiveMinRiskRewardRatio,
+      take_profit_distance_divisor:
+        input.executionConstraints.takeProfitDistanceDivisor,
       max_stop_distance_atr: input.executionConstraints.maxStopDistanceAtr,
       order_expiry_min_seconds:
         input.executionConstraints.orderExpiryMinSeconds,

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { buildModelPayload } from "../../apps/ai-orchestrator/src/payload.js";
@@ -39,7 +41,9 @@ const common = {
     digits: 2,
     brokerMinStopDistance: "0.1",
     configuredMinStopDistance: "0.1",
-    minRiskRewardRatio: "2",
+    minRiskRewardRatio: "4",
+    effectiveMinRiskRewardRatio: "2",
+    takeProfitDistanceDivisor: "2" as const,
     maxStopDistanceAtr: "3",
     orderExpiryMinSeconds: 15,
     orderExpiryMaxSeconds: 1800,
@@ -73,10 +77,19 @@ describe("model payload builder", () => {
       digits: 2,
       broker_min_stop_distance: "0.1",
       configured_min_stop_distance: "0.1",
-      min_risk_reward_ratio: "2",
+      min_risk_reward_ratio: "4",
+      effective_min_risk_reward_ratio: "2",
+      take_profit_distance_divisor: "2",
       max_stop_distance_atr: "3",
       order_expiry_min_seconds: 15,
       order_expiry_max_seconds: 1800,
     });
+  });
+
+  it("versions the TP transform instructions in the current prompt", () => {
+    const prompt = readFileSync("prompts/system-v3.md", "utf8");
+    expect(prompt).toContain("take_profit_distance_divisor");
+    expect(prompt).toContain("effective_min_risk_reward_ratio");
+    expect(prompt).toContain("derived midpoint remains exactly");
   });
 });
