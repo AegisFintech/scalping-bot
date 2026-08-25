@@ -1404,8 +1404,10 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   the typed market quote API, cTrader position-unrealized-P/L response, durable
   fill commission, ISSUE-045 lifecycle projection, and Streamlit fragments.
 - Current status: implementation is in progress on
-  `issue-046-live-position-monitor`. The monitor is display-only and cannot
-  alter cycle eligibility, risk, sizing, orders, positions, or reconciliation.
+  `issue-046-live-position-monitor` through
+  [PR #103](https://github.com/AegisFintech/scalping-bot/pull/103). The monitor
+  is display-only and cannot alter cycle eligibility, risk, sizing, orders,
+  positions, or reconciliation.
   Open commission means persisted charges received so far; final realized P/L
   and fees remain authoritative only after the exact closing deal is durable.
   Implementation and pre-merge gates pass: Prettier, ESLint, TypeScript
@@ -1414,8 +1416,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   format/lint, strict mypy over 21 source files, 70 Python tests, configured
   Streamlit AppTest with 35 dataframes and zero exceptions, replay/backtest
   smoke tests, zero-vulnerability npm/pip audits, tracked-file secret scan,
-  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). PR creation, merge,
-  and controlled rollout remain pending.
+  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Merge and controlled
+  rollout remain pending.
 
 ## Acceptance criteria
 

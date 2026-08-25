@@ -1567,4 +1567,5 @@ integration tests, Ruff format/lint, strict mypy over 21 source files, 70 Python
 tests, configured Streamlit AppTest with 35 dataframes and zero exceptions,
 replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
 secret scan, shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Rollout
-evidence will be recorded after merge.
+evidence will be recorded after merge. Implementation is proposed in
+[PR #103](https://github.com/AegisFintech/scalping-bot/pull/103).
