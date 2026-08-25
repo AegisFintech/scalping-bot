@@ -188,7 +188,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-043 | complete    | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
 | ISSUE-044 | complete    | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
 | ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
-| ISSUE-046 | in progress | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
+| ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1403,11 +1403,10 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
 - Dependencies: [issue #102](https://github.com/AegisFintech/scalping-bot/issues/102),
   the typed market quote API, cTrader position-unrealized-P/L response, durable
   fill commission, ISSUE-045 lifecycle projection, and Streamlit fragments.
-- Current status: implementation is in progress on
-  `issue-046-live-position-monitor` through
-  [PR #103](https://github.com/AegisFintech/scalping-bot/pull/103). The monitor
-  is display-only and cannot alter cycle eligibility, risk, sizing, orders,
-  positions, or reconciliation.
+- Current status: implemented on `issue-046-live-position-monitor` and merged
+  in [PR #103](https://github.com/AegisFintech/scalping-bot/pull/103). The
+  monitor is display-only and cannot alter cycle eligibility, risk, sizing,
+  orders, positions, or reconciliation.
   Open commission means persisted charges received so far; final realized P/L
   and fees remain authoritative only after the exact closing deal is durable.
   Implementation and pre-merge gates pass: Prettier, ESLint, TypeScript
@@ -1416,8 +1415,23 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   format/lint, strict mypy over 21 source files, 70 Python tests, configured
   Streamlit AppTest with 35 dataframes and zero exceptions, replay/backtest
   smoke tests, zero-vulnerability npm/pip audits, tracked-file secret scan,
-  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Merge and controlled
-  rollout remain pending.
+  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). Before rollout, new
+  analyses were paused while an existing SELL demo position finished its
+  broker-generated close; the terminal SHORT recorded demo P/L `-3.0700000000`
+  and fees `-0.2800000000`. PostgreSQL then proved zero active groups, orders,
+  positions, and unresolved execution events. The mode-`0600` local campaign
+  baseline advanced from 6 to the reviewed 10 completed analyses. All five PM2
+  services loaded `.22`; the first execution start raced market-data readiness,
+  then PM2's configured retry started cleanly. All health endpoints passed,
+  startup was certain with only `ANALYSES_PAUSED`, the new monitor returned
+  exact `NONE`, and configured AppTest rendered 35 dataframes/23 metrics with
+  zero exceptions. Releasing the pause restored automatic analysis and demo
+  trading with no reasons. The next automatic external-AI response advanced
+  the campaign to `11 / 100` and ended `BUY_ENTRY_TOO_CLOSE` without an order;
+  the following broker minute rejected `SPREAD_POINTS_EXCEEDED` before
+  inference. The scheduler remains automatic. ISSUE-046 is complete.
+  Rollout evidence is proposed in
+  [PR #104](https://github.com/AegisFintech/scalping-bot/pull/104).
 
 ## Acceptance criteria
 
