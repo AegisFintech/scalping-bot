@@ -63,6 +63,11 @@ broker synchronization can force a refresh, concurrent timer/reconnect calls
 share one attempt, and a thrown broker/history operation becomes a stable
 fail-closed reason. Existing recovery tests prove an exact reconstructed SL/TP
 deal closes a disappeared position while missing closing-order evidence blocks.
+Recorder tests prove a new certain terminal proof clears only failures that
+precede its checkpoint, while a repeated proof, an uncertain recovery, and a
+later callback remain fail closed. Isolated PostgreSQL tests retain the
+conflicting event payload, link its resolution to the later terminal SL/TP
+event, and refuse to resolve a different trade-outcome conflict.
 
 Hybrid-analysis tests render the exact accepted completed-candle/EMA/ATR input
 twice and require byte-identical PNG/hash output, reject forming candles without

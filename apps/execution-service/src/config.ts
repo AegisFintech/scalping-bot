@@ -21,6 +21,7 @@ export interface ExecutionConfig {
   readonly pauseNewAnalyses: boolean;
   readonly automaticAnalysisEnabled: boolean;
   readonly automaticAnalysisCompletedLimit: number;
+  readonly automaticAnalysisCompletedBaseline: number;
   readonly automaticAnalysisStartWindowSeconds: number;
   readonly symbol: string;
   readonly accountKey: string;
@@ -125,6 +126,28 @@ export function loadExecutionConfig(
     if (maxPositionNotional === null)
       throw new Error("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
   }
+  const automaticAnalysisCompletedLimit = integerValue(
+    environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,
+    0,
+    "AUTOMATIC_ANALYSIS_COMPLETED_LIMIT",
+  );
+  const automaticAnalysisCompletedBaseline = integerValue(
+    environment.AUTOMATIC_ANALYSIS_COMPLETED_BASELINE,
+    0,
+    "AUTOMATIC_ANALYSIS_COMPLETED_BASELINE",
+  );
+  if (automaticAnalysisCompletedLimit > 10_000)
+    throw new Error(
+      "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_LIMIT",
+    );
+  if (
+    automaticAnalysisCompletedBaseline > automaticAnalysisCompletedLimit ||
+    automaticAnalysisCompletedBaseline > 10_000
+  ) {
+    throw new Error(
+      "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_BASELINE",
+    );
+  }
   return {
     appEnv: environment.APP_ENV ?? "development",
     instanceId: environment.INSTANCE_ID ?? "local-1",
@@ -158,19 +181,8 @@ export function loadExecutionConfig(
       false,
       "AUTOMATIC_ANALYSIS_ENABLED",
     ),
-    automaticAnalysisCompletedLimit: (() => {
-      const value = integerValue(
-        environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,
-        0,
-        "AUTOMATIC_ANALYSIS_COMPLETED_LIMIT",
-      );
-      if (value > 10_000) {
-        throw new Error(
-          "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_LIMIT",
-        );
-      }
-      return value;
-    })(),
+    automaticAnalysisCompletedLimit,
+    automaticAnalysisCompletedBaseline,
     automaticAnalysisStartWindowSeconds: (() => {
       const value = integerValue(
         environment.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS,
@@ -243,6 +255,8 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         maxPositionNotional: config.maxPositionNotional,
         automaticAnalysisEnabled: config.automaticAnalysisEnabled,
         automaticAnalysisCompletedLimit: config.automaticAnalysisCompletedLimit,
+        automaticAnalysisCompletedBaseline:
+          config.automaticAnalysisCompletedBaseline,
         automaticAnalysisStartWindowSeconds:
           config.automaticAnalysisStartWindowSeconds,
       }),

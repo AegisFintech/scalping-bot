@@ -155,6 +155,13 @@ with tabs[0]:
         campaign_columns[3].metric(
             "Campaign state", "COMPLETE" if campaign.get("complete") is True else "RUNNING"
         )
+        campaign_baseline = campaign.get("baseline")
+        campaign_release_completed = campaign.get("releaseCompleted")
+        if isinstance(campaign_baseline, int) and campaign_baseline > 0:
+            st.caption(
+                f"Reviewed carry-forward: {campaign_baseline} completed before this bug-fix "
+                f"release; {campaign_release_completed} completed by the current release."
+            )
         campaign_limit = campaign.get("limit")
         campaign_completed = campaign.get("completed")
         if (
@@ -168,7 +175,7 @@ with tabs[0]:
                 bounded_completed / campaign_limit,
                 text=f"{bounded_completed} of {campaign_limit} completed AI analyses",
             )
-    st.subheader("What automation is doing now")
+    st.subheader(f"SYSTEM STATUS: {automation_view['state']}")
     state_message = f"{automation_view['headline']} — {automation_view['detail']}"
     if automation_view["severity"] == "error":
         st.error(state_message)
@@ -178,6 +185,7 @@ with tabs[0]:
         st.success(state_message)
     else:
         st.info(state_message)
+    st.markdown(f"**What you need to do:** {automation_view['operator_action']}")
     retry_at = automation_view.get("retry_at")
     if isinstance(retry_at, str):
         retry_time = datetime.fromisoformat(retry_at.replace("Z", "+00:00"))
@@ -190,6 +198,67 @@ with tabs[0]:
     if automation_view["reasons"]:
         st.subheader("Why a new cycle or order is waiting")
         st.dataframe(pd.DataFrame(automation_view["reasons"]), width="stretch", hide_index=True)
+
+    st.subheader("Current broker setup")
+    managed_setup = status.get("managedSetup")
+    if not isinstance(managed_setup, dict) or managed_setup.get("status") == "UNAVAILABLE":
+        st.error(
+            "Managed setup status is unavailable. Use Orders & Positions and the execution "
+            "journal; do not assume there are no orders."
+        )
+    elif managed_setup.get("status") == "NONE":
+        st.info("No managed demo order group has been created for this account and symbol.")
+    else:
+        setup_status = str(managed_setup.get("status", "UNAVAILABLE"))
+        group_state = str(managed_setup.get("groupState", "unknown"))
+        if setup_status == "ACTIVE":
+            st.warning(f"ACTIVE MANAGED SETUP — group state: {group_state}")
+        else:
+            st.info(
+                f"NO ACTIVE MANAGED SETUP — latest terminal group state: {group_state}. "
+                "The levels below are history, not working broker orders."
+            )
+        st.caption(
+            f"Group expires: {managed_setup.get('groupExpiresAt', 'unknown')} · "
+            f"last updated: {managed_setup.get('groupUpdatedAt', 'unknown')}"
+        )
+        setup_rows: list[dict[str, object]] = []
+        managed_orders = managed_setup.get("orders", [])
+        if isinstance(managed_orders, list):
+            for order in managed_orders:
+                if isinstance(order, dict):
+                    setup_rows.append(
+                        {
+                            "record": "ORDER",
+                            "side": order.get("side"),
+                            "state": order.get("state"),
+                            "entry": order.get("entryPrice"),
+                            "stop_loss": order.get("stopLoss"),
+                            "take_profit": order.get("takeProfit"),
+                            "volume": order.get("volume"),
+                            "expires_at": order.get("expiresAt"),
+                            "updated_at": order.get("updatedAt"),
+                        }
+                    )
+        managed_position = managed_setup.get("position")
+        if isinstance(managed_position, dict):
+            setup_rows.append(
+                {
+                    "record": "POSITION",
+                    "side": managed_position.get("side"),
+                    "state": managed_position.get("state"),
+                    "entry": managed_position.get("entryPrice"),
+                    "stop_loss": managed_position.get("stopLoss"),
+                    "take_profit": managed_position.get("takeProfit"),
+                    "volume": managed_position.get("volume"),
+                    "expires_at": None,
+                    "updated_at": managed_position.get("updatedAt"),
+                }
+            )
+        if setup_rows:
+            st.dataframe(pd.DataFrame(setup_rows), width="stretch", hide_index=True)
+        else:
+            st.warning("The selected managed group contains no strategy-owned order records.")
 
     last_cycle = status.get("lastCycle")
     if isinstance(last_cycle, dict):

@@ -3,6 +3,8 @@ import type pg from "pg";
 export interface AutomaticAnalysisCampaignProgress {
   readonly enabled: boolean;
   readonly limit: number | null;
+  readonly baseline: number;
+  readonly releaseCompleted: number;
   readonly completed: number;
   readonly remaining: number | null;
   readonly complete: boolean;
@@ -11,18 +13,25 @@ export interface AutomaticAnalysisCampaignProgress {
 }
 
 export function evaluateAutomaticAnalysisCampaign(
-  completed: number,
+  releaseCompleted: number,
   configuredLimit: number,
+  completedBaseline = 0,
 ): AutomaticAnalysisCampaignProgress {
   if (
-    !Number.isSafeInteger(completed) ||
-    completed < 0 ||
+    !Number.isSafeInteger(releaseCompleted) ||
+    releaseCompleted < 0 ||
     !Number.isSafeInteger(configuredLimit) ||
-    configuredLimit < 0
+    configuredLimit < 0 ||
+    !Number.isSafeInteger(completedBaseline) ||
+    completedBaseline < 0 ||
+    completedBaseline > configuredLimit ||
+    !Number.isSafeInteger(releaseCompleted + completedBaseline)
   ) {
     return {
       enabled: configuredLimit > 0,
       limit: configuredLimit > 0 ? configuredLimit : null,
+      baseline: 0,
+      releaseCompleted: 0,
       completed: 0,
       remaining: null,
       complete: false,
@@ -34,18 +43,23 @@ export function evaluateAutomaticAnalysisCampaign(
     return {
       enabled: false,
       limit: null,
-      completed,
+      baseline: 0,
+      releaseCompleted,
+      completed: releaseCompleted,
       remaining: null,
       complete: false,
       allowed: true,
       reasonCodes: [],
     };
   }
+  const completed = completedBaseline + releaseCompleted;
   const remaining = Math.max(0, configuredLimit - completed);
   const complete = remaining === 0;
   return {
     enabled: true,
     limit: configuredLimit,
+    baseline: completedBaseline,
+    releaseCompleted,
     completed,
     remaining,
     complete,
@@ -60,6 +74,7 @@ export class PostgresAutomaticAnalysisCampaign {
   readonly #symbolId: string;
   readonly #strategyVersionId: string;
   readonly #configuredLimit: number;
+  readonly #completedBaseline: number;
 
   constructor(input: {
     readonly pool: pg.Pool;
@@ -67,12 +82,14 @@ export class PostgresAutomaticAnalysisCampaign {
     readonly symbolId: string;
     readonly strategyVersionId: string;
     readonly configuredLimit: number;
+    readonly completedBaseline?: number;
   }) {
     this.#pool = input.pool;
     this.#accountId = input.accountId;
     this.#symbolId = input.symbolId;
     this.#strategyVersionId = input.strategyVersionId;
     this.#configuredLimit = input.configuredLimit;
+    this.#completedBaseline = input.completedBaseline ?? 0;
   }
 
   async progress(): Promise<AutomaticAnalysisCampaignProgress> {
@@ -98,6 +115,7 @@ export class PostgresAutomaticAnalysisCampaign {
       const progress = evaluateAutomaticAnalysisCampaign(
         completed,
         this.#configuredLimit,
+        this.#completedBaseline,
       );
       if (!progress.allowed && !progress.complete) {
         throw new Error(

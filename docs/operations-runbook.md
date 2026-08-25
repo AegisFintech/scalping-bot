@@ -150,6 +150,21 @@ normal expiry, callback, TP/SL, and reconciliation handling. Start another
 campaign only with a reviewed new release/config hash so the prior count cannot
 be silently reset.
 
+`AUTOMATIC_ANALYSIS_COMPLETED_BASELINE` defaults to zero. Use a non-zero value
+only for an audited bug-fix release that must continue an existing campaign:
+first pause analysis, query and record the prior release's durable completed
+count, set that exact count as the baseline, register a new immutable release,
+and verify Overview shows the baseline separately from the new release count.
+The baseline cannot exceed the configured limit. It does not create model
+responses or relax any independent order, risk, reconciliation, or safety gate.
+
+Overview obtains the current/latest managed setup from the execution service's
+exact configured account and symbol scope without displaying account IDs. It
+labels whether the rows are active or terminal history and shows order/position
+side, state, entry, SL, TP, volume, expiry, and update time. `UNAVAILABLE` is not
+an empty state: inspect Orders & Positions and the execution journal and do not
+assume there is no broker exposure.
+
 `MAX_ORDERS_PER_DAY` currently counts created OCO order groups, not individual
 BUY/SELL legs. Size that independent daily ceiling for the campaign plus any
 groups already created in the configured trading day. It remains a separate

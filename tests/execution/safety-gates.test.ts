@@ -63,6 +63,7 @@ describe("execution safety gates", () => {
       emergencyStop: true,
       automaticAnalysisEnabled: false,
       automaticAnalysisCompletedLimit: 0,
+      automaticAnalysisCompletedBaseline: 0,
       automaticAnalysisStartWindowSeconds: 10,
     });
   });
@@ -83,6 +84,28 @@ describe("execution safety gates", () => {
       expect(() =>
         loadExecutionConfig({ AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: value }),
       ).toThrow("CONFIG_INTEGER_INVALID:AUTOMATIC_ANALYSIS_COMPLETED_LIMIT");
+    }
+    expect(
+      loadExecutionConfig({
+        AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "100",
+        AUTOMATIC_ANALYSIS_COMPLETED_BASELINE: "4",
+      }).automaticAnalysisCompletedBaseline,
+    ).toBe(4);
+    expect(() =>
+      loadExecutionConfig({
+        AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "100",
+        AUTOMATIC_ANALYSIS_COMPLETED_BASELINE: "101",
+      }),
+    ).toThrow(
+      "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_BASELINE",
+    );
+    for (const value of ["-1", "1.5"]) {
+      expect(() =>
+        loadExecutionConfig({
+          AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "100",
+          AUTOMATIC_ANALYSIS_COMPLETED_BASELINE: value,
+        }),
+      ).toThrow("CONFIG_INTEGER_INVALID:AUTOMATIC_ANALYSIS_COMPLETED_BASELINE");
     }
   });
 

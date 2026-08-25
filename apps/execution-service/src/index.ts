@@ -58,6 +58,10 @@ import { PostgresDemoExecutionStore } from "./demo-execution-store.js";
 import { DailyRiskStore, tradingDayStart } from "./daily-risk-store.js";
 import { DisabledLiveGateway } from "./live-compatible-gateway.js";
 import {
+  PostgresManagedSetupOverview,
+  UNAVAILABLE_MANAGED_SETUP,
+} from "./managed-setup-overview.js";
+import {
   OcoRiskEvaluator,
   type MarginEstimator,
 } from "./oco-risk-evaluator.js";
@@ -404,6 +408,13 @@ async function main(): Promise<void> {
     symbolId: identity.symbolId,
     strategyVersionId: identity.strategyVersionId,
     configuredLimit: config.automaticAnalysisCompletedLimit,
+    completedBaseline: config.automaticAnalysisCompletedBaseline,
+  });
+  const managedSetupOverview = new PostgresManagedSetupOverview({
+    pool,
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+    mode: config.tradingMode,
   });
   const demoExecutionStore =
     brokerClient !== null && config.tradingMode === "demo"
@@ -448,7 +459,13 @@ async function main(): Promise<void> {
     if (brokerClient === null || demoExecutionStore === null)
       return { certain: true, reasonCodes: [] };
     try {
-      return await recoverDemoExecutions({
+      const recorderBeforeRecovery =
+        demoExecutionRecorder === null
+          ? { certain: true, reasonCodes: [] as readonly string[] }
+          : await demoExecutionRecorder.flush();
+      latestDemoExecutionReasonCodes = recorderBeforeRecovery.reasonCodes;
+      const failureCheckpoint = demoExecutionRecorder?.failureCheckpoint() ?? 0;
+      const recovered = await recoverDemoExecutions({
         pool,
         accountId: identity.accountId,
         symbolId: identity.symbolId,
@@ -456,6 +473,48 @@ async function main(): Promise<void> {
         store: demoExecutionStore,
         normalizer: { symbolId: executionSymbolId },
       });
+      const terminal = await demoExecutionStore.reconcileTerminalEvidence();
+      const recoveryReasons = recovered.reasonCodes.filter(
+        (reason) =>
+          terminal.resolvedEventCount === 0 ||
+          reason !== "DEMO_BROKER_EVENT_KEY_CONFLICT",
+      );
+      const recoveredCertain =
+        recovered.certain ||
+        (recovered.reasonCodes.length > 0 && recoveryReasons.length === 0);
+      const result = {
+        certain: recoveredCertain && terminal.certain,
+        reasonCodes: [
+          ...new Set([...recoveryReasons, ...terminal.reasonCodes]),
+        ].sort(),
+      };
+      if (
+        demoExecutionRecorder !== null &&
+        terminal.terminalProofKey !== null
+      ) {
+        demoExecutionRecorder.acknowledgeCertainTerminalRecovery(
+          failureCheckpoint,
+          terminal.terminalProofKey,
+          result,
+        );
+        const recorderState = await demoExecutionRecorder.flush();
+        latestDemoExecutionReasonCodes = recorderState.reasonCodes;
+        return {
+          certain: result.certain && recorderState.certain,
+          reasonCodes: [
+            ...new Set([...result.reasonCodes, ...recorderState.reasonCodes]),
+          ].sort(),
+        };
+      }
+      return {
+        certain: result.certain && recorderBeforeRecovery.certain,
+        reasonCodes: [
+          ...new Set([
+            ...result.reasonCodes,
+            ...recorderBeforeRecovery.reasonCodes,
+          ]),
+        ].sort(),
+      };
     } catch (error) {
       return {
         certain: false,
@@ -868,6 +927,9 @@ async function main(): Promise<void> {
     config.tradingMode !== "live" && demoRecoveryState.certain;
   const status = async (): Promise<ExecutionStatus> => {
     const current = await safety();
+    const managedSetup = await managedSetupOverview
+      .read()
+      .catch(() => UNAVAILABLE_MANAGED_SETUP);
     const campaign = await automaticAnalysisCampaign
       .progress()
       .catch((error) => ({
@@ -876,6 +938,8 @@ async function main(): Promise<void> {
           config.automaticAnalysisCompletedLimit > 0
             ? config.automaticAnalysisCompletedLimit
             : null,
+        baseline: config.automaticAnalysisCompletedBaseline,
+        releaseCompleted: null,
         completed: null,
         remaining: null,
         complete: false,
@@ -917,11 +981,14 @@ async function main(): Promise<void> {
       automaticAnalysisCampaign: {
         enabled: campaign.enabled,
         limit: campaign.limit,
+        baseline: campaign.baseline,
+        releaseCompleted: campaign.releaseCompleted,
         completed: campaign.completed,
         remaining: campaign.remaining,
         complete: campaign.complete,
         reasonCodes: campaign.reasonCodes,
       },
+      managedSetup,
       aiCircuitOpenUntil: model.circuitOpenUntil,
       tradingEnabled:
         eligibility.allowed &&
