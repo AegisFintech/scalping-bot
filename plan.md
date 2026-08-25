@@ -178,6 +178,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-033 | complete    | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
 | ISSUE-034 | complete    | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)         | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
 | ISSUE-035 | in progress | [Refresh and revalidate market immediately before demo intent](https://github.com/AegisFintech/scalping-bot/issues/74)          | Final market/account refresh; repeat spread/semantics; preserve freshness without raising limits              |
+| ISSUE-036 | in progress | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)  | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -998,6 +999,32 @@ never justify empty, noisy, unsafe, or misleading commits.
   dataframes, replay/backtest, zero-vulnerability npm/pip audits, tracked-file
   secret scan, shell/PM2 syntax, and all five offline systemd parses at 2.8
   (`OK`). Merge and supervised rollout evidence remain.
+
+### ISSUE-036 delivery details
+
+- Acceptance criteria: retain deterministic analytics over 600 M1, 500 M5, and
+  300 M15 completed candles; reduce only duplicated compact endpoint raw tails
+  to 60/36/24; preserve every computed feature and execution constraint; reject
+  non-positive, fractional, or history-exceeding overrides at startup; and
+  measure the deployed request size/latency before resuming continuous demo.
+- Dependencies: [issue #76](https://github.com/AegisFintech/scalping-bot/issues/76),
+  ISSUE-035 release `.13`, compact payload mode, and the typed analytics
+  contract.
+- Current status: implementation is in progress on
+  `issue-036-compact-payload-tails`. Automatic analyses are paused after the
+  measured `.13` request used 70,953 serialized bytes, of which roughly 61 KB
+  was the 180/100/50 raw candle tails, and a subsequent endpoint call exceeded
+  the 60-second budget. Applying 60/36/24 to that same durable payload estimates
+  31,687 bytes, a 55.3% reduction. Release `.14`, bounded startup configuration,
+  tests, and documentation are implemented. Pre-merge gates pass: Prettier,
+  ESLint, TypeScript typecheck/build, 179 Node tests across 31 files, 13 schema
+  tests, 3 migration tests, all 3 configured isolated-PostgreSQL integration
+  tests, Ruff format/lint, strict mypy over 16 Python source files, 51 Python
+  tests, configured Streamlit AppTest with zero exceptions and 31 dataframes,
+  replay/backtest, zero-vulnerability npm/pip audits, tracked-file secret scan,
+  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). No
+  analytics, freshness, risk, reconciliation, or execution gate is reduced;
+  merge and supervised request-size/latency evidence remain.
 
 ## Acceptance criteria
 

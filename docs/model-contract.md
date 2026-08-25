@@ -103,7 +103,14 @@ account money, risk budget, broker volume, account IDs, and execution authority.
 
 `full` contains configured completed candle histories for all timeframes with timestamps, OHLCV, ATR(15) Wilder, EMA(5/19) close, enabled indicators, and quality flags.
 
-`compact` contains configured raw tails plus latest/sloped indicators, returns, normalized ATR, rolling/session/previous-session ranges, pivots without look-ahead, VWAP distances, EMA alignment, realized volatility, volume stats, spread, depth imbalance/concentrations/changes, setup/session aggregates, drawdown/loss context, and every relevant timestamp.
+`compact` contains configured raw tails plus latest/sloped indicators, returns,
+normalized ATR, rolling/session/previous-session ranges, pivots without
+look-ahead, VWAP distances, EMA alignment, realized volatility, volume stats,
+spread, depth imbalance/concentrations/changes, setup/session aggregates,
+drawdown/loss context, and every relevant timestamp. The defaults retain the
+newest 60 M1, 36 M5, and 24 M15 completed raw candles. Deterministic analytics
+still computes all features from the full configured 600/500/300 histories;
+only duplicated raw arrays crossing the paid model boundary are shortened.
 
 Payloads are redacted and size-bounded before transport. The exact non-secret
 versioned system prompt and its SHA-256 are persisted for each new request. The
