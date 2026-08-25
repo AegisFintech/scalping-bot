@@ -1745,3 +1745,6 @@ and 15 tabs with zero exceptions. After unpause, the first `.24` automatic
 cycle recorded one completed external request/response, reached `ACCEPTED`,
 advanced the campaign to 43/100, and placed both pending demo stops. No AI
 cooldown was active.
+
+Rollout evidence is reviewed in
+[PR #113](https://github.com/AegisFintech/scalping-bot/pull/113).

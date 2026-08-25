@@ -1529,6 +1529,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   unpause, its first automatic cycle durably recorded one AI request and
   response, reached `ACCEPTED`, advanced the campaign to `43/100`, and placed
   both pending demo stops. The execution caller remained out of cooldown.
+  Rollout evidence is reviewed in
+  [PR #113](https://github.com/AegisFintech/scalping-bot/pull/113).
 
 ## Acceptance criteria
 
