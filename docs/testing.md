@@ -138,6 +138,10 @@ behavior. A configured pre-deployment Streamlit AppTest rendered 35 dataframes
 with zero exceptions; its Overview caption showed `25 Aug 2026, 13:37:03
 GMT+8`, and all 4,985 populated timestamp-table cells ended in `GMT+8` or used
 the explicit missing/invalid marker. Source database/API values were unchanged.
+After PR #97 merged, only Streamlit restarted and execution PID `2522098`
+remained unchanged. Dashboard health and the same configured AppTest passed;
+the deployed Overview caption and all 4,985 checked timestamp cells retained
+the standardized GMT+8 display.
 
 On 2026-08-25, ISSUE-041 passed Prettier, ESLint, TypeScript typecheck/build,
 198 Node tests across 34 files, 14 schema tests, 3 static migration tests, and
