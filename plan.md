@@ -186,6 +186,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-041 | complete    | [Run a bounded 100-completed-analysis demo campaign](https://github.com/AegisFintech/scalping-bot/issues/88)                      | Durable scoped counter; dashboard progress; audited automatic pause at the boundary                           |
 | ISSUE-042 | complete    | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
 | ISSUE-043 | complete    | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
+| ISSUE-044 | in progress | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1308,6 +1309,31 @@ never justify empty, noisy, unsafe, or misleading commits.
   already advanced to `6 / 100` and placed a new two-leg pending OCO, whose
   exact entry, SL, TP, expiry, and state are visible on Overview. ISSUE-043 is
   complete.
+
+### ISSUE-044 delivery details
+
+- Acceptance criteria: render Overview group expiry/update timestamps,
+  automatic retry timing, analysis and audit selectors, and every displayed
+  table timestamp as `DD Mon YYYY, HH:MM:SS GMT+8`; treat naive database
+  datetimes as UTC; display invalid values as unavailable; leave PostgreSQL,
+  API contracts, Plotly time axes, and exact persisted AI/audit JSON unchanged;
+  cover aware, naive, missing, invalid, and dataframe-column paths; and restart
+  only Streamlit after all required gates pass.
+- Dependencies: [issue #96](https://github.com/AegisFintech/scalping-bot/issues/96),
+  ISSUE-043, the current Streamlit status projection, and Python `zoneinfo`.
+- Current status: implementation is in progress on
+  `issue-044-gmt8-dashboard-time` through
+  [PR #97](https://github.com/AegisFintech/scalping-bot/pull/97). The shared
+  display conversion, complete dataframe routing, selectors, captions, docs,
+  and tests are implemented. Pre-merge gates pass: Prettier, ESLint, TypeScript
+  typecheck/build, 204 Node tests across 35 files, 14 schema tests, 3 migration
+  tests, all 3 configured PostgreSQL integration tests, Ruff format/lint,
+  strict mypy over 21 source files, 60 Python tests, configured Streamlit
+  AppTest with 35 dataframes and zero exceptions, replay/backtest smoke tests,
+  zero-vulnerability npm/pip audits, secret/shell/PM2 checks, and five systemd
+  parses at 2.8 (`OK`). AppTest checked 4,985 rendered timestamp cells. The
+  active demo OCO and execution service remain untouched; dashboard-only
+  deployment awaits merge.
 
 ## Acceptance criteria
 

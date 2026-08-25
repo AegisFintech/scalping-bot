@@ -132,6 +132,13 @@ PID `2522098` remained unchanged. Dashboard health and AppTest passed. The
 unchanged automatic loop advanced to `6 / 100`, placed a new pending demo OCO,
 and Overview rendered both exact legs under `ACTIVE MANAGED SETUP`.
 
+ISSUE-044 timestamp tests cover UTC-aware, explicit GMT+8, naive database,
+missing, malformed, numeric, timestamp-column selection, and display-copy
+behavior. A configured pre-deployment Streamlit AppTest rendered 35 dataframes
+with zero exceptions; its Overview caption showed `25 Aug 2026, 13:37:03
+GMT+8`, and all 4,985 populated timestamp-table cells ended in `GMT+8` or used
+the explicit missing/invalid marker. Source database/API values were unchanged.
+
 On 2026-08-25, ISSUE-041 passed Prettier, ESLint, TypeScript typecheck/build,
 198 Node tests across 34 files, 14 schema tests, 3 static migration tests, and
 all 3 configured isolated-PostgreSQL integration tests. Ruff format/lint,

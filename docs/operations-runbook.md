@@ -165,6 +165,13 @@ side, state, entry, SL, TP, volume, expiry, and update time. `UNAVAILABLE` is no
 an empty state: inspect Orders & Positions and the execution journal and do not
 assume there is no broker exposure.
 
+Streamlit renders operator-facing timestamps in Asia/Singapore as
+`DD Mon YYYY, HH:MM:SS GMT+8`. This conversion applies only to captions,
+selectors, and displayed table copies. PostgreSQL values, API contracts,
+Plotly inputs, and hash-verified exact AI/audit JSON retain their original UTC
+or offset-aware representation. A missing display time is `—`; a malformed
+value is `Unavailable` rather than an inferred timestamp.
+
 `MAX_ORDERS_PER_DAY` currently counts created OCO order groups, not individual
 BUY/SELL legs. Size that independent daily ceiling for the campaign plus any
 groups already created in the configured trading day. It remains a separate

@@ -1435,3 +1435,31 @@ snapshot showed no position yet and two active pending orders: BUY entry
 explaining that automatic analysis waits while the broker manages those stops.
 All five PM2 services were online on `.20`. These are broker-demo results, not
 live-money or profitability evidence.
+
+## Human-readable GMT+8 dashboard timestamps
+
+ISSUE-044 is tracked by
+[issue #96](https://github.com/AegisFintech/scalping-bot/issues/96). Streamlit
+previously displayed a mix of raw UTC ISO values and ad hoc Singapore strings.
+The dashboard now has one display-only conversion layer using the IANA
+`Asia/Singapore` timezone and format `DD Mon YYYY, HH:MM:SS GMT+8`. It applies
+to Overview expiry/update and AI retry captions, analysis/audit selectors, and
+every timestamp column passed to a Streamlit dataframe. The duplicate SQL-side
+Singapore columns in automatic-cycle history were removed in favor of the same
+presentation layer.
+
+Naive database datetimes are explicitly treated as UTC. Missing values display
+as `—`, while malformed or unsupported values display as `Unavailable` rather
+than implying a valid time. PostgreSQL, service/API contracts, Plotly source
+frames, and exact persisted AI/audit JSON are not mutated. Focused tests pass,
+and a configured AppTest rendered 35 dataframes with zero exceptions. The
+Overview example changed from `2026-08-25T05:37:03.364Z` to `25 Aug 2026,
+13:37:03 GMT+8`; 4,985 timestamp-table cells were checked for the standardized
+display form. The active demo OCO and execution process were not changed.
+The full pre-merge gate suite passed: 204 Node tests across 35 files, 14 schema
+tests, 3 migration tests, all 3 configured PostgreSQL integration tests, strict
+formatting/lint/type checks, 60 Python tests across 21 source files, configured
+AppTest, replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+tracked-file secret scan, shell/PM2 checks, and five systemd parses at 2.8
+(`OK`). Implementation is proposed in
+[PR #97](https://github.com/AegisFintech/scalping-bot/pull/97).
