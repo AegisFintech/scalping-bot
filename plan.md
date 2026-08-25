@@ -178,9 +178,9 @@ evidence precede any broker-capable live implementation.
 | ISSUE-033 | complete    | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                  | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
 | ISSUE-034 | complete    | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)           | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
 | ISSUE-035 | complete    | [Refresh and revalidate market immediately before demo intent](https://github.com/AegisFintech/scalping-bot/issues/74)            | Final market/account refresh; repeat spread/semantics; preserve freshness without raising limits              |
-| ISSUE-036 | in progress | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)    | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
+| ISSUE-036 | complete    | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)    | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
 | ISSUE-037 | complete    | [Deduplicate repeated cTrader fill callbacks before strict normalization](https://github.com/AegisFintech/scalping-bot/issues/78) | Skip only certainly persisted duplicate deal IDs; keep new malformed deals fail-closed                        |
-| ISSUE-038 | in progress | [Recover missed cTrader terminal deals automatically without restart](https://github.com/AegisFintech/scalping-bot/issues/80)     | Throttled serialized history recovery; exact terminal evidence releases next cycle                            |
+| ISSUE-038 | complete    | [Recover missed cTrader terminal deals automatically without restart](https://github.com/AegisFintech/scalping-bot/issues/80)     | Throttled serialized history recovery; exact terminal evidence releases next cycle                            |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -764,7 +764,7 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #57](https://github.com/AegisFintech/scalping-bot/issues/57),
   the deployed `.5` broker evidence, migration `0006`, ISSUE-025 terminal
   release, and active database pause/emergency controls.
-- Current status: implementation is in progress on
+- Current status: implementation completed on
   `fix/issue-028-demo-callback-ordering` with candidate immutable identity
   `0.1.0-actionable-oco-auto-demo.6`. It changes callback ordering and readiness
   only; it adds no order authority and weakens no market, model, risk, cap,
@@ -1034,9 +1034,13 @@ never justify empty, noisy, unsafe, or misleading commits.
   PR [#77](https://github.com/AegisFintech/scalping-bot/pull/77) merged as
   `b909be75af526fcf3b017c5958800f0330abe5d6` and release `.14` deployed. The
   first deployed request still used explicit ignored-environment overrides of
-  180/100/50; those local overrides are now corrected to 60/36/24. Reload and
-  actual deployed request-size/latency evidence wait for the active demo
-  position to reach a terminal broker state.
+  180/100/50; those local overrides were corrected to 60/36/24 and loaded by
+  release `.15`. The unattended `.16` 10:56 Asia/Singapore cycle durably
+  recorded exactly 60/36/24 raw candles in a 34,714-byte redacted request,
+  versus 77,597 bytes for the comparable prior 180/100/50 request: 55.3%
+  smaller. Model-pending to model-completed audit timestamps measured 28.9
+  seconds. Full analytics remained 600/500/300; the response passed every
+  validation and placed both pending demo stops. ISSUE-036 is complete.
 
 ### ISSUE-037 delivery details
 
@@ -1082,7 +1086,7 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: [issue #80](https://github.com/AegisFintech/scalping-bot/issues/80),
   ISSUE-037 release `.15`, existing bounded startup recovery, the durable demo
   journal, and broker order/deal history.
-- Current status: implementation is in progress on
+- Current status: implementation completed on
   `issue-038-periodic-demo-recovery`. Release `.16` invokes the existing
   recovery before scheduler safety evaluation at a default 15-second cadence;
   reconnect can force the same serialized runner. Thrown recovery and invalid
@@ -1094,8 +1098,16 @@ never justify empty, noisy, unsafe, or misleading commits.
   format/lint, strict mypy over 19 Python source files, 51 Python tests,
   configured Streamlit AppTest with zero exceptions and 34 dataframes,
   replay/backtest, zero-vulnerability npm/pip audits, tracked-file secret scan,
-  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). Automatic
-  analysis remains durably paused pending merge and stopped-state rollout.
+  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). PR
+  [#81](https://github.com/AegisFintech/scalping-bot/pull/81) merged as
+  `087d6f451c70a5c5bce185828c2c385753ed4f0c`. Release `.16` deployed while
+  analyses were durably paused; startup checks passed with zero active local
+  groups/orders/positions and zero unresolved broker events. After the pause
+  was cleared, status reported demo automatic analysis and trading enabled with
+  no blocking reason. Minutes 10:48 through 10:55 were claimed automatically
+  and ended on explicit spread or transient market-snapshot gates. The 10:56
+  cycle reached the endpoint, passed validation, finished `ACCEPTED`, and
+  placed/mapped one pending BUY and one pending SELL. ISSUE-038 is complete.
 
 ## Acceptance criteria
 
