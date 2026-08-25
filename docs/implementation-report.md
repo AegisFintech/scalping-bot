@@ -1033,9 +1033,14 @@ and all five offline systemd security parses at 2.8 (`OK`) passed. PR
 [#77](https://github.com/AegisFintech/scalping-bot/pull/77) merged as
 `b909be75af526fcf3b017c5958800f0330abe5d6` and release `.14` deployed. The
 first deployed request retained explicit ignored-environment overrides of
-180/100/50; those local values are corrected to 60/36/24. Reload and actual
-request-size/latency evidence wait for the active demo position to become
-terminal so deployment does not interrupt its protection.
+180/100/50; those local values were corrected to 60/36/24 and loaded by release
+`.15`. The unattended `.16` cycle at 10:56 Asia/Singapore then durably recorded
+exactly 60 M1, 36 M5, and 24 M15 raw candles in a 34,714-byte redacted request,
+versus 77,597 bytes for the prior 180/100/50 request, a measured 55.3% reduction.
+Model-pending at 10:56:10.363 to model-completed at 10:56:39.238 measured 28.9
+seconds. The full 600/500/300 analytics histories and derived features remained;
+the response passed validation and placed both demo pending stops. ISSUE-036 is
+complete.
 
 ## ISSUE-037 repeated fill callback deduplication
 
@@ -1064,6 +1069,24 @@ strict mypy over 16 Python source files, and 51 Python tests passed. Configured
 Streamlit AppTest rendered 34 dataframes with zero exceptions. Replay/backtest,
 zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
 and all five offline systemd security parses at 2.8 (`OK`) passed.
+
+PR [#81](https://github.com/AegisFintech/scalping-bot/pull/81) merged as
+`087d6f451c70a5c5bce185828c2c385753ed4f0c`. Release `.16` deployed with the
+durable analysis pause active. Startup recovery and readiness passed with zero
+active local groups, orders, positions, or unresolved broker events. Clearing
+only that pause produced a healthy status: demo mode, automatic analysis on,
+trading enabled, and no blocking reasons.
+
+The scheduler then claimed every broker minute without operator cycles. Runs
+from 10:48 through 10:55 ended explicitly on live spread protection or a
+transient market-snapshot 503. The 10:56 run passed collection/analytics,
+persisted the compact external-AI request and response, repeated final market
+and account validation, finished `ACCEPTED`, and placed/mapped one pending BUY
+and one pending SELL in the demo OCO group. The running system therefore has
+the requested automatic state: while those orders or a resulting position are
+active it waits; after expiry or exact TP/SL closure, the 15-second recovery and
+next eligible broker-minute scheduler continue without an operator restart.
+ISSUE-038 is complete.
 
 PR [#79](https://github.com/AegisFintech/scalping-bot/pull/79) merged as
 `8fead83ed2b071653415d8d80abbb2e76fb7b041`. Broker reconciliation then showed
