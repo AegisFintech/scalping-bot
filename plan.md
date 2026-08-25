@@ -1430,6 +1430,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   the campaign to `11 / 100` and ended `BUY_ENTRY_TOO_CLOSE` without an order;
   the following broker minute rejected `SPREAD_POINTS_EXCEEDED` before
   inference. The scheduler remains automatic. ISSUE-046 is complete.
+  Rollout evidence is proposed in
+  [PR #104](https://github.com/AegisFintech/scalping-bot/pull/104).
 
 ## Acceptance criteria
 

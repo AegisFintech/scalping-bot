@@ -1599,3 +1599,5 @@ cTrader-normalization, SQL, HTTP-contract, and Streamlit failure-path tests and
 will appear automatically on the next certainly reconciled open position; no
 trade was forced for display verification. These are demo operational results,
 not profitability evidence. ISSUE-046 is complete.
+Rollout evidence is proposed in
+[PR #104](https://github.com/AegisFintech/scalping-bot/pull/104).
