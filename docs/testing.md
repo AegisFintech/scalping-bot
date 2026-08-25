@@ -128,6 +128,15 @@ cover invalid thresholds, sub-threshold HTTP 503s, the exact opening boundary,
 validated-response reset, non-transient HTTP rejection, timeout/transport,
 cooldown, and half-open recovery.
 
+The stopped `.24` rollout waited for the active `.23` setup to finish. Its BUY
+filled, the SELL peer cancelled, and the BUY closed to one trade with realized
+P/L `-3.14`, fees `-0.28`, and zero unresolved events. Release `.24` started
+with only `ANALYSES_PAUSED`, campaign baseline 42/100, and no AI cooldown.
+Execution readiness and Streamlit health returned HTTP 200; configured AppTest
+rendered 39 dataframes, 37 metrics, 15 tabs, and zero exceptions. After
+unpause, its first cycle persisted one completed model request/response, reached
+`ACCEPTED`, advanced the campaign to 43/100, and placed two pending demo stops.
+
 On 2026-08-25, ISSUE-048 passed Prettier, ESLint, TypeScript typecheck/build,
 226 Node tests across 38 files, 16 JSON Schema tests, 3 static migration tests,
 and all 3 configured isolated-PostgreSQL/HTTP integration tests through

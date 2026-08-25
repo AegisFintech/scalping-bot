@@ -191,7 +191,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
 | ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
 | ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
-| ISSUE-049 | in progress | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
+| ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1512,7 +1512,7 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
 - Dependencies: ISSUE-030 automatic circuit reset, ISSUE-040 caller timeout
   budget, ISSUE-041 bounded automatic campaign, and ISSUE-048 clean broker
   lifecycle recovery.
-- Current status: implementation is in progress on
+- Current status: implementation and deployment are complete on
   `issue-049-ai-circuit-threshold`, tracked by
   [issue #111](https://github.com/AegisFintech/scalping-bot/issues/111) and
   [PR #112](https://github.com/AegisFintech/scalping-bot/pull/112).
@@ -1520,7 +1520,17 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   tests across 38 files, 16 schema tests, 3 migration tests, all 3 configured
   integration tests, Ruff/mypy/75 Python tests, configured AppTest with zero
   exceptions, replay/backtest, zero-vulnerability dependency audits, tracked
-  secret scan, and shell/PM2/systemd checks.
+  secret scan, and shell/PM2/systemd checks. Deployment waited for the active
+  `.23` setup: its BUY filled, the SELL peer cancelled immediately, and the
+  position closed to one immutable trade with realized P/L `-3.14`, fees
+  `-0.28`, and zero unresolved execution events. Release `.24` then started
+  under the database pause with only `ANALYSES_PAUSED`, campaign baseline
+  `42/100`, a closed AI circuit, and clean dashboard/readiness checks. After
+  unpause, its first automatic cycle durably recorded one AI request and
+  response, reached `ACCEPTED`, advanced the campaign to `43/100`, and placed
+  both pending demo stops. The execution caller remained out of cooldown.
+  Rollout evidence is reviewed in
+  [PR #113](https://github.com/AegisFintech/scalping-bot/pull/113).
 
 ## Acceptance criteria
 
