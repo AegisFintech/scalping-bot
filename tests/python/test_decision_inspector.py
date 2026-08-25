@@ -13,6 +13,7 @@ from apps.dashboard.decision_inspector import (
     analysis_chart_view,
     analytics_summary,
     automation_status_view,
+    broker_lifecycle_view,
     exact_model_input_view,
     latest_ai_request_index,
     model_input_summary,
@@ -138,6 +139,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert conflict["title"] == "Two broker callbacks disagreed about the same event"
     assert "No manual clearing is required" in conflict["next_action"]
 
+    slippage = reason_code_view("DEMO_FILL_SLIPPAGE_EXCEEDED")
+    assert "exceeded the configured slippage" in slippage["title"]
+    assert "releases this event-specific block automatically" in slippage["next_action"]
+
     upside = reason_code_view("UPSIDE_TARGETS_INVALID")
     downside = reason_code_view("DOWNSIDE_TARGETS_INVALID")
     assert "above the buy entry" in upside["meaning"]
@@ -205,6 +210,124 @@ def test_automation_status_fails_closed_when_campaign_progress_is_unavailable() 
 
     assert view["state"] == "SAFETY_BLOCKED"
     assert view["reasons"][0]["code"] == ("AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE")
+
+
+def test_broker_lifecycle_explains_closed_trade_result_and_exact_block() -> None:
+    status = {
+        "automaticAnalysisEnabled": True,
+        "reasonCodes": ["RECONCILIATION_UNCERTAIN", "DEMO_FILL_SLIPPAGE_EXCEEDED"],
+        "managedSetup": {
+            "status": "LATEST_TERMINAL",
+            "groupState": "CLOSED",
+            "orders": [
+                {"side": "BUY", "state": "FILLED"},
+                {"side": "SELL", "state": "CANCELLED"},
+            ],
+            "position": {"side": "BUY", "state": "CLOSED"},
+            "trade": {
+                "direction": "LONG",
+                "realizedPnl": "-4.6500000000",
+                "fees": "-0.2800000000",
+            },
+        },
+    }
+
+    view = broker_lifecycle_view(status)
+
+    assert view["state"] == "SETUP_CLOSED"
+    assert view["headline"] == "BUY demo trade closed — no order or position is active"
+    assert "BUY order filled; SELL order cancelled" in view["detail"]
+    assert "realized P/L -4.65; fees -0.28" in view["detail"]
+    assert "fill exceeded the configured slippage" in view["next_action"]
+
+
+def test_broker_lifecycle_prioritizes_live_position_then_pending_orders() -> None:
+    base = {
+        "automaticAnalysisEnabled": True,
+        "reasonCodes": ["RELEVANT_POSITION_EXISTS"],
+        "managedSetup": {
+            "status": "ACTIVE",
+            "groupState": "POSITION_OPEN",
+            "orders": [
+                {"side": "BUY", "state": "FILLED"},
+                {"side": "SELL", "state": "CANCELLED"},
+            ],
+            "position": {"side": "BUY", "state": "OPEN"},
+            "trade": None,
+        },
+    }
+    open_trade = broker_lifecycle_view(base)
+    assert open_trade["state"] == "TRADE_ACTIVE"
+    assert open_trade["headline"] == "BUY demo trade is open"
+
+    base["managedSetup"] = {
+        "status": "ACTIVE",
+        "groupState": "ACTIVE",
+        "orders": [
+            {"side": "BUY", "state": "PENDING"},
+            {"side": "SELL", "state": "PENDING"},
+        ],
+        "position": None,
+        "trade": None,
+    }
+    pending = broker_lifecycle_view(base)
+    assert pending["state"] == "ORDERS_WAITING"
+    assert pending["headline"] == "2 demo stop orders are waiting at the broker"
+    assert pending["detail"] == "Active sides: BUY, SELL. No strategy position is currently open."
+
+
+def test_broker_lifecycle_idle_state_says_when_automation_runs_next() -> None:
+    view = broker_lifecycle_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "reasonCodes": [],
+            "managedSetup": {
+                "status": "NONE",
+                "groupState": None,
+                "orders": [],
+                "position": None,
+                "trade": None,
+            },
+        }
+    )
+
+    assert view["state"] == "IDLE"
+    assert view["headline"] == "No strategy order or trade is active"
+    assert view["next_action"] == (
+        "Automatic analysis will start at the next eligible broker M1 window."
+    )
+
+
+@pytest.mark.parametrize(
+    "managed_setup",
+    [
+        None,
+        {"status": "UNAVAILABLE"},
+        {"status": "ACTIVE", "orders": "invalid", "position": None},
+        {
+            "status": "LATEST_TERMINAL",
+            "groupState": "CLOSED",
+            "orders": [{"side": "BUY", "state": "PENDING"}],
+            "position": None,
+        },
+        {
+            "status": "LATEST_TERMINAL",
+            "groupState": "CLOSED",
+            "orders": [{"side": "BUY", "state": "MALFORMED"}],
+            "position": {"side": "BUY", "state": "CLOSED"},
+        },
+    ],
+)
+def test_broker_lifecycle_does_not_call_unknown_exposure_idle(
+    managed_setup: object,
+) -> None:
+    view = broker_lifecycle_view(
+        {"automaticAnalysisEnabled": True, "reasonCodes": [], "managedSetup": managed_setup}
+    )
+
+    assert view["state"] == "UNKNOWN"
+    assert view["severity"] == "error"
+    assert "exposure is unknown" in view["headline"]
 
 
 def test_analysis_selection_prefers_latest_durable_ai_request_with_safe_fallback() -> None:

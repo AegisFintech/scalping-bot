@@ -115,6 +115,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       const result = await client.query<{
         resolved_event_count: string;
         terminal_proof_hash: string | null;
+        terminal_order_group_id: string | null;
       }>(
         `WITH terminal_proofs AS MATERIALIZED (
            SELECT DISTINCT ON (terminal.order_group_id)
@@ -189,16 +190,26 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
          SELECT (SELECT count(*)::text FROM resolved) AS resolved_event_count,
                 (SELECT payload_hash FROM terminal_proofs
                  ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
-                   AS terminal_proof_hash`,
+                   AS terminal_proof_hash,
+                (SELECT order_group_id::text FROM terminal_proofs
+                 ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
+                   AS terminal_order_group_id`,
         [this.#options.accountId, this.#options.symbolId],
       );
       const resolvedText = result.rows[0]?.resolved_event_count;
       const terminalProofHash = result.rows[0]?.terminal_proof_hash ?? null;
+      const terminalOrderGroupId =
+        result.rows[0]?.terminal_order_group_id ?? null;
       if (
         resolvedText === undefined ||
         !/^(?:0|[1-9][0-9]*)$/.test(resolvedText) ||
         (terminalProofHash !== null &&
-          !/^[0-9a-f]{64}$/.test(terminalProofHash))
+          !/^[0-9a-f]{64}$/.test(terminalProofHash)) ||
+        (terminalOrderGroupId !== null &&
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
+            terminalOrderGroupId,
+          )) ||
+        (terminalProofHash === null) !== (terminalOrderGroupId === null)
       ) {
         throw new Error("DEMO_TERMINAL_EVIDENCE_RESULT_INVALID");
       }
@@ -208,6 +219,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         ...readiness,
         terminalProofKey:
           terminalProofHash === null ? null : `terminal:${terminalProofHash}`,
+        terminalOrderGroupId,
         resolvedEventCount: Number(resolvedText),
       };
     } catch (error) {

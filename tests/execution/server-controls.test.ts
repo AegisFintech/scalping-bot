@@ -44,6 +44,7 @@ function server(
           groupUpdatedAt: null,
           orders: [],
           position: null,
+          trade: null,
         },
         aiCircuitOpenUntil: null,
         tradingEnabled: false,

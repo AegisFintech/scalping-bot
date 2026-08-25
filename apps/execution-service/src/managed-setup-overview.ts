@@ -23,6 +23,14 @@ export interface ManagedPositionOverview {
   readonly updatedAt: string;
 }
 
+export interface ManagedTradeOverview {
+  readonly direction: "LONG" | "SHORT";
+  readonly realizedPnl: string;
+  readonly fees: string;
+  readonly openedAt: string;
+  readonly closedAt: string;
+}
+
 export interface ManagedSetupOverview {
   readonly status: "ACTIVE" | "LATEST_TERMINAL" | "NONE" | "UNAVAILABLE";
   readonly groupState: string | null;
@@ -30,6 +38,7 @@ export interface ManagedSetupOverview {
   readonly groupUpdatedAt: string | null;
   readonly orders: readonly ManagedOrderOverview[];
   readonly position: ManagedPositionOverview | null;
+  readonly trade: ManagedTradeOverview | null;
 }
 
 interface GroupRow {
@@ -60,6 +69,14 @@ interface PositionRow {
   readonly opened_at: Date | null;
   readonly closed_at: Date | null;
   readonly updated_at: Date;
+}
+
+interface TradeRow {
+  readonly direction: "LONG" | "SHORT";
+  readonly realized_pnl: string;
+  readonly fees: string;
+  readonly opened_at: Date;
+  readonly closed_at: Date;
 }
 
 const TERMINAL_GROUP_STATES = new Set(["CLOSED", "EXPIRED", "FAILED"]);
@@ -120,6 +137,7 @@ export class PostgresManagedSetupOverview {
           groupUpdatedAt: null,
           orders: [],
           position: null,
+          trade: null,
         };
       }
       const orders = await client.query<OrderRow>(
@@ -144,7 +162,31 @@ export class PostgresManagedSetupOverview {
       );
       if (positions.rows.length > 1)
         throw new Error("MANAGED_SETUP_POSITION_AMBIGUOUS");
+      const trades = await client.query<TradeRow>(
+        `SELECT direction, realized_pnl::text, fees::text, opened_at, closed_at
+         FROM trades
+         WHERE order_group_id = $1
+         ORDER BY closed_at DESC
+         LIMIT 2`,
+        [group.id],
+      );
+      if (trades.rows.length > 1)
+        throw new Error("MANAGED_SETUP_TRADE_AMBIGUOUS");
       const position = positions.rows[0];
+      const trade = trades.rows[0];
+      if (
+        (group.state === "CLOSED" &&
+          (position === undefined ||
+            position.state !== "CLOSED" ||
+            trade === undefined)) ||
+        (group.state !== "CLOSED" && trade !== undefined) ||
+        (trade !== undefined &&
+          position !== undefined &&
+          ((trade.direction === "LONG" && position.side !== "BUY") ||
+            (trade.direction === "SHORT" && position.side !== "SELL")))
+      ) {
+        throw new Error("MANAGED_SETUP_TRADE_STATE_INVALID");
+      }
       const overview: ManagedSetupOverview = {
         status: TERMINAL_GROUP_STATES.has(group.state)
           ? "LATEST_TERMINAL"
@@ -197,6 +239,22 @@ export class PostgresManagedSetupOverview {
                   "MANAGED_SETUP_POSITION_UPDATE_INVALID",
                 )!,
               },
+        trade:
+          trade === undefined
+            ? null
+            : {
+                direction: trade.direction,
+                realizedPnl: trade.realized_pnl,
+                fees: trade.fees,
+                openedAt: timestamp(
+                  trade.opened_at,
+                  "MANAGED_SETUP_TRADE_OPEN_INVALID",
+                )!,
+                closedAt: timestamp(
+                  trade.closed_at,
+                  "MANAGED_SETUP_TRADE_CLOSE_INVALID",
+                )!,
+              },
       };
       await client.query("COMMIT");
       return overview;
@@ -216,4 +274,5 @@ export const UNAVAILABLE_MANAGED_SETUP: ManagedSetupOverview = {
   groupUpdatedAt: null,
   orders: [],
   position: null,
+  trade: null,
 };

@@ -25,6 +25,7 @@ from decision_inspector import (
     analysis_chart_view,
     analytics_summary,
     automation_status_view,
+    broker_lifecycle_view,
     exact_model_input_view,
     latest_ai_request_index,
     model_input_summary,
@@ -109,6 +110,7 @@ mode = str(status.get("mode", "unknown")).upper()
 account_environment = str(status.get("accountType", "unknown")).lower()
 selected_symbol = str(status.get("symbol", "unknown"))
 automation_view = automation_status_view(status)
+broker_view = broker_lifecycle_view(status, automation_view)
 st.title("cTrader AI Scalper Operations")
 if mode == "LIVE":
     st.error("LIVE-COMPATIBLE MODE — order submission remains unavailable in this build")
@@ -185,7 +187,19 @@ with tabs[0]:
                 bounded_completed / campaign_limit,
                 text=f"{bounded_completed} of {campaign_limit} completed AI analyses",
             )
-    st.subheader(f"SYSTEM STATUS: {automation_view['state']}")
+    st.subheader(f"RIGHT NOW: {broker_view['headline']}")
+    broker_message = broker_view["detail"]
+    if broker_view["severity"] == "error":
+        st.error(broker_message)
+    elif broker_view["severity"] == "warning":
+        st.warning(broker_message)
+    elif broker_view["severity"] == "success":
+        st.success(broker_message)
+    else:
+        st.info(broker_message)
+    st.markdown(f"**What happens next:** {broker_view['next_action']}")
+
+    st.subheader(f"AUTOMATION STATUS: {automation_view['state']}")
     state_message = f"{automation_view['headline']} — {automation_view['detail']}"
     if automation_view["severity"] == "error":
         st.error(state_message)
@@ -209,7 +223,7 @@ with tabs[0]:
             pd.DataFrame(automation_view["reasons"]), width="stretch", hide_index=True
         )
 
-    st.subheader("Current broker setup")
+    st.subheader("Orders and trade evidence")
     managed_setup = status.get("managedSetup")
     if not isinstance(managed_setup, dict) or managed_setup.get("status") == "UNAVAILABLE":
         st.error(
@@ -233,6 +247,19 @@ with tabs[0]:
             "last updated: "
             f"{format_gmt8_timestamp(managed_setup.get('groupUpdatedAt'))}"
         )
+        managed_trade = managed_setup.get("trade")
+        if isinstance(managed_trade, dict):
+            trade_columns = st.columns(4)
+            trade_columns[0].metric(
+                "Closed demo direction", str(managed_trade.get("direction", "unknown"))
+            )
+            trade_columns[1].metric(
+                "Realized demo P/L", str(managed_trade.get("realizedPnl", "unavailable"))
+            )
+            trade_columns[2].metric("Fees", str(managed_trade.get("fees", "unavailable")))
+            trade_columns[3].metric(
+                "Closed at", format_gmt8_timestamp(managed_trade.get("closedAt"))
+            )
         setup_rows: list[dict[str, object]] = []
         managed_orders = managed_setup.get("orders", [])
         if isinstance(managed_orders, list):

@@ -1190,6 +1190,7 @@ describe("PostgreSQL migrations integration", () => {
       expect(terminalReconciliation.terminalProofKey).toMatch(
         /^terminal:[0-9a-f]{64}$/,
       );
+      expect(terminalReconciliation.terminalOrderGroupId).toBe(orderGroupId);
       const retainedConflict = await isolated.query<{
         mapping_state: string;
         reason_codes: string[];

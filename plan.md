@@ -187,6 +187,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-042 | complete    | [Resolve terminal demo callback conflicts and clarify Overview status](https://github.com/AegisFintech/scalping-bot/issues/91)    | Certain terminal recovery releases only stale exact-group evidence; Overview shows status, action, and setup  |
 | ISSUE-043 | complete    | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
 | ISSUE-044 | complete    | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
+| ISSUE-045 | in progress | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1338,6 +1339,41 @@ never justify empty, noisy, unsafe, or misleading commits.
   rendered 35 dataframes with zero exceptions and verified 4,985 timestamp
   cells. Overview now displays `Group expires: 25 Aug 2026, 13:37:03 GMT+8 ·
 last updated: 25 Aug 2026, 13:30:10 GMT+8`. ISSUE-044 is complete.
+
+### ISSUE-045 delivery details
+
+- Acceptance criteria: lead Overview with a plain-language current broker
+  lifecycle state; distinguish live orders/positions from terminal history;
+  show the durably recorded demo direction, realized P/L, fees, and next
+  automatic action; preserve both the generic fail-closed gate and its bounded
+  source reason; and release a fill-slippage latch only after exact durable
+  terminal evidence proves the matching group closed with no active order or
+  position. Cover active, terminal, unavailable, malformed, retained-latch,
+  and safely released-latch paths with tests.
+- Dependencies: [issue #99](https://github.com/AegisFintech/scalping-bot/issues/99),
+  ISSUE-042 terminal-evidence recovery, ISSUE-044 GMT+8 presentation, and the
+  existing managed-setup status projection.
+- Current status: implementation is in progress on
+  `issue-045-human-closed-lifecycle`. The observed setup is durably `CLOSED`:
+  the BUY order filled, its SELL peer cancelled, the BUY position closed at
+  25 Aug 2026, 13:30:10 GMT+8, and PostgreSQL recorded demo realized P/L
+  `-4.6500000000` plus fees `-0.2800000000`. No unresolved execution-journal
+  row, broker order, or broker position remains. The running process retained
+  the event-specific fill-slippage latch because the `4646.6000000000` stop
+  filled at `4646.9100000000`: 31 ticks at the broker's `0.0100000000` tick,
+  beyond the configured five-point ceiling. Overview currently collapses that
+  to `RECONCILIATION_UNCERTAIN`; this issue will expose the exact cause and the
+  safe next action without weakening any durable reconciliation gate. Release
+  `.21`, the exact terminal trade projection, source-reason preservation,
+  group-bound terminal acknowledgement, plain lifecycle view, documentation,
+  and failure-path tests are implemented. Pre-merge gates pass: Prettier,
+  ESLint, TypeScript typecheck/build, 209 Node tests across 35 files, 14 schema
+  tests, 3 migration tests, all 3 configured PostgreSQL/HTTP integration tests,
+  Ruff format/lint, strict mypy over 21 source files, 68 Python tests, configured
+  Streamlit AppTest with 35 dataframes and zero exceptions, replay/backtest
+  smoke tests, zero-vulnerability npm/pip audits, tracked-file secret scan,
+  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). The running `.20`
+  execution service has not been restarted or otherwise altered before merge.
 
 ## Acceptance criteria
 

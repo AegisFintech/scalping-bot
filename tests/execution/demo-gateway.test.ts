@@ -94,7 +94,7 @@ class MockClient implements CTraderTradingClient {
     return Promise.resolve(result);
   }
 
-  fill(clientOrderId: string): void {
+  fill(clientOrderId: string, executionPrice = 2001.01): void {
     const source = this.orders.find(
       (order) => order.clientOrderId === clientOrderId,
     );
@@ -110,7 +110,7 @@ class MockClient implements CTraderTradingClient {
       position: {
         positionId: "801",
         positionStatus: 1,
-        price: 2001.01,
+        price: executionPrice,
         tradeData: data,
       },
       deal: {
@@ -122,7 +122,7 @@ class MockClient implements CTraderTradingClient {
         symbolId: data.symbolId,
         createTimestamp: Date.now(),
         executionTimestamp: Date.now(),
-        executionPrice: 2001.01,
+        executionPrice,
         tradeSide: data.tradeSide,
         dealStatus: 2,
         label: data.label,
@@ -267,5 +267,73 @@ describe("cTrader demo gateway", () => {
       }),
     );
     expect(client.cancelled).toEqual(["102"]);
+  });
+
+  it("retains fill-slippage uncertainty until matching terminal proof is certain", async () => {
+    const client = new MockClient();
+    const gateway = new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    client.fill("client-BUY", 2001.1);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+
+    await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
+      certain: false,
+      reasonCodes: ["DEMO_FILL_SLIPPAGE_EXCEEDED"],
+    });
+    gateway.acknowledgeCertainTerminalRecovery({
+      orderGroupId: "group",
+      terminalProofKey: `terminal:${"a".repeat(64)}`,
+      certain: false,
+    });
+    await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
+      certain: false,
+      reasonCodes: ["DEMO_FILL_SLIPPAGE_EXCEEDED"],
+    });
+  });
+
+  it("releases only a matching terminal group's fill-slippage latch", async () => {
+    const client = new MockClient();
+    const gateway = new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    client.fill("client-BUY", 2001.1);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+
+    gateway.acknowledgeCertainTerminalRecovery({
+      orderGroupId: "different-group",
+      terminalProofKey: `terminal:${"b".repeat(64)}`,
+      certain: true,
+    });
+    await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
+      certain: false,
+      reasonCodes: ["DEMO_FILL_SLIPPAGE_EXCEEDED"],
+    });
+
+    gateway.acknowledgeCertainTerminalRecovery({
+      orderGroupId: "group",
+      terminalProofKey: `terminal:${"c".repeat(64)}`,
+      certain: true,
+    });
+    await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
+      certain: true,
+      reasonCodes: [],
+    });
   });
 });
