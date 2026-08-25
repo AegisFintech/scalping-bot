@@ -1187,7 +1187,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   the active-position interlock correctly prevents a duplicate cycle. A
   post-run Streamlit AppTest rendered 34 dataframes with zero exceptions.
   Normal automation is enabled, the AI circuit is closed, and ISSUE-040 is
-  complete.
+  complete. Deployment evidence is tracked by
+  [PR #87](https://github.com/AegisFintech/scalping-bot/pull/87).
 
 ## Acceptance criteria
 

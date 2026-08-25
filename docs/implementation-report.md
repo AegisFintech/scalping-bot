@@ -1295,3 +1295,5 @@ service exposes `RELEVANT_POSITION_EXISTS` and
 intended. A post-cycle configured Streamlit AppTest rendered 34 dataframes with
 zero exceptions, including the exact prompt/response history. Normal automation
 remains enabled and will re-arm only after the terminal deal is reconciled.
+This rollout evidence is tracked by
+[PR #87](https://github.com/AegisFintech/scalping-bot/pull/87).
