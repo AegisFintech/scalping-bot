@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlparse
-from zoneinfo import ZoneInfo
 
 import httpx
 import pandas as pd
@@ -40,6 +39,7 @@ from decision_inspector import (
     trade_outcome_view,
 )
 from psycopg.rows import dict_row
+from time_display import dataframe_for_display, format_gmt8_timestamp
 
 st.set_page_config(page_title="cTrader AI Scalper", page_icon="🛑", layout="wide")
 
@@ -66,6 +66,12 @@ def query(sql: str, parameters: Sequence[object] = ()) -> list[dict[str, Any]]:
 
 def frame(sql: str, parameters: Sequence[object] = ()) -> pd.DataFrame:
     return pd.DataFrame(query(sql, parameters))
+
+
+def display_dataframe(data: Any, **kwargs: Any) -> Any:
+    """Display a copy whose timestamp columns use the operator GMT+8 format."""
+
+    return st.dataframe(dataframe_for_display(data), **kwargs)
 
 
 def api_get(path: str) -> dict[str, Any]:
@@ -115,6 +121,10 @@ else:
 st.caption(
     "Replay, backtest, paper, demo, shadow, and live outcomes are never aggregated "
     "as equivalent evidence."
+)
+st.caption(
+    "All operator-facing timestamps use Asia/Singapore time and are labelled GMT+8. "
+    "Hash-verified exact AI/audit JSON retains its original persisted timestamp text."
 )
 
 tabs = st.tabs(
@@ -188,16 +198,16 @@ with tabs[0]:
     st.markdown(f"**What you need to do:** {automation_view['operator_action']}")
     retry_at = automation_view.get("retry_at")
     if isinstance(retry_at, str):
-        retry_time = datetime.fromisoformat(retry_at.replace("Z", "+00:00"))
         st.info(
             "Automatic AI retry becomes eligible at "
-            f"{retry_time.astimezone(UTC).isoformat()} UTC / "
-            f"{retry_time.astimezone(ZoneInfo('Asia/Singapore')).isoformat()} Singapore. "
+            f"{format_gmt8_timestamp(retry_at)}. "
             "No process restart is required."
         )
     if automation_view["reasons"]:
         st.subheader("Why a new cycle or order is waiting")
-        st.dataframe(pd.DataFrame(automation_view["reasons"]), width="stretch", hide_index=True)
+        display_dataframe(
+            pd.DataFrame(automation_view["reasons"]), width="stretch", hide_index=True
+        )
 
     st.subheader("Current broker setup")
     managed_setup = status.get("managedSetup")
@@ -219,8 +229,9 @@ with tabs[0]:
                 "The levels below are history, not working broker orders."
             )
         st.caption(
-            f"Group expires: {managed_setup.get('groupExpiresAt', 'unknown')} · "
-            f"last updated: {managed_setup.get('groupUpdatedAt', 'unknown')}"
+            f"Group expires: {format_gmt8_timestamp(managed_setup.get('groupExpiresAt'))} · "
+            "last updated: "
+            f"{format_gmt8_timestamp(managed_setup.get('groupUpdatedAt'))}"
         )
         setup_rows: list[dict[str, object]] = []
         managed_orders = managed_setup.get("orders", [])
@@ -256,7 +267,7 @@ with tabs[0]:
                 }
             )
         if setup_rows:
-            st.dataframe(pd.DataFrame(setup_rows), width="stretch", hide_index=True)
+            display_dataframe(pd.DataFrame(setup_rows), width="stretch", hide_index=True)
         else:
             st.warning("The selected managed group contains no strategy-owned order records.")
 
@@ -270,7 +281,7 @@ with tabs[0]:
         if isinstance(last_reasons, list):
             cycle_columns[2].metric("Reason count", len(last_reasons))
             if last_reasons:
-                st.dataframe(
+                display_dataframe(
                     pd.DataFrame([reason_code_view(reason) for reason in last_reasons]),
                     width="stretch",
                     hide_index=True,
@@ -280,7 +291,7 @@ with tabs[0]:
             """SELECT symbol, mode, state, analysis_time, valid_until, rejection_reasons
                FROM dashboard_latest_analysis ORDER BY analysis_time DESC LIMIT 10"""
         )
-        st.dataframe(overview, width="stretch", hide_index=True)
+        display_dataframe(overview, width="stretch", hide_index=True)
         daily_overview = frame(
             """SELECT trading_day, timezone, baseline_equity, current_equity, net_flows,
                       realized_pnl, unrealized_pnl, loss_percent, locked_out, reconciled_at
@@ -288,7 +299,7 @@ with tabs[0]:
         )
         if not daily_overview.empty:
             st.subheader("Current daily risk")
-            st.dataframe(daily_overview, width="stretch", hide_index=True)
+            display_dataframe(daily_overview, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Database overview unavailable: {type(error).__name__}")
 
@@ -317,7 +328,7 @@ with tabs[1]:
                 ),
                 width="stretch",
             )
-            st.dataframe(pnl, width="stretch", hide_index=True)
+            display_dataframe(pnl, width="stretch", hide_index=True)
         period_pnl = frame(
             """SELECT mode, date_trunc('day', closed_at) AS day,
                       count(*) AS trades, sum(realized_pnl - fees) AS net_pnl
@@ -326,7 +337,7 @@ with tabs[1]:
             (start_time, end_time),
         )
         st.subheader("Daily totals")
-        st.dataframe(period_pnl, width="stretch", hide_index=True)
+        display_dataframe(period_pnl, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"P/L unavailable: {type(error).__name__}")
 
@@ -344,9 +355,9 @@ with tabs[2]:
                FROM setup_statistics ORDER BY computed_at DESC LIMIT 200"""
         )
         st.subheader("Session performance")
-        st.dataframe(sessions, width="stretch", hide_index=True)
+        display_dataframe(sessions, width="stretch", hide_index=True)
         st.subheader("Setup performance")
-        st.dataframe(setups, width="stretch", hide_index=True)
+        display_dataframe(setups, width="stretch", hide_index=True)
         grouped = frame(
             """SELECT mode, direction, market_regime, confidence_bucket,
                       count(*) AS trades,
@@ -358,7 +369,7 @@ with tabs[2]:
                ORDER BY mode, trades DESC"""
         )
         st.subheader("Direction, regime, and confidence buckets")
-        st.dataframe(grouped, width="stretch", hide_index=True)
+        display_dataframe(grouped, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Performance unavailable: {type(error).__name__}")
 
@@ -433,11 +444,11 @@ with tabs[3]:
         else:
             st.plotly_chart(quality_chart, width="stretch")
         st.subheader("Depth and freshness")
-        st.dataframe(market, width="stretch", hide_index=True)
+        display_dataframe(market, width="stretch", hide_index=True)
         st.subheader("Indicators")
-        st.dataframe(indicators, width="stretch", hide_index=True)
+        display_dataframe(indicators, width="stretch", hide_index=True)
         st.subheader("Latest completed candle snapshot")
-        st.dataframe(candles, width="stretch", hide_index=True)
+        display_dataframe(candles, width="stretch", hide_index=True)
     except ChartDataError as error:
         st.error(f"Market chart rejected invalid persisted data: {error}")
     except Exception as error:
@@ -467,16 +478,12 @@ with tabs[4]:
                 analysis_id = str(row["analysis_id"])
                 analysis_ids.append(analysis_id)
                 analysis_time = row["analysis_time"]
-                singapore_time = (
-                    analysis_time.astimezone(ZoneInfo("Asia/Singapore")).isoformat()
-                    if isinstance(analysis_time, datetime)
-                    else str(analysis_time)
-                )
+                singapore_time = format_gmt8_timestamp(analysis_time)
                 request_label = (
                     "AI REQUEST RECORDED" if row["ai_request_recorded"] else "NO DURABLE AI REQUEST"
                 )
                 labels[analysis_id] = (
-                    f"{singapore_time} Singapore · {str(row['mode']).upper()} · "
+                    f"{singapore_time} · {str(row['mode']).upper()} · "
                     f"{row['state']} · {request_label}"
                 )
             default_analysis_index = latest_ai_request_index(analyses)
@@ -575,12 +582,6 @@ with tabs[4]:
             automatic_history = query(
                 """SELECT ai.interval_start, ai.broker_server_time, ai.claimed_at,
                           ai.completed_at, ai.outcome,
-                          to_char(ai.interval_start AT TIME ZONE 'Asia/Singapore',
-                                  'YYYY-MM-DD HH24:MI:SS') AS interval_start_singapore,
-                          to_char(ai.claimed_at AT TIME ZONE 'Asia/Singapore',
-                                  'YYYY-MM-DD HH24:MI:SS') AS claimed_at_singapore,
-                          to_char(ai.completed_at AT TIME ZONE 'Asia/Singapore',
-                                  'YYYY-MM-DD HH24:MI:SS') AS completed_at_singapore,
                           COALESCE(ai.analysis_id::text, ai.cycle_id::text) AS cycle_id,
                           ar.state AS analysis_state, ar.rejection_reasons
                    FROM automatic_analysis_intervals ai
@@ -822,9 +823,9 @@ with tabs[4]:
                 )
                 st.json({key: value for key, value in chart_view.items() if key != "image_bytes"})
             st.subheader("Prompt and response history")
-            st.dataframe(pd.DataFrame(prompt_history), width="stretch", hide_index=True)
+            display_dataframe(pd.DataFrame(prompt_history), width="stretch", hide_index=True)
             st.subheader("Automatic broker-minute cycle history")
-            st.dataframe(pd.DataFrame(automatic_history), width="stretch", hide_index=True)
+            display_dataframe(pd.DataFrame(automatic_history), width="stretch", hide_index=True)
             summary_columns = st.columns(4)
             summary_columns[0].metric("Run state", str(detail["state"]))
             summary_columns[1].metric("AI output", model_proposal)
@@ -839,7 +840,7 @@ with tabs[4]:
                     + ", ".join(str(reason) for reason in detail["rejection_reasons"])
                 )
             st.subheader("Decision pipeline")
-            st.dataframe(pd.DataFrame(stage_rows), width="stretch", hide_index=True)
+            display_dataframe(pd.DataFrame(stage_rows), width="stretch", hide_index=True)
 
             inspector_tabs = st.tabs(
                 ["AI output", "Input & analytics", "Risk & execution", "Audit log"]
@@ -872,7 +873,7 @@ with tabs[4]:
                     st.json(model_view)
                     st.subheader("AI proposal → effective OCO levels")
                     if transformed_levels:
-                        st.dataframe(
+                        display_dataframe(
                             pd.DataFrame(transformed_levels),
                             width="stretch",
                             hide_index=True,
@@ -932,29 +933,31 @@ with tabs[4]:
                 else:
                     st.json(analytics_summary(detail["analytics_features"]))
                 st.subheader("Completed-candle coverage")
-                st.dataframe(pd.DataFrame(candles), width="stretch", hide_index=True)
+                display_dataframe(pd.DataFrame(candles), width="stretch", hide_index=True)
                 st.subheader("Initial and refreshed quote/depth snapshots")
-                st.dataframe(pd.DataFrame(market_snapshots), width="stretch", hide_index=True)
+                display_dataframe(pd.DataFrame(market_snapshots), width="stretch", hide_index=True)
 
             with inspector_tabs[2]:
                 st.subheader("Local validation results")
                 if validations:
-                    st.dataframe(pd.DataFrame(validations), width="stretch", hide_index=True)
+                    display_dataframe(pd.DataFrame(validations), width="stretch", hide_index=True)
                 else:
                     st.info("Validation was not reached for this run.")
                 st.subheader("Deterministic risk decisions")
                 if risk_decisions:
-                    st.dataframe(pd.DataFrame(risk_decisions), width="stretch", hide_index=True)
+                    display_dataframe(
+                        pd.DataFrame(risk_decisions), width="stretch", hide_index=True
+                    )
                 else:
                     st.info("Risk sizing was not reached; no broker volume was calculated.")
                 st.subheader("Order group and strategy-owned orders")
                 if orders:
-                    st.dataframe(pd.DataFrame(orders), width="stretch", hide_index=True)
+                    display_dataframe(pd.DataFrame(orders), width="stretch", hide_index=True)
                 else:
                     st.info("No order intent or broker order exists for this analysis.")
                 st.subheader("cTrader execution-event mapping")
                 if broker_events:
-                    st.dataframe(pd.DataFrame(broker_events), width="stretch", hide_index=True)
+                    display_dataframe(pd.DataFrame(broker_events), width="stretch", hide_index=True)
                 else:
                     st.info("No cTrader execution callback exists for this analysis.")
                 st.subheader("Closed demo trade outcome")
@@ -980,10 +983,11 @@ with tabs[4]:
                     event_details[event_id] = safe_audit_detail(safe_event.pop("details"))
                     safe_events.append(safe_event)
                 if safe_events:
-                    st.dataframe(pd.DataFrame(safe_events), width="stretch", hide_index=True)
+                    display_dataframe(pd.DataFrame(safe_events), width="stretch", hide_index=True)
                     event_labels = {
                         str(event["event_id"]): (
-                            f"{event['occurred_at']} · {event['event_name']} · {event['outcome']}"
+                            f"{format_gmt8_timestamp(event['occurred_at'])} · "
+                            f"{event['event_name']} · {event['outcome']}"
                         )
                         for event in safe_events
                     }
@@ -1015,9 +1019,9 @@ with tabs[5]:
                FROM positions ORDER BY updated_at DESC LIMIT 500"""
         )
         st.subheader("Orders")
-        st.dataframe(orders, width="stretch", hide_index=True)
+        display_dataframe(orders, width="stretch", hide_index=True)
         st.subheader("Positions")
-        st.dataframe(positions, width="stretch", hide_index=True)
+        display_dataframe(positions, width="stretch", hide_index=True)
         fills = frame(
             """SELECT f.occurred_at, COALESCE(o.side, p.side) AS side,
                       f.price, f.volume, f.commission, o.client_order_id
@@ -1027,7 +1031,7 @@ with tabs[5]:
                ORDER BY f.occurred_at DESC LIMIT 1000"""
         )
         st.subheader("Fills")
-        st.dataframe(fills, width="stretch", hide_index=True)
+        display_dataframe(fills, width="stretch", hide_index=True)
         execution_events = frame(
             """WITH target_symbol AS (
                  SELECT s.id FROM symbols s
@@ -1047,7 +1051,7 @@ with tabs[5]:
         else:
             st.plotly_chart(execution_chart, width="stretch")
         st.subheader("Execution-event journal")
-        st.dataframe(execution_events, width="stretch", hide_index=True)
+        display_dataframe(execution_events, width="stretch", hide_index=True)
     except ChartDataError as error:
         st.error(f"Execution chart rejected invalid persisted data: {error}")
     except Exception as error:
@@ -1083,16 +1087,16 @@ with tabs[6]:
             st.info("No daily-risk history is available for this account scope.")
         else:
             st.plotly_chart(risk_chart, width="stretch")
-        st.dataframe(daily, width="stretch", hide_index=True)
+        display_dataframe(daily, width="stretch", hide_index=True)
         st.subheader("Deterministic decisions")
-        st.dataframe(decisions, width="stretch", hide_index=True)
+        display_dataframe(decisions, width="stretch", hide_index=True)
         rejected = frame(
             """SELECT validated_at, stage, reason_codes
                FROM validation_results WHERE accepted = false
                ORDER BY validated_at DESC LIMIT 500"""
         )
         st.subheader("Rejected decisions")
-        st.dataframe(rejected, width="stretch", hide_index=True)
+        display_dataframe(rejected, width="stretch", hide_index=True)
     except ChartDataError as error:
         st.error(f"Risk chart rejected invalid persisted data: {error}")
     except Exception as error:
@@ -1113,14 +1117,14 @@ with tabs[7]:
             (mode.lower(), selected_symbol),
         )
         st.subheader("Service health")
-        st.dataframe(health, width="stretch", hide_index=True)
+        display_dataframe(health, width="stretch", hide_index=True)
         st.subheader("Recent operational events")
         audit_chart = audit_events_figure(events)
         if audit_chart is None:
             st.info("No operational audit events are available.")
         else:
             st.plotly_chart(audit_chart, width="stretch")
-        st.dataframe(events, width="stretch", hide_index=True)
+        display_dataframe(events, width="stretch", hide_index=True)
         delivery = frame(
             """SELECT o.status, count(*) AS events,
                       max(o.attempt_count) AS maximum_attempts,
@@ -1142,8 +1146,8 @@ with tabs[7]:
         if delivery.empty:
             st.info("No post-migration audit events have entered the delivery outbox.")
         else:
-            st.dataframe(delivery, width="stretch", hide_index=True)
-        st.dataframe(recent_delivery, width="stretch", hide_index=True)
+            display_dataframe(delivery, width="stretch", hide_index=True)
+        display_dataframe(recent_delivery, width="stretch", hide_index=True)
     except ChartDataError as error:
         st.error(f"Operations chart rejected invalid persisted data: {error}")
     except Exception as error:
@@ -1171,7 +1175,7 @@ with tabs[8]:
                 ),
                 width="stretch",
             )
-            st.dataframe(metrics.tail(100), width="stretch", hide_index=True)
+            display_dataframe(metrics.tail(100), width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Server metrics unavailable: {type(error).__name__}")
 
