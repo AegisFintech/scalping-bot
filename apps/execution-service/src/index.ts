@@ -234,6 +234,7 @@ async function main(): Promise<void> {
       environment.MARKET_DATA_BASE_URL ??
       `http://127.0.0.1:${environment.MARKET_DATA_PORT ?? "8081"}`,
     timeoutMs: 20_000,
+    maxRetries: integer(environment, "MARKET_DATA_MAX_RETRIES", 1),
   });
   let latestSnapshot: MarketSnapshot | null = null;
   const market = {
@@ -498,7 +499,10 @@ async function main(): Promise<void> {
       const recoveryReasons = recovered.reasonCodes.filter(
         (reason) =>
           terminal.resolvedEventCount === 0 ||
-          reason !== "DEMO_BROKER_EVENT_KEY_CONFLICT",
+          ![
+            "DEMO_BROKER_EVENT_KEY_CONFLICT",
+            "DEMO_TRADE_OUTCOME_CONFLICT",
+          ].includes(reason),
       );
       const recoveredCertain =
         recovered.certain ||

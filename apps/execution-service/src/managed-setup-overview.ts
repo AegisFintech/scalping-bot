@@ -37,6 +37,8 @@ export interface ManagedSetupOverview {
   readonly groupExpiresAt: string | null;
   readonly groupUpdatedAt: string | null;
   readonly orders: readonly ManagedOrderOverview[];
+  readonly positions: readonly ManagedPositionOverview[];
+  readonly trades: readonly ManagedTradeOverview[];
   readonly position: ManagedPositionOverview | null;
   readonly trade: ManagedTradeOverview | null;
 }
@@ -60,6 +62,7 @@ interface OrderRow {
 }
 
 interface PositionRow {
+  readonly id: string;
   readonly side: "BUY" | "SELL";
   readonly state: string;
   readonly entry_price: string | null;
@@ -72,6 +75,7 @@ interface PositionRow {
 }
 
 interface TradeRow {
+  readonly position_id: string | null;
   readonly direction: "LONG" | "SHORT";
   readonly realized_pnl: string;
   readonly fees: string;
@@ -136,12 +140,14 @@ export class PostgresManagedSetupOverview {
           groupExpiresAt: null,
           groupUpdatedAt: null,
           orders: [],
+          positions: [],
+          trades: [],
           position: null,
           trade: null,
         };
       }
       const orders = await client.query<OrderRow>(
-        `SELECT side, state, entry_price::text, stop_loss::text,
+        `SELECT id, side, state, entry_price::text, stop_loss::text,
                 take_profit::text, normalized_volume::text,
                 expires_at, updated_at
          FROM orders
@@ -160,33 +166,82 @@ export class PostgresManagedSetupOverview {
          ORDER BY updated_at DESC`,
         [this.#accountId, this.#symbolId, group.id],
       );
-      if (positions.rows.length > 1)
+      if (positions.rows.length > 2)
         throw new Error("MANAGED_SETUP_POSITION_AMBIGUOUS");
       const trades = await client.query<TradeRow>(
-        `SELECT direction, realized_pnl::text, fees::text, opened_at, closed_at
+        `SELECT position_id, direction, realized_pnl::text, fees::text,
+                opened_at, closed_at
          FROM trades
          WHERE order_group_id = $1
          ORDER BY closed_at DESC
-         LIMIT 2`,
+         LIMIT 3`,
         [group.id],
       );
-      if (trades.rows.length > 1)
+      if (trades.rows.length > 2)
         throw new Error("MANAGED_SETUP_TRADE_AMBIGUOUS");
-      const position = positions.rows[0];
-      const trade = trades.rows[0];
+      const positionsById = new Map(positions.rows.map((row) => [row.id, row]));
+      const tradePositionIds = new Set<string>();
+      for (const tradeRow of trades.rows) {
+        if (
+          tradeRow.position_id === null ||
+          tradePositionIds.has(tradeRow.position_id)
+        )
+          throw new Error("MANAGED_SETUP_TRADE_AMBIGUOUS");
+        tradePositionIds.add(tradeRow.position_id);
+        const matchingPosition = positionsById.get(tradeRow.position_id);
+        if (
+          matchingPosition === undefined ||
+          matchingPosition.state !== "CLOSED" ||
+          (tradeRow.direction === "LONG" && matchingPosition.side !== "BUY") ||
+          (tradeRow.direction === "SHORT" && matchingPosition.side !== "SELL")
+        )
+          throw new Error("MANAGED_SETUP_TRADE_STATE_INVALID");
+      }
       if (
         (group.state === "CLOSED" &&
-          (position === undefined ||
-            position.state !== "CLOSED" ||
-            trade === undefined)) ||
-        (group.state !== "CLOSED" && trade !== undefined) ||
-        (trade !== undefined &&
-          position !== undefined &&
-          ((trade.direction === "LONG" && position.side !== "BUY") ||
-            (trade.direction === "SHORT" && position.side !== "SELL")))
+          (positions.rows.length < 1 ||
+            positions.rows.some((row) => row.state !== "CLOSED") ||
+            positions.rows.some((row) => !tradePositionIds.has(row.id)) ||
+            trades.rows.length !== positions.rows.length)) ||
+        positions.rows.some(
+          (row) => row.state === "CLOSED" && !tradePositionIds.has(row.id),
+        )
       ) {
         throw new Error("MANAGED_SETUP_TRADE_STATE_INVALID");
       }
+      const positionViews = positions.rows.map((position) => ({
+        side: position.side,
+        state: position.state,
+        entryPrice: position.entry_price,
+        stopLoss: position.stop_loss,
+        takeProfit: position.take_profit,
+        volume: position.volume,
+        openedAt: timestamp(
+          position.opened_at,
+          "MANAGED_SETUP_POSITION_OPEN_INVALID",
+        ),
+        closedAt: timestamp(
+          position.closed_at,
+          "MANAGED_SETUP_POSITION_CLOSE_INVALID",
+        ),
+        updatedAt: timestamp(
+          position.updated_at,
+          "MANAGED_SETUP_POSITION_UPDATE_INVALID",
+        )!,
+      }));
+      const tradeViews = trades.rows.map((trade) => ({
+        direction: trade.direction,
+        realizedPnl: trade.realized_pnl,
+        fees: trade.fees,
+        openedAt: timestamp(
+          trade.opened_at,
+          "MANAGED_SETUP_TRADE_OPEN_INVALID",
+        )!,
+        closedAt: timestamp(
+          trade.closed_at,
+          "MANAGED_SETUP_TRADE_CLOSE_INVALID",
+        )!,
+      }));
       const overview: ManagedSetupOverview = {
         status: TERMINAL_GROUP_STATES.has(group.state)
           ? "LATEST_TERMINAL"
@@ -216,45 +271,10 @@ export class PostgresManagedSetupOverview {
             "MANAGED_SETUP_ORDER_UPDATE_INVALID",
           )!,
         })),
-        position:
-          position === undefined
-            ? null
-            : {
-                side: position.side,
-                state: position.state,
-                entryPrice: position.entry_price,
-                stopLoss: position.stop_loss,
-                takeProfit: position.take_profit,
-                volume: position.volume,
-                openedAt: timestamp(
-                  position.opened_at,
-                  "MANAGED_SETUP_POSITION_OPEN_INVALID",
-                ),
-                closedAt: timestamp(
-                  position.closed_at,
-                  "MANAGED_SETUP_POSITION_CLOSE_INVALID",
-                ),
-                updatedAt: timestamp(
-                  position.updated_at,
-                  "MANAGED_SETUP_POSITION_UPDATE_INVALID",
-                )!,
-              },
-        trade:
-          trade === undefined
-            ? null
-            : {
-                direction: trade.direction,
-                realizedPnl: trade.realized_pnl,
-                fees: trade.fees,
-                openedAt: timestamp(
-                  trade.opened_at,
-                  "MANAGED_SETUP_TRADE_OPEN_INVALID",
-                )!,
-                closedAt: timestamp(
-                  trade.closed_at,
-                  "MANAGED_SETUP_TRADE_CLOSE_INVALID",
-                )!,
-              },
+        positions: positionViews,
+        trades: tradeViews,
+        position: positionViews.length === 1 ? positionViews[0]! : null,
+        trade: tradeViews.length === 1 ? tradeViews[0]! : null,
       };
       await client.query("COMMIT");
       return overview;
@@ -273,6 +293,8 @@ export const UNAVAILABLE_MANAGED_SETUP: ManagedSetupOverview = {
   groupExpiresAt: null,
   groupUpdatedAt: null,
   orders: [],
+  positions: [],
+  trades: [],
   position: null,
   trade: null,
 };

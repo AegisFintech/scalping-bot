@@ -204,6 +204,7 @@ describe("PostgreSQL migrations integration", () => {
         "0010",
         "0011",
         "0012",
+        "0013",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -235,6 +236,22 @@ describe("PostgreSQL migrations integration", () => {
         `SELECT to_regclass('automatic_analysis_intervals') IS NOT NULL AS exists`,
       );
       expect(automaticIntervals.rows[0]?.exists).toBe(true);
+      const tradeOutcomeIndex = await isolated.query<{
+        position_unique: boolean;
+        group_constraint_removed: boolean;
+      }>(
+        `SELECT to_regclass('unique_trade_position_id') IS NOT NULL
+                  AS position_unique,
+                NOT EXISTS (
+                  SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'trades'::regclass
+                    AND conname = 'trades_order_group_id_key'
+                ) AS group_constraint_removed`,
+      );
+      expect(tradeOutcomeIndex.rows[0]).toEqual({
+        position_unique: true,
+        group_constraint_removed: true,
+      });
       await isolated.query(
         `INSERT INTO accounts
           (id, provider, provider_account_key_hash, environment, account_type, currency)

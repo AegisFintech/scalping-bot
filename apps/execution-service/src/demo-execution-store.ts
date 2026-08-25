@@ -149,15 +149,19 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                  AND terminal_fill.occurred_at = terminal.occurred_at
              )
              AND (SELECT count(*) FROM positions gp
-                  WHERE gp.order_group_id = og.id) = 1
+                  WHERE gp.order_group_id = og.id) BETWEEN 1 AND 2
              AND (SELECT count(*) FROM orders goi
                   WHERE goi.order_group_id = og.id) = 2
              AND (SELECT count(*) FROM orders filled_order
                   WHERE filled_order.order_group_id = og.id
-                    AND filled_order.state = 'FILLED') = 1
+                    AND filled_order.state = 'FILLED') =
+                 (SELECT count(*) FROM positions gp
+                  WHERE gp.order_group_id = og.id)
              AND (SELECT count(*) FROM orders peer_order
                   WHERE peer_order.order_group_id = og.id
-                    AND peer_order.state IN ('CANCELLED','EXPIRED','REJECTED')) = 1
+                    AND peer_order.state IN ('CANCELLED','EXPIRED','REJECTED')) =
+                 2 - (SELECT count(*) FROM positions gp
+                      WHERE gp.order_group_id = og.id)
              AND NOT EXISTS (
                SELECT 1 FROM orders active_order
                WHERE active_order.order_group_id = og.id
@@ -171,20 +175,51 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                  AND (active_position.strategy_owned = false OR active_position.state <>
                    'CLOSED')
              )
+             AND NOT EXISTS (
+               SELECT 1 FROM positions terminal_position
+               WHERE terminal_position.order_group_id = og.id
+                 AND NOT EXISTS (
+                   SELECT 1 FROM trades terminal_trade
+                   WHERE terminal_trade.order_group_id = og.id
+                     AND terminal_trade.position_id = terminal_position.id
+                 )
+             )
            ORDER BY terminal.order_group_id, terminal.occurred_at DESC,
                     terminal.id DESC
          ), resolved AS (
            UPDATE broker_execution_events blocked
-           SET resolved_at = proof.occurred_at,
+           SET resolved_at = GREATEST(proof.occurred_at, blocked.occurred_at),
                resolution_event_key = proof.broker_event_key
            FROM terminal_proofs proof
            WHERE blocked.account_id = $1 AND blocked.symbol_id = $2
              AND blocked.order_group_id = proof.order_group_id
              AND blocked.mapping_state = 'CONFLICT'
-             AND blocked.reason_codes =
-                 '["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb
              AND blocked.resolved_at IS NULL
-             AND blocked.occurred_at <= proof.occurred_at
+             AND (
+               (blocked.reason_codes =
+                  '["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb
+                AND blocked.occurred_at <= proof.occurred_at)
+               OR
+               (blocked.reason_codes =
+                  '["DEMO_TRADE_OUTCOME_CONFLICT"]'::jsonb
+                AND blocked.position_id IS NOT NULL
+                AND EXISTS (
+                  SELECT 1
+                  FROM positions recovered_position
+                  JOIN trades recovered_trade
+                    ON recovered_trade.order_group_id = blocked.order_group_id
+                   AND recovered_trade.position_id = recovered_position.id
+                  JOIN fills recovered_fill
+                    ON recovered_fill.position_id = recovered_position.id
+                   AND recovered_fill.broker_fill_id = blocked.broker_fill_id
+                   AND recovered_fill.occurred_at = blocked.occurred_at
+                  WHERE recovered_position.id = blocked.position_id
+                    AND recovered_position.order_group_id = blocked.order_group_id
+                    AND recovered_position.state = 'CLOSED'
+                    AND recovered_position.closed_at = blocked.occurred_at
+                    AND recovered_trade.closed_at = blocked.occurred_at
+                ))
+             )
            RETURNING blocked.id
          )
          SELECT (SELECT count(*)::text FROM resolved) AS resolved_event_count,
@@ -253,6 +288,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         [this.#options.accountId, event.eventKey],
       );
       const duplicate = existing.rows[0];
+      let replayTradeOutcomeConflict = false;
       if (duplicate !== undefined) {
         if (duplicate.payload_hash !== event.payloadHash) {
           await client.query(
@@ -268,20 +304,34 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
             reasonCodes: ["DEMO_BROKER_EVENT_KEY_CONFLICT"],
           };
         }
-        await client.query("COMMIT");
         const reasonCodes = Array.isArray(duplicate.reason_codes)
           ? duplicate.reason_codes.filter(
               (value): value is string => typeof value === "string",
             )
           : [];
-        const unresolvedReasonCodes =
-          duplicate.resolved_at === null ? reasonCodes : [];
-        return {
-          certain:
-            duplicate.mapping_state === "MAPPED" &&
-            unresolvedReasonCodes.length === 0,
-          reasonCodes: unresolvedReasonCodes,
-        };
+        replayTradeOutcomeConflict =
+          duplicate.mapping_state === "CONFLICT" &&
+          duplicate.resolved_at === null &&
+          reasonCodes.length === 1 &&
+          reasonCodes[0] === "DEMO_TRADE_OUTCOME_CONFLICT" &&
+          event.position?.state === "CLOSED" &&
+          event.closeDetail !== null &&
+          event.fill !== null;
+        if (replayTradeOutcomeConflict) {
+          // Continue through the normal locked persistence path. The retained
+          // conflict row is resolved only after exact position/fill/trade and
+          // terminal group evidence agree; it is never deleted or overwritten.
+        } else {
+          await client.query("COMMIT");
+          const unresolvedReasonCodes =
+            duplicate.resolved_at === null ? reasonCodes : [];
+          return {
+            certain:
+              duplicate.mapping_state === "MAPPED" &&
+              unresolvedReasonCodes.length === 0,
+            reasonCodes: unresolvedReasonCodes,
+          };
+        }
       }
 
       const orders = await client.query<OrderMatch>(
@@ -392,8 +442,8 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       );
       if (event.position?.state === "CLOSED" && event.closeDetail !== null) {
         const existingTrade = await client.query(
-          "SELECT 1 FROM trades WHERE order_group_id = $1",
-          [orderGroupId],
+          "SELECT 1 FROM trades WHERE position_id = $1",
+          [position?.position_id ?? null],
         );
         if ((existingTrade.rowCount ?? 0) > 0) {
           await this.#insertEvent(client, event, order, position, "CONFLICT", [
@@ -539,6 +589,14 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                              AND p.state IN ('OPEN','CLOSING','UNKNOWN','RECONCILIATION_PENDING'))
             AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.order_group_id = og.id
                              AND o.state IN ('INTENT','SUBMITTING','PENDING','PARTIALLY_FILLED','CANCEL_PENDING','UNKNOWN'))
+            AND NOT EXISTS (
+              SELECT 1 FROM positions p
+              WHERE p.order_group_id = og.id
+                AND (p.state <> 'CLOSED' OR NOT EXISTS (
+                  SELECT 1 FROM trades t
+                  WHERE t.order_group_id = og.id AND t.position_id = p.id
+                ))
+            )
              THEN 'CLOSED'
            WHEN EXISTS (SELECT 1 FROM positions p WHERE p.order_group_id = og.id
                          AND p.state = 'CLOSED')
@@ -579,14 +637,16 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       ) {
         reasons.push("DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED");
       }
-      await this.#insertEvent(
-        client,
-        event,
-        order,
-        position,
-        "MAPPED",
-        reasons,
-      );
+      if (!replayTradeOutcomeConflict) {
+        await this.#insertEvent(
+          client,
+          event,
+          order,
+          position,
+          "MAPPED",
+          reasons,
+        );
+      }
       if (storedOrderState === "FILLED" && event.brokerOrderId !== null) {
         await client.query(
           `UPDATE broker_execution_events
@@ -633,7 +693,13 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         );
       }
       await client.query("COMMIT");
-      return { certain: reasons.length === 0, reasonCodes: reasons };
+      const persistenceReasons = replayTradeOutcomeConflict
+        ? ["DEMO_TRADE_OUTCOME_CONFLICT"]
+        : reasons;
+      return {
+        certain: persistenceReasons.length === 0,
+        reasonCodes: persistenceReasons,
+      };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -670,8 +736,9 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       `SELECT ar.mode, sv.version AS strategy_version,
               model.model, model.prompt_version, model.schema_version,
               model.parsed_payload,
-              COALESCE((SELECT sum(o.filled_volume)::text FROM orders o
-                        WHERE o.order_group_id = og.id AND o.state = 'FILLED'), '0') AS filled_volume
+              COALESCE((SELECT sum(f.volume)::text FROM fills f
+                        WHERE f.position_id = $2 AND f.order_id IS NOT NULL), '0')
+                AS filled_volume
        FROM order_groups og
        JOIN analysis_runs ar ON ar.id = og.analysis_id
        JOIN strategy_versions sv ON sv.id = ar.strategy_version_id
@@ -683,7 +750,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
          ORDER BY mr.requested_at DESC LIMIT 1
        ) model ON true
        WHERE og.id = $1`,
-      [position.order_group_id],
+      [position.order_group_id, position.id],
     );
     const row = context.rows[0];
     if (
@@ -739,7 +806,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
          strategy_version)
        VALUES ($1, $2, $3, 'demo', $4, $5::jsonb, $6, $7, $8, $9, $10,
                $11, $12, $13, $14, $15)
-       ON CONFLICT (order_group_id) DO NOTHING
+       ON CONFLICT (position_id) WHERE position_id IS NOT NULL DO NOTHING
        RETURNING id`,
       [
         randomUUID(),

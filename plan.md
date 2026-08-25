@@ -190,6 +190,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
 | ISSUE-046 | complete    | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
 | ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
+| ISSUE-048 | in progress | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1461,6 +1462,30 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   Rollout evidence is recorded in
   [PR #107](https://github.com/AegisFintech/scalping-bot/pull/107).
 
+### ISSUE-048 delivery details
+
+- Acceptance criteria: retry a strategy-owned pending OCO peer immediately
+  after its sibling fills; preserve idempotent fail-closed cancellation and
+  manual-order ownership; retain one immutable result per exact broker position
+  so both bounded OCO legs can close independently; replay the retained second
+  close only from exact position/fill/trade evidence; keep a different outcome
+  for the same position blocking; display both outcomes and combined result;
+  retry one transient market-data 503 without stale reuse; and cover success
+  plus failure paths, migration/rollback, operations, and deployment evidence.
+- Dependencies: ISSUE-025 terminal demo outcomes, ISSUE-028 callback ordering,
+  ISSUE-042 terminal-evidence recovery, ISSUE-045 human lifecycle status, and
+  migration `0013`.
+- Current status: implementation is complete on
+  `issue-048-demo-oco-double-fill-recovery` and tracked by
+  [issue #108](https://github.com/AegisFintech/scalping-bot/issues/108).
+  Pre-merge gates pass: Prettier, ESLint, typecheck/build, 226 Node tests across
+  38 files, 16 schema tests, 3 migration tests, all 3 configured integration
+  tests, Ruff/mypy/75 Python tests, configured AppTest with zero exceptions,
+  replay/backtest, zero-vulnerability dependency audits, secret/shell/PM2
+  checks, and five systemd parses. An isolated clone of the exact retained
+  conflict recovered to two closed positions, two trades, zero unresolved
+  evidence, and certain terminal proof under migration `0013`.
+
 ## Acceptance criteria
 
 - Default configuration cannot place live or demo orders and starts emergency-stopped.
@@ -1491,8 +1516,9 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
 - Paper fills/positions/trades are durable. Demo callbacks now have a durable,
   deduplicated event journal with order/fill/position/trade mapping and bounded
   restart recovery. Fully closed single-deal outcomes use the protocol-defined
-  signed gross-profit, swap, commission, and conversion-fee fields; partial or
-  multiple closing deals remain a reconciliation blocker pending supervised evidence.
+  signed gross-profit, swap, commission, and conversion-fee fields. Distinct
+  positions from both bounded OCO legs retain separate outcomes; partial or
+  multiple closing deals for one position remain a reconciliation blocker.
 - PostgreSQL TLS connectivity and isolated-schema tests through migration `0007`
   passed; the configured Neon schema is now at `0007`, with a clean empty event
   journal and certain startup recovery. Backup/restore and

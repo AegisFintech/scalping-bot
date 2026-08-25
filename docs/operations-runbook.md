@@ -47,6 +47,16 @@ maps by broker order ID and that readiness clears after terminal evidence. If
 readiness stays uncertain, keep both stops active and investigate the retained
 journal; do not restart merely to erase a reason or edit journal rows.
 
+After either OCO leg fills, periodic maintenance searches durable state for its
+strategy-owned `PENDING` or `CANCEL_PENDING` peer and retries cancellation on
+every maintenance pass; it does not wait for setup expiry. Cancellation intent
+is durable before the broker call, manual orders remain excluded, and any
+failed/ambiguous cancel remains `RECONCILIATION_REQUIRED`. If the peer fills
+before cancellation is confirmed, both exact broker positions must close and
+each must have one matching entry fill, terminal fill, and immutable trade
+outcome before the group can close. Never delete the second outcome or combine
+it with the first position.
+
 The observed demo server also attaches a position placeholder without `price`
 to pending `ORDER_ACCEPTED` events. This is not a fill: it has no deal and must
 not create a local position. The order acceptance is still journaled and mapped.
@@ -104,11 +114,14 @@ empty demo acknowledgement, automatic analysis off, and environment emergency
 stop on. Verify those values through the service status before any later
 enablement.
 
-For a fully closed single-deal demo position, persist the protocol-defined
+For each fully closed single-deal demo position, persist the protocol-defined
 signed `grossProfit + swap + commission + pnlConversionFee` as realized P/L and
 persist the last three components as fees. Full-close detail and volume must
 match the durable filled volume. Missing detail, partial/multiple closing deals,
-or a second conflicting outcome stay unresolved and block new placement.
+or a second conflicting outcome for the same position stay unresolved and
+block new placement. A distinct second position from an OCO double fill is
+retained separately and the dashboard reports the combined setup result without
+hiding either direction.
 
 After every completed model call, the coordinator reacquires the full snapshot.
 `DECISION_MARKET_REFRESH_FAILED`, `DECISION_MARKET_TIME_REGRESSION`,
@@ -197,6 +210,12 @@ exact terminal proof for the same order group, the terminal recorder is
 certain, and the group's tracked legs are terminal. A mismatched group,
 uncertain recovery, active/unknown leg, unresolved journal row, open durable
 position, or failed audit write continues to block the next cycle.
+
+One fresh retry is permitted for a local market-data HTTP 503. The retry must
+return a newly validated quote/depth/completed-candle snapshot and does not
+reuse stale data; a second 503 retains the original fail-closed rejection. AI
+provider retries remain zero because a repeated inference would normally cross
+the completed M1 context boundary.
 
 Streamlit renders operator-facing timestamps in Asia/Singapore as
 `DD Mon YYYY, HH:MM:SS GMT+8`. This conversion applies only to captions,

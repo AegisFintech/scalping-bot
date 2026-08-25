@@ -916,7 +916,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
              prompt_version, schema_version, strategy_version)
            VALUES ($1, $2, $3, 'paper', $4, $5::jsonb, $6, $7, $8, 0, $9, $10,
                    $11, $12, $13, $14)
-           ON CONFLICT (order_group_id)
+           ON CONFLICT (position_id) WHERE position_id IS NOT NULL
            DO UPDATE SET realized_pnl = EXCLUDED.realized_pnl,
              closed_at = EXCLUDED.closed_at`,
           [
