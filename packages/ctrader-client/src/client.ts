@@ -93,6 +93,12 @@ export interface ExpectedMargin {
   readonly sellMargin: string;
 }
 
+export interface PositionUnrealizedPnl {
+  readonly grossUnrealizedPnl: string;
+  readonly netUnrealizedPnl: string;
+  readonly capturedAt: string;
+}
+
 export interface ExternalCashFlowSummary {
   readonly netFlows: string;
   readonly operationCount: number;
@@ -176,6 +182,38 @@ function money(value: unknown, digits: number): Decimal {
     throw new Error("CTRADER_MONEY_INVALID");
   }
   return new Decimal(String(value)).div(new Decimal(10).pow(digits));
+}
+
+export function normalizePositionUnrealizedPnl(
+  payload: Record<string, unknown>,
+  brokerPositionId: string,
+  capturedAt = new Date(),
+): PositionUnrealizedPnl {
+  ensureInteger(brokerPositionId, "CTRADER_POSITION_ID_INVALID");
+  if (!Number.isFinite(capturedAt.getTime()))
+    throw new Error("CTRADER_POSITION_PNL_TIMESTAMP_INVALID");
+  const digits = numberField(payload, "moneyDigits");
+  if (!Number.isInteger(digits) || digits < 0 || digits > 12)
+    throw new Error("CTRADER_POSITION_PNL_MONEY_DIGITS_INVALID");
+  const matches = recordsField(payload, "positionUnrealizedPnL").filter(
+    (row) => stringField(row, "positionId") === brokerPositionId,
+  );
+  if (matches.length !== 1)
+    throw new Error(
+      matches.length === 0
+        ? "CTRADER_POSITION_PNL_MISSING"
+        : "CTRADER_POSITION_PNL_AMBIGUOUS",
+    );
+  const row = matches[0]!;
+  return {
+    grossUnrealizedPnl: canonical(
+      money(stringField(row, "grossUnrealizedPnL"), digits),
+    ),
+    netUnrealizedPnl: canonical(
+      money(stringField(row, "netUnrealizedPnL"), digits),
+    ),
+    capturedAt: capturedAt.toISOString(),
+  };
 }
 
 export function normalizeExternalCashFlows(
@@ -868,6 +906,27 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       hasCancellationPending: false,
       reasonCodes: [],
     };
+  }
+
+  async positionUnrealizedPnl(
+    brokerPositionId: string,
+  ): Promise<PositionUnrealizedPnl> {
+    this.#requireAuthenticated();
+    const response = await this.#transport.request(
+      CTraderPayload.POSITION_UNREALIZED_PNL_REQ,
+      {
+        ctidTraderAccountId: protocolInteger(
+          this.accountId,
+          "CTRADER_ACCOUNT_ID_INVALID",
+        ),
+      },
+      [CTraderPayload.POSITION_UNREALIZED_PNL_RES],
+    );
+    return normalizePositionUnrealizedPnl(
+      response.payload,
+      brokerPositionId,
+      new Date(),
+    );
   }
 
   async #subscribeSpot(symbolId: string): Promise<void> {

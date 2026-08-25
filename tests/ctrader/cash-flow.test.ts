@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeDealHistory,
   normalizeExternalCashFlows,
+  normalizePositionUnrealizedPnl,
 } from "../../packages/ctrader-client/src/client.js";
 import { protocolInteger } from "../../packages/ctrader-client/src/protocol.js";
 
@@ -58,6 +59,67 @@ describe("cTrader cash-flow normalization", () => {
         to,
       ),
     ).toThrow("CTRADER_CASH_FLOW_TYPE_UNKNOWN");
+  });
+});
+
+describe("cTrader position P/L normalization", () => {
+  it("selects one broker position and preserves exact scaled money", () => {
+    expect(
+      normalizePositionUnrealizedPnl(
+        {
+          moneyDigits: 2,
+          positionUnrealizedPnL: [
+            {
+              positionId: "41",
+              grossUnrealizedPnL: "999",
+              netUnrealizedPnL: "950",
+            },
+            {
+              positionId: "42",
+              grossUnrealizedPnL: "1234",
+              netUnrealizedPnL: "1200",
+            },
+          ],
+        },
+        "42",
+        new Date("2026-08-25T04:00:00.000Z"),
+      ),
+    ).toEqual({
+      grossUnrealizedPnl: "12.34",
+      netUnrealizedPnl: "12",
+      capturedAt: "2026-08-25T04:00:00.000Z",
+    });
+  });
+
+  it("fails closed on missing, duplicate, or malformed position P/L", () => {
+    const payload = {
+      moneyDigits: 2,
+      positionUnrealizedPnL: [
+        {
+          positionId: "42",
+          grossUnrealizedPnL: "1234",
+          netUnrealizedPnL: "1200",
+        },
+      ],
+    };
+    expect(() => normalizePositionUnrealizedPnl(payload, "43")).toThrow(
+      "CTRADER_POSITION_PNL_MISSING",
+    );
+    expect(() =>
+      normalizePositionUnrealizedPnl(
+        {
+          ...payload,
+          positionUnrealizedPnL: [
+            ...payload.positionUnrealizedPnL,
+            payload.positionUnrealizedPnL[0],
+          ],
+        },
+        "42",
+      ),
+    ).toThrow("CTRADER_POSITION_PNL_AMBIGUOUS");
+    expect(() =>
+      normalizePositionUnrealizedPnl({ ...payload, moneyDigits: 13 }, "42"),
+    ).toThrow("CTRADER_POSITION_PNL_MONEY_DIGITS_INVALID");
   });
 });
 

@@ -214,6 +214,24 @@ export interface Quote {
   readonly receivedAt: IsoTimestamp;
 }
 
+export type OpenPositionMonitor =
+  | { readonly status: "NONE" }
+  | {
+      readonly status: "AVAILABLE";
+      readonly side: OrderSide;
+      readonly accountCurrency: string;
+      readonly bid: DecimalString;
+      readonly ask: DecimalString;
+      readonly markPrice: DecimalString;
+      readonly grossUnrealizedPnl: DecimalString;
+      readonly netUnrealizedPnl: DecimalString;
+      readonly recordedCommission: DecimalString;
+      readonly quoteSourceTime: IsoTimestamp;
+      readonly quoteReceivedAt: IsoTimestamp;
+      readonly pnlCapturedAt: IsoTimestamp;
+    }
+  | { readonly status: "UNAVAILABLE"; readonly reasonCode: string };
+
 export type OrderSide = "BUY" | "SELL";
 
 export interface PendingOrderCommand {

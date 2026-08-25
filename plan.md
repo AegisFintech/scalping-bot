@@ -188,6 +188,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-043 | complete    | [Explain AI technical-target rejections on Overview](https://github.com/AegisFintech/scalping-bot/issues/93)                      | Plain-language upside/downside target guidance; dashboard-only deployment                                     |
 | ISSUE-044 | complete    | [Render dashboard timestamps as human-readable GMT+8](https://github.com/AegisFintech/scalping-bot/issues/96)                     | One display-only Asia/Singapore format across Overview, selectors, and tables                                 |
 | ISSUE-045 | complete    | [Make closed demo lifecycle status human-readable and resumable](https://github.com/AegisFintech/scalping-bot/issues/99)          | Plain current-state summary; exact terminal result/block; safely release terminal slippage latch              |
+| ISSUE-046 | in progress | [Show live open-trade price, P/L, and commission on Overview](https://github.com/AegisFintech/scalping-bot/issues/102)            | Fresh side mark; broker unrealized P/L; recorded commission; two-second safe display refresh                  |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1388,6 +1389,33 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   14:03:08 GMT+8; no process restart or manual control is required. This proves
   closed-lifecycle release and scheduler continuation, not forecast accuracy or
   profitability. ISSUE-045 is complete.
+
+### ISSUE-046 delivery details
+
+- Acceptance criteria: add a read-only open-position monitor scoped to the
+  configured account, symbol, active strategy-owned position, and active group;
+  show fresh bid/ask, the side-correct close price, broker-reported gross/net
+  unrealized P/L, and durably recorded commission incurred so far; refresh the
+  Streamlit Overview panel every two seconds with GMT+8 times; expose no broker
+  or account identifiers; make unavailable, stale, malformed, mismatched, or
+  ambiguous evidence explicit instead of estimating; and cover success plus
+  failure paths with tests and documentation.
+- Dependencies: [issue #102](https://github.com/AegisFintech/scalping-bot/issues/102),
+  the typed market quote API, cTrader position-unrealized-P/L response, durable
+  fill commission, ISSUE-045 lifecycle projection, and Streamlit fragments.
+- Current status: implementation is in progress on
+  `issue-046-live-position-monitor`. The monitor is display-only and cannot
+  alter cycle eligibility, risk, sizing, orders, positions, or reconciliation.
+  Open commission means persisted charges received so far; final realized P/L
+  and fees remain authoritative only after the exact closing deal is durable.
+  Implementation and pre-merge gates pass: Prettier, ESLint, TypeScript
+  typecheck/build, 221 Node tests across 37 files, 16 JSON Schema tests, 3
+  migration tests, all 3 configured PostgreSQL/HTTP integration tests, Ruff
+  format/lint, strict mypy over 21 source files, 70 Python tests, configured
+  Streamlit AppTest with 35 dataframes and zero exceptions, replay/backtest
+  smoke tests, zero-vulnerability npm/pip audits, tracked-file secret scan,
+  shell/PM2 checks, and five systemd parses at 2.8 (`OK`). PR creation, merge,
+  and controlled rollout remain pending.
 
 ## Acceptance criteria
 

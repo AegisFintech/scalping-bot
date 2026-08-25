@@ -163,3 +163,10 @@ latest terminal `order_groups` row to its strategy-owned `orders`, at most one
 `positions` row, and at most one `trades` row. Decimal P/L and fee values remain
 text at the HTTP boundary. Multiple active groups, positions, or trade outcomes
 make the projection unavailable rather than selecting an arbitrary record.
+
+The open-position monitor adds no table or mutable state. It selects at most one
+active strategy-owned `positions` row in the exact account/symbol/mode scope and
+sums existing `fills.commission` rows owned by that position or its order group.
+The broker position ID is used only for an internal exact cTrader P/L match and
+is never returned to Streamlit. Zero rows means no open trade; multiple rows or
+any non-`OPEN` active state makes the monitor unavailable.
