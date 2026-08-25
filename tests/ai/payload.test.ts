@@ -44,6 +44,7 @@ const common = {
     minRiskRewardRatio: "4",
     effectiveMinRiskRewardRatio: "2",
     takeProfitDistanceDivisor: "2" as const,
+    maxAffordableStopDistance: "0.5",
     maxStopDistanceAtr: "3",
     orderExpiryMinSeconds: 15,
     orderExpiryMaxSeconds: 1800,
@@ -80,6 +81,7 @@ describe("model payload builder", () => {
       min_risk_reward_ratio: "4",
       effective_min_risk_reward_ratio: "2",
       take_profit_distance_divisor: "2",
+      max_affordable_stop_distance: "0.5",
       max_stop_distance_atr: "3",
       order_expiry_min_seconds: 15,
       order_expiry_max_seconds: 1800,
@@ -87,9 +89,10 @@ describe("model payload builder", () => {
   });
 
   it("versions the TP transform instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v3.md", "utf8");
+    const prompt = readFileSync("prompts/system-v4.md", "utf8");
     expect(prompt).toContain("take_profit_distance_divisor");
     expect(prompt).toContain("effective_min_risk_reward_ratio");
     expect(prompt).toContain("derived midpoint remains exactly");
+    expect(prompt).toContain("max_affordable_stop_distance");
   });
 });

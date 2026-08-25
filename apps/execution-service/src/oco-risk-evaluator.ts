@@ -12,6 +12,7 @@ import type {
 import {
   canonical,
   decimal,
+  maximumAffordableStopDistance,
   sizeOcoPair,
   type OcoRiskDecision,
   type PositionRiskInput,
@@ -44,11 +45,36 @@ export interface OcoEvaluation {
   readonly perLegRiskPercent: string | null;
 }
 
+export interface OcoProposalRiskConstraints {
+  readonly approved: boolean;
+  readonly reasonCodes: readonly string[];
+  readonly maxStopDistance: string | null;
+}
+
 export class OcoRiskEvaluator {
   readonly #options: OcoRiskEvaluatorOptions;
 
   constructor(options: OcoRiskEvaluatorOptions) {
     this.#options = options;
+  }
+
+  proposalConstraints(input: {
+    readonly account: AccountState;
+    readonly metadata: SymbolMetadata;
+  }): OcoProposalRiskConstraints {
+    if (!input.account.certain) {
+      return {
+        approved: false,
+        reasonCodes: ["RISK_ACCOUNT_UNCERTAIN"],
+        maxStopDistance: null,
+      };
+    }
+    return maximumAffordableStopDistance({
+      equity: input.account.equity,
+      setupRiskPercent: this.#options.baseRiskPercent,
+      maxRiskPercent: this.#options.maxRiskPercent,
+      metadata: input.metadata,
+    });
   }
 
   async evaluate(input: {

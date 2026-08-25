@@ -30,6 +30,74 @@ export interface PositionRiskDecision {
   readonly estimatedMargin: DecimalString | null;
 }
 
+export interface MinimumVolumeStopConstraintInput {
+  readonly equity: DecimalString;
+  readonly setupRiskPercent: DecimalString;
+  readonly maxRiskPercent: DecimalString;
+  readonly metadata: SymbolMetadata;
+}
+
+export interface MinimumVolumeStopConstraint {
+  readonly approved: boolean;
+  readonly reasonCodes: readonly string[];
+  readonly maxStopDistance: DecimalString | null;
+}
+
+export function maximumAffordableStopDistance(
+  input: MinimumVolumeStopConstraintInput,
+): MinimumVolumeStopConstraint {
+  try {
+    const equity = decimal(input.equity);
+    const setupRisk = decimal(input.setupRiskPercent);
+    const configuredMax = decimal(input.maxRiskPercent);
+    const tickSize = decimal(input.metadata.tickSize, "RISK_TICK_SIZE_INVALID");
+    const tickValue = decimal(
+      input.metadata.tickValue,
+      "RISK_TICK_VALUE_INVALID",
+    );
+    const minVolume = decimal(
+      input.metadata.minVolume,
+      "RISK_VOLUME_METADATA_INVALID",
+    );
+    if (equity.lte(0)) throw new Error("RISK_EQUITY_INVALID");
+    if (
+      setupRisk.lte(0) ||
+      setupRisk.gt(configuredMax) ||
+      configuredMax.gt(5)
+    ) {
+      throw new Error("RISK_PERCENT_INVALID");
+    }
+    if ([tickSize, tickValue, minVolume].some((value) => value.lte(0))) {
+      throw new Error("RISK_METADATA_INVALID");
+    }
+    const perLegRiskBudget = equity.mul(setupRisk).div(200);
+    const lossPerTickAtMinimumVolume = tickValue.mul(minVolume);
+    const affordableTicks = perLegRiskBudget
+      .div(lossPerTickAtMinimumVolume)
+      .floor();
+    if (affordableTicks.lt(1)) {
+      return {
+        approved: false,
+        reasonCodes: ["RISK_MIN_VOLUME_UNAFFORDABLE"],
+        maxStopDistance: null,
+      };
+    }
+    return {
+      approved: true,
+      reasonCodes: [],
+      maxStopDistance: canonical(tickSize.mul(affordableTicks)),
+    };
+  } catch (error) {
+    return {
+      approved: false,
+      reasonCodes: [
+        error instanceof Error ? error.message : "RISK_INPUT_INVALID",
+      ],
+      maxStopDistance: null,
+    };
+  }
+}
+
 function reject(...reasonCodes: string[]): PositionRiskDecision {
   return {
     approved: false,

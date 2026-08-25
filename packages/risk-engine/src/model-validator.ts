@@ -170,6 +170,7 @@ export interface SemanticContext {
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
   readonly maxStopDistanceAtr: string;
+  readonly maxAffordableStopDistance?: string;
   readonly maxQuoteAgeMs: number;
   readonly maxMetadataAgeMs?: number;
   readonly minStopDistancePoints?: string | null;
@@ -238,6 +239,12 @@ function checkLeg(
     reasons.push(`${side}_REWARD_RISK_MISMATCH`);
   if (risk.gt(decimal(context.atr).mul(decimal(context.maxStopDistanceAtr))))
     reasons.push(`${side}_STOP_DISTANCE_EXCESSIVE`);
+  if (
+    context.maxAffordableStopDistance !== undefined &&
+    risk.gt(decimal(context.maxAffordableStopDistance))
+  ) {
+    reasons.push(`${side}_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME`);
+  }
   const expiry = Date.parse(proposal.expires_at);
   const seconds = (expiry - context.now.getTime()) / 1000;
   if (

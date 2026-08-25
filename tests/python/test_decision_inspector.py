@@ -80,6 +80,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert "off the broker tick" in midpoint["title"]
     assert "No order was rounded" in midpoint["next_action"]
 
+    affordability = reason_code_view("SELL_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME")
+    assert "minimum-volume risk budget" in affordability["title"]
+    assert "No order was sent" in affordability["next_action"]
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(
@@ -315,8 +319,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v3", content, digest)
-    assert current["version"] == "system-v3"
+    current = prompt_artifact_view("system-v4", content, digest)
+    assert current["version"] == "system-v4"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

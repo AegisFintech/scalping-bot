@@ -5,9 +5,9 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.0.json`. Prompt `system-v3` is current; immutable
-`system-v1`/`system-v2` prompts and schema 1.0 remain available to interpret
-historical runs.
+`schemas/model-response-2.0.json`. Prompt `system-v4` is current; immutable
+`system-v1`/`system-v2`/`system-v3` prompts and schema 1.0 remain available to
+interpret historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
 are strings, original and adjusted confidence values are bounded integers,
 arrays and strings are length-limited, and timestamps use ISO-8601 formats.
@@ -30,6 +30,9 @@ The versioned system prompt tells the model to:
   R:R. The request says that execution preserves entry/SL and divides TP
   distance by two, supplies both proposal and effective minimum R:R values, and
   requires an even whole-tick TP distance so the midpoint stays tick-aligned.
+- keep each entry-to-SL distance at or below the supplied
+  `max_affordable_stop_distance`. This is a derived non-sizing limit; the request
+  still excludes equity, risk budget, broker volume, and account identity.
 
 ## Mandatory proposal
 
@@ -38,7 +41,7 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-For `system-v3` requests, the exact parsed response remains immutable. The
+For `system-v3` and later requests, the exact parsed response remains immutable. The
 execution coordinator separately derives each effective TP as
 `entry + (proposed_tp - entry) / 2`, recomputes the diagnostic R:R, and records
 both original and effective values in validation details. Entry and SL are not
@@ -81,7 +84,8 @@ Both proposal stages require exact symbol and analysis ID; plausible
 match and do not exceed `valid_until`; ordered waiting bounds; side-correct
 entry/SL/TP; entry beyond current bid/ask and broker distance; minimum R:R;
 tick/precision alignment; current quote and symbol metadata; stop-distance
-limits; deterministic performance-adjustment consistency; margin/sizing
+limits, including the recomputed broker-minimum affordability ceiling;
+deterministic performance-adjustment consistency; margin/sizing
 feasibility; and inactive lockouts. Data quality was already accepted by the
 deterministic analytics boundary before the model request.
 
@@ -91,9 +95,9 @@ Semantic failures and transform details are persisted as reason-coded
 validation results and create no order.
 
 The request includes current bid/ask, digits, tick size, broker/configured
-minimum stop distance, minimum reward-to-risk, maximum ATR stop distance, and
-expiry bounds. It excludes account money, risk budget, broker volume, account
-IDs, and execution authority.
+minimum stop distance, minimum reward-to-risk, maximum ATR stop distance,
+non-sizing maximum affordable stop distance, and expiry bounds. It excludes
+account money, risk budget, broker volume, account IDs, and execution authority.
 
 ## Request payload modes
 

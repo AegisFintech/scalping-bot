@@ -48,6 +48,7 @@ _PROMPT_FILES = {
     "system-v1": "system-v1.md",
     "system-v2": "system-v2.md",
     "system-v3": "system-v3.md",
+    "system-v4": "system-v4.md",
 }
 _SECRET_VALUE = re.compile(
     r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"
@@ -201,6 +202,24 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "Halving the distance from the sell entry to the AI take profit produced a price the "
         "broker precision cannot represent exactly.",
         "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "BUY_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME": (
+        "Buy stop exceeds minimum-volume risk budget",
+        "The endpoint buy SL is farther from entry than the current configured per-leg budget "
+        "can support at broker minimum volume.",
+        "No order was sent. The next request uses the newly reconciled maximum distance.",
+    ),
+    "SELL_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME": (
+        "Sell stop exceeds minimum-volume risk budget",
+        "The endpoint sell SL is farther from entry than the current configured per-leg budget "
+        "can support at broker minimum volume.",
+        "No order was sent. The next request uses the newly reconciled maximum distance.",
+    ),
+    "RISK_MIN_VOLUME_UNAFFORDABLE": (
+        "Broker minimum volume is outside the risk budget",
+        "Even a one-tick stop at broker minimum volume exceeds the configured per-leg budget.",
+        "No endpoint call or order is made; review broker metadata and configured risk without "
+        "bypassing the limit.",
     ),
 }
 

@@ -54,6 +54,9 @@ PostgreSQL stores UTC `timestamptz`, canonical numeric columns for prices/money/
   validation details separately store the TP-distance divisor plus original and
   effective TP/R:R values, including transform rejection evidence before any
   order intent exists.
+- Risk-stage validation details retain the pre-model and post-model
+  `max_affordable_stop_distance` without persisting an endpoint-facing equity,
+  money-budget, or volume field.
 - OCO group plus both client order intents/idempotency keys commit before gateway calls.
 - Each broker callback is inserted/deduplicated and its state transition commits atomically.
 - Placement callbacks drain only after returned broker order IDs commit. If a

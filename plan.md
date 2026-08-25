@@ -175,7 +175,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
 | ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
 | ISSUE-032 | complete    | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)      | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
-| ISSUE-033 | in progress | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
+| ISSUE-033 | complete    | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
+| ISSUE-034 | in progress | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)         | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -916,16 +917,52 @@ never justify empty, noisy, unsafe, or misleading commits.
   schema 2.0, the post-model refresh boundary, deterministic risk sizing,
   cTrader OCO lifecycle recovery, and the existing PostgreSQL/Streamlit decision
   trail.
-- Current status: implementation is in progress on
-  `issue-033-endpoint-tp-midpoint`. Prompt `system-v3`, the Decimal midpoint
+- Current status: complete through
+  [PR #71](https://github.com/AegisFintech/scalping-bot/pull/71), merged as
+  `8f3364a`. Prompt `system-v3`, the Decimal midpoint
   transform, original/effective validation trail, and Streamlit comparison are
   implemented. Pre-merge gates pass: Prettier, ESLint, TypeScript
   typecheck/build, 165 Node tests across 30 files, 12 schema tests, 3 migration
   tests, all 3 configured isolated-PostgreSQL integration tests, Ruff, strict
   mypy over 19 source files, 51 Python tests, configured Streamlit AppTest,
   replay/backtest, zero-vulnerability npm/pip audits, secret/shell checks, and
-  five offline systemd parses at 2.8 (`OK`). No model-selected volume, bypassed
-  risk gate, live execution authority, or default enablement is in scope.
+  five offline systemd parses at 2.8 (`OK`). The merged `.11` release deployed
+  under the audited analysis pause with certain startup reconciliation and then
+  resumed automatic demo analysis. The first complete endpoint cycle persisted
+  original 4:1 levels, effective midpoint 2:1 levels, unchanged entry/SL, and a
+  `DELIVERED` Better Stack validation event. It rejected before intent because
+  both endpoint stop distances made broker minimum volume exceed the configured
+  per-leg budget; ISSUE-034 addresses that observed input constraint without
+  changing the returned SL or bypassing risk. No model-selected volume,
+  bypassed risk gate, live execution authority, or default enablement is in
+  scope.
+
+### ISSUE-034 delivery details
+
+- Acceptance criteria: derive with Decimal arithmetic the maximum stop distance
+  affordable at broker minimum volume under half the configured setup-risk
+  budget; floor only to whole ticks; expose only that non-sizing distance to the
+  endpoint; validate the returned unchanged SL against it after the market
+  refresh; reject before inference if broker/configured minimum distance exceeds
+  the affordable maximum; retain all schema, freshness, spread, daily-loss,
+  notional, margin, reconciliation, idempotency, mode, and demo authorization
+  gates; and prove positive plus rejection paths before a supervised demo cycle.
+- Dependencies: [issue #72](https://github.com/AegisFintech/scalping-bot/issues/72),
+  ISSUE-033's deployed `system-v3` prompt, current broker symbol metadata,
+  reconciled account equity, deterministic OCO sizing, and the protected demo
+  environment.
+- Current status: implementation is in progress on
+  `issue-034-affordable-stop-constraint`. Prompt `system-v4`, the whole-tick
+  affordability calculation, pre/post-model reconciliation, payload exclusion,
+  semantic enforcement, reason guidance, and tests are implemented. New
+  automatic analyses remain paused to avoid repeated paid endpoint calls until
+  merge/deployment. The full pre-merge suite passes: Prettier, ESLint,
+  TypeScript typecheck/build, 171 Node tests across 30 files, 13 schema tests, 3
+  migration tests, all 3 configured isolated-PostgreSQL integration tests,
+  Ruff, strict mypy over 19 source files, 51 Python tests, configured Streamlit
+  AppTest, replay/backtest, zero-vulnerability npm/pip audits, secret/shell
+  checks, and five offline systemd parses at 2.8 (`OK`). Existing maintenance
+  and reconciliation remain active.
 
 ## Acceptance criteria
 

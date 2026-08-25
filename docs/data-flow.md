@@ -40,6 +40,9 @@ the temporary fail-closed daily-risk reason.
 7. Query bounded session/setup statistics and calculate deterministic confidence adjustment.
 8. Build a full or compact, size-bounded, versioned model request containing
    the non-sizing execution constraints needed for valid conditional levels.
+   Reconcile account state and derive the maximum whole-tick stop distance that
+   broker minimum volume can afford under half the setup-risk budget; send only
+   that distance, never equity, budget, volume, or account identity.
 9. Call the AI endpoint with per-attempt timeout/retries/circuit breaker. The
    execution-to-orchestrator deadline covers every configured attempt plus
    bounded grace; invalid or timer-overflowing budgets reject startup.
@@ -56,9 +59,10 @@ the temporary fail-closed daily-risk reason.
 12. Re-run spread protection against the refreshed execution state. Validate
     the immutable AI proposal at the pre-transform R:R; derive each effective
     TP as the Decimal midpoint from entry to AI TP; reject an off-tick midpoint;
-    then validate the effective proposal at the configured execution R:R. Run
-    stop, precision, daily loss, volume, margin, exposure, freshness, and
-    duplicate checks before recording intent.
+    then validate the effective proposal at the configured execution R:R.
+    Reconcile account state again and reject an unchanged endpoint SL above the
+    current affordable maximum. Run stop, precision, daily loss, volume, margin,
+    exposure, freshness, and duplicate checks before recording intent.
 13. Persist the entire decision trail and outcome transactionally.
 14. Select a mode-specific gateway. Replay/backtest/paper simulate; demo may
     submit; shadow cannot; live is deliberately unwired in this release.

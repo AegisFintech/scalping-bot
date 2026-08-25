@@ -922,8 +922,46 @@ new durable transform/audit-detail assertion. Ruff format/lint, strict mypy over
 npm/pip audits, tracked-file secret scan, shell/PM2 syntax checks, and all five
 offline systemd security parses at 2.8 (`OK`) passed. The host used Node 24.18.0,
 npm 11.16.0, and Python 3.13.5; Node 22 remains the supported deployment
-baseline. Merge and stopped rollout evidence remain required before ISSUE-033 is
-complete.
+baseline. PR #71 merged as `8f3364a`. Release `.11` deployed under the audited
+analysis pause, registered `system-v3`/schema 2.0, passed startup reconciliation,
+and resumed automatic demo analysis. The first complete endpoint cycle persisted
+original 4:1 levels, effective midpoint 2:1 levels, and unchanged entry/SL; its
+transform validation event reached Better Stack. ISSUE-033 is complete.
+
+## ISSUE-034 broker-minimum stop affordability
+
+That first complete deployed `system-v3` cycle returned 6.00-wide buy and sell
+stops. At broker minimum volume, both exceeded the configured half-setup-risk
+budget, so deterministic sizing correctly rejected
+`BUY_RISK_VOLUME_BELOW_MIN` and `SELL_RISK_VOLUME_BELOW_MIN` before intent.
+
+Issue [#72](https://github.com/AegisFintech/scalping-bot/issues/72) addresses
+that observed request-contract gap without changing a returned SL or bypassing
+risk. Before inference, the coordinator reconciles account state and derives
+the maximum whole-tick stop distance that broker minimum volume can afford when
+the configured setup risk is split across both OCO legs. Prompt `system-v4`
+receives only that distance—never equity, a money budget, volume, or account
+identity—and requires both proposed SL distances to remain within it. The
+coordinator recomputes the constraint after inference; a lower budget or changed
+metadata rejects the unchanged endpoint output. The existing risk engine still
+independently sizes volume and enforces loss, notional, margin, daily, exposure,
+freshness, reconciliation, idempotency, and demo-mode gates.
+
+Automatic analyses are paused during implementation so repeated paid endpoint
+calls do not reproduce the already-understood rejection. Maintenance and
+reconciliation continue.
+
+The 2026-08-25 pre-merge suite passed Prettier, ESLint, TypeScript typecheck and
+build, 171 Node tests across 30 files, 13 JSON Schema/semantic tests, 3 static
+migration tests, and all 3 configured isolated-PostgreSQL integration tests.
+Ruff format/lint, strict mypy over 19 source files, and 51 Python tests passed.
+Configured Streamlit AppTest rendered 32 dataframes with zero exceptions.
+Replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
+secret scan, shell/PM2 syntax checks, and all five offline systemd security
+parses at 2.8 (`OK`) passed. No migration is required because the payload is a
+versioned request artifact and the existing bounded validation-detail contract
+stores the derived constraint. Merge and stopped rollout evidence remain before
+ISSUE-034 is complete.
 
 ## Shadow-mode setup
 

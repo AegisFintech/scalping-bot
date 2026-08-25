@@ -58,7 +58,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v3",
+    version: "system-v4",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -129,6 +129,14 @@ function accountState(): AccountState {
     hasPartialFill: false,
     hasCancellationPending: false,
     reasonCodes: [],
+  };
+}
+
+function proposalRiskConstraints(maxStopDistance = "10") {
+  return {
+    approved: true,
+    reasonCodes: [] as readonly string[],
+    maxStopDistance,
   };
 }
 
@@ -250,7 +258,7 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v3",
+    promptVersion: "system-v4",
     schemaVersion: "2.0",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
@@ -303,6 +311,7 @@ function options(
       reconcile: () => Promise.resolve(accountState()),
     },
     risk: {
+      proposalConstraints: () => proposalRiskConstraints(),
       evaluate: (input) =>
         Promise.resolve({
           approved: true,
@@ -466,7 +475,10 @@ describe("analysis coordinator", () => {
           });
         }),
       },
-      risk: { evaluate: riskEvaluate },
+      risk: {
+        proposalConstraints: () => proposalRiskConstraints(),
+        evaluate: riskEvaluate,
+      },
       gateway: {
         kind: "paper",
         canSubmitToBroker: false,
@@ -517,6 +529,90 @@ describe("analysis coordinator", () => {
       reasonCodes: ["MODEL_PROPOSAL_CONSTRAINTS_UNSATISFIABLE"],
     });
     expect(model).not.toHaveBeenCalled();
+  });
+
+  it("rejects before inference when broker minimum volume is unaffordable", async () => {
+    const model = vi.fn(() => Promise.reject(new Error("must not call model")));
+    const riskEvaluate = vi.fn(() =>
+      Promise.reject(new Error("must not evaluate a proposal")),
+    );
+    const configured = options({
+      model: { circuitOpen: false, analyze: model },
+      risk: {
+        proposalConstraints: () => ({
+          approved: false,
+          reasonCodes: ["RISK_MIN_VOLUME_UNAFFORDABLE"],
+          maxStopDistance: null,
+        }),
+        evaluate: riskEvaluate,
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: ["RISK_MIN_VOLUME_UNAFFORDABLE"],
+    });
+    expect(model).not.toHaveBeenCalled();
+    expect(riskEvaluate).not.toHaveBeenCalled();
+  });
+
+  it("sends only the derived non-sizing stop limit to the endpoint", async () => {
+    const modelAnalyze = vi.fn(
+      (request: {
+        readonly analysisId: string;
+        readonly payload: Readonly<Record<string, unknown>>;
+      }) =>
+        Promise.resolve({
+          response: ocoProposal(request.analysisId),
+          rawResponse: "{}",
+          promptArtifact: promptArtifact(),
+        }),
+    );
+    const configured = options({
+      model: { circuitOpen: false, analyze: modelAnalyze },
+      risk: {
+        ...options().risk,
+        proposalConstraints: () => proposalRiskConstraints("0.5"),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({ outcome: "REJECTED" });
+    const payload = modelAnalyze.mock.calls[0]?.[0].payload;
+    const constraints = payload?.execution_constraints as
+      Record<string, unknown> | undefined;
+    expect(constraints?.max_affordable_stop_distance).toBe("0.5");
+    expect(constraints).not.toHaveProperty("equity");
+    expect(constraints).not.toHaveProperty("risk_budget");
+    expect(constraints).not.toHaveProperty("volume");
+  });
+
+  it("rejects when post-model account state lowers the affordable stop limit", async () => {
+    const proposalConstraints = vi
+      .fn()
+      .mockReturnValueOnce(proposalRiskConstraints("10"))
+      .mockReturnValueOnce(proposalRiskConstraints("0.5"));
+    const riskEvaluate = vi.fn(() =>
+      Promise.reject(new Error("must not size an unaffordable proposal")),
+    );
+    const configured = options({
+      risk: { proposalConstraints, evaluate: riskEvaluate },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: [
+        "BUY_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME",
+        "SELL_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME",
+      ],
+    });
+    expect(proposalConstraints).toHaveBeenCalledTimes(2);
+    expect(riskEvaluate).not.toHaveBeenCalled();
   });
 
   it("refreshes decision market state after model latency", async () => {
@@ -783,7 +879,10 @@ describe("analysis coordinator", () => {
         authenticate: () => Promise.resolve(),
         reconcile: () => Promise.resolve(accountState()),
       },
-      risk: { evaluate: riskEvaluate },
+      risk: {
+        proposalConstraints: () => proposalRiskConstraints(),
+        evaluate: riskEvaluate,
+      },
       gateway: {
         kind: "paper",
         canSubmitToBroker: false,
@@ -838,6 +937,7 @@ describe("analysis coordinator", () => {
           reconcile: () => Promise.resolve(accountState()),
         },
         risk: {
+          proposalConstraints: () => proposalRiskConstraints(),
           evaluate: (input) =>
             Promise.resolve({
               approved: true,

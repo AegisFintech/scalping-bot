@@ -172,6 +172,48 @@ describe("model response schema", () => {
     });
   });
 
+  it("rejects endpoint stops above the current broker-minimum affordability limit", () => {
+    const result = validateSemantics(response(), {
+      analysisId,
+      symbol: "XAUUSD",
+      now: new Date("2026-01-01T00:00:00.000Z"),
+      quote: {
+        bid: "1999.90",
+        ask: "2000.10",
+        sourceTime: "2026-01-01T00:00:00.000Z",
+        receivedAt: "2026-01-01T00:00:00.000Z",
+      },
+      metadata: {
+        symbolId: "1",
+        symbolName: "XAUUSD",
+        digits: 2,
+        tickSize: "0.01",
+        tickValue: "0.01",
+        contractSize: "100",
+        volumeScale: "0.01",
+        minVolume: "100",
+        maxVolume: "100000",
+        volumeStep: "100",
+        minStopDistance: "0.10",
+        metadataTime: "2026-01-01T00:00:00.000Z",
+      },
+      atr: "5.00",
+      minRiskRewardRatio: "2",
+      minExpirySeconds: 15,
+      maxExpirySeconds: 1800,
+      maxStopDistanceAtr: "3",
+      maxAffordableStopDistance: "0.5",
+      maxQuoteAgeMs: 3000,
+    });
+
+    expect(result.reasonCodes).toContain(
+      "BUY_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME",
+    );
+    expect(result.reasonCodes).toContain(
+      "SELL_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME",
+    );
+  });
+
   it("rejects a wrong symbol and inverted buy stop", () => {
     const invalid = response({
       symbol: "EURUSD",
