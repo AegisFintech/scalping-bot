@@ -996,8 +996,13 @@ Ruff format/lint, strict mypy over 16 Python source files, and 51 Python tests
 passed. Configured Streamlit AppTest rendered 32 dataframes with zero
 exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits,
 tracked-file secret scan, shell/PM2 syntax checks, and all five offline systemd
-security parses at 2.8 (`OK`) passed. Merge and supervised `.13` rollout
-evidence remain before ISSUE-035 is complete.
+security parses at 2.8 (`OK`) passed. PR
+[#75](https://github.com/AegisFintech/scalping-bot/pull/75) merged as
+`e8cb49c685094a2ea07d9597b1c23a045d4a3414`; release `.13` deployed. The next
+automatic `.14` cycle at 10:27 Asia/Singapore recorded both refresh phases,
+passed the repeated account, market, spread, semantic, and freshness checks,
+placed and mapped both demo pending stops, and finished `ACCEPTED`. ISSUE-035
+is complete.
 
 ## ISSUE-036 compact endpoint tails
 
@@ -1024,8 +1029,41 @@ all 3 configured isolated-PostgreSQL integration tests. Ruff format/lint,
 strict mypy over 16 Python source files, and 51 Python tests passed. Configured
 Streamlit AppTest rendered 31 dataframes with zero exceptions. Replay/backtest,
 zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
-and all five offline systemd security parses at 2.8 (`OK`) passed. Merge and
-supervised `.14` size/latency evidence remain before ISSUE-036 is complete.
+and all five offline systemd security parses at 2.8 (`OK`) passed. PR
+[#77](https://github.com/AegisFintech/scalping-bot/pull/77) merged as
+`b909be75af526fcf3b017c5958800f0330abe5d6` and release `.14` deployed. The
+first deployed request retained explicit ignored-environment overrides of
+180/100/50; those local values are corrected to 60/36/24. Reload and actual
+request-size/latency evidence wait for the active demo position to become
+terminal so deployment does not interrupt its protection.
+
+## ISSUE-037 repeated fill callback deduplication
+
+The first fully automated demo OCO placed both pending stops. Its sell leg later
+filled and the buy peer cancelled. The valid entry deal mapped durably; five
+seconds later cTrader repeated execution type 3 with order, position, and deal
+present but omitted the open-position `price`. Strict normalization correctly
+rejected `CTRADER_FIELD_INVALID:price`, but it ran before PostgreSQL could use
+the already-mapped deal ID to recognize the duplicate, leaving an operational
+lockout.
+
+Issue [#78](https://github.com/AegisFintech/scalping-bot/issues/78) adds a
+process-local optimization around the durable authority: the recorder remembers
+a broker fill ID only after normalization and certain store persistence. An
+exact repeat can then be discarded before parsing weaker contextual position
+data. A new deal ID, first malformed callback, or uncertain/failed persistence
+still enters strict normalization and fails closed. Database uniqueness and
+restart recovery remain unchanged. Release `.15`, unit tests, dashboard reason
+guidance, and operator documentation cover the observed shape; deployment waits
+for the current demo position to reach a safe terminal boundary.
+
+The 2026-08-25 pre-merge suite passed Prettier, ESLint, TypeScript typecheck and
+build, 182 Node tests across 31 files, 13 schema tests, 3 migration tests, and
+all 3 configured isolated-PostgreSQL integration tests. Ruff format/lint,
+strict mypy over 16 Python source files, and 51 Python tests passed. Configured
+Streamlit AppTest rendered 34 dataframes with zero exceptions. Replay/backtest,
+zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
+and all five offline systemd security parses at 2.8 (`OK`) passed.
 
 ## Shadow-mode setup
 

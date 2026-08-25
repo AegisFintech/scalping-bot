@@ -355,6 +355,85 @@ describe("durable demo execution recorder", () => {
     ]);
   });
 
+  it("skips a repeated persisted deal before strict position normalization", async () => {
+    const store = new MemoryStore();
+    const onFailure = vi.fn();
+    const recorder = new DurableDemoExecutionRecorder(store, {
+      symbolId: "7",
+      onFailure,
+    });
+    const valid = await fixture("demo-order-filled-v1.json");
+    recorder.enqueue(valid);
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: true,
+      reasonCodes: [],
+    });
+
+    const position = structuredClone(valid.position) as Record<string, unknown>;
+    delete position.price;
+    recorder.enqueue({ ...valid, position });
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: true,
+      reasonCodes: [],
+    });
+
+    expect(store.events.map((event) => event.eventKey)).toEqual(["deal:902"]);
+    expect(onFailure).not.toHaveBeenCalled();
+  });
+
+  it("keeps a new malformed deal fail-closed after another deal persisted", async () => {
+    const store = new MemoryStore();
+    const onFailure = vi.fn();
+    const recorder = new DurableDemoExecutionRecorder(store, {
+      symbolId: "7",
+      onFailure,
+    });
+    const valid = await fixture("demo-order-filled-v1.json");
+    recorder.enqueue(valid);
+    await recorder.flush();
+
+    const position = structuredClone(valid.position) as Record<string, unknown>;
+    delete position.price;
+    const deal = structuredClone(valid.deal) as Record<string, unknown>;
+    deal.dealId = "new-deal";
+    recorder.enqueue({ ...valid, position, deal });
+
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["CTRADER_FIELD_INVALID:price"],
+    });
+    expect(store.events.map((event) => event.eventKey)).toEqual(["deal:902"]);
+    expect(onFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reasonCode: "CTRADER_FIELD_INVALID:price",
+        stage: "NORMALIZE",
+      }),
+    );
+  });
+
+  it("does not remember a deal after uncertain persistence", async () => {
+    const store = new MemoryStore();
+    store.result = {
+      certain: false,
+      reasonCodes: ["DEMO_EXECUTION_LOCAL_INTENT_NOT_FOUND"],
+    };
+    const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
+    const valid = await fixture("demo-order-filled-v1.json");
+    recorder.enqueue(valid);
+    await recorder.flush();
+
+    store.result = { certain: true, reasonCodes: [] };
+    const position = structuredClone(valid.position) as Record<string, unknown>;
+    delete position.price;
+    recorder.enqueue({ ...valid, position });
+
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: false,
+      reasonCodes: ["CTRADER_FIELD_INVALID:price"],
+    });
+    expect(store.events).toHaveLength(1);
+  });
+
   it("remains fail-closed after a persistence rejection", async () => {
     const store = new MemoryStore();
     store.result = {

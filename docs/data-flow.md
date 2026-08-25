@@ -110,6 +110,10 @@ blocking.
 Pagination, missing local intent, duplicate-key conflicts, partial fills,
 unknown fields/states, or persistence failure make reconciliation uncertain and
 block placement.
+An exact deal callback may also repeat with less contextual position detail.
+The in-process recorder skips it before normalization only when that same deal
+ID previously normalized and persisted with a certain result. A different deal,
+first malformed callback, or uncertain persistence is never skipped.
 
 ## Timestamp rules
 

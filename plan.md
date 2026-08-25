@@ -142,43 +142,44 @@ Remote issue links are added as each bounded issue starts. These identifiers
 remain stable. Mandatory phase ordering applies: supervised demo and shadow
 evidence precede any broker-capable live implementation.
 
-| ID        | Status      | Issue                                                                                                                           | Acceptance summary                                                                                            |
-| --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| ISSUE-001 | in progress | [Supervised cTrader demo order lifecycle](https://github.com/AegisFintech/scalping-bot/issues/11)                               | Bounded manual session; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit   |
-| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)          | Callback journal/order/fill/position/trade mapping implemented; supervised broker evidence remains            |
-| ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                           | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
-| ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                      | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
-| ISSUE-005 | pending     | Neon backup, restore, outage, and least-privilege role drill                                                                    | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
-| ISSUE-006 | pending     | Debian Node 22 least-privilege systemd release validation                                                                       | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                                |
-| ISSUE-007 | pending     | Cross-service structured logging, metrics, heartbeats, and alert drills                                                         | Better Stack delivery/redaction and required failure alerts exercised                                         |
-| ISSUE-008 | pending     | Cloudflare Access policy, session, CSRF, and audit-retention review                                                             | Authorized identities only; controls protected; access/audit evidence retained                                |
-| ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                         | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
-| ISSUE-010 | blocked     | Supervised live canary authorization                                                                                            | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
-| ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1)      | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
-| ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)          | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
-| ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                          | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
-| ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)              | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
-| ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)     | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
-| ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20) | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
-| ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)           | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
-| ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)               | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
-| ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)               | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
-| ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)              | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
-| ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                   | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
-| ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)     | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
-| ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)       | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
-| ISSUE-024 | complete    | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)               | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
-| ISSUE-025 | complete    | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)   | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
-| ISSUE-026 | complete    | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)   | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
-| ISSUE-027 | complete    | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)         | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
-| ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)     | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
-| ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)              | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
-| ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                     | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
-| ISSUE-032 | complete    | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)      | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
-| ISSUE-033 | complete    | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
-| ISSUE-034 | complete    | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)         | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
-| ISSUE-035 | in progress | [Refresh and revalidate market immediately before demo intent](https://github.com/AegisFintech/scalping-bot/issues/74)          | Final market/account refresh; repeat spread/semantics; preserve freshness without raising limits              |
-| ISSUE-036 | in progress | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)  | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
+| ID        | Status      | Issue                                                                                                                             | Acceptance summary                                                                                            |
+| --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| ISSUE-001 | in progress | [Supervised cTrader demo order lifecycle](https://github.com/AegisFintech/scalping-bot/issues/11)                                 | Bounded manual session; place/cancel minimum demo OCO; verify fill, peer cancel, expiry, restart, and audit   |
+| ISSUE-002 | in progress | [Complete durable demo fill, position, and trade event mapping](https://github.com/AegisFintech/scalping-bot/issues/3)            | Callback journal/order/fill/position/trade mapping implemented; supervised broker evidence remains            |
+| ISSUE-003 | pending     | Credentialed live-data shadow rollout                                                                                             | Non-submitting gateway proven; supervised sessions; outcomes distinctly labelled                              |
+| ISSUE-004 | pending     | Broker-specific XAUUSD risk and execution parameter review                                                                        | Precision, volume, margin, spread, slippage, stop, session limits documented                                  |
+| ISSUE-005 | pending     | Neon backup, restore, outage, and least-privilege role drill                                                                      | Encrypted backup and isolated restore evidence; outage remains fail-closed                                    |
+| ISSUE-006 | pending     | Debian Node 22 least-privilege systemd release validation                                                                         | Non-root services, restart/rollback/graceful shutdown, hardened paths verified                                |
+| ISSUE-007 | pending     | Cross-service structured logging, metrics, heartbeats, and alert drills                                                           | Better Stack delivery/redaction and required failure alerts exercised                                         |
+| ISSUE-008 | pending     | Cloudflare Access policy, session, CSRF, and audit-retention review                                                               | Authorized identities only; controls protected; access/audit evidence retained                                |
+| ISSUE-009 | blocked     | Broker-capable live execution composition and independent safety review                                                           | Blocked by ISSUE-001 through ISSUE-008 and every live-readiness checklist item                                |
+| ISSUE-010 | blocked     | Supervised live canary authorization                                                                                              | Separate operator approval; all gates; minimal exposure; rollback/incident drill                              |
+| ISSUE-011 | complete    | [Require commit, push, and automatic merge after completed updates](https://github.com/AegisFintech/scalping-bot/issues/1)        | Rule documented, verified, and delivered through [PR #2](https://github.com/AegisFintech/scalping-bot/pull/2) |
+| ISSUE-012 | complete    | [Restore migration provenance and apply demo journal migration](https://github.com/AegisFintech/scalping-bot/issues/5)            | Exact historical bytes/checksums restored; `0006` applied stopped; journal and fail-closed runtime clean      |
+| ISSUE-013 | complete    | [Add read-only operational charts to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/6)                            | Bounded mode-labelled charts; completed candles; safe empty/error states; transformation tests                |
+| ISSUE-014 | complete    | [Make cTrader snapshots session-aware and time-consistent](https://github.com/AegisFintech/scalping-bot/issues/15)                | Exact weekly schedule; trusted closure gaps; broker-time depth; strict analytics and credentialed validation  |
+| ISSUE-015 | complete    | [Canonicalize analytics feature decimals before deterministic risk](https://github.com/AegisFintech/scalping-bot/issues/18)       | Ten-place deterministic boundary; conservative truncation; rejection tests; stopped credentialed validation   |
+| ISSUE-016 | complete    | [Collect stopped read-only spread observations for adaptive protection](https://github.com/AegisFintech/scalping-bot/issues/20)   | Durable minute samples; strict freshness/idempotency; 30 genuine observations; no execution authority         |
+| ISSUE-017 | complete    | [Persist model request IDs with unambiguous PostgreSQL types](https://github.com/AegisFintech/scalping-bot/issues/24)             | Distinct typed binds; atomic model trail; real PostgreSQL regression and rollback test                        |
+| ISSUE-018 | complete    | [Export correlated decision-trail events to Better Stack](https://github.com/AegisFintech/scalping-bot/issues/29)                 | Durable redacted outbox; stable correlation, retries, delivery status, and stopped deployment                 |
+| ISSUE-019 | complete    | [Refresh and revalidate market state after model latency](https://github.com/AegisFintech/scalping-bot/issues/32)                 | Immutable candle context; refreshed quote/depth; final spread, semantic, risk, and freshness checks           |
+| ISSUE-020 | complete    | [Coordinate execution and AI orchestrator timeout budgets](https://github.com/AegisFintech/scalping-bot/issues/35)                | Full retry budget; bounded startup validation; stable timeout/transport reasons and circuit behavior          |
+| ISSUE-021 | complete    | [Add a correlated AI decision inspector to Streamlit](https://github.com/AegisFintech/scalping-bot/issues/40)                     | Bounded redacted AI input/output, market, validation, risk, order, audit, and delivery drill-down             |
+| ISSUE-022 | complete    | [Require actionable two-leg AI proposals and expose prompt history](https://github.com/AegisFintech/scalping-bot/issues/43)       | Versioned mandatory OCO proposal contract plus exact prompt/request/response history                          |
+| ISSUE-023 | complete    | [Register immutable release identity for automated demo analysis](https://github.com/AegisFintech/scalping-bot/issues/47)         | New immutable identity; staged stopped restart; scoped demo automation enablement and verification            |
+| ISSUE-024 | complete    | [Align automatic demo analysis with broker M1 boundaries](https://github.com/AegisFintech/scalping-bot/issues/49)                 | Durable broker-M1 claims; one provider attempt; unchanged post-model context check; deployed terminal cycle   |
+| ISSUE-025 | complete    | [Complete terminal cTrader demo trade lifecycle and automatic repeat](https://github.com/AegisFintech/scalping-bot/issues/51)     | Persist full-close outcomes; release terminal analyses; display scheduler/trade history; repeat under caps    |
+| ISSUE-026 | complete    | [Register corrected immutable identity for bounded repeated demo cap](https://github.com/AegisFintech/scalping-bot/issues/53)     | Preserve `.3`; register `.4` with cap 20 before first execution startup; stopped deployment evidence          |
+| ISSUE-027 | complete    | [Normalize risk volume downward to the configured notional cap](https://github.com/AegisFintech/scalping-bot/issues/55)           | Cap down to broker step; never exceed loss/notional/margin; reject cap below broker minimum; deploy stopped   |
+| ISSUE-028 | in progress | [Persist cTrader placement callbacks after local broker IDs commit](https://github.com/AegisFintech/scalping-bot/issues/57)       | Queue placement callbacks; broker-ID fallback; durable readiness clears resolved evidence without restart     |
+| ISSUE-029 | in progress | [Handle broker demo callbacks that omit strategy identity](https://github.com/AegisFintech/scalping-bot/issues/59)                | Sanitized callback failure evidence; observed-shape fix; terminal same-PID automatic repeat                   |
+| ISSUE-030 | complete    | [Make execution AI circuit recover without restart](https://github.com/AegisFintech/scalping-bot/issues/61)                       | Configured caller cooldown; exact half-open boundary; same-PID scheduler recovery                             |
+| ISSUE-032 | complete    | [Make demo automation state and AI prompt trail operator-readable](https://github.com/AegisFintech/scalping-bot/issues/67)        | Plain-language state/retry timing; prominent exact AI messages; local/UTC cycle history                       |
+| ISSUE-033 | complete    | [Apply endpoint TP midpoint to continuous demo OCO loop](https://github.com/AegisFintech/scalping-bot/issues/70)                  | Preserve AI entry/SL; halve TP distance; validate/risk effective OCO; show proposal versus broker intent      |
+| ISSUE-034 | complete    | [Constrain endpoint stops to broker-minimum risk affordability](https://github.com/AegisFintech/scalping-bot/issues/72)           | Derive non-sizing max stop; endpoint honors it; retain deterministic risk and every existing gate             |
+| ISSUE-035 | complete    | [Refresh and revalidate market immediately before demo intent](https://github.com/AegisFintech/scalping-bot/issues/74)            | Final market/account refresh; repeat spread/semantics; preserve freshness without raising limits              |
+| ISSUE-036 | in progress | [Reduce compact AI payload latency without reducing analytics history](https://github.com/AegisFintech/scalping-bot/issues/76)    | Retain full analytics; bound raw endpoint tails; measure request size/latency                                 |
+| ISSUE-037 | in progress | [Deduplicate repeated cTrader fill callbacks before strict normalization](https://github.com/AegisFintech/scalping-bot/issues/78) | Skip only certainly persisted duplicate deal IDs; keep new malformed deals fail-closed                        |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -998,7 +999,12 @@ never justify empty, noisy, unsafe, or misleading commits.
   51 Python tests, configured Streamlit AppTest with zero exceptions and 32
   dataframes, replay/backtest, zero-vulnerability npm/pip audits, tracked-file
   secret scan, shell/PM2 syntax, and all five offline systemd parses at 2.8
-  (`OK`). Merge and supervised rollout evidence remain.
+  (`OK`). PR [#75](https://github.com/AegisFintech/scalping-bot/pull/75) merged
+  as `e8cb49c685094a2ea07d9597b1c23a045d4a3414`; release `.13` deployed.
+  The subsequent automatic `.14` cycle at 10:27 Asia/Singapore recorded both
+  `POST_MODEL` and `PRE_PLACEMENT`, passed the repeated account, market,
+  spread, semantic, and freshness checks, placed and mapped both demo pending
+  stops, and finished `ACCEPTED`. ISSUE-035 is complete.
 
 ### ISSUE-036 delivery details
 
@@ -1023,8 +1029,40 @@ never justify empty, noisy, unsafe, or misleading commits.
   tests, configured Streamlit AppTest with zero exceptions and 31 dataframes,
   replay/backtest, zero-vulnerability npm/pip audits, tracked-file secret scan,
   shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). No
-  analytics, freshness, risk, reconciliation, or execution gate is reduced;
-  merge and supervised request-size/latency evidence remain.
+  analytics, freshness, risk, reconciliation, or execution gate is reduced.
+  PR [#77](https://github.com/AegisFintech/scalping-bot/pull/77) merged as
+  `b909be75af526fcf3b017c5958800f0330abe5d6` and release `.14` deployed. The
+  first deployed request still used explicit ignored-environment overrides of
+  180/100/50; those local overrides are now corrected to 60/36/24. Reload and
+  actual deployed request-size/latency evidence wait for the active demo
+  position to reach a terminal broker state.
+
+### ISSUE-037 delivery details
+
+- Acceptance criteria: remember a fill/deal ID only after its normalized event
+  persists with a certain result; skip an exact same-process repeat before
+  strict contextual-position normalization; retain fail-closed behavior for a
+  new/first malformed deal and uncertain/failed persistence; preserve database
+  uniqueness/restart recovery; and deploy only after the current demo position
+  reaches a safe terminal boundary.
+- Dependencies: [issue #78](https://github.com/AegisFintech/scalping-bot/issues/78),
+  the `.14` supervised cTrader callback evidence, durable execution store, and
+  existing normalized deal-id idempotency.
+- Current status: implementation is in progress on
+  `issue-037-runtime-fill-dedup`. The first sell fill mapped durably, then cTrader
+  repeated execution type 3 with order/position/deal present but without the
+  open-position price. Normalization failed before database deduplication and
+  correctly locked new cycles. The active demo position remains undisturbed
+  while the bounded fix and tests are prepared. Release `.15`, the bounded
+  recorder change, dashboard guidance, documentation, and positive/failure
+  tests are implemented. Pre-merge gates pass: Prettier, ESLint, TypeScript
+  typecheck/build, 182 Node tests across 31 files, 13 schema tests, 3 migration
+  tests, all 3 configured isolated-PostgreSQL integration tests, Ruff
+  format/lint, strict mypy over 16 Python source files, 51 Python tests,
+  configured Streamlit AppTest with zero exceptions and 34 dataframes,
+  replay/backtest, zero-vulnerability npm/pip audits, tracked-file secret scan,
+  shell/PM2 syntax, and all five offline systemd parses at 2.8 (`OK`). Merge is
+  ready; deployment remains deferred until the active position is terminal.
 
 ## Acceptance criteria
 

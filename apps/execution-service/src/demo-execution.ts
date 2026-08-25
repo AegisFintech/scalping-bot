@@ -551,6 +551,7 @@ export class DurableDemoExecutionRecorder {
   #tail: Promise<void> = Promise.resolve();
   readonly #pending: BrokerExecution[] = [];
   #reasonCodes = new Set<string>();
+  readonly #persistedBrokerFillIds = new Set<string>();
 
   constructor(
     store: DemoExecutionStore,
@@ -599,6 +600,19 @@ export class DurableDemoExecutionRecorder {
   async #drain(): Promise<void> {
     while (this.#pending.length > 0) {
       const execution = this.#pending.shift()!;
+      const rawBrokerFillId = (() => {
+        const value = execution.deal?.dealId;
+        if (typeof value === "string" && value.length > 0) return value;
+        if (typeof value === "number" && Number.isSafeInteger(value))
+          return value.toString();
+        return null;
+      })();
+      if (
+        rawBrokerFillId !== null &&
+        this.#persistedBrokerFillIds.has(rawBrokerFillId)
+      ) {
+        continue;
+      }
       let normalized: DemoExecutionEvent | null;
       try {
         normalized = normalizeDemoExecution(execution, this.#options);
@@ -613,6 +627,9 @@ export class DurableDemoExecutionRecorder {
       if (normalized === null) continue;
       try {
         const result = await this.#store.persist(normalized);
+        if (result.certain && normalized.brokerFillId !== null) {
+          this.#persistedBrokerFillIds.add(normalized.brokerFillId);
+        }
         if (!result.certain && result.reasonCodes.length === 0) {
           this.#recordFailure(
             "DEMO_EXECUTION_PERSISTENCE_UNCERTAIN",
