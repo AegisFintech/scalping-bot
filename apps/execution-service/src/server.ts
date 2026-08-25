@@ -13,6 +13,7 @@ export interface ExecutionStatus {
   readonly emergencyStopped: boolean;
   readonly pauseNewAnalyses: boolean;
   readonly automaticAnalysisEnabled: boolean;
+  readonly aiCircuitOpenUntil: string | null;
   readonly tradingEnabled: boolean;
   readonly startupChecksPassed: boolean;
   readonly lastCycle: CycleResult | null;

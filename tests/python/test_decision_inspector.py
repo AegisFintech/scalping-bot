@@ -9,16 +9,99 @@ import pytest
 from apps.dashboard.decision_inspector import (
     DecisionViewError,
     analytics_summary,
+    automation_status_view,
     exact_model_input_view,
+    latest_ai_request_index,
     model_input_summary,
     model_output_authority_notice,
     model_output_view,
     model_proposal_label,
     prompt_artifact_view,
+    reason_code_view,
     safe_audit_detail,
     stage_state,
     trade_outcome_view,
 )
+
+
+def test_automation_status_explains_ai_cooldown_as_automatic_retry() -> None:
+    view = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "pauseNewAnalyses": False,
+            "emergencyStopped": False,
+            "tradingEnabled": False,
+            "aiCircuitOpenUntil": "2026-08-25T01:02:00.000Z",
+            "reasonCodes": ["AI_CIRCUIT_OPEN"],
+        }
+    )
+
+    assert view["state"] == "WAITING_FOR_AI"
+    assert "retry automatically" in view["detail"]
+    assert view["retry_at"] == "2026-08-25T01:02:00.000Z"
+    assert view["reasons"][0]["code"] == "AI_CIRCUIT_OPEN"
+    assert "No restart" in view["reasons"][0]["next_action"]
+
+
+def test_automation_status_keeps_emergency_stop_and_unknown_reasons_fail_closed() -> None:
+    stopped = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "emergencyStopped": True,
+            "reasonCodes": ["EMERGENCY_STOP_DATABASE", "NEW_SAFETY_GATE"],
+        }
+    )
+
+    assert stopped["state"] == "STOPPED"
+    assert stopped["severity"] == "error"
+    unknown = reason_code_view("NEW_SAFETY_GATE")
+    assert unknown["code"] == "NEW_SAFETY_GATE"
+    assert "do not bypass" in unknown["next_action"]
+
+
+def test_automation_status_does_not_treat_malformed_reasons_as_ready() -> None:
+    view = automation_status_view(
+        {"automaticAnalysisEnabled": True, "reasonCodes": "AI_CIRCUIT_OPEN"}
+    )
+
+    assert view["state"] == "SAFETY_BLOCKED"
+    assert view["reasons"][0]["code"] == "STATUS_REASON_CODES_INVALID"
+
+
+def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
+    view = reason_code_view("SELL_ENTRY_TOO_CLOSE")
+
+    assert view["code"] == "SELL_ENTRY_TOO_CLOSE"
+    assert view["title"] == "Sell proposal failed deterministic validation"
+    assert "No sell order was sent" in view["next_action"]
+
+
+def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
+    view = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "emergencyStopped": False,
+            "reasonCodes": ["PREVIOUS_ANALYSIS_ACTIVE"],
+        }
+    )
+
+    assert view["state"] == "ACTIVE_CYCLE_OR_SETUP"
+    assert "cycle or setup is already active" in view["headline"]
+
+
+def test_analysis_selection_prefers_latest_durable_ai_request_with_safe_fallback() -> None:
+    assert (
+        latest_ai_request_index(
+            [
+                {"ai_request_recorded": False},
+                {"ai_request_recorded": True},
+                {"ai_request_recorded": True},
+            ]
+        )
+        == 1
+    )
+    assert latest_ai_request_index([{"ai_request_recorded": False}]) == 0
+    assert latest_ai_request_index([]) == 0
 
 
 def test_model_output_view_preserves_exact_validated_ai_fields() -> None:

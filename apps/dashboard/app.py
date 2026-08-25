@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 import httpx
 import pandas as pd
@@ -23,12 +24,15 @@ from charts import (
 from decision_inspector import (
     DecisionViewError,
     analytics_summary,
+    automation_status_view,
     exact_model_input_view,
+    latest_ai_request_index,
     model_input_summary,
     model_output_authority_notice,
     model_output_view,
     model_proposal_label,
     prompt_artifact_view,
+    reason_code_view,
     safe_audit_detail,
     stage_state,
     trade_outcome_view,
@@ -96,6 +100,7 @@ except Exception as error:
 mode = str(status.get("mode", "unknown")).upper()
 account_environment = str(status.get("accountType", "unknown")).lower()
 selected_symbol = str(status.get("symbol", "unknown"))
+automation_view = automation_status_view(status)
 st.title("cTrader AI Scalper Operations")
 if mode == "LIVE":
     st.error("LIVE-COMPATIBLE MODE — order submission remains unavailable in this build")
@@ -130,7 +135,7 @@ with tabs[0]:
     columns[0].metric("Mode", mode)
     columns[1].metric("Symbol", str(status.get("symbol", "unknown")))
     columns[2].metric("Account type", str(status.get("accountType", "unknown")))
-    columns[3].metric("Trading enabled", "YES" if status.get("tradingEnabled") else "NO")
+    columns[3].metric("Can place a new order now", "YES" if status.get("tradingEnabled") else "NO")
     columns = st.columns(4)
     columns[0].metric("Emergency stop", "ACTIVE" if status.get("emergencyStopped") else "clear")
     columns[1].metric("Analyses paused", "YES" if status.get("pauseNewAnalyses") else "NO")
@@ -138,6 +143,44 @@ with tabs[0]:
     columns[3].metric(
         "Automatic analysis", "ON" if status.get("automaticAnalysisEnabled") else "OFF"
     )
+    st.subheader("What automation is doing now")
+    state_message = f"{automation_view['headline']} — {automation_view['detail']}"
+    if automation_view["severity"] == "error":
+        st.error(state_message)
+    elif automation_view["severity"] == "warning":
+        st.warning(state_message)
+    elif automation_view["severity"] == "success":
+        st.success(state_message)
+    else:
+        st.info(state_message)
+    retry_at = automation_view.get("retry_at")
+    if isinstance(retry_at, str):
+        retry_time = datetime.fromisoformat(retry_at.replace("Z", "+00:00"))
+        st.info(
+            "Automatic AI retry becomes eligible at "
+            f"{retry_time.astimezone(UTC).isoformat()} UTC / "
+            f"{retry_time.astimezone(ZoneInfo('Asia/Singapore')).isoformat()} Singapore. "
+            "No process restart is required."
+        )
+    if automation_view["reasons"]:
+        st.subheader("Why a new cycle or order is waiting")
+        st.dataframe(pd.DataFrame(automation_view["reasons"]), width="stretch", hide_index=True)
+
+    last_cycle = status.get("lastCycle")
+    if isinstance(last_cycle, dict):
+        st.subheader("Last completed automatic/manual cycle")
+        cycle_columns = st.columns(3)
+        cycle_columns[0].metric("Outcome", str(last_cycle.get("outcome", "unknown")))
+        cycle_columns[1].metric("Analysis ID", str(last_cycle.get("analysisId", "not created")))
+        last_reasons = last_cycle.get("reasonCodes", [])
+        if isinstance(last_reasons, list):
+            cycle_columns[2].metric("Reason count", len(last_reasons))
+            if last_reasons:
+                st.dataframe(
+                    pd.DataFrame([reason_code_view(reason) for reason in last_reasons]),
+                    width="stretch",
+                    hide_index=True,
+                )
     try:
         overview = frame(
             """SELECT symbol, mode, state, analysis_time, valid_until, rejection_reasons
@@ -154,9 +197,6 @@ with tabs[0]:
             st.dataframe(daily_overview, width="stretch", hide_index=True)
     except Exception as error:
         st.error(f"Database overview unavailable: {type(error).__name__}")
-    reasons = status.get("reasonCodes", [])
-    if reasons:
-        st.error("Blocking reasons: " + ", ".join(str(item) for item in reasons))
 
 with tabs[1]:
     try:
@@ -313,7 +353,10 @@ with tabs[4]:
     try:
         analyses = query(
             """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode,
-                      ar.state, ar.valid_until, ar.rejection_reasons
+                      ar.state, ar.valid_until, ar.rejection_reasons,
+                      EXISTS (
+                        SELECT 1 FROM model_requests mq WHERE mq.analysis_id = ar.id
+                      ) AS ai_request_recorded
                FROM analysis_runs ar
                JOIN accounts a ON a.id = ar.account_id
                JOIN symbols s ON s.id = ar.symbol_id
@@ -324,16 +367,35 @@ with tabs[4]:
         if not analyses:
             st.info("No analysis runs are available for this account environment and symbol.")
         else:
-            labels = {
-                str(row["analysis_id"]): (
-                    f"{row['analysis_time']} · {str(row['mode']).upper()} · {row['state']}"
+            labels: dict[str, str] = {}
+            analysis_ids: list[str] = []
+            for row in analyses:
+                analysis_id = str(row["analysis_id"])
+                analysis_ids.append(analysis_id)
+                analysis_time = row["analysis_time"]
+                singapore_time = (
+                    analysis_time.astimezone(ZoneInfo("Asia/Singapore")).isoformat()
+                    if isinstance(analysis_time, datetime)
+                    else str(analysis_time)
                 )
-                for row in analyses
-            }
+                request_label = (
+                    "AI REQUEST RECORDED" if row["ai_request_recorded"] else "NO DURABLE AI REQUEST"
+                )
+                labels[analysis_id] = (
+                    f"{singapore_time} Singapore · {str(row['mode']).upper()} · "
+                    f"{row['state']} · {request_label}"
+                )
+            default_analysis_index = latest_ai_request_index(analyses)
             selected_analysis_id = st.selectbox(
                 "Analysis run",
-                list(labels),
+                analysis_ids,
+                index=default_analysis_index,
                 format_func=lambda value: labels[str(value)],
+                help=(
+                    "Defaults to the newest run with a durable external-AI request. Runs without "
+                    "one stopped before a request was persisted or failed before a response was "
+                    "recorded."
+                ),
             )
             detail_rows = query(
                 """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode,
@@ -397,7 +459,7 @@ with tabs[4]:
                    FROM analysis_runs ar
                    JOIN accounts a ON a.id = ar.account_id
                    JOIN symbols s ON s.id = ar.symbol_id
-                   LEFT JOIN LATERAL (
+                   JOIN LATERAL (
                      SELECT * FROM model_requests
                      WHERE analysis_id = ar.id
                      ORDER BY requested_at DESC LIMIT 1
@@ -410,6 +472,12 @@ with tabs[4]:
             automatic_history = query(
                 """SELECT ai.interval_start, ai.broker_server_time, ai.claimed_at,
                           ai.completed_at, ai.outcome,
+                          to_char(ai.interval_start AT TIME ZONE 'Asia/Singapore',
+                                  'YYYY-MM-DD HH24:MI:SS') AS interval_start_singapore,
+                          to_char(ai.claimed_at AT TIME ZONE 'Asia/Singapore',
+                                  'YYYY-MM-DD HH24:MI:SS') AS claimed_at_singapore,
+                          to_char(ai.completed_at AT TIME ZONE 'Asia/Singapore',
+                                  'YYYY-MM-DD HH24:MI:SS') AS completed_at_singapore,
                           COALESCE(ai.analysis_id::text, ai.cycle_id::text) AS cycle_id,
                           ar.state AS analysis_state, ar.rejection_reasons
                    FROM automatic_analysis_intervals ai
@@ -556,6 +624,27 @@ with tabs[4]:
                     detail.get("system_prompt_sha256"),
                 )
             )
+            request_metadata = {
+                key: detail.get(key)
+                for key in (
+                    "request_id",
+                    "api_style",
+                    "model",
+                    "prompt_version",
+                    "schema_version",
+                    "strategy_version",
+                    "payload_mode",
+                    "payload_sha256",
+                    "system_prompt_sha256",
+                    "model_request_status",
+                    "attempt_count",
+                    "requested_at",
+                    "completed_at",
+                    "duration_ms",
+                    "input_tokens",
+                    "output_tokens",
+                )
+            }
             refresh_reached = any(
                 event["event_name"] == "decision_market_refreshed" for event in audit_events
             )
@@ -593,6 +682,28 @@ with tabs[4]:
                 f"Analysis ID: {detail['analysis_id']} · PostgreSQL is authoritative; "
                 "Better Stack is the correlated delivery mirror."
             )
+            st.subheader("Exact messages sent to the external AI")
+            if prompt_view is None or detail.get("payload_redacted") is None:
+                st.info(
+                    "This selected run has no durable AI request record. Select a run labelled "
+                    "AI REQUEST RECORDED to inspect its exact persisted messages."
+                )
+            else:
+                st.success(
+                    "This is the hash-verified system message and persisted redacted user message "
+                    "for the selected external-AI request. Private endpoint URLs, authorization "
+                    "headers, and credentials are never stored or displayed."
+                )
+                st.json(request_metadata)
+                with st.expander("System message (exact)", expanded=True):
+                    st.code(prompt_view["content"], language="text")
+                    st.json({key: value for key, value in prompt_view.items() if key != "content"})
+                with st.expander("User message (exact persisted redacted JSON)", expanded=True):
+                    st.json(exact_model_input_view(detail["payload_redacted"]))
+                    st.caption(
+                        "PostgreSQL JSONB may normalize object-key order; values and arrays are "
+                        "the persisted redacted user message."
+                    )
             st.subheader("Prompt and response history")
             st.dataframe(pd.DataFrame(prompt_history), width="stretch", hide_index=True)
             st.subheader("Automatic broker-minute cycle history")
@@ -652,27 +763,6 @@ with tabs[4]:
                 )
 
             with inspector_tabs[1]:
-                request_metadata = {
-                    key: detail.get(key)
-                    for key in (
-                        "request_id",
-                        "api_style",
-                        "model",
-                        "prompt_version",
-                        "schema_version",
-                        "strategy_version",
-                        "payload_mode",
-                        "payload_sha256",
-                        "system_prompt_sha256",
-                        "model_request_status",
-                        "attempt_count",
-                        "requested_at",
-                        "completed_at",
-                        "duration_ms",
-                        "input_tokens",
-                        "output_tokens",
-                    )
-                }
                 st.subheader("Model request identity and immutable input hash")
                 st.json(request_metadata)
                 st.subheader("System prompt sent to the model")
@@ -696,16 +786,10 @@ with tabs[4]:
                         "the Market tab for completed-candle charts; the request hash above "
                         "identifies the exact persisted redacted payload."
                     )
-                    if st.checkbox(
-                        "Show exact redacted user JSON sent to the AI",
-                        value=False,
-                        key=f"exact-model-input-{selected_analysis_id}",
-                    ):
-                        st.json(exact_model_input_view(detail["payload_redacted"]))
-                        st.caption(
-                            "PostgreSQL JSONB may normalize object-key order; values and arrays "
-                            "are the persisted redacted user message."
-                        )
+                    st.caption(
+                        "The exact redacted user JSON is displayed in the prominent external-AI "
+                        "request section above."
+                    )
                 st.subheader("Deterministic analytics supplied to the decision path")
                 if detail.get("analytics_features") is None:
                     st.info("Analytics was not reached for this run.")

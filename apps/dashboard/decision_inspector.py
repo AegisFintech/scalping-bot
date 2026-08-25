@@ -55,6 +55,346 @@ _SECRET_VALUE = re.compile(
     re.IGNORECASE,
 )
 
+_REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
+    "AI_CIRCUIT_OPEN": (
+        "External AI is cooling down",
+        "The last AI call timed out or returned unavailable. New analyses wait during the "
+        "bounded cooldown; no order is sent.",
+        "No restart is required. The scheduler retries automatically after the displayed "
+        "retry time.",
+    ),
+    "ANALYSES_PAUSED": (
+        "Analysis paused by control",
+        "The analysis pause control is active. Order maintenance and reconciliation continue.",
+        "Clear the pause only after confirming that resuming automatic analysis is intended.",
+    ),
+    "AUTOMATIC_ANALYSIS_DISABLED": (
+        "Automatic analysis is off",
+        "The scheduler is running maintenance but will not start analysis cycles.",
+        "Enable automatic analysis through reviewed configuration when intended.",
+    ),
+    "EMERGENCY_STOP_ENV": (
+        "Environment emergency stop is active",
+        "The process configuration blocks new analyses and orders.",
+        "Reconcile first, then clear the environment stop and restart only when intended.",
+    ),
+    "EMERGENCY_STOP_FILE": (
+        "Emergency-stop file is active",
+        "The local sentinel blocks new analyses and orders.",
+        "Reconcile first, then remove the sentinel through the approved operator procedure.",
+    ),
+    "EMERGENCY_STOP_DATABASE": (
+        "Dashboard emergency stop is active",
+        "The durable runtime control blocks new analyses and orders.",
+        "Reconcile first, then clear the dashboard control with an audited reason.",
+    ),
+    "PREVIOUS_ANALYSIS_ACTIVE": (
+        "An analysis cycle or setup is already active",
+        "The scheduler will not overlap an analysis or replace managed orders/positions.",
+        "No action is normally required; wait for the cycle, close, cancellation, expiry, and "
+        "reconciliation to finish.",
+    ),
+    "RELEVANT_POSITION_EXISTS": (
+        "A relevant position is being managed",
+        "A new analysis is blocked while a position for this strategy scope exists.",
+        "Monitor the position lifecycle; do not manually clear durable state.",
+    ),
+    "RELEVANT_PENDING_ORDER_EXISTS": (
+        "A relevant pending order is being managed",
+        "A new analysis is blocked while a strategy or blocking pending order exists.",
+        "Wait for fill/expiry/cancellation and reconciliation, or use the audited cancellation "
+        "control.",
+    ),
+    "CANCELLATION_PENDING": (
+        "Order cancellation is still pending",
+        "The broker has not yet supplied certain terminal cancellation evidence.",
+        "Wait for reconciliation; investigate if it persists.",
+    ),
+    "PARTIAL_FILL_BLOCKING": (
+        "A partial fill requires reconciliation",
+        "Execution state is uncertain, so replacement analysis and orders are blocked.",
+        "Inspect the broker event trail and reconcile; never delete the evidence.",
+    ),
+    "RECONCILIATION_UNCERTAIN": (
+        "Broker and local state do not yet reconcile",
+        "The system cannot prove that positions and orders are in a safe known state.",
+        "Inspect the execution journal and broker state before clearing any control.",
+    ),
+    "ACCOUNT_NOT_RECONCILED": (
+        "Account reconciliation is incomplete",
+        "New analysis waits until broker and local account state agree.",
+        "Check cTrader connectivity and the reconciliation trail.",
+    ),
+    "ACCOUNT_NOT_AUTHENTICATED": (
+        "cTrader authentication is unavailable",
+        "The system cannot safely fetch or act on the demo account.",
+        "Check the service and token-renewal status without exposing credentials.",
+    ),
+    "SERVICE_UNHEALTHY": (
+        "A required service is unhealthy",
+        "The execution service cannot prove all required dependencies are available.",
+        "Inspect service health and PostgreSQL events; automation resumes only after recovery.",
+    ),
+    "CANDLES_UNSYNCHRONIZED": (
+        "Completed candles are not synchronized",
+        "The required M1, M5, and M15 completed-candle context is not aligned.",
+        "Wait for the market feed or inspect the Market tab if this repeats.",
+    ),
+    "ORDER_BOOK_STALE": (
+        "Order book is stale",
+        "Fresh depth is required before analysis or placement.",
+        "The next eligible broker minute retries automatically; inspect market-data health if "
+        "persistent.",
+    ),
+    "MARKET_DATA_STALE": (
+        "Market data is stale",
+        "A fresh broker timestamp and quote are required before analysis or placement.",
+        "The next eligible broker minute retries automatically; inspect market-data health if "
+        "persistent.",
+    ),
+    "SYMBOL_METADATA_INVALID": (
+        "Broker symbol metadata is unavailable",
+        "Precision, tick, volume, or session metadata cannot be proven current.",
+        "Check cTrader discovery and market-data service health.",
+    ),
+    "DAILY_LOSS_LOCKOUT": (
+        "Daily loss lockout is active",
+        "Configured daily loss protection blocks new risk.",
+        "Review the Risk tab; reset is permitted only on the next configured day after "
+        "reconciliation.",
+    ),
+    "OPERATIONAL_RISK_LOCKOUT": (
+        "Operational risk lockout is active",
+        "A broker journal, equity-floor, recovery, or daily order-cap condition blocks new risk.",
+        "Inspect the execution journal, account state, and configured caps before intervening.",
+    ),
+    "FILESYSTEM_CONTROLS_UNCERTAIN": (
+        "Filesystem controls cannot be verified",
+        "The service cannot safely determine sentinel state.",
+        "Repair file access/permissions; do not bypass the control.",
+    ),
+    "RUNTIME_CONTROLS_UNCERTAIN": (
+        "Database controls cannot be verified",
+        "The durable stop/pause state is unknown.",
+        "Restore PostgreSQL control access and verify the audit trail.",
+    ),
+    "DEMO_TRADING_DISABLED": (
+        "Demo order submission is off",
+        "Analysis may run, but the demo gateway is not authorized to submit broker orders.",
+        "Enable demo trading only for an explicitly authorized demo session.",
+    ),
+    "DEMO_ACKNOWLEDGEMENT_INVALID": (
+        "Demo acknowledgement is missing",
+        "The required demo-only acknowledgement is not active in the running process.",
+        "Set the exact acknowledgement only for an intended broker-demo session and restart "
+        "safely.",
+    ),
+}
+
+_PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (
+    (
+        "AI_ORCHESTRATOR_",
+        (
+            "External AI request failed",
+            "The local AI service timed out, was unavailable, or rejected the provider response; "
+            "no order was sent.",
+            "The automatic scheduler retries on a later eligible broker minute after any cooldown.",
+        ),
+    ),
+    (
+        "MARKET_DATA_",
+        (
+            "Market-data request failed",
+            "Required broker market information was unavailable or invalid, so the AI/order path "
+            "stopped for this cycle.",
+            "The automatic scheduler retries on the next eligible broker minute; inspect Market "
+            "and service health if repeated.",
+        ),
+    ),
+    (
+        "SPREAD_",
+        (
+            "Spread protection rejected this cycle",
+            "The observed spread or its required history did not pass the configured deterministic "
+            "limit.",
+            "No order was sent. The next eligible broker minute is evaluated independently.",
+        ),
+    ),
+    (
+        "DECISION_",
+        (
+            "Post-AI market recheck rejected this cycle",
+            "Market context changed, became stale, or could not be refreshed after the AI "
+            "response.",
+            "No order was sent. The scheduler obtains a completely new snapshot on a later "
+            "eligible minute.",
+        ),
+    ),
+    (
+        "BUY_RISK_",
+        (
+            "Buy proposal failed deterministic risk sizing",
+            "The buy-side AI levels could not produce a broker-valid size within configured risk "
+            "and notional limits.",
+            "No buy order was sent; inspect the selected run's Risk & execution tab.",
+        ),
+    ),
+    (
+        "SELL_RISK_",
+        (
+            "Sell proposal failed deterministic risk sizing",
+            "The sell-side AI levels could not produce a broker-valid size within configured risk "
+            "and notional limits.",
+            "No sell order was sent; inspect the selected run's Risk & execution tab.",
+        ),
+    ),
+    (
+        "BUY_",
+        (
+            "Buy proposal failed deterministic validation",
+            "The buy-side AI levels no longer satisfy current price, distance, precision, or "
+            "expiry rules.",
+            "No buy order was sent; inspect the selected run's validation rows.",
+        ),
+    ),
+    (
+        "SELL_",
+        (
+            "Sell proposal failed deterministic validation",
+            "The sell-side AI levels no longer satisfy current price, distance, precision, or "
+            "expiry rules.",
+            "No sell order was sent; inspect the selected run's validation rows.",
+        ),
+    ),
+    (
+        "RISK_",
+        (
+            "Deterministic risk rejected this cycle",
+            "The proposal could not satisfy a configured money, volume, margin, exposure, or "
+            "price constraint.",
+            "No order was sent; inspect the selected run's Risk & execution tab.",
+        ),
+    ),
+    (
+        "MODEL_",
+        (
+            "AI response validation failed",
+            "The returned JSON did not pass the strict schema or semantic contract.",
+            "No order was sent; inspect the exact AI response and local validation rows.",
+        ),
+    ),
+)
+
+
+def reason_code_view(reason: object) -> dict[str, str]:
+    """Translate one internal gate code without hiding the authoritative code."""
+
+    code = str(reason)
+    guidance = _REASON_GUIDANCE.get(code)
+    if guidance is None:
+        guidance = next(
+            (value for prefix, value in _PREFIX_REASON_GUIDANCE if code.startswith(prefix)),
+            None,
+        )
+    if guidance is None:
+        return {
+            "code": code,
+            "title": "Safety condition is blocking this cycle",
+            "meaning": "The system retained an unrecognized fail-closed reason code.",
+            "next_action": (
+                "Use this exact code in the PostgreSQL audit trail and runbook; do not bypass it."
+            ),
+        }
+    title, meaning, next_action = guidance
+    return {"code": code, "title": title, "meaning": meaning, "next_action": next_action}
+
+
+def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
+    """Build an operator-readable state while preserving every blocking reason."""
+
+    raw_reasons = status.get("reasonCodes", [])
+    reasons = (
+        [str(reason) for reason in raw_reasons]
+        if isinstance(raw_reasons, Sequence) and not isinstance(raw_reasons, (str, bytes))
+        else ["STATUS_REASON_CODES_INVALID"]
+    )
+    reason_set = set(reasons)
+    automatic = status.get("automaticAnalysisEnabled") is True
+    paused = status.get("pauseNewAnalyses") is True
+    emergency = status.get("emergencyStopped") is True
+
+    if emergency or reason_set.intersection(
+        {"EMERGENCY_STOP_ENV", "EMERGENCY_STOP_FILE", "EMERGENCY_STOP_DATABASE"}
+    ):
+        state, headline, severity = "STOPPED", "Automation stopped by an emergency control", "error"
+        detail = "New analyses and orders are blocked; maintenance and reconciliation continue."
+    elif not automatic:
+        state, headline, severity = "OFF", "Automatic analysis is off", "info"
+        detail = (
+            "The process can maintain existing state, but it will not start scheduled analyses."
+        )
+    elif paused or "ANALYSES_PAUSED" in reason_set:
+        state, headline, severity = "PAUSED", "Automatic analysis is paused", "warning"
+        detail = "A runtime control is preventing new cycles."
+    elif "AI_CIRCUIT_OPEN" in reason_set:
+        state, headline, severity = (
+            "WAITING_FOR_AI",
+            "Automatic analysis is on — waiting for the external AI cooldown",
+            "warning",
+        )
+        detail = "The scheduler remains alive and will retry automatically after the cooldown."
+    elif reason_set.intersection(
+        {
+            "PREVIOUS_ANALYSIS_ACTIVE",
+            "RELEVANT_POSITION_EXISTS",
+            "RELEVANT_PENDING_ORDER_EXISTS",
+            "CANCELLATION_PENDING",
+        }
+    ):
+        state, headline, severity = (
+            "ACTIVE_CYCLE_OR_SETUP",
+            "Automatic analysis is on — a cycle or setup is already active",
+            "info",
+        )
+        detail = (
+            "The next scheduled analysis waits for the current analysis or broker lifecycle to "
+            "finish."
+        )
+    elif reasons:
+        state, headline, severity = (
+            "SAFETY_BLOCKED",
+            "Automatic analysis is on — safety checks are waiting",
+            "warning",
+        )
+        detail = "No new order is sent until every listed condition clears."
+    else:
+        state, headline, severity = "READY", "Automatic demo analysis is running", "success"
+        detail = (
+            "The scheduler checks broker time and starts at most one cycle in each eligible M1 "
+            "window."
+        )
+
+    retry_at = status.get("aiCircuitOpenUntil")
+    if not isinstance(retry_at, str):
+        retry_at = None
+    return {
+        "state": state,
+        "headline": headline,
+        "severity": severity,
+        "detail": detail,
+        "retry_at": retry_at,
+        "reasons": [reason_code_view(reason) for reason in reasons],
+    }
+
+
+def latest_ai_request_index(rows: Sequence[Mapping[str, Any]]) -> int:
+    """Prefer the newest run with a durable request, retaining a safe empty fallback."""
+
+    for index, row in enumerate(rows):
+        if row.get("ai_request_recorded") is True:
+            return index
+    return 0
+
 
 def _json_default(value: object) -> str:
     if isinstance(value, (datetime, date, Decimal)):

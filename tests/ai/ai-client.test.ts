@@ -249,6 +249,7 @@ describe("AI orchestrator HTTP client", () => {
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
     ).rejects.toThrow("AI_ORCHESTRATOR_HTTP_ERROR:503");
     expect(client.circuitOpen).toBe(true);
+    expect(client.circuitOpenUntil).toBe("1970-01-01T00:00:06.000Z");
     clock = 5_999;
     await expect(
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
@@ -257,6 +258,7 @@ describe("AI orchestrator HTTP client", () => {
 
     clock = 6_000;
     expect(client.circuitOpen).toBe(false);
+    expect(client.circuitOpenUntil).toBeNull();
     await expect(
       client.analyze({ analysisId, symbol: "XAUUSD", payload: {} }),
     ).resolves.toMatchObject({ response: { analysis_id: analysisId } });

@@ -873,6 +873,7 @@ async function main(): Promise<void> {
         current.databaseEmergencyStop,
       pauseNewAnalyses: current.pauseNewAnalyses,
       automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+      aiCircuitOpenUntil: model.circuitOpenUntil,
       tradingEnabled:
         eligibility.allowed &&
         gateway.canSubmitToBroker &&

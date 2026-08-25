@@ -136,10 +136,17 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   refreshed market evidence, local validation/risk, broker outcome, and each
   PostgreSQL audit event with its Better Stack delivery checkpoint. Missing
   stages render as not reached rather than successful.
+- The Overview distinguishes scheduler enablement from immediate order
+  eligibility. Temporary AI cooldowns show their exact automatic retry time and
+  retain the authoritative reason code alongside plain-language impact and
+  operator action. Broker-minute history shows UTC and Asia/Singapore time so a
+  bounded cooldown is not mistaken for a stopped process.
 - Prompt history shows prior request/response versions and hashes. Each selected
-  run shows the exact hash-verified system prompt and an operator-controlled
-  view of the exact persisted redacted user JSON. New prompts are persisted per
-  request; legacy versions use an explicit tracked-artifact fallback.
+  run defaults to the newest durable AI request and prominently shows the exact
+  hash-verified system prompt with the exact persisted redacted user JSON. New
+  prompts are persisted per completed request; a run without one is explicitly
+  labelled as having no durable AI request record, and legacy versions use an
+  explicit tracked-artifact fallback.
 - Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
 
 ## Typed boundaries

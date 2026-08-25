@@ -139,6 +139,14 @@ the matching `automatic_analysis_interval_completed` event contains the cycle
 outcome and correlation ID. Better Stack never receives the full prompt or
 request payload.
 
+The Overview reports separate states for automation `OFF`, operator `PAUSED` or
+`STOPPED`, temporary `WAITING_FOR_AI`, an active cycle/setup, safety waiting,
+and `READY`. `AI_CIRCUIT_OPEN` means the scheduler is still running but will not
+start another model call until the displayed UTC/Singapore retry time. It
+half-opens automatically; do not restart merely to clear the message. The last
+cycle is shown separately because a terminal rejection explains why that cycle
+placed no order but does not mean the scheduler stopped.
+
 ## Adaptive spread-history warm-up
 
 1. Apply migration `0007` and restart the execution service with
@@ -184,7 +192,8 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
   `AI_CIRCUIT_BREAKER_RESET_SECONDS`, blocks throughout that cooldown, and
   automatically half-opens for a later broker minute at the exact boundary.
   A repeated timeout, connection failure, or 503 reopens it. Do not restart just
-  to clear the circuit; investigate a breaker that repeatedly reopens.
+  to clear the circuit; the Overview shows the automatic retry time. Investigate
+  a breaker that repeatedly reopens.
 - **reconciliation failure:** block account/symbol; query broker state; resolve labels/idempotency; never resubmit an uncertain command.
 - **daily loss lockout:** cancel pending strategy orders; monitor/document existing positions under approved policy; reset only next configured day after reconciliation.
 - **database failure:** block new order commands; keep broker reconciliation attempts and buffered local critical logs; recover DB and reconcile.
@@ -204,26 +213,31 @@ into repository files or logs.
 
 ## Streamlit AI decision inspection
 
-1. Open **AI Analysis** and select the analysis timestamp/state within the
-   current mode/account-environment/symbol banner. Copy its `analysis_id` when
-   correlating another system.
-2. Read **Decision pipeline** from top to bottom. `NOT_REACHED` means no durable
+1. Open **AI Analysis**. The selector defaults to the newest run labelled
+   **AI REQUEST RECORDED**; runs without a completed durable request remain
+   available and are labelled **NO DURABLE AI REQUEST**. Copy the selected
+   `analysis_id` when correlating another system.
+2. Inspect **Exact messages sent to the external AI** near the top. It shows the
+   hash-verified system message and exact persisted redacted user JSON together.
+   Private endpoint URLs, authorization headers, tokens, and credentials are
+   intentionally neither stored nor displayed.
+3. Read **Decision pipeline** from top to bottom. `NOT_REACHED` means no durable
    evidence exists for that stage; it must never be interpreted as approval.
-3. In **AI output**, inspect the exact parsed and schema-validated model JSON.
+4. In **AI output**, inspect the exact parsed and schema-validated model JSON.
    Schema 2.0 always contains both conditional stops and has no `NO_TRADE` or
    leg-enabled switch. These are proposals only—not queued, submitted, accepted,
    or filled orders. The displayed local validation, deterministic risk, and
    broker stages remain separate execution authorities.
-4. In **Input & analytics**, verify request/model/prompt/schema/strategy
+5. In **Input & analytics**, verify request/model/prompt/schema/strategy
    versions, payload mode/hash, the hash-verified exact system prompt,
    completed-candle coverage, indicator summary, execution constraints, and
-   initial/refreshed quote/depth evidence. Select **Show exact redacted user JSON
-   sent to the AI** only when the full persisted input is needed; its object-key
-   order may be normalized by PostgreSQL JSONB.
-5. In **Risk & execution**, distinguish semantic rejection from deterministic
+   initial/refreshed quote/depth evidence. The exact redacted user JSON is also
+   available in the prominent request section; PostgreSQL JSONB may normalize
+   object-key order.
+6. In **Risk & execution**, distinguish semantic rejection from deterministic
    sizing, recorded order intent, broker order state, and normalized callback
    mapping. An empty section explicitly says the stage was not reached.
-6. In **Audit log**, follow chronological authoritative PostgreSQL events and
+7. In **Audit log**, follow chronological authoritative PostgreSQL events and
    their per-event Better Stack status. Search Live Tail using `event_id`,
    `analysis_id`, `request_id`, or `order_group_id`; investigate any missing or
    repeatedly retried mirror without modifying the PostgreSQL record.

@@ -831,6 +831,42 @@ risk path rejected both risk-based volumes below the broker minimum. PID,
 controls, and readiness remained healthy. This is active unattended demo
 automation, while every invalid or unsafe cycle continues to create no order.
 
+## Operator-readable automation and AI request trail
+
+The reported midnight stop was a presentation problem, not a dead scheduler.
+PostgreSQL showed continuing broker-minute claims through 01:05 UTC on August
+25 (09:05 Asia/Singapore) under PID `2476750`. Five-minute gaps followed real
+external-AI HTTP 503 responses because the execution caller correctly retained
+its 300-second circuit cooldown, then resumed under the same PID. Other claimed
+minutes ended as explicit market-data, spread, refresh, or minimum-volume
+rejections. Those terminal cycle outcomes did not disable later scheduling.
+
+ISSUE-032 exposes the caller's bounded circuit expiry as a non-secret local
+status timestamp. Streamlit now separates scheduler enablement, immediate order
+eligibility, the last terminal cycle, and active safety gates. Every status
+keeps its exact reason code while adding plain-language impact and next action;
+`AI_CIRCUIT_OPEN` is labelled as a temporary automatic wait with UTC and
+Asia/Singapore retry times, not a permanent trading stop.
+
+The AI inspector defaults to the newest analysis with a durable model request,
+labels analyses with and without one, and opens the exact hash-verified system
+message plus exact persisted redacted user JSON near the top. Endpoint URLs,
+authorization headers, account identifiers, and credentials remain excluded.
+PostgreSQL contained completed model requests with both prompt artifacts and
+redacted payloads after midnight; runs that failed before a durable response
+remain honestly labelled as having no durable AI request rather than implying a
+prompt record exists.
+
+The pre-merge checkpoint passed Prettier, ESLint, TypeScript typecheck/build,
+161 Node tests across 29 files, 12 JSON Schema tests, 3 static migration tests,
+all 3 configured isolated-PostgreSQL integration tests, Ruff format/lint, strict
+mypy over 19 source files, and 49 Python tests. The configured Streamlit AppTest
+rendered the current database with the automation explanation and exact-request
+section visible and zero exceptions. Replay/backtest smoke tests, npm/pip audits
+with zero known vulnerabilities, secret and shell checks, and all five offline
+systemd security parses also passed. The host used Node 24.18.0; Node 22 remains
+the supported deployment baseline.
+
 ## Shadow-mode setup
 
 After demo market-data validation, use a separately authorized live-data account
