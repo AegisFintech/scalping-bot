@@ -63,8 +63,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v5` tells the endpoint that execution will preserve entry/SL
-  and halve TP distance. It supplies a doubled proposal R:R minimum plus a
+- Prompt `system-v6` tells the endpoint that execution will preserve entry/SL
+  and halve TP distance. It explicitly self-checks both sides' R:R, midpoint,
+  target ordering, and independent chart-structure confirmation. It supplies a
+  doubled proposal R:R minimum plus a
   non-sizing maximum stop distance derived from reconciled equity, configured
   setup risk, broker tick value, and broker minimum volume. No account money,
   budget, volume, or identity crosses the endpoint boundary.

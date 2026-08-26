@@ -64,7 +64,7 @@ describe("execution safety gates", () => {
       automaticAnalysisEnabled: false,
       automaticAnalysisCompletedLimit: 0,
       automaticAnalysisCompletedBaseline: 0,
-      automaticAnalysisStartWindowSeconds: 10,
+      automaticAnalysisStartWindowSeconds: 5,
     });
   });
 

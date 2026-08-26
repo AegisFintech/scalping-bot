@@ -1789,3 +1789,43 @@ campaign remained paused. The configured deployed-source AppTest again had
 zero exceptions and displayed 156 scheduler attempts, 100 completed AI
 responses, 36 demo order groups, and 26 exact closed trades. No broker or
 database mutation was part of this dashboard rollout.
+
+## Campaign 002 multimodal refinement
+
+[ISSUE-051](https://github.com/AegisFintech/scalping-bot/issues/115) introduces
+prompt `system-v6` without changing response schema 2.1 or any deterministic
+gate. The 3,734-byte prompt is screenshot-first and 14.9% smaller than v5. It
+requires independently reasoned BUY/SELL confirmations, stronger ATR-aware
+structural buffers under uncertain/ranging/balanced evidence, explicit zone
+bounds and target ordering, exact BUY/SELL R:R formulas, exact TP-midpoint
+formulas, and a small post-tick R:R safety margin. It still requires both legs
+and cannot select size, risk, mode, or execution eligibility.
+
+Compact payload defaults move from 60/36/24 to 30/18/12 M1/M5/M15 raw candles.
+The deterministic analytics service still computes from all 600/500/300
+completed candles, and the model still receives the full exact 1600x1200
+EMA/ATR chart plus indicator, session, order-book, spread, and provenance
+summaries. The broker-M1 start window default moves from 10 to 5 seconds based
+on campaign 001's 34 completed-context invalidations and measured endpoint
+latency. Freshness limits and post-model/final-placement context comparisons do
+not change.
+
+A read-only benchmark used six stored completed-candle PNG/payload artifacts:
+two previously placed, two context-expired, and two proposal-invalid. It made
+external model calls only—no PostgreSQL writes and no cTrader calls. Average
+numeric payload size fell from 34,509 to 23,276 bytes (32.6%). The first pass
+was 6/6 schema-valid and 5/6 fully semantic-valid; the exact retained validator
+caught one technical-zone error. After making zone bounds explicit, a
+category-balanced three-case check was 3/3 schema/transform-valid and 2/3
+semantic-valid, with one SELL R:R boundary miss. After adding a post-tick R:R
+safety margin, the final three-category check passed 3/3 at schema, proposal
+semantics, TP transform, and effective semantics with no reason code. This
+small demo benchmark is refinement evidence, not a profitability claim.
+
+Pre-merge gates passed: Prettier, ESLint, TypeScript typecheck/build, 232 Node
+tests across 38 files, 16 schema tests, 3 migration tests, all 3 configured
+PostgreSQL/HTTP integration tests, Ruff format/lint, strict mypy over 21 source
+files, and 78 Python tests. Configured Streamlit AppTest rendered 39
+dataframes/57 metrics/15 tabs with zero exceptions. Replay/backtest smoke
+tests, zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2
+checks, and all five offline systemd security parses passed.

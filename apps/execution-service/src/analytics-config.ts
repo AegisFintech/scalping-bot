@@ -1,9 +1,9 @@
 import type { Timeframe } from "../../../packages/contracts/src/index.js";
 
 const DEFAULT_COMPACT_TAILS: Readonly<Record<Timeframe, number>> = {
-  M1: 60,
-  M5: 36,
-  M15: 24,
+  M1: 30,
+  M5: 18,
+  M15: 12,
 };
 
 function positiveInteger(

@@ -186,7 +186,7 @@ export function loadExecutionConfig(
     automaticAnalysisStartWindowSeconds: (() => {
       const value = integerValue(
         environment.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS,
-        10,
+        5,
         "AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS",
       );
       if (value < 1 || value > 30) {

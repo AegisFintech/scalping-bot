@@ -10,7 +10,7 @@ spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
 The one explicitly configured execution transform is TP-distance division by
-two. Prompt `system-v5` asks for at least twice the effective minimum R:R. The
+two. Prompt `system-v6` asks for at least twice the effective minimum R:R. The
 coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
 recomputes R:R, and rejects an off-tick result without rounding. The original
 endpoint response and effective values remain separately auditable.

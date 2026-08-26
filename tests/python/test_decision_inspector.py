@@ -585,8 +585,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v4", content, digest)
-    assert current["version"] == "system-v4"
+    current = prompt_artifact_view("system-v6", content, digest)
+    assert current["version"] == "system-v6"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

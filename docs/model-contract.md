@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v5` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v6` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -120,7 +120,7 @@ normalized ATR, rolling/session/previous-session ranges, pivots without
 look-ahead, VWAP distances, EMA alignment, realized volatility, volume stats,
 spread, depth imbalance/concentrations/changes, setup/session aggregates,
 drawdown/loss context, and every relevant timestamp. The defaults retain the
-newest 60 M1, 36 M5, and 24 M15 completed raw candles. Deterministic analytics
+newest 30 M1, 18 M5, and 12 M15 completed raw candles. Deterministic analytics
 still computes all features from the full configured 600/500/300 histories;
 only duplicated raw arrays crossing the paid model boundary are shortened.
 
