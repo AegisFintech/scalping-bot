@@ -140,6 +140,8 @@ first `AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS` of a broker-server-time M1
 interval. Keep that window between 1 and 30 seconds and use
 `AI_MAX_RETRIES=0`: a failed provider attempt is retried on the next fresh
 broker minute rather than against an expiring candle context.
+The current default is 5 seconds; campaign 001 showed that later starts were
+disproportionately likely to cross the completed M1 boundary before response.
 
 Migration `0010` must exist before this scheduler is deployed. Each
 account/symbol/minute claim is durable and unique; an incomplete claim after a
@@ -231,13 +233,14 @@ lockout: increasing it does not override the completed-analysis campaign,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v5` tells the endpoint that the execution service preserves its
+Prompt `system-v6` tells the endpoint that the execution service preserves its
 entry and stop loss but halves the distance from entry to take profit. It asks
-for twice the configured effective minimum R:R and supplies the maximum stop
-distance affordable at broker minimum volume. That derived field contains no
-equity, budget, volume, or account identity. An off-tick midpoint or returned
-stop above the current limit is rejected without correction, and a later broker
-minute starts a fresh cycle after the rejection becomes terminal.
+for twice the configured effective minimum R:R, explicitly self-checks both
+independent legs and midpoint targets, and supplies the maximum stop distance
+affordable at broker minimum volume. That derived field contains no equity,
+budget, volume, or account identity. An off-tick midpoint or returned stop above
+the current limit is rejected without correction, and a later broker minute
+starts a fresh cycle after the rejection becomes terminal.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted

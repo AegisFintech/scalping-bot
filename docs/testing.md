@@ -51,7 +51,7 @@ Minimum-volume affordability tests prove per-leg OCO budget splitting,
 whole-tick downward flooring, below-one-tick rejection before inference,
 non-sizing payload exclusion, exact semantic enforcement, and changed
 post-model account-state rejection before risk intent.
-Compact-payload configuration tests prove the 60/36/24 raw-tail defaults leave
+Compact-payload configuration tests prove the 30/18/12 raw-tail defaults leave
 the 600/500/300 analytics histories unchanged, accept explicit positive bounded
 overrides, and reject zero, fractional, or history-exceeding values at startup.
 Runtime fill-idempotency tests persist a complete deal, repeat the same deal
@@ -116,6 +116,18 @@ Fixtures use clearly fictional account IDs and inert illustrative prices. No rea
 Record exact commands, versions, pass/fail/skip counts, duration, and skipped external tests. A demo test skipped for missing credentials is not a pass and does not block mock/paper implementation; it remains a live-readiness blocker.
 
 ## Latest local result
+
+On 2026-08-26, ISSUE-051 passed Prettier, ESLint, TypeScript typecheck/build,
+232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
+3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,
+strict mypy over 21 source files, and 78 Python tests passed. Configured
+Streamlit AppTest rendered 39 dataframes, 57 metrics, and 15 tabs with zero
+exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits,
+tracked-file secret scan, shell/PM2 syntax, and all five offline systemd
+security parses passed. The external stored-artifact benchmark was read-only:
+it did not write PostgreSQL or contact cTrader. The final category-balanced
+prompt check passed strict schema, proposal semantics, TP transform, and
+effective semantics for all 3 cases.
 
 On 2026-08-26, ISSUE-050 passed Prettier, ESLint, TypeScript typecheck/build,
 232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all

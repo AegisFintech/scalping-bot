@@ -7,9 +7,9 @@ const collected = { M1: 600, M5: 500, M15: 300 } as const;
 describe("analytics request configuration", () => {
   it("uses bounded compact tails without changing collected history", () => {
     expect(compactTailCounts({}, collected)).toEqual({
-      M1: 60,
-      M5: 36,
-      M15: 24,
+      M1: 30,
+      M5: 18,
+      M15: 12,
     });
     expect(collected).toEqual({ M1: 600, M5: 500, M15: 300 });
   });

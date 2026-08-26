@@ -53,8 +53,8 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v5.md"),
-    promptVersion: "system-v5",
+    systemPromptPath: path.resolve("prompts/system-v6.md"),
+    promptVersion: "system-v6",
     timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
     maxRetries: Number(process.env.AI_MAX_RETRIES ?? 0),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),

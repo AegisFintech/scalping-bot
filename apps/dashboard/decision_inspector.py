@@ -52,6 +52,7 @@ _PROMPT_FILES = {
     "system-v3": "system-v3.md",
     "system-v4": "system-v4.md",
     "system-v5": "system-v5.md",
+    "system-v6": "system-v6.md",
 }
 _SECRET_VALUE = re.compile(
     r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"

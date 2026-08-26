@@ -181,7 +181,8 @@ export interface ModelResponse {
 }
 
 export interface ModelPromptArtifact {
-  readonly version: "system-v2" | "system-v3" | "system-v4" | "system-v5";
+  readonly version:
+    "system-v2" | "system-v3" | "system-v4" | "system-v5" | "system-v6";
   readonly content: string;
   readonly sha256: string;
 }

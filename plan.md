@@ -193,7 +193,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
 | ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
 | ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
-| ISSUE-051 | pending     | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
+| ISSUE-051 | in progress | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1571,8 +1571,22 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   reconciled broker state.
 - Dependencies: ISSUE-050 campaign review and funnel, prompt/schema 2.1,
   completed-candle chart artifacts, and the bounded automatic campaign.
-- Current status: pending ISSUE-050 on `issue-051-campaign-002-refinement`,
-  tracked by [issue #115](https://github.com/AegisFintech/scalping-bot/issues/115).
+- Current status: implementation is in progress on
+  `issue-051-campaign-002-refinement`, tracked by
+  [issue #115](https://github.com/AegisFintech/scalping-bot/issues/115).
+  Campaign 001 evidence selected prompt `system-v6`, 30/18/12 compact raw
+  tails, and a 5-second broker-M1 start window. The response schema and every
+  deterministic validation/risk/reconciliation gate remain unchanged. A
+  read-only stored-artifact benchmark reduced average numeric payload bytes by
+  32.6%; its initial six diverse images were 6/6 schema-valid and 5/6 fully
+  semantic-valid. Prompt self-check corrections for the observed zone and R:R
+  boundary misses then produced a final category-balanced 3/3 pass through
+  schema, proposal semantics, TP transform, and effective semantics. All full
+  repository gates passed, including 232 Node tests, 78 Python tests, all 3
+  configured integration tests, AppTest, dependency audits, secret scan, and
+  deployment syntax/security checks. Review and automatic merge are tracked by
+  [PR #118](https://github.com/AegisFintech/scalping-bot/pull/118). Immutable
+  paused deployment and the fresh campaign remain.
 
 ## Acceptance criteria
 

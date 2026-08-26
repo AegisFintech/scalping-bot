@@ -22,12 +22,13 @@ refresh, validation/risk, broker outcome, and the PostgreSQL/Better Stack audit
 trail. Raw provider text, secrets, and broker identifiers are deliberately not
 rendered; full persisted redacted input is available only through an explicit
 operator checkbox.
-New schema 2.0 analyses always return a mandatory buy-stop and sell-stop
+New schema 2.1 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Prompt `system-v4` exposes the configured TP-distance division by two plus the
-non-sizing maximum stop distance affordable at broker minimum volume. The
+Prompt `system-v6` is screenshot-first, self-checks both independent legs and
+the configured TP-distance division by two, and receives the non-sizing maximum
+stop distance affordable at broker minimum volume. The
 dashboard shows endpoint and effective TP/R:R side by side; generated proposals
 remain distinct from queued or broker-submitted orders.
 After deterministic margin/sizing work, execution reconciles the account and
@@ -102,12 +103,12 @@ or future quote/depth source timestamp fails closed.
 Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style.
 The Responses style requests strict JSON Schema output where the endpoint
 supports it; all output is size-limited and validated locally regardless.
-System-v4/schema 2.0 require a buy-stop plus sell-stop proposal whenever the
-model is reached and tell the endpoint how the downstream TP midpoint is
-validated and how far its unchanged stop may be from entry. The exact system
+System-v6/schema 2.1 require a buy-stop plus sell-stop proposal whenever the
+model is reached and tell the endpoint how the downstream TP midpoint, R:R,
+target ordering, and unchanged-stop limit are validated. The exact system
 prompt/hash is persisted per new request.
 Compact mode computes indicators from the full configured 600/500/300 completed
-M1/M5/M15 histories but sends only the newest 60/36/24 raw candles alongside
+M1/M5/M15 histories but sends only the newest 30/18/12 raw candles alongside
 those indicators. `MODEL_COMPACT_RAW_TAIL_1M`, `_5M`, and `_15M` may override
 the tails with positive counts no larger than the collected history.
 AI or prompt-artifact failure rejects the cycle and creates no order. Repeated

@@ -59,7 +59,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v5",
+    version: "system-v6",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -274,7 +274,7 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v5",
+    promptVersion: "system-v6",
     schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
