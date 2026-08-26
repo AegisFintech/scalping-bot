@@ -1850,3 +1850,6 @@ cancelling or abandoning the active group. Because `.25` is immutable, the
 correction advances identity to `.26`; deployment must explicitly export the
 protected `.env` before PM2 `--update-env`, then prove the first persisted
 request contains 30/18/12. The `.25` response is not counted as campaign 002.
+
+The immutable environment correction is tracked by
+[PR #120](https://github.com/AegisFintech/scalping-bot/pull/120).

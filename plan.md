@@ -1594,6 +1594,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   active group remains managed. Immutable correction `.26` will be launched
   with the protected `.env` explicitly exported, then must prove 30/18/12 in
   the first persisted request before the fresh 0/100 campaign is accepted.
+  Review is tracked by
+  [PR #120](https://github.com/AegisFintech/scalping-bot/pull/120).
 
 ## Acceptance criteria
 
