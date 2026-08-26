@@ -1779,3 +1779,6 @@ Replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
 secret scan, shell/PM2 checks, and all five offline systemd security parses
 also passed. The work was read-only with respect to PostgreSQL and cTrader;
 execution stayed paused and was not restarted.
+
+Implementation review and automatic merge are tracked by
+[PR #116](https://github.com/AegisFintech/scalping-bot/pull/116).

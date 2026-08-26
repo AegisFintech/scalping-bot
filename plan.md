@@ -1552,7 +1552,9 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   required local gates passed, including 232 Node tests, 78 Python tests, all
   3 configured integration tests, configured AppTest with the exact
   156-attempt/100-response campaign, dependency audits, secret scan, and
-  shell/systemd checks. Review, merge, and dashboard-only rollout remain.
+  shell/systemd checks. Review and automatic merge are tracked by
+  [PR #116](https://github.com/AegisFintech/scalping-bot/pull/116); the
+  dashboard-only rollout remains.
 
 ### ISSUE-051 delivery details
 
