@@ -1832,3 +1832,11 @@ checks, and all five offline systemd security parses passed.
 
 Implementation review and automatic merge are tracked by
 [PR #118](https://github.com/AegisFintech/scalping-bot/pull/118).
+
+Before deployment, the PM2 identity is advanced from immutable `.24` to `.25`
+and covered by the deployment configuration test. Release `.25` must register
+prompt v6/config defaults before its first execution start; it must never reuse
+the `.24` strategy row.
+
+Release identity review is tracked by
+[PR #119](https://github.com/AegisFintech/scalping-bot/pull/119).

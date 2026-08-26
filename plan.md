@@ -1586,7 +1586,9 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   configured integration tests, AppTest, dependency audits, secret scan, and
   deployment syntax/security checks. Review and automatic merge are tracked by
   [PR #118](https://github.com/AegisFintech/scalping-bot/pull/118). Immutable
-  paused deployment and the fresh campaign remain.
+  release `.25` registration is tracked by
+  [PR #119](https://github.com/AegisFintech/scalping-bot/pull/119) before its
+  first execution start; paused deployment and the fresh campaign remain.
 
 ## Acceptance criteria
 
