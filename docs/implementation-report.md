@@ -1853,3 +1853,15 @@ request contains 30/18/12. The `.25` response is not counted as campaign 002.
 
 The immutable environment correction is tracked by
 [PR #120](https://github.com/AegisFintech/scalping-bot/pull/120).
+
+Before `.26` was unpaused, selected `/proc` environment evidence proved PM2
+still retained the old 10-second window and 60/36/24 tails. The exported shell
+environment plus `startOrReload --update-env` did not replace those cached keys.
+Release `.26` therefore remains immutable with zero analyses. The deterministic
+fix advances to `.27` and pins only the non-secret campaign baseline/window/tail
+values in the PM2 manifest; secrets remain exclusively in the protected
+environment. Deployment must verify the selected process keys before unpause
+and the exact first persisted request after inference.
+
+The deterministic PM2 pinning correction is tracked by
+[PR #121](https://github.com/AegisFintech/scalping-bot/pull/121).
