@@ -195,7 +195,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
 | ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 | ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
-| ISSUE-053 | in progress | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
+| ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1676,6 +1676,13 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   configured AppTest at 3/100, replay/backtest, dependency audits, secret scan,
   and deployment checks. Review and automatic merge are tracked by
   [PR #128](https://github.com/AegisFintech/scalping-bot/pull/128).
+  The PR merged and `.29` deployed under the audited pause. Process evidence
+  proved `.29`, campaign baseline `3`, start window `5`, and tails 30/18/12.
+  The managed setup now renders `LATEST_TERMINAL / CLOSED`, the exact LONG
+  result `10.06` with fees `-0.28`, and history `3 / 100`; deployed AppTest had
+  zero exceptions and neither unavailable/count error. After pause release,
+  readiness returned HTTP 200 with `trading_allowed=true`, automatic analysis
+  enabled, a closed AI circuit, and zero blocking reasons. ISSUE-053 is complete.
 
 ## Acceptance criteria
 
