@@ -82,6 +82,7 @@ describe("open position monitor", () => {
 
     expect(result).toMatchObject({
       status: "AVAILABLE",
+      executionState: "NORMAL",
       side: "BUY",
       accountCurrency: "USD",
       bid: "4641.2",
@@ -101,6 +102,22 @@ describe("open position monitor", () => {
       side: "SELL",
       markPrice: "4641.4",
     });
+  });
+
+  it("shows exact broker-confirmed values while group reconciliation stays pending", async () => {
+    const { subject, quote, pnl } = monitor([
+      { ...buy, group_state: "RECONCILIATION_REQUIRED" },
+    ]);
+
+    await expect(subject.read()).resolves.toMatchObject({
+      status: "AVAILABLE",
+      executionState: "RECONCILIATION_REQUIRED",
+      side: "BUY",
+      markPrice: "4641.2",
+      netUnrealizedPnl: "2.75",
+    });
+    expect(quote).toHaveBeenCalledOnce();
+    expect(pnl).toHaveBeenCalledWith("7788");
   });
 
   it("does not call external sources when there is no open position", async () => {
@@ -123,9 +140,7 @@ describe("open position monitor", () => {
     );
     expect(uncertain.pnl).not.toHaveBeenCalled();
 
-    const uncertainGroup = monitor([
-      { ...buy, group_state: "RECONCILIATION_REQUIRED" },
-    ]);
+    const uncertainGroup = monitor([{ ...buy, group_state: "ACTIVE" }]);
     await expect(uncertainGroup.subject.read()).rejects.toThrow(
       "OPEN_POSITION_MONITOR_GROUP_STATE_UNCERTAIN",
     );

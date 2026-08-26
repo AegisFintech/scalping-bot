@@ -294,6 +294,15 @@ terminal event key is retained as the resolution evidence. A process-local
 callback failure is acknowledged only once for a new certain terminal proof;
 callbacks recorded after that recovery checkpoint remain blocking.
 
+Read-only open-position telemetry is independent from execution eligibility.
+For one durable strategy-owned `OPEN` position, an exact single-match cTrader
+P/L response for its durable broker position identity may be displayed while
+the containing group is `RECONCILIATION_REQUIRED`. Contract 1.1 labels that
+condition explicitly. It does not change the group, clear evidence, or make
+analysis/placement eligible; an ambiguous position, an uncertain position
+state, an unsupported group state, or a missing/ambiguous broker lookup still
+returns no value.
+
 ## Dependency rationale
 
 - TypeScript: type-safe external orchestration and protocol handling.

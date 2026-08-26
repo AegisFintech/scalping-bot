@@ -117,6 +117,20 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
+On 2026-08-26, ISSUE-052 passed Prettier, ESLint, TypeScript typecheck/build,
+233 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
+3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,
+strict mypy over 21 source files, and 78 Python tests passed. The exact
+reconciliation test proves one durable `OPEN` position plus one matching cTrader
+P/L result returns bounded live values with `RECONCILIATION_REQUIRED`; an
+unsupported group, uncertain position, ambiguous position, or failed broker
+lookup still returns no value. Configured Streamlit AppTest rendered 42
+dataframes and 57 metrics with zero exceptions. Replay/backtest smoke tests,
+zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 syntax,
+and all five offline systemd security parses at 2.8 (`OK`) passed. Source-tree
+`systemd-analyze verify` reported only the expected absent future
+`/opt/ctrader-ai-scalper/current` Python executables.
+
 On 2026-08-26, ISSUE-051 passed Prettier, ESLint, TypeScript typecheck/build,
 232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
 3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,

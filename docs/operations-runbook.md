@@ -194,6 +194,12 @@ Do not subtract it from net P/L again. Closing commission or other terminal
 charges may not exist yet, so the immutable `trades.realized_pnl` and `fees`
 record after close remains the final authority.
 
+The monitor 1.1 contract can also render an exact broker-confirmed `OPEN`
+position while its order group is `RECONCILIATION_REQUIRED`. In that case the
+panel shows a warning above the live values. This is telemetry only: readiness,
+automatic analysis, and new placement remain fail-closed until normal terminal
+reconciliation clears the group and any execution-journal reasons.
+
 `NONE` means no strategy-owned active position was found in this exact scope.
 `UNAVAILABLE` is deliberately different: ambiguous positions, an uncertain
 position state, missing broker identity, cTrader P/L failure, market quote

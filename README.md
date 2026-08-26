@@ -245,6 +245,13 @@ broker lifecycle, and closed demo win/loss results. It also exposes the selected
 run's redacted prompt/response and execution evidence without account or broker
 identifiers.
 
+The **Live open trade** panel uses the exact durable broker position identity
+for its cTrader P/L lookup. If the surrounding execution group requires
+reconciliation but the single durable position is still `OPEN` and that exact
+broker lookup succeeds, the values remain visible with a warning while all
+analysis and placement gates stay blocked. Ambiguous or otherwise uncertain
+position evidence still renders no value.
+
 ## systemd installation
 
 ```bash

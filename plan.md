@@ -194,6 +194,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
 | ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
 | ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
+| ISSUE-052 | in progress | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1619,6 +1620,30 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   30/18/12 tails, reached `ACCEPTED`, and created two active pending demo stops.
   Repeat proof is tracked by
   [PR #123](https://github.com/AegisFintech/scalping-bot/pull/123).
+
+### ISSUE-052 delivery details
+
+- Acceptance criteria: when PostgreSQL has exactly one strategy-owned `OPEN`
+  position and cTrader returns P/L for that exact durable broker position,
+  render live price, broker P/L, and recorded commission even if its group is
+  `RECONCILIATION_REQUIRED`; explicitly warn that execution reconciliation is
+  pending; keep new analysis, placement, risk, and reconciliation gates
+  unchanged; continue rejecting ambiguous positions, uncertain position
+  states, unsupported group states, missing broker identity, and missing or
+  ambiguous broker P/L.
+- Dependencies: ISSUE-046 read-only open-position monitor and ISSUE-048 durable
+  multi-position/reconciliation handling.
+- Current status: implementation is in progress on
+  `issue-052-reconciliation-live-monitor`, tracked by
+  [issue #124](https://github.com/AegisFintech/scalping-bot/issues/124). The
+  execution change advances the immutable identity to `.28`; its reviewed
+  campaign baseline is the two completed `.27` responses, so campaign 002
+  remains `2 / 100` across the telemetry-only release. Pre-deployment gates
+  passed 233 Node tests, 16 schema tests, 3 migration tests, all 3 configured
+  integration tests, 78 Python tests, configured AppTest, replay/backtest,
+  dependency audits, secret scan, and deployment syntax/security checks.
+  Review and automatic merge are tracked by
+  [PR #125](https://github.com/AegisFintech/scalping-bot/pull/125).
 
 ## Acceptance criteria
 

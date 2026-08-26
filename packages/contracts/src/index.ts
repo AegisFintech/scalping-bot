@@ -219,6 +219,7 @@ export type OpenPositionMonitor =
   | { readonly status: "NONE" }
   | {
       readonly status: "AVAILABLE";
+      readonly executionState: "NORMAL" | "RECONCILIATION_REQUIRED";
       readonly side: OrderSide;
       readonly accountCurrency: string;
       readonly bid: DecimalString;

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/open-position-monitor-1.1.json",
+  "title": "Read-only open position monitor 1.1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "string", "const": "NONE" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasonCode"],
+      "properties": {
+        "status": { "type": "string", "const": "UNAVAILABLE" },
+        "reasonCode": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_:]{1,160}$"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "executionState",
+        "side",
+        "accountCurrency",
+        "bid",
+        "ask",
+        "markPrice",
+        "grossUnrealizedPnl",
+        "netUnrealizedPnl",
+        "recordedCommission",
+        "quoteSourceTime",
+        "quoteReceivedAt",
+        "pnlCapturedAt"
+      ],
+      "properties": {
+        "status": { "type": "string", "const": "AVAILABLE" },
+        "executionState": {
+          "type": "string",
+          "enum": ["NORMAL", "RECONCILIATION_REQUIRED"]
+        },
+        "side": { "type": "string", "enum": ["BUY", "SELL"] },
+        "accountCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3,12}$"
+        },
+        "bid": { "$ref": "#/$defs/positiveDecimal" },
+        "ask": { "$ref": "#/$defs/positiveDecimal" },
+        "markPrice": { "$ref": "#/$defs/positiveDecimal" },
+        "grossUnrealizedPnl": { "$ref": "#/$defs/signedDecimal" },
+        "netUnrealizedPnl": { "$ref": "#/$defs/signedDecimal" },
+        "recordedCommission": { "$ref": "#/$defs/signedDecimal" },
+        "quoteSourceTime": { "$ref": "#/$defs/timestamp" },
+        "quoteReceivedAt": { "$ref": "#/$defs/timestamp" },
+        "pnlCapturedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    }
+  ],
+  "$defs": {
+    "positiveDecimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$"
+    },
+    "signedDecimal": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

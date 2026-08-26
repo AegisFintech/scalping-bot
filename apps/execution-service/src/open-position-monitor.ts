@@ -103,7 +103,8 @@ export class PostgresOpenPositionMonitor {
       throw new Error("OPEN_POSITION_MONITOR_STATE_UNCERTAIN");
     if (
       position.group_state !== "CANCELLING_PEER" &&
-      position.group_state !== "POSITION_OPEN"
+      position.group_state !== "POSITION_OPEN" &&
+      position.group_state !== "RECONCILIATION_REQUIRED"
     ) {
       throw new Error("OPEN_POSITION_MONITOR_GROUP_STATE_UNCERTAIN");
     }
@@ -162,6 +163,10 @@ export class PostgresOpenPositionMonitor {
 
     return {
       status: "AVAILABLE",
+      executionState:
+        position.group_state === "RECONCILIATION_REQUIRED"
+          ? "RECONCILIATION_REQUIRED"
+          : "NORMAL",
       side: position.side,
       accountCurrency: position.account_currency,
       bid: canonical(bid),

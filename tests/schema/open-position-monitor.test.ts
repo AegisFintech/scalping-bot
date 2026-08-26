@@ -11,12 +11,13 @@ const addFormats = formatsModule.default as unknown as (
 addFormats(ajv);
 const validate = ajv.compile(
   JSON.parse(
-    readFileSync("schemas/open-position-monitor-1.0.json", "utf8"),
+    readFileSync("schemas/open-position-monitor-1.1.json", "utf8"),
   ) as AnySchema,
 );
 
 const available = {
   status: "AVAILABLE",
+  executionState: "NORMAL",
   side: "BUY",
   accountCurrency: "USD",
   bid: "4641.2",
@@ -40,11 +41,18 @@ describe("open position monitor schema", () => {
       }),
     ).toBe(true);
     expect(validate(available)).toBe(true);
+    expect(
+      validate({
+        ...available,
+        executionState: "RECONCILIATION_REQUIRED",
+      }),
+    ).toBe(true);
   });
 
   it("rejects identifiers, malformed decimals, and incomplete evidence", () => {
     expect(validate({ ...available, brokerPositionId: "7788" })).toBe(false);
     expect(validate({ ...available, netUnrealizedPnl: "NaN" })).toBe(false);
+    expect(validate({ ...available, executionState: "ACTIVE" })).toBe(false);
     const incomplete: Record<string, unknown> = { ...available };
     Reflect.deleteProperty(incomplete, "pnlCapturedAt");
     expect(validate(incomplete)).toBe(false);

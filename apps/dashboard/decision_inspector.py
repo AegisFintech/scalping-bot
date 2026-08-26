@@ -63,6 +63,7 @@ _SECRET_VALUE = re.compile(
 _MONITOR_DECIMAL = re.compile(r"^-?(0|[1-9][0-9]{0,15})(\.[0-9]{1,10})?$")
 _OPEN_POSITION_MONITOR_FIELDS = {
     "status",
+    "executionState",
     "side",
     "accountCurrency",
     "bid",
@@ -1122,6 +1123,8 @@ def open_position_monitor_view(value: object) -> dict[str, str]:
         return {"status": "UNAVAILABLE", "reasonCode": reason}
     if status != "AVAILABLE" or set(document) != _OPEN_POSITION_MONITOR_FIELDS:
         raise DecisionViewError("DECISION_VIEW_POSITION_MONITOR_FIELDS_INVALID")
+    if document.get("executionState") not in {"NORMAL", "RECONCILIATION_REQUIRED"}:
+        raise DecisionViewError("DECISION_VIEW_POSITION_MONITOR_EXECUTION_STATE_INVALID")
     if document.get("side") not in {"BUY", "SELL"}:
         raise DecisionViewError("DECISION_VIEW_POSITION_MONITOR_SIDE_INVALID")
     currency = document.get("accountCurrency")
