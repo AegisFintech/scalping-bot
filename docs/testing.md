@@ -142,6 +142,10 @@ rejected by unchanged spread gates with no order. Deployed AppTest rendered 39
 dataframes, 57 metrics, and 15 tabs with zero exceptions and showed one attempt,
 one response, one spread skip, and no trade/order group. Automation remained
 unpaused, circuit-closed, terminal, and eligible for the next broker minute.
+The next broker minute then ran automatically, advanced `.27` to 2/100,
+persisted the same v6/schema 2.1 and 30/18/12 provenance, reached `ACCEPTED`,
+and placed two pending demo stops. This is direct repeat-loop evidence; it is
+not a trade outcome or profitability evidence.
 
 On 2026-08-26, ISSUE-050 passed Prettier, ESLint, TypeScript typecheck/build,
 232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
