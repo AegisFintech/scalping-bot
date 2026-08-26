@@ -194,7 +194,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
 | ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
 | ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
-| ISSUE-052 | in progress | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
+| ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1644,6 +1644,16 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   dependency audits, secret scan, and deployment syntax/security checks.
   Review and automatic merge are tracked by
   [PR #125](https://github.com/AegisFintech/scalping-bot/pull/125).
+  The PR merged and `.28` deployed under the durable analysis pause. Selected
+  process evidence proved `.28`, campaign baseline `2`, start window `5`, and
+  tails 30/18/12. The real open BUY then returned exact broker-confirmed live
+  values with `executionState=RECONCILIATION_REQUIRED`; deployed AppTest found
+  the warning with zero exceptions. Readiness remained fail-closed on the
+  unchanged database/execution lifecycle reasons. The temporary pause was
+  audited and cleared, leaving automatic analysis enabled but correctly
+  blocked until the open position reaches exact terminal reconciliation.
+  ISSUE-052 is complete. Rollout evidence is tracked by
+  [PR #126](https://github.com/AegisFintech/scalping-bot/pull/126).
 
 ## Acceptance criteria
 
