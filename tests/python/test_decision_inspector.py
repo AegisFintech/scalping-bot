@@ -16,7 +16,9 @@ from apps.dashboard.decision_inspector import (
     analytics_summary,
     automation_status_view,
     broker_lifecycle_view,
+    campaign_history_counts,
     exact_model_input_view,
+    execution_status_recovered,
     latest_ai_request_index,
     model_input_summary,
     model_output_authority_notice,
@@ -330,6 +332,48 @@ def test_broker_lifecycle_idle_state_says_when_automation_runs_next() -> None:
     assert view["next_action"] == (
         "Automatic analysis will start at the next eligible broker M1 window."
     )
+
+
+def test_execution_status_recovery_requires_complete_bounded_shape() -> None:
+    recovered = {
+        "mode": "demo",
+        "reasonCodes": [],
+        "managedSetup": {"status": "ACTIVE"},
+        "automaticAnalysisCampaign": {"completed": 2},
+    }
+
+    assert execution_status_recovered(recovered) is True
+    assert execution_status_recovered(None) is False
+    assert execution_status_recovered({**recovered, "managedSetup": None}) is False
+    assert execution_status_recovered({**recovered, "reasonCodes": "invalid"}) is False
+
+
+def test_campaign_history_counts_accepts_carry_forward_and_rejects_mismatch() -> None:
+    assert campaign_history_counts({"completed": 3, "baseline": 3, "releaseCompleted": 0}) == {
+        "completed": 3,
+        "baseline": 3,
+        "releaseCompleted": 0,
+    }
+
+    with pytest.raises(DecisionViewError, match="CAMPAIGN_COUNT_INVALID"):
+        campaign_history_counts({"completed": 3, "baseline": 2, "releaseCompleted": 0})
+    with pytest.raises(DecisionViewError, match="CAMPAIGN_COUNT_INVALID"):
+        campaign_history_counts({"completed": True, "baseline": 0, "releaseCompleted": 1})
+
+
+def test_broker_lifecycle_calls_transient_api_outage_reconnecting_not_unknown() -> None:
+    view = broker_lifecycle_view(
+        {
+            "mode": "unknown",
+            "reasonCodes": ["EXECUTION_API_UNAVAILABLE:ConnectError"],
+        }
+    )
+
+    assert view["state"] == "RECONNECTING"
+    assert view["severity"] == "warning"
+    assert view["headline"] == "Execution service is reconnecting"
+    assert "has not been deleted" in view["detail"]
+    assert "retries every two seconds" in view["next_action"]
 
 
 @pytest.mark.parametrize(

@@ -195,6 +195,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
 | ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 | ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
+| ISSUE-053 | in progress | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1654,6 +1655,26 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   blocked until the open position reaches exact terminal reconciliation.
   ISSUE-052 is complete. Rollout evidence is tracked by
   [PR #126](https://github.com/AegisFintech/scalping-bot/pull/126).
+
+### ISSUE-053 delivery details
+
+- Acceptance criteria: distinguish a transient execution-status outage from
+  malformed durable history; show one plain reconnecting state instead of
+  multiple broker/history validation alarms; retry status every two seconds;
+  automatically rerun the full Streamlit app after recovery; select the closed
+  position identity required to match a terminal trade; and retain strict
+  rejection for genuinely malformed or ambiguous status/evidence.
+- Dependencies: ISSUE-045 human lifecycle status, ISSUE-047 campaign history,
+  and ISSUE-052 live monitor fragments.
+- Current status: implementation is in progress on
+  `issue-053-dashboard-api-recovery`, tracked by
+  [issue #127](https://github.com/AegisFintech/scalping-bot/issues/127). The
+  execution query repair advances the immutable identity to `.29`; the audited
+  campaign carry-forward is the three completed responses recorded before the
+  deployment pause. Full gates passed 233 Node tests, 16 schema tests, 3
+  migration tests, all 3 configured integration tests, 81 Python tests,
+  configured AppTest at 3/100, replay/backtest, dependency audits, secret scan,
+  and deployment checks.
 
 ## Acceptance criteria
 

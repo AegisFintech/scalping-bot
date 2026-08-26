@@ -252,6 +252,13 @@ broker lookup succeeds, the values remain visible with a warning while all
 analysis and placement gates stay blocked. Ambiguous or otherwise uncertain
 position evidence still renders no value.
 
+If Streamlit loads while the loopback execution API is restarting, it labels
+the page `RECONNECTING`, states that durable history is retained, retries every
+two seconds, and reruns the full dashboard after a complete status response.
+This prevents a brief restart from leaving Overview and Analysis History stuck
+on an old unavailable snapshot. Genuine malformed or ambiguous evidence still
+remains unavailable.
+
 ## systemd installation
 
 ```bash

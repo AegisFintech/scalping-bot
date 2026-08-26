@@ -457,6 +457,49 @@ def reason_code_view(reason: object) -> dict[str, str]:
     return {"code": code, "title": title, "meaning": meaning, "next_action": next_action}
 
 
+def execution_status_recovered(value: object) -> bool:
+    """Return true only for the bounded status shape needed by the full dashboard."""
+
+    if not isinstance(value, Mapping):
+        return False
+    reasons = value.get("reasonCodes")
+    return (
+        value.get("mode") in {"paper", "demo", "shadow", "live"}
+        and isinstance(value.get("managedSetup"), Mapping)
+        and isinstance(value.get("automaticAnalysisCampaign"), Mapping)
+        and isinstance(reasons, Sequence)
+        and not isinstance(reasons, (str, bytes))
+    )
+
+
+def campaign_history_counts(value: object) -> dict[str, int]:
+    """Validate the exact current-release and carry-forward campaign counts."""
+
+    if not isinstance(value, Mapping):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_CAMPAIGN_COUNT_INVALID")
+    completed = value.get("completed")
+    baseline = value.get("baseline")
+    release_completed = value.get("releaseCompleted")
+    if (
+        not isinstance(completed, int)
+        or isinstance(completed, bool)
+        or not 0 <= completed <= 100
+        or not isinstance(baseline, int)
+        or isinstance(baseline, bool)
+        or not isinstance(release_completed, int)
+        or isinstance(release_completed, bool)
+        or baseline < 0
+        or release_completed < 0
+        or baseline + release_completed != completed
+    ):
+        raise DecisionViewError("DECISION_VIEW_HISTORY_CAMPAIGN_COUNT_INVALID")
+    return {
+        "completed": completed,
+        "baseline": baseline,
+        "releaseCompleted": release_completed,
+    }
+
+
 def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
     """Build an operator-readable state while preserving every blocking reason."""
 
@@ -643,6 +686,22 @@ def broker_lifecycle_view(
     """Summarize what is actually live at the broker and what happens next."""
 
     automation_view = automation_status_view(status) if automation is None else automation
+    raw_reasons = status.get("reasonCodes", [])
+    if (
+        isinstance(raw_reasons, Sequence)
+        and not isinstance(raw_reasons, (str, bytes))
+        and any(str(reason).startswith("EXECUTION_API_UNAVAILABLE:") for reason in raw_reasons)
+    ):
+        return {
+            "state": "RECONNECTING",
+            "headline": "Execution service is reconnecting",
+            "detail": (
+                "Current broker status is temporarily unavailable; durable order, trade, "
+                "and analysis history has not been deleted."
+            ),
+            "next_action": "No action required; the dashboard retries every two seconds.",
+            "severity": "warning",
+        }
     managed = status.get("managedSetup")
     unavailable = {
         "state": "UNKNOWN",

@@ -29,7 +29,9 @@ from decision_inspector import (
     analytics_summary,
     automation_status_view,
     broker_lifecycle_view,
+    campaign_history_counts,
     exact_model_input_view,
+    execution_status_recovered,
     latest_ai_request_index,
     model_input_summary,
     model_output_authority_notice,
@@ -47,6 +49,10 @@ from psycopg.rows import dict_row
 from time_display import dataframe_for_display, format_gmt8_timestamp
 
 st.set_page_config(page_title="cTrader AI Scalper", page_icon="🛑", layout="wide")
+
+
+class ExecutionStatusTemporarilyUnavailable(RuntimeError):
+    """Render reconnecting state instead of a false history-integrity alarm."""
 
 
 def execution_url() -> str:
@@ -103,6 +109,27 @@ def control(path: str, payload: dict[str, object]) -> tuple[bool, str]:
 
 
 @st.fragment(run_every="2s")
+def execution_status_recovery_probe() -> None:
+    """Rerun the full app after a transient execution-status outage recovers."""
+
+    try:
+        recovered = api_get("/v1/status")
+    except (httpx.HTTPError, RuntimeError, ValueError):
+        st.warning(
+            "Execution service is reconnecting. Current broker and campaign status is "
+            "temporarily unavailable; PostgreSQL history has not been deleted. Retrying "
+            "every 2 seconds."
+        )
+        return
+    if execution_status_recovered(recovered):
+        st.rerun()
+    st.warning(
+        "Execution service responded without a complete status snapshot. Durable history "
+        "is retained; retrying every 2 seconds."
+    )
+
+
+@st.fragment(run_every="2s")
 def live_open_trade_panel() -> None:
     st.subheader("Live open trade")
     try:
@@ -151,13 +178,18 @@ def live_open_trade_panel() -> None:
     )
 
 
+execution_status_error: str | None = None
 try:
     status = api_get("/v1/status")
 except Exception as error:
+    execution_status_error = type(error).__name__
     status = {
         "mode": "unknown",
         "reasonCodes": [f"EXECUTION_API_UNAVAILABLE:{type(error).__name__}"],
     }
+
+if execution_status_error is not None:
+    execution_status_recovery_probe()
 
 mode = str(status.get("mode", "unknown")).upper()
 account_environment = str(status.get("accountType", "unknown")).lower()
@@ -282,10 +314,13 @@ with tabs[0]:
     st.subheader("Orders and trade evidence")
     managed_setup = status.get("managedSetup")
     if not isinstance(managed_setup, dict) or managed_setup.get("status") == "UNAVAILABLE":
-        st.error(
-            "Managed setup status is unavailable. Use Orders & Positions and the execution "
-            "journal; do not assume there are no orders."
-        )
+        if execution_status_error is not None:
+            st.info("Orders and trade status will reload automatically after reconnection.")
+        else:
+            st.error(
+                "Managed setup status is unavailable. Use Orders & Positions and the execution "
+                "journal; do not assume there are no orders."
+            )
     elif managed_setup.get("status") == "NONE":
         st.info("No managed demo order group has been created for this account and symbol.")
     else:
@@ -1128,24 +1163,14 @@ with tabs[5]:
         "PostgreSQL contains a durable closed demo trade."
     )
     try:
+        if execution_status_error is not None:
+            raise ExecutionStatusTemporarilyUnavailable
         campaign = status.get("automaticAnalysisCampaign")
-        completed_count = campaign.get("completed") if isinstance(campaign, dict) else None
+        campaign_counts = campaign_history_counts(campaign)
+        completed_count = campaign_counts["completed"]
         campaign_limit = campaign.get("limit") if isinstance(campaign, dict) else None
-        campaign_baseline = campaign.get("baseline") if isinstance(campaign, dict) else None
-        release_completed = campaign.get("releaseCompleted") if isinstance(campaign, dict) else None
-        if (
-            not isinstance(completed_count, int)
-            or isinstance(completed_count, bool)
-            or not 0 <= completed_count <= 100
-            or not isinstance(campaign_baseline, int)
-            or isinstance(campaign_baseline, bool)
-            or not isinstance(release_completed, int)
-            or isinstance(release_completed, bool)
-            or campaign_baseline < 0
-            or release_completed < 0
-            or campaign_baseline + release_completed != completed_count
-        ):
-            raise DecisionViewError("DECISION_VIEW_HISTORY_CAMPAIGN_COUNT_INVALID")
+        campaign_baseline = campaign_counts["baseline"]
+        release_completed = campaign_counts["releaseCompleted"]
         attempt_rows = query(
             """WITH target_symbol AS (
                  SELECT s.id
@@ -1644,6 +1669,11 @@ with tabs[5]:
                     "Selected history evidence is malformed or ambiguous. Exact detail is "
                     "withheld instead of presenting a guessed lifecycle."
                 )
+    except ExecutionStatusTemporarilyUnavailable:
+        st.info(
+            "Analysis history is retained in PostgreSQL and will reload automatically when "
+            "the execution service reconnects."
+        )
     except DecisionViewError as error:
         st.error(f"Analysis history rejected unsafe or ambiguous evidence: {error}")
     except Exception as error:

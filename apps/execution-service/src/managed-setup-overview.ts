@@ -157,13 +157,13 @@ export class PostgresManagedSetupOverview {
         [this.#accountId, group.id],
       );
       const positions = await client.query<PositionRow>(
-        `SELECT side, state, entry_price::text, stop_loss::text,
-                take_profit::text, volume::text, opened_at, closed_at,
-                updated_at
-         FROM positions
-         WHERE account_id = $1 AND symbol_id = $2 AND order_group_id = $3
-           AND strategy_owned = true
-         ORDER BY updated_at DESC`,
+        `SELECT p.id, p.side, p.state, p.entry_price::text, p.stop_loss::text,
+                p.take_profit::text, p.volume::text, p.opened_at, p.closed_at,
+                p.updated_at
+         FROM positions p
+         WHERE p.account_id = $1 AND p.symbol_id = $2 AND p.order_group_id = $3
+           AND p.strategy_owned = true
+         ORDER BY p.updated_at DESC`,
         [this.#accountId, this.#symbolId, group.id],
       );
       if (positions.rows.length > 2)

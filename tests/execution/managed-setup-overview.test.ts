@@ -101,7 +101,7 @@ describe("managed setup Overview projection", () => {
   it("returns the exact durable terminal demo trade result", async () => {
     const openedAt = new Date("2026-08-25T05:28:28.765Z");
     const closedAt = new Date("2026-08-25T05:30:10.572Z");
-    const { read } = overviewWithRows({
+    const { read, query } = overviewWithRows({
       groups: [
         {
           id: "group",
@@ -147,6 +147,10 @@ describe("managed setup Overview projection", () => {
         closedAt: "2026-08-25T05:30:10.572Z",
       },
     });
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT p.id, p.side, p.state"),
+      ["account", "symbol", "group"],
+    );
   });
 
   it("rejects ambiguous strategy positions instead of choosing one", async () => {
