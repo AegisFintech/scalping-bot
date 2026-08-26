@@ -1976,3 +1976,19 @@ tests, all 3 configured integration tests, strict TypeScript/Python checks, 81
 Python tests, configured AppTest at 3/100 with zero exceptions, replay/backtest,
 dependency audits, secret scan, shell/PM2 checks, and five systemd security
 parses at 2.8 (`OK`).
+
+PR #128 merged as `1a6087e` and `.29` deployed under the audited database
+analysis pause. Selected process evidence proved release/code `.29`, campaign
+baseline `3`, five-second start window, and 30/18/12 compact tails. The repaired
+status returned `LATEST_TERMINAL / CLOSED`, the exact closed BUY/LONG lifecycle,
+realized demo P/L `10.06`, fees `-0.28`, and no open position. The campaign
+showed baseline `3`, current-release count `0`, total `3 / 100`.
+
+Configured deployed AppTest explicitly required 3/100 and the `10.06` result;
+it completed with zero exceptions and neither the stale managed-setup error nor
+the false campaign-count error. The temporary pause was audited and cleared.
+Final execution readiness returned HTTP 200 with `trading_allowed=true`,
+automatic analysis enabled, the AI circuit closed, and zero blocking reasons.
+ISSUE-053 is complete.
+Rollout evidence is tracked by
+[PR #129](https://github.com/AegisFintech/scalping-bot/pull/129).

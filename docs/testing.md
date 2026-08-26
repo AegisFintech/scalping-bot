@@ -128,6 +128,15 @@ exceptions, rendered 3/100 history, and did not emit the false campaign-count
 error. Replay/backtest, zero-vulnerability dependency audits, secret scan,
 shell/PM2 checks, and all five systemd security parses at 2.8 (`OK`) passed.
 
+After PR #128 merged, `.29` deployed under the durable analysis pause. Selected
+process evidence proved `.29`, campaign baseline `3`, five-second window, and
+30/18/12 tails. Status returned `LATEST_TERMINAL / CLOSED` with one exact LONG
+trade, realized demo P/L `10.06`, and fees `-0.28`. Deployed AppTest rendered
+3/100 history, the same terminal result, zero exceptions, and neither the
+managed-setup unavailable nor campaign-count-invalid error. The pause was then
+cleared; execution readiness returned HTTP 200 with trading allowed, automatic
+analysis enabled, a closed AI circuit, and zero blockers.
+
 On 2026-08-26, ISSUE-052 passed Prettier, ESLint, TypeScript typecheck/build,
 233 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
 3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,
