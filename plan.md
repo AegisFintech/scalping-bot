@@ -1612,6 +1612,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   unpaused scheduler immediately eligible to continue at 1/100. Configured
   AppTest showed one attempt/response/spread skip and zero exceptions.
   ISSUE-051 is complete; campaign 002 is running automatically toward 100.
+  Final rollout evidence is tracked by
+  [PR #122](https://github.com/AegisFintech/scalping-bot/pull/122).
 
 ## Acceptance criteria
 

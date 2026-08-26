@@ -1884,3 +1884,6 @@ circuit, no blocking reason, and the unpaused scheduler eligible for the next
 minute. Deployed AppTest had zero exceptions and showed exactly one attempt,
 one completed response, one spread skip, and zero order groups/trades. Campaign
 002 is a running bounded demo test, not a profitability result.
+
+Final rollout evidence is tracked by
+[PR #122](https://github.com/AegisFintech/scalping-bot/pull/122).
