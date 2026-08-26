@@ -1829,3 +1829,6 @@ files, and 78 Python tests. Configured Streamlit AppTest rendered 39
 dataframes/57 metrics/15 tabs with zero exceptions. Replay/backtest smoke
 tests, zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2
 checks, and all five offline systemd security parses passed.
+
+Implementation review and automatic merge are tracked by
+[PR #118](https://github.com/AegisFintech/scalping-bot/pull/118).

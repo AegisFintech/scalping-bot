@@ -1584,8 +1584,9 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   schema, proposal semantics, TP transform, and effective semantics. All full
   repository gates passed, including 232 Node tests, 78 Python tests, all 3
   configured integration tests, AppTest, dependency audits, secret scan, and
-  deployment syntax/security checks. Review, immutable deployment, and the
-  fresh campaign remain.
+  deployment syntax/security checks. Review and automatic merge are tracked by
+  [PR #118](https://github.com/AegisFintech/scalping-bot/pull/118). Immutable
+  paused deployment and the fresh campaign remain.
 
 ## Acceptance criteria
 
