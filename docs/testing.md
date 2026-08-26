@@ -129,6 +129,20 @@ it did not write PostgreSQL or contact cTrader. The final category-balanced
 prompt check passed strict schema, proposal semantics, TP transform, and
 effective semantics for all 3 cases.
 
+Deployment provenance caught and contained two PM2 environment-cache issues
+before accepting campaign 002. Immutable `.25` produced one prompt-v6 response
+with old 60/36/24 tails; new analysis was paused and its accepted demo OCO was
+managed to normal expiry. `.26` remained paused with zero analyses after
+selected process evidence still showed stale values. Release `.27` pins the
+non-secret baseline/window/tails in the PM2 manifest. It started with only
+`ANALYSES_PAUSED`, zero exposure, and campaign 0/100; selected `/proc` evidence
+proved 0/5/30/18/12 before unpause. The first automatic `.27` request persisted
+prompt v6/schema 2.1 and exact 30/18/12 tails, advanced to 1/100, and was safely
+rejected by unchanged spread gates with no order. Deployed AppTest rendered 39
+dataframes, 57 metrics, and 15 tabs with zero exceptions and showed one attempt,
+one response, one spread skip, and no trade/order group. Automation remained
+unpaused, circuit-closed, terminal, and eligible for the next broker minute.
+
 On 2026-08-26, ISSUE-050 passed Prettier, ESLint, TypeScript typecheck/build,
 232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
 3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,

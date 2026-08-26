@@ -193,7 +193,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
 | ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
 | ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
-| ISSUE-051 | in progress | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
+| ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1603,6 +1603,17 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   process-environment and first-request provenance must both pass before
   campaign release. Review is tracked by
   [PR #121](https://github.com/AegisFintech/scalping-bot/pull/121).
+  Release `.27` then started paused with only `ANALYSES_PAUSED`, zero broker
+  exposure, a closed AI circuit, and campaign 0/100. Its selected process
+  environment proved baseline 0, start window 5, and tails 30/18/12 before
+  unpause. The first automatic cycle completed as prompt v6/schema 2.1 and its
+  persisted payload proved exact 30/18/12 tails. It was safely rejected by the
+  unchanged spread gates, created no order, became terminal, and left the
+  unpaused scheduler immediately eligible to continue at 1/100. Configured
+  AppTest showed one attempt/response/spread skip and zero exceptions.
+  ISSUE-051 is complete; campaign 002 is running automatically toward 100.
+  Final rollout evidence is tracked by
+  [PR #122](https://github.com/AegisFintech/scalping-bot/pull/122).
 
 ## Acceptance criteria
 
