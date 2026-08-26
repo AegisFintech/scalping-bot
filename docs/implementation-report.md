@@ -1896,3 +1896,31 @@ release and next-cycle placement, not a completed-trade result.
 
 Repeat proof is tracked by
 [PR #123](https://github.com/AegisFintech/scalping-bot/pull/123).
+
+## Broker-confirmed telemetry during reconciliation
+
+ISSUE-052 separates read-only position telemetry from execution eligibility
+without weakening either one. Open-position monitor contract 1.1 adds an exact
+`executionState`; a single durable strategy-owned `OPEN` position in a
+`RECONCILIATION_REQUIRED` group can return live values only after cTrader
+returns exactly one P/L match for its durable broker position identity. The
+dashboard displays those values with a reconciliation warning. The existing
+readiness, scheduler, reconciliation, risk, and placement gates are unchanged,
+and ambiguous positions, uncertain position states, unsupported group states,
+or missing/ambiguous broker evidence still return no value.
+
+Because the monitor lives in the execution service, deployment advances the
+immutable strategy/code identity from `.27` to `.28`. The reviewed campaign
+carry-forward is exactly two completed `.27` model responses; `.28` therefore
+pins baseline `2` while retaining the 100-response limit, five-second start
+window, and 30/18/12 compact tails. Deployment must occur under the durable
+analysis pause and prove the baseline plus broker lifecycle before release.
+
+The pre-deployment gate passed 233 Node tests, 16 schema tests, 3 migration
+tests, all 3 configured integration tests, strict TypeScript/Python checks, 78
+Python tests, configured AppTest with zero exceptions, replay/backtest,
+dependency audits, secret scanning, shell/PM2 syntax, and five systemd security
+parses at 2.8 (`OK`).
+
+Implementation and rollout are tracked by
+[issue #124](https://github.com/AegisFintech/scalping-bot/issues/124).

@@ -123,6 +123,13 @@ def live_open_trade_panel() -> None:
         )
         return
 
+    if monitor["executionState"] == "RECONCILIATION_REQUIRED":
+        st.warning(
+            "The values below are confirmed for the exact open broker position, but its "
+            "execution lifecycle still requires reconciliation. Automatic analysis and new "
+            "orders remain blocked; this panel is read-only and will keep refreshing."
+        )
+
     currency = monitor["accountCurrency"]
     side = monitor["side"]
     mark_side = "bid" if side == "BUY" else "ask"

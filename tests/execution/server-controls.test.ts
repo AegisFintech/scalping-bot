@@ -122,6 +122,7 @@ describe("open position monitor route", () => {
     const read = vi.fn(() =>
       Promise.resolve<OpenPositionMonitor>({
         status: "AVAILABLE",
+        executionState: "NORMAL",
         side: "BUY",
         accountCurrency: "USD",
         bid: "4641.2",
@@ -143,6 +144,7 @@ describe("open position monitor route", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
       status: "AVAILABLE",
+      executionState: "NORMAL",
       markPrice: "4641.2",
       netUnrealizedPnl: "2.75",
     });
