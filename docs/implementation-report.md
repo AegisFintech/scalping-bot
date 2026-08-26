@@ -1887,3 +1887,12 @@ one completed response, one spread skip, and zero order groups/trades. Campaign
 
 Final rollout evidence is tracked by
 [PR #122](https://github.com/AegisFintech/scalping-bot/pull/122).
+
+The repeat loop then executed without operator input. The next eligible broker
+minute advanced `.27` to 2/100; its second persisted request again proved
+prompt v6/schema 2.1 and 30/18/12 tails, passed validation as `ACCEPTED`, and
+created an active two-leg pending demo OCO. This proves automatic terminal-run
+release and next-cycle placement, not a completed-trade result.
+
+Repeat proof is tracked by
+[PR #123](https://github.com/AegisFintech/scalping-bot/pull/123).
