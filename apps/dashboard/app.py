@@ -23,6 +23,7 @@ from charts import (
 )
 from decision_inspector import (
     DecisionViewError,
+    analysis_attempt_funnel_view,
     analysis_chart_view,
     analysis_history_view,
     analytics_summary,
@@ -1138,6 +1139,167 @@ with tabs[5]:
             or campaign_baseline + release_completed != completed_count
         ):
             raise DecisionViewError("DECISION_VIEW_HISTORY_CAMPAIGN_COUNT_INVALID")
+        attempt_rows = query(
+            """WITH target_symbol AS (
+                 SELECT s.id
+                 FROM symbols s
+                 JOIN accounts a ON a.id = s.account_id
+                 WHERE a.environment = %s AND s.name = %s
+                 ORDER BY s.metadata_at DESC LIMIT 1
+               ), current_strategy AS (
+                 SELECT sv.id, sv.created_at
+                 FROM strategy_versions sv
+                 ORDER BY sv.created_at DESC, sv.id DESC
+                 LIMIT 1
+               ), baseline_rows AS (
+                 SELECT ar.id, ar.created_at
+                 FROM analysis_runs ar
+                 WHERE ar.symbol_id = (SELECT id FROM target_symbol)
+                   AND ar.strategy_version_id <> (SELECT id FROM current_strategy)
+                   AND EXISTS (
+                     SELECT 1
+                     FROM model_requests mq
+                     JOIN model_responses mr ON mr.model_request_id = mq.id
+                     WHERE mq.analysis_id = ar.id
+                       AND mq.status = 'COMPLETED'
+                       AND mr.status = 'COMPLETED'
+                   )
+                 ORDER BY ar.created_at DESC
+                 LIMIT %s
+               ), campaign_start AS (
+                 SELECT COALESCE(
+                   (SELECT min(created_at) FROM baseline_rows),
+                   (SELECT created_at FROM current_strategy)
+                 ) AS created_at
+               )
+               SELECT ar.id::text AS analysis_id,
+                      ar.analysis_time,
+                      ar.state AS analysis_state,
+                      ar.rejection_reasons,
+                      EXISTS (
+                        SELECT 1 FROM model_requests mq WHERE mq.analysis_id = ar.id
+                      ) AS model_request_present,
+                      EXISTS (
+                        SELECT 1
+                        FROM model_requests mq
+                        JOIN model_responses mr ON mr.model_request_id = mq.id
+                        WHERE mq.analysis_id = ar.id
+                          AND mq.status = 'COMPLETED'
+                          AND mr.status = 'COMPLETED'
+                      ) AS model_completed,
+                      model.ai_pipeline_latency_ms,
+                      og.state AS group_state,
+                      COALESCE(position.position_count, 0)::int AS position_count,
+                      COALESCE(trade.trade_count, 0)::int AS trade_count,
+                      COALESCE(trade.win_count, 0)::int AS trade_win_count,
+                      COALESCE(trade.loss_count, 0)::int AS trade_loss_count,
+                      COALESCE(trade.break_even_count, 0)::int AS trade_break_even_count,
+                      COALESCE(trade.long_count, 0)::int AS trade_long_count,
+                      COALESCE(trade.short_count, 0)::int AS trade_short_count,
+                      trade.realized_pnl::text AS realized_pnl,
+                      trade.fees::text AS fees
+               FROM analysis_runs ar
+               LEFT JOIN LATERAL (
+                 SELECT round(
+                          extract(epoch FROM (mr.received_at - ar.created_at)) * 1000
+                        )::bigint AS ai_pipeline_latency_ms
+                 FROM model_requests mq
+                 JOIN model_responses mr ON mr.model_request_id = mq.id
+                 WHERE mq.analysis_id = ar.id
+                   AND mq.status = 'COMPLETED'
+                   AND mr.status = 'COMPLETED'
+                 ORDER BY mr.received_at DESC
+                 LIMIT 1
+               ) model ON true
+               LEFT JOIN order_groups og ON og.analysis_id = ar.id
+               LEFT JOIN LATERAL (
+                 SELECT count(*)::int AS position_count
+                 FROM positions p
+                 WHERE p.order_group_id = og.id AND p.strategy_owned = true
+               ) position ON true
+               LEFT JOIN LATERAL (
+                 SELECT count(*)::int AS trade_count,
+                        count(*) FILTER (WHERE t.realized_pnl > 0)::int AS win_count,
+                        count(*) FILTER (WHERE t.realized_pnl < 0)::int AS loss_count,
+                        count(*) FILTER (WHERE t.realized_pnl = 0)::int AS break_even_count,
+                        count(*) FILTER (WHERE t.direction = 'LONG')::int AS long_count,
+                        count(*) FILTER (WHERE t.direction = 'SHORT')::int AS short_count,
+                        sum(t.realized_pnl) AS realized_pnl,
+                        sum(t.fees) AS fees
+                 FROM trades t
+                 WHERE t.order_group_id = og.id
+               ) trade ON true
+               WHERE ar.symbol_id = (SELECT id FROM target_symbol)
+                 AND ar.created_at >= (SELECT created_at FROM campaign_start)
+               ORDER BY ar.created_at, ar.id
+               LIMIT 2001""",
+            (
+                account_environment,
+                selected_symbol,
+                campaign_baseline,
+            ),
+        )
+        attempt_funnel = analysis_attempt_funnel_view(attempt_rows)
+        attempt_summary = attempt_funnel["summary"]
+        st.subheader("Every analysis attempt, explained")
+        st.caption(
+            "This includes retries that ended before a completed AI response. Raw PostgreSQL "
+            "state is preserved; Primary category names the furthest verified lifecycle stage "
+            "so REJECTED no longer hides whether data, AI, validation, or execution stopped it."
+        )
+        attempt_metrics = st.columns(6)
+        attempt_metrics[0].metric("Scheduler attempts", attempt_summary["analysis_attempts"])
+        attempt_metrics[1].metric(
+            "Completed AI responses", attempt_summary["completed_ai_responses"]
+        )
+        attempt_metrics[2].metric(
+            "Ended before AI completed", attempt_summary["ended_before_completed_ai"]
+        )
+        attempt_metrics[3].metric("Order groups", attempt_summary["order_groups"])
+        attempt_metrics[4].metric("Closed demo trades", attempt_summary["trades"])
+        attempt_metrics[5].metric("Terminal realized demo P/L", attempt_summary["realized_pnl"])
+        attempt_reason_metrics = st.columns(6)
+        attempt_reason_metrics[0].metric("Context expired", attempt_summary["context_expired"])
+        attempt_reason_metrics[1].metric(
+            "AI proposal invalid", attempt_summary["ai_proposal_invalid"]
+        )
+        attempt_reason_metrics[2].metric(
+            "Dependency failures", attempt_summary["dependency_failures"]
+        )
+        attempt_reason_metrics[3].metric("Spread skips", attempt_summary["spread_skips"])
+        attempt_reason_metrics[4].metric("Setups expired", attempt_summary["expired_setups"])
+        attempt_reason_metrics[5].metric(
+            "Closed W / L / BE",
+            f"{attempt_summary['wins']} / {attempt_summary['losses']} / "
+            f"{attempt_summary['break_even']}",
+        )
+        attempt_evidence_metrics = st.columns(5)
+        attempt_evidence_metrics[0].metric("Closed LONG trades", attempt_summary["long_trades"])
+        attempt_evidence_metrics[1].metric("Closed SHORT trades", attempt_summary["short_trades"])
+        attempt_evidence_metrics[2].metric(
+            "Median analysis-to-response",
+            f"{attempt_summary['median_ai_pipeline_seconds']} s",
+        )
+        attempt_evidence_metrics[3].metric(
+            "P90 analysis-to-response", f"{attempt_summary['p90_ai_pipeline_seconds']} s"
+        )
+        attempt_evidence_metrics[4].metric(
+            "Maximum analysis-to-response",
+            f"{attempt_summary['max_ai_pipeline_seconds']} s",
+        )
+        display_dataframe(
+            pd.DataFrame(attempt_funnel["category_counts"]),
+            width="stretch",
+            hide_index=True,
+        )
+        with st.expander("Show every attempt and its exact durable reason"):
+            display_dataframe(
+                pd.DataFrame(attempt_funnel["rows"]),
+                width="stretch",
+                hide_index=True,
+            )
+
+        st.subheader("Counted completed-AI ledger")
         history_rows = (
             []
             if completed_count == 0
