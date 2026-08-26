@@ -1683,6 +1683,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   zero exceptions and neither unavailable/count error. After pause release,
   readiness returned HTTP 200 with `trading_allowed=true`, automatic analysis
   enabled, a closed AI circuit, and zero blocking reasons. ISSUE-053 is complete.
+  Rollout evidence is tracked by
+  [PR #129](https://github.com/AegisFintech/scalping-bot/pull/129).
 
 ## Acceptance criteria
 

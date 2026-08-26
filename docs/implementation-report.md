@@ -1990,3 +1990,5 @@ the false campaign-count error. The temporary pause was audited and cleared.
 Final execution readiness returned HTTP 200 with `trading_allowed=true`,
 automatic analysis enabled, the AI circuit closed, and zero blocking reasons.
 ISSUE-053 is complete.
+Rollout evidence is tracked by
+[PR #129](https://github.com/AegisFintech/scalping-bot/pull/129).
