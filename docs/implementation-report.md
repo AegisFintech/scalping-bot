@@ -1782,3 +1782,10 @@ execution stayed paused and was not restarted.
 
 Implementation review and automatic merge are tracked by
 [PR #116](https://github.com/AegisFintech/scalping-bot/pull/116).
+
+After merge as `41e0150`, only the Streamlit process restarted. Its local
+health endpoint returned `ok`; execution retained its existing PID and the
+campaign remained paused. The configured deployed-source AppTest again had
+zero exceptions and displayed 156 scheduler attempts, 100 completed AI
+responses, 36 demo order groups, and 26 exact closed trades. No broker or
+database mutation was part of this dashboard rollout.

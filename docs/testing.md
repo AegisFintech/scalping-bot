@@ -129,6 +129,11 @@ backtest smoke tests, zero-vulnerability npm/pip audits, the tracked-file secret
 scan, shell/PM2 syntax, and all five offline systemd security parses passed.
 No execution service, database row, or broker state was changed.
 
+After PR #116 merged as `41e0150`, only `scalper-dashboard` restarted. Its
+health endpoint returned `ok`; the execution PID remained unchanged. The
+deployed-source AppTest again rendered 39 dataframes, 57 metrics, and 15 tabs
+with zero exceptions and showed the exact 156/100/36/26 campaign funnel.
+
 On 2026-08-25, ISSUE-049 passed Prettier, ESLint, TypeScript typecheck/build,
 232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
 3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,

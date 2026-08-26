@@ -192,7 +192,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
 | ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
 | ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
-| ISSUE-050 | in progress | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
+| ISSUE-050 | complete    | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
 | ISSUE-051 | pending     | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
@@ -1554,7 +1554,10 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   156-attempt/100-response campaign, dependency audits, secret scan, and
   shell/systemd checks. Review and automatic merge are tracked by
   [PR #116](https://github.com/AegisFintech/scalping-bot/pull/116); the
-  dashboard-only rollout remains.
+  dashboard-only rollout restarted Streamlit from merged commit `41e0150`
+  without restarting execution. Health returned `ok`; configured AppTest had
+  zero exceptions and displayed the exact 156 attempts, 100 completed
+  responses, 36 order groups, and 26 closed demo trades. ISSUE-050 is complete.
 
 ### ISSUE-051 delivery details
 
