@@ -1652,7 +1652,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   unchanged database/execution lifecycle reasons. The temporary pause was
   audited and cleared, leaving automatic analysis enabled but correctly
   blocked until the open position reaches exact terminal reconciliation.
-  ISSUE-052 is complete.
+  ISSUE-052 is complete. Rollout evidence is tracked by
+  [PR #126](https://github.com/AegisFintech/scalping-bot/pull/126).
 
 ## Acceptance criteria
 

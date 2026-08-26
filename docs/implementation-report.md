@@ -1943,3 +1943,5 @@ HTTP 503 with `DATABASE_RECONCILIATION_PENDING`,
 the temporary deployment pause was audited and cleared. Automatic analysis is
 enabled but remains blocked by that open lifecycle until exact terminal
 reconciliation. All five PM2 services are online. ISSUE-052 is complete.
+Rollout evidence is tracked by
+[PR #126](https://github.com/AegisFintech/scalping-bot/pull/126).
