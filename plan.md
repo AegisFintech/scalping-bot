@@ -1596,6 +1596,12 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   the first persisted request before the fresh 0/100 campaign is accepted.
   Review is tracked by
   [PR #120](https://github.com/AegisFintech/scalping-bot/pull/120).
+  Pre-unpause `/proc` evidence showed PM2 still retained the four old tail/window
+  keys even after an exported-env reload. `.26` therefore remains paused at
+  zero analyses. Release `.27` pins the non-secret 0 baseline, 5-second window,
+  and 30/18/12 tails in the PM2 release manifest so they override daemon cache;
+  process-environment and first-request provenance must both pass before
+  campaign release.
 
 ## Acceptance criteria
 
