@@ -1840,3 +1840,13 @@ the `.24` strategy row.
 
 Release identity review is tracked by
 [PR #119](https://github.com/AegisFintech/scalping-bot/pull/119).
+
+The paused `.25` startup registered prompt v6/schema 2.1 at campaign 0/100.
+After unpause, its first automatic request completed, passed validation, and
+placed two pending demo stops. Persisted provenance then exposed that PM2 had
+retained previously exported 60/36/24 tail variables even though the protected
+`.env` contained 30/18/12. New analyses were immediately paused without
+cancelling or abandoning the active group. Because `.25` is immutable, the
+correction advances identity to `.26`; deployment must explicitly export the
+protected `.env` before PM2 `--update-env`, then prove the first persisted
+request contains 30/18/12. The `.25` response is not counted as campaign 002.

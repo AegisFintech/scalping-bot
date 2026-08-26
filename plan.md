@@ -1588,7 +1588,12 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   [PR #118](https://github.com/AegisFintech/scalping-bot/pull/118). Immutable
   release `.25` registration is tracked by
   [PR #119](https://github.com/AegisFintech/scalping-bot/pull/119) before its
-  first execution start; paused deployment and the fresh campaign remain.
+  first execution start. Its first response proved prompt v6 and placed an
+  accepted demo OCO, but the persisted payload also proved PM2 had retained the
+  old exported 60/36/24 tail values. New analyses were paused immediately; the
+  active group remains managed. Immutable correction `.26` will be launched
+  with the protected `.env` explicitly exported, then must prove 30/18/12 in
+  the first persisted request before the fresh 0/100 campaign is accepted.
 
 ## Acceptance criteria
 
