@@ -1601,7 +1601,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   zero analyses. Release `.27` pins the non-secret 0 baseline, 5-second window,
   and 30/18/12 tails in the PM2 release manifest so they override daemon cache;
   process-environment and first-request provenance must both pass before
-  campaign release.
+  campaign release. Review is tracked by
+  [PR #121](https://github.com/AegisFintech/scalping-bot/pull/121).
 
 ## Acceptance criteria
 

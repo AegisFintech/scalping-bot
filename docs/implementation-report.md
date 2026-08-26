@@ -1862,3 +1862,6 @@ fix advances to `.27` and pins only the non-secret campaign baseline/window/tail
 values in the PM2 manifest; secrets remain exclusively in the protected
 environment. Deployment must verify the selected process keys before unpause
 and the exact first persisted request after inference.
+
+The deterministic PM2 pinning correction is tracked by
+[PR #121](https://github.com/AegisFintech/scalping-bot/pull/121).
