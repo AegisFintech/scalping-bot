@@ -1617,6 +1617,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   Without operator intervention, the next broker minute advanced the same
   `.27` campaign to 2/100; its persisted request again proved v6/schema 2.1 and
   30/18/12 tails, reached `ACCEPTED`, and created two active pending demo stops.
+  Repeat proof is tracked by
+  [PR #123](https://github.com/AegisFintech/scalping-bot/pull/123).
 
 ## Acceptance criteria
 
