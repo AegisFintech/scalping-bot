@@ -1923,4 +1923,5 @@ dependency audits, secret scanning, shell/PM2 syntax, and five systemd security
 parses at 2.8 (`OK`).
 
 Implementation and rollout are tracked by
-[issue #124](https://github.com/AegisFintech/scalping-bot/issues/124).
+[issue #124](https://github.com/AegisFintech/scalping-bot/issues/124) and
+[PR #125](https://github.com/AegisFintech/scalping-bot/pull/125).
