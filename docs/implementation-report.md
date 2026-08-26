@@ -1968,7 +1968,8 @@ unchanged. The execution fix advances the immutable identity to `.29` with the
 audited three completed campaign responses carried forward.
 
 Implementation is tracked by
-[issue #127](https://github.com/AegisFintech/scalping-bot/issues/127).
+[issue #127](https://github.com/AegisFintech/scalping-bot/issues/127) and
+[PR #128](https://github.com/AegisFintech/scalping-bot/pull/128).
 
 The pre-deployment gate passed 233 Node tests, 16 schema tests, 3 migration
 tests, all 3 configured integration tests, strict TypeScript/Python checks, 81

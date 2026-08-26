@@ -1674,7 +1674,8 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   deployment pause. Full gates passed 233 Node tests, 16 schema tests, 3
   migration tests, all 3 configured integration tests, 81 Python tests,
   configured AppTest at 3/100, replay/backtest, dependency audits, secret scan,
-  and deployment checks.
+  and deployment checks. Review and automatic merge are tracked by
+  [PR #128](https://github.com/AegisFintech/scalping-bot/pull/128).
 
 ## Acceptance criteria
 
