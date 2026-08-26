@@ -1865,3 +1865,22 @@ and the exact first persisted request after inference.
 
 The deterministic PM2 pinning correction is tracked by
 [PR #121](https://github.com/AegisFintech/scalping-bot/pull/121).
+
+Release `.27` deployed under the durable database pause with zero active broker
+orders, groups, positions, or reconciliation blockers. Startup registered
+`.27` with prompt v6/schema 2.1, campaign 0/100, a closed AI circuit, and only
+`ANALYSES_PAUSED`. Before unpause, selected process environment evidence proved
+baseline `0`, start window `5`, and compact tails `30/18/12`. AI, execution,
+and dashboard health checks passed.
+
+After audited pause release, the scheduler claimed the next broker minute
+inside the five-second window. Its first automatic external response completed
+and the immutable PostgreSQL payload proved prompt v6/schema 2.1 plus exact
+30/18/12 tails. Final unchanged spread protection rejected
+`SPREAD_ATR_EXCEEDED`, `SPREAD_PERCENTILE_EXCEEDED`,
+`SPREAD_POINTS_EXCEEDED`, and `SPREAD_SESSION_ABNORMAL`; no risk intent, group,
+or broker order was created. The run became terminal with campaign 1/100, no AI
+circuit, no blocking reason, and the unpaused scheduler eligible for the next
+minute. Deployed AppTest had zero exceptions and showed exactly one attempt,
+one completed response, one spread skip, and zero order groups/trades. Campaign
+002 is a running bounded demo test, not a profitability result.
