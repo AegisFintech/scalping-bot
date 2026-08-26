@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
@@ -1166,7 +1167,7 @@ def _history_decimal(value: object, reason: str, *, positive: bool = False) -> s
     return "0" if rendered in {"", "-0"} else rendered
 
 
-def _history_reasons(value: object, cancellation_reason: object) -> str:
+def _history_reason_codes(value: object) -> list[str]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise DecisionViewError("DECISION_VIEW_HISTORY_REASONS_INVALID")
     reasons: list[str] = []
@@ -1179,6 +1180,11 @@ def _history_reasons(value: object, cancellation_reason: object) -> str:
         ):
             raise DecisionViewError("DECISION_VIEW_HISTORY_REASONS_INVALID")
         reasons.append(reason)
+    return list(dict.fromkeys(reasons))
+
+
+def _history_reasons(value: object, cancellation_reason: object) -> str:
+    reasons = _history_reason_codes(value)
     if cancellation_reason is not None:
         if (
             not isinstance(cancellation_reason, str)
@@ -1354,6 +1360,353 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
     if group_state == "RECONCILIATION_REQUIRED":
         return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
     raise DecisionViewError("DECISION_VIEW_HISTORY_GROUP_OUTCOME_MISSING")
+
+
+_ANALYSIS_STATES = {
+    "PENDING",
+    "COLLECTING",
+    "FEATURED",
+    "MODEL_PENDING",
+    "VALIDATING",
+    "ACCEPTED",
+    "REJECTED",
+    "EXPIRED",
+}
+_GROUP_STATES = {
+    "INTENT_RECORDED",
+    "SUBMITTING",
+    "ACTIVE",
+    "ONE_FILLED",
+    "CANCELLING_PEER",
+    "POSITION_OPEN",
+    "RECONCILIATION_REQUIRED",
+    "CLOSED",
+    "EXPIRED",
+    "FAILED",
+}
+
+
+def _attempt_primary_reason(reasons: Sequence[str], category: str) -> str:
+    matchers: dict[str, tuple[str, ...]] = {
+        "AI_DEPENDENCY_FAILED": ("AI_",),
+        "MARKET_DATA_FAILED": ("MARKET_DATA_", "ANALYTICS_", "QUOTE_", "ORDER_BOOK_"),
+        "SPREAD_SAFETY_SKIP": ("SPREAD_",),
+        "CONTEXT_EXPIRED": ("DECISION_CANDLE_CONTEXT_CHANGED", "PLACEMENT_CANDLE_CONTEXT_CHANGED"),
+        "MARKET_REFRESH_FAILED": (
+            "DECISION_MARKET_REFRESH_FAILED",
+            "PLACEMENT_MARKET_REFRESH_FAILED",
+            "MARKET_DATA_STALE",
+            "ORDER_BOOK_STALE",
+            "QUOTE_STALE",
+        ),
+    }
+    prefixes = matchers.get(category, ())
+    for reason in reasons:
+        if any(reason == prefix or reason.startswith(prefix) for prefix in prefixes):
+            return reason
+    return reasons[0] if reasons else "—"
+
+
+def analysis_attempt_funnel_view(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Classify every campaign analysis attempt once without rewriting raw evidence."""
+
+    if len(rows) > _MAX_EXACT_COLLECTION_ITEMS:
+        raise DecisionViewError("DECISION_VIEW_ATTEMPT_COUNT_INVALID")
+    output: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    previous_time: datetime | None = None
+    category_counts: dict[str, int] = {}
+    realized_total = Decimal(0)
+    fee_total = Decimal(0)
+    completed_ai = 0
+    order_groups = 0
+    positions = 0
+    trades = 0
+    wins = 0
+    losses = 0
+    break_even = 0
+    long_trades = 0
+    short_trades = 0
+    ai_latencies_ms: list[int] = []
+
+    for index, row in enumerate(rows, start=1):
+        analysis_id = row.get("analysis_id")
+        if (
+            not isinstance(analysis_id, str)
+            or re.fullmatch(
+                r"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+                analysis_id,
+            )
+            is None
+            or analysis_id in seen
+        ):
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_ANALYSIS_ID_INVALID")
+        seen.add(analysis_id)
+        analysis_time = _history_timestamp(
+            row.get("analysis_time"), "DECISION_VIEW_ATTEMPT_TIME_INVALID"
+        )
+        if previous_time is not None and analysis_time < previous_time:
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_ORDER_INVALID")
+        previous_time = analysis_time
+        state = row.get("analysis_state")
+        if state not in _ANALYSIS_STATES:
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_STATE_INVALID")
+        reasons = _history_reason_codes(row.get("rejection_reasons"))
+        model_request_present = row.get("model_request_present")
+        model_completed = row.get("model_completed")
+        if (
+            not isinstance(model_request_present, bool)
+            or not isinstance(model_completed, bool)
+            or (model_completed and not model_request_present)
+        ):
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_MODEL_STATE_INVALID")
+        group_state = row.get("group_state")
+        if group_state is not None and group_state not in _GROUP_STATES:
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_GROUP_STATE_INVALID")
+
+        counts: dict[str, int] = {}
+        for key in (
+            "position_count",
+            "trade_count",
+            "trade_win_count",
+            "trade_loss_count",
+            "trade_break_even_count",
+            "trade_long_count",
+            "trade_short_count",
+        ):
+            value = row.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0 or value > 2:
+                raise DecisionViewError("DECISION_VIEW_ATTEMPT_LIFECYCLE_COUNT_INVALID")
+            counts[key] = value
+        if (
+            counts["trade_count"] > counts["position_count"]
+            or counts["trade_win_count"]
+            + counts["trade_loss_count"]
+            + counts["trade_break_even_count"]
+            != counts["trade_count"]
+            or counts["trade_long_count"] + counts["trade_short_count"] != counts["trade_count"]
+            or (group_state is None and (counts["position_count"] or counts["trade_count"]))
+        ):
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_LIFECYCLE_AMBIGUOUS")
+        if group_state is not None and not model_completed:
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_LIFECYCLE_AMBIGUOUS")
+
+        latency_ms = row.get("ai_pipeline_latency_ms")
+        if model_completed:
+            if (
+                not isinstance(latency_ms, int)
+                or isinstance(latency_ms, bool)
+                or not 0 <= latency_ms <= 600_000
+            ):
+                raise DecisionViewError("DECISION_VIEW_ATTEMPT_LATENCY_INVALID")
+            ai_latencies_ms.append(latency_ms)
+            rendered_latency = _history_decimal(
+                Decimal(latency_ms) / Decimal(1000),
+                "DECISION_VIEW_ATTEMPT_LATENCY_INVALID",
+            )
+        else:
+            if latency_ms is not None:
+                raise DecisionViewError("DECISION_VIEW_ATTEMPT_LATENCY_INVALID")
+            rendered_latency = "—"
+
+        rendered_pnl = "—"
+        rendered_fees = "—"
+        if counts["trade_count"] > 0:
+            rendered_pnl = _history_decimal(
+                row.get("realized_pnl"), "DECISION_VIEW_ATTEMPT_PNL_INVALID"
+            )
+            rendered_fees = _history_decimal(row.get("fees"), "DECISION_VIEW_ATTEMPT_FEES_INVALID")
+            realized_total += Decimal(rendered_pnl)
+            fee_total += Decimal(rendered_fees)
+        elif row.get("realized_pnl") is not None or row.get("fees") is not None:
+            raise DecisionViewError("DECISION_VIEW_ATTEMPT_MONEY_WITHOUT_TRADE")
+
+        if group_state is not None:
+            stage = "BROKER LIFECYCLE"
+            order_groups += 1
+            if counts["trade_count"] > 0:
+                if group_state != "CLOSED" or counts["position_count"] != counts["trade_count"]:
+                    category = "EXECUTION_REVIEW_REQUIRED"
+                elif counts["trade_win_count"] == counts["trade_count"]:
+                    category = "TRADE_CLOSED_WIN"
+                elif counts["trade_loss_count"] == counts["trade_count"]:
+                    category = "TRADE_CLOSED_LOSS"
+                elif counts["trade_break_even_count"] == counts["trade_count"]:
+                    category = "TRADE_CLOSED_BREAK_EVEN"
+                else:
+                    category = "TRADE_CLOSED_MIXED"
+            elif group_state == "EXPIRED":
+                category = "SETUP_EXPIRED_NO_TRADE"
+            elif group_state in {
+                "INTENT_RECORDED",
+                "SUBMITTING",
+                "ACTIVE",
+                "ONE_FILLED",
+                "CANCELLING_PEER",
+                "POSITION_OPEN",
+            }:
+                category = "SETUP_OR_TRADE_ACTIVE"
+            else:
+                category = "EXECUTION_REVIEW_REQUIRED"
+        elif model_completed:
+            stage = "AFTER AI RESPONSE"
+            if any("CANDLE_CONTEXT_CHANGED" in reason for reason in reasons):
+                category = "CONTEXT_EXPIRED"
+            elif any(
+                "REFRESH_FAILED" in reason
+                or reason in {"MARKET_DATA_STALE", "ORDER_BOOK_STALE", "QUOTE_STALE"}
+                for reason in reasons
+            ):
+                category = "MARKET_REFRESH_FAILED"
+            elif any(reason.startswith("SPREAD_") for reason in reasons):
+                category = "SPREAD_SAFETY_SKIP"
+            elif (
+                state
+                in {
+                    "PENDING",
+                    "COLLECTING",
+                    "FEATURED",
+                    "MODEL_PENDING",
+                    "VALIDATING",
+                    "ACCEPTED",
+                }
+                and not reasons
+            ):
+                category = "AI_RESPONSE_PROCESSING"
+            elif state == "EXPIRED":
+                category = "ANALYSIS_EXPIRED_NO_SETUP"
+            else:
+                category = "AI_PROPOSAL_INVALID"
+        else:
+            stage = "BEFORE COMPLETED AI RESPONSE"
+            if (
+                state
+                in {
+                    "PENDING",
+                    "COLLECTING",
+                    "FEATURED",
+                    "MODEL_PENDING",
+                    "VALIDATING",
+                    "ACCEPTED",
+                }
+                and not reasons
+            ):
+                category = "ANALYSIS_OR_AI_IN_PROGRESS"
+            elif any(reason.startswith("AI_") for reason in reasons):
+                category = "AI_DEPENDENCY_FAILED"
+            elif any(reason.startswith("SPREAD_") for reason in reasons):
+                category = "SPREAD_SAFETY_SKIP"
+            elif any(
+                reason.startswith(prefix)
+                for reason in reasons
+                for prefix in ("MARKET_DATA_", "ANALYTICS_", "QUOTE_", "ORDER_BOOK_")
+            ):
+                category = "MARKET_DATA_FAILED"
+            else:
+                category = "PRE_MODEL_REJECTED"
+
+        if model_completed:
+            completed_ai += 1
+        positions += counts["position_count"]
+        trades += counts["trade_count"]
+        wins += counts["trade_win_count"]
+        losses += counts["trade_loss_count"]
+        break_even += counts["trade_break_even_count"]
+        long_trades += counts["trade_long_count"]
+        short_trades += counts["trade_short_count"]
+        category_counts[category] = category_counts.get(category, 0) + 1
+        output.append(
+            {
+                "attempt_number": index,
+                "analysis_time": row.get("analysis_time"),
+                "stage": stage,
+                "primary_category": category,
+                "primary_reason": _attempt_primary_reason(reasons, category),
+                "raw_analysis_state": state,
+                "raw_reasons": ", ".join(reasons) if reasons else "—",
+                "model_completed": model_completed,
+                "group_state": group_state or "—",
+                "position_count": counts["position_count"],
+                "trade_count": counts["trade_count"],
+                "trade_direction": (
+                    "LONG + SHORT"
+                    if counts["trade_long_count"] and counts["trade_short_count"]
+                    else "LONG"
+                    if counts["trade_long_count"]
+                    else "SHORT"
+                    if counts["trade_short_count"]
+                    else "—"
+                ),
+                "ai_pipeline_seconds": rendered_latency,
+                "realized_pnl": rendered_pnl,
+                "fees": rendered_fees,
+            }
+        )
+
+    sorted_latencies = sorted(ai_latencies_ms)
+    if sorted_latencies:
+        midpoint = len(sorted_latencies) // 2
+        if len(sorted_latencies) % 2:
+            median_ms = Decimal(sorted_latencies[midpoint])
+        else:
+            median_ms = Decimal(
+                sorted_latencies[midpoint - 1] + sorted_latencies[midpoint]
+            ) / Decimal(2)
+        p90_ms = Decimal(sorted_latencies[math.ceil(len(sorted_latencies) * 0.9) - 1])
+        maximum_ms = Decimal(sorted_latencies[-1])
+    else:
+        median_ms = p90_ms = maximum_ms = Decimal(0)
+
+    return {
+        "rows": output,
+        "category_counts": [
+            {"primary_category": category, "count": count}
+            for category, count in sorted(
+                category_counts.items(), key=lambda item: (-item[1], item[0])
+            )
+        ],
+        "summary": {
+            "analysis_attempts": len(output),
+            "completed_ai_responses": completed_ai,
+            "ended_before_completed_ai": len(output) - completed_ai,
+            "order_groups": order_groups,
+            "positions": positions,
+            "trades": trades,
+            "wins": wins,
+            "losses": losses,
+            "break_even": break_even,
+            "long_trades": long_trades,
+            "short_trades": short_trades,
+            "median_ai_pipeline_seconds": _history_decimal(
+                median_ms / Decimal(1000),
+                "DECISION_VIEW_ATTEMPT_LATENCY_TOTAL_INVALID",
+            ),
+            "p90_ai_pipeline_seconds": _history_decimal(
+                p90_ms / Decimal(1000),
+                "DECISION_VIEW_ATTEMPT_LATENCY_TOTAL_INVALID",
+            ),
+            "max_ai_pipeline_seconds": _history_decimal(
+                maximum_ms / Decimal(1000),
+                "DECISION_VIEW_ATTEMPT_LATENCY_TOTAL_INVALID",
+            ),
+            "realized_pnl": _history_decimal(
+                realized_total, "DECISION_VIEW_ATTEMPT_PNL_TOTAL_INVALID"
+            ),
+            "fees": _history_decimal(fee_total, "DECISION_VIEW_ATTEMPT_FEES_TOTAL_INVALID"),
+            "context_expired": category_counts.get("CONTEXT_EXPIRED", 0),
+            "ai_proposal_invalid": category_counts.get("AI_PROPOSAL_INVALID", 0),
+            "dependency_failures": sum(
+                category_counts.get(category, 0)
+                for category in (
+                    "AI_DEPENDENCY_FAILED",
+                    "MARKET_DATA_FAILED",
+                    "MARKET_REFRESH_FAILED",
+                )
+            ),
+            "spread_skips": category_counts.get("SPREAD_SAFETY_SKIP", 0),
+            "expired_setups": category_counts.get("SETUP_EXPIRED_NO_TRADE", 0),
+        },
+    }
 
 
 def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int) -> dict[str, Any]:

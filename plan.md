@@ -192,6 +192,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-047 | complete    | [Add consolidated 100-analysis outcome history tab](https://github.com/AegisFintech/scalping-bot/issues/105)                      | AI and placed levels; lifecycle/result; exact prompt/response; campaign outcome summary                       |
 | ISSUE-048 | complete    | [Recover double-filled demo OCO groups and retry peer cancellation](https://github.com/AegisFintech/scalping-bot/issues/108)      | Durable peer-cancel retry; one outcome per position; exact conflict recovery; clear multi-fill dashboard      |
 | ISSUE-049 | complete    | [Honor AI circuit failure threshold in execution client](https://github.com/AegisFintech/scalping-bot/issues/111)                 | One transient failure rejects its cycle; configured repeated failures open the bounded cooldown               |
+| ISSUE-050 | in progress | [Archive campaign 001 and clarify the analysis rejection funnel](https://github.com/AegisFintech/scalping-bot/issues/114)         | Immutable review; one human primary category per attempt; complete Streamlit funnel                           |
+| ISSUE-051 | pending     | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -1531,6 +1533,41 @@ position is active`, exact P/L/fees, and `AUTOMATION STATUS: PAUSED`.
   both pending demo stops. The execution caller remained out of cooldown.
   Rollout evidence is reviewed in
   [PR #113](https://github.com/AegisFintech/scalping-bot/pull/113).
+
+### ISSUE-050 delivery details
+
+- Acceptance criteria: preserve a non-secret aggregate review of campaign 001;
+  derive one stable human primary category per analysis attempt without
+  rewriting the raw state or reason codes; distinguish pre-model dependency and
+  spread skips, completed-model context expiry, invalid AI proposals, placed
+  setups, expiries, and exact terminal trade outcomes; show the full funnel,
+  direction, latency, net demo P/L, and fees in Streamlit; and cover normal,
+  multi-reason, malformed, and ambiguous evidence with read-only tests.
+- Dependencies: ISSUE-041 campaign boundary, ISSUE-047 Analysis History,
+  ISSUE-049 clean completed campaign, and the immutable PostgreSQL trail.
+- Current status: audit and implementation are in progress on
+  `issue-050-campaign-review-funnel`, tracked by
+  [issue #114](https://github.com/AegisFintech/scalping-bot/issues/114). The
+  immutable review and fail-closed Streamlit funnel are implemented. All
+  required local gates passed, including 232 Node tests, 78 Python tests, all
+  3 configured integration tests, configured AppTest with the exact
+  156-attempt/100-response campaign, dependency audits, secret scan, and
+  shell/systemd checks. Review, merge, and dashboard-only rollout remain.
+
+### ISSUE-051 delivery details
+
+- Acceptance criteria: add a versioned concise multimodal prompt with exact
+  R:R and TP-transform formula checks plus stronger independent structural
+  confirmation guidance; reduce redundant compact raw tails while preserving
+  full analytics/chart provenance; narrow late broker-minute starts based on
+  measured rollover failures; preserve every deterministic gate; benchmark
+  stored payload/chart artifacts without broker submission; and deploy a new
+  immutable release as a distinct campaign at `0 / 100` only from empty,
+  reconciled broker state.
+- Dependencies: ISSUE-050 campaign review and funnel, prompt/schema 2.1,
+  completed-candle chart artifacts, and the bounded automatic campaign.
+- Current status: pending ISSUE-050 on `issue-051-campaign-002-refinement`,
+  tracked by [issue #115](https://github.com/AegisFintech/scalping-bot/issues/115).
 
 ## Acceptance criteria
 

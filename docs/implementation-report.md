@@ -1748,3 +1748,34 @@ cooldown was active.
 
 Rollout evidence is reviewed in
 [PR #113](https://github.com/AegisFintech/scalping-bot/pull/113).
+
+## Campaign 001 archive and analysis-attempt funnel
+
+[ISSUE-050](https://github.com/AegisFintech/scalping-bot/issues/114) archives
+the completed first campaign from its immutable PostgreSQL evidence. The
+campaign contained 156 scheduler attempts, of which 100 reached a durable
+completed external-AI response, 36 created broker-demo OCO groups, and 26
+became exact closed position/trade outcomes. Those trades produced 6 wins, 20
+losses, net realized P/L `-43.65`, and a separately reported fee component of
+`-7.28`. These are demo observations, not evidence of future profitability.
+
+The Analysis History tab now shows every attempt as exactly one human-readable
+primary category while retaining its raw analysis state and raw reason codes.
+It distinguishes pre-response AI or market-data dependency failures, spread
+skips, post-response candle-context expiry, market-refresh failure, invalid AI
+proposals, active or expired setups, exact wins/losses, and uncertain execution
+evidence. Direction counts and analysis-to-response latency are derived from
+the same bounded read-only query. Malformed identities, timestamps, reason
+codes, model state, lifecycle counts, money fields, or latency fail closed
+instead of being guessed or rendered.
+
+Pre-merge gates passed: Prettier, ESLint, TypeScript typecheck/build, 232 Node
+tests across 38 files, 16 schema tests, 3 migration tests, all 3 configured
+PostgreSQL/HTTP integration tests, Ruff format/lint, strict mypy over 21 source
+files, and 78 Python tests. Configured Streamlit AppTest rendered 39
+dataframes/57 metrics/15 tabs with zero exceptions and exactly reconstructed
+the 156/100/36/26 campaign funnel plus 12 LONG and 14 SHORT outcomes.
+Replay/backtest smoke tests, zero-vulnerability npm/pip audits, tracked-file
+secret scan, shell/PM2 checks, and all five offline systemd security parses
+also passed. The work was read-only with respect to PostgreSQL and cTrader;
+execution stayed paused and was not restarted.

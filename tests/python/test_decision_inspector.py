@@ -10,6 +10,7 @@ from PIL import Image
 
 from apps.dashboard.decision_inspector import (
     DecisionViewError,
+    analysis_attempt_funnel_view,
     analysis_chart_view,
     analysis_history_view,
     analytics_summary,
@@ -749,6 +750,209 @@ def history_row(**overrides: object) -> dict[str, object]:
     }
     row.update(overrides)
     return row
+
+
+def attempt_row(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "analysis_id": "11111111-1111-4111-8111-111111111111",
+        "analysis_time": "2026-08-25T04:00:00.000Z",
+        "analysis_state": "REJECTED",
+        "rejection_reasons": ["AI_ORCHESTRATOR_503"],
+        "model_request_present": False,
+        "model_completed": False,
+        "group_state": None,
+        "position_count": 0,
+        "trade_count": 0,
+        "trade_win_count": 0,
+        "trade_loss_count": 0,
+        "trade_break_even_count": 0,
+        "trade_long_count": 0,
+        "trade_short_count": 0,
+        "ai_pipeline_latency_ms": None,
+        "realized_pnl": None,
+        "fees": None,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_analysis_attempt_funnel_explains_each_attempt_once() -> None:
+    rows = [
+        attempt_row(),
+        attempt_row(
+            analysis_id="22222222-2222-4222-8222-222222222222",
+            analysis_time="2026-08-25T04:01:00.000Z",
+            rejection_reasons=["MARKET_DATA_SERVICE_503"],
+        ),
+        attempt_row(
+            analysis_id="33333333-3333-4333-8333-333333333333",
+            analysis_time="2026-08-25T04:02:00.000Z",
+            rejection_reasons=["SPREAD_POINTS_EXCEEDED"],
+        ),
+        attempt_row(
+            analysis_id="44444444-4444-4444-8444-444444444444",
+            analysis_time="2026-08-25T04:03:00.000Z",
+            rejection_reasons=[
+                "SPREAD_POINTS_EXCEEDED",
+                "DECISION_CANDLE_CONTEXT_CHANGED",
+            ],
+            model_request_present=True,
+            model_completed=True,
+            ai_pipeline_latency_ms=40_000,
+        ),
+        attempt_row(
+            analysis_id="55555555-5555-4555-8555-555555555555",
+            analysis_time="2026-08-25T04:04:00.000Z",
+            rejection_reasons=["DOWNSIDE_TARGETS_INVALID"],
+            model_request_present=True,
+            model_completed=True,
+            ai_pipeline_latency_ms=50_000,
+        ),
+        attempt_row(
+            analysis_id="66666666-6666-4666-8666-666666666666",
+            analysis_time="2026-08-25T04:05:00.000Z",
+            analysis_state="EXPIRED",
+            rejection_reasons=[],
+            model_request_present=True,
+            model_completed=True,
+            ai_pipeline_latency_ms=60_000,
+            group_state="EXPIRED",
+        ),
+        attempt_row(
+            analysis_id="77777777-7777-4777-8777-777777777777",
+            analysis_time="2026-08-25T04:06:00.000Z",
+            analysis_state="EXPIRED",
+            rejection_reasons=[],
+            model_request_present=True,
+            model_completed=True,
+            ai_pipeline_latency_ms=70_000,
+            group_state="CLOSED",
+            position_count=1,
+            trade_count=1,
+            trade_win_count=1,
+            trade_long_count=1,
+            realized_pnl="5.00",
+            fees="-0.30",
+        ),
+        attempt_row(
+            analysis_id="88888888-8888-4888-8888-888888888888",
+            analysis_time="2026-08-25T04:07:00.000Z",
+            analysis_state="EXPIRED",
+            rejection_reasons=[],
+            model_request_present=True,
+            model_completed=True,
+            ai_pipeline_latency_ms=80_000,
+            group_state="CLOSED",
+            position_count=2,
+            trade_count=2,
+            trade_loss_count=2,
+            trade_short_count=2,
+            realized_pnl="-7.00",
+            fees="-0.60",
+        ),
+    ]
+
+    view = analysis_attempt_funnel_view(rows)
+
+    assert [row["primary_category"] for row in view["rows"]] == [
+        "AI_DEPENDENCY_FAILED",
+        "MARKET_DATA_FAILED",
+        "SPREAD_SAFETY_SKIP",
+        "CONTEXT_EXPIRED",
+        "AI_PROPOSAL_INVALID",
+        "SETUP_EXPIRED_NO_TRADE",
+        "TRADE_CLOSED_WIN",
+        "TRADE_CLOSED_LOSS",
+    ]
+    assert view["rows"][3]["primary_reason"] == "DECISION_CANDLE_CONTEXT_CHANGED"
+    assert view["summary"] == {
+        "analysis_attempts": 8,
+        "completed_ai_responses": 5,
+        "ended_before_completed_ai": 3,
+        "order_groups": 3,
+        "positions": 3,
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "break_even": 0,
+        "long_trades": 1,
+        "short_trades": 2,
+        "median_ai_pipeline_seconds": "60",
+        "p90_ai_pipeline_seconds": "80",
+        "max_ai_pipeline_seconds": "80",
+        "realized_pnl": "-2",
+        "fees": "-0.9",
+        "context_expired": 1,
+        "ai_proposal_invalid": 1,
+        "dependency_failures": 2,
+        "spread_skips": 1,
+        "expired_setups": 1,
+    }
+
+
+def test_analysis_attempt_funnel_rejects_ambiguous_or_unsafe_evidence() -> None:
+    with pytest.raises(DecisionViewError, match="ANALYSIS_ID_INVALID"):
+        analysis_attempt_funnel_view([attempt_row(), attempt_row()])
+
+    unsafe_reason = attempt_row(rejection_reasons=["password=not-for-display"])
+    with pytest.raises(DecisionViewError, match="REASONS_INVALID"):
+        analysis_attempt_funnel_view([unsafe_reason])
+
+    completed_without_request = attempt_row(model_completed=True, ai_pipeline_latency_ms=50_000)
+    with pytest.raises(DecisionViewError, match="MODEL_STATE_INVALID"):
+        analysis_attempt_funnel_view([completed_without_request])
+
+    group_without_completed_model = attempt_row(group_state="ACTIVE")
+    with pytest.raises(DecisionViewError, match="LIFECYCLE_AMBIGUOUS"):
+        analysis_attempt_funnel_view([group_without_completed_model])
+
+    impossible_trade = attempt_row(
+        model_request_present=True,
+        model_completed=True,
+        ai_pipeline_latency_ms=50_000,
+        group_state="CLOSED",
+        position_count=1,
+        trade_count=1,
+        trade_win_count=1,
+        trade_long_count=1,
+    )
+    with pytest.raises(DecisionViewError, match="PNL_INVALID"):
+        analysis_attempt_funnel_view([impossible_trade])
+
+
+def test_analysis_attempt_funnel_labels_non_terminal_processing_without_guessing() -> None:
+    view = analysis_attempt_funnel_view(
+        [
+            attempt_row(
+                analysis_state="COLLECTING",
+                rejection_reasons=[],
+            ),
+            attempt_row(
+                analysis_id="22222222-2222-4222-8222-222222222222",
+                analysis_time="2026-08-25T04:01:00.000Z",
+                analysis_state="VALIDATING",
+                rejection_reasons=[],
+                model_request_present=True,
+                model_completed=True,
+                ai_pipeline_latency_ms=45_000,
+            ),
+            attempt_row(
+                analysis_id="33333333-3333-4333-8333-333333333333",
+                analysis_time="2026-08-25T04:02:00.000Z",
+                analysis_state="EXPIRED",
+                rejection_reasons=[],
+                model_request_present=True,
+                model_completed=True,
+                ai_pipeline_latency_ms=46_000,
+            ),
+        ]
+    )
+
+    assert [row["primary_category"] for row in view["rows"]] == [
+        "ANALYSIS_OR_AI_IN_PROGRESS",
+        "AI_RESPONSE_PROCESSING",
+        "ANALYSIS_EXPIRED_NO_SETUP",
+    ]
 
 
 def test_analysis_history_distinguishes_non_trades_and_terminal_results() -> None:
