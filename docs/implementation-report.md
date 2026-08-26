@@ -1925,3 +1925,21 @@ parses at 2.8 (`OK`).
 Implementation and rollout are tracked by
 [issue #124](https://github.com/AegisFintech/scalping-bot/issues/124) and
 [PR #125](https://github.com/AegisFintech/scalping-bot/pull/125).
+
+PR #125 merged as `e9f70fd`. Deployment first set the audited database analysis
+pause, built merged `main`, and restarted only execution and dashboard. The
+selected execution process proved `.28`, campaign baseline `2`, five-second
+start window, and 30/18/12 tails. Status then showed baseline `2`, release
+count `0`, total `2 / 100`, the original `OPEN` BUY, and its
+`RECONCILIATION_REQUIRED` group. The read-only endpoint returned `AVAILABLE`
+with the new reconciliation state plus exact cTrader mark price, gross/net P/L,
+and durable recorded commission. Deployed AppTest explicitly found the warning
+and completed with zero exceptions, 42 dataframes, and 60 metrics.
+
+The release did not clear or reinterpret execution evidence. Readiness remained
+HTTP 503 with `DATABASE_RECONCILIATION_PENDING`,
+`DEMO_CLOSING_ORDER_AWAITING_DEAL`, `OPERATIONAL_RISK_LOCKOUT`,
+`RECONCILIATION_UNCERTAIN`, and `RELEVANT_POSITION_EXISTS`. After verification,
+the temporary deployment pause was audited and cleared. Automatic analysis is
+enabled but remains blocked by that open lifecycle until exact terminal
+reconciliation. All five PM2 services are online. ISSUE-052 is complete.

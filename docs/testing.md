@@ -131,6 +131,17 @@ and all five offline systemd security parses at 2.8 (`OK`) passed. Source-tree
 `systemd-analyze verify` reported only the expected absent future
 `/opt/ctrader-ai-scalper/current` Python executables.
 
+After PR #125 merged, `.28` deployed under the durable analysis pause. The
+selected execution process showed exact release `.28`, campaign baseline `2`,
+five-second start window, and 30/18/12 tails. Against the retained real demo
+BUY, `/v1/open-position-monitor` returned `AVAILABLE`,
+`executionState=RECONCILIATION_REQUIRED`, exact broker P/L, mark price, and
+recorded commission. Deployed AppTest rendered 42 dataframes and 60 metrics,
+found the reconciliation warning, and had zero exceptions. Execution readiness
+remained HTTP 503 with the retained reconciliation/position blockers. The
+temporary pause was then cleared; automation remained enabled and correctly
+blocked from a new cycle by the existing position.
+
 On 2026-08-26, ISSUE-051 passed Prettier, ESLint, TypeScript typecheck/build,
 232 Node tests across 38 files, 16 JSON Schema tests, 3 migration tests, and all
 3 configured isolated-PostgreSQL/HTTP integration tests. Ruff format/lint,
