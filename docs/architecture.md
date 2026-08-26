@@ -303,6 +303,14 @@ analysis/placement eligible; an ambiguous position, an uncertain position
 state, an unsupported group state, or a missing/ambiguous broker lookup still
 returns no value.
 
+Streamlit treats transport-level execution-status loss separately from an
+invalid durable state. A bounded two-second fragment probes the loopback status
+contract only after the initial full-page request fails and triggers a full app
+rerun after a complete response. It never supplies placeholder campaign or
+broker values. Terminal managed-setup projection selects the internal position
+identity needed to prove a one-to-one match with each durable trade; missing,
+duplicate, or mismatched identities remain unavailable.
+
 ## Dependency rationale
 
 - TypeScript: type-safe external orchestration and protocol handling.

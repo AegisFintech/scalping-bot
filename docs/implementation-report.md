@@ -1945,3 +1945,34 @@ enabled but remains blocked by that open lifecycle until exact terminal
 reconciliation. All five PM2 services are online. ISSUE-052 is complete.
 Rollout evidence is tracked by
 [PR #126](https://github.com/AegisFintech/scalping-bot/pull/126).
+
+## Automatic dashboard recovery and terminal projection
+
+ISSUE-053 addresses the two distinct causes behind the unusable status screen
+observed after the `.28` restart. A transient execution API failure had left
+the full Streamlit run on fallback data while only the two-second live-trade
+fragment recovered. The dashboard now labels this as reconnecting, states that
+durable history is retained, probes every two seconds, and reruns the complete
+app after the bounded status shape returns. Analysis History no longer reports
+a campaign-integrity error for a known transport outage; its original strict
+carry-forward count validation is factored into a tested helper and still
+rejects mismatches.
+
+Separately, the real demo BUY closed at 26 Aug 2026, 10:43:06 GMT+8. PostgreSQL
+contained a `CLOSED` group, one closed BUY position, one matching LONG trade,
+realized demo P/L `10.06`, fees `-0.28`, and resolved closing-order evidence.
+The managed setup nevertheless returned unavailable because its position query
+did not select the internal position ID later required for the exact trade
+match. The query now selects that ID; ambiguity and mismatch checks are
+unchanged. The execution fix advances the immutable identity to `.29` with the
+audited three completed campaign responses carried forward.
+
+Implementation is tracked by
+[issue #127](https://github.com/AegisFintech/scalping-bot/issues/127) and
+[PR #128](https://github.com/AegisFintech/scalping-bot/pull/128).
+
+The pre-deployment gate passed 233 Node tests, 16 schema tests, 3 migration
+tests, all 3 configured integration tests, strict TypeScript/Python checks, 81
+Python tests, configured AppTest at 3/100 with zero exceptions, replay/backtest,
+dependency audits, secret scan, shell/PM2 checks, and five systemd security
+parses at 2.8 (`OK`).

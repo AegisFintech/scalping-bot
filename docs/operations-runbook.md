@@ -208,6 +208,14 @@ estimated display value. Inspect Orders & Positions, execution logs, and the
 broker before intervening. This monitor is telemetry only; its polling cannot
 start, stop, resize, place, cancel, or close a trade.
 
+If the execution API briefly restarts while Streamlit is rendering, the page
+shows `Execution service is reconnecting` and explicitly says PostgreSQL
+history is retained. The dashboard probes every two seconds and reruns the
+whole app after a complete status response; no manual browser refresh should be
+needed. If `Managed setup status is unavailable` remains after recovery, that
+is a durable projection failure rather than a transport outage and must be
+investigated.
+
 The generic `RECONCILIATION_UNCERTAIN` gate remains visible together with any
 bounded source reason reported by the account, gateway, terminal recovery,
 event recorder, database group, or audit persistence. For example,
