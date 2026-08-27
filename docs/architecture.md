@@ -118,7 +118,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   M1 interval. A PostgreSQL claim keyed by account, symbol, and broker minute is
   committed before the cycle, so restarts cannot issue a second model request
   for that interval. Provider failure retries on the next fresh interval; the
-  post-model completed-candle identity check remains unchanged.
+  post-model completed-candle identity check remains unchanged. The existing
+  scheduler frequency is phase-aligned to wall-clock boundaries with a bounded
+  lead so reconciliation can finish near the broker minute open; broker time,
+  not host time, remains authoritative for admission.
 - Separately bounds automatic operation by distinct durable completed model
   responses and by durable closed demo trades for the exact account, symbol,
   and immutable strategy release. The response boundary is an inference-cost

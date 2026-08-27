@@ -143,7 +143,12 @@ The analytics image is bounded to 1 MiB and validated as a 1600x1200 PNG at the
 analytics client, AI client, persistence boundary, and dashboard display. Its
 SHA-256 and provenance are included in the numeric message. The base64 bytes
 travel in the typed loopback AI call and provider multimodal content, while
-PostgreSQL stores one durable bytea artifact per analysis.
+PostgreSQL stores one durable bytea artifact per analysis. The provider request
+may set the separately validated `AI_REASONING_EFFORT=low|medium|high`;
+unsupported values reject at startup. Reasoning effort does not alter the JSON
+schema or grant execution authority. Provider aborts and connection failures
+are normalized to finite reason codes; free-form upstream errors do not cross
+into execution status or logs.
 legacy requests retain their recorded prompt version and use an explicitly
 labelled tracked-artifact fallback in Streamlit. Full redacted user JSON and
 the parsed response are restricted to the authenticated dashboard/database

@@ -10,6 +10,7 @@ import { ModelResponseValidator } from "../../risk-engine/src/model-validator.js
 import { record, recordsField } from "../../ctrader-client/src/protocol.js";
 
 export type AiApiStyle = "responses" | "chat_completions";
+export type AiReasoningEffort = "low" | "medium" | "high";
 
 export interface AiClientOptions {
   readonly baseUrl: string;
@@ -23,6 +24,7 @@ export interface AiClientOptions {
   readonly maxRetries?: number;
   readonly maxOutputTokens?: number;
   readonly temperature?: number;
+  readonly reasoningEffort?: AiReasoningEffort;
   readonly circuitBreakerFailures?: number;
   readonly circuitBreakerResetMs?: number;
   readonly maxRequestBytes?: number;
@@ -247,6 +249,9 @@ export class OpenAiCompatibleClient {
     if (this.#options.apiStyle === "responses") {
       return {
         model: this.#options.model,
+        ...(this.#options.reasoningEffort === undefined
+          ? {}
+          : { reasoning: { effort: this.#options.reasoningEffort } }),
         input: [
           {
             role: "system",
@@ -274,6 +279,9 @@ export class OpenAiCompatibleClient {
     }
     return {
       model: this.#options.model,
+      ...(this.#options.reasoningEffort === undefined
+        ? {}
+        : { reasoning_effort: this.#options.reasoningEffort }),
       messages: [
         { role: "system", content: this.#systemPrompt },
         {

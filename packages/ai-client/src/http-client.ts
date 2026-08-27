@@ -23,6 +23,16 @@ export interface AiOrchestratorHttpClientOptions {
 
 const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
+function orchestratorFailureReason(value: unknown): string | null {
+  if (typeof value !== "object" || value === null) return null;
+  const reason = (value as { readonly reason?: unknown }).reason;
+  return typeof reason === "string" &&
+    reason.length <= 128 &&
+    /^AI_[A-Z0-9_]+(?::[A-Z0-9_.-]+)?$/.test(reason)
+    ? reason
+    : null;
+}
+
 export function aiOrchestratorRequestTimeoutMs(input: {
   readonly providerTimeoutMs: number;
   readonly maxRetries: number;
@@ -170,7 +180,15 @@ export class AiOrchestratorHttpClient {
     }
     if (!response.ok) {
       if (response.status === 503) this.#recordTransientFailure();
-      throw new Error(`AI_ORCHESTRATOR_HTTP_ERROR:${response.status}`);
+      let reason: string | null = null;
+      try {
+        reason = orchestratorFailureReason(await response.json());
+      } catch {
+        // Non-JSON and malformed upstream failures retain the bounded HTTP code.
+      }
+      throw new Error(
+        reason ?? `AI_ORCHESTRATOR_HTTP_ERROR:${response.status}`,
+      );
     }
     const envelope = record(
       await response.json(),

@@ -4,6 +4,11 @@ import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  aiReasoningEffort,
+  createAiServer,
+  normalizeAiAnalysisError,
+} from "../../apps/ai-orchestrator/src/index.js";
 import { OpenAiCompatibleClient } from "../../packages/ai-client/src/client.js";
 import {
   AiOrchestratorHttpClient,
@@ -98,6 +103,7 @@ describe("OpenAI-compatible client", () => {
         if (typeof init?.body !== "string")
           throw new Error("expected JSON body");
         const body = JSON.parse(init.body) as Record<string, unknown>;
+        expect(body.reasoning).toEqual({ effort: "low" });
         const text = body.text as { format: { strict: boolean } };
         expect(text.format.strict).toBe(true);
         const input = body.input as Array<{
@@ -140,6 +146,7 @@ describe("OpenAI-compatible client", () => {
       schemaPath: path.resolve("schemas/model-response-2.0.json"),
       systemPromptPath: path.resolve("prompts/system-v2.md"),
       promptVersion: "system-v2",
+      reasoningEffort: "low",
       fetchImpl: fetchMock,
     });
     const result = await client.analyze({
@@ -266,6 +273,55 @@ describe("OpenAI-compatible client", () => {
   });
 });
 
+describe("AI orchestrator failure normalization", () => {
+  it("keeps only finite operator-safe reason codes", () => {
+    const timeout = new Error("The operation was aborted due to timeout");
+    timeout.name = "TimeoutError";
+    expect(normalizeAiAnalysisError(timeout)).toBe("AI_PROVIDER_TIMEOUT");
+    expect(normalizeAiAnalysisError(new TypeError("private host failed"))).toBe(
+      "AI_PROVIDER_UNAVAILABLE",
+    );
+    expect(normalizeAiAnalysisError(new Error("AI_RESPONSE_INCOMPLETE"))).toBe(
+      "AI_RESPONSE_INCOMPLETE",
+    );
+    expect(normalizeAiAnalysisError(new Error("private upstream detail"))).toBe(
+      "AI_ANALYSIS_FAILED",
+    );
+  });
+
+  it("rejects unsupported reasoning effort before startup", () => {
+    expect(aiReasoningEffort("low")).toBe("low");
+    expect(aiReasoningEffort(undefined)).toBeUndefined();
+    expect(() => aiReasoningEffort("minimal")).toThrow(
+      "AI_REASONING_EFFORT_INVALID",
+    );
+  });
+
+  it("returns only the normalized failure reason over the local HTTP boundary", async () => {
+    const timeout = new Error("private provider timeout detail");
+    timeout.name = "TimeoutError";
+    const app = createAiServer({
+      client: {
+        circuitOpen: false,
+        analyze: vi.fn(() => Promise.reject(timeout)),
+      } as unknown as OpenAiCompatibleClient,
+    });
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/analyze",
+      payload: analysisRequest,
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({
+      error: "AI_ANALYSIS_UNAVAILABLE",
+      reason: "AI_PROVIDER_TIMEOUT",
+    });
+    expect(response.body).not.toContain("private provider timeout detail");
+    await app.close();
+  });
+});
+
 describe("AI orchestrator HTTP client", () => {
   it("passes a bounded provider deadline inside the broker-M1 budget", async () => {
     const rawResponse = JSON.stringify(validResponse());
@@ -368,6 +424,26 @@ describe("AI orchestrator HTTP client", () => {
       "AI_ORCHESTRATOR_TIMEOUT",
     );
     expect(client.circuitOpen).toBe(true);
+  });
+
+  it("propagates a finite provider timeout reason from the local boundary", async () => {
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      fetchImpl: vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ reason: "AI_PROVIDER_TIMEOUT" }), {
+            status: 503,
+          }),
+        ),
+      ),
+    });
+
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_PROVIDER_TIMEOUT",
+    );
   });
 
   it("opens only after the configured transient failure threshold", async () => {

@@ -117,6 +117,19 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
+On 2026-08-27, ISSUE-055 passed Prettier, ESLint, TypeScript typecheck/build,
+250 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
+configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
+mypy over 17 source files, and 82 Python tests. Configured Streamlit AppTest
+rendered 35 dataframes, 47 metrics, and 15 tabs with zero exceptions. A
+read-only stored-artifact low-reasoning probe passed schema 2.1, proposal
+semantics, TP transform, and effective semantics in 51.152 seconds. Tests cover
+wall alignment, invalid cadence/lead configuration, safe provider error
+normalization, loopback propagation, reasoning request shape, and readable
+dashboard guidance. Replay/backtest, zero-vulnerability dependency audits,
+tracked-file secret scan, shell/PM2 syntax, and five offline systemd security
+parses at 2.8 (`OK`) passed.
+
 On 2026-08-27, ISSUE-054 passed Prettier, ESLint, TypeScript typecheck/build,
 244 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
 configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
@@ -684,6 +697,14 @@ the deadline reaches the provider client. Schema/semantic tests reject BUY and
 SELL confirmations beyond the configured M1-ATR cap. Deployment tests pin the
 new immutable release, separate inference/trade limits, entry reachability, and
 bounded expiry values without embedding trading authority or credentials.
+
+ISSUE-055 tests wall-aligned scheduler phase and invalid alignment inputs,
+provider timeout/unavailability normalization, rejection of free-form upstream
+errors, exact finite-reason propagation across the loopback AI boundary, and
+strict reasoning-effort configuration. A read-only stored-artifact `low`-effort
+probe reached the external endpoint in 51.152 seconds and passed schema 2.1,
+proposal semantics, TP transform, and effective-proposal semantics without a
+database write or broker call.
 
 ISSUE-031 adds order-type/closing-flag normalization, non-deal contextual
 position handling, exact broker-ID entry recovery, and reconstruction of a

@@ -40,6 +40,7 @@ import {
 } from "./safety-gates.js";
 import { AnalysisCoordinator, type CycleResult } from "./coordinator.js";
 import {
+  alignedSchedulerDelayMs,
   evaluateAutomaticAnalysisWindow,
   PostgresAutomaticAnalysisSchedule,
 } from "./automatic-analysis-schedule.js";
@@ -1441,10 +1442,23 @@ async function main(): Promise<void> {
     }
   };
   const intervalSeconds = integer(environment, "ANALYSIS_INTERVAL_SECONDS", 5);
-  if (intervalSeconds < 1)
-    throw new Error("CONFIG_INTEGER_TOO_SMALL:ANALYSIS_INTERVAL_SECONDS");
-  const timer = setInterval(() => void tick(), intervalSeconds * 1_000);
-  timer.unref();
+  const schedulerLeadMs = integer(
+    environment,
+    "ANALYSIS_SCHEDULER_LEAD_MS",
+    1_000,
+  );
+  const alignedDelayMs = alignedSchedulerDelayMs(
+    Date.now(),
+    intervalSeconds,
+    schedulerLeadMs,
+  );
+  let timer: ReturnType<typeof setInterval> | null = null;
+  const alignmentTimer = setTimeout(() => {
+    void tick();
+    timer = setInterval(() => void tick(), intervalSeconds * 1_000);
+    timer.unref();
+  }, alignedDelayMs);
+  alignmentTimer.unref();
   const spreadSampler = new SpreadObservationSampler({
     symbol: config.symbol,
     providerSymbolId: executionSymbolId,
@@ -1518,7 +1532,8 @@ async function main(): Promise<void> {
   observabilityTimer.unref();
   scheduleObservabilityFlush();
   const shutdown = async (): Promise<void> => {
-    clearInterval(timer);
+    clearTimeout(alignmentTimer);
+    if (timer !== null) clearInterval(timer);
     clearInterval(spreadTimer);
     clearInterval(observabilityTimer);
     await observabilityTail;

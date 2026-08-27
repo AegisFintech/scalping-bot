@@ -142,6 +142,11 @@ interval. Keep that window between 1 and 30 seconds and use
 broker minute rather than against an expiring candle context.
 The current default is 5 seconds; campaign 001 showed that later starts were
 disproportionately likely to cross the completed M1 boundary before response.
+The scheduler phase is aligned to the wall clock with
+`ANALYSIS_SCHEDULER_LEAD_MS=1000`: maintenance begins one second before each
+five-second boundary so the tick nearest an M1 close can finish reconciliation
+as the new broker minute opens. This changes phase, not frequency, and the
+broker timestamp plus durable minute claim remain authoritative.
 
 Migration `0010` must exist before this scheduler is deployed. Each
 account/symbol/minute claim is durable and unique; an incomplete claim after a
@@ -331,7 +336,10 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
 - **cTrader disconnect:** stop scheduling; retain/mark stale data; reconnect with bounded jitter; refresh token if appropriate; reconcile before ready.
 - **stale market/depth:** reject cycle; cancel context-dependent strategy pending orders if policy permits; verify subscription, clock, and reconnect flags.
 - **invalid AI burst:** open circuit breaker; preserve redacted samples/hashes; verify model/prompt/schema/provider; do not loosen validation.
-- **AI orchestrator timeout:** treat `AI_ORCHESTRATOR_TIMEOUT` as a hard stop.
+- **AI provider timeout:** `AI_PROVIDER_TIMEOUT` means the external endpoint was
+  reached but did not return a locally validated answer before that candle's
+  provider deadline. `AI_ORCHESTRATOR_TIMEOUT` means the loopback AI service
+  itself did not answer. Both reject only their current cycle and send no order.
   Verify provider latency and configured `AI_TIMEOUT_MS`/`AI_MAX_RETRIES`; the
   automatic demo loop requires zero same-interval retries. The local caller
   must budget the single attempt and must not be shortened below the derived

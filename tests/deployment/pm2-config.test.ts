@@ -53,12 +53,12 @@ describe("PM2 deployment configuration", () => {
     expect(
       config.apps.every(
         (app) =>
-          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.30",
+          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.31",
       ),
     ).toBe(true);
     expect(
       config.apps.every(
-        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.30",
+        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.31",
       ),
     ).toBe(true);
     expect(
@@ -69,6 +69,7 @@ describe("PM2 deployment configuration", () => {
           app.env.AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT === "100" &&
           app.env.AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE === "0" &&
           app.env.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS === "5" &&
+          app.env.ANALYSIS_SCHEDULER_LEAD_MS === "1000" &&
           app.env.MODEL_MINIMUM_CALL_BUDGET_SECONDS === "40" &&
           app.env.MODEL_POST_RESPONSE_RESERVE_SECONDS === "5" &&
           app.env.MODEL_COMPACT_RAW_TAIL_1M === "30" &&
@@ -77,7 +78,8 @@ describe("PM2 deployment configuration", () => {
           app.env.MAX_ENTRY_DISTANCE_ATR === "2.5" &&
           app.env.ORDER_EXPIRY_MIN_SECONDS === "900" &&
           app.env.ORDER_EXPIRY_MAX_SECONDS === "1800" &&
-          app.env.PREFERRED_ORDER_EXPIRY_SECONDS === "1500",
+          app.env.PREFERRED_ORDER_EXPIRY_SECONDS === "1500" &&
+          app.env.AI_REASONING_EFFORT === "low",
       ),
     ).toBe(true);
   });
