@@ -2178,3 +2178,24 @@ Streamlit AppTest during the intentional execution-service maintenance stop had
 zero exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
 vulnerabilities, the tracked-file secret scan, shell/PM2 syntax, and all five
 offline systemd security parses at 2.8 (`OK`) passed.
+
+PR #136 merged as `d1bcae6`. Release `.32` was built from that merged commit
+and all five PM2 services returned online/healthy after one expected execution
+restart while market data was still synchronizing. Startup atomically rejected
+and audited the abandoned `.31` `PENDING` row. Status then showed automatic
+demo analysis enabled, unpaused, a fresh 0/500 AI-response ceiling, a fresh
+0/100 closed-trade target, a terminal prior setup, and no static blocker.
+
+The new scheduler immediately resumed fresh broker-minute attempts. The first
+met the transient market-data restart; the next two finished in about six
+seconds each before inference because the broker spread was 12 points against
+the unchanged 10-point absolute limit and also exceeded the ATR/history gates.
+This is a real automatic retry, not a manual cycle. Both complete market trails
+stored exactly 30 M1, 18 M5, and 12 M15 candles plus one approximately 3 KB
+indicator summary. Across the first three `.32` attempts PostgreSQL held only
+120 new candle rows and two indicator rows, and database size remained about
+71.3 MB. No analysis remained active or stuck; the scheduler was free to retry
+the next broker minute. Deployed AppTest rendered 37 dataframes, 51 metrics,
+and 15 tabs with zero exceptions. No order was forced through the configured
+spread gates. ISSUE-056 is complete; rollout evidence is tracked in the same
+issue and its follow-up evidence pull request.

@@ -198,7 +198,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
 | ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
 | ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
-| ISSUE-056 | in progress | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
+| ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -302,7 +302,19 @@ never justify empty, noisy, unsafe, or misleading commits.
   checks, and 82 Python tests. A configured maintenance-state Streamlit AppTest
   rendered with zero exceptions. Replay/backtest, dependency audits, tracked-
   file secret scanning, shell/PM2 syntax, and all five offline systemd security
-  parses at 2.8 (`OK`) also passed.
+  parses at 2.8 (`OK`) also passed. Implementation merged through
+  [PR #136](https://github.com/AegisFintech/scalping-bot/pull/136) as
+  `d1bcae6`. Release `.32` is deployed with all five PM2 services online and
+  automatic demo analysis enabled/unpaused at 0/100 closed trades. Startup
+  recovered the one abandoned `.31` row; the new release immediately resumed
+  broker-minute cycles. Its first attempt met a transient market-data restart,
+  and the next two completed in about six seconds each before inference on an
+  observed 12-point spread versus the unchanged 10-point limit. Both persisted
+  exactly 30/18/12 candles and one roughly 3 KB indicator summary. Database
+  size remained about 68 MB, no analysis is stuck, and deployed AppTest
+  rendered 37 dataframes, 51 metrics, and 15 tabs with zero exceptions.
+  ISSUE-056 is complete; the scheduler continues retrying each free broker
+  minute and no order was forced through an unsafe spread.
 
 ### ISSUE-001 delivery details
 
