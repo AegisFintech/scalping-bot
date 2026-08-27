@@ -64,8 +64,42 @@ describe("execution safety gates", () => {
       automaticAnalysisEnabled: false,
       automaticAnalysisCompletedLimit: 0,
       automaticAnalysisCompletedBaseline: 0,
+      automaticDemoClosedTradeLimit: 0,
+      automaticDemoClosedTradeBaseline: 0,
       automaticAnalysisStartWindowSeconds: 5,
+      maxEntryDistanceAtr: "2.5",
     });
+  });
+
+  it("bounds closed-demo-trade targets and reachable entry distance", () => {
+    const configured = loadExecutionConfig({
+      TRADING_MODE: "demo",
+      AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT: "100",
+      AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE: "4",
+      MAX_ENTRY_DISTANCE_ATR: "2.25",
+    });
+    expect(configured.automaticDemoClosedTradeLimit).toBe(100);
+    expect(configured.automaticDemoClosedTradeBaseline).toBe(4);
+    expect(configured.maxEntryDistanceAtr).toBe("2.25");
+    expect(() =>
+      loadExecutionConfig({
+        TRADING_MODE: "demo",
+        AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT: "100",
+        AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE: "101",
+      }),
+    ).toThrow(
+      "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE",
+    );
+    expect(() =>
+      loadExecutionConfig({ AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT: "100" }),
+    ).toThrow("CONFIG_DEMO_TRADE_CAMPAIGN_REQUIRES_DEMO_MODE");
+    for (const value of ["0", "20.1", "not-a-decimal"]) {
+      expect(() =>
+        loadExecutionConfig({ MAX_ENTRY_DISTANCE_ATR: value }),
+      ).toThrow(
+        /CONFIG_DECIMAL_(?:INVALID|OUT_OF_RANGE):MAX_ENTRY_DISTANCE_ATR/,
+      );
+    }
   });
 
   it("bounds the durable completed-analysis campaign limit", () => {

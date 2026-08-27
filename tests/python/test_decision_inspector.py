@@ -195,6 +195,32 @@ def test_automation_status_prioritizes_completed_campaign_review_over_pause() ->
     }
 
 
+def test_automation_status_prioritizes_closed_trade_target_over_inference_limit() -> None:
+    view = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "pauseNewAnalyses": True,
+            "emergencyStopped": False,
+            "reasonCodes": ["ANALYSES_PAUSED"],
+            "automaticAnalysisCampaign": {
+                "complete": False,
+                "reasonCodes": [],
+            },
+            "automaticDemoTradeCampaign": {
+                "complete": True,
+                "reasonCodes": ["AUTOMATIC_TRADE_CAMPAIGN_COMPLETE"],
+            },
+        }
+    )
+
+    assert view["state"] == "TRADE_CAMPAIGN_COMPLETE"
+    assert view["severity"] == "success"
+    assert {reason["code"] for reason in view["reasons"]} == {
+        "ANALYSES_PAUSED",
+        "AUTOMATIC_TRADE_CAMPAIGN_COMPLETE",
+    }
+
+
 def test_automation_status_fails_closed_when_campaign_progress_is_unavailable() -> None:
     view = automation_status_view(
         {
@@ -354,6 +380,12 @@ def test_campaign_history_counts_accepts_carry_forward_and_rejects_mismatch() ->
         "baseline": 3,
         "releaseCompleted": 0,
     }
+    assert (
+        campaign_history_counts({"completed": 500, "baseline": 0, "releaseCompleted": 500})[
+            "completed"
+        ]
+        == 500
+    )
 
     with pytest.raises(DecisionViewError, match="CAMPAIGN_COUNT_INVALID"):
         campaign_history_counts({"completed": 3, "baseline": 2, "releaseCompleted": 0})
@@ -629,8 +661,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v6", content, digest)
-    assert current["version"] == "system-v6"
+    current = prompt_artifact_view("system-v7", content, digest)
+    assert current["version"] == "system-v7"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

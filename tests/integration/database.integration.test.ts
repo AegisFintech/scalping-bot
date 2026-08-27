@@ -14,6 +14,7 @@ import {
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { PostgresAutomaticAnalysisCampaign } from "../../apps/execution-service/src/automatic-analysis-campaign.js";
+import { PostgresAutomaticTradeCampaign } from "../../apps/execution-service/src/automatic-trade-campaign.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
 import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
@@ -1163,6 +1164,21 @@ describe("PostgreSQL migrations integration", () => {
         prompt_version: "system-v2",
         schema_version: "2.1",
         strategy_version: `integration-${strategyVersionId}`,
+      });
+      await expect(
+        new PostgresAutomaticTradeCampaign({
+          pool: isolated,
+          accountId: demoAccountId,
+          symbolId,
+          strategyVersionId,
+          configuredLimit: 100,
+        }).progress(),
+      ).resolves.toMatchObject({
+        releaseClosedTrades: 1,
+        closedTrades: 1,
+        remaining: 99,
+        complete: false,
+        allowed: true,
       });
       const closingEvidence = await isolated.query<{
         broker_order_type: number;

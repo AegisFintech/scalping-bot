@@ -226,7 +226,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
   async decisionMarket(
     analysisId: string,
     snapshot: MarketSnapshot,
-    refreshPhase: "POST_MODEL" | "PRE_PLACEMENT" = "POST_MODEL",
+    refreshPhase: "PRE_MODEL" | "POST_MODEL" | "PRE_PLACEMENT" = "POST_MODEL",
   ): Promise<void> {
     const client = await this.#options.pool.connect();
     try {

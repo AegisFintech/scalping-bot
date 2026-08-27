@@ -180,12 +180,53 @@ describe("model response schema", () => {
       minExpirySeconds: 15,
       maxExpirySeconds: 1800,
       maxStopDistanceAtr: "3",
+      maxEntryDistanceAtr: "2.5",
       maxQuoteAgeMs: 3000,
     });
     expect(result).toEqual({
       accepted: true,
       reasonCodes: [],
     });
+  });
+
+  it("rejects confirmations beyond the configured ATR reachability cap", () => {
+    const result = validateSemantics(response(), {
+      analysisId,
+      symbol: "XAUUSD",
+      now: new Date("2026-01-01T00:00:00.000Z"),
+      quote: {
+        bid: "1999.90",
+        ask: "2000.10",
+        sourceTime: "2026-01-01T00:00:00.000Z",
+        receivedAt: "2026-01-01T00:00:00.000Z",
+      },
+      metadata: {
+        symbolId: "1",
+        symbolName: "XAUUSD",
+        digits: 2,
+        tickSize: "0.01",
+        tickValue: "0.01",
+        contractSize: "100",
+        volumeScale: "0.01",
+        minVolume: "1",
+        maxVolume: "100000",
+        volumeStep: "1",
+        minStopDistance: "0.10",
+        metadataTime: "2026-01-01T00:00:00.000Z",
+      },
+      atr: "0.25",
+      minRiskRewardRatio: "2",
+      minExpirySeconds: 15,
+      maxExpirySeconds: 1800,
+      maxStopDistanceAtr: "10",
+      maxEntryDistanceAtr: "2.5",
+      maxQuoteAgeMs: 3000,
+    });
+    expect(result.accepted).toBe(false);
+    expect(result.reasonCodes).toEqual([
+      "BUY_ENTRY_DISTANCE_ATR_EXCEEDED",
+      "SELL_ENTRY_DISTANCE_ATR_EXCEEDED",
+    ]);
   });
 
   it("rejects technical levels that do not own executable entries and targets", () => {

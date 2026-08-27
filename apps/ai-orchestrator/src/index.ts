@@ -28,6 +28,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
       symbol: string;
       payload: Record<string, unknown>;
       chart: AnalysisChartArtifact;
+      timeoutMs?: number;
     };
   }>("/v1/analyze", async (request, reply) => {
     try {
@@ -53,8 +54,8 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v6.md"),
-    promptVersion: "system-v6",
+    systemPromptPath: path.resolve("prompts/system-v7.md"),
+    promptVersion: "system-v7",
     timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
     maxRetries: Number(process.env.AI_MAX_RETRIES ?? 0),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),

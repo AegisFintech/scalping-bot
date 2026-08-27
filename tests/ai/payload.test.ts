@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v6",
+  promptVersion: "system-v7",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -50,8 +50,10 @@ const common = {
     takeProfitDistanceDivisor: "2" as const,
     maxAffordableStopDistance: "0.5",
     maxStopDistanceAtr: "3",
+    maxEntryDistanceAtr: "2.5",
     orderExpiryMinSeconds: 15,
     orderExpiryMaxSeconds: 1800,
+    preferredOrderExpirySeconds: 1500,
   },
 };
 
@@ -87,8 +89,10 @@ describe("model payload builder", () => {
       take_profit_distance_divisor: "2",
       max_affordable_stop_distance: "0.5",
       max_stop_distance_atr: "3",
+      max_entry_distance_atr: "2.5",
       order_expiry_min_seconds: 15,
       order_expiry_max_seconds: 1800,
+      preferred_order_expiry_seconds: 1500,
     });
   });
 
@@ -108,16 +112,16 @@ describe("model payload builder", () => {
   });
 
   it("versions the TP transform instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v6.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v5.md", "utf8");
+    const prompt = readFileSync("prompts/system-v7.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v6.md", "utf8");
     expect(prompt).toContain("take_profit_distance_divisor");
     expect(prompt).toContain("effective_min_risk_reward_ratio");
     expect(prompt).toContain("midpoint must be");
     expect(prompt).toContain("max_affordable_stop_distance");
+    expect(prompt).toContain("max_entry_distance_atr");
+    expect(prompt).toContain("preferred_order_expiry_seconds");
     expect(prompt).toContain("technical_map.bullish_confirmation.price");
-    expect(prompt).toContain(
-      "For every zone require lower<upper (never equal)",
-    );
+    expect(prompt).toContain("For every zone require lower<upper");
     expect(prompt).toContain("min_risk_reward_ratio+0.2");
     expect(prompt).toContain("risk_reward_ratio=reward/risk");
     expect(prompt).toContain(
@@ -127,8 +131,6 @@ describe("model payload builder", () => {
     expect(prompt).toContain(
       "Read the attached deterministic 1600x1200 PNG first",
     );
-    expect(Buffer.byteLength(prompt)).toBeLessThan(
-      Buffer.byteLength(previousPrompt),
-    );
+    expect(prompt).not.toEqual(previousPrompt);
   });
 });

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AnalysisCoordinator,
   InMemoryDecisionTrail,
+  modelCallBudgetMs,
   type CoordinatorOptions,
 } from "../../apps/execution-service/src/coordinator.js";
 import type { SafetyGateInput } from "../../apps/execution-service/src/safety-gates.js";
@@ -59,7 +60,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v6",
+    version: "system-v7",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -274,13 +275,15 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v6",
+    promptVersion: "system-v7",
     schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
     minExpirySeconds: 15,
     maxExpirySeconds: 1800,
+    preferredExpirySeconds: 1500,
     maxStopDistanceAtr: "3",
+    maxEntryDistanceAtr: "2.5",
     minStopDistancePoints: null,
     maxQuoteAgeMs: 3000,
     maxMetadataAgeMs: 86400000,
@@ -288,6 +291,8 @@ function options(
     maxSpreadPoints: "50",
     maxSpreadAtrRatio: "0.1",
     maxSpreadPercentile: null,
+    minimumModelBudgetMs: 1_000,
+    postModelReserveMs: 1_000,
     spreadContext: () =>
       Promise.resolve({ observedPercentile: null, sessionAbnormal: false }),
     market: { snapshot: vi.fn(() => Promise.resolve(marketSnapshot)) },
@@ -373,6 +378,46 @@ function options(
 }
 
 describe("analysis coordinator", () => {
+  it("reserves post-model time inside the current broker M1 candle", () => {
+    expect(
+      modelCallBudgetMs({
+        brokerServerTime: "2026-08-27T00:00:05.000Z",
+        postModelReserveMs: 5_000,
+        minimumModelBudgetMs: 40_000,
+      }),
+    ).toBe(50_000);
+    expect(() =>
+      modelCallBudgetMs({
+        brokerServerTime: "2026-08-27T00:00:20.000Z",
+        postModelReserveMs: 5_000,
+        minimumModelBudgetMs: 40_000,
+      }),
+    ).toThrow("MODEL_DEADLINE_INSUFFICIENT");
+  });
+
+  it("stops before paid inference when the second pre-model snapshot is unsafe", async () => {
+    const stable = snapshot();
+    const widened: MarketSnapshot = {
+      ...stable,
+      quote: { ...stable.quote, ask: "2000.9" },
+    };
+    const analyze = vi.fn(() => Promise.reject(new Error("must not call AI")));
+    const configured = options({
+      preModelStabilityCheck: true,
+      market: {
+        snapshot: vi
+          .fn()
+          .mockResolvedValueOnce(stable)
+          .mockResolvedValueOnce(widened),
+      },
+      model: { circuitOpen: false, analyze },
+    });
+    const result = await new AnalysisCoordinator(configured).runOnce();
+    expect(result).toMatchObject({ outcome: "REJECTED" });
+    expect(result.reasonCodes).toContain("SPREAD_POINTS_EXCEEDED");
+    expect(analyze).not.toHaveBeenCalled();
+  });
+
   it("carries a mandatory two-leg proposal through deterministic placement", async () => {
     const place = vi.fn(
       (submitted: readonly [PendingOrderCommand, PendingOrderCommand]) =>

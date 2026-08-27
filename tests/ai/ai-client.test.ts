@@ -73,6 +73,25 @@ const promptArtifact = {
 };
 
 describe("OpenAI-compatible client", () => {
+  it("rejects a per-cycle deadline outside the configured provider budget", async () => {
+    const fetchMock = vi.fn(() => Promise.reject(new Error("must not fetch")));
+    const client = new OpenAiCompatibleClient({
+      baseUrl: "https://ai.example.invalid/v1",
+      apiKey: "hidden",
+      model: "test-model",
+      apiStyle: "responses",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      timeoutMs: 5_000,
+      fetchImpl: fetchMock,
+    });
+    await expect(
+      client.analyze({ ...analysisRequest, timeoutMs: 6_000 }),
+    ).rejects.toThrow("AI_REQUEST_DEADLINE_INVALID");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("requests strict structured output and validates locally", async () => {
     const fetchMock = vi.fn(
       (_url: string | URL | Request, init?: RequestInit) => {
@@ -248,6 +267,35 @@ describe("OpenAI-compatible client", () => {
 });
 
 describe("AI orchestrator HTTP client", () => {
+  it("passes a bounded provider deadline inside the broker-M1 budget", async () => {
+    const rawResponse = JSON.stringify(validResponse());
+    const fetchMock = vi.fn(
+      (_url: string | URL | Request, init?: RequestInit) => {
+        if (typeof init?.body !== "string")
+          throw new Error("expected JSON body");
+        expect(JSON.parse(init.body)).toMatchObject({
+          timeoutMs: 49_000,
+        });
+        return Promise.resolve(
+          new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+            status: 200,
+          }),
+        );
+      },
+    );
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      timeoutMs: 65_000,
+      fetchImpl: fetchMock,
+    });
+    await expect(
+      client.analyze({ ...analysisRequest, timeoutMs: 50_000 }),
+    ).resolves.toMatchObject({ response: { analysis_id: analysisId } });
+  });
+
   it.each([0, 0.5, 2_147_484])(
     "rejects an unsafe caller circuit reset: %s seconds",
     (seconds) => {

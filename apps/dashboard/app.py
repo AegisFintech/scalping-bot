@@ -243,15 +243,50 @@ with tabs[0]:
     columns[3].metric(
         "Automatic analysis", "ON" if status.get("automaticAnalysisEnabled") else "OFF"
     )
+    trade_campaign = status.get("automaticDemoTradeCampaign")
+    if isinstance(trade_campaign, dict) and trade_campaign.get("enabled") is True:
+        st.subheader("Closed demo trade collection")
+        trade_campaign_columns = st.columns(4)
+        trade_campaign_columns[0].metric(
+            "Trade target", str(trade_campaign.get("limit", "unknown"))
+        )
+        trade_campaign_columns[1].metric(
+            "Closed trades", str(trade_campaign.get("closedTrades", "unavailable"))
+        )
+        trade_campaign_columns[2].metric(
+            "Trades remaining", str(trade_campaign.get("remaining", "unavailable"))
+        )
+        trade_campaign_columns[3].metric(
+            "Collection state",
+            "COMPLETE" if trade_campaign.get("complete") is True else "RUNNING",
+        )
+        trade_limit = trade_campaign.get("limit")
+        closed_trades = trade_campaign.get("closedTrades")
+        if (
+            isinstance(trade_limit, int)
+            and trade_limit > 0
+            and isinstance(closed_trades, int)
+            and closed_trades >= 0
+        ):
+            bounded_trades = min(closed_trades, trade_limit)
+            st.progress(
+                bounded_trades / trade_limit,
+                text=f"{bounded_trades} of {trade_limit} durable closed demo trades",
+            )
+        st.caption(
+            "Rejected attempts and unfilled expiries remain visible but do not complete this "
+            "target. Automation continues until the trade target or inference safety limit is "
+            "reached."
+        )
     campaign = status.get("automaticAnalysisCampaign")
     if isinstance(campaign, dict) and campaign.get("enabled") is True:
-        st.subheader("Completed external-AI analysis campaign")
+        st.subheader("External-AI inference safety limit")
         campaign_columns = st.columns(4)
         campaign_columns[0].metric("Target", str(campaign.get("limit", "unknown")))
         campaign_columns[1].metric("Completed", str(campaign.get("completed", "unavailable")))
         campaign_columns[2].metric("Remaining", str(campaign.get("remaining", "unavailable")))
         campaign_columns[3].metric(
-            "Campaign state", "COMPLETE" if campaign.get("complete") is True else "RUNNING"
+            "Limit state", "REACHED" if campaign.get("complete") is True else "AVAILABLE"
         )
         campaign_baseline = campaign.get("baseline")
         campaign_release_completed = campaign.get("releaseCompleted")
@@ -271,7 +306,7 @@ with tabs[0]:
             bounded_completed = min(campaign_completed, campaign_limit)
             st.progress(
                 bounded_completed / campaign_limit,
-                text=f"{bounded_completed} of {campaign_limit} completed AI analyses",
+                text=f"{bounded_completed} of {campaign_limit} permitted AI responses",
             )
     st.subheader(f"RIGHT NOW: {broker_view['headline']}")
     broker_message = broker_view["detail"]
@@ -1156,11 +1191,11 @@ with tabs[4]:
         st.error(f"AI analysis unavailable: {type(error).__name__}")
 
 with tabs[5]:
-    st.subheader("100-analysis campaign history")
+    st.subheader("Demo collection funnel and history")
     st.caption(
-        "One row equals one durable completed external-AI response counted by the campaign. "
-        "A rejected analysis or expired stop is not a loss; WIN/LOSS is assigned only after "
-        "PostgreSQL contains a durable closed demo trade."
+        "Attempts, completed external-AI responses, order groups, expiries, and closed trades are "
+        "counted separately. A rejected analysis or expired stop is not a loss; WIN/LOSS is "
+        "assigned only after PostgreSQL contains a durable closed demo trade."
     )
     try:
         if execution_status_error is not None:
@@ -1171,6 +1206,22 @@ with tabs[5]:
         campaign_limit = campaign.get("limit") if isinstance(campaign, dict) else None
         campaign_baseline = campaign_counts["baseline"]
         release_completed = campaign_counts["releaseCompleted"]
+        trade_campaign = status.get("automaticDemoTradeCampaign")
+        if isinstance(trade_campaign, dict) and trade_campaign.get("enabled") is True:
+            target_columns = st.columns(4)
+            target_columns[0].metric(
+                "Closed-trade target", str(trade_campaign.get("limit", "unknown"))
+            )
+            target_columns[1].metric(
+                "Closed trades", str(trade_campaign.get("closedTrades", "unavailable"))
+            )
+            target_columns[2].metric(
+                "Trades remaining", str(trade_campaign.get("remaining", "unavailable"))
+            )
+            target_columns[3].metric(
+                "Target state",
+                "COMPLETE" if trade_campaign.get("complete") is True else "COLLECTING",
+            )
         attempt_rows = query(
             """WITH target_symbol AS (
                  SELECT s.id
@@ -1502,12 +1553,12 @@ with tabs[5]:
         history = analysis_history_view(history_rows, completed_count)
         summary = history["summary"]
         if completed_count == 0:
-            st.info("No completed external-AI analysis has been counted in this campaign yet.")
+            st.info("No completed external-AI response exists for this release yet.")
         else:
             summary_columns = st.columns(5)
             summary_columns[0].metric(
-                "Completed AI analyses",
-                f"{summary['completed_ai_analyses']} / {campaign_limit or 100}",
+                "Completed AI responses / limit",
+                f"{summary['completed_ai_analyses']} / {campaign_limit or 'unbounded'}",
             )
             summary_columns[1].metric("Order groups created", summary["orders_created"])
             summary_columns[2].metric("Pending stop setups", summary["pending_stops"])

@@ -117,6 +117,18 @@ Record exact commands, versions, pass/fail/skip counts, duration, and skipped ex
 
 ## Latest local result
 
+On 2026-08-27, ISSUE-054 passed Prettier, ESLint, TypeScript typecheck/build,
+244 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
+configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
+mypy over 17 source files, and 82 Python tests. Configured Streamlit AppTest
+rendered 40 dataframes, 57 metrics, and 15 tabs with zero exceptions. Tests
+prove the exact closed-demo-trade boundary, fail-closed progress handling,
+pre-model context/spread stability check, broker-M1 provider deadline, semantic
+entry-reachability cap, deadline propagation, and separate dashboard progress
+for trade collection and inference cost. Replay/backtest, zero-vulnerability
+dependency audits, tracked-file secret scan, shell/PM2 syntax, and all five
+offline systemd security parses at 2.8 (`OK`) passed.
+
 On 2026-08-26, ISSUE-053 passed Prettier, ESLint, TypeScript typecheck/build,
 233 Node tests across 38 files, 16 schema tests, 3 migration tests, all 3
 configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
@@ -663,6 +675,15 @@ assert no HTTP request occurs before the reset boundary, an exact-boundary
 half-open request can succeed and clear the circuit, a second transport failure
 reopens for the full interval, and zero, fractional, or timer-overflowing reset
 configuration rejects before startup.
+
+ISSUE-054 adds exact-boundary tests for the strategy-scoped closed-demo-trade
+target, reviewed carry-forward, database unavailability, malformed counts, and
+audited pause enforcement. Coordinator tests prove a second widened-spread
+snapshot stops before AI, late broker-M1 budgets reject before inference, and
+the deadline reaches the provider client. Schema/semantic tests reject BUY and
+SELL confirmations beyond the configured M1-ATR cap. Deployment tests pin the
+new immutable release, separate inference/trade limits, entry reachability, and
+bounded expiry values without embedding trading authority or credentials.
 
 ISSUE-031 adds order-type/closing-flag normalization, non-deal contextual
 position handling, exact broker-ID entry recovery, and reconstruction of a

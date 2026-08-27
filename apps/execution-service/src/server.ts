@@ -25,6 +25,16 @@ export interface ExecutionStatus {
     readonly complete: boolean;
     readonly reasonCodes: readonly string[];
   };
+  readonly automaticDemoTradeCampaign: {
+    readonly enabled: boolean;
+    readonly limit: number | null;
+    readonly baseline: number;
+    readonly releaseClosedTrades: number | null;
+    readonly closedTrades: number | null;
+    readonly remaining: number | null;
+    readonly complete: boolean;
+    readonly reasonCodes: readonly string[];
+  };
   readonly managedSetup: ManagedSetupOverview;
   readonly aiCircuitOpenUntil: string | null;
   readonly tradingEnabled: boolean;

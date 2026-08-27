@@ -152,18 +152,16 @@ state is active or uncertain. A rejected analysis may retry on a later broker
 minute. An accepted analysis becomes terminal only after its group closes,
 expires, or fails; only then can a later broker minute start the next cycle.
 
-For a bounded review campaign, set `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` to the
-number of completed external-AI results required. Zero leaves the campaign
-boundary disabled. The durable count is scoped to the exact account, symbol,
-and immutable strategy release and requires both a completed model request and
-completed response. A spread/data rejection or failed provider call does not
-consume a slot. The service queries the count before each broker-minute claim;
-database failure or malformed progress blocks the scheduler. After the final
-result finishes normal validation/placement, the service writes an audited
-`PAUSE_NEW_ANALYSES` control. Existing pending orders and positions remain under
-normal expiry, callback, TP/SL, and reconciliation handling. Start another
-campaign only with a reviewed new release/config hash so the prior count cannot
-be silently reset.
+For a terminal-evidence campaign, set `AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT` to the
+required number of durable closed demo trades and keep
+`AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` at a larger finite value as the inference-
+cost backstop. A rejection or unfilled expiry increments neither the trade
+target nor wins/losses; after terminal reconciliation it starts a fresh cycle.
+The scheduler queries both strategy-scoped counts before each broker-minute
+claim and again afterward. Unavailable, malformed, or complete progress blocks
+new analysis. Reaching either boundary writes an audited `PAUSE_NEW_ANALYSES`
+control while existing pending orders/positions remain under normal expiry,
+callback, TP/SL, and reconciliation handling.
 
 `AUTOMATIC_ANALYSIS_COMPLETED_BASELINE` defaults to zero. Use a non-zero value
 only for an audited bug-fix release that must continue an existing campaign:
@@ -172,6 +170,14 @@ count, set that exact count as the baseline, register a new immutable release,
 and verify Overview shows the baseline separately from the new release count.
 The baseline cannot exceed the configured limit. It does not create model
 responses or relax any independent order, risk, reconciliation, or safety gate.
+`AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE` follows the same rule and counts only
+exact terminal demo trade rows joined to a `CLOSED` group.
+
+Before paying for inference, the coordinator verifies a second fresh snapshot
+has unchanged completed candles/metadata and still passes spread protection.
+It also requires enough broker-M1 time for the configured AI budget plus the
+post-model reserve. `PRE_MODEL_*` or `MODEL_DEADLINE_INSUFFICIENT` therefore
+means the endpoint was not called and the next eligible M1 window retries.
 
 Overview obtains the current/latest managed setup from the execution service's
 exact configured account and symbol scope without displaying account IDs. It
@@ -243,18 +249,20 @@ value is `Unavailable` rather than an inferred timestamp.
 `MAX_ORDERS_PER_DAY` currently counts created OCO order groups, not individual
 BUY/SELL legs. Size that independent daily ceiling for the campaign plus any
 groups already created in the configured trading day. It remains a separate
-lockout: increasing it does not override the completed-analysis campaign,
+lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v6` tells the endpoint that the execution service preserves its
+Prompt `system-v7` tells the endpoint that the execution service preserves its
 entry and stop loss but halves the distance from entry to take profit. It asks
 for twice the configured effective minimum R:R, explicitly self-checks both
 independent legs and midpoint targets, and supplies the maximum stop distance
 affordable at broker minimum volume. That derived field contains no equity,
-budget, volume, or account identity. An off-tick midpoint or returned stop above
-the current limit is rejected without correction, and a later broker minute
-starts a fresh cycle after the rejection becomes terminal.
+budget, volume, or account identity. It also requires the nearest defensible
+confirmation inside `MAX_ENTRY_DISTANCE_ATR` and the configured preferred
+expiry. An off-tick midpoint, over-distance entry, or returned stop above the
+current limit is rejected without correction, and a later broker minute starts
+a fresh cycle after the rejection becomes terminal.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted
@@ -401,12 +409,14 @@ broaden the dashboard query to expose secret-bearing configuration.
 
 ## Streamlit campaign analysis history
 
-Open **Analysis History** for the operator-level 100-analysis ledger. The
+Open **Analysis History** for the operator-level collection funnel. The
 oldest retained campaign result is numbered 1 and the newest defaults in the
 details selector. Read **Outcome ledger** for rejected/no-order, pending-stop,
 expired/no-trade, open-trade, and terminal closed outcomes. Only `CLOSED WIN`,
 `CLOSED LOSS`, and `CLOSED BREAK-EVEN` come from a durable broker trade; a
 rejection or unfilled expiry does not count as a loss.
+The closed-demo-trade progress bar is the collection target. Completed AI
+responses are displayed separately against the inference safety limit.
 
 Use **AI proposal versus effective/placed levels** for both BUY and SELL entry,
 SL, and TP. `EFFECTIVE LEVELS — NOT PLACED` means the midpoint-TP transform was

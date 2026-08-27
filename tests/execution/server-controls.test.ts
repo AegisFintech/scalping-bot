@@ -39,6 +39,16 @@ function server(
           complete: false,
           reasonCodes: [],
         },
+        automaticDemoTradeCampaign: {
+          enabled: false,
+          limit: null,
+          baseline: 0,
+          releaseClosedTrades: 0,
+          closedTrades: 0,
+          remaining: null,
+          complete: false,
+          reasonCodes: [],
+        },
         managedSetup: {
           status: "NONE",
           groupState: null,

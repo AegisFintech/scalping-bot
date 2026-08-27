@@ -26,9 +26,10 @@ New schema 2.1 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Prompt `system-v6` is screenshot-first, self-checks both independent legs and
-the configured TP-distance division by two, and receives the non-sizing maximum
-stop distance affordable at broker minimum volume. The
+Prompt `system-v7` is screenshot-first, self-checks both independent legs and
+the configured TP-distance division by two, receives the non-sizing maximum
+stop distance affordable at broker minimum volume, and keeps each confirmation
+inside the configured M1-ATR reachability cap. The
 dashboard shows endpoint and effective TP/R:R side by side; generated proposals
 remain distinct from queued or broker-submitted orders.
 After deterministic margin/sizing work, execution reconciles the account and
@@ -209,12 +210,16 @@ exact acknowledgement, a positive `MAX_ORDERS_PER_DAY`, and a positive
 per-position `MAX_POSITION_NOTIONAL` are all configured. Keep the automatic
 gate off and use one authenticated loopback cycle for the first supervised
 session. A later explicitly authorized campaign can set
-`AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` to a positive durable result count; the
-scheduler then pauses new analyses at that immutable-release boundary while
+`AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT` to the required durable closed-demo-trade
+sample. Rejections and unfilled expiries remain visible but do not complete that
+target. `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` remains a separate finite
+inference-cost ceiling; reaching either boundary pauses new analyses while
 continuing broker lifecycle maintenance.
 `AUTOMATIC_ANALYSIS_COMPLETED_BASELINE` must normally remain zero; it exists
 only to carry a separately verified durable count through a reviewed immutable
 bug-fix release and is displayed separately on Overview.
+`AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE` has the same reviewed carry-forward rule
+for terminal demo trades and normally remains zero.
 
 ## Tests and quality gates
 

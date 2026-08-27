@@ -33,8 +33,10 @@ export interface ModelPayloadInput {
     readonly takeProfitDistanceDivisor: "2";
     readonly maxAffordableStopDistance: string;
     readonly maxStopDistanceAtr: string;
+    readonly maxEntryDistanceAtr: string;
     readonly orderExpiryMinSeconds: number;
     readonly orderExpiryMaxSeconds: number;
+    readonly preferredOrderExpirySeconds: number;
   };
 }
 
@@ -126,10 +128,13 @@ export function buildModelPayload(
       max_affordable_stop_distance:
         input.executionConstraints.maxAffordableStopDistance,
       max_stop_distance_atr: input.executionConstraints.maxStopDistanceAtr,
+      max_entry_distance_atr: input.executionConstraints.maxEntryDistanceAtr,
       order_expiry_min_seconds:
         input.executionConstraints.orderExpiryMinSeconds,
       order_expiry_max_seconds:
         input.executionConstraints.orderExpiryMaxSeconds,
+      preferred_order_expiry_seconds:
+        input.executionConstraints.preferredOrderExpirySeconds,
     },
     performance: boundedPerformance(input.performanceContext),
   };

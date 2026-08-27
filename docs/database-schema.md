@@ -87,11 +87,18 @@ durable completed `model_requests` plus `model_responses`, reconstructs the
 reviewed prior-release baseline separately from current-release results, and
 joins existing validation, OCO order, position, and trade evidence. An extra
 current-release row is queried only to detect a concurrent count change and
-reject the display; the configured campaign count otherwise bounds the result
-to at most 100 rows. Closed-trade signed
+reject the display; the configured inference ceiling otherwise bounds the
+result to at most 2,000 rows. Closed-trade signed
 `realized_pnl` is the outcome authority; rejection and expiry rows are never
 converted into losses. Broker/account identifiers and raw provider text are
 not selected.
+
+Automatic demo collection derives two immutable-release counters without
+duplicating outcome state: completed AI responses join `analysis_runs` through
+`model_requests/model_responses`, while the evidence target counts distinct
+`trades` joined through a `CLOSED` demo `order_group`. Missing or malformed
+counter results block the scheduler; rejected analyses and unfilled expiries do
+not increment the trade target.
 
 Audit, order, fill, position, trade, and risk records follow regulatory/operational retention chosen by the operator. High-volume raw depth/candle/server metrics can be partitioned/expired only through reviewed migrations/jobs that retain decision-linked evidence. Dashboard roles should not read secret-bearing configuration; runtime controls require dedicated mutation privileges.
 

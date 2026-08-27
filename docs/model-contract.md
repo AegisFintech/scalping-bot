@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v6` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v7` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -39,6 +39,12 @@ The versioned system prompt tells the model to:
 - keep each entry-to-SL distance at or below the supplied
   `max_affordable_stop_distance`. This is a derived non-sizing limit; the request
   still excludes equity, risk budget, broker volume, and account identity.
+- select the nearest defensible completed-candle confirmation and keep each
+  entry within `max_entry_distance_atr * M1_ATR` of the executable quote side;
+  weak or ranging evidence lowers confidence instead of moving stops to distant
+  broader levels;
+- use `preferred_order_expiry_seconds` inside the unchanged minimum/maximum
+  expiry policy. An expired response is never extended or reused.
 
 ## Mandatory proposal
 
@@ -94,6 +100,11 @@ limits, including the recomputed broker-minimum affordability ceiling;
 deterministic performance-adjustment consistency; margin/sizing
 feasibility; and inactive lockouts. Data quality was already accepted by the
 deterministic analytics boundary before the model request.
+
+Both proposal and final-placement validation recompute the BUY distance from
+current ask and SELL distance from current bid and reject a confirmation beyond
+the configured M1-ATR reachability cap. A nearer quote never permits an entry
+inside the broker/configured minimum stop distance.
 
 Schema 2.1 additionally requires every technical zone and target to be
 tick-aligned and directionally ordered. `waiting_area` must equal

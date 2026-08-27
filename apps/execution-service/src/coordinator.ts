@@ -67,6 +67,7 @@ export interface ModelProvider {
     readonly symbol: string;
     readonly payload: Readonly<Record<string, unknown>>;
     readonly chart: AnalysisChartArtifact;
+    readonly timeoutMs: number;
   }): Promise<{
     readonly response: ModelResponse;
     readonly rawResponse: string;
@@ -85,7 +86,7 @@ export interface DecisionTrail {
   decisionMarket(
     analysisId: string,
     snapshot: MarketSnapshot,
-    refreshPhase?: "POST_MODEL" | "PRE_PLACEMENT",
+    refreshPhase?: "PRE_MODEL" | "POST_MODEL" | "PRE_PLACEMENT",
   ): Promise<void>;
   analytics(analysisId: string, response: AnalyticsResponse): Promise<void>;
   model(
@@ -147,7 +148,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
   decisionMarket(
     analysisId: string,
     snapshot: MarketSnapshot,
-    refreshPhase: "POST_MODEL" | "PRE_PLACEMENT" = "POST_MODEL",
+    refreshPhase: "PRE_MODEL" | "POST_MODEL" | "PRE_PLACEMENT" = "POST_MODEL",
   ): Promise<void> {
     this.events.push({
       type: "decision_market",
@@ -217,13 +218,15 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v6";
+  readonly promptVersion: "system-v7";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
+  readonly preferredExpirySeconds: number;
   readonly maxStopDistanceAtr: string;
+  readonly maxEntryDistanceAtr: string;
   readonly minStopDistancePoints: string | null;
   readonly maxQuoteAgeMs: number;
   readonly maxMetadataAgeMs: number;
@@ -231,6 +234,10 @@ export interface CoordinatorOptions {
   readonly maxSpreadPoints: string | null;
   readonly maxSpreadAtrRatio: string | null;
   readonly maxSpreadPercentile: string | null;
+  readonly preModelStabilityCheck?: boolean;
+  readonly enforceModelDeadline?: boolean;
+  readonly minimumModelBudgetMs: number;
+  readonly postModelReserveMs: number;
   readonly spreadContext: (snapshot: MarketSnapshot) => Promise<{
     readonly observedPercentile: string | null;
     readonly sessionAbnormal: boolean;
@@ -315,7 +322,7 @@ function candleContextFingerprint(snapshot: MarketSnapshot): string {
 function marketContextReasons(
   initial: MarketSnapshot,
   refreshed: MarketSnapshot,
-  phase: "DECISION" | "PLACEMENT",
+  phase: "PRE_MODEL" | "DECISION" | "PLACEMENT",
 ): readonly string[] {
   const reasons: string[] = [];
   const initialServerTime = Date.parse(initial.serverTime);
@@ -339,6 +346,31 @@ function marketContextReasons(
     reasons.push(`${phase}_CANDLE_CONTEXT_CHANGED`);
   }
   return reasons.sort();
+}
+
+export function modelCallBudgetMs(input: {
+  readonly brokerServerTime: string;
+  readonly postModelReserveMs: number;
+  readonly minimumModelBudgetMs: number;
+}): number {
+  const serverTime = Date.parse(input.brokerServerTime);
+  if (
+    !Number.isFinite(serverTime) ||
+    !Number.isSafeInteger(input.postModelReserveMs) ||
+    input.postModelReserveMs < 1_000 ||
+    input.postModelReserveMs > 30_000 ||
+    !Number.isSafeInteger(input.minimumModelBudgetMs) ||
+    input.minimumModelBudgetMs < 1_000 ||
+    input.minimumModelBudgetMs > 55_000
+  ) {
+    throw new Error("MODEL_DEADLINE_CONFIG_INVALID");
+  }
+  const nextM1Boundary = (Math.floor(serverTime / 60_000) + 1) * 60_000;
+  const budget = nextM1Boundary - serverTime - input.postModelReserveMs;
+  if (budget < input.minimumModelBudgetMs) {
+    throw new Error("MODEL_DEADLINE_INSUFFICIENT");
+  }
+  return budget;
 }
 
 function accountExecutionFingerprint(account: AccountState): string {
@@ -494,14 +526,84 @@ export class AnalysisCoordinator {
         return await reject(reasons);
       }
 
+      let preModelSnapshot = snapshot;
+      if (this.#options.preModelStabilityCheck === true) {
+        try {
+          preModelSnapshot = await this.#options.market.snapshot(
+            this.#options.symbol,
+            this.#options.candleCounts,
+            this.#options.orderBookDepth,
+          );
+        } catch {
+          return await reject(["PRE_MODEL_MARKET_REFRESH_FAILED"]);
+        }
+        const preModelContextReasons = marketContextReasons(
+          snapshot,
+          preModelSnapshot,
+          "PRE_MODEL",
+        );
+        if (preModelContextReasons.length > 0) {
+          await this.#options.trail.validation(
+            analysisId,
+            "RISK",
+            false,
+            preModelContextReasons,
+            { validation_scope: "PRE_MODEL_MARKET_CONTEXT" },
+          );
+          return await reject(preModelContextReasons);
+        }
+        await this.#options.trail.decisionMarket(
+          analysisId,
+          preModelSnapshot,
+          "PRE_MODEL",
+        );
+        const preModelSpreadContext =
+          await this.#options.spreadContext(preModelSnapshot);
+        const preModelSpread = checkSpread({
+          bid: preModelSnapshot.quote.bid,
+          ask: preModelSnapshot.quote.ask,
+          tickSize: preModelSnapshot.metadata.tickSize,
+          atr,
+          maxPoints: this.#options.maxSpreadPoints,
+          maxAtrRatio: this.#options.maxSpreadAtrRatio,
+          observedPercentile: preModelSpreadContext.observedPercentile,
+          maxPercentile: this.#options.maxSpreadPercentile,
+          sessionAbnormal: preModelSpreadContext.sessionAbnormal,
+          liveMode: this.#options.mode === "live",
+        });
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          preModelSpread.approved,
+          preModelSpread.reasonCodes,
+          { validation_scope: "PRE_MODEL_SPREAD_STABILITY" },
+        );
+        if (!preModelSpread.approved)
+          return await reject(preModelSpread.reasonCodes);
+      }
+      let modelTimeoutMs = 30_000;
+      if (this.#options.enforceModelDeadline === true) {
+        try {
+          modelTimeoutMs = modelCallBudgetMs({
+            brokerServerTime: preModelSnapshot.serverTime,
+            postModelReserveMs: this.#options.postModelReserveMs,
+            minimumModelBudgetMs: this.#options.minimumModelBudgetMs,
+          });
+        } catch (error) {
+          return await reject([
+            error instanceof Error ? error.message : "MODEL_DEADLINE_INVALID",
+          ]);
+        }
+      }
+
       await this.#recordTransition(analysisId, machine, "FEATURED");
       const performance = await this.#options.performance(analytics);
       const payload = buildModelPayload({
         mode: this.#options.modelPayloadMode,
         analysisId,
         symbol: this.#options.symbol,
-        analysisTime: snapshot.serverTime,
-        serverTime: snapshot.serverTime,
+        analysisTime: preModelSnapshot.serverTime,
+        serverTime: preModelSnapshot.serverTime,
         analyticsFeatures: analytics.features,
         performanceContext: performance,
         promptVersion: this.#options.promptVersion,
@@ -509,19 +611,21 @@ export class AnalysisCoordinator {
         strategyVersion: this.#options.strategyVersion,
         chart: analytics.chart,
         executionConstraints: {
-          currentBid: snapshot.quote.bid,
-          currentAsk: snapshot.quote.ask,
-          tickSize: snapshot.metadata.tickSize,
-          digits: snapshot.metadata.digits,
-          brokerMinStopDistance: snapshot.metadata.minStopDistance,
+          currentBid: preModelSnapshot.quote.bid,
+          currentAsk: preModelSnapshot.quote.ask,
+          tickSize: preModelSnapshot.metadata.tickSize,
+          digits: preModelSnapshot.metadata.digits,
+          brokerMinStopDistance: preModelSnapshot.metadata.minStopDistance,
           configuredMinStopDistance: canonical(minimumStopDistance),
           minRiskRewardRatio: minimumProposalRiskRewardRatio,
           effectiveMinRiskRewardRatio: this.#options.minRiskRewardRatio,
           takeProfitDistanceDivisor: TAKE_PROFIT_DISTANCE_DIVISOR,
           maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
+          maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
           orderExpiryMinSeconds: this.#options.minExpirySeconds,
           orderExpiryMaxSeconds: this.#options.maxExpirySeconds,
+          preferredOrderExpirySeconds: this.#options.preferredExpirySeconds,
         },
       });
       await this.#recordTransition(analysisId, machine, "MODEL_PENDING");
@@ -530,6 +634,7 @@ export class AnalysisCoordinator {
         symbol: this.#options.symbol,
         payload,
         chart: analytics.chart,
+        timeoutMs: modelTimeoutMs,
       });
       if (model.promptArtifact.version !== this.#options.promptVersion) {
         return await reject(["MODEL_PROMPT_VERSION_MISMATCH"]);
@@ -631,6 +736,7 @@ export class AnalysisCoordinator {
         minExpirySeconds: this.#options.minExpirySeconds,
         maxExpirySeconds: this.#options.maxExpirySeconds,
         maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
+        maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
         maxAffordableStopDistance: currentRiskConstraints.maxStopDistance,
         minStopDistancePoints: this.#options.minStopDistancePoints,
         maxQuoteAgeMs: this.#options.maxQuoteAgeMs,
