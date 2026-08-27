@@ -129,6 +129,14 @@ reported zero exceptions. Replay/backtest smoke tests, zero-vulnerability
 npm/pip audits, tracked-file secret scanning, shell/PM2 syntax, and all five
 offline systemd security parses at 2.8 (`OK`) passed.
 
+After PR #136 merged as `d1bcae6`, all five `.32` PM2 services came online.
+The abandoned `.31` analysis was rejected/audited on startup and automatic
+broker-minute attempts resumed. Two complete post-restart cycles persisted
+30/18/12 candle tails and roughly 3 KB feature summaries, then rejected before
+AI on an observed 12-point spread versus the retained 10-point limit. No row
+was left active. Deployed AppTest rendered 37 dataframes, 51 metrics, and 15
+tabs with zero exceptions.
+
 On 2026-08-27, ISSUE-055 passed Prettier, ESLint, TypeScript typecheck/build,
 250 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
 configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
