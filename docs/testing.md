@@ -130,6 +130,16 @@ dashboard guidance. Replay/backtest, zero-vulnerability dependency audits,
 tracked-file secret scan, shell/PM2 syntax, and five offline systemd security
 parses at 2.8 (`OK`) passed.
 
+After PR #133 merged, `.31` deployed under the audited pause with all five
+services healthy, selected low-effort/alignment/campaign configuration, certain
+reconciliation, and no open position. The first post-release broker minute was
+claimed automatically at 27 Aug 2026, 09:33:00 GMT+8 and completed 43.864
+seconds later as `PLACED`. PostgreSQL proved a completed system-v7/schema-2.1
+request and response, exact 2.5-ATR/900/1,800/1,500-second constraints, and two
+broker-confirmed pending demo stops in one `ACTIVE` group. Status showed 1/500
+completed responses, 0/100 closed trades, and no AI cooldown. Deployed AppTest
+rendered 42 dataframes, 65 metrics, and 15 tabs with zero exceptions.
+
 On 2026-08-27, ISSUE-054 passed Prettier, ESLint, TypeScript typecheck/build,
 244 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
 configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
