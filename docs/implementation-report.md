@@ -1331,9 +1331,6 @@ exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip audits, the
 tracked-file secret scan, shell/PM2 syntax, and all five offline systemd parses
 at 2.8 (`OK`) passed.
 
-Review and automatic merge are tracked by
-[PR #131](https://github.com/AegisFintech/scalping-bot/pull/131).
-
 PR #89 merged as `b18322b`. Before deployment, the prior `.18` demo position
 had closed. Periodic recovery showed zero active groups, orders, positions, and
 unresolved execution events, although its malformed terminal callback had left
@@ -2056,3 +2053,6 @@ rendered 40 dataframes, 57 metrics, and 15 tabs with zero exceptions.
 Replay/backtest, npm/pip audits with zero known vulnerabilities, tracked-file
 secret scanning, shell/PM2 syntax, and all five offline systemd security parses
 at 2.8 (`OK`) passed.
+
+Review and automatic merge are tracked by
+[PR #131](https://github.com/AegisFintech/scalping-bot/pull/131).
