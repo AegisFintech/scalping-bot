@@ -2119,3 +2119,5 @@ and the group is `ACTIVE`. Status correctly shows 1/500 completed AI responses,
 managed. Deployed AppTest rendered 42 dataframes, 65 metrics, and 15 tabs with
 zero exceptions and found both the active state and closed-trade target. No
 restart or manual lifecycle action followed. ISSUE-055 is complete.
+Rollout evidence is tracked by
+[PR #134](https://github.com/AegisFintech/scalping-bot/pull/134).

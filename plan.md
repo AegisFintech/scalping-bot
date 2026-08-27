@@ -264,6 +264,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   Deployed AppTest rendered 42 dataframes, 65 metrics, and 15 tabs with zero
   exceptions and showed both the active setup and closed-trade target.
   ISSUE-055 is complete; the broker lifecycle remains managed automatically.
+  Rollout evidence is tracked by
+  [PR #134](https://github.com/AegisFintech/scalping-bot/pull/134).
 
 ### ISSUE-001 delivery details
 
