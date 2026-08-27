@@ -4,6 +4,31 @@ import type { CycleResult } from "./coordinator.js";
 
 const M1_INTERVAL_MS = 60_000;
 
+export function alignedSchedulerDelayMs(
+  nowMs: number,
+  intervalSeconds: number,
+  leadMs = 0,
+): number {
+  const intervalMs = intervalSeconds * 1_000;
+  if (
+    !Number.isSafeInteger(nowMs) ||
+    nowMs < 0 ||
+    !Number.isSafeInteger(intervalSeconds) ||
+    intervalSeconds < 1 ||
+    intervalSeconds > 60 ||
+    !Number.isSafeInteger(intervalMs) ||
+    !Number.isSafeInteger(leadMs) ||
+    leadMs < 0 ||
+    leadMs >= intervalMs
+  ) {
+    throw new Error("AUTOMATIC_ANALYSIS_INTERVAL_INVALID");
+  }
+  const remainder = nowMs % intervalMs;
+  const targetRemainder = (intervalMs - leadMs) % intervalMs;
+  const delay = (targetRemainder - remainder + intervalMs) % intervalMs;
+  return delay === 0 ? intervalMs : delay;
+}
+
 export interface AutomaticAnalysisWindow {
   readonly allowed: boolean;
   readonly intervalStart: string | null;

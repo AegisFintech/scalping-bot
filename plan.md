@@ -197,6 +197,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
 | ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
 | ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
+| ISSUE-055 | in progress | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -225,6 +226,33 @@ never justify empty, noisy, unsafe, or misleading commits.
   (`OK`) also passed. Merge, stopped rollout, and bounded demo restart remain.
   Review and automatic merge are tracked by
   [PR #131](https://github.com/AegisFintech/scalping-bot/pull/131).
+
+### ISSUE-055 delivery details
+
+- Acceptance criteria: preserve every completed-candle, freshness, spread,
+  reconciliation, ownership, and deterministic risk gate; align the existing
+  scheduler cadence to wall-clock boundaries without increasing its polling
+  frequency; propagate finite non-sensitive provider failure reasons across the
+  local AI boundary; enable lower reasoning effort only after a stored-artifact
+  schema/semantic benchmark; deploy a distinct immutable demo release under the
+  audited pause and prove an operator-readable automatic cycle.
+- Dependencies: ISSUE-054 release `.30`, the exact prompt/image trail, local AI
+  HTTP boundary, and the durable automatic interval claim.
+- Current status: release `.30` is paused after two automatic calls reached the
+  broker-M1 deadline as opaque HTTP 503 responses; a third fresh cycle rejected
+  before AI on the unchanged absolute spread gate. Post-model placement takes
+  5.600 seconds median and 6.345 seconds at p90, so the five-second reserve is
+  retained. A read-only stored-artifact `low`-effort request completed in 51.152
+  seconds and passed schema, proposal semantics, TP transform, and effective
+  semantics. Wall alignment, finite error propagation, release `.31`, tests,
+  and documentation are implemented on `issue-055-ai-deadline-visibility`.
+  The full gate passed 250 Node tests across 39 files, 17 schema tests, 3
+  migration tests, all 3 configured integration tests, 82 Python tests, strict
+  TypeScript/Python checks, and configured AppTest with zero exceptions, 35
+  dataframes, 47 metrics, and 15 tabs. Replay/backtest, dependency audits,
+  secret/shell/PM2 checks, and all five 2.8 (`OK`) systemd parses passed.
+  Review and automatic merge are tracked by
+  [PR #133](https://github.com/AegisFintech/scalping-bot/pull/133).
 
 ### ISSUE-001 delivery details
 

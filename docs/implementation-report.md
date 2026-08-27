@@ -2056,3 +2056,46 @@ at 2.8 (`OK`) passed.
 
 Review and automatic merge are tracked by
 [PR #131](https://github.com/AegisFintech/scalping-bot/pull/131).
+
+## AI deadline visibility and scheduler phase
+
+The first `.30` rollout started safely at `0 / 100` closed trades and `0 / 500`
+completed AI responses. With automation released, its first two paid calls each
+reached the broker-M1 deadline and appeared only as
+`AI_ORCHESTRATOR_HTTP_ERROR:503`; the next fresh attempt rejected before AI on
+the unchanged 10-point absolute spread limit. No order was created. New analyses
+were paused before a circuit cooldown while ISSUE-055 was opened.
+
+PostgreSQL campaign evidence shows the post-model path to a placed OCO takes
+5.600 seconds median, 6.345 seconds at p90, and 9.629 seconds maximum. The
+post-model reserve is therefore not reduced. Instead, the same five-second
+scheduler cadence is wall-aligned with a one-second lead, allowing maintenance
+to begin near the next M1 open without increasing its broker polling frequency.
+The broker timestamp and durable M1 claim still decide eligibility.
+
+The AI service now converts provider aborts and connection errors to finite
+`AI_PROVIDER_TIMEOUT` / `AI_PROVIDER_UNAVAILABLE` reason codes, rejects
+free-form error text, and the loopback execution client propagates only a
+bounded AI reason code. Streamlit explains whether the endpoint was reached and
+why no order was sent.
+
+A single read-only stored-artifact request tested `AI_REASONING_EFFORT=low`
+against the exact v7 prompt, compact numeric payload, and completed-candle PNG.
+It returned in 51.152 seconds and passed schema 2.1, proposal semantics, TP
+division, and effective-proposal semantics with zero reasons. It wrote neither
+PostgreSQL nor cTrader. Release `.31` pins the validated effort and the scheduler
+phase as distinct immutable provenance; it does not change any spread,
+freshness, reconciliation, sizing, exposure, or risk rule. Implementation is
+tracked by [issue #132](https://github.com/AegisFintech/scalping-bot/issues/132).
+
+The pre-deployment gate passed Prettier, ESLint, TypeScript typecheck/build,
+250 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
+configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
+mypy over 17 source files, and 82 Python tests. Configured Streamlit AppTest
+rendered 35 dataframes, 47 metrics, and 15 tabs with zero exceptions.
+Replay/backtest, npm/pip audits with zero known vulnerabilities, tracked-file
+secret scanning, shell/PM2 syntax, and all five offline systemd security parses
+at 2.8 (`OK`) passed.
+
+Review and automatic merge are tracked by
+[PR #133](https://github.com/AegisFintech/scalping-bot/pull/133).

@@ -154,6 +154,11 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert "below the sell entry" in downside["meaning"]
     assert "fresh market snapshot" in downside["next_action"]
 
+    provider_timeout = reason_code_view("AI_PROVIDER_TIMEOUT")
+    assert provider_timeout["title"] == "The external AI exceeded this candle's deadline"
+    assert "request reached the external endpoint" in provider_timeout["meaning"]
+    assert "will not place an old answer" in provider_timeout["next_action"]
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(

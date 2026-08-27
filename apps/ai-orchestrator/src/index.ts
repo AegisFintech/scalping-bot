@@ -5,11 +5,40 @@ import { pathToFileURL } from "node:url";
 
 import Fastify, { type FastifyInstance } from "fastify";
 
-import { OpenAiCompatibleClient } from "../../../packages/ai-client/src/client.js";
+import {
+  OpenAiCompatibleClient,
+  type AiReasoningEffort,
+} from "../../../packages/ai-client/src/client.js";
 import type { AnalysisChartArtifact } from "../../../packages/contracts/src/index.js";
 
 export interface AiServerOptions {
   readonly client: OpenAiCompatibleClient;
+}
+
+export function normalizeAiAnalysisError(error: unknown): string {
+  if (
+    error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError")
+  ) {
+    return "AI_PROVIDER_TIMEOUT";
+  }
+  if (error instanceof TypeError) return "AI_PROVIDER_UNAVAILABLE";
+  if (
+    error instanceof Error &&
+    error.message.length <= 128 &&
+    /^AI_[A-Z0-9_]+(?::[A-Z0-9_.-]+)?$/.test(error.message)
+  ) {
+    return error.message;
+  }
+  return "AI_ANALYSIS_FAILED";
+}
+
+export function aiReasoningEffort(
+  value: string | undefined,
+): AiReasoningEffort | undefined {
+  if (value === undefined || value === "") return undefined;
+  if (value === "low" || value === "medium" || value === "high") return value;
+  throw new Error("AI_REASONING_EFFORT_INVALID");
 }
 
 export function createAiServer(options: AiServerOptions): FastifyInstance {
@@ -37,7 +66,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
     } catch (error) {
       return reply.code(503).send({
         error: "AI_ANALYSIS_UNAVAILABLE",
-        reason: error instanceof Error ? error.message : "AI_ANALYSIS_FAILED",
+        reason: normalizeAiAnalysisError(error),
       });
     }
   });
@@ -45,6 +74,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
 }
 
 async function main(): Promise<void> {
+  const reasoningEffort = aiReasoningEffort(process.env.AI_REASONING_EFFORT);
   const client = new OpenAiCompatibleClient({
     baseUrl: process.env.AI_BASE_URL ?? "",
     apiKey: process.env.AI_API_KEY ?? "",
@@ -59,6 +89,7 @@ async function main(): Promise<void> {
     timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
     maxRetries: Number(process.env.AI_MAX_RETRIES ?? 0),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),
+    ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
     circuitBreakerFailures: Number(
       process.env.AI_CIRCUIT_BREAKER_FAILURES ?? 3,
     ),

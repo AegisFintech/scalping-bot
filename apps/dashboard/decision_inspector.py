@@ -138,6 +138,20 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "completed-candle context changes.",
         "No action is required; the scheduler retries immediately after a later M1 close.",
     ),
+    "AI_PROVIDER_TIMEOUT": (
+        "The external AI exceeded this candle's deadline",
+        "The request reached the external endpoint, but no validated response returned before "
+        "the remaining M1 context budget expired. No order was sent.",
+        "The scheduler retries a fresh chart on a later eligible broker minute. Repeated timeouts "
+        "mean provider latency must be reduced; the script will not place an old answer.",
+    ),
+    "AI_PROVIDER_UNAVAILABLE": (
+        "The external AI connection was unavailable",
+        "The local AI service could not complete its connection to the configured endpoint. No "
+        "order was sent.",
+        "The scheduler retries after the bounded circuit cooldown; inspect provider availability "
+        "if this repeats.",
+    ),
     "EMERGENCY_STOP_ENV": (
         "Environment emergency stop is active",
         "The process configuration blocks new analyses and orders.",
