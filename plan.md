@@ -197,7 +197,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
 | ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
 | ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
-| ISSUE-055 | in progress | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
+| ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -215,15 +215,16 @@ never justify empty, noisy, unsafe, or misleading commits.
   trade persistence, strategy-scoped reconciliation, and the existing demo-only
   acknowledgement/configuration.
 - Current status: implementation and the full pre-deployment gate suite passed
-  on `issue-054-closed-trade-campaign`. Campaign 002 remains durably paused at
-  100 completed responses while release `.30` is reviewed and deployed. The
+  on `issue-054-closed-trade-campaign`. Release `.31` is running automatically
+  at 1 completed AI response, 1 active demo OCO group, and 0/100 closed trades;
+  rejected attempts and expiries cannot complete the target. The
   gate record is 244 Node tests across 39 files, 17 schema tests, 3 migration
   tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, 82 Python
   tests, strict TypeScript and Python checks, and configured Streamlit AppTest
   with zero exceptions, 40 dataframes, 57 metrics, and 15 tabs. Replay,
   backtest, zero-vulnerability dependency audits, the tracked-file secret
   scan, shell/PM2 syntax, and all five offline systemd security parses at 2.8
-  (`OK`) also passed. Merge, stopped rollout, and bounded demo restart remain.
+  (`OK`) also passed. The closed-trade collection remains in progress.
   Review and automatic merge are tracked by
   [PR #131](https://github.com/AegisFintech/scalping-bot/pull/131).
 
@@ -253,6 +254,16 @@ never justify empty, noisy, unsafe, or misleading commits.
   secret/shell/PM2 checks, and all five 2.8 (`OK`) systemd parses passed.
   Review and automatic merge are tracked by
   [PR #133](https://github.com/AegisFintech/scalping-bot/pull/133).
+  PR #133 merged as `1de24bd`; `.31` deployed under the audited pause with all
+  five services healthy, exact selected configuration, certain reconciliation,
+  and no open position. After pause release, the 09:33:00 GMT+8 broker minute
+  was claimed automatically and completed in 43.864 seconds as `PLACED` with a
+  completed system-v7/schema-2.1 request and two broker-confirmed pending demo
+  stops. Status showed 1/500 completed responses, 0/100 closed trades, an
+  `ACTIVE` group, no AI cooldown, and only the expected active-setup blockers.
+  Deployed AppTest rendered 42 dataframes, 65 metrics, and 15 tabs with zero
+  exceptions and showed both the active setup and closed-trade target.
+  ISSUE-055 is complete; the broker lifecycle remains managed automatically.
 
 ### ISSUE-001 delivery details
 

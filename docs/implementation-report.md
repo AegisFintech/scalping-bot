@@ -2099,3 +2099,23 @@ at 2.8 (`OK`) passed.
 
 Review and automatic merge are tracked by
 [PR #133](https://github.com/AegisFintech/scalping-bot/pull/133).
+
+PR #133 merged as `1de24bd`. Release `.31` was built and restarted in dependency
+order under the audited analysis pause. All five health endpoints returned 200;
+selected execution-process evidence proved release/code `.31`, the unchanged
+five-second cadence and post-model reserve, one-second scheduler lead, low
+reasoning effort, 500-response cost ceiling, and 100-closed-trade target.
+Startup reconciliation was certain, the previous group was terminal/expired,
+and the open-position monitor returned `NONE`.
+
+After the pause was cleared, broker minute 27 Aug 2026, 09:33:00 GMT+8 was
+claimed automatically and completed 43.864 seconds later as `PLACED`. The
+durable request/response are `COMPLETED` with prompt `system-v7` and schema
+`2.1`; their payload records the 2.5 M1-ATR entry cap and 900/1,800/1,500-second
+expiry constraints. cTrader accepted both strategy-owned demo stops as pending
+and the group is `ACTIVE`. Status correctly shows 1/500 completed AI responses,
+0/100 closed demo trades, no circuit cooldown, and only
+`PREVIOUS_ANALYSIS_ACTIVE` / `RELEVANT_PENDING_ORDER_EXISTS` while this setup is
+managed. Deployed AppTest rendered 42 dataframes, 65 metrics, and 15 tabs with
+zero exceptions and found both the active state and closed-trade target. No
+restart or manual lifecycle action followed. ISSUE-055 is complete.
