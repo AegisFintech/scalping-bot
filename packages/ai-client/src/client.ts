@@ -35,6 +35,7 @@ export interface AiAnalysisRequest {
   readonly symbol: string;
   readonly payload: Readonly<Record<string, unknown>>;
   readonly chart: AnalysisChartArtifact;
+  readonly timeoutMs?: number;
 }
 
 export interface AiAnalysisResult {
@@ -161,10 +162,23 @@ export class OpenAiCompatibleClient {
       throw new Error("AI_REQUEST_OVERSIZED");
     }
     const maxRetries = this.#options.maxRetries ?? 0;
+    const configuredTimeoutMs = this.#options.timeoutMs ?? 30_000;
+    const requestTimeoutMs = request.timeoutMs ?? configuredTimeoutMs;
+    if (
+      !Number.isSafeInteger(requestTimeoutMs) ||
+      requestTimeoutMs < 1_000 ||
+      requestTimeoutMs > configuredTimeoutMs
+    ) {
+      throw new Error("AI_REQUEST_DEADLINE_INVALID");
+    }
     const started = now();
     let lastError: Error = new Error("AI_REQUEST_FAILED");
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       try {
+        const remainingTimeoutMs = requestTimeoutMs - (now() - started);
+        if (remainingTimeoutMs < 1_000) {
+          throw new Error("AI_REQUEST_DEADLINE_EXHAUSTED");
+        }
         const response = await (this.#options.fetchImpl ?? fetch)(
           endpoint(this.#options.baseUrl, this.#options.apiStyle),
           {
@@ -175,7 +189,7 @@ export class OpenAiCompatibleClient {
               "x-analysis-id": request.analysisId,
             },
             body: JSON.stringify(body),
-            signal: AbortSignal.timeout(this.#options.timeoutMs ?? 30_000),
+            signal: AbortSignal.timeout(remainingTimeoutMs),
           },
         );
         if (!response.ok) {

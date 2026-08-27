@@ -1992,3 +1992,64 @@ automatic analysis enabled, the AI circuit closed, and zero blocking reasons.
 ISSUE-053 is complete.
 Rollout evidence is tracked by
 [PR #129](https://github.com/AegisFintech/scalping-bot/pull/129).
+
+## Closed-demo-trade collection and conversion refinement
+
+ISSUE-054 replaces “100 completed AI responses” as the experiment outcome with
+a separate target of 100 durable closed demo trades. Campaign 002 produced 177
+scheduler attempts, 100 completed AI responses, 30 OCO groups, 21 unfilled
+expiries, and 9 closed trades. Completed-response losses comprised 34 candle-
+context changes, 18 absolute-spread blocks (with overlapping adaptive reasons),
+16 refresh/staleness failures, and 2 invalid proposals. Median response-pipeline
+time was 49.208 seconds and p90 was 60.526 seconds. Across 625 release-window
+spread samples, median was 8 points, p90 11, and p95 12 against the unchanged
+10-point absolute limit. Expired groups placed their median BUY/SELL entries
+4.422/4.069 M1 ATR from the request quote; traded groups were 3.276/3.189.
+
+The scheduler now reads two independent PostgreSQL boundaries. The completed-
+response limit is retained as a finite inference-cost backstop. The new demo-
+trade target counts only exact `trades` rows joined through the scoped strategy
+release to a `CLOSED` demo group. Rejections and unfilled expiries remain in the
+attempt funnel but cannot complete or inflate the trade target. Unavailable or
+malformed progress for either boundary blocks new analysis.
+
+Before paid inference, production cycles reacquire a second full market
+snapshot, require unchanged completed candles and execution metadata, and
+recheck all configured spread dimensions. A broker-M1 deadline reserves time
+for the post-model risk and placement refresh; insufficient time does not call
+the endpoint. The deadline is propagated through the local HTTP boundary to the
+provider call, including across configured retries.
+
+Prompt `system-v7` removes the prior instruction to push weak/ranging setups to
+distant broader levels. It requests the nearest defensible completed-candle
+confirmation and receives `max_entry_distance_atr=2.5`. Decimal semantic checks
+enforce that cap after inference and again against the final quote. The new
+release requests a preferred 1,500-second expiry inside a 900–1,800-second
+window; expiry is never rolled forward or reused. Schema 2.1, TP division,
+spread, freshness, precision, sizing, exposure, reconciliation, ownership, and
+mode gates are unchanged.
+
+Overview and Analysis History separately show closed-trade target progress,
+the completed-AI inference ceiling, attempts, placements, expiries, terminal
+results, and operator-readable pre-model/deadline reasons. Implementation is
+tracked by [issue #130](https://github.com/AegisFintech/scalping-bot/issues/130).
+
+A bounded external-AI benchmark reused four durable completed-candle/image
+artifacts without placing orders or changing PostgreSQL. Three responses
+completed in 47, 51, and 60 seconds; one reached the existing 60-second provider
+timeout. The first two measured responses returned both entries inside the 2.5
+ATR cap and exactly 1,500-second expiry. The 47-second verification passed the
+unchanged schema, proposal semantics, TP transform, and effective-proposal
+semantics with no reason codes. This supports a stopped demo pilot but also
+confirms that endpoint latency remains the limiting source of M1 context loss;
+the new broker-minute deadline intentionally prevents late results from being
+counted or placed.
+
+The pre-deployment gate passed Prettier, ESLint, TypeScript typecheck/build,
+244 Node tests across 39 files, 17 schema tests, 3 migration tests, all 3
+configured isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict
+mypy over 17 source files, and 82 Python tests. Configured Streamlit AppTest
+rendered 40 dataframes, 57 metrics, and 15 tabs with zero exceptions.
+Replay/backtest, npm/pip audits with zero known vulnerabilities, tracked-file
+secret scanning, shell/PM2 syntax, and all five offline systemd security parses
+at 2.8 (`OK`) passed.

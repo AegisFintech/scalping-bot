@@ -22,7 +22,10 @@ export interface ExecutionConfig {
   readonly automaticAnalysisEnabled: boolean;
   readonly automaticAnalysisCompletedLimit: number;
   readonly automaticAnalysisCompletedBaseline: number;
+  readonly automaticDemoClosedTradeLimit: number;
+  readonly automaticDemoClosedTradeBaseline: number;
   readonly automaticAnalysisStartWindowSeconds: number;
+  readonly maxEntryDistanceAtr: string;
   readonly symbol: string;
   readonly accountKey: string;
   readonly baseRiskPercent: string;
@@ -91,6 +94,19 @@ function optionalPositiveDecimal(
   }
 }
 
+function boundedPositiveDecimal(
+  value: string | undefined,
+  fallback: string,
+  name: string,
+  maximum: string,
+): string {
+  const parsed = optionalPositiveDecimal(value ?? fallback, name);
+  if (parsed === null || new Decimal(parsed).gt(maximum)) {
+    throw new Error(`CONFIG_DECIMAL_OUT_OF_RANGE:${name}`);
+  }
+  return parsed;
+}
+
 export function loadExecutionConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): ExecutionConfig {
@@ -148,6 +164,32 @@ export function loadExecutionConfig(
       "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_ANALYSIS_COMPLETED_BASELINE",
     );
   }
+  const automaticDemoClosedTradeLimit = integerValue(
+    environment.AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT,
+    0,
+    "AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT",
+  );
+  const automaticDemoClosedTradeBaseline = integerValue(
+    environment.AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE,
+    0,
+    "AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE",
+  );
+  if (automaticDemoClosedTradeLimit > 10_000) {
+    throw new Error(
+      "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT",
+    );
+  }
+  if (
+    automaticDemoClosedTradeBaseline > automaticDemoClosedTradeLimit ||
+    automaticDemoClosedTradeBaseline > 10_000
+  ) {
+    throw new Error(
+      "CONFIG_INTEGER_OUT_OF_RANGE:AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE",
+    );
+  }
+  if (automaticDemoClosedTradeLimit > 0 && mode !== "demo") {
+    throw new Error("CONFIG_DEMO_TRADE_CAMPAIGN_REQUIRES_DEMO_MODE");
+  }
   return {
     appEnv: environment.APP_ENV ?? "development",
     instanceId: environment.INSTANCE_ID ?? "local-1",
@@ -183,6 +225,8 @@ export function loadExecutionConfig(
     ),
     automaticAnalysisCompletedLimit,
     automaticAnalysisCompletedBaseline,
+    automaticDemoClosedTradeLimit,
+    automaticDemoClosedTradeBaseline,
     automaticAnalysisStartWindowSeconds: (() => {
       const value = integerValue(
         environment.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS,
@@ -196,6 +240,12 @@ export function loadExecutionConfig(
       }
       return value;
     })(),
+    maxEntryDistanceAtr: boundedPositiveDecimal(
+      environment.MAX_ENTRY_DISTANCE_ATR,
+      "2.5",
+      "MAX_ENTRY_DISTANCE_ATR",
+      "20",
+    ),
     symbol,
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
     baseRiskPercent: decimalPercent(
@@ -257,8 +307,12 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         automaticAnalysisCompletedLimit: config.automaticAnalysisCompletedLimit,
         automaticAnalysisCompletedBaseline:
           config.automaticAnalysisCompletedBaseline,
+        automaticDemoClosedTradeLimit: config.automaticDemoClosedTradeLimit,
+        automaticDemoClosedTradeBaseline:
+          config.automaticDemoClosedTradeBaseline,
         automaticAnalysisStartWindowSeconds:
           config.automaticAnalysisStartWindowSeconds,
+        maxEntryDistanceAtr: config.maxEntryDistanceAtr,
       }),
     )
     .digest("hex");

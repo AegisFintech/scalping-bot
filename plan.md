@@ -196,11 +196,33 @@ evidence precede any broker-capable live implementation.
 | ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 | ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
 | ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
+| ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
 required checks, reviews, and safety sequencing pass. Contribution-count targets
 never justify empty, noisy, unsafe, or misleading commits.
+
+### ISSUE-054 delivery details
+
+- Acceptance criteria: collect 100 durable closed demo trades without counting
+  rejected analyses or unfilled expiries as outcomes; retain a separate finite
+  completed-AI cost ceiling; reject unavailable progress; prevent late/unstable
+  paid calls; enforce reachable conditional entries and bounded fresh expiry;
+  expose the complete conversion funnel in Streamlit.
+- Dependencies: ISSUE-050 campaign review, ISSUE-051 campaign 002, exact terminal
+  trade persistence, strategy-scoped reconciliation, and the existing demo-only
+  acknowledgement/configuration.
+- Current status: implementation and the full pre-deployment gate suite passed
+  on `issue-054-closed-trade-campaign`. Campaign 002 remains durably paused at
+  100 completed responses while release `.30` is reviewed and deployed. The
+  gate record is 244 Node tests across 39 files, 17 schema tests, 3 migration
+  tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, 82 Python
+  tests, strict TypeScript and Python checks, and configured Streamlit AppTest
+  with zero exceptions, 40 dataframes, 57 metrics, and 15 tabs. Replay,
+  backtest, zero-vulnerability dependency audits, the tracked-file secret
+  scan, shell/PM2 syntax, and all five offline systemd security parses at 2.8
+  (`OK`) also passed. Merge, stopped rollout, and bounded demo restart remain.
 
 ### ISSUE-001 delivery details
 

@@ -10,7 +10,7 @@ spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
 The one explicitly configured execution transform is TP-distance division by
-two. Prompt `system-v6` asks for at least twice the effective minimum R:R. The
+two. Prompt `system-v7` asks for at least twice the effective minimum R:R. The
 coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
 recomputes R:R, and rejects an off-tick result without rounding. The original
 endpoint response and effective values remain separately auditable.
@@ -100,6 +100,9 @@ units must not be treated as whole lots.
   minimum; after transformation, the effective broker proposal must still
   satisfy the configured minimum.
 - Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
+- Buy/sell confirmation distance from the current ask/bid must not exceed the
+  configured M1-ATR reachability cap. This is checked after the model response
+  and again against the final pre-placement quote.
 - Entry/SL/TP/invalidation/expiration must all remain coherent at validation immediately before placement.
 - A mathematically incompatible minimum/maximum stop-distance interval rejects before inference, so the model is never asked for an impossible proposal.
 

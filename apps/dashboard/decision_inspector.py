@@ -53,6 +53,7 @@ _PROMPT_FILES = {
     "system-v4": "system-v4.md",
     "system-v5": "system-v5.md",
     "system-v6": "system-v6.md",
+    "system-v7": "system-v7.md",
 }
 _SECRET_VALUE = re.compile(
     r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"
@@ -96,11 +97,11 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "Enable automatic analysis through reviewed configuration when intended.",
     ),
     "AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE": (
-        "Completed-analysis campaign reached its limit",
-        "The configured number of durable external-AI analyses is complete. New analyses are "
+        "External-AI inference safety limit reached",
+        "The configured number of durable external-AI responses is complete. New analyses are "
         "paused while order maintenance and reconciliation continue.",
-        "Review the campaign in Streamlit and PostgreSQL before starting a separately versioned "
-        "campaign.",
+        "Review inference usage and campaign conversion before starting a separately versioned "
+        "limit.",
     ),
     "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE": (
         "Completed-analysis campaign progress is unavailable",
@@ -113,6 +114,29 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "Completed-analysis campaign progress is invalid",
         "The configured limit or durable count could not be interpreted safely.",
         "Correct the configuration or durable-state fault before resuming analysis.",
+    ),
+    "AUTOMATIC_TRADE_CAMPAIGN_COMPLETE": (
+        "Closed-demo-trade campaign reached its target",
+        "The configured number of durable closed demo trades has been collected. New analyses "
+        "are paused while maintenance and reconciliation continue.",
+        "Review the complete trade sample before starting another immutable campaign.",
+    ),
+    "AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_UNAVAILABLE": (
+        "Closed-demo-trade progress is unavailable",
+        "The scheduler cannot prove the durable closed-trade count, so it will not start another "
+        "analysis.",
+        "Restore PostgreSQL access and verify the strategy-scoped trade count.",
+    ),
+    "AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_INVALID": (
+        "Closed-demo-trade progress is invalid",
+        "The configured target or durable trade count could not be interpreted safely.",
+        "Correct the configuration or durable-state fault before resuming analysis.",
+    ),
+    "MODEL_DEADLINE_INSUFFICIENT": (
+        "Not enough time remains in this M1 candle",
+        "The AI was not called because its response would be likely to arrive after the current "
+        "completed-candle context changes.",
+        "No action is required; the scheduler retries immediately after a later M1 close.",
     ),
     "EMERGENCY_STOP_ENV": (
         "Environment emergency stop is active",
@@ -331,6 +355,15 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
 
 _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (
     (
+        "PRE_MODEL_",
+        (
+            "Pre-AI market stability check stopped this attempt",
+            "Two fresh market snapshots did not retain the same completed candles, eligible "
+            "spread, or available data, so no paid AI request was made.",
+            "No action is required unless it repeats; the scheduler retries with a fresh cycle.",
+        ),
+    ),
+    (
         "AI_ORCHESTRATOR_",
         (
             "External AI request failed",
@@ -483,7 +516,7 @@ def campaign_history_counts(value: object) -> dict[str, int]:
     if (
         not isinstance(completed, int)
         or isinstance(completed, bool)
-        or not 0 <= completed <= 100
+        or not 0 <= completed <= _MAX_EXACT_COLLECTION_ITEMS
         or not isinstance(baseline, int)
         or isinstance(baseline, bool)
         or not isinstance(release_completed, int)
@@ -521,6 +554,18 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         campaign_complete = campaign.get("complete") is True
     else:
         campaign_complete = False
+    trade_campaign = status.get("automaticDemoTradeCampaign")
+    if isinstance(trade_campaign, Mapping):
+        raw_trade_reasons = trade_campaign.get("reasonCodes", [])
+        if isinstance(raw_trade_reasons, Sequence) and not isinstance(
+            raw_trade_reasons, (str, bytes)
+        ):
+            reasons.extend(str(reason) for reason in raw_trade_reasons)
+        else:
+            reasons.append("AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_INVALID")
+        trade_campaign_complete = trade_campaign.get("complete") is True
+    else:
+        trade_campaign_complete = False
     reasons = list(dict.fromkeys(reasons))
     reason_set = set(reasons)
     automatic = status.get("automaticAnalysisEnabled") is True
@@ -537,14 +582,24 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         detail = (
             "The process can maintain existing state, but it will not start scheduled analyses."
         )
-    elif campaign_complete:
+    elif trade_campaign_complete:
         state, headline, severity = (
-            "CAMPAIGN_COMPLETE",
-            "Completed-analysis campaign is ready for review",
+            "TRADE_CAMPAIGN_COMPLETE",
+            "Closed-demo-trade campaign is ready for review",
             "success",
         )
         detail = (
-            "The configured durable external-AI result limit was reached; no next analysis will "
+            "The durable closed-demo-trade target was reached; no next analysis will start while "
+            "maintenance and reconciliation continue."
+        )
+    elif campaign_complete:
+        state, headline, severity = (
+            "CAMPAIGN_COMPLETE",
+            "External-AI inference limit is ready for review",
+            "success",
+        )
+        detail = (
+            "The configured durable external-AI response limit was reached; no next analysis will "
             "start while maintenance and reconciliation continue."
         )
     elif paused or "ANALYSES_PAUSED" in reason_set:
@@ -601,6 +656,8 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         )
     elif state == "WAITING_FOR_AI":
         operator_action = "No action required; the same process retries after the displayed time."
+    elif state == "TRADE_CAMPAIGN_COMPLETE":
+        operator_action = "Review the completed demo trade sample before starting another campaign."
     elif state == "CAMPAIGN_COMPLETE":
         operator_action = "Review the 100 completed AI analyses before starting another campaign."
     elif reason_views:
@@ -1454,7 +1511,12 @@ def _attempt_primary_reason(reasons: Sequence[str], category: str) -> str:
         "AI_DEPENDENCY_FAILED": ("AI_",),
         "MARKET_DATA_FAILED": ("MARKET_DATA_", "ANALYTICS_", "QUOTE_", "ORDER_BOOK_"),
         "SPREAD_SAFETY_SKIP": ("SPREAD_",),
-        "CONTEXT_EXPIRED": ("DECISION_CANDLE_CONTEXT_CHANGED", "PLACEMENT_CANDLE_CONTEXT_CHANGED"),
+        "CONTEXT_EXPIRED": (
+            "PRE_MODEL_CANDLE_CONTEXT_CHANGED",
+            "DECISION_CANDLE_CONTEXT_CHANGED",
+            "PLACEMENT_CANDLE_CONTEXT_CHANGED",
+            "MODEL_DEADLINE_INSUFFICIENT",
+        ),
         "MARKET_REFRESH_FAILED": (
             "DECISION_MARKET_REFRESH_FAILED",
             "PLACEMENT_MARKET_REFRESH_FAILED",
@@ -1655,6 +1717,10 @@ def analysis_attempt_funnel_view(rows: Sequence[Mapping[str, Any]]) -> dict[str,
                 and not reasons
             ):
                 category = "ANALYSIS_OR_AI_IN_PROGRESS"
+            elif any("CANDLE_CONTEXT_CHANGED" in reason for reason in reasons) or any(
+                reason == "MODEL_DEADLINE_INSUFFICIENT" for reason in reasons
+            ):
+                category = "CONTEXT_EXPIRED"
             elif any(reason.startswith("AI_") for reason in reasons):
                 category = "AI_DEPENDENCY_FAILED"
             elif any(reason.startswith("SPREAD_") for reason in reasons):
@@ -1662,7 +1728,13 @@ def analysis_attempt_funnel_view(rows: Sequence[Mapping[str, Any]]) -> dict[str,
             elif any(
                 reason.startswith(prefix)
                 for reason in reasons
-                for prefix in ("MARKET_DATA_", "ANALYTICS_", "QUOTE_", "ORDER_BOOK_")
+                for prefix in (
+                    "MARKET_DATA_",
+                    "ANALYTICS_",
+                    "QUOTE_",
+                    "ORDER_BOOK_",
+                    "PRE_MODEL_MARKET_",
+                )
             ):
                 category = "MARKET_DATA_FAILED"
             else:
@@ -1778,7 +1850,7 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
     if (
         not isinstance(expected_count, int)
         or isinstance(expected_count, bool)
-        or not 0 <= expected_count <= 100
+        or not 0 <= expected_count <= _MAX_EXACT_COLLECTION_ITEMS
         or len(rows) != expected_count
     ):
         raise DecisionViewError("DECISION_VIEW_HISTORY_COUNT_MISMATCH")

@@ -171,6 +171,7 @@ export interface SemanticContext {
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
   readonly maxStopDistanceAtr: string;
+  readonly maxEntryDistanceAtr?: string;
   readonly maxAffordableStopDistance?: string;
   readonly maxQuoteAgeMs: number;
   readonly maxMetadataAgeMs?: number;
@@ -211,6 +212,10 @@ function checkLeg(
   );
   const bid = decimal(context.quote.bid);
   const ask = decimal(context.quote.ask);
+  const maximumEntryDistance =
+    context.maxEntryDistanceAtr === undefined
+      ? null
+      : decimal(context.atr).mul(decimal(context.maxEntryDistanceAtr));
   if (!trigger.eq(entry)) reasons.push(`${side}_TRIGGER_ENTRY_MISMATCH`);
   if (
     ![entry, trigger, stop, target, invalidation].every((price) =>
@@ -225,11 +230,21 @@ function checkLeg(
     if (!(stop.lt(entry) && target.gt(entry)))
       reasons.push("BUY_LEVEL_ORDER_INVALID");
     if (entry.lt(ask.plus(minDistance))) reasons.push("BUY_ENTRY_TOO_CLOSE");
+    if (
+      maximumEntryDistance !== null &&
+      entry.minus(ask).gt(maximumEntryDistance)
+    )
+      reasons.push("BUY_ENTRY_DISTANCE_ATR_EXCEEDED");
     if (!invalidation.lte(entry)) reasons.push("BUY_INVALIDATION_INVALID");
   } else {
     if (!(stop.gt(entry) && target.lt(entry)))
       reasons.push("SELL_LEVEL_ORDER_INVALID");
     if (entry.gt(bid.minus(minDistance))) reasons.push("SELL_ENTRY_TOO_CLOSE");
+    if (
+      maximumEntryDistance !== null &&
+      bid.minus(entry).gt(maximumEntryDistance)
+    )
+      reasons.push("SELL_ENTRY_DISTANCE_ATR_EXCEEDED");
     if (!invalidation.gte(entry)) reasons.push("SELL_INVALIDATION_INVALID");
   }
   if (risk.lt(minDistance)) reasons.push(`${side}_STOP_DISTANCE_TOO_SMALL`);

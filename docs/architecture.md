@@ -60,12 +60,13 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 
 - Builds full/compact payloads, applies token/size bounds, and records prompt/model/schema versions.
 - Supplies non-sizing execution constraints—current bid/ask, precision, tick,
-  stop-distance, reward/risk, ATR-distance, and expiry bounds—so the mandatory
+  stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v6` tells the endpoint that execution will preserve entry/SL
+- Prompt `system-v7` tells the endpoint that execution will preserve entry/SL
   and halve TP distance. It explicitly self-checks both sides' R:R, midpoint,
-  target ordering, and independent chart-structure confirmation. It supplies a
+  target ordering, nearest actionable chart-structure confirmation, a maximum
+  entry distance in M1 ATR, and a preferred bounded expiry. It supplies a
   doubled proposal R:R minimum plus a
   non-sizing maximum stop distance derived from reconciled equity, configured
   setup risk, broker tick value, and broker minimum volume. No account money,
@@ -118,13 +119,15 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   committed before the cycle, so restarts cannot issue a second model request
   for that interval. Provider failure retries on the next fresh interval; the
   post-model completed-candle identity check remains unchanged.
-- Optionally bounds an automatic campaign by distinct durable completed model
-  responses for the exact account, symbol, and immutable strategy release.
+- Separately bounds automatic operation by distinct durable completed model
+  responses and by durable closed demo trades for the exact account, symbol,
+  and immutable strategy release. The response boundary is an inference-cost
+  ceiling; the closed-trade boundary is the evidence-collection target.
   Pre-model rejection and failed/unavailable provider attempts do not consume a
-  slot. The scheduler checks PostgreSQL before every claim and again after each
-  cycle. Result 100 may finish its normal validation and placement, after which
-  the service persists `PAUSE_NEW_ANALYSES`; no later result can start when the
-  count is unavailable or at its limit. Broker callback processing, expiry,
+  response slot or closed-trade target. The scheduler checks PostgreSQL before
+  every claim and again after each cycle. Reaching either configured limit
+  persists `PAUSE_NEW_ANALYSES`; no later result can start when either count is
+  unavailable or at its limit. Broker callback processing, expiry,
   cancellation, position management, and reconciliation continue while paused.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or
@@ -201,10 +204,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   gross/net unrealized P/L. Persisted commission incurred so far is shown
   separately. Missing, ambiguous, mismatched, malformed, or unreconciled
   evidence renders unavailable and is never estimated.
-- A configured completed-analysis campaign shows its immutable-release target,
-  durable completed count, remaining count, progress bar, and explicit
-  `CAMPAIGN_COMPLETE` review state. An unavailable or invalid count is displayed
-  as a fail-closed scheduler condition rather than zero progress.
+- The closed-demo-trade target and completed-AI inference ceiling have separate
+  immutable-release counts, remaining values, progress bars, and completion
+  states. An unavailable or invalid count is displayed as a fail-closed
+  scheduler condition rather than zero progress.
 - Prompt history shows prior request/response versions and hashes. Each selected
   run defaults to the newest durable AI request and prominently shows the exact
   hash-verified system prompt with the exact persisted redacted user JSON. New

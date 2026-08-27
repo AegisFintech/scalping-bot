@@ -127,12 +127,23 @@ export class AiOrchestratorHttpClient {
     readonly symbol: string;
     readonly payload: Readonly<Record<string, unknown>>;
     readonly chart: AnalysisChartArtifact;
+    readonly timeoutMs?: number;
   }): Promise<{
     readonly response: ModelResponse;
     readonly rawResponse: string;
     readonly promptArtifact: ModelPromptArtifact;
   }> {
     if (this.circuitOpen) throw new Error("AI_ORCHESTRATOR_CIRCUIT_OPEN");
+    const configuredTimeoutMs = this.#options.timeoutMs ?? 35_000;
+    const requestTimeoutMs = request.timeoutMs ?? configuredTimeoutMs;
+    if (
+      !Number.isSafeInteger(requestTimeoutMs) ||
+      requestTimeoutMs < 2_000 ||
+      requestTimeoutMs > configuredTimeoutMs
+    ) {
+      throw new Error("AI_ORCHESTRATOR_DEADLINE_INVALID");
+    }
+    const providerTimeoutMs = requestTimeoutMs - 1_000;
     let response: Response;
     try {
       response = await (this.#options.fetchImpl ?? fetch)(
@@ -143,8 +154,8 @@ export class AiOrchestratorHttpClient {
             "content-type": "application/json",
             "x-analysis-id": request.analysisId,
           },
-          body: JSON.stringify(request),
-          signal: AbortSignal.timeout(this.#options.timeoutMs ?? 35_000),
+          body: JSON.stringify({ ...request, timeoutMs: providerTimeoutMs }),
+          signal: AbortSignal.timeout(requestTimeoutMs),
         },
       );
     } catch (error) {

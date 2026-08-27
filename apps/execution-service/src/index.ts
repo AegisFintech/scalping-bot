@@ -47,6 +47,10 @@ import {
   enforceAutomaticAnalysisCampaign,
   PostgresAutomaticAnalysisCampaign,
 } from "./automatic-analysis-campaign.js";
+import {
+  enforceAutomaticTradeCampaign,
+  PostgresAutomaticTradeCampaign,
+} from "./automatic-trade-campaign.js";
 import { loadExecutionConfig, safetyConfigHash } from "./config.js";
 import { compactTailCounts } from "./analytics-config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
@@ -102,6 +106,20 @@ function integer(
 
 function optionalDecimal(value: string | undefined): string | null {
   return value === undefined || value === "" ? null : value;
+}
+
+function boundedSecondsMs(
+  environment: NodeJS.ProcessEnv,
+  name: string,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  const seconds = integer(environment, name, fallback);
+  if (seconds < minimum || seconds > maximum) {
+    throw new Error(`CONFIG_INTEGER_OUT_OF_RANGE:${name}`);
+  }
+  return seconds * 1_000;
 }
 
 function counts(
@@ -282,7 +300,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v6",
+    promptVersion: "system-v7",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -368,8 +386,8 @@ async function main(): Promise<void> {
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v6.md"),
-    promptVersion: "system-v6",
+    systemPromptPath: path.resolve("prompts/system-v7.md"),
+    promptVersion: "system-v7",
     timeoutMs: aiOrchestratorRequestTimeoutMs({
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
@@ -402,7 +420,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v6",
+    promptVersion: "system-v7",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -421,6 +439,14 @@ async function main(): Promise<void> {
     strategyVersionId: identity.strategyVersionId,
     configuredLimit: config.automaticAnalysisCompletedLimit,
     completedBaseline: config.automaticAnalysisCompletedBaseline,
+  });
+  const automaticTradeCampaign = new PostgresAutomaticTradeCampaign({
+    pool,
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+    strategyVersionId: identity.strategyVersionId,
+    configuredLimit: config.automaticDemoClosedTradeLimit,
+    closedTradeBaseline: config.automaticDemoClosedTradeBaseline,
   });
   const managedSetupOverview = new PostgresManagedSetupOverview({
     pool,
@@ -916,6 +942,29 @@ async function main(): Promise<void> {
     };
   };
 
+  const minimumOrderExpirySeconds = integer(
+    environment,
+    "ORDER_EXPIRY_MIN_SECONDS",
+    15,
+  );
+  const maximumOrderExpirySeconds = integer(
+    environment,
+    "ORDER_EXPIRY_MAX_SECONDS",
+    1800,
+  );
+  const preferredOrderExpirySeconds = integer(
+    environment,
+    "PREFERRED_ORDER_EXPIRY_SECONDS",
+    1500,
+  );
+  if (
+    minimumOrderExpirySeconds < 1 ||
+    maximumOrderExpirySeconds < minimumOrderExpirySeconds ||
+    preferredOrderExpirySeconds < minimumOrderExpirySeconds ||
+    preferredOrderExpirySeconds > maximumOrderExpirySeconds
+  ) {
+    throw new Error("CONFIG_ORDER_EXPIRY_RANGE_INVALID");
+  }
   const coordinator = new AnalysisCoordinator({
     symbol: config.symbol,
     mode: config.tradingMode as "paper" | "demo" | "shadow" | "live",
@@ -939,13 +988,15 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v6",
+    promptVersion: "system-v7",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: environment.MIN_RISK_REWARD_RATIO ?? "2",
-    minExpirySeconds: integer(environment, "ORDER_EXPIRY_MIN_SECONDS", 15),
-    maxExpirySeconds: integer(environment, "ORDER_EXPIRY_MAX_SECONDS", 1800),
+    minExpirySeconds: minimumOrderExpirySeconds,
+    maxExpirySeconds: maximumOrderExpirySeconds,
+    preferredExpirySeconds: preferredOrderExpirySeconds,
     maxStopDistanceAtr: environment.MAX_STOP_DISTANCE_ATR ?? "3",
+    maxEntryDistanceAtr: config.maxEntryDistanceAtr,
     minStopDistancePoints: optionalDecimal(
       environment.MIN_STOP_DISTANCE_POINTS,
     ),
@@ -955,6 +1006,22 @@ async function main(): Promise<void> {
     maxSpreadPoints: optionalDecimal(environment.MAX_SPREAD_POINTS),
     maxSpreadAtrRatio: optionalDecimal(environment.MAX_SPREAD_ATR_RATIO),
     maxSpreadPercentile: optionalDecimal(environment.MAX_SPREAD_PERCENTILE),
+    preModelStabilityCheck: true,
+    enforceModelDeadline: true,
+    minimumModelBudgetMs: boundedSecondsMs(
+      environment,
+      "MODEL_MINIMUM_CALL_BUDGET_SECONDS",
+      40,
+      1,
+      55,
+    ),
+    postModelReserveMs: boundedSecondsMs(
+      environment,
+      "MODEL_POST_RESPONSE_RESERVE_SECONDS",
+      5,
+      1,
+      30,
+    ),
     spreadContext,
     market,
     analytics,
@@ -1003,6 +1070,27 @@ async function main(): Promise<void> {
             : "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_UNAVAILABLE",
         ],
       }));
+    const tradeCampaign = await automaticTradeCampaign
+      .progress()
+      .catch((error) => ({
+        enabled: config.automaticDemoClosedTradeLimit > 0,
+        limit:
+          config.automaticDemoClosedTradeLimit > 0
+            ? config.automaticDemoClosedTradeLimit
+            : null,
+        baseline: config.automaticDemoClosedTradeBaseline,
+        releaseClosedTrades: null,
+        closedTrades: null,
+        remaining: null,
+        complete: false,
+        allowed: false,
+        reasonCodes: [
+          error instanceof Error &&
+          error.message === "AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_INVALID"
+            ? error.message
+            : "AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_UNAVAILABLE",
+        ],
+      }));
     const eligibility = evaluateAnalysisEligibility(current);
     const modeReasons =
       config.tradingMode === "demo"
@@ -1040,6 +1128,16 @@ async function main(): Promise<void> {
         remaining: campaign.remaining,
         complete: campaign.complete,
         reasonCodes: campaign.reasonCodes,
+      },
+      automaticDemoTradeCampaign: {
+        enabled: tradeCampaign.enabled,
+        limit: tradeCampaign.limit,
+        baseline: tradeCampaign.baseline,
+        releaseClosedTrades: tradeCampaign.releaseClosedTrades,
+        closedTrades: tradeCampaign.closedTrades,
+        remaining: tradeCampaign.remaining,
+        complete: tradeCampaign.complete,
+        reasonCodes: tradeCampaign.reasonCodes,
       },
       managedSetup,
       aiCircuitOpenUntil: model.circuitOpenUntil,
@@ -1187,6 +1285,7 @@ async function main(): Promise<void> {
 
   let ticking = false;
   let automaticCampaignPausePersisted = false;
+  let automaticTradeCampaignPausePersisted = false;
   const persistAutomaticCampaignPause = async (): Promise<void> => {
     if (automaticCampaignPausePersisted) return;
     await controls.setControl({
@@ -1202,6 +1301,23 @@ async function main(): Promise<void> {
       outcome: "paused",
       completed: config.automaticAnalysisCompletedLimit,
       limit: config.automaticAnalysisCompletedLimit,
+    });
+  };
+  const persistAutomaticTradeCampaignPause = async (): Promise<void> => {
+    if (automaticTradeCampaignPausePersisted) return;
+    await controls.setControl({
+      key: "PAUSE_NEW_ANALYSES",
+      scope: config.instanceId,
+      enabled: true,
+      actor: "automatic-trade-campaign",
+      reason: `Configured campaign collected ${config.automaticDemoClosedTradeLimit} durable closed demo trades; paused for review`,
+    });
+    automaticTradeCampaignPausePersisted = true;
+    logger.log("info", {
+      event_name: "automatic_trade_campaign_completed",
+      outcome: "paused",
+      closed_trades: config.automaticDemoClosedTradeLimit,
+      limit: config.automaticDemoClosedTradeLimit,
     });
   };
   const tick = async (): Promise<void> => {
@@ -1242,6 +1358,15 @@ async function main(): Promise<void> {
         ).allowed
       ) {
         const campaignBefore = await automaticAnalysisCampaign.progress();
+        const tradeCampaignBefore = await automaticTradeCampaign.progress();
+        if (
+          !(await enforceAutomaticTradeCampaign(
+            tradeCampaignBefore,
+            persistAutomaticTradeCampaignPause,
+          ))
+        ) {
+          return;
+        }
         if (
           !(await enforceAutomaticAnalysisCampaign(
             campaignBefore,
@@ -1296,6 +1421,10 @@ async function main(): Promise<void> {
             await enforceAutomaticAnalysisCampaign(
               await automaticAnalysisCampaign.progress(),
               persistAutomaticCampaignPause,
+            );
+            await enforceAutomaticTradeCampaign(
+              await automaticTradeCampaign.progress(),
+              persistAutomaticTradeCampaignPause,
             );
           }
         }
