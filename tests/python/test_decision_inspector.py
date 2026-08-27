@@ -159,6 +159,14 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     assert "request reached the external endpoint" in provider_timeout["meaning"]
     assert "will not place an old answer" in provider_timeout["next_action"]
 
+    storage = reason_code_view("DATABASE_STORAGE_LIMIT_EXCEEDED")
+    assert storage["title"] == "PostgreSQL storage is full"
+    assert "no new order is sent" in storage["meaning"]
+
+    interrupted = reason_code_view("ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART")
+    assert interrupted["title"] == "An unfinished analysis was safely closed"
+    assert "No manual state edit" in interrupted["next_action"]
+
 
 def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> None:
     view = automation_status_view(

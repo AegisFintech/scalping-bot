@@ -80,6 +80,7 @@ import { PaperAccountAdapter, LinearMarginEstimator } from "./paper-account.js";
 import { PaperGateway } from "./paper-gateway.js";
 import { PostgresPerformanceContext } from "./performance-context.js";
 import { PostgresDecisionTrail } from "./postgres-trail.js";
+import { stableFailureReason } from "./failure-reasons.js";
 import { createExecutionServer, type ExecutionStatus } from "./server.js";
 import { ShadowGateway } from "./shadow-gateway.js";
 import {
@@ -248,6 +249,7 @@ async function main(): Promise<void> {
     : null;
 
   const candleCounts = counts(environment);
+  const persistedCandleTails = compactTailCounts(environment, candleCounts);
   const marketClient = new MarketDataHttpClient({
     baseUrl:
       environment.MARKET_DATA_BASE_URL ??
@@ -426,7 +428,17 @@ async function main(): Promise<void> {
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
     environment: config.appEnv,
+    persistedCandleTails,
   });
+  const recoveredInterruptedAnalyses = await trail.recoverInterruptedAnalyses();
+  if (recoveredInterruptedAnalyses > 0) {
+    logger.log("warn", {
+      event_name: "interrupted_analyses_recovered",
+      outcome: "rejected",
+      reason_code: "ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART",
+      count: recoveredInterruptedAnalyses,
+    });
+  }
   const executionSymbolId = latestSnapshot.metadata.symbolId;
   const automaticAnalysisSchedule = new PostgresAutomaticAnalysisSchedule({
     pool,
@@ -984,7 +996,7 @@ async function main(): Promise<void> {
       bollingerStddev: environment.BOLLINGER_STDDEV ?? "2",
       swingPivotLeft: integer(environment, "SWING_PIVOT_LEFT", 3),
       swingPivotRight: integer(environment, "SWING_PIVOT_RIGHT", 3),
-      compactTail: compactTailCounts(environment, candleCounts),
+      compactTail: persistedCandleTails,
       expectedCounts: candleCounts,
     },
     modelPayloadMode:
@@ -1434,8 +1446,7 @@ async function main(): Promise<void> {
       logger.log("error", {
         event_name: "scheduler_tick_failed",
         outcome: "failed",
-        reason_code:
-          error instanceof Error ? error.message : "SCHEDULER_FAILED",
+        reason_code: stableFailureReason(error, "SCHEDULER_FAILED"),
       });
     } finally {
       ticking = false;
@@ -1481,8 +1492,7 @@ async function main(): Promise<void> {
       logger.log("warn", {
         event_name: "spread_observation_failed",
         outcome: "rejected",
-        reason_code:
-          error instanceof Error ? error.message : "SPREAD_OBSERVATION_FAILED",
+        reason_code: stableFailureReason(error, "SPREAD_OBSERVATION_FAILED"),
       });
     } finally {
       spreadSampling = false;

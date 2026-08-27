@@ -133,6 +133,39 @@ not widen freshness thresholds to accommodate model latency.
 
 ## Automatic demo analysis loop
 
+### PostgreSQL bulk-history capacity recovery
+
+`DATABASE_STORAGE_LIMIT_EXCEEDED` means PostgreSQL could not durably record a
+complete cycle. It is not an AI rejection and no order is sent. Stop the
+execution service only after status and broker reconciliation show no active
+strategy order or position. Export `candles` and `indicator_snapshots` to a
+mode-`0600` local archive outside the repository, record exact source row
+counts, SHA-256 checksums, byte sizes, and archive format, then independently
+read every compressed line and compare counts before clearing either table.
+
+The reviewed `DECISION_COMPACT_V1` transition may then truncate only
+`candles` and `indicator_snapshots`. Do not clear `candle_snapshots`,
+`analysis_runs`, `analysis_chart_artifacts`, `model_requests`,
+`model_responses`, `validation_results`, `risk_decisions`, orders, fills,
+positions, trades, audit events, or execution-event journal rows. These remain
+the authoritative decision and broker trail. The exact model input and chart
+remain queryable even when legacy duplicated raw series are local-only.
+
+Rollback is to stop execution, verify no active broker lifecycle, verify the
+manifest hashes again, require empty target bulk tables, stream the archived
+NDJSON objects through PostgreSQL `jsonb_populate_record` in bounded
+transactions, compare restored counts to the manifest, run `ANALYZE`, and only
+then restart. Never restore over newer rows or disable primary/foreign/unique
+constraints. Retain the protected archive until an isolated restore drill and
+the 100-trade campaign review are complete.
+
+Release `.32` stores only the configured completed-candle tails and removes
+duplicated `full_candles`/`raw_tail` arrays from `indicator_snapshots.features`.
+The exact compact payload sent to the endpoint remains in `model_requests`, and
+the exact 1600x1200 chart remains in `analysis_chart_artifacts`. Startup also
+closes only abandoned pre-placement analysis states; it does not infer or alter
+broker outcomes.
+
 Set `AUTOMATIC_ANALYSIS_ENABLED=true` only for an explicitly authorized demo
 session. The scheduler continues maintenance every
 `ANALYSIS_INTERVAL_SECONDS`, but it may claim a new analysis only during the

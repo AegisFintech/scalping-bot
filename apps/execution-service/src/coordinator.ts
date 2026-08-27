@@ -47,6 +47,7 @@ import {
   AnalysisStateMachine,
   type AnalysisTransition,
 } from "./state-machine.js";
+import { stableFailureReason } from "./failure-reasons.js";
 
 export interface MarketSnapshotProvider {
   snapshot(
@@ -1037,7 +1038,7 @@ export class AnalysisCoordinator {
       return { analysisId, outcome: "PLACED", reasonCodes: [], placement };
     } catch (error) {
       return await reject([
-        error instanceof Error ? error.message : "ANALYSIS_CYCLE_FAILED",
+        stableFailureReason(error, "ANALYSIS_CYCLE_FAILED"),
       ]);
     } finally {
       this.#running = false;
