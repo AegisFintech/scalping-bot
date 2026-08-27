@@ -223,6 +223,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   backtest, zero-vulnerability dependency audits, the tracked-file secret
   scan, shell/PM2 syntax, and all five offline systemd security parses at 2.8
   (`OK`) also passed. Merge, stopped rollout, and bounded demo restart remain.
+  Review and automatic merge are tracked by
+  [PR #131](https://github.com/AegisFintech/scalping-bot/pull/131).
 
 ### ISSUE-001 delivery details
 
