@@ -251,6 +251,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   TypeScript/Python checks, and configured AppTest with zero exceptions, 35
   dataframes, 47 metrics, and 15 tabs. Replay/backtest, dependency audits,
   secret/shell/PM2 checks, and all five 2.8 (`OK`) systemd parses passed.
+  Review and automatic merge are tracked by
+  [PR #133](https://github.com/AegisFintech/scalping-bot/pull/133).
 
 ### ISSUE-001 delivery details
 

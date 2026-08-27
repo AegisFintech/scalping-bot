@@ -2096,3 +2096,6 @@ rendered 35 dataframes, 47 metrics, and 15 tabs with zero exceptions.
 Replay/backtest, npm/pip audits with zero known vulnerabilities, tracked-file
 secret scanning, shell/PM2 syntax, and all five offline systemd security parses
 at 2.8 (`OK`) passed.
+
+Review and automatic merge are tracked by
+[PR #133](https://github.com/AegisFintech/scalping-bot/pull/133).
