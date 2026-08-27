@@ -11,6 +11,7 @@ import type {
   ModelResponse,
   OcoPlacementResult,
   ReconciliationSnapshot,
+  Timeframe,
   TradingMode,
 } from "../../../packages/contracts/src/index.js";
 import { redact, type LogValue } from "../../../packages/logging/src/index.js";
@@ -19,6 +20,11 @@ import type { DecisionTrail } from "./coordinator.js";
 import type { OcoEvaluation } from "./oco-risk-evaluator.js";
 import type { PaperPositionSummary } from "./paper-gateway.js";
 import type { AnalysisTransition } from "./state-machine.js";
+import {
+  compactAnalyticsFeatures,
+  compactMarketCandles,
+  validatePersistedCandleTails,
+} from "./decision-storage.js";
 
 export interface PostgresDecisionTrailOptions {
   readonly pool: pg.Pool;
@@ -33,6 +39,7 @@ export interface PostgresDecisionTrailOptions {
   readonly payloadMode: "full" | "compact";
   readonly instanceId: string;
   readonly environment: string;
+  readonly persistedCandleTails: Readonly<Record<Timeframe, number>>;
 }
 
 function safeJson(value: unknown): string {
@@ -77,6 +84,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
   #lastReconciliationFingerprint: string | null = null;
 
   constructor(options: PostgresDecisionTrailOptions) {
+    validatePersistedCandleTails(options.persistedCandleTails);
     this.#options = options;
   }
 
@@ -136,13 +144,30 @@ export class PostgresDecisionTrail implements DecisionTrail {
 
   async market(analysisId: string, snapshot: MarketSnapshot): Promise<void> {
     const candleSnapshotId = randomUUID();
+    const persistedCandles = compactMarketCandles(
+      snapshot,
+      this.#options.persistedCandleTails,
+    );
+    const sourceCandleCounts = Object.fromEntries(
+      snapshot.candles.map((series) => [
+        series.timeframe,
+        series.candles.length,
+      ]),
+    );
+    const persistedCandleCounts = Object.fromEntries(
+      persistedCandles.map((series) => [
+        series.timeframe,
+        series.candles.length,
+      ]),
+    );
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
       await client.query(
         `INSERT INTO candle_snapshots
-          (id, account_id, symbol_id, analysis_time, server_time, received_at, max_skew_ms, complete)
-         VALUES ($1, $2, $3, $4, $4, $5, $6, true)`,
+          (id, account_id, symbol_id, analysis_time, server_time, received_at, max_skew_ms,
+           complete, quality_flags)
+         VALUES ($1, $2, $3, $4, $4, $5, $6, true, $7::jsonb)`,
         [
           candleSnapshotId,
           this.#options.accountId,
@@ -150,9 +175,10 @@ export class PostgresDecisionTrail implements DecisionTrail {
           snapshot.serverTime,
           snapshot.capturedAt,
           snapshot.observedSkewMs,
+          JSON.stringify(["DECISION_COMPACT_V1"]),
         ],
       );
-      for (const series of snapshot.candles) {
+      for (const series of persistedCandles) {
         for (const candle of series.candles) {
           await client.query(
             `INSERT INTO candles
@@ -203,12 +229,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
         server_time: snapshot.serverTime,
         captured_at: snapshot.capturedAt,
         observed_skew_ms: snapshot.observedSkewMs,
-        candle_counts: Object.fromEntries(
-          snapshot.candles.map((series) => [
-            series.timeframe,
-            series.candles.length,
-          ]),
-        ),
+        candle_counts: persistedCandleCounts,
+        source_candle_counts: sourceCandleCounts,
+        storage_profile: "DECISION_COMPACT_V1",
         completed_candles_only: snapshot.candles.every((series) =>
           series.candles.every((candle) => candle.complete),
         ),
@@ -311,7 +334,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
           typeof m1.atr === "string" ? m1.atr : null,
           typeof m1.ema_fast === "string" ? m1.ema_fast : null,
           typeof m1.ema_slow === "string" ? m1.ema_slow : null,
-          safeJson(response.features),
+          compactAnalyticsFeatures(response.features),
           response.acceptable,
           JSON.stringify(response.rejectionReasons),
         ],
@@ -398,6 +421,57 @@ export class PostgresDecisionTrail implements DecisionTrail {
         ),
       },
     );
+  }
+
+  async recoverInterruptedAnalyses(): Promise<number> {
+    const client = await this.#options.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const interrupted = await client.query<{ id: string; state: string }>(
+        `SELECT id, state FROM analysis_runs
+         WHERE account_id = $1 AND symbol_id = $2
+           AND state IN ('PENDING', 'COLLECTING', 'FEATURED', 'MODEL_PENDING', 'VALIDATING')
+         ORDER BY created_at
+         FOR UPDATE`,
+        [this.#options.accountId, this.#options.symbolId],
+      );
+      for (const row of interrupted.rows) {
+        await client.query(
+          `UPDATE analysis_runs
+           SET state = 'REJECTED',
+               rejection_reasons = '["ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART"]'::jsonb,
+               updated_at = now()
+           WHERE id = $1`,
+          [row.id],
+        );
+        await client.query(
+          `INSERT INTO audit_events
+            (id, occurred_at, severity, service, instance_id, environment, trading_mode,
+             analysis_id, event_name, outcome, reason_code, schema_version, model_version,
+             details)
+           VALUES ($1, now(), 'warn', 'execution-service', $2, $3, $4, $5,
+                   'interrupted_analysis_recovered', 'rejected',
+                   'ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART', $6, $7, $8::jsonb)`,
+          [
+            randomUUID(),
+            this.#options.instanceId,
+            this.#options.environment,
+            this.#options.mode,
+            row.id,
+            this.#options.schemaVersion,
+            this.#options.model,
+            JSON.stringify({ previous_state: row.state }),
+          ],
+        );
+      }
+      await client.query("COMMIT");
+      return interrupted.rowCount ?? 0;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async model(

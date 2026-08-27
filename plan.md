@@ -198,6 +198,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
 | ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
 | ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
+| ISSUE-056 | in progress | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -266,6 +267,42 @@ never justify empty, noisy, unsafe, or misleading commits.
   ISSUE-055 is complete; the broker lifecycle remains managed automatically.
   Rollout evidence is tracked by
   [PR #134](https://github.com/AegisFintech/scalping-bot/pull/134).
+
+### ISSUE-056 delivery details
+
+- Acceptance criteria: pause only after broker lifecycle is terminal; export
+  full candle and indicator rows to a protected checksummed local archive and
+  verify exact row counts before clearing them; retain decision-critical
+  PostgreSQL analyses, prompts/responses, chart artifacts, validation, risk,
+  execution, P/L, and audit evidence; bound future row-wise candle tails and
+  indicator summaries; recover pre-placement analyses interrupted by a process
+  restart; expose stable human-readable capacity reasons; deploy a distinct
+  demo release only after the complete gate suite passes.
+- Dependencies: ISSUE-054 release `.31`, terminal broker reconciliation, local
+  protected storage, and the existing demo-only execution authority.
+- Current status: release `.31` produced three completed model responses, three
+  placed groups, and three closed demo trades between 09:33 and 10:29 GMT+8.
+  Every completed model response converted to a trade. Six later attempts were
+  rejected by configured spread protection; PostgreSQL then reached its 512 MB
+  project limit because 880 snapshots had accumulated 1,232,000 duplicated
+  candle rows and about 126 MB of full indicator series. Five attempts surfaced
+  the capacity failure and the last was left `PENDING`, blocking later cycles.
+  Execution was stopped after confirming the latest broker lifecycle was terminal
+  with zero active orders and positions. The two bulk tables were exported to
+  `/root/scalping-bot-local-archives/decision-bulk-20260827TdKYemq` as exact
+  gzip NDJSON: 1,232,000 candle rows (`8ed8d0ce…0fc7`) and 880 indicator rows
+  (`1cb71ee0…8028`). An independent full decompression/JSON/count/hash pass
+  matched the source and manifest before truncation. All important decision
+  table counts remained unchanged and PostgreSQL fell from 489 MB to 67.5 MB.
+  Five raw capacity rejections were normalized to
+  `DATABASE_STORAGE_LIMIT_EXCEEDED`. Code compaction, tests, and release `.32`
+  rollout are in progress. The complete pre-deployment gate passed 255 Node
+  tests across 41 files, 17 schema tests, 3 migration tests, all 3 configured
+  isolated-PostgreSQL/HTTP integration tests, strict TypeScript and Python
+  checks, and 82 Python tests. A configured maintenance-state Streamlit AppTest
+  rendered with zero exceptions. Replay/backtest, dependency audits, tracked-
+  file secret scanning, shell/PM2 syntax, and all five offline systemd security
+  parses at 2.8 (`OK`) also passed.
 
 ### ISSUE-001 delivery details
 

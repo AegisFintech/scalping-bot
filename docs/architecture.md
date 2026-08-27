@@ -40,6 +40,13 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 - Creates logically aligned candle/depth snapshots with distinct broker-source,
   local-receive, and final broker-server timestamps. Depth is unavailable until
   a broker timestamp exists, and future quote/book sources reject the snapshot.
+- Analytics still receives the full configured completed-candle history. The
+  PostgreSQL decision trail stores only the configured 30/18/12 M1/M5/M15 raw
+  tails (with a hard 60/36/24 ceiling), scalar/short-array indicator evidence,
+  the exact compact model payload, and the exact rendered chart. It does not
+  duplicate full candle and per-candle indicator series on every rejected or
+  completed analysis. Snapshot audit metadata records source versus persisted
+  counts and the `DECISION_COMPACT_V1` profile.
 - Exposes typed snapshot APIs; the execution decision trail persists the raw
   snapshot before analytics/model work.
 - Does not decide or submit orders.
@@ -114,6 +121,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   blocks for the configured reset interval, then half-opens at the exact
   boundary; another threshold-reaching transient failure reopens it.
 - Writes intent and idempotency state transactionally before broker calls.
+- On startup, pre-placement analyses interrupted in `PENDING` through
+  `VALIDATING` are atomically rejected and audited as
+  `ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART`. Accepted analyses and every broker
+  order/position lifecycle remain untouched and must reconcile normally.
 - Starts automatic cycles only in a configured opening window of the broker's
   M1 interval. A PostgreSQL claim keyed by account, symbol, and broker minute is
   committed before the cycle, so restarts cannot issue a second model request

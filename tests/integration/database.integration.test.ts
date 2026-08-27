@@ -492,6 +492,7 @@ describe("PostgreSQL migrations integration", () => {
         payloadMode: "compact",
         instanceId: "integration-instance",
         environment: "test",
+        persistedCandleTails: { M1: 1, M5: 1, M15: 1 },
       });
       const analysisCampaign = new PostgresAutomaticAnalysisCampaign({
         pool: isolated,
@@ -746,6 +747,42 @@ describe("PostgreSQL migrations integration", () => {
       };
       await trail.reconciliation(reconciliation);
       await trail.reconciliation(reconciliation);
+      await isolated.query(
+        `UPDATE analysis_runs
+         SET state = 'EXPIRED', rejection_reasons = '[]'::jsonb
+         WHERE id = $1`,
+        [analysisId],
+      );
+      const interruptedAnalysisId = randomUUID();
+      await isolated.query(
+        `INSERT INTO analysis_runs
+          (id, account_id, symbol_id, strategy_version_id, mode, state, analysis_time)
+         VALUES ($1, $2, $3, $4, 'demo', 'MODEL_PENDING', now())`,
+        [interruptedAnalysisId, demoAccountId, symbolId, strategyVersionId],
+      );
+      await expect(trail.recoverInterruptedAnalyses()).resolves.toBe(1);
+      await expect(trail.recoverInterruptedAnalyses()).resolves.toBe(0);
+      const interruptedAnalysis = await isolated.query<{
+        state: string;
+        rejection_reasons: string[];
+        audit_count: string;
+      }>(
+        `SELECT ar.state, ar.rejection_reasons,
+                (SELECT count(*)::text FROM audit_events ae
+                 WHERE ae.analysis_id = ar.id
+                   AND ae.event_name = 'interrupted_analysis_recovered') AS audit_count
+         FROM analysis_runs ar WHERE ar.id = $1`,
+        [interruptedAnalysisId],
+      );
+      expect(interruptedAnalysis.rows[0]).toEqual({
+        state: "REJECTED",
+        rejection_reasons: ["ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART"],
+        audit_count: "1",
+      });
+      await isolated.query(
+        `UPDATE analysis_runs SET state = 'ACCEPTED' WHERE id = $1`,
+        [analysisId],
+      );
       const reconciliationAudit = await isolated.query<{
         count: string;
         details: Record<string, unknown>;

@@ -79,6 +79,20 @@ _OPEN_POSITION_MONITOR_FIELDS = {
 }
 
 _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
+    "DATABASE_STORAGE_LIMIT_EXCEEDED": (
+        "PostgreSQL storage is full",
+        "The decision database cannot safely persist another complete cycle, so no new "
+        "order is sent.",
+        "Archive and clear bulk candle/indicator history, verify database writes, then "
+        "restart automation.",
+    ),
+    "ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART": (
+        "An unfinished analysis was safely closed",
+        "The service restarted before this analysis reached a final state; it was rejected "
+        "so it cannot block later cycles.",
+        "No manual state edit is required. Review the preceding service or storage failure "
+        "if this repeats.",
+    ),
     "AI_CIRCUIT_OPEN": (
         "External AI is cooling down",
         "The last AI call timed out or returned unavailable. New analyses wait during the "

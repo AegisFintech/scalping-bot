@@ -2121,3 +2121,60 @@ zero exceptions and found both the active state and closed-trade target. No
 restart or manual lifecycle action followed. ISSUE-055 is complete.
 Rollout evidence is tracked by
 [PR #134](https://github.com/AegisFintech/scalping-bot/pull/134).
+
+## Bounded decision storage and campaign recovery
+
+Release `.31` produced three completed AI responses, three broker OCO groups,
+and three closed demo trades between 09:33 and 10:29 GMT+8. All three model
+responses converted to trades. The positions remained open for about 16.3,
+4.6, and 25.0 minutes; the first two were profitable and the third also closed
+profitably in this small demo sample. This is operational evidence only, not a
+profitability claim. Six subsequent fresh-minute attempts were rejected before
+inference by unchanged spread protection.
+
+At 10:35 GMT+8 the Neon project reached its 512 MB limit. The database contained
+1,232,000 candle rows (about 296 MB) and 880 full indicator documents (about
+126 MB) because the same long completed-candle histories and per-candle
+indicator arrays were duplicated for every snapshot. Five attempts recorded
+the raw capacity error and the next analysis remained `PENDING`; that stale row
+then correctly blocked overlap. Execution was stopped after status showed the
+latest group, orders, position, and trade were terminal.
+
+The operator explicitly approved clearing the bulk rows after local archival.
+The data transition exports exact `row_to_json` NDJSON for `candles` and
+`indicator_snapshots`, gzip-compresses it outside the repository with mode
+`0600`, records row counts/bytes/SHA-256 in a protected manifest, and verifies
+every compressed row before truncation. PostgreSQL retains all analysis,
+prompt/response, exact chart, validation, risk, execution, trade/P&L, audit, and
+broker-journal records. Rollback and restore preconditions are documented in
+the operations runbook.
+
+The protected archive is
+`/root/scalping-bot-local-archives/decision-bulk-20260827TdKYemq`. Independent
+verification parsed all 1,232,000 candle and 880 indicator JSON objects and
+matched manifest hashes `8ed8d0cece33c4620812ec6c341f30c7c24c863923afe2bd0584316f240c0fc7`
+and `1cb71ee0249af86c8c92eea5aec865c724a0ecf661ea823a006fd4bda16d8028`.
+Before and after truncation, counts remained 997 analyses, 569 model requests,
+569 model responses, 315 charts, 3,420 validations, 154 risk decisions/orders,
+84 fills, 42 positions/trades, and 11,725 audit events. Database size then
+reported 70,778,880 bytes (about 67.5 MiB), with both bulk tables empty.
+
+Future release `.32` persists 30/18/12 completed-candle tails and a bounded
+indicator summary without the duplicated `full_candles` and `raw_tail` arrays.
+The full history still feeds analytics in memory; the exact compact endpoint
+payload and chart remain durable. Storage-tail limits and a 64 KB feature bound
+fail closed. Startup atomically rejects and audits only interrupted
+pre-placement analysis states, preventing a process/database fault from
+creating a permanent `PREVIOUS_ANALYSIS_ACTIVE` loop. Arbitrary database text
+is reduced to the human-readable `DATABASE_STORAGE_LIMIT_EXCEEDED` reason.
+Implementation is tracked by
+[issue #135](https://github.com/AegisFintech/scalping-bot/issues/135).
+
+The complete pre-deployment gate passed Prettier, ESLint, TypeScript
+typecheck/build, 255 Node tests across 41 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 82 Python tests. A configured
+Streamlit AppTest during the intentional execution-service maintenance stop had
+zero exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
+vulnerabilities, the tracked-file secret scan, shell/PM2 syntax, and all five
+offline systemd security parses at 2.8 (`OK`) passed.
