@@ -779,7 +779,9 @@ and every observability outbox row was delivered.
 That rollout also proved the new watchdog failure path: at 09:17:45 GMT+8 it
 persisted `AUTOMATIC_ANALYSIS_STALLED` when broker reconciliation repeatedly
 finished beyond the 5-second claim window while market sampling remained
-fresh. ISSUE-058 pins `.34`, analysis baseline 109, trade baseline 49, and a
+fresh. The audited pause allowed an in-flight call and a preceding durable
+minute claim to settle, leaving `.33` with nine attempts and six completed
+responses. ISSUE-058 pins `.34`, analysis baseline 111, trade baseline 49, and a
 10-second broker-time window in the PM2 contract. The schedule tests already
 prove 09.999 seconds is accepted while the exact 10.000-second boundary and
 later times reject.

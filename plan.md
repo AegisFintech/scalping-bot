@@ -366,7 +366,7 @@ never justify empty, noisy, unsafe, or misleading commits.
   the new watchdog then correctly exposed a separate cadence defect: mandatory
   reconciliation sometimes finished after the 5-second broker opening window,
   so healthy later ticks could not claim a minute. ISSUE-058 carries the exact
-  109-response/49-trade baseline into `.34` and corrects that bounded window;
+  111-response/49-trade baseline into `.34` and corrects that bounded window;
   no placement or risk validation is relaxed.
 
 ### ISSUE-058 delivery details
@@ -374,7 +374,7 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Acceptance criteria: preserve every schema, semantic, freshness, spread,
   reconciliation, sizing, ownership, and deterministic risk gate; accommodate
   measured broker preflight latency inside a bounded M1 opening window; carry
-  exactly 109 completed endpoint responses and 49 closed demo trades into a
+  exactly 111 completed endpoint responses and 49 closed demo trades into a
   new immutable release; test the release/config contract and both sides of
   the time boundary; pass the complete gate; and prove multiple automatic
   minutes complete after a paused rollout without a stall.
@@ -389,7 +389,10 @@ never justify empty, noisy, unsafe, or misleading commits.
   scheduler ticks and fresh market data continued; required reconciliation
   sometimes consumed the entire 5-second opening window. Release `.34` uses
   the already-tested 10-second inclusive/exclusive boundary and carries
-  baselines 109/49. Risk and placement gates are unchanged. The complete gate
+  baselines 111/49. The pause was applied while one `.33` cycle was in flight
+  and immediately after another durable minute claim; both completed, taking
+  `.33` to nine attempts and six responses before rollout. Risk and placement
+  gates are unchanged. The complete gate
   passed Prettier, ESLint, TypeScript typecheck/build, 266 Node tests across 42
   files, 17 schema tests, 3 migration tests, all 3 configured integration
   tests, Ruff format/lint, strict mypy over 17 sources, and 84 Python tests.
