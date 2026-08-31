@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v7",
+  promptVersion: "system-v8",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -51,6 +51,13 @@ const common = {
     maxAffordableStopDistance: "0.5",
     maxStopDistanceAtr: "3",
     maxEntryDistanceAtr: "2.5",
+    buyEntryMinimum: "2000.2",
+    buyEntryMaximum: "2002.6",
+    sellEntryMinimum: "1997.4",
+    sellEntryMaximum: "1999.8",
+    minimumStopDistance: "0.1",
+    maximumStopDistance: "0.5",
+    preferredExpiresAt: "2026-01-01T00:25:00.000Z",
     orderExpiryMinSeconds: 15,
     orderExpiryMaxSeconds: 1800,
     preferredOrderExpirySeconds: 1500,
@@ -90,6 +97,13 @@ describe("model payload builder", () => {
       max_affordable_stop_distance: "0.5",
       max_stop_distance_atr: "3",
       max_entry_distance_atr: "2.5",
+      buy_entry_minimum: "2000.2",
+      buy_entry_maximum: "2002.6",
+      sell_entry_minimum: "1997.4",
+      sell_entry_maximum: "1999.8",
+      minimum_stop_distance: "0.1",
+      maximum_stop_distance: "0.5",
+      preferred_expires_at: "2026-01-01T00:25:00.000Z",
       order_expiry_min_seconds: 15,
       order_expiry_max_seconds: 1800,
       preferred_order_expiry_seconds: 1500,
@@ -112,14 +126,16 @@ describe("model payload builder", () => {
   });
 
   it("versions the TP transform instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v7.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v6.md", "utf8");
+    const prompt = readFileSync("prompts/system-v8.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v7.md", "utf8");
     expect(prompt).toContain("take_profit_distance_divisor");
     expect(prompt).toContain("effective_min_risk_reward_ratio");
     expect(prompt).toContain("midpoint must be");
     expect(prompt).toContain("max_affordable_stop_distance");
-    expect(prompt).toContain("max_entry_distance_atr");
-    expect(prompt).toContain("preferred_order_expiry_seconds");
+    expect(prompt).toContain("preferred_expires_at");
+    expect(prompt).toContain("[buy_entry_minimum,buy_entry_maximum]");
+    expect(prompt).toContain("[sell_entry_minimum,sell_entry_maximum]");
+    expect(prompt).toContain("[minimum_stop_distance,maximum_stop_distance]");
     expect(prompt).toContain("technical_map.bullish_confirmation.price");
     expect(prompt).toContain("For every zone require lower<upper");
     expect(prompt).toContain("min_risk_reward_ratio+0.2");

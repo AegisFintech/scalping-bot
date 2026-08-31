@@ -70,14 +70,13 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v7` tells the endpoint that execution will preserve entry/SL
-  and halve TP distance. It explicitly self-checks both sides' R:R, midpoint,
-  target ordering, nearest actionable chart-structure confirmation, a maximum
-  entry distance in M1 ATR, and a preferred bounded expiry. It supplies a
-  doubled proposal R:R minimum plus a
-  non-sizing maximum stop distance derived from reconciled equity, configured
-  setup risk, broker tick value, and broker minimum volume. No account money,
-  budget, volume, or identity crosses the endpoint boundary.
+- Prompt `system-v8` tells the endpoint that execution will preserve entry/SL
+  and halve TP distance. The coordinator precomputes inclusive, tick-aligned
+  BUY/SELL entry ranges, one stop-distance range, and the exact preferred
+  expiry from current quotes, M1 ATR, broker distance, configuration, and the
+  non-sizing affordable stop ceiling. The prompt explicitly self-checks both
+  sides' R:R, midpoint, target ordering, and those executable ranges. No
+  account money, budget, volume, or identity crosses the endpoint boundary.
 - Sends the deterministic image as high-detail multimodal content beside the
   compact numeric JSON. The numeric message contains only hash/provenance
   metadata for the image, not duplicated base64 bytes.
@@ -143,6 +142,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   persists `PAUSE_NEW_ANALYSES`; no later result can start when either count is
   unavailable or at its limit. Broker callback processing, expiry,
   cancellation, position management, and reconciliation continue while paused.
+- Projects automatic activity from the exact release's interval/lifecycle
+  timestamps plus recent spread observations. A market-active free scheduler
+  with no durable progress beyond the configured threshold reports `STALLED`
+  and emits one durable alert; recovery emits one corresponding event. Closed
+  market, pause, disabled automation, and managed setups are distinct states.
 - Normalizes and durably journals cTrader demo callbacks, atomically maps
   order/fill/position state, and replays bounded broker history after startup or
   reconnect before restoring readiness. Placement callbacks queue until the
@@ -152,7 +156,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   A non-deal `ORDER_ACCEPTED` event establishes only its pending order; an
   optional unpriced cTrader position placeholder on that event is not persisted
   as an opened position. Fill and partial-fill events still require their deal
-  plus a fully normalized, priced position.
+  plus a fully normalized, priced position. A CLOSED terminal callback may use
+  the deal's close-detail entry price only when the same callback also carries
+  a complete terminal deal and positive execution price; an OPEN position or
+  incomplete close remains strictly priced and fail-closed.
   Callback failures expose only a stable allowlisted reason, processing stage,
   numeric event/status enums, and field-presence booleans; raw callbacks,
   labels, client IDs, broker IDs, and database error text are never logged.
@@ -308,8 +315,11 @@ marked resolved only when the same strategy-owned demo group is durably closed
 with exactly two terminal OCO orders, one closed position and trade, and a later
 mapped broker-generated SL/TP fill carrying complete close details. The
 terminal event key is retained as the resolution evidence. A process-local
-callback failure is acknowledged only once for a new certain terminal proof;
-callbacks recorded after that recovery checkpoint remain blocking.
+callback failure is acknowledged once for a new certain terminal proof. The
+same proof may acknowledge a later duplicate failure only when its private
+broker fill identity exactly matches the fill in that durable proof. Another
+fill, missing fill identity, uncertain recovery, or failure beyond a different
+proof remains blocking.
 
 Read-only open-position telemetry is independent from execution eligibility.
 For one durable strategy-owned `OPEN` position, an exact single-match cTrader

@@ -76,6 +76,7 @@ export interface DemoExecutionPersistenceResult {
 export interface DemoTerminalEvidenceReconciliationResult extends DemoExecutionPersistenceResult {
   readonly terminalProofKey: string | null;
   readonly terminalOrderGroupId: string | null;
+  readonly terminalBrokerFillId: string | null;
   readonly resolvedEventCount: number;
 }
 
@@ -152,6 +153,13 @@ function priceField(
   if (!price.isFinite() || price.lte(0))
     throw new Error(`CTRADER_FIELD_INVALID:${key}`);
   return canonical(price);
+}
+
+function zeroPrice(value: unknown): boolean {
+  return (
+    (typeof value === "number" && Number.isFinite(value) && value === 0) ||
+    (typeof value === "string" && /^0(?:\.0+)?$/.test(value))
+  );
 }
 
 function money(
@@ -269,6 +277,7 @@ function assertExecutionOrderState(
 function normalizePosition(
   position: Record<string, unknown>,
   receivedAt: string,
+  terminalEntryPrice: string | null = null,
 ): DemoExecutionPosition {
   const data = tradeData(position);
   const status = numberField(position, "positionStatus");
@@ -287,12 +296,21 @@ function normalizePosition(
   const volume = new Decimal(decimalField(data, "volume"));
   if (!volume.isInteger() || volume.lt(0))
     throw new Error("CTRADER_POSITION_VOLUME_INVALID");
+  const rawEntryPrice = position.price;
+  const closedEntryPriceFallbackAllowed =
+    state === "CLOSED" &&
+    terminalEntryPrice !== null &&
+    (rawEntryPrice === undefined ||
+      rawEntryPrice === null ||
+      zeroPrice(rawEntryPrice));
   return {
     brokerPositionId: stringField(position, "positionId"),
     side: side(data),
     state,
     volume: canonical(volume),
-    entryPrice: priceField(position, "price", state === "OPEN"),
+    entryPrice: closedEntryPriceFallbackAllowed
+      ? terminalEntryPrice
+      : priceField(position, "price", state === "OPEN"),
     stopLoss: priceField(position, "stopLoss", false),
     takeProfit: priceField(position, "takeProfit", false),
     openedAt: optionalTimestamp(
@@ -467,10 +485,20 @@ export function normalizeDemoExecution(
   // cTrader may attach an unpriced contextual position to non-deal order
   // lifecycle events. A position transition becomes authoritative only when a
   // fill/partial-fill execution carries its deal.
+  const closeDetail = deal === null ? null : normalizeCloseDetail(deal);
+  const terminalEntryPrice =
+    closeDetail === null || deal === null
+      ? null
+      : (() => {
+          // Both authoritative terminal prices must be usable before an
+          // unpriced CLOSED contextual position can fall back to close detail.
+          priceField(deal, "executionPrice", true);
+          return closeDetail.entryPrice;
+        })();
   const normalizedPosition =
     position === null || ![3, 11].includes(execution.executionType)
       ? null
-      : normalizePosition(position, receivedAt);
+      : normalizePosition(position, receivedAt, terminalEntryPrice);
   const contextualBrokerPositionId =
     position === null ? null : stringField(position, "positionId");
   const brokerOrderId =
@@ -483,7 +511,6 @@ export function normalizeDemoExecution(
       : stringField(deal, "positionId"));
   let fill: DemoExecutionFill | null = null;
   let brokerFillId: string | null = null;
-  let closeDetail: DemoExecutionCloseDetail | null = null;
   if (deal !== null) {
     brokerFillId = stringField(deal, "dealId");
     if (brokerOrderId !== stringField(deal, "orderId"))
@@ -518,7 +545,6 @@ export function normalizeDemoExecution(
       commission,
       occurredAt,
     };
-    closeDetail = normalizeCloseDetail(deal);
   }
   const occurredAt =
     fill?.occurredAt ??
@@ -556,7 +582,10 @@ export class DurableDemoExecutionRecorder {
   readonly #options: DemoExecutionNormalizerOptions;
   #tail: Promise<void> = Promise.resolve();
   readonly #pending: BrokerExecution[] = [];
-  readonly #reasonCodes = new Map<string, number>();
+  readonly #reasonCodes = new Map<
+    string,
+    { readonly sequence: number; readonly brokerFillId: string | null }
+  >();
   #failureSequence = 0;
   readonly #acknowledgedTerminalProofKeys = new Set<string>();
   readonly #persistedBrokerFillIds = new Set<string>();
@@ -580,7 +609,10 @@ export class DurableDemoExecutionRecorder {
   ): void {
     this.#failureSequence += 1;
     const added = !this.#reasonCodes.has(reasonCode);
-    this.#reasonCodes.set(reasonCode, this.#failureSequence);
+    this.#reasonCodes.set(reasonCode, {
+      sequence: this.#failureSequence,
+      brokerFillId: rawBrokerFillId(execution),
+    });
     if (!added || this.#options.onFailure === undefined) return;
     try {
       this.#options.onFailure({
@@ -614,6 +646,7 @@ export class DurableDemoExecutionRecorder {
     checkpoint: number,
     terminalProofKey: string,
     recovery: DemoExecutionPersistenceResult,
+    terminalBrokerFillId: string | null = null,
   ): void {
     if (
       !Number.isSafeInteger(checkpoint) ||
@@ -623,31 +656,31 @@ export class DurableDemoExecutionRecorder {
     ) {
       throw new Error("DEMO_EXECUTION_RECOVERY_ACK_INVALID");
     }
-    if (
-      !recovery.certain ||
-      this.#acknowledgedTerminalProofKeys.has(terminalProofKey)
-    ) {
+    if (!recovery.certain) {
       return;
     }
+    const proofPreviouslyAcknowledged =
+      this.#acknowledgedTerminalProofKeys.has(terminalProofKey);
+    if (proofPreviouslyAcknowledged && terminalBrokerFillId === null) return;
     this.#acknowledgedTerminalProofKeys.add(terminalProofKey);
-    for (const [reasonCode, sequence] of this.#reasonCodes) {
-      if (sequence <= checkpoint) this.#reasonCodes.delete(reasonCode);
+    for (const [reasonCode, failure] of this.#reasonCodes) {
+      if (
+        failure.sequence <= checkpoint &&
+        (!proofPreviouslyAcknowledged ||
+          failure.brokerFillId === terminalBrokerFillId)
+      ) {
+        this.#reasonCodes.delete(reasonCode);
+      }
     }
   }
 
   async #drain(): Promise<void> {
     while (this.#pending.length > 0) {
       const execution = this.#pending.shift()!;
-      const rawBrokerFillId = (() => {
-        const value = execution.deal?.dealId;
-        if (typeof value === "string" && value.length > 0) return value;
-        if (typeof value === "number" && Number.isSafeInteger(value))
-          return value.toString();
-        return null;
-      })();
+      const brokerFillId = rawBrokerFillId(execution);
       if (
-        rawBrokerFillId !== null &&
-        this.#persistedBrokerFillIds.has(rawBrokerFillId)
+        brokerFillId !== null &&
+        this.#persistedBrokerFillIds.has(brokerFillId)
       ) {
         continue;
       }
@@ -708,4 +741,12 @@ export class DurableDemoExecutionRecorder {
       reasonCodes: [...reasonCodes].sort(),
     };
   }
+}
+
+function rawBrokerFillId(execution: BrokerExecution | null): string | null {
+  const value = execution?.deal?.dealId;
+  if (typeof value === "string" && value.length > 0) return value;
+  if (typeof value === "number" && Number.isSafeInteger(value))
+    return value.toString();
+  return null;
 }

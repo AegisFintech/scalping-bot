@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v7` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v8` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -36,15 +36,16 @@ The versioned system prompt tells the model to:
   R:R. The request says that execution preserves entry/SL and divides TP
   distance by two, supplies both proposal and effective minimum R:R values, and
   requires an even whole-tick TP distance so the midpoint stays tick-aligned.
-- keep each entry-to-SL distance at or below the supplied
-  `max_affordable_stop_distance`. This is a derived non-sizing limit; the request
-  still excludes equity, risk budget, broker volume, and account identity.
-- select the nearest defensible completed-candle confirmation and keep each
-  entry within `max_entry_distance_atr * M1_ATR` of the executable quote side;
-  weak or ranging evidence lowers confidence instead of moving stops to distant
-  broader levels;
-- use `preferred_order_expiry_seconds` inside the unchanged minimum/maximum
-  expiry policy. An expired response is never extended or reused.
+- put each BUY/SELL confirmation inside its supplied inclusive, tick-aligned
+  `buy_entry_*` or `sell_entry_*` range. Those ranges already apply current
+  executable quote side, broker/configured minimum distance, and the maximum
+  M1-ATR reachability cap;
+- keep each entry-to-SL distance inside the inclusive
+  `minimum_stop_distance`/`maximum_stop_distance` range. The maximum includes
+  the ATR cap and derived non-sizing affordable ceiling; the request still
+  excludes equity, risk budget, broker volume, and account identity;
+- set `valid_until` and both expiries exactly to `preferred_expires_at`. An
+  expired response is never extended or reused.
 
 ## Mandatory proposal
 

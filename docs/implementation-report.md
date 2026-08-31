@@ -2199,3 +2199,57 @@ the next broker minute. Deployed AppTest rendered 37 dataframes, 51 metrics,
 and 15 tabs with zero exceptions. No order was forced through the configured
 spread gates. ISSUE-056 is complete; rollout evidence is tracked in the same
 issue and its follow-up evidence pull request.
+
+## ISSUE-057 terminal recovery and throughput restoration
+
+Read-only PostgreSQL and local-log analysis found 177 release `.32` automatic
+cycle attempts from 27 Aug 2026, 12:45 GMT+8 through 28 Aug 2026, 09:27 GMT+8.
+Of those, 105 reached a completed external-AI response, 49 created broker OCO
+groups, and all 49 groups filled and closed. The 72 pre-AI rejections were
+mostly the unchanged spread protections; the 56 completed-response rejections
+were proposal/context/risk validation. This is demo operational evidence, not
+a profitability claim.
+
+The service did not crash after the 49th trade. Spread sampling and 15-second
+recovery continued for days, while no later broker-minute claim occurred. The
+terminal trade was durably persisted at 28 Aug 2026, 09:27:24.069 GMT+8. A
+duplicate cTrader terminal callback arrived 663 ms later with a zero contextual
+CLOSED-position price. Strict normalization raised
+`CTRADER_FIELD_INVALID:price`. Recovery repeatedly found the already-correct
+terminal proof, but the process-local latch deliberately refused to consume the
+same proof twice, so reconciliation and automatic analysis stayed blocked.
+
+The correction accepts a missing/zero contextual CLOSED-position price only
+when that same callback carries a complete terminal deal, positive close
+execution price, and authoritative close-detail entry price. OPEN positions and
+incomplete terminal events remain fail-closed. Terminal reconciliation now
+returns the exact broker fill identity; an already-acknowledged proof may clear
+only a later duplicate failure for that identical fill. No broker/account ID is
+logged or exposed.
+
+Prompt `system-v8` receives coordinator-derived tick-aligned BUY/SELL entry
+ranges, an inclusive stop-distance range, and one preferred expiry timestamp.
+This removes avoidable arithmetic ambiguity at the endpoint while the original
+schema, semantic, TP-transform, spread, freshness, reconciliation, sizing,
+margin, and placement checks remain authoritative. Provider latency and retry
+count now cross the typed local boundary and populate the existing durable
+model-request timing columns.
+
+Status now projects automatic activity as starting, running, managing a setup,
+waiting for market, paused, disabled, stalled, or unavailable. A genuinely
+market-active free scheduler without durable progress for the configured
+threshold produces a plain Overview error and one redacted durable stall audit;
+recovery produces one paired event. Both flow through the existing Better Stack
+outbox. Release `.33` carries forward the verified 105 completed responses and
+49 closed demo trades toward the unchanged 500/100 campaign boundaries.
+
+The complete pre-deployment gate passed Prettier, ESLint, TypeScript
+typecheck/build, 266 Node tests across 42 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 84 Python tests. The database
+test includes exact terminal-fill proof, provider timing persistence, and
+stalled/resumed audit outbox delivery. Configured Streamlit AppTest rendered 42
+dataframes, 69 metrics, and 15 tabs with zero exceptions. Replay/backtest smoke
+tests, npm/pip audits with zero known vulnerabilities, tracked-file secret
+scanning, shell/PM2 syntax, and all five offline systemd security parses at 2.8
+(`OK`) passed.

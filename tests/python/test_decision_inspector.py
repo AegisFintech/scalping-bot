@@ -61,6 +61,7 @@ def test_automation_status_explains_ai_cooldown_as_automatic_retry() -> None:
             "tradingEnabled": False,
             "aiCircuitOpenUntil": "2026-08-25T01:02:00.000Z",
             "reasonCodes": ["AI_CIRCUIT_OPEN"],
+            "automationActivity": {"state": "RUNNING", "reasonCodes": []},
         }
     )
 
@@ -108,6 +109,45 @@ def test_automation_status_does_not_treat_malformed_reasons_as_ready() -> None:
 
     assert view["state"] == "SAFETY_BLOCKED"
     assert view["reasons"][0]["code"] == "STATUS_REASON_CODES_INVALID"
+
+
+def test_automation_status_calls_a_market_active_watchdog_stall_an_error() -> None:
+    view = automation_status_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "pauseNewAnalyses": False,
+            "emergencyStopped": False,
+            "reasonCodes": ["RECONCILIATION_UNCERTAIN"],
+            "automationActivity": {
+                "state": "STALLED",
+                "lastProgressAt": "2026-08-28T01:27:24.000Z",
+                "reasonCodes": ["AUTOMATIC_ANALYSIS_STALLED"],
+            },
+        }
+    )
+
+    assert view["state"] == "STALLED"
+    assert view["severity"] == "error"
+    assert "stopped" in view["headline"]
+    assert {reason["code"] for reason in view["reasons"]} == {
+        "RECONCILIATION_UNCERTAIN",
+        "AUTOMATIC_ANALYSIS_STALLED",
+    }
+
+
+def test_automation_status_rejects_missing_or_unknown_watchdog_state() -> None:
+    for activity in (None, {"state": "NOT_A_STATE", "reasonCodes": []}):
+        status = {
+            "automaticAnalysisEnabled": True,
+            "pauseNewAnalyses": False,
+            "emergencyStopped": False,
+            "reasonCodes": [],
+        }
+        if activity is not None:
+            status["automationActivity"] = activity
+        view = automation_status_view(status)
+        assert view["state"] == "SAFETY_BLOCKED"
+        assert view["reasons"][0]["code"] == "AUTOMATIC_WATCHDOG_UNAVAILABLE"
 
 
 def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
@@ -174,6 +214,7 @@ def test_automation_status_distinguishes_an_in_progress_cycle_from_a_stop() -> N
             "automaticAnalysisEnabled": True,
             "emergencyStopped": False,
             "reasonCodes": ["PREVIOUS_ANALYSIS_ACTIVE"],
+            "automationActivity": {"state": "MANAGING_SETUP", "reasonCodes": []},
         }
     )
 
@@ -188,6 +229,7 @@ def test_automation_status_prioritizes_completed_campaign_review_over_pause() ->
             "pauseNewAnalyses": True,
             "emergencyStopped": False,
             "reasonCodes": ["ANALYSES_PAUSED"],
+            "automationActivity": {"state": "PAUSED", "reasonCodes": []},
             "automaticAnalysisCampaign": {
                 "enabled": True,
                 "limit": 100,
@@ -215,6 +257,7 @@ def test_automation_status_prioritizes_closed_trade_target_over_inference_limit(
             "pauseNewAnalyses": True,
             "emergencyStopped": False,
             "reasonCodes": ["ANALYSES_PAUSED"],
+            "automationActivity": {"state": "PAUSED", "reasonCodes": []},
             "automaticAnalysisCampaign": {
                 "complete": False,
                 "reasonCodes": [],
@@ -241,6 +284,7 @@ def test_automation_status_fails_closed_when_campaign_progress_is_unavailable() 
             "pauseNewAnalyses": False,
             "emergencyStopped": False,
             "reasonCodes": [],
+            "automationActivity": {"state": "RUNNING", "reasonCodes": []},
             "automaticAnalysisCampaign": {
                 "enabled": True,
                 "limit": 100,
@@ -325,6 +369,7 @@ def test_broker_lifecycle_reports_both_terminal_oco_positions() -> None:
         {
             "automaticAnalysisEnabled": True,
             "reasonCodes": [],
+            "automationActivity": {"state": "RUNNING", "reasonCodes": []},
             "managedSetup": {
                 "status": "LATEST_TERMINAL",
                 "groupState": "CLOSED",
@@ -356,6 +401,7 @@ def test_broker_lifecycle_idle_state_says_when_automation_runs_next() -> None:
         {
             "automaticAnalysisEnabled": True,
             "reasonCodes": [],
+            "automationActivity": {"state": "RUNNING", "reasonCodes": []},
             "managedSetup": {
                 "status": "NONE",
                 "groupState": None,
@@ -378,6 +424,7 @@ def test_execution_status_recovery_requires_complete_bounded_shape() -> None:
         "mode": "demo",
         "reasonCodes": [],
         "managedSetup": {"status": "ACTIVE"},
+        "automationActivity": {"state": "MANAGING_SETUP"},
         "automaticAnalysisCampaign": {"completed": 2},
     }
 
@@ -674,8 +721,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v7", content, digest)
-    assert current["version"] == "system-v7"
+    current = prompt_artifact_view("system-v8", content, digest)
+    assert current["version"] == "system-v8"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

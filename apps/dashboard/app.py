@@ -231,6 +231,13 @@ tabs = st.tabs(
 )
 
 with tabs[0]:
+    automation_activity = status.get("automationActivity")
+    if isinstance(automation_activity, dict) and automation_activity.get("state") == "STALLED":
+        st.error(
+            "AUTOMATIC TRADING IS STOPPED — fresh market data is arriving but no new analysis "
+            "cycle is completing. Last scheduler/lifecycle progress: "
+            f"{format_gmt8_timestamp(automation_activity.get('lastProgressAt'))}."
+        )
     columns = st.columns(4)
     columns[0].metric("Mode", mode)
     columns[1].metric("Symbol", str(status.get("symbol", "unknown")))

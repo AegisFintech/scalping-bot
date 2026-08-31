@@ -744,3 +744,24 @@ entry, its acceptance blocks pending deal evidence, the exact deal atomically
 closes the position/trade/group, and the retained acceptance becomes resolved.
 Missing closing-order evidence remains a tested fail-closed path. Migration
 tests cover fresh and `0005` upgrade paths through `0011`.
+
+ISSUE-057 adds the observed terminal-callback regression shape: a CLOSED
+contextual position with missing/zero price succeeds only when the same event
+has a complete terminal deal and close detail, while OPEN or incomplete events
+still reject. Recorder tests prove an already-seen terminal proof releases a
+late failure only for the exact same private broker fill identity. PostgreSQL
+integration checks that terminal reconciliation returns that identity.
+
+Coordinator tests verify exact Decimal/tick derivation of BUY/SELL entry ranges,
+the stop-distance range, and preferred expiry, including an unsatisfiable
+failure path. AI boundary tests require finite latency/retry metadata, and the
+database trail persists it. Watchdog unit/integration tests distinguish active,
+managed, paused, closed-market, and genuinely stalled states and prove stall
+plus recovery audits enter the Better Stack outbox.
+
+The ISSUE-057 pre-deployment gate passed 266 Node tests across 42 files, 17
+schema tests, 3 migration tests, all 3 configured integration tests, and 84
+Python tests, with strict formatting/lint/type checks. Configured Streamlit
+AppTest rendered 42 dataframes, 69 metrics, and 15 tabs with zero exceptions.
+Replay/backtest, dependency audits, tracked-file secret scanning, shell/PM2
+checks, and all five offline systemd security parses also passed.

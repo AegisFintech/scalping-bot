@@ -34,6 +34,13 @@ export interface ModelPayloadInput {
     readonly maxAffordableStopDistance: string;
     readonly maxStopDistanceAtr: string;
     readonly maxEntryDistanceAtr: string;
+    readonly buyEntryMinimum: string;
+    readonly buyEntryMaximum: string;
+    readonly sellEntryMinimum: string;
+    readonly sellEntryMaximum: string;
+    readonly minimumStopDistance: string;
+    readonly maximumStopDistance: string;
+    readonly preferredExpiresAt: string;
     readonly orderExpiryMinSeconds: number;
     readonly orderExpiryMaxSeconds: number;
     readonly preferredOrderExpirySeconds: number;
@@ -129,6 +136,13 @@ export function buildModelPayload(
         input.executionConstraints.maxAffordableStopDistance,
       max_stop_distance_atr: input.executionConstraints.maxStopDistanceAtr,
       max_entry_distance_atr: input.executionConstraints.maxEntryDistanceAtr,
+      buy_entry_minimum: input.executionConstraints.buyEntryMinimum,
+      buy_entry_maximum: input.executionConstraints.buyEntryMaximum,
+      sell_entry_minimum: input.executionConstraints.sellEntryMinimum,
+      sell_entry_maximum: input.executionConstraints.sellEntryMaximum,
+      minimum_stop_distance: input.executionConstraints.minimumStopDistance,
+      maximum_stop_distance: input.executionConstraints.maximumStopDistance,
+      preferred_expires_at: input.executionConstraints.preferredExpiresAt,
       order_expiry_min_seconds:
         input.executionConstraints.orderExpiryMinSeconds,
       order_expiry_max_seconds:

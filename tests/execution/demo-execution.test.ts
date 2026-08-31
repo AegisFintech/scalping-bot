@@ -132,6 +132,39 @@ describe("cTrader demo execution normalization", () => {
     ).toThrow("CTRADER_FIELD_INVALID:price");
   });
 
+  it("uses authoritative close detail for an unpriced closed position", async () => {
+    const raw = await fixture("demo-position-closed-v1.json");
+    const missing = structuredClone(raw.position) as Record<string, unknown>;
+    delete missing.price;
+    const zero = structuredClone(raw.position) as Record<string, unknown>;
+    zero.price = 0;
+
+    for (const position of [missing, zero]) {
+      const event = normalizeDemoExecution(
+        { ...raw, position },
+        { symbolId: "7" },
+      );
+      expect(event?.position).toMatchObject({
+        state: "CLOSED",
+        entryPrice: "2001.28",
+      });
+      expect(event?.fill).toMatchObject({ price: "2011.28" });
+      expect(event?.closeDetail).toMatchObject({ entryPrice: "2001.28" });
+    }
+  });
+
+  it("does not accept an unpriced closed position without complete terminal evidence", async () => {
+    const raw = await fixture("demo-position-closed-v1.json");
+    const position = structuredClone(raw.position) as Record<string, unknown>;
+    position.price = 0;
+    const deal = structuredClone(raw.deal) as Record<string, unknown>;
+    delete deal.closePositionDetail;
+
+    expect(() =>
+      normalizeDemoExecution({ ...raw, position, deal }, { symbolId: "7" }),
+    ).toThrow("CTRADER_FIELD_INVALID:price");
+  });
+
   it("normalizes a partial fill with broker-native volume and scaled commission", async () => {
     const raw = await fixture("demo-order-partial-fill-v1.json");
     const event = normalizeDemoExecution(raw, { symbolId: "7" });
@@ -467,6 +500,44 @@ describe("durable demo execution recorder", () => {
       recorder.failureCheckpoint(),
       "terminal:proof-two",
       { certain: true, reasonCodes: [] },
+    );
+    await expect(recorder.flush()).resolves.toEqual({
+      certain: true,
+      reasonCodes: [],
+    });
+  });
+
+  it("reuses exact terminal fill proof for a late duplicate failure only", async () => {
+    const store = new MemoryStore();
+    const recorder = new DurableDemoExecutionRecorder(store, { symbolId: "7" });
+    const proof = `terminal:${"d".repeat(64)}`;
+    recorder.acknowledgeCertainTerminalRecovery(0, proof, {
+      certain: true,
+      reasonCodes: [],
+    });
+
+    const filled = await fixture("demo-order-filled-v1.json");
+    const malformedPosition = structuredClone(filled.position) as Record<
+      string,
+      unknown
+    >;
+    delete malformedPosition.price;
+    recorder.enqueue({ ...filled, position: malformedPosition });
+    await expect(recorder.flush()).resolves.toMatchObject({ certain: false });
+
+    recorder.acknowledgeCertainTerminalRecovery(
+      recorder.failureCheckpoint(),
+      proof,
+      { certain: true, reasonCodes: [] },
+      "different-fill",
+    );
+    await expect(recorder.flush()).resolves.toMatchObject({ certain: false });
+
+    recorder.acknowledgeCertainTerminalRecovery(
+      recorder.failureCheckpoint(),
+      proof,
+      { certain: true, reasonCodes: [] },
+      "902",
     );
     await expect(recorder.flush()).resolves.toEqual({
       certain: true,

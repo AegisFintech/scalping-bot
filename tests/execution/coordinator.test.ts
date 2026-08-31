@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AnalysisCoordinator,
   InMemoryDecisionTrail,
+  deriveModelExecutionBounds,
   modelCallBudgetMs,
   type CoordinatorOptions,
 } from "../../apps/execution-service/src/coordinator.js";
@@ -60,7 +61,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v7",
+    version: "system-v8",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -275,7 +276,7 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v7",
+    promptVersion: "system-v8",
     schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
@@ -378,6 +379,48 @@ function options(
 }
 
 describe("analysis coordinator", () => {
+  it("derives exact tick-aligned entry, stop, and expiry bounds for the model", () => {
+    expect(
+      deriveModelExecutionBounds({
+        currentBid: "1999.9",
+        currentAsk: "2000.1",
+        tickSize: "0.01",
+        minimumStopDistance: "0.1",
+        atr: "1",
+        maxEntryDistanceAtr: "2.5",
+        maxStopDistanceAtr: "3",
+        maxAffordableStopDistance: "2",
+        serverTime: "2026-08-27T00:00:05.000Z",
+        preferredExpirySeconds: 1500,
+      }),
+    ).toEqual({
+      buyEntryMinimum: "2000.2",
+      buyEntryMaximum: "2002.6",
+      sellEntryMinimum: "1997.4",
+      sellEntryMaximum: "1999.8",
+      minimumStopDistance: "0.1",
+      maximumStopDistance: "2",
+      preferredExpiresAt: "2026-08-27T00:25:05.000Z",
+    });
+  });
+
+  it("rejects execution bounds that cannot satisfy the minimum stop distance", () => {
+    expect(() =>
+      deriveModelExecutionBounds({
+        currentBid: "1999.9",
+        currentAsk: "2000.1",
+        tickSize: "0.01",
+        minimumStopDistance: "0.2",
+        atr: "0.05",
+        maxEntryDistanceAtr: "2.5",
+        maxStopDistanceAtr: "3",
+        maxAffordableStopDistance: "2",
+        serverTime: "2026-08-27T00:00:05.000Z",
+        preferredExpirySeconds: 1500,
+      }),
+    ).toThrow("MODEL_ENTRY_RANGE_UNSATISFIABLE");
+  });
+
   it("reserves post-model time inside the current broker M1 candle", () => {
     expect(
       modelCallBudgetMs({
@@ -647,6 +690,14 @@ describe("analysis coordinator", () => {
     const constraints = payload?.execution_constraints as
       Record<string, unknown> | undefined;
     expect(constraints?.max_affordable_stop_distance).toBe("0.5");
+    expect(constraints).toMatchObject({
+      buy_entry_minimum: "2000.2",
+      buy_entry_maximum: "2012.6",
+      sell_entry_minimum: "1987.4",
+      sell_entry_maximum: "1999.8",
+      minimum_stop_distance: "0.1",
+      maximum_stop_distance: "0.5",
+    });
     expect(constraints).not.toHaveProperty("equity");
     expect(constraints).not.toHaveProperty("risk_budget");
     expect(constraints).not.toHaveProperty("volume");
