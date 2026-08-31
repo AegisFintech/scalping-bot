@@ -2309,4 +2309,5 @@ format/lint, strict mypy over 17 source files, and 84 Python tests. Configured
 Streamlit AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero
 exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
 vulnerabilities, tracked-file secret scanning, shell/PM2 checks, and all five
-offline systemd security parses at 2.8 (`OK`) passed.
+offline systemd security parses at 2.8 (`OK`) passed. Review and rollout are
+tracked by [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141).

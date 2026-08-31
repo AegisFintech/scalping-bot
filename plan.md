@@ -396,7 +396,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   Streamlit AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero
   exceptions. Replay/backtest, zero-vulnerability npm/pip audits, tracked-file
   secret scanning, shell/PM2 validation, and all five systemd security parses
-  at 2.8 (`OK`) passed. Paused rollout verification remains.
+  at 2.8 (`OK`) passed. Review, merge, and paused rollout verification are
+  tracked by [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141).
 
 ### ISSUE-001 delivery details
 
