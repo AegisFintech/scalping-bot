@@ -351,7 +351,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   15 tabs with zero exceptions. Replay/backtest, zero-vulnerability npm/pip
   audits, tracked-file secret scanning, shell/PM2 checks, and all five offline
   systemd security parses at 2.8 (`OK`) passed. Reviewed merge and paused
-  immutable `.33` rollout remain to finish.
+  immutable `.33` rollout remain to finish. Review and automatic merge are
+  tracked by [PR #139](https://github.com/AegisFintech/scalping-bot/pull/139).
 
 ### ISSUE-001 delivery details
 
