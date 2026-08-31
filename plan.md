@@ -199,7 +199,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
 | ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
 | ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
-| ISSUE-057 | in progress | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
+| ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
+| ISSUE-058 | in progress | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -331,8 +332,9 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: ISSUE-054 campaign target, ISSUE-056 compact decision trail,
   exact terminal broker-event evidence, the local multimodal AI boundary, and
   the existing demo-only acknowledgement and execution authority.
-- Current status: implementation is in progress on
-  `issue-057-terminal-recovery-throughput`, tracked by
+- Current status: complete. Implementation was reviewed and squash-merged as
+  `568043f` through
+  [PR #139](https://github.com/AegisFintech/scalping-bot/pull/139), tracked by
   [issue #138](https://github.com/AegisFintech/scalping-bot/issues/138).
   Read-only evidence found 177 attempts, 105 completed endpoint responses, 49
   placed groups, and 49 closed demo trades before progress stopped at
@@ -350,9 +352,52 @@ never justify empty, noisy, unsafe, or misleading commits.
   tests. Configured Streamlit AppTest rendered 42 dataframes, 69 metrics, and
   15 tabs with zero exceptions. Replay/backtest, zero-vulnerability npm/pip
   audits, tracked-file secret scanning, shell/PM2 checks, and all five offline
-  systemd security parses at 2.8 (`OK`) passed. Reviewed merge and paused
-  immutable `.33` rollout remain to finish. Review and automatic merge are
-  tracked by [PR #139](https://github.com/AegisFintech/scalping-bot/pull/139).
+  systemd security parses at 2.8 (`OK`) passed. Immutable `.33` was then built
+  from merged `main` and rolled out under an audited analysis pause. All five
+  services returned healthy before that pause was removed. By 31 Aug 2026,
+  09:15 GMT+8, the scheduler had made seven new automatic attempts and four
+  completed `system-v8` endpoint calls. Status was `RUNNING`, startup was
+  certain, no blocker or reconciliation reason remained, and no order or
+  position was active. The four calls persisted one attempt each and measured
+  27.394--28.785 seconds. Current-price and spread protections rejected the
+  proposals instead of leaving a sticky state; the following eligible cycle
+  continued automatically. PostgreSQL contained no nonterminal `.33` broker
+  lifecycle row, and every observability outbox row was `DELIVERED`. At 09:17,
+  the new watchdog then correctly exposed a separate cadence defect: mandatory
+  reconciliation sometimes finished after the 5-second broker opening window,
+  so healthy later ticks could not claim a minute. ISSUE-058 carries the exact
+  109-response/49-trade baseline into `.34` and corrects that bounded window;
+  no placement or risk validation is relaxed.
+
+### ISSUE-058 delivery details
+
+- Acceptance criteria: preserve every schema, semantic, freshness, spread,
+  reconciliation, sizing, ownership, and deterministic risk gate; accommodate
+  measured broker preflight latency inside a bounded M1 opening window; carry
+  exactly 109 completed endpoint responses and 49 closed demo trades into a
+  new immutable release; test the release/config contract and both sides of
+  the time boundary; pass the complete gate; and prove multiple automatic
+  minutes complete after a paused rollout without a stall.
+- Dependencies: ISSUE-057 terminal recovery and activity watchdog, the durable
+  minute-claim table, completed-candle policy, and the existing demo-only
+  authority.
+- Current status: implementation is in progress on
+  `issue-058-scheduler-window`, tracked by
+  [issue #140](https://github.com/AegisFintech/scalping-bot/issues/140).
+  Release `.33` completed seven attempts and four endpoint responses before
+  the watchdog reported `AUTOMATIC_ANALYSIS_STALLED`. Read-only evidence showed
+  scheduler ticks and fresh market data continued; required reconciliation
+  sometimes consumed the entire 5-second opening window. Release `.34` uses
+  the already-tested 10-second inclusive/exclusive boundary and carries
+  baselines 109/49. Risk and placement gates are unchanged. The complete gate
+  passed Prettier, ESLint, TypeScript typecheck/build, 266 Node tests across 42
+  files, 17 schema tests, 3 migration tests, all 3 configured integration
+  tests, Ruff format/lint, strict mypy over 17 sources, and 84 Python tests.
+  Streamlit AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero
+  exceptions. Replay/backtest, zero-vulnerability npm/pip audits, tracked-file
+  secret scanning, shell/PM2 validation, and all five systemd security parses
+  at 2.8 (`OK`) passed. Review, merge, and paused rollout verification are
+  tracked by [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141).
 
 ### ISSUE-001 delivery details
 

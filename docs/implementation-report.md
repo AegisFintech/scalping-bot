@@ -2254,3 +2254,60 @@ tests, npm/pip audits with zero known vulnerabilities, tracked-file secret
 scanning, shell/PM2 syntax, and all five offline systemd security parses at 2.8
 (`OK`) passed. Review and automatic merge are tracked by
 [PR #139](https://github.com/AegisFintech/scalping-bot/pull/139).
+
+PR #139 was squash-merged as `568043f` at 31 Aug 2026, 09:02:52 GMT+8.
+Release `.33` was built from that merged commit and deployed under an audited
+analysis pause. Analytics, market data, AI, execution, and Streamlit all
+returned healthy before the pause was removed; the saved PM2 process set also
+contains the `.33` campaign baselines of 105 completed endpoint responses and
+49 closed demo trades.
+
+The first resumed broker-minute claim occurred automatically at 09:05:05
+GMT+8. By the 09:15 rollout snapshot, seven `.33` cycles had completed, four
+had reached the external endpoint with `system-v8`, and the next eligible
+cycle continued without operator intervention. PostgreSQL recorded exactly one
+attempt per completed request and real provider durations from 27.394 to
+28.785 seconds. Two endpoint proposals became too close to the refreshed
+market during inference; other attempts met the unchanged point/percentile
+spread gates. They ended as finite rejections and did not recreate the prior
+terminal latch.
+
+At that snapshot, execution status was startup-certain, automatic analysis was
+enabled, activity was `RUNNING`, and there were no persistent blocker reason
+codes. The latest managed setup remained the correctly terminal `CLOSED`
+release `.32` trade; the open-position monitor returned `NONE`. Release `.33`
+had no order group, nonterminal order, nonterminal position, or closed trade
+yet. All 14,769 observability outbox rows were `DELIVERED`.
+
+At 09:17:45 GMT+8, the new watchdog correctly emitted
+`AUTOMATIC_ANALYSIS_STALLED`. Scheduler ticks, broker reconciliation, and fresh
+market sampling continued, but reconciliation occasionally completed after
+the 5-second broker opening window. Those healthy ticks were then ineligible
+to claim their minute. This was not the old terminal latch, and it created no
+order or uncertain broker state. Analyses were auditably paused at four `.33`
+endpoint responses while ISSUE-058 corrects the bounded window. These are demo
+operational results, not evidence or a claim of profitability.
+
+## ISSUE-058 scheduler preflight window
+
+The claim window is increased from 5 to 10 broker-time seconds for immutable
+release `.34`. The existing evaluator already proves 09.999 seconds is allowed
+and the exact 10.000-second boundary is rejected. Durable uniqueness still
+permits at most one account/symbol claim per M1 interval, and every completed-
+candle, inference-budget, spread, freshness, semantic, reconciliation, sizing,
+ownership, and risk gate is unchanged.
+
+Release `.34` carries the paused, verified baseline of 109 completed endpoint
+responses and 49 closed demo trades. The release/config test pins that version,
+both baselines, and the 10-second window together so a PM2 restart cannot
+silently inherit the prior cadence.
+
+The complete pre-deployment gate passed Prettier, ESLint, TypeScript
+typecheck/build, 266 Node tests across 42 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 84 Python tests. Configured
+Streamlit AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero
+exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
+vulnerabilities, tracked-file secret scanning, shell/PM2 checks, and all five
+offline systemd security parses at 2.8 (`OK`) passed. Review and rollout are
+tracked by [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141).
