@@ -2297,10 +2297,13 @@ permits at most one account/symbol claim per M1 interval, and every completed-
 candle, inference-budget, spread, freshness, semantic, reconciliation, sizing,
 ownership, and risk gate is unchanged.
 
-Release `.34` carries the paused, verified baseline of 109 completed endpoint
-responses and 49 closed demo trades. The release/config test pins that version,
-both baselines, and the 10-second window together so a PM2 restart cannot
-silently inherit the prior cadence.
+The pause became effective while one `.33` cycle was in flight and immediately
+after another durable minute claim. Both completed without an order, taking
+`.33` to nine attempts and six endpoint responses. Release `.34` therefore
+carries the final paused, verified baseline of 111 completed endpoint responses
+and 49 closed demo trades. The release/config test pins that version, both
+baselines, and the 10-second window together so a PM2 restart cannot silently
+inherit the prior cadence.
 
 The complete pre-deployment gate passed Prettier, ESLint, TypeScript
 typecheck/build, 266 Node tests across 42 files, 17 schema tests, 3 migration
