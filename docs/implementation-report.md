@@ -2340,3 +2340,6 @@ At the rollout snapshot, `.34` had two completed responses, one terminal group,
 one closed trade, no nonterminal order/group/position, and no watchdog stall
 event. All 14,861 Better Stack outbox rows were `DELIVERED`. This is broker-demo
 operational evidence, not a profitability claim.
+
+Final rollout evidence is tracked by
+[PR #143](https://github.com/AegisFintech/scalping-bot/pull/143).

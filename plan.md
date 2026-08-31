@@ -414,7 +414,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   `RUNNING` with zero blocker reasons. The two `.34` endpoint calls took
   24.074--26.847 seconds with one attempt each. PostgreSQL has no nonterminal
   `.34` broker rows, no `.34` stall event exists, and all 14,861 Better Stack
-  outbox rows were `DELIVERED`.
+  outbox rows were `DELIVERED`. Final rollout evidence is tracked by
+  [PR #143](https://github.com/AegisFintech/scalping-bot/pull/143).
 
 ### ISSUE-001 delivery details
 
