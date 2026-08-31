@@ -10,7 +10,7 @@ spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
 The one explicitly configured execution transform is TP-distance division by
-two. Prompt `system-v7` asks for at least twice the effective minimum R:R. The
+two. Prompt `system-v8` asks for at least twice the effective minimum R:R. The
 coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
 recomputes R:R, and rejects an off-tick result without rounding. The original
 endpoint response and effective values remain separately auditable.
@@ -27,6 +27,11 @@ loss budget at broker minimum volume to whole ticks and sends only the resulting
 maximum stop distance to the endpoint. It never sends equity, money budget,
 volume, or account identity. The same constraint is recomputed after inference;
 lower equity or changed metadata can only reject the unchanged endpoint SL.
+Before the request, the same Decimal inputs produce exact tick-aligned BUY and
+SELL entry intervals, an inclusive stop-distance interval, and one preferred
+expiry timestamp. These are instructions to improve proposal compliance, not
+an authority bypass: the unchanged response still passes schema, semantic,
+freshness, spread, account, sizing, margin, and placement validation.
 
 ```text
 per_leg_budget = equity * setup_risk_percent / 100 / 2

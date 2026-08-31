@@ -44,6 +44,7 @@ import {
   evaluateAutomaticAnalysisWindow,
   PostgresAutomaticAnalysisSchedule,
 } from "./automatic-analysis-schedule.js";
+import { PostgresAutomaticAnalysisWatchdog } from "./automatic-analysis-watchdog.js";
 import {
   enforceAutomaticAnalysisCampaign,
   PostgresAutomaticAnalysisCampaign,
@@ -202,6 +203,7 @@ async function buildCTraderClient(
 }
 
 async function main(): Promise<void> {
+  const serviceStartedAt = new Date();
   const environment = process.env;
   const config = loadExecutionConfig(environment);
   if (!["paper", "demo", "shadow", "live"].includes(config.tradingMode)) {
@@ -303,7 +305,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v7",
+    promptVersion: "system-v8",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -389,8 +391,8 @@ async function main(): Promise<void> {
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v7.md"),
-    promptVersion: "system-v7",
+    systemPromptPath: path.resolve("prompts/system-v8.md"),
+    promptVersion: "system-v8",
     timeoutMs: aiOrchestratorRequestTimeoutMs({
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
@@ -423,7 +425,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v7",
+    promptVersion: "system-v8",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -466,6 +468,26 @@ async function main(): Promise<void> {
     accountId: identity.accountId,
     symbolId: identity.symbolId,
     mode: config.tradingMode,
+  });
+  const automaticAnalysisWatchdog = new PostgresAutomaticAnalysisWatchdog({
+    pool,
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+    strategyVersionId: identity.strategyVersionId,
+    strategyVersion,
+    symbol: config.symbol,
+    accountKey: config.accountKey,
+    instanceId: config.instanceId,
+    environment: config.appEnv,
+    mode: config.tradingMode,
+    serviceStartedAt,
+    stallAfterMs: boundedSecondsMs(
+      environment,
+      "AUTOMATIC_ANALYSIS_STALL_SECONDS",
+      180,
+      60,
+      3600,
+    ),
   });
   const openPositionMonitor =
     brokerClient === null
@@ -565,6 +587,7 @@ async function main(): Promise<void> {
           failureCheckpoint,
           terminal.terminalProofKey,
           result,
+          terminal.terminalBrokerFillId,
         );
         const recorderState = await demoExecutionRecorder.flush();
         latestDemoExecutionReasonCodes = recorderState.reasonCodes;
@@ -1001,7 +1024,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v7",
+    promptVersion: "system-v8",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: environment.MIN_RISK_REWARD_RATIO ?? "2",
@@ -1105,6 +1128,22 @@ async function main(): Promise<void> {
         ],
       }));
     const eligibility = evaluateAnalysisEligibility(current);
+    const automationActivity = await automaticAnalysisWatchdog
+      .snapshot({
+        automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+        paused: current.pauseNewAnalyses,
+        managedSetupActive: managedSetup.status === "ACTIVE",
+      })
+      .catch(() => ({
+        state: "UNAVAILABLE" as const,
+        lastClaimedAt: null,
+        lastCompletedAt: null,
+        lastLifecycleAt: null,
+        lastProgressAt: null,
+        latestMarketAt: null,
+        stalledSince: null,
+        reasonCodes: ["AUTOMATIC_WATCHDOG_UNAVAILABLE"],
+      }));
     const modeReasons =
       config.tradingMode === "demo"
         ? [
@@ -1120,6 +1159,9 @@ async function main(): Promise<void> {
         ...modeReasons,
         ...latestDemoExecutionReasonCodes,
         ...latestSafetyDetailReasonCodes,
+        ...(automationActivity.state === "STALLED"
+          ? automationActivity.reasonCodes
+          : []),
       ]),
     ].sort();
     return {
@@ -1152,6 +1194,7 @@ async function main(): Promise<void> {
         complete: tradeCampaign.complete,
         reasonCodes: tradeCampaign.reasonCodes,
       },
+      automationActivity,
       managedSetup,
       aiCircuitOpenUntil: model.circuitOpenUntil,
       tradingEnabled:
@@ -1336,6 +1379,11 @@ async function main(): Promise<void> {
   const tick = async (): Promise<void> => {
     if (ticking) return;
     ticking = true;
+    let watchdogContext: {
+      automaticAnalysisEnabled: boolean;
+      paused: boolean;
+      managedSetupActive: boolean;
+    } | null = null;
     try {
       await refreshDemoRecovery();
       await maintenance.expireAndReconcile();
@@ -1357,6 +1405,15 @@ async function main(): Promise<void> {
         await trail.paperState(changes, paperGateway.positions());
       }
       const current = await safety();
+      watchdogContext = {
+        automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+        paused: current.pauseNewAnalyses,
+        managedSetupActive:
+          current.relevantPositionCount > 0 ||
+          current.relevantPendingOrderCount > 0 ||
+          current.partialFillPresent ||
+          current.cancellationPending,
+      };
       if (
         current.environmentEmergencyStop ||
         current.filesystemEmergencyStop ||
@@ -1449,6 +1506,17 @@ async function main(): Promise<void> {
         reason_code: stableFailureReason(error, "SCHEDULER_FAILED"),
       });
     } finally {
+      if (watchdogContext !== null) {
+        try {
+          await automaticAnalysisWatchdog.observe(watchdogContext);
+        } catch {
+          logger.log("error", {
+            event_name: "automatic_analysis_watchdog_failed",
+            outcome: "failed",
+            reason_code: "AUTOMATIC_WATCHDOG_UNAVAILABLE",
+          });
+        }
+      }
       ticking = false;
     }
   };

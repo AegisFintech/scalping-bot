@@ -73,6 +73,8 @@ export interface ModelProvider {
     readonly response: ModelResponse;
     readonly rawResponse: string;
     readonly promptArtifact: ModelPromptArtifact;
+    readonly latencyMs?: number;
+    readonly retryCount?: number;
   }>;
 }
 
@@ -96,6 +98,7 @@ export interface DecisionTrail {
     response: ModelResponse,
     rawResponse: string,
     promptArtifact: ModelPromptArtifact,
+    timing?: { readonly latencyMs: number; readonly retryCount: number },
   ): Promise<void>;
   validation(
     analysisId: string,
@@ -171,6 +174,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
     response: ModelResponse,
     rawResponse: string,
     promptArtifact: ModelPromptArtifact,
+    timing?: { readonly latencyMs: number; readonly retryCount: number },
   ): Promise<void> {
     this.events.push({
       type: "model",
@@ -179,6 +183,7 @@ export class InMemoryDecisionTrail implements DecisionTrail {
       response,
       rawResponse,
       promptArtifact,
+      timing,
     });
     return Promise.resolve();
   }
@@ -219,7 +224,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v7";
+  readonly promptVersion: "system-v8";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -262,6 +267,90 @@ export interface CycleResult {
   readonly outcome: "PLACED" | "REJECTED";
   readonly reasonCodes: readonly string[];
   readonly placement: OcoPlacementResult | null;
+}
+
+export interface ModelExecutionBounds {
+  readonly buyEntryMinimum: string;
+  readonly buyEntryMaximum: string;
+  readonly sellEntryMinimum: string;
+  readonly sellEntryMaximum: string;
+  readonly minimumStopDistance: string;
+  readonly maximumStopDistance: string;
+  readonly preferredExpiresAt: string;
+}
+
+function floorToTick(value: Decimal, tickSize: Decimal): Decimal {
+  return value.div(tickSize).floor().mul(tickSize);
+}
+
+function ceilToTick(value: Decimal, tickSize: Decimal): Decimal {
+  return value.div(tickSize).ceil().mul(tickSize);
+}
+
+export function deriveModelExecutionBounds(input: {
+  readonly currentBid: string;
+  readonly currentAsk: string;
+  readonly tickSize: string;
+  readonly minimumStopDistance: string;
+  readonly atr: string;
+  readonly maxEntryDistanceAtr: string;
+  readonly maxStopDistanceAtr: string;
+  readonly maxAffordableStopDistance: string;
+  readonly serverTime: string;
+  readonly preferredExpirySeconds: number;
+}): ModelExecutionBounds {
+  const bid = decimal(input.currentBid);
+  const ask = decimal(input.currentAsk);
+  const tickSize = decimal(input.tickSize);
+  const minimumStopDistance = decimal(input.minimumStopDistance);
+  const atr = decimal(input.atr);
+  const maximumEntryDistance = atr.mul(decimal(input.maxEntryDistanceAtr));
+  const maximumStopDistance = floorToTick(
+    Decimal.min(
+      atr.mul(decimal(input.maxStopDistanceAtr)),
+      decimal(input.maxAffordableStopDistance),
+    ),
+    tickSize,
+  );
+  const buyEntryMinimum = ceilToTick(ask.plus(minimumStopDistance), tickSize);
+  const buyEntryMaximum = floorToTick(ask.plus(maximumEntryDistance), tickSize);
+  const sellEntryMinimum = ceilToTick(
+    bid.minus(maximumEntryDistance),
+    tickSize,
+  );
+  const sellEntryMaximum = floorToTick(
+    bid.minus(minimumStopDistance),
+    tickSize,
+  );
+  if (
+    buyEntryMinimum.gt(buyEntryMaximum) ||
+    sellEntryMinimum.gt(sellEntryMaximum)
+  ) {
+    throw new Error("MODEL_ENTRY_RANGE_UNSATISFIABLE");
+  }
+  if (maximumStopDistance.lt(minimumStopDistance))
+    throw new Error("MODEL_STOP_RANGE_UNSATISFIABLE");
+  const serverTime = Date.parse(input.serverTime);
+  if (
+    !Number.isFinite(serverTime) ||
+    serverTime < 0 ||
+    !Number.isSafeInteger(input.preferredExpirySeconds) ||
+    input.preferredExpirySeconds < 1
+  ) {
+    throw new Error("MODEL_EXPIRY_BOUND_INVALID");
+  }
+  const preferredExpiresAt = serverTime + input.preferredExpirySeconds * 1_000;
+  if (!Number.isSafeInteger(preferredExpiresAt))
+    throw new Error("MODEL_EXPIRY_BOUND_INVALID");
+  return {
+    buyEntryMinimum: canonical(buyEntryMinimum),
+    buyEntryMaximum: canonical(buyEntryMaximum),
+    sellEntryMinimum: canonical(sellEntryMinimum),
+    sellEntryMaximum: canonical(sellEntryMaximum),
+    minimumStopDistance: canonical(minimumStopDistance),
+    maximumStopDistance: canonical(maximumStopDistance),
+    preferredExpiresAt: new Date(preferredExpiresAt).toISOString(),
+  };
 }
 
 function m1Atr(response: AnalyticsResponse): string {
@@ -599,6 +688,27 @@ export class AnalysisCoordinator {
 
       await this.#recordTransition(analysisId, machine, "FEATURED");
       const performance = await this.#options.performance(analytics);
+      let modelExecutionBounds: ModelExecutionBounds;
+      try {
+        modelExecutionBounds = deriveModelExecutionBounds({
+          currentBid: preModelSnapshot.quote.bid,
+          currentAsk: preModelSnapshot.quote.ask,
+          tickSize: preModelSnapshot.metadata.tickSize,
+          minimumStopDistance: canonical(minimumStopDistance),
+          atr,
+          maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
+          maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
+          maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
+          serverTime: preModelSnapshot.serverTime,
+          preferredExpirySeconds: this.#options.preferredExpirySeconds,
+        });
+      } catch (error) {
+        return await reject([
+          error instanceof Error
+            ? error.message
+            : "MODEL_EXECUTION_BOUNDS_INVALID",
+        ]);
+      }
       const payload = buildModelPayload({
         mode: this.#options.modelPayloadMode,
         analysisId,
@@ -624,6 +734,7 @@ export class AnalysisCoordinator {
           maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
           maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
+          ...modelExecutionBounds,
           orderExpiryMinSeconds: this.#options.minExpirySeconds,
           orderExpiryMaxSeconds: this.#options.maxExpirySeconds,
           preferredOrderExpirySeconds: this.#options.preferredExpirySeconds,
@@ -646,6 +757,10 @@ export class AnalysisCoordinator {
         model.response,
         model.rawResponse,
         model.promptArtifact,
+        {
+          latencyMs: model.latencyMs ?? 0,
+          retryCount: model.retryCount ?? 0,
+        },
       );
       await this.#recordTransition(analysisId, machine, "VALIDATING");
 

@@ -31,10 +31,10 @@ New schema 2.1 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Prompt `system-v7` is screenshot-first, self-checks both independent legs and
+Prompt `system-v8` is screenshot-first, self-checks both independent legs and
 the configured TP-distance division by two, receives the non-sizing maximum
-stop distance affordable at broker minimum volume, and keeps each confirmation
-inside the configured M1-ATR reachability cap. The
+stop distance affordable at broker minimum volume, and receives exact
+tick-aligned entry/stop ranges plus the preferred expiry. The
 dashboard shows endpoint and effective TP/R:R side by side; generated proposals
 remain distinct from queued or broker-submitted orders.
 After deterministic margin/sizing work, execution reconciles the account and

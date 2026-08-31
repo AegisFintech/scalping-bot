@@ -63,6 +63,14 @@ not create a local position. The order acceptance is still journaled and mapped.
 An unpriced position on `ORDER_FILLED` or `ORDER_PARTIAL_FILL` remains invalid
 and blocking.
 
+On a terminal `ORDER_FILLED` close, cTrader may report zero or omit the
+contextual CLOSED position `price` even though the same callback has a complete
+deal, positive close execution price, and `closePositionDetail.entryPrice`.
+That exact terminal shape uses the close-detail entry price. It does not apply
+to an OPEN position or incomplete deal. A late duplicate normalization failure
+can clear only when PostgreSQL returns terminal proof carrying the same broker
+fill identity; a different or missing fill identity remains fail-closed.
+
 The running execution service rechecks unresolved local demo state against
 bounded broker history every 15 seconds by default. This is the normal recovery
 path when a terminal callback is missed; an exact closing order/deal can close
@@ -291,16 +299,16 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v7` tells the endpoint that the execution service preserves its
+Prompt `system-v8` tells the endpoint that the execution service preserves its
 entry and stop loss but halves the distance from entry to take profit. It asks
 for twice the configured effective minimum R:R, explicitly self-checks both
-independent legs and midpoint targets, and supplies the maximum stop distance
-affordable at broker minimum volume. That derived field contains no equity,
-budget, volume, or account identity. It also requires the nearest defensible
-confirmation inside `MAX_ENTRY_DISTANCE_ATR` and the configured preferred
-expiry. An off-tick midpoint, over-distance entry, or returned stop above the
-current limit is rejected without correction, and a later broker minute starts
-a fresh cycle after the rejection becomes terminal.
+independent legs and midpoint targets, and supplies exact tick-aligned BUY/SELL
+entry ranges, an inclusive stop-distance range, and one exact preferred expiry.
+Those ranges combine current quote, broker/configured minimum, M1 ATR caps, and
+the maximum stop affordable at broker minimum volume. They contain no equity,
+budget, volume, or account identity. An off-tick midpoint, out-of-range entry,
+or returned stop outside the current limit is rejected without correction, and
+a later broker minute starts a fresh cycle after the rejection becomes terminal.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted
@@ -331,6 +339,17 @@ start another model call until the displayed UTC/Singapore retry time. It
 half-opens automatically; do not restart merely to clear the message. The last
 cycle is shown separately because a terminal rejection explains why that cycle
 placed no order but does not mean the scheduler stopped.
+
+The status contract also reports automatic activity as `STARTING`, `RUNNING`,
+`MANAGING_SETUP`, `WAITING_FOR_MARKET`, `PAUSED`, `DISABLED`, `STALLED`, or
+`UNAVAILABLE`. `STALLED` requires recent spread observations, no managed setup,
+automation enabled/unpaused, and no durable interval/lifecycle progress for
+`AUTOMATIC_ANALYSIS_STALL_SECONDS` (default 180). It adds
+`AUTOMATIC_ANALYSIS_STALLED` to Overview and writes one durable
+`automatic_analysis_stalled` audit event; resumed progress writes one
+`automatic_analysis_resumed` event only after a cycle/lifecycle becomes active
+again. Pause, disable, startup, or market closure is not called recovery. Both enter the Better Stack outbox. This is
+an alert and diagnosis aid, not an execution or safety bypass.
 
 ## Adaptive spread-history warm-up
 
@@ -388,8 +407,10 @@ To recover, investigate and reconcile first. Each stop source must be cleared by
 - **`CTRADER_FIELD_INVALID:price`:** a new fill/position callback omitted a
   required price. New cycles remain locked. Correlate the sanitized execution
   type and field-presence log with broker history; never invent the value. An
-  exact duplicate of a certainly persisted deal is ignored before this check,
-  so the reason indicates a first/new event or a prior uncertain persistence.
+  OPEN position always requires its own positive price. A CLOSED position can
+  use only the entry price from complete same-callback terminal close detail,
+  while exact durable terminal fill proof can release only a matching late
+  duplicate failure. Any other shape stays blocked.
 - **daily loss lockout:** cancel pending strategy orders; monitor/document existing positions under approved policy; reset only next configured day after reconciliation.
 - **database failure:** block new order commands; keep broker reconciliation attempts and buffered local critical logs; recover DB and reconcile.
 - **resource pressure/low disk:** emergency stop if durability/freshness is threatened; rotate/preserve audit logs; restore capacity.

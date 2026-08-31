@@ -116,12 +116,14 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         resolved_event_count: string;
         terminal_proof_hash: string | null;
         terminal_order_group_id: string | null;
+        terminal_broker_fill_id: string | null;
       }>(
         `WITH terminal_proofs AS MATERIALIZED (
            SELECT DISTINCT ON (terminal.order_group_id)
                   terminal.order_group_id,
                   terminal.broker_event_key,
                   terminal.payload_hash,
+                  terminal.broker_fill_id,
                   terminal.occurred_at
            FROM broker_execution_events terminal
            JOIN order_groups og ON og.id = terminal.order_group_id
@@ -228,13 +230,18 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                    AS terminal_proof_hash,
                 (SELECT order_group_id::text FROM terminal_proofs
                  ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
-                   AS terminal_order_group_id`,
+                   AS terminal_order_group_id,
+                (SELECT broker_fill_id FROM terminal_proofs
+                 ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
+                   AS terminal_broker_fill_id`,
         [this.#options.accountId, this.#options.symbolId],
       );
       const resolvedText = result.rows[0]?.resolved_event_count;
       const terminalProofHash = result.rows[0]?.terminal_proof_hash ?? null;
       const terminalOrderGroupId =
         result.rows[0]?.terminal_order_group_id ?? null;
+      const terminalBrokerFillId =
+        result.rows[0]?.terminal_broker_fill_id ?? null;
       if (
         resolvedText === undefined ||
         !/^(?:0|[1-9][0-9]*)$/.test(resolvedText) ||
@@ -244,7 +251,10 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
             terminalOrderGroupId,
           )) ||
-        (terminalProofHash === null) !== (terminalOrderGroupId === null)
+        (terminalBrokerFillId !== null &&
+          !/^[0-9]{1,32}$/.test(terminalBrokerFillId)) ||
+        (terminalProofHash === null) !== (terminalOrderGroupId === null) ||
+        (terminalProofHash === null) !== (terminalBrokerFillId === null)
       ) {
         throw new Error("DEMO_TERMINAL_EVIDENCE_RESULT_INVALID");
       }
@@ -255,6 +265,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         terminalProofKey:
           terminalProofHash === null ? null : `terminal:${terminalProofHash}`,
         terminalOrderGroupId,
+        terminalBrokerFillId,
         resolvedEventCount: Number(resolvedText),
       };
     } catch (error) {

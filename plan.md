@@ -199,6 +199,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
 | ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
 | ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
+| ISSUE-057 | in progress | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -315,6 +316,43 @@ never justify empty, noisy, unsafe, or misleading commits.
   rendered 37 dataframes, 51 metrics, and 15 tabs with zero exceptions.
   ISSUE-056 is complete; the scheduler continues retrying each free broker
   minute and no order was forced through an unsafe spread.
+
+### ISSUE-057 delivery details
+
+- Acceptance criteria: explain the exact 49-trade/105-response stop from
+  immutable PostgreSQL and local logs; recover a late duplicate terminal
+  callback only from its exact durable fill proof; preserve all spread,
+  freshness, schema, semantic, reconciliation, ownership, and deterministic
+  risk gates; give the endpoint precomputed tick-aligned entry/stop/expiry
+  bounds; persist provider latency and retry count; expose a plain automatic
+  activity state and durable Better Stack stall/recovery events; continue the
+  reviewed 500-response/100-closed-trade campaign under a new immutable
+  release; and verify the first resumed cycle and broker lifecycle.
+- Dependencies: ISSUE-054 campaign target, ISSUE-056 compact decision trail,
+  exact terminal broker-event evidence, the local multimodal AI boundary, and
+  the existing demo-only acknowledgement and execution authority.
+- Current status: implementation is in progress on
+  `issue-057-terminal-recovery-throughput`, tracked by
+  [issue #138](https://github.com/AegisFintech/scalping-bot/issues/138).
+  Read-only evidence found 177 attempts, 105 completed endpoint responses, 49
+  placed groups, and 49 closed demo trades before progress stopped at
+  28 Aug 2026, 09:27:24 GMT+8. A valid terminal close was followed 663 ms later
+  by a duplicate cTrader close callback whose contextual position price was
+  zero. The durable close remained correct, but the process-local
+  `CTRADER_FIELD_INVALID:price` latch could not reuse already-consumed terminal
+  proof and blocked every later cycle. The same process kept reconciling and
+  sampling spreads, proving the scheduler had not crashed. The fix, prompt-v8
+  contract, latency persistence, activity watchdog, and documentation are
+  implemented. The complete pre-deployment gate passed formatting, ESLint,
+  TypeScript typecheck/build, 266 Node tests across 42 files, 17 schema tests,
+  3 migration tests, all 3 configured isolated PostgreSQL/HTTP integration
+  tests, Ruff format/lint, strict mypy over 17 source files, and 84 Python
+  tests. Configured Streamlit AppTest rendered 42 dataframes, 69 metrics, and
+  15 tabs with zero exceptions. Replay/backtest, zero-vulnerability npm/pip
+  audits, tracked-file secret scanning, shell/PM2 checks, and all five offline
+  systemd security parses at 2.8 (`OK`) passed. Reviewed merge and paused
+  immutable `.33` rollout remain to finish. Review and automatic merge are
+  tracked by [PR #139](https://github.com/AegisFintech/scalping-bot/pull/139).
 
 ### ISSUE-001 delivery details
 

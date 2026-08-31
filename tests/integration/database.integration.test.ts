@@ -15,6 +15,7 @@ import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-stor
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { PostgresAutomaticAnalysisCampaign } from "../../apps/execution-service/src/automatic-analysis-campaign.js";
 import { PostgresAutomaticTradeCampaign } from "../../apps/execution-service/src/automatic-trade-campaign.js";
+import { PostgresAutomaticAnalysisWatchdog } from "../../apps/execution-service/src/automatic-analysis-watchdog.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
 import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
@@ -442,6 +443,78 @@ describe("PostgreSQL migrations integration", () => {
         analysis_id: analysisId,
         outcome: "REJECTED",
       });
+      await isolated.query(
+        `UPDATE automatic_analysis_intervals
+         SET claimed_at = '2026-08-24T00:00:03.000Z',
+             completed_at = '2026-08-24T00:00:30.000Z'
+         WHERE account_id = $1 AND symbol_id = $2 AND interval_start = $3`,
+        [demoAccountId, symbolId, automaticInterval],
+      );
+      await isolated.query(
+        `INSERT INTO spread_observations
+          (id, account_id, symbol_id, source_minute, source_time, received_at,
+           server_time, bid, ask, spread, created_at)
+         VALUES ($1, $2, $3, 29792170, '2026-08-24T00:10:00.900Z',
+                 '2026-08-24T00:10:00.980Z', '2026-08-24T00:10:00.950Z',
+                 4649.12, 4649.21, 0.09, '2026-08-24T00:10:01.000Z')`,
+        [randomUUID(), demoAccountId, symbolId],
+      );
+      const watchdog = new PostgresAutomaticAnalysisWatchdog({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+        strategyVersionId,
+        strategyVersion: `integration-${strategyVersionId}`,
+        symbol: "XAUUSD",
+        accountKey: "integration-demo-account",
+        instanceId: "integration-instance",
+        environment: "test",
+        mode: "demo",
+        serviceStartedAt: new Date("2026-08-23T23:50:00.000Z"),
+        stallAfterMs: 180_000,
+      });
+      await expect(
+        watchdog.observe({
+          automaticAnalysisEnabled: true,
+          paused: false,
+          managedSetupActive: false,
+          now: new Date("2026-08-24T00:10:30.000Z"),
+        }),
+      ).resolves.toMatchObject({
+        state: "STALLED",
+        reasonCodes: ["AUTOMATIC_ANALYSIS_STALLED"],
+      });
+      await expect(
+        watchdog.observe({
+          automaticAnalysisEnabled: true,
+          paused: true,
+          managedSetupActive: false,
+          now: new Date("2026-08-24T00:10:30.500Z"),
+        }),
+      ).resolves.toMatchObject({ state: "PAUSED", reasonCodes: [] });
+      await expect(
+        watchdog.observe({
+          automaticAnalysisEnabled: true,
+          paused: false,
+          managedSetupActive: true,
+          now: new Date("2026-08-24T00:10:31.000Z"),
+        }),
+      ).resolves.toMatchObject({ state: "MANAGING_SETUP", reasonCodes: [] });
+      const watchdogAudit = await isolated.query<{
+        event_name: string;
+        outbox_status: string;
+      }>(
+        `SELECT ae.event_name, oo.status AS outbox_status
+         FROM audit_events ae
+         JOIN observability_outbox oo ON oo.audit_event_id = ae.id
+         WHERE ae.event_name IN
+           ('automatic_analysis_stalled', 'automatic_analysis_resumed')
+         ORDER BY ae.occurred_at`,
+      );
+      expect(watchdogAudit.rows).toEqual([
+        { event_name: "automatic_analysis_stalled", outbox_status: "PENDING" },
+        { event_name: "automatic_analysis_resumed", outbox_status: "PENDING" },
+      ]);
       const preflightInterval = "2026-08-24T00:01:00.000Z";
       await expect(
         automaticSchedule.claim({
@@ -607,6 +680,7 @@ describe("PostgreSQL migrations integration", () => {
           ocoResponse(analysisId),
           '{"status":"completed"}',
           promptArtifact,
+          { latencyMs: 1234, retryCount: 1 },
         ),
       ).resolves.toBeUndefined();
       const modelTrail = await isolated.query<{
@@ -617,6 +691,8 @@ describe("PostgreSQL migrations integration", () => {
         authorization: string;
         system_prompt: string;
         system_prompt_sha256: string;
+        attempt_count: number;
+        duration_ms: number;
       }>(
         `SELECT mr.id::text = mr.request_id AS id_matches_request_id,
                 (SELECT count(*)::text FROM model_requests WHERE analysis_id = $1) AS requests,
@@ -625,7 +701,8 @@ describe("PostgreSQL migrations integration", () => {
                  WHERE mreq.analysis_id = $1) AS responses,
                 ar.valid_until,
                 mr.payload_redacted ->> 'authorization' AS authorization,
-                mr.system_prompt, mr.system_prompt_sha256
+                mr.system_prompt, mr.system_prompt_sha256,
+                mr.attempt_count, mr.duration_ms
          FROM analysis_runs ar
          JOIN model_requests mr ON mr.analysis_id = ar.id
          WHERE ar.id = $1`,
@@ -639,6 +716,8 @@ describe("PostgreSQL migrations integration", () => {
         authorization: "[REDACTED]",
         system_prompt: promptContent,
         system_prompt_sha256: promptArtifact.sha256,
+        attempt_count: 2,
+        duration_ms: 1234,
       });
       await expect(
         new PostgresAutomaticAnalysisCampaign({
@@ -655,6 +734,16 @@ describe("PostgreSQL migrations integration", () => {
         allowed: false,
         reasonCodes: ["AUTOMATIC_ANALYSIS_CAMPAIGN_COMPLETE"],
       });
+      await expect(
+        trail.model(
+          analysisId,
+          { schema_version: "2.0" },
+          ocoResponse(analysisId),
+          "{}",
+          promptArtifact,
+          { latencyMs: -1, retryCount: 0 },
+        ),
+      ).rejects.toThrow("MODEL_TIMING_INVALID");
       await expect(
         trail.model(
           analysisId,
@@ -1261,6 +1350,7 @@ describe("PostgreSQL migrations integration", () => {
         /^terminal:[0-9a-f]{64}$/,
       );
       expect(terminalReconciliation.terminalOrderGroupId).toBe(orderGroupId);
+      expect(terminalReconciliation.terminalBrokerFillId).toBe("903");
       const retainedConflict = await isolated.query<{
         mapping_state: string;
         reason_codes: string[];

@@ -480,6 +480,10 @@ export class PostgresDecisionTrail implements DecisionTrail {
     response: ModelResponse,
     rawResponse: string,
     promptArtifact: ModelPromptArtifact,
+    timing: { readonly latencyMs: number; readonly retryCount: number } = {
+      latencyMs: 0,
+      retryCount: 0,
+    },
   ): Promise<void> {
     if (
       promptArtifact.version !== this.#options.promptVersion ||
@@ -490,6 +494,15 @@ export class PostgresDecisionTrail implements DecisionTrail {
         promptArtifact.sha256
     ) {
       throw new Error("MODEL_PROMPT_ARTIFACT_INVALID");
+    }
+    if (
+      !Number.isSafeInteger(timing.latencyMs) ||
+      timing.latencyMs < 0 ||
+      !Number.isSafeInteger(timing.retryCount) ||
+      timing.retryCount < 0 ||
+      timing.retryCount > 9
+    ) {
+      throw new Error("MODEL_TIMING_INVALID");
     }
     const requestId = randomUUID();
     const responseId = randomUUID();
@@ -507,9 +520,11 @@ export class PostgresDecisionTrail implements DecisionTrail {
         `INSERT INTO model_requests
           (id, analysis_id, request_id, api_style, model, prompt_version, schema_version,
            payload_mode, system_prompt, system_prompt_sha256, payload_redacted,
-           payload_sha256, status, attempt_count, requested_at, completed_at)
+           payload_sha256, status, attempt_count, requested_at, completed_at,
+           duration_ms)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12,
-                 'COMPLETED', 1, now(), now())`,
+                 'COMPLETED', $13, now() - ($14 * interval '1 millisecond'),
+                 now(), $14)`,
         [
           requestId,
           analysisId,
@@ -523,6 +538,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
           promptArtifact.sha256,
           redactedRequest,
           createHash("sha256").update(redactedRequest).digest("hex"),
+          timing.retryCount + 1,
+          timing.latencyMs,
         ],
       );
       await client.query(
@@ -557,6 +574,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
       data_quality: response.data_quality,
       evidence_codes: response.evidence_codes,
       risk_flags: response.risk_flags,
+      latency_ms: timing.latencyMs,
+      retry_count: timing.retryCount,
     });
   }
 

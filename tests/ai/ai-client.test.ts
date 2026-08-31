@@ -77,6 +77,10 @@ const promptArtifact = {
   sha256: createHash("sha256").update(systemPrompt).digest("hex"),
 };
 
+function orchestratorEnvelope(rawResponse: string) {
+  return { rawResponse, promptArtifact, latencyMs: 123, retryCount: 0 };
+}
+
 describe("OpenAI-compatible client", () => {
   it("rejects a per-cycle deadline outside the configured provider budget", async () => {
     const fetchMock = vi.fn(() => Promise.reject(new Error("must not fetch")));
@@ -333,7 +337,7 @@ describe("AI orchestrator HTTP client", () => {
           timeoutMs: 49_000,
         });
         return Promise.resolve(
-          new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+          new Response(JSON.stringify(orchestratorEnvelope(rawResponse)), {
             status: 200,
           }),
         );
@@ -481,7 +485,7 @@ describe("AI orchestrator HTTP client", () => {
       .fn<() => Promise<Response>>()
       .mockResolvedValueOnce(new Response("unavailable", { status: 503 }))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+        new Response(JSON.stringify(orchestratorEnvelope(rawResponse)), {
           status: 200,
         }),
       )
@@ -546,7 +550,7 @@ describe("AI orchestrator HTTP client", () => {
       .fn<() => Promise<Response>>()
       .mockResolvedValueOnce(new Response("unavailable", { status: 503 }))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+        new Response(JSON.stringify(orchestratorEnvelope(rawResponse)), {
           status: 200,
         }),
       );
@@ -620,7 +624,7 @@ describe("AI orchestrator HTTP client", () => {
       promptVersion: "system-v2",
       fetchImpl: vi.fn(() =>
         Promise.resolve(
-          new Response(JSON.stringify({ rawResponse, promptArtifact }), {
+          new Response(JSON.stringify(orchestratorEnvelope(rawResponse)), {
             status: 200,
           }),
         ),
@@ -631,8 +635,37 @@ describe("AI orchestrator HTTP client", () => {
       response: validResponse(),
       rawResponse,
       promptArtifact,
+      latencyMs: 123,
+      retryCount: 0,
     });
     expect(client.circuitOpen).toBe(false);
+  });
+
+  it("rejects missing or invalid orchestrator timing evidence", async () => {
+    const rawResponse = JSON.stringify(validResponse());
+    const client = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2",
+      fetchImpl: vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              rawResponse,
+              promptArtifact,
+              latencyMs: -1,
+              retryCount: 0,
+            }),
+            { status: 200 },
+          ),
+        ),
+      ),
+    });
+
+    await expect(client.analyze(analysisRequest)).rejects.toThrow(
+      "AI_ORCHESTRATOR_TIMING_INVALID",
+    );
   });
 
   it("rejects a prompt artifact whose content does not match its hash", async () => {
@@ -648,6 +681,8 @@ describe("AI orchestrator HTTP client", () => {
             JSON.stringify({
               rawResponse,
               promptArtifact: { ...promptArtifact, sha256: "0".repeat(64) },
+              latencyMs: 123,
+              retryCount: 0,
             }),
             { status: 200 },
           ),
@@ -680,6 +715,8 @@ describe("AI orchestrator HTTP client", () => {
                   .update(alteredContent)
                   .digest("hex"),
               },
+              latencyMs: 123,
+              retryCount: 0,
             }),
             { status: 200 },
           ),

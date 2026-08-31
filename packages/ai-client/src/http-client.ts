@@ -142,6 +142,8 @@ export class AiOrchestratorHttpClient {
     readonly response: ModelResponse;
     readonly rawResponse: string;
     readonly promptArtifact: ModelPromptArtifact;
+    readonly latencyMs: number;
+    readonly retryCount: number;
   }> {
     if (this.circuitOpen) throw new Error("AI_ORCHESTRATOR_CIRCUIT_OPEN");
     const configuredTimeoutMs = this.#options.timeoutMs ?? 35_000;
@@ -196,6 +198,18 @@ export class AiOrchestratorHttpClient {
     );
     if (typeof envelope.rawResponse !== "string")
       throw new Error("AI_ORCHESTRATOR_RAW_MISSING");
+    if (
+      typeof envelope.latencyMs !== "number" ||
+      !Number.isSafeInteger(envelope.latencyMs) ||
+      envelope.latencyMs < 0 ||
+      envelope.latencyMs > providerTimeoutMs ||
+      typeof envelope.retryCount !== "number" ||
+      !Number.isSafeInteger(envelope.retryCount) ||
+      envelope.retryCount < 0 ||
+      envelope.retryCount > 9
+    ) {
+      throw new Error("AI_ORCHESTRATOR_TIMING_INVALID");
+    }
     const artifact = record(
       envelope.promptArtifact,
       "AI_ORCHESTRATOR_PROMPT_ARTIFACT_MISSING",
@@ -236,6 +250,8 @@ export class AiOrchestratorHttpClient {
         content: artifact.content,
         sha256: artifact.sha256,
       },
+      latencyMs: envelope.latencyMs,
+      retryCount: envelope.retryCount,
     };
   }
 }

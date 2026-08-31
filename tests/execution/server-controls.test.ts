@@ -49,6 +49,16 @@ function server(
           complete: false,
           reasonCodes: [],
         },
+        automationActivity: {
+          state: "DISABLED",
+          lastClaimedAt: null,
+          lastCompletedAt: null,
+          lastLifecycleAt: null,
+          lastProgressAt: null,
+          latestMarketAt: null,
+          stalledSince: null,
+          reasonCodes: [],
+        },
         managedSetup: {
           status: "NONE",
           groupState: null,

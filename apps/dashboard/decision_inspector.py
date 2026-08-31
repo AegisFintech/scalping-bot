@@ -54,6 +54,17 @@ _PROMPT_FILES = {
     "system-v5": "system-v5.md",
     "system-v6": "system-v6.md",
     "system-v7": "system-v7.md",
+    "system-v8": "system-v8.md",
+}
+_AUTOMATION_ACTIVITY_STATES = {
+    "UNAVAILABLE",
+    "DISABLED",
+    "PAUSED",
+    "MANAGING_SETUP",
+    "WAITING_FOR_MARKET",
+    "STARTING",
+    "RUNNING",
+    "STALLED",
 }
 _SECRET_VALUE = re.compile(
     r"(?:bearer\s+[a-z0-9._~+/=-]{12,}|"
@@ -280,6 +291,19 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "Operational risk lockout is active",
         "A broker journal, equity-floor, recovery, or daily order-cap condition blocks new risk.",
         "Inspect the execution journal, account state, and configured caps before intervening.",
+    ),
+    "AUTOMATIC_ANALYSIS_STALLED": (
+        "Automatic analysis has stopped progressing",
+        "Fresh market observations are arriving, no managed setup is active, and no new "
+        "broker-minute cycle completed inside the watchdog window.",
+        "Inspect the accompanying safety reason and execution recovery trail; this is a real "
+        "automation stop, not a normal wait for orders or market reopening.",
+    ),
+    "AUTOMATIC_WATCHDOG_UNAVAILABLE": (
+        "Automation activity monitoring is unavailable",
+        "The dashboard cannot prove when the scheduler last progressed.",
+        "Restore PostgreSQL activity queries and inspect execution-service logs; do not assume "
+        "the online process is trading.",
     ),
     "FILESYSTEM_CONTROLS_UNCERTAIN": (
         "Filesystem controls cannot be verified",
@@ -527,6 +551,7 @@ def execution_status_recovered(value: object) -> bool:
     return (
         value.get("mode") in {"paper", "demo", "shadow", "live"}
         and isinstance(value.get("managedSetup"), Mapping)
+        and isinstance(value.get("automationActivity"), Mapping)
         and isinstance(value.get("automaticAnalysisCampaign"), Mapping)
         and isinstance(reasons, Sequence)
         and not isinstance(reasons, (str, bytes))
@@ -594,6 +619,26 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         trade_campaign_complete = trade_campaign.get("complete") is True
     else:
         trade_campaign_complete = False
+    activity = status.get("automationActivity")
+    activity_state = "UNAVAILABLE"
+    activity_last_progress = None
+    if isinstance(activity, Mapping):
+        activity_state = str(activity.get("state", "UNAVAILABLE"))
+        if activity_state not in _AUTOMATION_ACTIVITY_STATES:
+            activity_state = "UNAVAILABLE"
+            reasons.append("AUTOMATIC_WATCHDOG_UNAVAILABLE")
+        activity_last_progress = activity.get("lastProgressAt")
+        raw_activity_reasons = activity.get("reasonCodes", [])
+        if isinstance(raw_activity_reasons, Sequence) and not isinstance(
+            raw_activity_reasons, (str, bytes)
+        ):
+            reasons.extend(str(reason) for reason in raw_activity_reasons)
+        else:
+            reasons.append("AUTOMATIC_WATCHDOG_UNAVAILABLE")
+        if activity_state == "UNAVAILABLE":
+            reasons.append("AUTOMATIC_WATCHDOG_UNAVAILABLE")
+    else:
+        reasons.append("AUTOMATIC_WATCHDOG_UNAVAILABLE")
     reasons = list(dict.fromkeys(reasons))
     reason_set = set(reasons)
     automatic = status.get("automaticAnalysisEnabled") is True
@@ -633,6 +678,16 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
     elif paused or "ANALYSES_PAUSED" in reason_set:
         state, headline, severity = "PAUSED", "Automatic analysis is paused", "warning"
         detail = "A runtime control is preventing new cycles."
+    elif activity_state == "STALLED":
+        state, headline, severity = (
+            "STALLED",
+            "Automatic analysis is stopped — fresh market data is not producing cycles",
+            "error",
+        )
+        detail = (
+            "No managed setup is active and the scheduler has exceeded its progress watchdog. "
+            f"Last progress: {activity_last_progress or 'unavailable'}."
+        )
     elif "AI_CIRCUIT_OPEN" in reason_set:
         state, headline, severity = (
             "WAITING_FOR_AI",
@@ -657,6 +712,13 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
             "The next scheduled analysis waits for the current analysis or broker lifecycle to "
             "finish."
         )
+    elif activity_state == "WAITING_FOR_MARKET":
+        state, headline, severity = (
+            "WAITING_FOR_MARKET",
+            "Automatic analysis is on — waiting for fresh broker market data",
+            "info",
+        )
+        detail = "A closed or inactive market is not counted as a scheduler failure."
     elif reasons:
         state, headline, severity = (
             "SAFETY_BLOCKED",
@@ -664,6 +726,13 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
             "warning",
         )
         detail = "No new order is sent until every listed condition clears."
+    elif activity_state == "STARTING":
+        state, headline, severity = (
+            "STARTING",
+            "Automatic analysis is starting",
+            "info",
+        )
+        detail = "The scheduler is inside its bounded startup grace period."
     else:
         state, headline, severity = "READY", "Automatic demo analysis is running", "success"
         detail = (
@@ -684,6 +753,10 @@ def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
         )
     elif state == "WAITING_FOR_AI":
         operator_action = "No action required; the same process retries after the displayed time."
+    elif state == "WAITING_FOR_MARKET":
+        operator_action = "No action required; automation resumes when fresh broker data returns."
+    elif state == "STARTING":
+        operator_action = "No action required during the displayed startup grace period."
     elif state == "TRADE_CAMPAIGN_COMPLETE":
         operator_action = "Review the completed demo trade sample before starting another campaign."
     elif state == "CAMPAIGN_COMPLETE":
