@@ -793,3 +793,14 @@ AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero exceptions.
 Replay/backtest, zero-vulnerability dependency audits, tracked-file secret
 scanning, shell/PM2 validation, and all five offline systemd security parses at
 2.8 (`OK`) passed.
+
+The `.34` rollout proved the full automatic lifecycle. After all five services
+started healthy under the audited pause, the first unpaused interval claimed at
+31 Aug 2026, 09:24:05 GMT+8 and placed two cTrader demo stops. SELL filled, the
+BUY peer cancelled, terminal broker evidence closed the position/trade at
+09:38:16, and the temporary reconciliation/slippage reasons cleared. The next
+interval claimed at 09:39:05 and completed at 09:39:37 without intervention.
+PostgreSQL then contained two `.34` completed `system-v8` calls, one closed
+trade, no nonterminal broker rows, and no `.34` stall event. All 14,861
+observability outbox rows were delivered; service health and PM2 status were
+green across all five processes.

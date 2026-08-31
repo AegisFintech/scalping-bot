@@ -2314,3 +2314,29 @@ exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
 vulnerabilities, tracked-file secret scanning, shell/PM2 checks, and all five
 offline systemd security parses at 2.8 (`OK`) passed. Review and rollout are
 tracked by [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141).
+
+PR #141 was squash-merged as `4c9859b`; the final baseline follow-up
+[PR #142](https://github.com/AegisFintech/scalping-bot/pull/142) was merged as
+`1da6309`. Release `.34` was built from merged `main`, deployed under the
+audited pause, and started with all five PM2 services healthy. Selected process
+environment evidence matched `.34`, analysis baseline 111, trade baseline 49,
+the 10-second broker window, and the 180-second stall threshold before the
+pause was removed.
+
+The first `.34` interval claimed automatically at 31 Aug 2026, 09:24:05 GMT+8.
+Its `system-v8` response passed validation and cTrader accepted both pending
+demo stops. The SELL stop filled at 09:33:04, the BUY peer cancelled, and the
+broker position closed at 09:38:16. PostgreSQL recorded the 50th campaign trade
+with realized demo P/L `-6.09` and fees `-0.26`. The temporary fill-slippage and
+closing-order evidence reasons cleared from exact terminal proof; no operator
+control, inferred outcome, or manual cancellation was used.
+
+The scheduler then claimed the next eligible interval at 09:39:05 and
+completed it at 09:39:37 without intervention. Its proposal ended with the
+finite `SELL_ENTRY_DISTANCE_ATR_EXCEEDED` reason and returned status to
+`RUNNING` with zero persistent blockers. Across the two `.34` calls, the
+provider trail records two attempts and durations of 24.074--26.847 seconds.
+At the rollout snapshot, `.34` had two completed responses, one terminal group,
+one closed trade, no nonterminal order/group/position, and no watchdog stall
+event. All 14,861 Better Stack outbox rows were `DELIVERED`. This is broker-demo
+operational evidence, not a profitability claim.
