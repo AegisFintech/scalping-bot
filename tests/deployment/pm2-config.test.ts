@@ -53,22 +53,22 @@ describe("PM2 deployment configuration", () => {
     expect(
       config.apps.every(
         (app) =>
-          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.33",
+          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.34",
       ),
     ).toBe(true);
     expect(
       config.apps.every(
-        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.33",
+        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.34",
       ),
     ).toBe(true);
     expect(
       config.apps.every(
         (app) =>
           app.env.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT === "500" &&
-          app.env.AUTOMATIC_ANALYSIS_COMPLETED_BASELINE === "105" &&
+          app.env.AUTOMATIC_ANALYSIS_COMPLETED_BASELINE === "109" &&
           app.env.AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT === "100" &&
           app.env.AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE === "49" &&
-          app.env.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS === "5" &&
+          app.env.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS === "10" &&
           app.env.AUTOMATIC_ANALYSIS_STALL_SECONDS === "180" &&
           app.env.ANALYSIS_SCHEDULER_LEAD_MS === "1000" &&
           app.env.MODEL_MINIMUM_CALL_BUDGET_SECONDS === "40" &&

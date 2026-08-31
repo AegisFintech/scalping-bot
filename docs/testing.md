@@ -765,3 +765,29 @@ Python tests, with strict formatting/lint/type checks. Configured Streamlit
 AppTest rendered 42 dataframes, 69 metrics, and 15 tabs with zero exceptions.
 Replay/backtest, dependency audits, tracked-file secret scanning, shell/PM2
 checks, and all five offline systemd security parses also passed.
+
+After PR #139 merged as `568043f`, all five `.33` PM2 services returned healthy
+under an audited analysis pause, and the configured Streamlit application
+rendered 42 dataframes, 66 metrics, and 15 tabs with zero exceptions against
+the deployed status. Removing the pause produced seven automatic cycles and
+four completed `system-v8` requests by 31 Aug 2026, 09:15 GMT+8. Each request
+persisted one provider attempt plus a measured 27.394--28.785 second duration.
+Finite entry-distance/spread rejections returned activity to `RUNNING`; startup
+and reconciliation stayed certain, the open-position monitor returned `NONE`,
+and every observability outbox row was delivered.
+
+That rollout also proved the new watchdog failure path: at 09:17:45 GMT+8 it
+persisted `AUTOMATIC_ANALYSIS_STALLED` when broker reconciliation repeatedly
+finished beyond the 5-second claim window while market sampling remained
+fresh. ISSUE-058 pins `.34`, analysis baseline 109, trade baseline 49, and a
+10-second broker-time window in the PM2 contract. The schedule tests already
+prove 09.999 seconds is accepted while the exact 10.000-second boundary and
+later times reject.
+
+The ISSUE-058 complete gate passed 266 Node tests across 42 files, 17 schema
+tests, 3 migration tests, all 3 configured integration tests, and 84 Python
+tests with formatting, lint, and strict type checks. Configured Streamlit
+AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero exceptions.
+Replay/backtest, zero-vulnerability dependency audits, tracked-file secret
+scanning, shell/PM2 validation, and all five offline systemd security parses at
+2.8 (`OK`) passed.

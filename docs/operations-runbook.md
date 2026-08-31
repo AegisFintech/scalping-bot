@@ -181,8 +181,12 @@ first `AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS` of a broker-server-time M1
 interval. Keep that window between 1 and 30 seconds and use
 `AI_MAX_RETRIES=0`: a failed provider attempt is retried on the next fresh
 broker minute rather than against an expiring candle context.
-The current default is 5 seconds; campaign 001 showed that later starts were
-disproportionately likely to cross the completed M1 boundary before response.
+The current default is 10 seconds. Release `.33` proved that the earlier
+5-second window could be fully consumed by mandatory broker reconciliation,
+causing otherwise-healthy ticks to miss repeated minutes. Ten seconds retains
+a bounded completed-M1 opening window while allowing the preflight to finish;
+later starts remain disproportionately likely to cross the completed M1
+boundary before response.
 The scheduler phase is aligned to the wall clock with
 `ANALYSIS_SCHEDULER_LEAD_MS=1000`: maintenance begins one second before each
 five-second boundary so the tick nearest an M1 close can finish reconciliation
