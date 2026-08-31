@@ -200,7 +200,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
 | ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
 | ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
-| ISSUE-058 | in progress | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
+| ISSUE-058 | complete    | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -381,8 +381,11 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: ISSUE-057 terminal recovery and activity watchdog, the durable
   minute-claim table, completed-candle policy, and the existing demo-only
   authority.
-- Current status: implementation is in progress on
-  `issue-058-scheduler-window`, tracked by
+- Current status: complete. The window/release correction was merged as
+  `4c9859b` through
+  [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141); the final
+  in-flight baseline correction was merged as `1da6309` through
+  [PR #142](https://github.com/AegisFintech/scalping-bot/pull/142), tracked by
   [issue #140](https://github.com/AegisFintech/scalping-bot/issues/140).
   Release `.33` completed seven attempts and four endpoint responses before
   the watchdog reported `AUTOMATIC_ANALYSIS_STALLED`. Read-only evidence showed
@@ -399,8 +402,20 @@ never justify empty, noisy, unsafe, or misleading commits.
   Streamlit AppTest rendered 39 dataframes, 69 metrics, and 15 tabs with zero
   exceptions. Replay/backtest, zero-vulnerability npm/pip audits, tracked-file
   secret scanning, shell/PM2 validation, and all five systemd security parses
-  at 2.8 (`OK`) passed. Review, merge, and paused rollout verification are
-  tracked by [PR #141](https://github.com/AegisFintech/scalping-bot/pull/141).
+  at 2.8 (`OK`) passed. Release `.34` was deployed under the audited pause with
+  all five services healthy and the exact 111/49 baseline, then unpaused. Its
+  first automatic cycle claimed 31 Aug 2026, 09:24:05 GMT+8, completed one
+  `system-v8` response, and placed a broker-accepted demo OCO group. The SELL
+  stop filled, the BUY peer cancelled, and the position closed at 09:38:16;
+  exact terminal evidence cleared the transient reconciliation/slippage latch
+  and advanced the durable campaign to 50/100 trades. The next automatic cycle
+  claimed at 09:39:05 and completed at 09:39:37 without intervention. It ended
+  in a finite `SELL_ENTRY_DISTANCE_ATR_EXCEEDED` rejection and returned to
+  `RUNNING` with zero blocker reasons. The two `.34` endpoint calls took
+  24.074--26.847 seconds with one attempt each. PostgreSQL has no nonterminal
+  `.34` broker rows, no `.34` stall event exists, and all 14,861 Better Stack
+  outbox rows were `DELIVERED`. Final rollout evidence is tracked by
+  [PR #143](https://github.com/AegisFintech/scalping-bot/pull/143).
 
 ### ISSUE-001 delivery details
 
