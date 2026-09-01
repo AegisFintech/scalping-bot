@@ -2651,4 +2651,5 @@ dataframes, 66 metrics, and 15 tabs with no exception. Automatic analysis is
 enabled and unpaused; another cycle is correctly blocked while the managed OCO
 is active. The pending broker lifecycle was not interrupted. This verifies the
 demo transport and observability change, not fill quality, forecast accuracy,
-or profitability.
+or profitability. The rollout record is delivered through
+[PR #156](https://github.com/AegisFintech/scalping-bot/pull/156).

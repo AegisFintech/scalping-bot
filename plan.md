@@ -676,7 +676,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   events, and post-placement AppTest rendered 42 dataframes, 66 metrics, and 15
   tabs with zero exceptions. Automatic analysis remains enabled and unpaused;
   new cycles correctly wait while the current OCO is active. This is demo
-  transport and lifecycle evidence, not profitability.
+  transport and lifecycle evidence, not profitability. Rollout evidence is
+  tracked by [PR #156](https://github.com/AegisFintech/scalping-bot/pull/156).
 
 ### ISSUE-001 delivery details
 
