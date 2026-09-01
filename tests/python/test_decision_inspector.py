@@ -165,6 +165,14 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     half_stop = reason_code_view("SELL_SL_MIDPOINT_NOT_ON_TICK")
     assert "half-distance" in half_stop["title"]
 
+    commission = reason_code_view("BUY_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION")
+    assert commission["title"] == "Buy take profit does not cover commission"
+    assert "ACTUAL_VOLUME_COMMISSION_COVERAGE" in commission["next_action"]
+    envelope = reason_code_view("SELL_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL")
+    assert "required 2x stop distance" in envelope["title"]
+    unsupported = reason_code_view("COMMISSION_TYPE_UNSUPPORTED")
+    assert unsupported["title"] == "Broker commission model is not supported"
+
     affordability = reason_code_view("SELL_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME")
     assert "minimum-volume risk budget" in affordability["title"]
     assert "No order was sent" in affordability["next_action"]
@@ -647,6 +655,44 @@ def test_take_profit_transform_view_keeps_legacy_history_readable() -> None:
     assert rows[0]["effective_take_profit"] == "2003"
 
 
+def test_take_profit_transform_view_shows_commission_coverage() -> None:
+    leg = {
+        "entry_price": "4444",
+        "original_stop_loss": "4443",
+        "effective_stop_loss": "4443.46",
+        "original_take_profit": "4445",
+        "effective_take_profit": "4444.27",
+        "original_risk_reward_ratio": "1",
+        "effective_risk_reward_ratio": "0.5",
+        "pip_size": "0.01",
+        "take_profit_pips": "27",
+        "gross_profit": "0.27",
+        "total_estimated_fees": "0.2666481",
+        "expected_net_profit": "0.0033519",
+    }
+    rows = take_profit_transform_view(
+        [
+            {
+                "details": {
+                    "validation_scope": "TAKE_PROFIT_TRANSFORM",
+                    "proposal_transform": {
+                        "code": "COMMISSION_COVERING_TP_WITH_DOUBLE_SL",
+                        "commission_type": "USD_PER_MILLION_USD",
+                        "stop_loss_to_take_profit_ratio": "2",
+                        "effective_risk_reward_ratio": "0.5",
+                        "buy": leg,
+                        "sell": leg,
+                    },
+                }
+            }
+        ]
+    )
+
+    assert rows[0]["take_profit_pips"] == "27"
+    assert rows[0]["estimated_round_trip_fees"] == "0.2666481"
+    assert rows[0]["expected_net_at_basis_volume"] == "0.0033519"
+
+
 def test_take_profit_transform_view_rejects_malformed_audit_details() -> None:
     with pytest.raises(DecisionViewError, match="TP_TRANSFORM_LEG_INVALID"):
         take_profit_transform_view(
@@ -765,8 +811,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v9", content, digest)
-    assert current["version"] == "system-v9"
+    current = prompt_artifact_view("system-v10", content, digest)
+    assert current["version"] == "system-v10"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

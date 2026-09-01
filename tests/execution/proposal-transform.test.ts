@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  halveTakeProfitAndStopLossDistances,
-  proposalMinimumRiskRewardRatio,
+  applyCommissionAwareExitPolicy,
+  deriveCommissionAwareMinimumDistances,
 } from "../../apps/execution-service/src/proposal-transform.js";
 import type {
   ModelResponse,
@@ -14,46 +14,46 @@ function response(): ModelResponse {
     schema_version: "2.1",
     analysis_id: "22222222-2222-4222-8222-222222222222",
     symbol: "XAUUSD",
-    generated_at: "2026-08-25T00:00:00.000Z",
-    valid_until: "2026-08-25T00:05:00.000Z",
+    generated_at: "2026-09-01T00:00:00.000Z",
+    valid_until: "2026-09-01T00:05:00.000Z",
     market_regime: "RANGING",
     technical_map: {
-      decision_zone: { lower: "1999", upper: "2001" },
-      resistance_zones: [{ lower: "2000", upper: "2001" }],
-      support_zones: [{ lower: "1999", upper: "2000" }],
+      decision_zone: { lower: "4443", upper: "4444" },
+      resistance_zones: [{ lower: "4443.8", upper: "4444" }],
+      support_zones: [{ lower: "4443", upper: "4443.2" }],
       bullish_confirmation: {
-        price: "2001",
+        price: "4444",
         condition_code: "BUFFERED_BREAKOUT_ABOVE_RESISTANCE",
       },
       bearish_confirmation: {
-        price: "1999",
+        price: "4443",
         condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
       },
-      upside_targets: ["2002"],
-      downside_targets: ["1998"],
+      upside_targets: ["4445"],
+      downside_targets: ["4442"],
     },
     waiting_area: {
-      lower: "1999",
-      upper: "2001",
+      lower: "4443",
+      upper: "4444",
       description_code: "RANGE",
     },
     buy_stop: {
-      trigger_price: "2001",
-      entry_price: "2001",
-      stop_loss: "2000",
-      take_profit: "2005",
-      risk_reward_ratio: "4",
-      expires_at: "2026-08-25T00:05:00.000Z",
-      invalidation_price: "2000.5",
+      trigger_price: "4444",
+      entry_price: "4444",
+      stop_loss: "4443",
+      take_profit: "4445",
+      risk_reward_ratio: "1",
+      expires_at: "2026-09-01T00:05:00.000Z",
+      invalidation_price: "4443",
     },
     sell_stop: {
-      trigger_price: "1999",
-      entry_price: "1999",
-      stop_loss: "2000",
-      take_profit: "1995",
-      risk_reward_ratio: "4",
-      expires_at: "2026-08-25T00:05:00.000Z",
-      invalidation_price: "1999.5",
+      trigger_price: "4443",
+      entry_price: "4443",
+      stop_loss: "4444",
+      take_profit: "4442",
+      risk_reward_ratio: "1",
+      expires_at: "2026-09-01T00:05:00.000Z",
+      invalidation_price: "4444",
     },
     confidence: {
       overall: 50,
@@ -75,111 +75,145 @@ function response(): ModelResponse {
   };
 }
 
-function metadata(tickSize = "0.01"): SymbolMetadata {
+function metadata(): SymbolMetadata {
   return {
     symbolId: "7",
     symbolName: "XAUUSD",
     digits: 2,
-    tickSize,
-    tickValue: "0.01",
+    pipPosition: 2,
+    pipSize: "0.01",
+    tickSize: "0.01",
+    tickValue: "0.0001",
+    baseAsset: "XAU",
+    quoteAsset: "USD",
+    accountAsset: "USD",
+    quoteToAccountConversionRate: "1",
     contractSize: "100",
     volumeScale: "0.01",
-    minVolume: "1",
-    maxVolume: "10000",
-    volumeStep: "1",
-    minStopDistance: "0.1",
-    metadataTime: "2026-08-25T00:00:00.000Z",
+    minVolume: "100",
+    maxVolume: "1000000",
+    volumeStep: "100",
+    minStopDistance: "0",
+    commission: {
+      type: "USD_PER_MILLION_USD",
+      rate: "30",
+      minimum: "0",
+      minimumType: "QUOTE_CURRENCY",
+      minimumAsset: "USD",
+      pnlConversionFeeRate: "0",
+    },
+    metadataTime: "2026-09-01T00:00:00.000Z",
   };
 }
 
-describe("take-profit distance transform", () => {
-  it("halves the prior effective TP distance and the endpoint SL distance", () => {
+describe("commission-aware exit transform", () => {
+  it("chooses the first commission-positive pip and sets SL to twice TP", () => {
     const original = response();
-    const result = halveTakeProfitAndStopLossDistances(original, metadata());
+    const result = applyCommissionAwareExitPolicy(
+      original,
+      metadata(),
+      "0.01",
+      "4",
+    );
 
     expect(result).toMatchObject({ accepted: true, reasonCodes: [] });
     expect(result.response?.buy_stop).toMatchObject({
-      entry_price: "2001",
-      stop_loss: "2000.5",
-      take_profit: "2002",
-      risk_reward_ratio: "2",
+      entry_price: "4444",
+      stop_loss: "4443.46",
+      take_profit: "4444.27",
+      invalidation_price: "4443.46",
+      risk_reward_ratio: "0.5",
     });
     expect(result.response?.sell_stop).toMatchObject({
-      entry_price: "1999",
-      stop_loss: "1999.5",
-      take_profit: "1998",
-      risk_reward_ratio: "2",
+      entry_price: "4443",
+      stop_loss: "4443.54",
+      take_profit: "4442.73",
+      invalidation_price: "4443.54",
+      risk_reward_ratio: "0.5",
     });
-    expect(original.buy_stop.stop_loss).toBe("2000");
-    expect(original.buy_stop.take_profit).toBe("2005");
-    expect(result.details?.buy.original_stop_loss).toBe("2000");
-    expect(result.details?.buy.effective_stop_loss).toBe("2000.5");
-    expect(result.details?.buy.original_take_profit).toBe("2005");
-    expect(result.details?.buy.effective_take_profit).toBe("2002");
-    expect(proposalMinimumRiskRewardRatio("2")).toBe("4");
+    expect(result.details?.buy).toMatchObject({
+      pip_size: "0.01",
+      take_profit_pips: "27",
+      gross_profit: "0.27",
+      total_estimated_fees: "0.2666481",
+      expected_net_profit: "0.0033519",
+      stop_loss_distance: "0.54",
+    });
+    expect(result.details?.sell.take_profit_pips).toBe("27");
+    expect(original.buy_stop.take_profit).toBe("4445");
+    expect(original.buy_stop.stop_loss).toBe("4443");
   });
 
-  it("rejects an off-tick TP quarter without rounding it", () => {
-    const original = response();
-    const result = halveTakeProfitAndStopLossDistances(
-      {
-        ...original,
-        buy_stop: {
-          ...original.buy_stop,
-          take_profit: "2004.99",
-          risk_reward_ratio: "3.99",
-        },
-      },
-      metadata("0.01"),
-    );
+  it("derives a conservative pre-model floor at broker minimum volume", () => {
+    const result = deriveCommissionAwareMinimumDistances({
+      buyEntryPrice: "4445",
+      sellEntryPrice: "4444",
+      minimumStopDistance: "0.01",
+      maximumStopDistance: "4",
+      metadata: metadata(),
+    });
 
     expect(result).toMatchObject({
-      accepted: false,
-      response: null,
-      reasonCodes: ["BUY_TP_QUARTER_NOT_ON_TICK"],
+      accepted: true,
+      reasonCodes: [],
+      takeProfitDistance: "0.27",
+      stopLossDistance: "0.54",
     });
-    expect(result.details?.buy.effective_take_profit).toBe("2001.9975");
   });
 
-  it("rejects an off-tick SL midpoint without rounding it", () => {
-    const original = response();
-    const result = halveTakeProfitAndStopLossDistances(
-      {
-        ...original,
-        buy_stop: {
-          ...original.buy_stop,
-          stop_loss: "1999.99",
-          invalidation_price: "2000.495",
-        },
-      },
-      metadata("0.01"),
-    );
-
-    expect(result).toMatchObject({
+  it("fails closed when the broker commission type is unsupported", () => {
+    const unsupported: SymbolMetadata = {
+      ...metadata(),
+      commission: { ...metadata().commission, type: "USD_PER_LOT" },
+    };
+    expect(
+      applyCommissionAwareExitPolicy(response(), unsupported, "0.01", "4"),
+    ).toMatchObject({
       accepted: false,
       response: null,
-      reasonCodes: ["BUY_SL_MIDPOINT_NOT_ON_TICK"],
+      reasonCodes: ["COMMISSION_TYPE_UNSUPPORTED"],
     });
-    expect(result.details?.buy.effective_stop_loss).toBe("2000.495");
   });
 
-  it("rejects when the model invalidation does not equal the effective SL", () => {
+  it("rejects an AI technical envelope inside the commission-aware exits", () => {
     const original = response();
-    const result = halveTakeProfitAndStopLossDistances(
-      {
-        ...original,
-        buy_stop: {
-          ...original.buy_stop,
-          invalidation_price: "2000.6",
-        },
+    const tooNarrow: ModelResponse = {
+      ...original,
+      technical_map: {
+        ...original.technical_map,
+        upside_targets: ["4444.2"],
       },
-      metadata(),
-    );
+      buy_stop: {
+        ...original.buy_stop,
+        take_profit: "4444.2",
+        stop_loss: "4443.6",
+        invalidation_price: "4443.6",
+      },
+    };
 
-    expect(result).toMatchObject({
+    expect(
+      applyCommissionAwareExitPolicy(tooNarrow, metadata(), "0.01", "4"),
+    ).toMatchObject({
       accepted: false,
       response: null,
-      reasonCodes: ["BUY_EFFECTIVE_SL_INVALIDATION_MISMATCH"],
+      reasonCodes: [
+        "BUY_AI_INVALIDATION_DOES_NOT_CONTAIN_DOUBLE_SL",
+        "BUY_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL",
+        "BUY_AI_TARGET_BELOW_COMMISSION_POSITIVE_TP",
+      ],
+    });
+  });
+
+  it("rejects when no commission-positive target fits the stop ceiling", () => {
+    expect(
+      applyCommissionAwareExitPolicy(response(), metadata(), "0.01", "0.4"),
+    ).toMatchObject({
+      accepted: false,
+      response: null,
+      reasonCodes: [
+        "BUY_COMMISSION_POSITIVE_TP_UNAVAILABLE",
+        "SELL_COMMISSION_POSITIVE_TP_UNAVAILABLE",
+      ],
     });
   });
 });

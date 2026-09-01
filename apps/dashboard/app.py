@@ -506,7 +506,7 @@ with tabs[1]:
         end_time = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
         pnl = frame(
             """SELECT closed_at, mode, direction, realized_pnl, fees,
-                      sum(realized_pnl - fees) OVER
+                      sum(realized_pnl) OVER
                         (PARTITION BY mode ORDER BY closed_at) AS cumulative_pnl
                FROM trades WHERE closed_at >= %s AND closed_at < %s
                ORDER BY closed_at DESC LIMIT 5000""",
@@ -524,7 +524,7 @@ with tabs[1]:
             display_dataframe(pnl, width="stretch", hide_index=True)
         period_pnl = frame(
             """SELECT mode, date_trunc('day', closed_at) AS day,
-                      count(*) AS trades, sum(realized_pnl - fees) AS net_pnl
+                      count(*) AS trades, sum(realized_pnl) AS net_pnl
                FROM trades WHERE closed_at >= %s AND closed_at < %s
                GROUP BY mode, day ORDER BY day DESC, mode""",
             (start_time, end_time),
@@ -554,9 +554,9 @@ with tabs[2]:
         grouped = frame(
             """SELECT mode, direction, market_regime, confidence_bucket,
                       count(*) AS trades,
-                      sum(CASE WHEN realized_pnl - fees > 0 THEN 1 ELSE 0 END) AS wins,
-                      avg(realized_pnl - fees) AS expectancy,
-                      sum(realized_pnl - fees) AS net_pnl
+                      sum(CASE WHEN realized_pnl > 0 THEN 1 ELSE 0 END) AS wins,
+                      avg(realized_pnl) AS expectancy,
+                      sum(realized_pnl) AS net_pnl
                FROM trades
                GROUP BY mode, direction, market_regime, confidence_bucket
                ORDER BY mode, trades DESC"""
@@ -1072,11 +1072,13 @@ with tabs[4]:
                             hide_index=True,
                         )
                         st.caption(
-                            "Entry is unchanged. The effective stop loss is exactly halfway from "
-                            "entry to the AI stop, and effective take profit is one quarter of the "
-                            "AI target distance. No rounding is applied. These effective levels "
-                            "still require semantic, freshness, reconciliation, and deterministic "
-                            "risk approval before broker submission."
+                            "Entry is unchanged. The effective take profit is the smallest whole "
+                            "broker-pip move whose estimated gross profit exceeds opening plus "
+                            "closing commission at the displayed basis volume. The effective stop "
+                            "loss is exactly twice that take-profit distance (reward:risk 1:2). "
+                            "The AI target and stop remain the outer technical envelope. The "
+                            "displayed gross, fee, and expected-net amounts are estimates; final "
+                            "sized commands are checked again before broker submission."
                         )
                     else:
                         st.info(
@@ -1635,9 +1637,10 @@ with tabs[5]:
             st.subheader("AI proposal versus effective/placed levels")
             display_dataframe(history_frame[level_columns], width="stretch", hide_index=True)
             st.caption(
-                "EFFECTIVE LEVELS — NOT PLACED means SL/TP transformation was recorded but no "
-                "broker order group was created. PLACED ORDER LEVELS are the exact durable "
-                "order intents and their current broker lifecycle state is shown above."
+                "EFFECTIVE LEVELS — NOT PLACED means the commission-aware exit policy was "
+                "recorded but no broker order group was created. PLACED ORDER LEVELS are the "
+                "exact durable order intents and their current broker lifecycle state is shown "
+                "above."
             )
 
             history_labels: dict[int, str] = {

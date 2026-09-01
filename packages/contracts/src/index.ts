@@ -189,7 +189,8 @@ export interface ModelPromptArtifact {
     | "system-v6"
     | "system-v7"
     | "system-v8"
-    | "system-v9";
+    | "system-v9"
+    | "system-v10";
   readonly content: string;
   readonly sha256: string;
 }
@@ -199,12 +200,36 @@ export interface TechnicalZone {
   readonly upper: DecimalString;
 }
 
+export type SymbolCommissionType =
+  | "USD_PER_MILLION_USD"
+  | "USD_PER_LOT"
+  | "PERCENTAGE_OF_VALUE"
+  | "QUOTE_CCY_PER_LOT";
+
+export interface SymbolCommissionMetadata {
+  /** Broker rate in the units named by `type`. */
+  readonly type: SymbolCommissionType;
+  readonly rate: DecimalString;
+  /** Minimum one-way commission before conversion into account currency. */
+  readonly minimum: DecimalString;
+  readonly minimumType: "CURRENCY" | "QUOTE_CURRENCY";
+  readonly minimumAsset: string;
+  /** Percent of positive realized gross P/L (for example `0.01` = 0.01%). */
+  readonly pnlConversionFeeRate: DecimalString;
+}
+
 export interface SymbolMetadata {
   readonly symbolId: string;
   readonly symbolName: string;
   readonly digits: number;
+  readonly pipPosition: number;
+  readonly pipSize: DecimalString;
   readonly tickSize: DecimalString;
   readonly tickValue: DecimalString;
+  readonly baseAsset: string;
+  readonly quoteAsset: string;
+  readonly accountAsset: string;
+  readonly quoteToAccountConversionRate: DecimalString;
   readonly contractSize: DecimalString;
   /** Base units represented by one broker-native volume integer. */
   readonly volumeScale: DecimalString;
@@ -212,6 +237,7 @@ export interface SymbolMetadata {
   readonly maxVolume: DecimalString;
   readonly volumeStep: DecimalString;
   readonly minStopDistance: DecimalString;
+  readonly commission: SymbolCommissionMetadata;
   readonly metadataTime: IsoTimestamp;
 }
 

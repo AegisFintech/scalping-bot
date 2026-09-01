@@ -168,6 +168,7 @@ export interface SemanticContext {
   readonly atr: string;
   readonly minRiskRewardRatio: string;
   readonly takeProfitDistanceDivisor?: "1" | "2" | "4";
+  readonly primaryTargetMode?: "EXACT" | "CONTAINS_EFFECTIVE";
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
   readonly maxStopDistanceAtr: string;
@@ -446,10 +447,17 @@ export function validateSemantics(
     const effectiveSellTarget = sellEntry.plus(
       decimal(response.sell_stop.take_profit).minus(sellEntry).div(divisor),
     );
-    if (!effectiveBuyTarget.eq(upside[0]!))
-      reasons.push("BUY_PRIMARY_TARGET_MISMATCH");
-    if (!effectiveSellTarget.eq(downside[0]!))
-      reasons.push("SELL_PRIMARY_TARGET_MISMATCH");
+    if (context.primaryTargetMode === "CONTAINS_EFFECTIVE") {
+      if (effectiveBuyTarget.gt(upside[0]!))
+        reasons.push("BUY_PRIMARY_TARGET_BELOW_EFFECTIVE_TP");
+      if (effectiveSellTarget.lt(downside[0]!))
+        reasons.push("SELL_PRIMARY_TARGET_ABOVE_EFFECTIVE_TP");
+    } else {
+      if (!effectiveBuyTarget.eq(upside[0]!))
+        reasons.push("BUY_PRIMARY_TARGET_MISMATCH");
+      if (!effectiveSellTarget.eq(downside[0]!))
+        reasons.push("SELL_PRIMARY_TARGET_MISMATCH");
+    }
     checkLeg("BUY", response.buy_stop, context, reasons);
     checkLeg("SELL", response.sell_stop, context, reasons);
   } catch {

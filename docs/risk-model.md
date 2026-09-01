@@ -9,19 +9,22 @@ normalization, exposure, margin, eligibility, precision, freshness,
 spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
-The current explicitly configured execution transform divides the endpoint SL
-distance by two and TP distance by four. Prompt `system-v9` asks for the
-pre-transform R:R needed to preserve the configured effective minimum. The
-coordinator preserves entry, computes both levels with Decimal arithmetic,
-recomputes R:R, and rejects an off-tick result without rounding. The original
-endpoint response and effective values remain separately auditable.
+The current execution exit policy preserves entry, chooses the smallest whole
+broker-pip TP whose estimated gross profit strictly exceeds round-trip fees,
+and sets SL distance to exactly twice that TP distance. This is reward:risk
+`1:2`, represented internally as numeric reward/risk `0.5`. Prompt `system-v10`
+asks the endpoint for a technical target/stop envelope that contains those
+effective levels. The coordinator uses Decimal arithmetic, rejects off-tick or
+unsupported fee inputs without rounding, and keeps the original endpoint
+response, effective values, and fee evidence separately auditable.
 
 Schema 2.1 does not grant the chart or model execution authority. Deterministic
 semantics require each OCO entry to equal its technical-map confirmation price
-and each effective TP to equal the first corresponding target. The endpoint
-invalidation must equal the effective SL. A
-mismatch, off-tick zone/target, or directionally unordered target rejects; code
-does not invent or substitute a technical level.
+and each endpoint TP to equal the first corresponding target. The effective TP
+must remain inside that target; the effective SL must remain inside both the
+endpoint stop and invalidation. A mismatch, off-tick zone/target, or
+directionally unordered target rejects; code does not invent a technical
+envelope.
 
 Before inference, reconciled equity and the configured setup-risk percent are
 split across the two race-exposed OCO legs. The service floors the affordable
@@ -44,10 +47,39 @@ max_affordable_stop_distance = affordable_ticks * tick_size
 
 Fewer than one affordable tick rejects before the endpoint. The downstream
 position-sizing calculation remains authoritative and can still reject on newer
-account state, margin, notional, or any other risk ceiling. The prompt's
-minimum original SL distance is the effective minimum multiplied by two, so
-the transform cannot place an effective stop inside the broker/configured
-minimum.
+account state, margin, notional, or any other risk ceiling. The prompt's minimum
+SL distance includes the larger of the broker/configured minimum and twice the
+commission-positive TP floor, so the policy cannot place an effective stop
+inside the broker/configured minimum.
+
+## Commission-aware exit floor
+
+The adapter discovers `pipPosition`, commission type/rate/minimum, base/quote
+and account assets, positive-P/L conversion fee rate, and quote-to-account
+conversion from current broker metadata. No zero-fee default is permitted. The
+currently supported cTrader calculation is `USD_PER_MILLION_USD` for a
+USD-quoted symbol:
+
+```text
+base_units = native_volume * volume_scale
+one_way_commission = max(
+  entry_or_exit_price * base_units * commission_rate / 1_000_000
+    * quote_to_account_rate,
+  converted_minimum_commission
+)
+gross_at_tp = tp_ticks * tick_value * native_volume
+pnl_conversion_fee = gross_at_tp * pnl_conversion_fee_percent / 100
+expected_net = gross_at_tp - opening_commission - closing_commission
+  - pnl_conversion_fee
+```
+
+The first whole-pip TP with `expected_net > 0` is eligible; equality is not.
+Before inference the calculation uses broker minimum volume and conservative
+BUY/SELL entry bounds. After deterministic sizing it runs again on both exact
+commands and their actual volume. An unsupported commission type, missing
+asset conversion, unavailable commission-positive TP inside the distance
+ceiling, or non-positive expected net rejects without inference/placement as
+appropriate.
 
 After sizing and broker margin estimation, the account is reconciled again. Any
 change to equity, balance, available margin, exposure, pending/fill/cancel, or
@@ -105,10 +137,9 @@ units must not be treated as whole lots.
 
 - Buy: `stop_loss < entry < take_profit`; buy-stop trigger/entry is above current ask plus broker distance.
 - Sell: `take_profit < entry < stop_loss`; sell-stop trigger/entry is below current bid minus broker distance.
-- `reward / risk >= MIN_RISK_REWARD_RATIO`, default `2`.
-- Before the SL/TP transformation, the endpoint proposal must satisfy twice
-  that minimum; after dividing SL distance by two and TP distance by four, the
-  effective broker proposal must still satisfy the configured minimum.
+- `reward / risk >= MIN_RISK_REWARD_RATIO`, current default `0.5`.
+- The effective TP is the nearest whole-pip commission-positive target inside
+  the AI technical target; effective SL distance is exactly twice TP distance.
 - Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
 - Buy/sell confirmation distance from the current ask/bid must not exceed the
   configured M1-ATR reachability cap. This is checked after the model response

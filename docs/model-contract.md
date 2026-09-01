@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v9` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v10` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -30,12 +30,14 @@ The versioned system prompt tells the model to:
   has passed, including when evidence is conflicting or confidence is low.
 - return a technical map with a decision zone, support/resistance zones, exact
   buffered breakout/breakdown confirmation prices, and ordered targets. The OCO
-  entries must equal those confirmation prices, and each effective TP
-  must equal the first corresponding target.
-- provide the pre-transform SL and reward distances required by the supplied
-  proposal R:R. The request says that execution divides SL distance by two and
-  TP distance by four, supplies both proposal and effective minimum R:R values,
-  and requires both transformed prices to remain on whole broker ticks.
+  entries must equal those confirmation prices, and each JSON TP must equal the
+  first corresponding technical target;
+- place the first technical target at or beyond the supplied minimum
+  commission-covering TP distance and place its stop/invalidation at or beyond
+  the supplied `2 * TP` effective stop floor. Execution chooses the nearest
+  whole-pip commission-positive TP within that envelope and uses numeric
+  reward/risk `0.5` (reward:risk `1:2`). The endpoint does not calculate fees or
+  volume;
 - put each BUY/SELL confirmation inside its supplied inclusive, tick-aligned
   `buy_entry_*` or `sell_entry_*` range. Those ranges already apply current
   executable quote side, broker/configured minimum distance, and the maximum
@@ -54,13 +56,16 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-The exact parsed response remains immutable. For current `system-v9` requests,
-the execution coordinator separately derives effective SL as
-`entry + (proposed_sl - entry) / 2` and effective TP as
-`entry + (proposed_tp - entry) / 4`, recomputes the diagnostic R:R, and records
-both original and effective values in validation details. An off-tick result,
-invalidation mismatch, or invalid Decimal rejects rather than rounding.
-Historical `system-v8` requests preserve SL and divide TP distance by two.
+The exact parsed response remains immutable. For current `system-v10` requests,
+the execution coordinator separately selects the smallest whole-pip effective
+TP whose estimated gross profit strictly exceeds opening commission, closing
+commission, and positive-P/L conversion fees at broker minimum volume. It sets
+effective SL distance to exactly twice effective TP distance, recomputes numeric
+reward/risk as `0.5`, and records original/effective levels plus fee evidence.
+The selected effective exits must remain inside the AI technical target and
+stop/invalidation envelope. An off-tick result, unsupported commission model,
+missing currency conversion, or invalid Decimal rejects rather than assuming a
+fee or rounding. Historical prompts retain their versioned transformations.
 
 Deterministic analytics owns input/data eligibility before inference. Model
 warnings, risk flags, regime, and confidence remain visible diagnostics but
@@ -91,9 +96,9 @@ Reject:
 
 ## Semantic validation
 
-The validation pipeline first validates the exact AI proposal against the
-pre-transform minimum R:R, then validates the audited SL/TP transform, and finally
-validates the effective proposal against the configured execution minimum R:R.
+The validation pipeline first validates the exact AI proposal, then validates
+the audited commission-aware exit policy, and finally validates the effective
+proposal against configured numeric reward/risk `0.5`.
 Both proposal stages require exact symbol and analysis ID; plausible
 `generated_at`; future `valid_until` within expiry policy; leg expirations that
 match and do not exceed `valid_until`; ordered waiting bounds; side-correct
@@ -112,19 +117,21 @@ inside the broker/configured minimum stop distance.
 Schema 2.1 additionally requires every technical zone and target to be
 tick-aligned and directionally ordered. `waiting_area` must equal
 `technical_map.decision_zone`; each stop entry must equal its named confirmation
-price; and the proposal/effective validation phases independently prove that
-the configured TP transform resolves to the first technical target. The
-transform stage also proves the model invalidation equals the effective SL.
+price; and the original proposal proves that each JSON TP is the first technical
+target. Effective validation proves that the nearer commission-aware TP remains
+inside that target and its `2×` SL remains inside the endpoint stop and
+invalidation envelope.
 
 `risk_reward_ratio` must agree with recomputed price distances within strict
 Decimal tolerance at each stage. Material discrepancies reject the response.
 Semantic failures and transform details are persisted as reason-coded
 validation results and create no order.
 
-The request includes current bid/ask, digits, tick size, broker/configured
-minimum stop distance, minimum reward-to-risk, maximum ATR stop distance,
-non-sizing maximum affordable stop distance, and expiry bounds. It excludes
-account money, risk budget, broker volume, account IDs, and execution authority.
+The request includes current bid/ask, digits, tick/pip size,
+broker/configured minimum stop distance, the minimum commission-covering TP
+distance, the `2×` SL policy, maximum ATR stop distance, non-sizing maximum
+affordable stop distance, and expiry bounds. It excludes account money, risk
+budget, broker volume, account IDs, commission rates, and execution authority.
 
 ## Request payload modes
 

@@ -305,7 +305,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v9",
+    promptVersion: "system-v10",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -347,7 +347,16 @@ async function main(): Promise<void> {
     if (
       localMetadata.symbolId !== latestSnapshot.metadata.symbolId ||
       localMetadata.tickSize !== latestSnapshot.metadata.tickSize ||
-      localMetadata.volumeStep !== latestSnapshot.metadata.volumeStep
+      localMetadata.pipSize !== latestSnapshot.metadata.pipSize ||
+      localMetadata.tickValue !== latestSnapshot.metadata.tickValue ||
+      localMetadata.volumeScale !== latestSnapshot.metadata.volumeScale ||
+      localMetadata.volumeStep !== latestSnapshot.metadata.volumeStep ||
+      localMetadata.quoteAsset !== latestSnapshot.metadata.quoteAsset ||
+      localMetadata.accountAsset !== latestSnapshot.metadata.accountAsset ||
+      localMetadata.quoteToAccountConversionRate !==
+        latestSnapshot.metadata.quoteToAccountConversionRate ||
+      JSON.stringify(localMetadata.commission) !==
+        JSON.stringify(latestSnapshot.metadata.commission)
     ) {
       throw new Error("MARKET_AND_EXECUTION_SYMBOL_METADATA_MISMATCH");
     }
@@ -391,8 +400,8 @@ async function main(): Promise<void> {
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v9.md"),
-    promptVersion: "system-v9",
+    systemPromptPath: path.resolve("prompts/system-v10.md"),
+    promptVersion: "system-v10",
     timeoutMs: aiOrchestratorRequestTimeoutMs({
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
@@ -425,7 +434,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v9",
+    promptVersion: "system-v10",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1024,10 +1033,10 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v9",
+    promptVersion: "system-v10",
     schemaVersion: "2.1",
     strategyVersion,
-    minRiskRewardRatio: environment.MIN_RISK_REWARD_RATIO ?? "2",
+    minRiskRewardRatio: config.minRiskRewardRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
     preferredExpirySeconds: preferredOrderExpirySeconds,

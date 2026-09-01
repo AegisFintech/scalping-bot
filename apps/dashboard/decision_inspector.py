@@ -56,6 +56,7 @@ _PROMPT_FILES = {
     "system-v7": "system-v7.md",
     "system-v8": "system-v8.md",
     "system-v9": "system-v9.md",
+    "system-v10": "system-v10.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",
@@ -327,6 +328,33 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "Set the exact acknowledgement only for an intended broker-demo session and restart "
         "safely.",
     ),
+    "COMMISSION_TYPE_UNSUPPORTED": (
+        "Broker commission model is not supported",
+        "The service cannot safely estimate round-trip fees for the symbol's reported commission "
+        "type.",
+        "No order was sent. Verify the broker symbol metadata and add a tested calculator for that "
+        "commission type before resuming this strategy.",
+    ),
+    "COMMISSION_USD_NOTIONAL_CONVERSION_UNAVAILABLE": (
+        "USD-notional commission cannot be converted",
+        "The broker charges per USD notional, but the symbol metadata does not provide the "
+        "required USD quote conversion.",
+        "No order was sent. Restore complete broker asset and conversion metadata; do not assume "
+        "a zero fee.",
+    ),
+    "COMMISSION_MINIMUM_CURRENCY_UNSUPPORTED": (
+        "Minimum commission currency cannot be converted",
+        "The broker's minimum fee is denominated in a currency that cannot be converted to the "
+        "account currency from current metadata.",
+        "No order was sent. Restore a tested currency conversion before estimating net profit.",
+    ),
+    "MODEL_COMMISSION_STOP_RANGE_UNSATISFIABLE": (
+        "No commission-positive target fits the allowed stop range",
+        "The smallest whole-pip target that would exceed estimated round-trip fees requires a stop "
+        "outside the configured deterministic distance ceiling.",
+        "No paid AI request or order was made. Review the symbol fee economics and configured "
+        "distance ceiling without treating commission as zero.",
+    ),
     "BUY_TP_MIDPOINT_NOT_ON_TICK": (
         "Buy TP midpoint is off the broker tick",
         "Halving the distance from the buy entry to the AI take profit produced a price the "
@@ -441,6 +469,96 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
 }
 
 _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (
+    (
+        "BUY_COMMISSION_POSITIVE_TP_UNAVAILABLE",
+        (
+            "No commission-positive buy target is available",
+            "No whole-pip buy target inside the allowed distance range has estimated gross profit "
+            "greater than round-trip fees.",
+            "No buy order was sent; inspect the displayed commission evidence and broker metadata.",
+        ),
+    ),
+    (
+        "SELL_COMMISSION_POSITIVE_TP_UNAVAILABLE",
+        (
+            "No commission-positive sell target is available",
+            "No whole-pip sell target inside the allowed distance range has estimated gross profit "
+            "greater than round-trip fees.",
+            "No sell order was sent; inspect the displayed commission evidence and broker "
+            "metadata.",
+        ),
+    ),
+    (
+        "BUY_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION",
+        (
+            "Buy take profit does not cover commission",
+            "At the final sized volume, estimated gross profit is not greater than opening plus "
+            "closing commission and conversion fees.",
+            "No buy order was sent; inspect ACTUAL_VOLUME_COMMISSION_COVERAGE for exact estimates.",
+        ),
+    ),
+    (
+        "SELL_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION",
+        (
+            "Sell take profit does not cover commission",
+            "At the final sized volume, estimated gross profit is not greater than opening plus "
+            "closing commission and conversion fees.",
+            "No sell order was sent; inspect ACTUAL_VOLUME_COMMISSION_COVERAGE for exact "
+            "estimates.",
+        ),
+    ),
+    (
+        "BUY_AI_TARGET_BELOW_COMMISSION_POSITIVE_TP",
+        (
+            "AI buy target is too close to cover commission",
+            "The AI's first technical upside target does not contain the smallest "
+            "commission-positive whole-pip take profit.",
+            "No buy order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
+    (
+        "SELL_AI_TARGET_BELOW_COMMISSION_POSITIVE_TP",
+        (
+            "AI sell target is too close to cover commission",
+            "The AI's first technical downside target does not contain the smallest "
+            "commission-positive whole-pip take profit.",
+            "No sell order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
+    (
+        "BUY_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL",
+        (
+            "AI buy stop is inside the required 2x stop distance",
+            "The AI technical downside envelope does not contain a stop loss twice the "
+            "commission-positive take-profit distance.",
+            "No buy order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
+    (
+        "SELL_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL",
+        (
+            "AI sell stop is inside the required 2x stop distance",
+            "The AI technical upside envelope does not contain a stop loss twice the "
+            "commission-positive take-profit distance.",
+            "No sell order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
+    (
+        "BUY_AI_INVALIDATION_DOES_NOT_CONTAIN_DOUBLE_SL",
+        (
+            "AI buy invalidation is inside the required 2x stop distance",
+            "The AI invalidation does not contain the commission-aware effective stop loss.",
+            "No buy order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
+    (
+        "SELL_AI_INVALIDATION_DOES_NOT_CONTAIN_DOUBLE_SL",
+        (
+            "AI sell invalidation is inside the required 2x stop distance",
+            "The AI invalidation does not contain the commission-aware effective stop loss.",
+            "No sell order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
     (
         "PRE_MODEL_",
         (
@@ -1291,13 +1409,20 @@ def take_profit_transform_view(
         code = transform.get("code")
         legacy = code == "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
         current = code == "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2"
+        commission_aware = code == "COMMISSION_COVERING_TP_WITH_DOUBLE_SL"
         if legacy and transform.get("divisor") != "2":
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         if current and (
             transform.get("take_profit_divisor") != "4" or transform.get("stop_loss_divisor") != "2"
         ):
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
-        if not legacy and not current:
+        if commission_aware and (
+            transform.get("commission_type") != "USD_PER_MILLION_USD"
+            or transform.get("stop_loss_to_take_profit_ratio") != "2"
+            or transform.get("effective_risk_reward_ratio") != "0.5"
+        ):
+            raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
+        if not legacy and not current and not commission_aware:
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         output: list[dict[str, str]] = []
         for side in ("buy", "sell"):
@@ -1312,22 +1437,41 @@ def take_profit_transform_view(
                 "effective_risk_reward_ratio",
             ]
             keys.extend(["stop_loss"] if legacy else ["original_stop_loss", "effective_stop_loss"])
+            if commission_aware:
+                keys.extend(
+                    [
+                        "pip_size",
+                        "take_profit_pips",
+                        "gross_profit",
+                        "total_estimated_fees",
+                        "expected_net_profit",
+                    ]
+                )
             if any(not isinstance(leg.get(key), str) for key in keys):
                 raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
             ai_stop_loss = str(leg["stop_loss"] if legacy else leg["original_stop_loss"])
             effective_stop_loss = str(leg["stop_loss"] if legacy else leg["effective_stop_loss"])
-            output.append(
-                {
-                    "side": side.upper(),
-                    "entry_price": str(leg["entry_price"]),
-                    "ai_stop_loss": ai_stop_loss,
-                    "effective_stop_loss": effective_stop_loss,
-                    "ai_take_profit": str(leg["original_take_profit"]),
-                    "effective_take_profit": str(leg["effective_take_profit"]),
-                    "ai_risk_reward_ratio": str(leg["original_risk_reward_ratio"]),
-                    "effective_risk_reward_ratio": str(leg["effective_risk_reward_ratio"]),
-                }
-            )
+            row = {
+                "side": side.upper(),
+                "entry_price": str(leg["entry_price"]),
+                "ai_stop_loss": ai_stop_loss,
+                "effective_stop_loss": effective_stop_loss,
+                "ai_take_profit": str(leg["original_take_profit"]),
+                "effective_take_profit": str(leg["effective_take_profit"]),
+                "ai_risk_reward_ratio": str(leg["original_risk_reward_ratio"]),
+                "effective_risk_reward_ratio": str(leg["effective_risk_reward_ratio"]),
+            }
+            if commission_aware:
+                row.update(
+                    {
+                        "pip_size": str(leg["pip_size"]),
+                        "take_profit_pips": str(leg["take_profit_pips"]),
+                        "gross_profit_at_basis_volume": str(leg["gross_profit"]),
+                        "estimated_round_trip_fees": str(leg["total_estimated_fees"]),
+                        "expected_net_at_basis_volume": str(leg["expected_net_profit"]),
+                    }
+                )
+            output.append(row)
         return output
     return []
 

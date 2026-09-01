@@ -9,6 +9,7 @@ import type {
   PendingOrderCommand,
   Quote,
   SymbolMetadata,
+  SymbolCommissionMetadata,
   Timeframe,
 } from "../../contracts/src/index.js";
 import { canonical } from "../../risk-engine/src/decimal.js";
@@ -166,6 +167,92 @@ function ensureInteger(value: string, reason: string): string {
   return value;
 }
 
+const COMMISSION_TYPES: Readonly<
+  Record<number, SymbolCommissionMetadata["type"] | undefined>
+> = {
+  1: "USD_PER_MILLION_USD",
+  2: "USD_PER_LOT",
+  3: "PERCENTAGE_OF_VALUE",
+  4: "QUOTE_CCY_PER_LOT",
+};
+
+const MINIMUM_COMMISSION_TYPES: Readonly<
+  Record<number, SymbolCommissionMetadata["minimumType"] | undefined>
+> = {
+  1: "CURRENCY",
+  2: "QUOTE_CURRENCY",
+};
+
+export function normalizeSymbolCommission(
+  symbol: Record<string, unknown>,
+): SymbolCommissionMetadata {
+  const type = COMMISSION_TYPES[numberField(symbol, "commissionType")];
+  const minimumType =
+    MINIMUM_COMMISSION_TYPES[numberField(symbol, "minCommissionType")];
+  const minimumAsset = stringField(symbol, "minCommissionAsset");
+  if (type === undefined)
+    throw new Error("CTRADER_COMMISSION_TYPE_UNSUPPORTED");
+  if (minimumType === undefined)
+    throw new Error("CTRADER_MIN_COMMISSION_TYPE_UNSUPPORTED");
+  if (!/^[A-Z0-9._-]{2,16}$/.test(minimumAsset))
+    throw new Error("CTRADER_MIN_COMMISSION_ASSET_INVALID");
+  const preciseRate = new Decimal(
+    ensureInteger(
+      stringField(symbol, "preciseTradingCommissionRate"),
+      "CTRADER_COMMISSION_RATE_INVALID",
+    ),
+  );
+  const preciseMinimum = new Decimal(
+    ensureInteger(
+      stringField(symbol, "preciseMinCommission"),
+      "CTRADER_MIN_COMMISSION_INVALID",
+    ),
+  );
+  const rawConversionFeeRate = new Decimal(
+    ensureInteger(
+      optionalStringField(symbol, "pnlConversionFeeRate") ?? "0",
+      "CTRADER_PNL_CONVERSION_FEE_INVALID",
+    ),
+  );
+  return {
+    type,
+    rate: canonical(
+      preciseRate.div(type === "PERCENTAGE_OF_VALUE" ? "100000" : "100000000"),
+    ),
+    minimum: canonical(preciseMinimum.div("100000000")),
+    minimumType,
+    minimumAsset,
+    pnlConversionFeeRate: canonical(rawConversionFeeRate.div(100)),
+  };
+}
+
+export function normalizeSymbolPip(
+  digitsValue: unknown,
+  pipPositionValue: unknown,
+): {
+  readonly digits: number;
+  readonly pipPosition: number;
+  readonly pipSize: string;
+} {
+  const values = { digits: digitsValue, pipPosition: pipPositionValue };
+  const digits = numberField(values, "digits");
+  if (!Number.isSafeInteger(digits) || digits < 0 || digits > 10)
+    throw new Error("CTRADER_SYMBOL_DIGITS_INVALID");
+  const pipPosition = numberField(values, "pipPosition");
+  if (
+    !Number.isSafeInteger(pipPosition) ||
+    pipPosition < 0 ||
+    pipPosition > digits
+  ) {
+    throw new Error("CTRADER_SYMBOL_PIP_POSITION_INVALID");
+  }
+  return {
+    digits,
+    pipPosition,
+    pipSize: canonical(new Decimal(10).pow(-pipPosition)),
+  };
+}
+
 function unixDate(value: number): Date {
   const milliseconds = value < 10_000_000_000 ? value * 1000 : value;
   const date = new Date(milliseconds);
@@ -286,6 +373,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   readonly #quotes = new Map<string, QuoteState>();
   readonly #books = new Map<string, CTraderDepthBook>();
   readonly #metadata = new Map<string, SymbolMetadata>();
+  readonly #assets = new Map<string, string>();
   readonly #schedules = new Map<string, WeeklyTradingSchedule>();
   readonly #subscribedSpots = new Set<string>();
   readonly #subscribedDepth = new Set<string>();
@@ -293,6 +381,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   readonly #synchronizationHandlers = new Set<SynchronizationHandler>();
   #accountId: string | null = null;
   #depositAssetId: string | null = null;
+  #depositAssetName: string | null = null;
   #permissionScope: number | null = null;
   #authenticated = false;
   #lastServerTime: Date | null = null;
@@ -509,6 +598,33 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     );
     const trader = await this.#trader();
     this.#depositAssetId = stringField(trader, "depositAssetId");
+    const assets = await this.#transport.request(
+      CTraderPayload.ASSET_LIST_REQ,
+      {
+        ctidTraderAccountId: protocolInteger(
+          this.#accountId,
+          "CTRADER_ACCOUNT_ID_INVALID",
+        ),
+      },
+      [CTraderPayload.ASSET_LIST_RES],
+    );
+    this.#assets.clear();
+    for (const asset of recordsField(assets.payload, "asset")) {
+      const assetId = stringField(asset, "assetId");
+      const name = stringField(asset, "name").toUpperCase();
+      // cTrader may include unrelated display-only assets whose names are not
+      // canonical currency/metal codes. Keep only safe codes; discovery below
+      // still fails closed when a symbol's required base/quote/deposit asset
+      // cannot be resolved from this map.
+      if (!/^[A-Z0-9._-]{2,16}$/.test(name)) continue;
+      const existing = this.#assets.get(assetId);
+      if (existing !== undefined && existing !== name)
+        throw new Error("CTRADER_ASSET_ID_CONFLICT");
+      this.#assets.set(assetId, name);
+    }
+    this.#depositAssetName = this.#assets.get(this.#depositAssetId) ?? null;
+    if (this.#depositAssetName === null)
+      throw new Error("CTRADER_DEPOSIT_ASSET_UNKNOWN");
     this.#authenticated = true;
   }
 
@@ -574,18 +690,25 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
         endSecond: numberField(interval, "endSecond"),
       })),
     );
-    const digits = numberField(full, "digits");
-    if (!Number.isSafeInteger(digits) || digits < 0 || digits > 10)
-      throw new Error("CTRADER_SYMBOL_DIGITS_INVALID");
+    const { digits, pipPosition, pipSize } = normalizeSymbolPip(
+      full.digits,
+      full.pipPosition,
+    );
     const tradingMode = optionalNumberField(full, "tradingMode") ?? 0;
     if (tradingMode !== 0) throw new Error("CTRADER_SYMBOL_TRADING_DISABLED");
     const distanceType = optionalNumberField(full, "distanceSetIn") ?? 1;
     if (distanceType !== 1)
       throw new Error("CTRADER_PERCENTAGE_STOP_DISTANCE_UNSUPPORTED");
     const depositAssetId = this.#depositAssetId;
-    if (depositAssetId === null)
+    const depositAssetName = this.#depositAssetName;
+    if (depositAssetId === null || depositAssetName === null)
       throw new Error("CTRADER_DEPOSIT_ASSET_UNKNOWN");
+    const baseAssetId = stringField(light, "baseAssetId");
     const quoteAssetId = stringField(light, "quoteAssetId");
+    const baseAssetName = this.#assets.get(baseAssetId);
+    const quoteAssetName = this.#assets.get(quoteAssetId);
+    if (baseAssetName === undefined || quoteAssetName === undefined)
+      throw new Error("CTRADER_SYMBOL_ASSET_UNKNOWN");
     const conversion =
       quoteAssetId === depositAssetId
         ? "1"
@@ -606,8 +729,14 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       symbolId,
       symbolName: stringField(light, "symbolName"),
       digits,
+      pipPosition,
+      pipSize,
       tickSize: canonical(tickSize),
       tickValue: canonical(tickSize.mul(volumeScale).mul(conversion)),
+      baseAsset: baseAssetName,
+      quoteAsset: quoteAssetName,
+      accountAsset: depositAssetName,
+      quoteToAccountConversionRate: canonical(new Decimal(conversion)),
       contractSize: canonical(
         new Decimal(stringField(full, "lotSize")).div(100),
       ),
@@ -627,6 +756,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       minStopDistance: canonical(
         tickSize.mul(optionalNumberField(full, "slDistance") ?? 0),
       ),
+      commission: normalizeSymbolCommission(full),
       metadataTime: new Date().toISOString(),
     };
     this.#metadata.set(symbolId, metadata);

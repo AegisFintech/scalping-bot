@@ -68,7 +68,21 @@ describe("execution safety gates", () => {
       automaticDemoClosedTradeBaseline: 0,
       automaticAnalysisStartWindowSeconds: 5,
       maxEntryDistanceAtr: "2.5",
+      minRiskRewardRatio: "0.5",
     });
+  });
+
+  it("requires a positive bounded effective reward-to-risk ratio", () => {
+    expect(
+      loadExecutionConfig({ MIN_RISK_REWARD_RATIO: "0.5" }).minRiskRewardRatio,
+    ).toBe("0.5");
+    for (const value of ["0", "-0.5", "101", "invalid"]) {
+      expect(() =>
+        loadExecutionConfig({ MIN_RISK_REWARD_RATIO: value }),
+      ).toThrow(
+        /CONFIG_DECIMAL_(?:INVALID|OUT_OF_RANGE):MIN_RISK_REWARD_RATIO/,
+      );
+    }
   });
 
   it("bounds closed-demo-trade targets and reachable entry distance", () => {
