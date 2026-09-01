@@ -808,6 +808,37 @@ def campaign_history_counts(value: object) -> dict[str, int]:
     }
 
 
+def continuous_demo_counters(analysis_campaign: object, trade_campaign: object) -> dict[str, int]:
+    """Validate durable lifetime and immutable-release demo counters."""
+
+    if not isinstance(analysis_campaign, Mapping) or not isinstance(trade_campaign, Mapping):
+        raise DecisionViewError("DECISION_VIEW_CONTINUOUS_COUNTER_INVALID")
+
+    def counter(source: Mapping[str, Any], key: str) -> int:
+        value = source.get(key)
+        if (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value < 0
+            or value > 9_007_199_254_740_991
+        ):
+            raise DecisionViewError("DECISION_VIEW_CONTINUOUS_COUNTER_INVALID")
+        return value
+
+    values = {
+        "lifetimeAnalyses": counter(analysis_campaign, "lifetimeCompleted"),
+        "releaseAnalyses": counter(analysis_campaign, "releaseCompleted"),
+        "lifetimeTrades": counter(trade_campaign, "lifetimeClosedTrades"),
+        "releaseTrades": counter(trade_campaign, "releaseClosedTrades"),
+    }
+    if (
+        values["releaseAnalyses"] > values["lifetimeAnalyses"]
+        or values["releaseTrades"] > values["lifetimeTrades"]
+    ):
+        raise DecisionViewError("DECISION_VIEW_CONTINUOUS_COUNTER_INVALID")
+    return values
+
+
 def automation_status_view(status: Mapping[str, Any]) -> dict[str, Any]:
     """Build an operator-readable state while preserving every blocking reason."""
 

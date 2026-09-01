@@ -937,3 +937,29 @@ price units. Performance-context tests prove gross-positive but
 net-nonpositive results remain losses and are explicitly sent to prompt
 `system-v12`. Dashboard tests show gross, fees, net, and the fee-erased label
 without weakening malformed-history rejection.
+
+## ISSUE-064 continuous demo counters and zero-fill cancellation
+
+Tests cover unbounded analysis and closed-trade progress beyond the former
+caps without calling either pause callback, plus unchanged exact-boundary
+behavior for positive limits. PostgreSQL campaign tests separately validate
+mode-scoped all-time and immutable-release counts and reject missing, malformed,
+or lifetime-below-release results. Dashboard tests verify the four continuous
+counters and reject null or inconsistent status values instead of substituting
+zero.
+
+The cTrader regression fixture represents an `ORDER_CANCELLED` event carrying a
+rejected deal with exact zero filled volume. It produces a distinct non-fill
+deal-attempt event, updates the terminal order, and creates no fill. A rejected
+deal claiming positive volume remains invalid. Existing tests continue to
+reject missing/zero volume for an actually filled deal and every ambiguous or
+incomplete terminal state.
+
+On 1 Sep 2026, the pre-deployment suite passed Prettier, ESLint, TypeScript
+typecheck/build, 299 Node tests across 45 files, 17 schema tests, 3 migration
+tests, all 3 configured integration tests, Ruff format/lint, strict mypy over
+21 source files, and 91 Python tests. Configured source Streamlit AppTest
+rendered 42 dataframes, 66 metrics, and 15 tabs with zero exceptions.
+Replay/backtest smoke commands, zero-vulnerability npm/pip audits, the tracked-
+file secret scan, shell/PM2 syntax, `git diff --check`, and all five offline
+systemd security checks at 2.8 (`OK`) passed.

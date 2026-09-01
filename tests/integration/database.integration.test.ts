@@ -586,6 +586,7 @@ describe("PostgreSQL migrations integration", () => {
         accountId: demoAccountId,
         symbolId,
         strategyVersionId,
+        mode: "demo",
         configuredLimit: 1,
       });
       await expect(analysisCampaign.progress()).resolves.toMatchObject({
@@ -739,6 +740,7 @@ describe("PostgreSQL migrations integration", () => {
           accountId: demoAccountId,
           symbolId,
           strategyVersionId,
+          mode: "demo",
           configuredLimit: 1,
         }).progress(),
       ).resolves.toMatchObject({

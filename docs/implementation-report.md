@@ -2653,3 +2653,46 @@ is active. The pending broker lifecycle was not interrupted. This verifies the
 demo transport and observability change, not fill quality, forecast accuracy,
 or profitability. The rollout record is delivered through
 [PR #156](https://github.com/AegisFintech/scalping-bot/pull/156).
+
+## ISSUE-064 continuous demo collection and durable counters
+
+The finite ISSUE-054 collection is complete and its remote issue is closed.
+Before this change, authoritative demo history contained 1,009 distinct
+completed external-AI analyses and 172 closed trades across immutable strategy
+releases. The latest `.38` OCO was fully terminal with zero active local/broker
+orders or positions and no unresolved journal row, but the process remained
+fail-closed after cTrader attached a deal object with zero filled volume to an
+`ORDER_CANCELLED` callback. The recorder incorrectly treated every deal object
+as a fill and retained `CTRADER_DEAL_FILLED_VOLUME_INVALID` in memory, so the
+next broker-minute cycle could not start.
+
+Release `.39` distinguishes a non-fill deal attempt from a fill. Only cTrader
+deal statuses rejected, internally rejected, error, or missed with integer zero
+`filledVolume`, no close detail, and a terminal cancel/expire/reject execution can persist the
+order lifecycle without a fill row. Positive, fractional, malformed, unknown,
+or fill-type contradictory evidence still rejects. This matches cTrader's
+documented deal-status and execution-event model while preserving the existing
+reconciliation and ownership boundaries.
+
+Both optional campaign limits and their baselines are zero in `.39`. This
+removes only the 500-response and 100-closed-trade automatic pause boundaries;
+all emergency, daily-loss, broker-state certainty, journal, freshness, spread,
+precision, margin, notional, sizing, idempotency, and deterministic-risk checks
+remain unchanged. The status contract now derives all-time and current-release
+completed-AI-analysis and closed-demo-trade counters from PostgreSQL, scoped to
+the configured account, symbol, and mode. Streamlit always shows the four
+counters and labels the boundary state `CONTINUOUS MODE`; unavailable,
+malformed, or internally inconsistent counts remain fail-closed rather than
+displaying zero.
+
+Pre-deployment gates passed on 1 Sep 2026: Prettier, ESLint, TypeScript
+typecheck/build, 299 Node tests across 45 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 21 source files, and 91 Python tests. Configured
+source Streamlit AppTest rendered 42 dataframes, 66 metrics, and 15 tabs with
+zero exceptions. Replay/backtest smoke commands, npm/pip audits with zero known
+vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
+`git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
+passed. Deployment evidence will be appended after the source change is merged
+and `.39` is rolled out under the durable analysis pause. These counts and
+checks are demo engineering evidence, not a profitability claim.

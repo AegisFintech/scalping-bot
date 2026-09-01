@@ -6,6 +6,7 @@ export interface AutomaticAnalysisCampaignProgress {
   readonly baseline: number;
   readonly releaseCompleted: number;
   readonly completed: number;
+  readonly lifetimeCompleted: number;
   readonly remaining: number | null;
   readonly complete: boolean;
   readonly allowed: boolean;
@@ -16,6 +17,7 @@ export function evaluateAutomaticAnalysisCampaign(
   releaseCompleted: number,
   configuredLimit: number,
   completedBaseline = 0,
+  lifetimeCompleted = releaseCompleted + completedBaseline,
 ): AutomaticAnalysisCampaignProgress {
   if (
     !Number.isSafeInteger(releaseCompleted) ||
@@ -25,6 +27,8 @@ export function evaluateAutomaticAnalysisCampaign(
     !Number.isSafeInteger(completedBaseline) ||
     completedBaseline < 0 ||
     completedBaseline > configuredLimit ||
+    !Number.isSafeInteger(lifetimeCompleted) ||
+    lifetimeCompleted < releaseCompleted + completedBaseline ||
     !Number.isSafeInteger(releaseCompleted + completedBaseline)
   ) {
     return {
@@ -33,6 +37,7 @@ export function evaluateAutomaticAnalysisCampaign(
       baseline: 0,
       releaseCompleted: 0,
       completed: 0,
+      lifetimeCompleted: 0,
       remaining: null,
       complete: false,
       allowed: false,
@@ -46,6 +51,7 @@ export function evaluateAutomaticAnalysisCampaign(
       baseline: 0,
       releaseCompleted,
       completed: releaseCompleted,
+      lifetimeCompleted,
       remaining: null,
       complete: false,
       allowed: true,
@@ -61,6 +67,7 @@ export function evaluateAutomaticAnalysisCampaign(
     baseline: completedBaseline,
     releaseCompleted,
     completed,
+    lifetimeCompleted,
     remaining,
     complete,
     allowed: !complete,
@@ -73,6 +80,7 @@ export class PostgresAutomaticAnalysisCampaign {
   readonly #accountId: string;
   readonly #symbolId: string;
   readonly #strategyVersionId: string;
+  readonly #mode: string;
   readonly #configuredLimit: number;
   readonly #completedBaseline: number;
 
@@ -81,6 +89,7 @@ export class PostgresAutomaticAnalysisCampaign {
     readonly accountId: string;
     readonly symbolId: string;
     readonly strategyVersionId: string;
+    readonly mode: string;
     readonly configuredLimit: number;
     readonly completedBaseline?: number;
   }) {
@@ -88,26 +97,36 @@ export class PostgresAutomaticAnalysisCampaign {
     this.#accountId = input.accountId;
     this.#symbolId = input.symbolId;
     this.#strategyVersionId = input.strategyVersionId;
+    this.#mode = input.mode;
     this.#configuredLimit = input.configuredLimit;
     this.#completedBaseline = input.completedBaseline ?? 0;
   }
 
   async progress(): Promise<AutomaticAnalysisCampaignProgress> {
     try {
-      const result = await this.#pool.query<{ completed: string }>(
-        `SELECT count(DISTINCT ar.id)::text AS completed
+      const result = await this.#pool.query<{
+        completed: string;
+        lifetime_completed: string;
+      }>(
+        `SELECT count(DISTINCT ar.id) FILTER (
+                  WHERE ar.strategy_version_id = $3
+                )::text AS completed,
+                count(DISTINCT ar.id)::text AS lifetime_completed
          FROM analysis_runs ar
          JOIN model_requests mr ON mr.analysis_id = ar.id
          JOIN model_responses mres ON mres.model_request_id = mr.id
          WHERE ar.account_id = $1 AND ar.symbol_id = $2
-           AND ar.strategy_version_id = $3
+           AND ar.mode = $4
            AND mr.status = 'COMPLETED' AND mres.status = 'COMPLETED'`,
-        [this.#accountId, this.#symbolId, this.#strategyVersionId],
+        [this.#accountId, this.#symbolId, this.#strategyVersionId, this.#mode],
       );
       const completedText = result.rows[0]?.completed;
+      const lifetimeText = result.rows[0]?.lifetime_completed;
       if (
         completedText === undefined ||
-        !/^(?:0|[1-9][0-9]*)$/.test(completedText)
+        !/^(?:0|[1-9][0-9]*)$/.test(completedText) ||
+        lifetimeText === undefined ||
+        !/^(?:0|[1-9][0-9]*)$/.test(lifetimeText)
       ) {
         throw new Error("AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID");
       }
@@ -116,6 +135,7 @@ export class PostgresAutomaticAnalysisCampaign {
         completed,
         this.#configuredLimit,
         this.#completedBaseline,
+        Number(lifetimeText),
       );
       if (!progress.allowed && !progress.complete) {
         throw new Error(

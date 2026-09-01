@@ -240,6 +240,12 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   immutable-release counts, remaining values, progress bars, and completion
   states. An unavailable or invalid count is displayed as a fail-closed
   scheduler condition rather than zero progress.
+- With both optional count boundaries disabled, Overview labels the scheduler
+  continuous and still exposes database-derived all-time and current-release
+  completed-AI-analysis and closed-demo-trade counters. These counters are
+  scoped to the configured account, symbol, and mode and survive process/release
+  restarts; they do not aggregate rejected attempts or unfilled expiries as
+  trades.
 - Prompt history shows prior request/response versions and hashes. Each selected
   run defaults to the newest durable AI request and prominently shows the exact
   hash-verified system prompt with the exact persisted redacted user JSON. New
@@ -331,6 +337,13 @@ same proof may acknowledge a later duplicate failure only when its private
 broker fill identity exactly matches the fill in that durable proof. Another
 fill, missing fill identity, uncertain recovery, or failure beyond a different
 proof remains blocking.
+
+A broker deal whose explicit status is rejected, internally rejected, error,
+or missed can accompany a terminal cancel/expire/reject order lifecycle event. The normalizer
+persists it as a distinct non-fill deal attempt only with integer zero filled
+volume and no close detail, so cancellation/expiry can reconcile without a
+fabricated fill. Any contradictory status, volume, or close evidence remains
+blocking.
 
 Read-only open-position telemetry is independent from execution eligibility.
 For one durable strategy-owned `OPEN` position, an exact single-match cTrader

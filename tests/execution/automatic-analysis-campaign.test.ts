@@ -14,6 +14,7 @@ describe("automatic completed-AI analysis campaign", () => {
       baseline: 0,
       releaseCompleted: 12,
       completed: 12,
+      lifetimeCompleted: 12,
       remaining: null,
       complete: false,
       allowed: true,
@@ -25,6 +26,7 @@ describe("automatic completed-AI analysis campaign", () => {
       baseline: 0,
       releaseCompleted: 99,
       completed: 99,
+      lifetimeCompleted: 99,
       remaining: 1,
       complete: false,
       allowed: true,
@@ -79,6 +81,13 @@ describe("automatic completed-AI analysis campaign", () => {
     const pause = vi.fn(() => Promise.resolve());
     await expect(
       enforceAutomaticAnalysisCampaign(
+        evaluateAutomaticAnalysisCampaign(50_000, 0, 0, 51_000),
+        pause,
+      ),
+    ).resolves.toBe(true);
+    expect(pause).not.toHaveBeenCalled();
+    await expect(
+      enforceAutomaticAnalysisCampaign(
         evaluateAutomaticAnalysisCampaign(99, 100),
         pause,
       ),
@@ -99,7 +108,7 @@ describe("automatic completed-AI analysis campaign", () => {
       void sql;
       void parameters;
       return Promise.resolve({
-        rows: [{ completed: "42" }],
+        rows: [{ completed: "42", lifetime_completed: "1009" }],
       });
     });
     const input = {
@@ -107,6 +116,7 @@ describe("automatic completed-AI analysis campaign", () => {
       accountId: "account",
       symbolId: "symbol",
       strategyVersionId: "strategy",
+      mode: "demo",
       configuredLimit: 100,
       completedBaseline: 4,
     };
@@ -116,6 +126,7 @@ describe("automatic completed-AI analysis campaign", () => {
       baseline: 4,
       releaseCompleted: 42,
       completed: 46,
+      lifetimeCompleted: 1009,
       remaining: 54,
       allowed: true,
     });
@@ -123,7 +134,12 @@ describe("automatic completed-AI analysis campaign", () => {
       new PostgresAutomaticAnalysisCampaign(input).progress(),
     ).resolves.toMatchObject({ completed: 46, remaining: 54, allowed: true });
     expect(query).toHaveBeenCalledTimes(2);
-    expect(query.mock.calls[0]?.[1]).toEqual(["account", "symbol", "strategy"]);
+    expect(query.mock.calls[0]?.[1]).toEqual([
+      "account",
+      "symbol",
+      "strategy",
+      "demo",
+    ]);
   });
 
   it("uses stable fail-closed errors for unavailable or invalid database progress", async () => {
@@ -134,6 +150,7 @@ describe("automatic completed-AI analysis campaign", () => {
       accountId: "account",
       symbolId: "symbol",
       strategyVersionId: "strategy",
+      mode: "demo",
       configuredLimit: 100,
     });
     await expect(unavailable.progress()).rejects.toThrow(
@@ -142,14 +159,39 @@ describe("automatic completed-AI analysis campaign", () => {
 
     const malformed = new PostgresAutomaticAnalysisCampaign({
       pool: {
-        query: vi.fn(() => Promise.resolve({ rows: [{ completed: "1.5" }] })),
+        query: vi.fn(() =>
+          Promise.resolve({
+            rows: [{ completed: "1.5", lifetime_completed: "42" }],
+          }),
+        ),
       } as never,
       accountId: "account",
       symbolId: "symbol",
       strategyVersionId: "strategy",
+      mode: "demo",
       configuredLimit: 100,
     });
     await expect(malformed.progress()).rejects.toThrow(
+      "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID",
+    );
+  });
+
+  it("fails closed when lifetime progress is below release progress", async () => {
+    const campaign = new PostgresAutomaticAnalysisCampaign({
+      pool: {
+        query: vi.fn(() =>
+          Promise.resolve({
+            rows: [{ completed: "2", lifetime_completed: "1" }],
+          }),
+        ),
+      } as never,
+      accountId: "account",
+      symbolId: "symbol",
+      strategyVersionId: "strategy",
+      mode: "demo",
+      configuredLimit: 0,
+    });
+    await expect(campaign.progress()).rejects.toThrow(
       "AUTOMATIC_ANALYSIS_CAMPAIGN_PROGRESS_INVALID",
     );
   });

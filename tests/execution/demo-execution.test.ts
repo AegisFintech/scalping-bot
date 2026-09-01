@@ -122,6 +122,82 @@ describe("cTrader demo execution normalization", () => {
     });
   });
 
+  it("records a zero-filled rejected deal on cancellation without inventing a fill", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    order.orderStatus = 5;
+    const position = {
+      positionId: "801",
+      positionStatus: 1,
+      tradeData: {
+        symbolId: "7",
+        volume: "0",
+        tradeSide: 2,
+        label: "ctrader-ai-scalper:0.1.0",
+      },
+    };
+    const deal = {
+      dealId: "904",
+      orderId: "501",
+      positionId: "801",
+      volume: "100",
+      filledVolume: "0",
+      symbolId: "7",
+      createTimestamp: 1787544060000,
+      executionTimestamp: 1787544061000,
+      tradeSide: 2,
+      dealStatus: 4,
+      label: "ctrader-ai-scalper:0.1.0",
+    };
+
+    const event = normalizeDemoExecution(
+      { ...raw, executionType: 5, order, position, deal },
+      { symbolId: "7" },
+    );
+
+    expect(event).toMatchObject({
+      eventKey: "deal-attempt:904",
+      executionType: 5,
+      brokerFillId: null,
+      fill: null,
+      order: { state: "CANCELLED", filledVolume: "0" },
+      occurredAt: "2026-08-24T04:01:01.000Z",
+    });
+  });
+
+  it("rejects contradictory positive volume on a non-filled deal", async () => {
+    const raw = await fixture("demo-order-accepted-v1.json");
+    const order = structuredClone(raw.order) as Record<string, unknown>;
+    order.orderStatus = 5;
+    const deal = {
+      dealId: "904",
+      orderId: "501",
+      positionId: "801",
+      volume: "100",
+      filledVolume: "1",
+      symbolId: "7",
+      createTimestamp: 1787544060000,
+      executionTimestamp: 1787544061000,
+      tradeSide: 2,
+      dealStatus: 4,
+    };
+
+    expect(() =>
+      normalizeDemoExecution(
+        { ...raw, executionType: 5, order, position: null, deal },
+        { symbolId: "7" },
+      ),
+    ).toThrow("CTRADER_NON_FILLED_DEAL_INVALID");
+
+    deal.filledVolume = "0";
+    expect(() =>
+      normalizeDemoExecution(
+        { ...raw, executionType: 2, order: raw.order, position: null, deal },
+        { symbolId: "7" },
+      ),
+    ).toThrow("DEMO_EXECUTION_DEAL_STATUS_INVALID");
+  });
+
   it("still requires a priced position on a fill execution", async () => {
     const raw = await fixture("demo-order-filled-v1.json");
     const position = structuredClone(raw.position) as Record<string, unknown>;
@@ -608,6 +684,7 @@ describe("durable demo execution recorder", () => {
       stage: "NORMALIZE",
       executionType: 2,
       orderStatus: 1,
+      dealStatus: null,
       hasOrder: true,
       hasPosition: false,
       hasDeal: false,

@@ -196,7 +196,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-051 | complete    | [Refine multimodal proposals and launch campaign 002](https://github.com/AegisFintech/scalping-bot/issues/115)                    | Prompt/runtime refinement; stored-artifact benchmark; distinct immutable 0/100 campaign                       |
 | ISSUE-052 | complete    | [Show broker-confirmed live values during group reconciliation](https://github.com/AegisFintech/scalping-bot/issues/124)          | Exact open-position telemetry remains visible with a warning; execution stays fail-closed                     |
 | ISSUE-053 | complete    | [Auto-recover dashboard after transient execution API restart](https://github.com/AegisFintech/scalping-bot/issues/127)           | One reconnect notice; automatic full-page recovery; retained history reloads without manual refresh           |
-| ISSUE-054 | in progress | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
+| ISSUE-054 | complete    | [Collect 100 closed demo trades with higher analysis conversion](https://github.com/AegisFintech/scalping-bot/issues/130)         | Closed-trade target; bounded inference guard; reachable entries; clearer conversion funnel                    |
 | ISSUE-055 | complete    | [Reduce demo AI deadline rejects and expose exact failure reasons](https://github.com/AegisFintech/scalping-bot/issues/132)       | Wall-aligned scheduler; finite AI failure reasons; measured low-effort probe; immutable rollout               |
 | ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
 | ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
@@ -206,6 +206,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
 | ISSUE-062 | complete    | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
 | ISSUE-063 | complete    | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                 | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
+| ISSUE-064 | in progress | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                 | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -678,6 +679,39 @@ never justify empty, noisy, unsafe, or misleading commits.
   new cycles correctly wait while the current OCO is active. This is demo
   transport and lifecycle evidence, not profitability. Rollout evidence is
   tracked by [PR #156](https://github.com/AegisFintech/scalping-bot/pull/156).
+
+### ISSUE-064 delivery details
+
+- Acceptance criteria: disable only the completed-analysis and closed-trade
+  campaign boundaries so demo scheduling can continue across reviewed samples;
+  retain all independent emergency, daily-loss, reconciliation, freshness,
+  spread, deterministic-risk, ownership, and execution gates; expose durable
+  all-time and current-release completed-AI-analysis and closed-demo-trade
+  counters on Overview; safely persist a broker-documented rejected deal with
+  exactly zero filled volume on a non-fill execution without creating a fill;
+  keep contradictory or malformed deal evidence fail-closed; and deploy a new
+  immutable demo release under the durable pause before resuming automation.
+- Dependencies: the completed ISSUE-054 sample, ISSUE-063 stop-limit execution,
+  authoritative PostgreSQL history, cTrader account reconciliation, and the
+  existing demo-only authorization gates.
+- Current status: implementation in progress on
+  `issue-064-continuous-demo-counters`, tracked by
+  [issue #157](https://github.com/AegisFintech/scalping-bot/issues/157). The
+  pre-change audit found zero active groups, orders, positions, or unresolved
+  journal rows, but the same process remained blocked by a sanitized
+  `ORDER_CANCELLED` callback carrying a zero-filled non-fill deal. Durable demo
+  history currently contains 1,009 completed external-AI analyses and 172
+  closed trades across immutable releases; these are engineering observations,
+  not profitability evidence. Release `.39` disables only the two optional
+  campaign boundaries, adds mode-scoped lifetime/current-release counters, and
+  distinguishes a zero-filled rejected deal on a non-fill callback from a
+  broker fill. Pre-deployment gates passed 299 Node tests across 45 files, 91
+  Python tests, 17 schema tests, 3 migration tests, and all 3 configured
+  integration tests. Formatting, linting, TypeScript/Python types, build,
+  configured AppTest (42 dataframes, 66 metrics, 15 tabs, zero exceptions),
+  replay/backtest, dependency audits, tracked-file secret scan, shell/PM2,
+  diff, and all five offline systemd checks also passed. Paused deployment and
+  automatic terminal-to-next-cycle proof remain.
 
 ### ISSUE-001 delivery details
 

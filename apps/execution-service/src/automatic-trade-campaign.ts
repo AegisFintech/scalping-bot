@@ -6,6 +6,7 @@ export interface AutomaticTradeCampaignProgress {
   readonly baseline: number;
   readonly releaseClosedTrades: number;
   readonly closedTrades: number;
+  readonly lifetimeClosedTrades: number;
   readonly remaining: number | null;
   readonly complete: boolean;
   readonly allowed: boolean;
@@ -16,6 +17,7 @@ export function evaluateAutomaticTradeCampaign(
   releaseClosedTrades: number,
   configuredLimit: number,
   closedTradeBaseline = 0,
+  lifetimeClosedTrades = releaseClosedTrades + closedTradeBaseline,
 ): AutomaticTradeCampaignProgress {
   if (
     !Number.isSafeInteger(releaseClosedTrades) ||
@@ -25,6 +27,8 @@ export function evaluateAutomaticTradeCampaign(
     !Number.isSafeInteger(closedTradeBaseline) ||
     closedTradeBaseline < 0 ||
     closedTradeBaseline > configuredLimit ||
+    !Number.isSafeInteger(lifetimeClosedTrades) ||
+    lifetimeClosedTrades < releaseClosedTrades + closedTradeBaseline ||
     !Number.isSafeInteger(releaseClosedTrades + closedTradeBaseline)
   ) {
     return {
@@ -33,6 +37,7 @@ export function evaluateAutomaticTradeCampaign(
       baseline: 0,
       releaseClosedTrades: 0,
       closedTrades: 0,
+      lifetimeClosedTrades: 0,
       remaining: null,
       complete: false,
       allowed: false,
@@ -46,6 +51,7 @@ export function evaluateAutomaticTradeCampaign(
       baseline: 0,
       releaseClosedTrades,
       closedTrades: releaseClosedTrades,
+      lifetimeClosedTrades,
       remaining: null,
       complete: false,
       allowed: true,
@@ -61,6 +67,7 @@ export function evaluateAutomaticTradeCampaign(
     baseline: closedTradeBaseline,
     releaseClosedTrades,
     closedTrades,
+    lifetimeClosedTrades,
     remaining,
     complete,
     allowed: !complete,
@@ -94,25 +101,37 @@ export class PostgresAutomaticTradeCampaign {
 
   async progress(): Promise<AutomaticTradeCampaignProgress> {
     try {
-      const result = await this.#pool.query<{ closed_trades: string }>(
-        `SELECT count(DISTINCT t.id)::text AS closed_trades
+      const result = await this.#pool.query<{
+        closed_trades: string;
+        lifetime_closed_trades: string;
+      }>(
+        `SELECT count(DISTINCT t.id) FILTER (
+                  WHERE ar.strategy_version_id = $3
+                )::text AS closed_trades,
+                count(DISTINCT t.id)::text AS lifetime_closed_trades
          FROM analysis_runs ar
          JOIN order_groups og ON og.analysis_id = ar.id
          JOIN trades t ON t.order_group_id = og.id
          WHERE ar.account_id = $1 AND ar.symbol_id = $2
-           AND ar.strategy_version_id = $3
            AND ar.mode = 'demo' AND og.mode = 'demo' AND t.mode = 'demo'
            AND og.state = 'CLOSED' AND t.closed_at IS NOT NULL`,
         [this.#accountId, this.#symbolId, this.#strategyVersionId],
       );
       const countText = result.rows[0]?.closed_trades;
-      if (countText === undefined || !/^(?:0|[1-9][0-9]*)$/.test(countText)) {
+      const lifetimeText = result.rows[0]?.lifetime_closed_trades;
+      if (
+        countText === undefined ||
+        !/^(?:0|[1-9][0-9]*)$/.test(countText) ||
+        lifetimeText === undefined ||
+        !/^(?:0|[1-9][0-9]*)$/.test(lifetimeText)
+      ) {
         throw new Error("AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_INVALID");
       }
       const progress = evaluateAutomaticTradeCampaign(
         Number(countText),
         this.#configuredLimit,
         this.#closedTradeBaseline,
+        Number(lifetimeText),
       );
       if (!progress.allowed && !progress.complete) {
         throw new Error(
