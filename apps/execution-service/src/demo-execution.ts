@@ -96,6 +96,7 @@ export interface DemoExecutionFailureSummary {
   readonly stage: "NORMALIZE" | "PERSIST" | "READINESS";
   readonly executionType: number | null;
   readonly orderStatus: number | null;
+  readonly dealStatus: number | null;
   readonly hasOrder: boolean;
   readonly hasPosition: boolean;
   readonly hasDeal: boolean;
@@ -511,43 +512,58 @@ export function normalizeDemoExecution(
       : stringField(deal, "positionId"));
   let fill: DemoExecutionFill | null = null;
   let brokerFillId: string | null = null;
+  let brokerDealId: string | null = null;
+  let dealOccurredAt: string | null = null;
   if (deal !== null) {
-    brokerFillId = stringField(deal, "dealId");
+    brokerDealId = stringField(deal, "dealId");
     if (brokerOrderId !== stringField(deal, "orderId"))
       throw new Error("DEMO_EXECUTION_DEAL_ORDER_MISMATCH");
     if (brokerPositionId !== stringField(deal, "positionId"))
       throw new Error("DEMO_EXECUTION_DEAL_POSITION_MISMATCH");
     const dealStatus = numberField(deal, "dealStatus");
-    if (
-      [3, 11].includes(execution.executionType) &&
-      ![2, 3].includes(dealStatus)
-    )
+    const filledDeal = [2, 3].includes(dealStatus);
+    const nonFilledDeal = [4, 5, 6, 7].includes(dealStatus);
+    if (!filledDeal && !nonFilledDeal)
       throw new Error("DEMO_EXECUTION_DEAL_STATUS_INVALID");
-    const occurredAt = isoTimestamp(
+    if ([3, 11].includes(execution.executionType) && !filledDeal)
+      throw new Error("DEMO_EXECUTION_DEAL_STATUS_INVALID");
+    if (nonFilledDeal && ![5, 6, 7].includes(execution.executionType))
+      throw new Error("DEMO_EXECUTION_DEAL_STATUS_INVALID");
+    dealOccurredAt = isoTimestamp(
       numberField(deal, "executionTimestamp"),
       "CTRADER_DEAL_TIMESTAMP_INVALID",
     );
-    const digits = optionalNumberField(deal, "moneyDigits");
-    let commission = "0";
-    if (optionalStringField(deal, "commission") !== undefined) {
-      if (digits === undefined) throw new Error("CTRADER_MONEY_DIGITS_INVALID");
-      commission = money(deal, "commission", digits);
-    }
     const fillVolume = new Decimal(decimalField(deal, "filledVolume"));
-    if (!fillVolume.isInteger() || fillVolume.lte(0))
+    if (!fillVolume.isInteger())
       throw new Error("CTRADER_DEAL_FILLED_VOLUME_INVALID");
-    fill = {
-      brokerFillId,
-      brokerOrderId,
-      brokerPositionId,
-      price: priceField(deal, "executionPrice", true) as string,
-      volume: canonical(fillVolume),
-      commission,
-      occurredAt,
-    };
+    if (filledDeal) {
+      if (fillVolume.lte(0))
+        throw new Error("CTRADER_DEAL_FILLED_VOLUME_INVALID");
+      const digits = optionalNumberField(deal, "moneyDigits");
+      let commission = "0";
+      if (optionalStringField(deal, "commission") !== undefined) {
+        if (digits === undefined)
+          throw new Error("CTRADER_MONEY_DIGITS_INVALID");
+        commission = money(deal, "commission", digits);
+      }
+      brokerFillId = brokerDealId;
+      fill = {
+        brokerFillId,
+        brokerOrderId,
+        brokerPositionId,
+        price: priceField(deal, "executionPrice", true) as string,
+        volume: canonical(fillVolume),
+        commission,
+        occurredAt: dealOccurredAt,
+      };
+    } else {
+      if (!fillVolume.eq(0) || closeDetail !== null)
+        throw new Error("CTRADER_NON_FILLED_DEAL_INVALID");
+    }
   }
   const occurredAt =
     fill?.occurredAt ??
+    dealOccurredAt ??
     normalizedOrder?.updatedAt ??
     normalizedPosition?.updatedAt ??
     receivedAt;
@@ -571,7 +587,9 @@ export function normalizeDemoExecution(
   return {
     ...payload,
     eventKey:
-      brokerFillId === null ? `event:${payloadHash}` : `deal:${brokerFillId}`,
+      brokerDealId === null
+        ? `event:${payloadHash}`
+        : `${brokerFillId === null ? "deal-attempt" : "deal"}:${brokerDealId}`,
     payloadHash,
     receivedAt,
   };
@@ -623,6 +641,7 @@ export class DurableDemoExecutionRecorder {
             ? execution.executionType
             : null,
         orderStatus: safeIntegerField(execution?.order ?? null, "orderStatus"),
+        dealStatus: safeIntegerField(execution?.deal ?? null, "dealStatus"),
         hasOrder: execution?.order !== null && execution?.order !== undefined,
         hasPosition:
           execution?.position !== null && execution?.position !== undefined,

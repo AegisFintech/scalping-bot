@@ -14,6 +14,7 @@ describe("automatic closed-demo-trade campaign", () => {
       baseline: 0,
       releaseClosedTrades: 9,
       closedTrades: 9,
+      lifetimeClosedTrades: 9,
       remaining: 91,
       complete: false,
       allowed: true,
@@ -46,6 +47,13 @@ describe("automatic closed-demo-trade campaign", () => {
     const pause = vi.fn(() => Promise.resolve());
     await expect(
       enforceAutomaticTradeCampaign(
+        evaluateAutomaticTradeCampaign(50_000, 0, 0, 51_000),
+        pause,
+      ),
+    ).resolves.toBe(true);
+    expect(pause).not.toHaveBeenCalled();
+    await expect(
+      enforceAutomaticTradeCampaign(
         evaluateAutomaticTradeCampaign(99, 100),
         pause,
       ),
@@ -66,7 +74,9 @@ describe("automatic closed-demo-trade campaign", () => {
       expect(sql).toContain("og.state = 'CLOSED'");
       expect(sql).toContain("t.mode = 'demo'");
       expect(parameters).toEqual(["account", "symbol", "strategy"]);
-      return Promise.resolve({ rows: [{ closed_trades: "9" }] });
+      return Promise.resolve({
+        rows: [{ closed_trades: "9", lifetime_closed_trades: "172" }],
+      });
     });
     await expect(
       new PostgresAutomaticTradeCampaign({
@@ -76,7 +86,11 @@ describe("automatic closed-demo-trade campaign", () => {
         strategyVersionId: "strategy",
         configuredLimit: 100,
       }).progress(),
-    ).resolves.toMatchObject({ closedTrades: 9, remaining: 91 });
+    ).resolves.toMatchObject({
+      closedTrades: 9,
+      lifetimeClosedTrades: 172,
+      remaining: 91,
+    });
   });
 
   it("fails closed when durable progress is unavailable or malformed", async () => {
@@ -95,7 +109,9 @@ describe("automatic closed-demo-trade campaign", () => {
     const malformed = new PostgresAutomaticTradeCampaign({
       pool: {
         query: vi.fn(() =>
-          Promise.resolve({ rows: [{ closed_trades: "1.5" }] }),
+          Promise.resolve({
+            rows: [{ closed_trades: "1.5", lifetime_closed_trades: "9" }],
+          }),
         ),
       } as never,
       accountId: "account",
@@ -104,6 +120,25 @@ describe("automatic closed-demo-trade campaign", () => {
       configuredLimit: 100,
     });
     await expect(malformed.progress()).rejects.toThrow(
+      "AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_INVALID",
+    );
+  });
+
+  it("fails closed when lifetime trades are below current-release trades", async () => {
+    const campaign = new PostgresAutomaticTradeCampaign({
+      pool: {
+        query: vi.fn(() =>
+          Promise.resolve({
+            rows: [{ closed_trades: "2", lifetime_closed_trades: "1" }],
+          }),
+        ),
+      } as never,
+      accountId: "account",
+      symbolId: "symbol",
+      strategyVersionId: "strategy",
+      configuredLimit: 0,
+    });
+    await expect(campaign.progress()).rejects.toThrow(
       "AUTOMATIC_TRADE_CAMPAIGN_PROGRESS_INVALID",
     );
   });

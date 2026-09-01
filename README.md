@@ -226,9 +226,14 @@ gate off and use one authenticated loopback cycle for the first supervised
 session. A later explicitly authorized campaign can set
 `AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT` to the required durable closed-demo-trade
 sample. Rejections and unfilled expiries remain visible but do not complete that
-target. `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` remains a separate finite
-inference-cost ceiling; reaching either boundary pauses new analyses while
-continuing broker lifecycle maintenance.
+target. `AUTOMATIC_ANALYSIS_COMPLETED_LIMIT` is a separate inference-cost
+ceiling; reaching either positive boundary pauses new analyses while continuing
+broker lifecycle maintenance. Zero disables only that campaign boundary, so an
+explicitly enabled demo scheduler can run continuously while every independent
+safety, reconciliation, daily-loss, freshness, spread, and risk gate remains
+active. Overview always shows PostgreSQL-backed all-time and current-release
+completed-AI-analysis and closed-demo-trade counters, including in continuous
+mode.
 `AUTOMATIC_ANALYSIS_COMPLETED_BASELINE` must normally remain zero; it exists
 only to carry a separately verified durable count through a reviewed immutable
 bug-fix release and is displayed separately on Overview.

@@ -17,6 +17,7 @@ from apps.dashboard.decision_inspector import (
     automation_status_view,
     broker_lifecycle_view,
     campaign_history_counts,
+    continuous_demo_counters,
     exact_model_input_view,
     execution_status_recovered,
     latest_ai_request_index,
@@ -466,6 +467,29 @@ def test_campaign_history_counts_accepts_carry_forward_and_rejects_mismatch() ->
         campaign_history_counts({"completed": 3, "baseline": 2, "releaseCompleted": 0})
     with pytest.raises(DecisionViewError, match="CAMPAIGN_COUNT_INVALID"):
         campaign_history_counts({"completed": True, "baseline": 0, "releaseCompleted": 1})
+
+
+def test_continuous_demo_counters_validate_lifetime_and_release_counts() -> None:
+    assert continuous_demo_counters(
+        {"lifetimeCompleted": 1009, "releaseCompleted": 2},
+        {"lifetimeClosedTrades": 172, "releaseClosedTrades": 0},
+    ) == {
+        "lifetimeAnalyses": 1009,
+        "releaseAnalyses": 2,
+        "lifetimeTrades": 172,
+        "releaseTrades": 0,
+    }
+
+    with pytest.raises(DecisionViewError, match="CONTINUOUS_COUNTER_INVALID"):
+        continuous_demo_counters(
+            {"lifetimeCompleted": 1, "releaseCompleted": 2},
+            {"lifetimeClosedTrades": 172, "releaseClosedTrades": 0},
+        )
+    with pytest.raises(DecisionViewError, match="CONTINUOUS_COUNTER_INVALID"):
+        continuous_demo_counters(
+            {"lifetimeCompleted": None, "releaseCompleted": 0},
+            {"lifetimeClosedTrades": 0, "releaseClosedTrades": 0},
+        )
 
 
 def test_broker_lifecycle_calls_transient_api_outage_reconnecting_not_unknown() -> None:

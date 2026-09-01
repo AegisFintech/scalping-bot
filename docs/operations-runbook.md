@@ -223,6 +223,24 @@ responses or relax any independent order, risk, reconciliation, or safety gate.
 `AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE` follows the same rule and counts only
 exact terminal demo trade rows joined to a `CLOSED` group.
 
+After a finite sample is reviewed, continuous demo collection requires both
+campaign limits and both baselines to be zero. This removes only the two
+count-based automatic pauses; it does not relax any emergency stop, daily-loss,
+broker reconciliation, ownership, freshness, spread, sizing, margin, precision,
+or deterministic-risk check. Overview must say **CONTINUOUS MODE** and show
+four database-derived counters: all-time completed external-AI analyses,
+all-time closed demo trades, and the same two counts for the current immutable
+release. Counter query failure, malformed values, or a current-release count
+above its lifetime count blocks new scheduling rather than substituting zero.
+
+cTrader can attach a rejected/internal-rejected/error/missed deal to a
+non-fill order execution such as `ORDER_CANCELLED`. It is safe to persist that
+terminal order transition without a fill only when the deal status is explicitly
+non-filled, the execution is cancel/expire/reject, `filledVolume` is exactly
+zero, and no close detail exists. Positive,
+fractional, malformed, or fill-type contradictory evidence remains fail-closed.
+The persisted event key distinguishes a non-fill deal attempt from a broker fill.
+
 Before paying for inference, the coordinator verifies a second fresh snapshot
 has unchanged completed candles/metadata and still passes spread protection.
 It also requires enough broker-M1 time for the configured AI budget plus the

@@ -30,6 +30,7 @@ from decision_inspector import (
     automation_status_view,
     broker_lifecycle_view,
     campaign_history_counts,
+    continuous_demo_counters,
     exact_model_input_view,
     execution_status_recovered,
     latest_ai_request_index,
@@ -251,6 +252,36 @@ with tabs[0]:
         "Automatic analysis", "ON" if status.get("automaticAnalysisEnabled") else "OFF"
     )
     trade_campaign = status.get("automaticDemoTradeCampaign")
+    campaign = status.get("automaticAnalysisCampaign")
+    st.subheader("Durable automation counters")
+    try:
+        counters = continuous_demo_counters(campaign, trade_campaign)
+        counter_columns = st.columns(4)
+        counter_columns[0].metric("All-time AI analyses", counters["lifetimeAnalyses"])
+        counter_columns[1].metric("All-time closed trades", counters["lifetimeTrades"])
+        counter_columns[2].metric("This release: analyses", counters["releaseAnalyses"])
+        counter_columns[3].metric("This release: trades", counters["releaseTrades"])
+        if (
+            status.get("automaticAnalysisEnabled") is True
+            and isinstance(campaign, dict)
+            and campaign.get("limit") is None
+            and isinstance(trade_campaign, dict)
+            and trade_campaign.get("limit") is None
+        ):
+            st.success(
+                "CONTINUOUS MODE — no analysis-count or closed-trade campaign boundary will "
+                "pause the scheduler. Independent safety and reconciliation controls remain active."
+            )
+        st.caption(
+            "An analysis is counted only after a durable completed external-AI response. A trade "
+            "is counted only after its demo position and closed outcome are durably reconciled. "
+            "Rejected attempts and unfilled expiries are not trades."
+        )
+    except DecisionViewError:
+        st.error(
+            "Durable analysis/trade counters are unavailable or inconsistent. Automation remains "
+            "fail-closed until PostgreSQL progress can be verified."
+        )
     if isinstance(trade_campaign, dict) and trade_campaign.get("enabled") is True:
         st.subheader("Closed demo trade collection")
         trade_campaign_columns = st.columns(4)
@@ -285,7 +316,6 @@ with tabs[0]:
             "target. Automation continues until the trade target or inference safety limit is "
             "reached."
         )
-    campaign = status.get("automaticAnalysisCampaign")
     if isinstance(campaign, dict) and campaign.get("enabled") is True:
         st.subheader("External-AI inference safety limit")
         campaign_columns = st.columns(4)

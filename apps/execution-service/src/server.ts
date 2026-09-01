@@ -22,6 +22,7 @@ export interface ExecutionStatus {
     readonly baseline: number;
     readonly releaseCompleted: number | null;
     readonly completed: number | null;
+    readonly lifetimeCompleted: number | null;
     readonly remaining: number | null;
     readonly complete: boolean;
     readonly reasonCodes: readonly string[];
@@ -32,6 +33,7 @@ export interface ExecutionStatus {
     readonly baseline: number;
     readonly releaseClosedTrades: number | null;
     readonly closedTrades: number | null;
+    readonly lifetimeClosedTrades: number | null;
     readonly remaining: number | null;
     readonly complete: boolean;
     readonly reasonCodes: readonly string[];
