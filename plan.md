@@ -602,6 +602,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   integration tests; formatting, lint, types, build, AppTest, replay/backtest,
   dependency audits, secret scan, shell/PM2, diff, and all five offline systemd
   checks also passed. Merge and terminal-safe demo rollout remain.
+  [PR #152](https://github.com/AegisFintech/scalping-bot/pull/152) contains the
+  reviewed implementation and complete pre-deployment evidence.
 
 ### ISSUE-001 delivery details
 

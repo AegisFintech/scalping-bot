@@ -2546,3 +2546,6 @@ known vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
 `git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
 passed. Broker-demo rollout evidence is pending merge and exact terminal-state
 reconciliation.
+
+[PR #152](https://github.com/AegisFintech/scalping-bot/pull/152) contains this
+implementation and its pre-deployment evidence.
