@@ -55,6 +55,7 @@ _PROMPT_FILES = {
     "system-v6": "system-v6.md",
     "system-v7": "system-v7.md",
     "system-v8": "system-v8.md",
+    "system-v9": "system-v9.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",
@@ -337,6 +338,40 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "Halving the distance from the sell entry to the AI take profit produced a price the "
         "broker precision cannot represent exactly.",
         "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "BUY_TP_QUARTER_NOT_ON_TICK": (
+        "Buy TP quarter-distance is off the broker tick",
+        "Reducing the distance from the buy entry to the AI take profit by four produced a "
+        "price the broker precision cannot represent exactly.",
+        "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "SELL_TP_QUARTER_NOT_ON_TICK": (
+        "Sell TP quarter-distance is off the broker tick",
+        "Reducing the distance from the sell entry to the AI take profit by four produced a "
+        "price the broker precision cannot represent exactly.",
+        "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "BUY_SL_MIDPOINT_NOT_ON_TICK": (
+        "Buy SL half-distance is off the broker tick",
+        "Halving the distance from the buy entry to the AI stop loss produced a price the "
+        "broker precision cannot represent exactly.",
+        "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "SELL_SL_MIDPOINT_NOT_ON_TICK": (
+        "Sell SL half-distance is off the broker tick",
+        "Halving the distance from the sell entry to the AI stop loss produced a price the "
+        "broker precision cannot represent exactly.",
+        "No order was rounded or sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "BUY_EFFECTIVE_SL_INVALIDATION_MISMATCH": (
+        "Buy invalidation does not match the shorter SL",
+        "The AI invalidation price differs from the exact half-distance stop loss.",
+        "No order was sent. A later broker minute requests a fresh AI proposal.",
+    ),
+    "SELL_EFFECTIVE_SL_INVALIDATION_MISMATCH": (
+        "Sell invalidation does not match the shorter SL",
+        "The AI invalidation price differs from the exact half-distance stop loss.",
+        "No order was sent. A later broker minute requests a fresh AI proposal.",
     ),
     "UPSIDE_TARGETS_INVALID": (
         "AI upside targets are not usable as buy objectives",
@@ -1241,7 +1276,7 @@ def analysis_chart_view(value: Mapping[str, Any]) -> dict[str, Any] | None:
 def take_profit_transform_view(
     validations: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, str]]:
-    """Return the audited AI-to-effective TP comparison, if that stage ran."""
+    """Return the audited AI-to-effective price comparison, if that stage ran."""
 
     for validation in reversed(validations):
         details = validation.get("details")
@@ -1253,31 +1288,40 @@ def take_profit_transform_view(
         if not isinstance(transform, Mapping):
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         _reject_sensitive_keys(transform)
-        if (
-            transform.get("code") != "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
-            or transform.get("divisor") != "2"
+        code = transform.get("code")
+        legacy = code == "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
+        current = code == "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2"
+        if legacy and transform.get("divisor") != "2":
+            raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
+        if current and (
+            transform.get("take_profit_divisor") != "4" or transform.get("stop_loss_divisor") != "2"
         ):
+            raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
+        if not legacy and not current:
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         output: list[dict[str, str]] = []
         for side in ("buy", "sell"):
             leg = transform.get(side)
             if not isinstance(leg, Mapping):
                 raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
-            keys = (
+            keys = [
                 "entry_price",
-                "stop_loss",
                 "original_take_profit",
                 "effective_take_profit",
                 "original_risk_reward_ratio",
                 "effective_risk_reward_ratio",
-            )
+            ]
+            keys.extend(["stop_loss"] if legacy else ["original_stop_loss", "effective_stop_loss"])
             if any(not isinstance(leg.get(key), str) for key in keys):
                 raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
+            ai_stop_loss = str(leg["stop_loss"] if legacy else leg["original_stop_loss"])
+            effective_stop_loss = str(leg["stop_loss"] if legacy else leg["effective_stop_loss"])
             output.append(
                 {
                     "side": side.upper(),
                     "entry_price": str(leg["entry_price"]),
-                    "stop_loss": str(leg["stop_loss"]),
+                    "ai_stop_loss": ai_stop_loss,
+                    "effective_stop_loss": effective_stop_loss,
                     "ai_take_profit": str(leg["original_take_profit"]),
                     "effective_take_profit": str(leg["effective_take_profit"]),
                     "ai_risk_reward_ratio": str(leg["original_risk_reward_ratio"]),

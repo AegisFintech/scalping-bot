@@ -11,11 +11,13 @@ import {
   isTickAligned,
 } from "../../../packages/risk-engine/src/index.js";
 
-export const TAKE_PROFIT_DISTANCE_DIVISOR = "2";
+export const TAKE_PROFIT_DISTANCE_DIVISOR = "4";
+export const STOP_LOSS_DISTANCE_DIVISOR = "2";
 
 export interface TakeProfitTransformLegDetails {
   readonly entry_price: string;
-  readonly stop_loss: string;
+  readonly original_stop_loss: string;
+  readonly effective_stop_loss: string;
   readonly original_take_profit: string;
   readonly effective_take_profit: string;
   readonly original_risk_reward_ratio: string;
@@ -23,8 +25,9 @@ export interface TakeProfitTransformLegDetails {
 }
 
 export interface TakeProfitTransformDetails {
-  readonly code: "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2";
-  readonly divisor: "2";
+  readonly code: "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2";
+  readonly take_profit_divisor: "4";
+  readonly stop_loss_divisor: "2";
   readonly buy: TakeProfitTransformLegDetails;
   readonly sell: TakeProfitTransformLegDetails;
 }
@@ -41,7 +44,9 @@ export function proposalMinimumRiskRewardRatio(
 ): string {
   return canonical(
     decimal(effectiveMinimum, "TAKE_PROFIT_EFFECTIVE_RR_INVALID").mul(
-      decimal(TAKE_PROFIT_DISTANCE_DIVISOR),
+      decimal(TAKE_PROFIT_DISTANCE_DIVISOR).div(
+        decimal(STOP_LOSS_DISTANCE_DIVISOR),
+      ),
     ),
   );
 }
@@ -73,35 +78,51 @@ function transformLeg(
 } {
   const entry = decimal(proposal.entry_price);
   const stopLoss = decimal(proposal.stop_loss);
+  const invalidation = decimal(proposal.invalidation_price);
   const originalTakeProfit = decimal(proposal.take_profit);
-  const effectiveTakeProfit = entry
-    .plus(originalTakeProfit)
-    .div(decimal(TAKE_PROFIT_DISTANCE_DIVISOR));
+  const effectiveStopLoss = entry.plus(
+    stopLoss.minus(entry).div(decimal(STOP_LOSS_DISTANCE_DIVISOR)),
+  );
+  const effectiveTakeProfit = entry.plus(
+    originalTakeProfit.minus(entry).div(decimal(TAKE_PROFIT_DISTANCE_DIVISOR)),
+  );
+  const effectiveStopLossText = canonical(effectiveStopLoss);
   const effectiveTakeProfitText = canonical(effectiveTakeProfit);
   const reasons: string[] = [];
+  if (
+    (side === "BUY" && !stopLoss.lt(entry)) ||
+    (side === "SELL" && !stopLoss.gt(entry))
+  ) {
+    reasons.push(`${side}_SL_DISTANCE_INVALID`);
+  }
   if (
     (side === "BUY" && !originalTakeProfit.gt(entry)) ||
     (side === "SELL" && !originalTakeProfit.lt(entry))
   ) {
     reasons.push(`${side}_TP_DISTANCE_INVALID`);
   }
-  if (!isTickAligned(effectiveTakeProfit, tickSize)) {
-    reasons.push(`${side}_TP_MIDPOINT_NOT_ON_TICK`);
-  }
+  if (!isTickAligned(effectiveStopLoss, tickSize))
+    reasons.push(`${side}_SL_MIDPOINT_NOT_ON_TICK`);
+  if (!isTickAligned(effectiveTakeProfit, tickSize))
+    reasons.push(`${side}_TP_QUARTER_NOT_ON_TICK`);
+  if (!effectiveStopLoss.eq(invalidation))
+    reasons.push(`${side}_EFFECTIVE_SL_INVALIDATION_MISMATCH`);
   const effectiveRiskRewardRatio = transformedRatio(
     entry,
-    stopLoss,
+    effectiveStopLoss,
     effectiveTakeProfit,
   );
   return {
     proposal: {
       ...proposal,
+      stop_loss: effectiveStopLossText,
       take_profit: effectiveTakeProfitText,
       risk_reward_ratio: effectiveRiskRewardRatio,
     },
     details: {
       entry_price: proposal.entry_price,
-      stop_loss: proposal.stop_loss,
+      original_stop_loss: proposal.stop_loss,
+      effective_stop_loss: effectiveStopLossText,
       original_take_profit: proposal.take_profit,
       effective_take_profit: effectiveTakeProfitText,
       original_risk_reward_ratio: proposal.risk_reward_ratio,
@@ -111,7 +132,7 @@ function transformLeg(
   };
 }
 
-export function halveTakeProfitDistances(
+export function halveTakeProfitAndStopLossDistances(
   response: ModelResponse,
   metadata: SymbolMetadata,
 ): TakeProfitTransformResult {
@@ -129,8 +150,9 @@ export function halveTakeProfitDistances(
     const sell = transformLeg("SELL", response.sell_stop, tickSize);
     const reasonCodes = [...buy.reasonCodes, ...sell.reasonCodes].sort();
     const details: TakeProfitTransformDetails = {
-      code: "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2",
-      divisor: "2",
+      code: "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2",
+      take_profit_divisor: "4",
+      stop_loss_divisor: "2",
       buy: buy.details,
       sell: sell.details,
     };
@@ -151,7 +173,7 @@ export function halveTakeProfitDistances(
     return {
       accepted: false,
       response: null,
-      reasonCodes: ["TAKE_PROFIT_TRANSFORM_DECIMAL_INVALID"],
+      reasonCodes: ["PROPOSAL_DISTANCE_TRANSFORM_DECIMAL_INVALID"],
       details: null,
     };
   }

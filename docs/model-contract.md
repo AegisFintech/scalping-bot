@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v8` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v9` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -30,12 +30,12 @@ The versioned system prompt tells the model to:
   has passed, including when evidence is conflicting or confidence is low.
 - return a technical map with a decision zone, support/resistance zones, exact
   buffered breakout/breakdown confirmation prices, and ordered targets. The OCO
-  entries must equal those confirmation prices, and each effective midpoint TP
+  entries must equal those confirmation prices, and each effective TP
   must equal the first corresponding target.
-- provide the pre-transform reward distance required by the supplied proposal
-  R:R. The request says that execution preserves entry/SL and divides TP
-  distance by two, supplies both proposal and effective minimum R:R values, and
-  requires an even whole-tick TP distance so the midpoint stays tick-aligned.
+- provide the pre-transform SL and reward distances required by the supplied
+  proposal R:R. The request says that execution divides SL distance by two and
+  TP distance by four, supplies both proposal and effective minimum R:R values,
+  and requires both transformed prices to remain on whole broker ticks.
 - put each BUY/SELL confirmation inside its supplied inclusive, tick-aligned
   `buy_entry_*` or `sell_entry_*` range. Those ranges already apply current
   executable quote side, broker/configured minimum distance, and the maximum
@@ -54,11 +54,13 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-For `system-v3` and later requests, the exact parsed response remains immutable. The
-execution coordinator separately derives each effective TP as
-`entry + (proposed_tp - entry) / 2`, recomputes the diagnostic R:R, and records
-both original and effective values in validation details. Entry and SL are not
-changed. An off-tick midpoint or invalid Decimal rejects rather than rounding.
+The exact parsed response remains immutable. For current `system-v9` requests,
+the execution coordinator separately derives effective SL as
+`entry + (proposed_sl - entry) / 2` and effective TP as
+`entry + (proposed_tp - entry) / 4`, recomputes the diagnostic R:R, and records
+both original and effective values in validation details. An off-tick result,
+invalidation mismatch, or invalid Decimal rejects rather than rounding.
+Historical `system-v8` requests preserve SL and divide TP distance by two.
 
 Deterministic analytics owns input/data eligibility before inference. Model
 warnings, risk flags, regime, and confidence remain visible diagnostics but
@@ -90,7 +92,7 @@ Reject:
 ## Semantic validation
 
 The validation pipeline first validates the exact AI proposal against the
-pre-transform minimum R:R, then validates the audited TP transform, and finally
+pre-transform minimum R:R, then validates the audited SL/TP transform, and finally
 validates the effective proposal against the configured execution minimum R:R.
 Both proposal stages require exact symbol and analysis ID; plausible
 `generated_at`; future `valid_until` within expiry policy; leg expirations that
@@ -111,7 +113,8 @@ Schema 2.1 additionally requires every technical zone and target to be
 tick-aligned and directionally ordered. `waiting_area` must equal
 `technical_map.decision_zone`; each stop entry must equal its named confirmation
 price; and the proposal/effective validation phases independently prove that
-the configured TP transform resolves to the first technical target.
+the configured TP transform resolves to the first technical target. The
+transform stage also proves the model invalidation equals the effective SL.
 
 `risk_reward_ratio` must agree with recomputed price distances within strict
 Decimal tolerance at each stage. Material discrepancies reject the response.

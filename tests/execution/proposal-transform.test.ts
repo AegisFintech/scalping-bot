@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  halveTakeProfitDistances,
+  halveTakeProfitAndStopLossDistances,
   proposalMinimumRiskRewardRatio,
 } from "../../apps/execution-service/src/proposal-transform.js";
 import type {
@@ -29,8 +29,8 @@ function response(): ModelResponse {
         price: "1999",
         condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
       },
-      upside_targets: ["2003"],
-      downside_targets: ["1997"],
+      upside_targets: ["2002"],
+      downside_targets: ["1998"],
     },
     waiting_area: {
       lower: "1999",
@@ -44,7 +44,7 @@ function response(): ModelResponse {
       take_profit: "2005",
       risk_reward_ratio: "4",
       expires_at: "2026-08-25T00:05:00.000Z",
-      invalidation_price: "2000",
+      invalidation_price: "2000.5",
     },
     sell_stop: {
       trigger_price: "1999",
@@ -53,7 +53,7 @@ function response(): ModelResponse {
       take_profit: "1995",
       risk_reward_ratio: "4",
       expires_at: "2026-08-25T00:05:00.000Z",
-      invalidation_price: "2000",
+      invalidation_price: "1999.5",
     },
     confidence: {
       overall: 50,
@@ -93,31 +93,35 @@ function metadata(tickSize = "0.01"): SymbolMetadata {
 }
 
 describe("take-profit distance transform", () => {
-  it("preserves entry and stop loss while halving both TP distances", () => {
+  it("halves the prior effective TP distance and the endpoint SL distance", () => {
     const original = response();
-    const result = halveTakeProfitDistances(original, metadata());
+    const result = halveTakeProfitAndStopLossDistances(original, metadata());
 
     expect(result).toMatchObject({ accepted: true, reasonCodes: [] });
     expect(result.response?.buy_stop).toMatchObject({
       entry_price: "2001",
-      stop_loss: "2000",
-      take_profit: "2003",
+      stop_loss: "2000.5",
+      take_profit: "2002",
       risk_reward_ratio: "2",
     });
     expect(result.response?.sell_stop).toMatchObject({
       entry_price: "1999",
-      stop_loss: "2000",
-      take_profit: "1997",
+      stop_loss: "1999.5",
+      take_profit: "1998",
       risk_reward_ratio: "2",
     });
+    expect(original.buy_stop.stop_loss).toBe("2000");
     expect(original.buy_stop.take_profit).toBe("2005");
+    expect(result.details?.buy.original_stop_loss).toBe("2000");
+    expect(result.details?.buy.effective_stop_loss).toBe("2000.5");
     expect(result.details?.buy.original_take_profit).toBe("2005");
+    expect(result.details?.buy.effective_take_profit).toBe("2002");
     expect(proposalMinimumRiskRewardRatio("2")).toBe("4");
   });
 
-  it("rejects an off-tick midpoint without rounding it", () => {
+  it("rejects an off-tick TP quarter without rounding it", () => {
     const original = response();
-    const result = halveTakeProfitDistances(
+    const result = halveTakeProfitAndStopLossDistances(
       {
         ...original,
         buy_stop: {
@@ -132,8 +136,50 @@ describe("take-profit distance transform", () => {
     expect(result).toMatchObject({
       accepted: false,
       response: null,
-      reasonCodes: ["BUY_TP_MIDPOINT_NOT_ON_TICK"],
+      reasonCodes: ["BUY_TP_QUARTER_NOT_ON_TICK"],
     });
-    expect(result.details?.buy.effective_take_profit).toBe("2002.995");
+    expect(result.details?.buy.effective_take_profit).toBe("2001.9975");
+  });
+
+  it("rejects an off-tick SL midpoint without rounding it", () => {
+    const original = response();
+    const result = halveTakeProfitAndStopLossDistances(
+      {
+        ...original,
+        buy_stop: {
+          ...original.buy_stop,
+          stop_loss: "1999.99",
+          invalidation_price: "2000.495",
+        },
+      },
+      metadata("0.01"),
+    );
+
+    expect(result).toMatchObject({
+      accepted: false,
+      response: null,
+      reasonCodes: ["BUY_SL_MIDPOINT_NOT_ON_TICK"],
+    });
+    expect(result.details?.buy.effective_stop_loss).toBe("2000.495");
+  });
+
+  it("rejects when the model invalidation does not equal the effective SL", () => {
+    const original = response();
+    const result = halveTakeProfitAndStopLossDistances(
+      {
+        ...original,
+        buy_stop: {
+          ...original.buy_stop,
+          invalidation_price: "2000.6",
+        },
+      },
+      metadata(),
+    );
+
+    expect(result).toMatchObject({
+      accepted: false,
+      response: null,
+      reasonCodes: ["BUY_EFFECTIVE_SL_INVALIDATION_MISMATCH"],
+    });
   });
 });

@@ -201,6 +201,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
 | ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
 | ISSUE-058 | complete    | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
+| ISSUE-059 | in progress | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -416,6 +417,44 @@ never justify empty, noisy, unsafe, or misleading commits.
   `.34` broker rows, no `.34` stall event exists, and all 14,861 Better Stack
   outbox rows were `DELIVERED`. Final rollout evidence is tracked by
   [PR #143](https://github.com/AegisFintech/scalping-bot/pull/143).
+
+### ISSUE-059 delivery details
+
+- Acceptance criteria: preserve the endpoint JSON and separately derive
+  broker-effective BUY/SELL prices with TP distance one quarter of the endpoint
+  proposal (half the `.34` effective TP) and SL distance one half of the
+  endpoint proposal; use Decimal arithmetic and reject off-tick effective TP or
+  SL without rounding; precompute model SL bounds that preserve the effective
+  broker/configured minimum; keep original/effective semantic, schema,
+  freshness, spread, reconciliation, sizing, margin, ownership, and mode checks
+  fail-closed; add prompt `system-v9`; show original and effective SL/TP in the
+  decision trail; and start a distinct immutable 0/500-response,
+  0/100-closed-trade demo comparison cohort.
+- Dependencies: ISSUE-054 campaign controls, ISSUE-057 prompt/bounds trail,
+  ISSUE-058 reliable cadence, exact `.34` closed-trade evidence, and existing
+  demo-only authority.
+- Current status: implementation is in progress on
+  `issue-059-half-distance-cohort`, tracked by
+  [issue #144](https://github.com/AegisFintech/scalping-bot/issues/144).
+  Release `.34` was auditably paused with no active broker setup at 95/100
+  cumulative trades. Its distinct one-day release cohort contained 46 closed
+  trades: 10 wins, 36 losses, 21.74% win rate, net realized P/L `-82.16`
+  including `-11.54` fees, profit factor `0.502`, mean holding time 18.0 minutes,
+  and median holding time 11.2 minutes. A same-outcome arithmetic estimate would
+  improve per-trade expectancy from `-1.79` to about `-1.02` after halving gross
+  movement while retaining observed fees, but remains negative and is not a
+  counterfactual replay or profitability claim. The new cohort is required to
+  measure actual win-rate, fee, and holding-time changes without mixing strategy
+  definitions. Release `.35`, prompt `system-v9`, the Decimal transform, the
+  doubled original-SL minimum, dashboard compatibility, and the distinct zero
+  baselines are implemented. The complete pre-deployment gate passed 269 Node
+  tests across 42 files, 17 schema tests, 3 migration tests, all 3 configured
+  integration tests, and 85 Python tests, plus formatting, lint, strict type
+  checks, build, configured Streamlit AppTest, replay/backtest, dependency
+  audits, tracked-file secret scanning, shell/PM2 validation, and all five 2.8
+  (`OK`) systemd security parses. Review and automatic merge are tracked by
+  [PR #145](https://github.com/AegisFintech/scalping-bot/pull/145); paused rollout
+  remains.
 
 ### ISSUE-001 delivery details
 

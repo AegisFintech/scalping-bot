@@ -61,8 +61,9 @@ the temporary fail-closed daily-risk reason.
     if broker time regressed; persist the refreshed quote/depth evidence.
 12. Re-run spread protection against the refreshed execution state. Validate
     the immutable AI proposal at the pre-transform R:R; derive each effective
-    TP as the Decimal midpoint from entry to AI TP; reject an off-tick midpoint;
-    then validate the effective proposal at the configured execution R:R.
+    SL at half the AI SL distance and each effective TP at one quarter of the AI
+    TP distance; reject either off-tick result; then validate the effective
+    proposal at the configured execution R:R.
     For schema 2.1, prove that the entries equal the chart-derived confirmation
     prices and that each effective TP equals the first returned technical target.
     Reconcile account state again and reject an unchanged endpoint SL above the

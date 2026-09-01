@@ -31,11 +31,11 @@ New schema 2.1 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Prompt `system-v8` is screenshot-first, self-checks both independent legs and
-the configured TP-distance division by two, receives the non-sizing maximum
+Prompt `system-v9` is screenshot-first, self-checks both independent legs and
+the configured SL-distance division by two plus TP-distance division by four, receives the non-sizing maximum
 stop distance affordable at broker minimum volume, and receives exact
 tick-aligned entry/stop ranges plus the preferred expiry. The
-dashboard shows endpoint and effective TP/R:R side by side; generated proposals
+dashboard shows endpoint and effective SL/TP/R:R side by side; generated proposals
 remain distinct from queued or broker-submitted orders.
 After deterministic margin/sizing work, execution reconciles the account and
 reacquires market state once more. It rejects changed account/candle/metadata,
@@ -110,8 +110,9 @@ Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style.
 The Responses style requests strict JSON Schema output where the endpoint
 supports it; all output is size-limited and validated locally regardless.
 System-v6/schema 2.1 require a buy-stop plus sell-stop proposal whenever the
-model is reached and tell the endpoint how the downstream TP midpoint, R:R,
-target ordering, and unchanged-stop limit are validated. The exact system
+model is reached; current prompt `system-v9` tells the endpoint how the
+downstream SL/TP transforms, R:R, target ordering, and stop limits are
+validated. The exact system
 prompt/hash is persisted per new request.
 Compact mode computes indicators from the full configured 600/500/300 completed
 M1/M5/M15 histories but sends only the newest 30/18/12 raw candles alongside

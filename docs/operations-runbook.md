@@ -303,14 +303,16 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v8` tells the endpoint that the execution service preserves its
-entry and stop loss but halves the distance from entry to take profit. It asks
-for twice the configured effective minimum R:R, explicitly self-checks both
-independent legs and midpoint targets, and supplies exact tick-aligned BUY/SELL
+Prompt `system-v9` tells the endpoint that the execution service halves the
+distance from entry to its stop loss and uses one quarter of the distance from
+entry to its take profit. It asks for the pre-transform R:R required by the
+configured effective minimum, explicitly self-checks both independent legs and
+transformed targets, and supplies exact tick-aligned BUY/SELL
 entry ranges, an inclusive stop-distance range, and one exact preferred expiry.
 Those ranges combine current quote, broker/configured minimum, M1 ATR caps, and
 the maximum stop affordable at broker minimum volume. They contain no equity,
-budget, volume, or account identity. An off-tick midpoint, out-of-range entry,
+budget, volume, or account identity. An off-tick transformed price, mismatched
+invalidation, out-of-range entry,
 or returned stop outside the current limit is rejected without correction, and
 a later broker minute starts a fresh cycle after the rejection becomes terminal.
 
@@ -449,7 +451,7 @@ into repository files or logs.
    or filled orders. The displayed local validation, deterministic risk, and
    broker stages remain separate execution authorities.
    The **AI proposal → effective OCO levels** table shows endpoint entry/SL/TP
-   beside the audited effective midpoint TP and both R:R values. Absence of that
+   beside the audited effective SL/TP and both R:R values. Absence of that
    table means the transform stage was not reached.
    For schema 2.1, verify that the stop entries equal the technical-map
    confirmation prices and the effective TPs equal the first upside/downside
@@ -485,7 +487,7 @@ The closed-demo-trade progress bar is the collection target. Completed AI
 responses are displayed separately against the inference safety limit.
 
 Use **AI proposal versus effective/placed levels** for both BUY and SELL entry,
-SL, and TP. `EFFECTIVE LEVELS — NOT PLACED` means the midpoint-TP transform was
+SL, and TP. `EFFECTIVE LEVELS — NOT PLACED` means the SL/TP transform was
 audited but broker intent was never created. `PLACED ORDER LEVELS` means the
 displayed values are the durable order intents. Select a row to open its exact
 hash-verified prompt, persisted redacted user JSON, parsed AI response,

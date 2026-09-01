@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v8",
+  promptVersion: "system-v9",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -47,7 +47,8 @@ const common = {
     configuredMinStopDistance: "0.1",
     minRiskRewardRatio: "4",
     effectiveMinRiskRewardRatio: "2",
-    takeProfitDistanceDivisor: "2" as const,
+    takeProfitDistanceDivisor: "4" as const,
+    stopLossDistanceDivisor: "2" as const,
     maxAffordableStopDistance: "0.5",
     maxStopDistanceAtr: "3",
     maxEntryDistanceAtr: "2.5",
@@ -93,7 +94,8 @@ describe("model payload builder", () => {
       configured_min_stop_distance: "0.1",
       min_risk_reward_ratio: "4",
       effective_min_risk_reward_ratio: "2",
-      take_profit_distance_divisor: "2",
+      take_profit_distance_divisor: "4",
+      stop_loss_distance_divisor: "2",
       max_affordable_stop_distance: "0.5",
       max_stop_distance_atr: "3",
       max_entry_distance_atr: "2.5",
@@ -125,12 +127,16 @@ describe("model payload builder", () => {
     expect(JSON.stringify(payload)).not.toContain(chart.dataBase64);
   });
 
-  it("versions the TP transform instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v8.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v7.md", "utf8");
+  it("versions the TP/SL transform instructions in the current prompt", () => {
+    const prompt = readFileSync("prompts/system-v9.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v8.md", "utf8");
     expect(prompt).toContain("take_profit_distance_divisor");
+    expect(prompt).toContain("stop_loss_distance_divisor");
     expect(prompt).toContain("effective_min_risk_reward_ratio");
-    expect(prompt).toContain("midpoint must be");
+    expect(prompt).toContain(
+      "effective_stop_loss=entry_price+(stop_loss-entry_price)/2",
+    );
+    expect(prompt).toContain("quarter-distance TP");
     expect(prompt).toContain("max_affordable_stop_distance");
     expect(prompt).toContain("preferred_expires_at");
     expect(prompt).toContain("[buy_entry_minimum,buy_entry_maximum]");
@@ -141,7 +147,7 @@ describe("model payload builder", () => {
     expect(prompt).toContain("min_risk_reward_ratio+0.2");
     expect(prompt).toContain("risk_reward_ratio=reward/risk");
     expect(prompt).toContain(
-      "take_profit=entry_price+2*(primary target-entry_price)",
+      "take_profit=entry_price+4*(primary target-entry_price)",
     );
     expect(prompt).toContain("Do not mirror one leg");
     expect(prompt).toContain(

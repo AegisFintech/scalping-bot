@@ -167,7 +167,7 @@ export interface SemanticContext {
   readonly metadata: SymbolMetadata;
   readonly atr: string;
   readonly minRiskRewardRatio: string;
-  readonly takeProfitDistanceDivisor?: "1" | "2";
+  readonly takeProfitDistanceDivisor?: "1" | "2" | "4";
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
   readonly maxStopDistanceAtr: string;

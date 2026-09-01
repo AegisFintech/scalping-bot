@@ -160,6 +160,10 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     midpoint = reason_code_view("BUY_TP_MIDPOINT_NOT_ON_TICK")
     assert "off the broker tick" in midpoint["title"]
     assert "No order was rounded" in midpoint["next_action"]
+    quarter = reason_code_view("BUY_TP_QUARTER_NOT_ON_TICK")
+    assert "quarter-distance" in quarter["title"]
+    half_stop = reason_code_view("SELL_SL_MIDPOINT_NOT_ON_TICK")
+    assert "half-distance" in half_stop["title"]
 
     affordability = reason_code_view("SELL_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME")
     assert "minimum-volume risk budget" in affordability["title"]
@@ -560,7 +564,54 @@ def test_missing_model_output_notice_does_not_imply_a_proposal_exists() -> None:
     )
 
 
-def test_take_profit_transform_view_shows_original_and_effective_levels() -> None:
+def test_take_profit_transform_view_shows_current_original_and_effective_levels() -> None:
+    rows = take_profit_transform_view(
+        [
+            {
+                "details": {
+                    "validation_scope": "TAKE_PROFIT_TRANSFORM",
+                    "proposal_transform": {
+                        "code": "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2",
+                        "take_profit_divisor": "4",
+                        "stop_loss_divisor": "2",
+                        "buy": {
+                            "entry_price": "2001",
+                            "original_stop_loss": "1999",
+                            "effective_stop_loss": "2000",
+                            "original_take_profit": "2005",
+                            "effective_take_profit": "2002",
+                            "original_risk_reward_ratio": "4",
+                            "effective_risk_reward_ratio": "2",
+                        },
+                        "sell": {
+                            "entry_price": "1999",
+                            "original_stop_loss": "2001",
+                            "effective_stop_loss": "2000",
+                            "original_take_profit": "1995",
+                            "effective_take_profit": "1998",
+                            "original_risk_reward_ratio": "4",
+                            "effective_risk_reward_ratio": "2",
+                        },
+                    },
+                }
+            }
+        ]
+    )
+
+    assert rows[0] == {
+        "side": "BUY",
+        "entry_price": "2001",
+        "ai_stop_loss": "1999",
+        "effective_stop_loss": "2000",
+        "ai_take_profit": "2005",
+        "effective_take_profit": "2002",
+        "ai_risk_reward_ratio": "4",
+        "effective_risk_reward_ratio": "2",
+    }
+    assert rows[1]["side"] == "SELL"
+
+
+def test_take_profit_transform_view_keeps_legacy_history_readable() -> None:
     rows = take_profit_transform_view(
         [
             {
@@ -591,16 +642,9 @@ def test_take_profit_transform_view_shows_original_and_effective_levels() -> Non
         ]
     )
 
-    assert rows[0] == {
-        "side": "BUY",
-        "entry_price": "2001",
-        "stop_loss": "2000",
-        "ai_take_profit": "2005",
-        "effective_take_profit": "2003",
-        "ai_risk_reward_ratio": "4",
-        "effective_risk_reward_ratio": "2",
-    }
-    assert rows[1]["side"] == "SELL"
+    assert rows[0]["ai_stop_loss"] == "2000"
+    assert rows[0]["effective_stop_loss"] == "2000"
+    assert rows[0]["effective_take_profit"] == "2003"
 
 
 def test_take_profit_transform_view_rejects_malformed_audit_details() -> None:
@@ -721,8 +765,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v8", content, digest)
-    assert current["version"] == "system-v8"
+    current = prompt_artifact_view("system-v9", content, digest)
+    assert current["version"] == "system-v9"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]
