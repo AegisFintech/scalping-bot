@@ -2404,6 +2404,8 @@ including fees `-0.26`. Automation returned to `RUNNING` with no blocker and
 the new campaign reached 2/500 responses and 1/100 closed trades. This is demo
 operational evidence only; the requested 100-trade cohort must finish before
 comparing win rate, expectancy, fees, or holding time.
+Final rollout evidence is tracked by
+[PR #147](https://github.com/AegisFintech/scalping-bot/pull/147).
 
 The cohort review also found a separate accounting defect, now bounded as
 [issue #146](https://github.com/AegisFintech/scalping-bot/issues/146). Broker

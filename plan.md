@@ -469,6 +469,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   including fees `-0.26`; the campaign reached 2/500 completed endpoint
   responses and 1/100 closed trades, returned to `RUNNING`, and had no blocker
   reason. This is broker-demo operational evidence, not a profitability claim.
+  Final rollout evidence is tracked by
+  [PR #147](https://github.com/AegisFintech/scalping-bot/pull/147).
 
 ### ISSUE-060 delivery details
 
