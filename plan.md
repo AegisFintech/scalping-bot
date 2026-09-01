@@ -621,7 +621,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   metrics, and 15 tabs without an exception. Automation is managing the active
   broker-confirmed OCO at 2/500 responses and 0/100 closed trades; no manual
   order or position was cancelled or interrupted. This verifies arithmetic,
-  placement, and observability only, not profitability.
+  placement, and observability only, not profitability. Rollout evidence is in
+  [PR #153](https://github.com/AegisFintech/scalping-bot/pull/153).
 
 ### ISSUE-001 delivery details
 

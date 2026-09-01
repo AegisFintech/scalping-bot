@@ -2579,3 +2579,6 @@ and final-volume fee evidence. At the snapshot automation was safely managing
 the active broker-confirmed OCO at 2/500 completed responses and 0/100 closed
 trades. This proves the deployed demo arithmetic, placement, and observability;
 it does not establish forecast accuracy or profitability.
+
+The terminal-safe rollout record is delivered through
+[PR #153](https://github.com/AegisFintech/scalping-bot/pull/153).
