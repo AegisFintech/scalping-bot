@@ -804,3 +804,25 @@ PostgreSQL then contained two `.34` completed `system-v8` calls, one closed
 trade, no nonterminal broker rows, and no `.34` stall event. All 14,861
 observability outbox rows were delivered; service health and PM2 status were
 green across all five processes.
+
+## ISSUE-059 half-distance comparison cohort
+
+Proposal-transform tests prove that current execution preserves the immutable
+endpoint response while deriving effective SL at half the endpoint distance and
+effective TP at one quarter of the endpoint distance. They cover exact BUY and
+SELL arithmetic, recalculated effective R:R, off-tick SL and TP rejection
+without rounding, and rejection when model invalidation does not equal the
+effective SL. Coordinator coverage proves that prompt SL bounds double the
+effective broker/configured minimum, reject an unsatisfiable original-stop
+range before inference, pass only transformed SL/TP into deterministic sizing,
+and persist both divisors. Dashboard tests cover current transform evidence,
+legacy `.34` evidence, reason guidance, and prompt `system-v9` provenance.
+
+The complete pre-deployment gate passed Prettier, ESLint, TypeScript
+typecheck/build, 269 Node tests across 42 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 85 Python tests. Configured
+Streamlit AppTest rendered 43 dataframes, 69 metrics, and 15 tabs with zero
+exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
+vulnerabilities, tracked-file secret scanning, shell/PM2 checks, and all five
+offline systemd security parses at 2.8 (`OK`) passed.

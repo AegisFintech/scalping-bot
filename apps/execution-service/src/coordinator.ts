@@ -34,8 +34,9 @@ import type {
   OcoProposalRiskConstraints,
 } from "./oco-risk-evaluator.js";
 import {
-  halveTakeProfitDistances,
+  halveTakeProfitAndStopLossDistances,
   proposalMinimumRiskRewardRatio,
+  STOP_LOSS_DISTANCE_DIVISOR,
   TAKE_PROFIT_DISTANCE_DIVISOR,
 } from "./proposal-transform.js";
 import {
@@ -224,7 +225,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v8";
+  readonly promptVersion: "system-v9";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -292,6 +293,7 @@ export function deriveModelExecutionBounds(input: {
   readonly currentAsk: string;
   readonly tickSize: string;
   readonly minimumStopDistance: string;
+  readonly stopLossDistanceDivisor: string;
   readonly atr: string;
   readonly maxEntryDistanceAtr: string;
   readonly maxStopDistanceAtr: string;
@@ -303,6 +305,7 @@ export function deriveModelExecutionBounds(input: {
   const ask = decimal(input.currentAsk);
   const tickSize = decimal(input.tickSize);
   const minimumStopDistance = decimal(input.minimumStopDistance);
+  const stopLossDistanceDivisor = decimal(input.stopLossDistanceDivisor);
   const atr = decimal(input.atr);
   const maximumEntryDistance = atr.mul(decimal(input.maxEntryDistanceAtr));
   const maximumStopDistance = floorToTick(
@@ -328,7 +331,14 @@ export function deriveModelExecutionBounds(input: {
   ) {
     throw new Error("MODEL_ENTRY_RANGE_UNSATISFIABLE");
   }
-  if (maximumStopDistance.lt(minimumStopDistance))
+  if (!stopLossDistanceDivisor.isInteger() || stopLossDistanceDivisor.lt(1)) {
+    throw new Error("MODEL_STOP_DISTANCE_DIVISOR_INVALID");
+  }
+  const modelMinimumStopDistance = ceilToTick(
+    minimumStopDistance.mul(stopLossDistanceDivisor),
+    tickSize,
+  );
+  if (maximumStopDistance.lt(modelMinimumStopDistance))
     throw new Error("MODEL_STOP_RANGE_UNSATISFIABLE");
   const serverTime = Date.parse(input.serverTime);
   if (
@@ -347,7 +357,7 @@ export function deriveModelExecutionBounds(input: {
     buyEntryMaximum: canonical(buyEntryMaximum),
     sellEntryMinimum: canonical(sellEntryMinimum),
     sellEntryMaximum: canonical(sellEntryMaximum),
-    minimumStopDistance: canonical(minimumStopDistance),
+    minimumStopDistance: canonical(modelMinimumStopDistance),
     maximumStopDistance: canonical(maximumStopDistance),
     preferredExpiresAt: new Date(preferredExpiresAt).toISOString(),
   };
@@ -695,6 +705,7 @@ export class AnalysisCoordinator {
           currentAsk: preModelSnapshot.quote.ask,
           tickSize: preModelSnapshot.metadata.tickSize,
           minimumStopDistance: canonical(minimumStopDistance),
+          stopLossDistanceDivisor: STOP_LOSS_DISTANCE_DIVISOR,
           atr,
           maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
@@ -731,6 +742,7 @@ export class AnalysisCoordinator {
           minRiskRewardRatio: minimumProposalRiskRewardRatio,
           effectiveMinRiskRewardRatio: this.#options.minRiskRewardRatio,
           takeProfitDistanceDivisor: TAKE_PROFIT_DISTANCE_DIVISOR,
+          stopLossDistanceDivisor: STOP_LOSS_DISTANCE_DIVISOR,
           maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
           maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
@@ -905,12 +917,13 @@ export class AnalysisCoordinator {
           validation_scope: "AI_PROPOSAL",
           required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
           take_profit_distance_divisor: TAKE_PROFIT_DISTANCE_DIVISOR,
+          stop_loss_distance_divisor: STOP_LOSS_DISTANCE_DIVISOR,
         },
       );
       if (!proposalSemantic.accepted)
         return await reject(proposalSemantic.reasonCodes);
 
-      const transformed = halveTakeProfitDistances(
+      const transformed = halveTakeProfitAndStopLossDistances(
         model.response,
         decisionSnapshot.metadata,
       );
@@ -1084,6 +1097,7 @@ export class AnalysisCoordinator {
           validation_scope: "PRE_PLACEMENT_AI_PROPOSAL",
           required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
           take_profit_distance_divisor: TAKE_PROFIT_DISTANCE_DIVISOR,
+          stop_loss_distance_divisor: STOP_LOSS_DISTANCE_DIVISOR,
         },
       );
       if (!placementProposalSemantic.accepted)

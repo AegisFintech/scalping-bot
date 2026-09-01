@@ -2343,3 +2343,37 @@ operational evidence, not a profitability claim.
 
 Final rollout evidence is tracked by
 [PR #143](https://github.com/AegisFintech/scalping-bot/pull/143).
+
+## ISSUE-059 shorter demo exits and distinct comparison cohort
+
+Release `.34` was auditably paused with no active managed setup after 46 closed
+release trades. Those demo trades recorded 10 wins and 36 losses, net realized
+P/L `-82.16` including fees `-11.54`, profit factor `0.502`, mean holding time
+18.0 minutes, and median holding time 11.2 minutes. Halving the observed gross
+movement while retaining the same fees would improve the arithmetic mean from
+`-1.79` to approximately `-1.02` per trade, but that is not a tick replay and
+does not establish the counterfactual outcome or profitability.
+
+The new immutable `.35` strategy keeps each endpoint response unchanged and
+derives broker-effective SL as `entry + (endpoint_sl - entry) / 2` and TP as
+`entry + (endpoint_tp - entry) / 4`. The latter is half the effective TP
+distance used by `.34`. Decimal/tick validation rejects rather than rounding;
+the endpoint invalidation must equal effective SL. Prompt `system-v9` receives
+an original-stop minimum doubled from the effective broker/configured minimum,
+both transform divisors, exact entry ranges, the affordable ceiling, and the
+preferred expiry. The downstream schema, semantic, spread, freshness,
+reconciliation, sizing, margin, ownership, duplicate, and demo-mode gates are
+unchanged. Streamlit shows AI versus effective SL/TP while retaining readable
+`.34` transform history.
+
+The comparison cohort is intentionally reset to 0/500 completed endpoint
+responses and 0/100 closed demo trades instead of inheriting the nearly complete
+prior campaign. The complete pre-deployment gate passed Prettier, ESLint,
+TypeScript typecheck/build, 269 Node tests across 42 files, 17 schema tests, 3
+migration tests, all 3 configured isolated-PostgreSQL/HTTP integration tests,
+Ruff format/lint, strict mypy over 17 source files, and 85 Python tests.
+Configured Streamlit AppTest rendered 43 dataframes, 69 metrics, and 15 tabs
+with zero exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip
+audits, tracked-file secret scanning, shell/PM2 checks, and all five offline
+systemd security parses at 2.8 (`OK`) passed. Issue and automatic delivery are
+tracked by [issue #144](https://github.com/AegisFintech/scalping-bot/issues/144).

@@ -70,12 +70,13 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v8` tells the endpoint that execution will preserve entry/SL
-  and halve TP distance. The coordinator precomputes inclusive, tick-aligned
+- Prompt `system-v9` tells the endpoint that execution will halve its proposed
+  SL distance and use one quarter of its proposed TP distance. This is half of
+  the effective TP distance used by `system-v8`. The coordinator precomputes inclusive, tick-aligned
   BUY/SELL entry ranges, one stop-distance range, and the exact preferred
   expiry from current quotes, M1 ATR, broker distance, configuration, and the
   non-sizing affordable stop ceiling. The prompt explicitly self-checks both
-  sides' R:R, midpoint, target ordering, and those executable ranges. No
+  sides' original/effective R:R, transformed levels, target ordering, and those executable ranges. No
   account money, budget, volume, or identity crosses the endpoint boundary.
 - Sends the deterministic image as high-detail multimodal content beside the
   compact numeric JSON. The numeric message contains only hash/provenance
@@ -105,11 +106,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   reacquires a final market snapshot, requires the same completed candles and
   execution metadata, and repeats spread plus original/effective semantics.
   Only this final quote/depth drives the unchanged placement freshness gate.
-- Keeps the parsed endpoint JSON immutable, records a separate Decimal TP
-  midpoint transform, and validates both the original and effective proposal.
-  Off-tick midpoints reject without broker-price rounding. Deterministic sizing
-  uses the unchanged endpoint entry/SL and the gateway receives the validated
-  effective TP.
+- Keeps the parsed endpoint JSON immutable, records a separate Decimal transform
+  that divides SL distance by two and TP distance by four, and validates both
+  the original and effective proposal. Off-tick results reject without
+  broker-price rounding. Deterministic sizing and the gateway use only the
+  validated effective SL/TP.
 - Rejects invalid/overflowing AI timeout and circuit-threshold configuration at
   startup. A local AI timeout, transport loss, or HTTP 503 becomes a stable
   reason code and cannot create a model row, risk intent, or order command.
@@ -205,8 +206,8 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   refreshed market evidence, local validation/risk, broker outcome, and each
   PostgreSQL audit event with its Better Stack delivery checkpoint. Missing
   stages render as not reached rather than successful.
-- The AI output view places endpoint entry/SL/TP and effective midpoint TP side
-  by side, including original/effective R:R, even when later risk sizing or
+- The AI output view places endpoint entry/SL/TP and effective transformed SL/TP
+  side by side, including original/effective R:R, even when later risk sizing or
   broker placement is not reached.
 - The Analysis History tab projects the active campaign's reviewed carry-forward
   plus current-release durable completed model responses into a chronological

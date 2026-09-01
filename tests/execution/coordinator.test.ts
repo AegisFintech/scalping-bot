@@ -61,7 +61,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v8",
+    version: "system-v9",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -89,8 +89,8 @@ function ocoProposal(analysisId: string): ModelResponse {
         price: "1999",
         condition_code: "BUFFERED_BREAKDOWN_BELOW_SUPPORT",
       },
-      upside_targets: ["2003"],
-      downside_targets: ["1997"],
+      upside_targets: ["2002"],
+      downside_targets: ["1998"],
     },
     waiting_area: {
       lower: "1999",
@@ -104,7 +104,7 @@ function ocoProposal(analysisId: string): ModelResponse {
       take_profit: "2005",
       risk_reward_ratio: "4",
       expires_at: expiresAt,
-      invalidation_price: "2000",
+      invalidation_price: "2000.5",
     },
     sell_stop: {
       trigger_price: "1999",
@@ -113,7 +113,7 @@ function ocoProposal(analysisId: string): ModelResponse {
       take_profit: "1995",
       risk_reward_ratio: "4",
       expires_at: expiresAt,
-      invalidation_price: "2000",
+      invalidation_price: "1999.5",
     },
     confidence: {
       overall: 0,
@@ -182,8 +182,8 @@ function commands(
     strategyLabel: "test",
   });
   return [
-    command("BUY", "2001", "2000", "2003"),
-    command("SELL", "1999", "2000", "1997"),
+    command("BUY", "2001", "2000.5", "2002"),
+    command("SELL", "1999", "1999.5", "1998"),
   ];
 }
 
@@ -276,7 +276,7 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v8",
+    promptVersion: "system-v9",
     schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "2",
@@ -345,10 +345,12 @@ function options(
             return [
               {
                 ...pending[0],
+                stopLoss: input.response.buy_stop.stop_loss,
                 takeProfit: input.response.buy_stop.take_profit,
               },
               {
                 ...pending[1],
+                stopLoss: input.response.sell_stop.stop_loss,
                 takeProfit: input.response.sell_stop.take_profit,
               },
             ] as [PendingOrderCommand, PendingOrderCommand];
@@ -386,6 +388,7 @@ describe("analysis coordinator", () => {
         currentAsk: "2000.1",
         tickSize: "0.01",
         minimumStopDistance: "0.1",
+        stopLossDistanceDivisor: "2",
         atr: "1",
         maxEntryDistanceAtr: "2.5",
         maxStopDistanceAtr: "3",
@@ -398,7 +401,7 @@ describe("analysis coordinator", () => {
       buyEntryMaximum: "2002.6",
       sellEntryMinimum: "1997.4",
       sellEntryMaximum: "1999.8",
-      minimumStopDistance: "0.1",
+      minimumStopDistance: "0.2",
       maximumStopDistance: "2",
       preferredExpiresAt: "2026-08-27T00:25:05.000Z",
     });
@@ -411,6 +414,7 @@ describe("analysis coordinator", () => {
         currentAsk: "2000.1",
         tickSize: "0.01",
         minimumStopDistance: "0.2",
+        stopLossDistanceDivisor: "2",
         atr: "0.05",
         maxEntryDistanceAtr: "2.5",
         maxStopDistanceAtr: "3",
@@ -419,6 +423,24 @@ describe("analysis coordinator", () => {
         preferredExpirySeconds: 1500,
       }),
     ).toThrow("MODEL_ENTRY_RANGE_UNSATISFIABLE");
+  });
+
+  it("rejects when the original SL range cannot preserve the effective minimum", () => {
+    expect(() =>
+      deriveModelExecutionBounds({
+        currentBid: "1999.9",
+        currentAsk: "2000.1",
+        tickSize: "0.01",
+        minimumStopDistance: "0.1",
+        stopLossDistanceDivisor: "2",
+        atr: "1",
+        maxEntryDistanceAtr: "2.5",
+        maxStopDistanceAtr: "3",
+        maxAffordableStopDistance: "0.15",
+        serverTime: "2026-08-27T00:00:05.000Z",
+        preferredExpirySeconds: 1500,
+      }),
+    ).toThrow("MODEL_STOP_RANGE_UNSATISFIABLE");
   });
 
   it("reserves post-model time inside the current broker M1 candle", () => {
@@ -485,8 +507,16 @@ describe("analysis coordinator", () => {
     expect(result.outcome).toBe("PLACED");
     expect(result.placement).not.toBeNull();
     const submitted = place.mock.calls[0]?.[0];
-    expect(submitted?.[0]).toMatchObject({ side: "BUY", takeProfit: "2003" });
-    expect(submitted?.[1]).toMatchObject({ side: "SELL", takeProfit: "1997" });
+    expect(submitted?.[0]).toMatchObject({
+      side: "BUY",
+      stopLoss: "2000.5",
+      takeProfit: "2002",
+    });
+    expect(submitted?.[1]).toMatchObject({
+      side: "SELL",
+      stopLoss: "1999.5",
+      takeProfit: "1998",
+    });
     expect(
       trail.events.some((event) => {
         if (event === null || typeof event !== "object") return false;
@@ -500,7 +530,7 @@ describe("analysis coordinator", () => {
           transform !== null &&
           typeof transform === "object" &&
           (transform as Record<string, unknown>).code ===
-            "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
+            "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2"
         );
       }),
     ).toBe(true);
@@ -695,7 +725,7 @@ describe("analysis coordinator", () => {
       buy_entry_maximum: "2012.6",
       sell_entry_minimum: "1987.4",
       sell_entry_maximum: "1999.8",
-      minimum_stop_distance: "0.1",
+      minimum_stop_distance: "0.2",
       maximum_stop_distance: "0.5",
     });
     expect(constraints).not.toHaveProperty("equity");
@@ -1020,8 +1050,10 @@ describe("analysis coordinator", () => {
     ).resolves.toMatchObject({ outcome: "PLACED" });
     const riskInput = riskEvaluate.mock.calls[0]?.[0];
     expect(riskInput?.quote).toEqual(refreshed.quote);
-    expect(riskInput?.response.buy_stop.take_profit).toBe("2003");
-    expect(riskInput?.response.sell_stop.take_profit).toBe("1997");
+    expect(riskInput?.response.buy_stop.stop_loss).toBe("2000.5");
+    expect(riskInput?.response.buy_stop.take_profit).toBe("2002");
+    expect(riskInput?.response.sell_stop.stop_loss).toBe("1999.5");
+    expect(riskInput?.response.sell_stop.take_profit).toBe("1998");
     expect(place).toHaveBeenCalledOnce();
   });
 

@@ -1072,14 +1072,15 @@ with tabs[4]:
                             hide_index=True,
                         )
                         st.caption(
-                            "Entry and stop loss are unchanged. Effective take profit is the "
-                            "exact midpoint between entry and the AI take profit. These effective "
-                            "levels still require semantic, freshness, reconciliation, and "
-                            "deterministic risk approval before broker submission."
+                            "Entry is unchanged. The effective stop loss is exactly halfway from "
+                            "entry to the AI stop, and effective take profit is one quarter of the "
+                            "AI target distance. No rounding is applied. These effective levels "
+                            "still require semantic, freshness, reconciliation, and deterministic "
+                            "risk approval before broker submission."
                         )
                     else:
                         st.info(
-                            "The TP transform was not reached for this run, so no effective "
+                            "The SL/TP transform was not reached for this run, so no effective "
                             "broker levels exist."
                         )
                 st.caption(
@@ -1499,13 +1500,19 @@ with tabs[5]:
                    LEFT JOIN LATERAL (
                      SELECT vr.details->'proposal_transform'->'buy'->>'entry_price'
                               AS effective_buy_entry,
-                            vr.details->'proposal_transform'->'buy'->>'stop_loss'
+                            COALESCE(
+                              vr.details->'proposal_transform'->'buy'->>'effective_stop_loss',
+                              vr.details->'proposal_transform'->'buy'->>'stop_loss'
+                            )
                               AS effective_buy_stop_loss,
                             vr.details->'proposal_transform'->'buy'->>'effective_take_profit'
                               AS effective_buy_take_profit,
                             vr.details->'proposal_transform'->'sell'->>'entry_price'
                               AS effective_sell_entry,
-                            vr.details->'proposal_transform'->'sell'->>'stop_loss'
+                            COALESCE(
+                              vr.details->'proposal_transform'->'sell'->>'effective_stop_loss',
+                              vr.details->'proposal_transform'->'sell'->>'stop_loss'
+                            )
                               AS effective_sell_stop_loss,
                             vr.details->'proposal_transform'->'sell'->>'effective_take_profit'
                               AS effective_sell_take_profit
@@ -1628,7 +1635,7 @@ with tabs[5]:
             st.subheader("AI proposal versus effective/placed levels")
             display_dataframe(history_frame[level_columns], width="stretch", hide_index=True)
             st.caption(
-                "EFFECTIVE LEVELS — NOT PLACED means TP transformation was recorded but no "
+                "EFFECTIVE LEVELS — NOT PLACED means SL/TP transformation was recorded but no "
                 "broker order group was created. PLACED ORDER LEVELS are the exact durable "
                 "order intents and their current broker lifecycle state is shown above."
             )

@@ -9,15 +9,17 @@ normalization, exposure, margin, eligibility, precision, freshness,
 spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
-The one explicitly configured execution transform is TP-distance division by
-two. Prompt `system-v8` asks for at least twice the effective minimum R:R. The
-coordinator preserves entry/SL, computes the TP midpoint with Decimal arithmetic,
+The current explicitly configured execution transform divides the endpoint SL
+distance by two and TP distance by four. Prompt `system-v9` asks for the
+pre-transform R:R needed to preserve the configured effective minimum. The
+coordinator preserves entry, computes both levels with Decimal arithmetic,
 recomputes R:R, and rejects an off-tick result without rounding. The original
 endpoint response and effective values remain separately auditable.
 
 Schema 2.1 does not grant the chart or model execution authority. Deterministic
 semantics require each OCO entry to equal its technical-map confirmation price
-and each effective midpoint TP to equal the first corresponding target. A
+and each effective TP to equal the first corresponding target. The endpoint
+invalidation must equal the effective SL. A
 mismatch, off-tick zone/target, or directionally unordered target rejects; code
 does not invent or substitute a technical level.
 
@@ -42,7 +44,10 @@ max_affordable_stop_distance = affordable_ticks * tick_size
 
 Fewer than one affordable tick rejects before the endpoint. The downstream
 position-sizing calculation remains authoritative and can still reject on newer
-account state, margin, notional, or any other risk ceiling.
+account state, margin, notional, or any other risk ceiling. The prompt's
+minimum original SL distance is the effective minimum multiplied by two, so
+the transform cannot place an effective stop inside the broker/configured
+minimum.
 
 After sizing and broker margin estimation, the account is reconciled again. Any
 change to equity, balance, available margin, exposure, pending/fill/cancel, or
@@ -101,9 +106,9 @@ units must not be treated as whole lots.
 - Buy: `stop_loss < entry < take_profit`; buy-stop trigger/entry is above current ask plus broker distance.
 - Sell: `take_profit < entry < stop_loss`; sell-stop trigger/entry is below current bid minus broker distance.
 - `reward / risk >= MIN_RISK_REWARD_RATIO`, default `2`.
-- Before TP transformation, the endpoint proposal must satisfy twice that
-  minimum; after transformation, the effective broker proposal must still
-  satisfy the configured minimum.
+- Before the SL/TP transformation, the endpoint proposal must satisfy twice
+  that minimum; after dividing SL distance by two and TP distance by four, the
+  effective broker proposal must still satisfy the configured minimum.
 - Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
 - Buy/sell confirmation distance from the current ask/bid must not exceed the
   configured M1-ATR reachability cap. This is checked after the model response
