@@ -9,157 +9,279 @@ import {
   canonical,
   decimal,
   isTickAligned,
+  minimumCommissionPositiveTarget,
+  type CommissionCoverageEvidence,
 } from "../../../packages/risk-engine/src/index.js";
 
-export const TAKE_PROFIT_DISTANCE_DIVISOR = "4";
-export const STOP_LOSS_DISTANCE_DIVISOR = "2";
+export const STOP_LOSS_TO_TAKE_PROFIT_RATIO = "2";
+export const COMMISSION_AWARE_RISK_REWARD_RATIO = "0.5";
 
-export interface TakeProfitTransformLegDetails {
-  readonly entry_price: string;
+export interface CommissionAwareTransformLegDetails extends CommissionCoverageEvidence {
   readonly original_stop_loss: string;
   readonly effective_stop_loss: string;
   readonly original_take_profit: string;
   readonly effective_take_profit: string;
+  readonly original_invalidation_price: string;
+  readonly effective_invalidation_price: string;
   readonly original_risk_reward_ratio: string;
-  readonly effective_risk_reward_ratio: string;
+  readonly effective_risk_reward_ratio: "0.5";
+  readonly stop_loss_distance: string;
 }
 
-export interface TakeProfitTransformDetails {
-  readonly code: "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2";
-  readonly take_profit_divisor: "4";
-  readonly stop_loss_divisor: "2";
-  readonly buy: TakeProfitTransformLegDetails;
-  readonly sell: TakeProfitTransformLegDetails;
+export interface CommissionAwareTransformDetails {
+  readonly code: "COMMISSION_COVERING_TP_WITH_DOUBLE_SL";
+  readonly commission_type: "USD_PER_MILLION_USD";
+  readonly commission_rate: string;
+  readonly commission_basis_volume: string;
+  readonly stop_loss_to_take_profit_ratio: "2";
+  readonly effective_risk_reward_ratio: "0.5";
+  readonly buy: CommissionAwareTransformLegDetails;
+  readonly sell: CommissionAwareTransformLegDetails;
 }
 
-export interface TakeProfitTransformResult {
+export interface CommissionAwareTransformResult {
   readonly accepted: boolean;
   readonly response: ModelResponse | null;
   readonly reasonCodes: readonly string[];
-  readonly details: TakeProfitTransformDetails | null;
+  readonly details: CommissionAwareTransformDetails | null;
 }
 
-export function proposalMinimumRiskRewardRatio(
-  effectiveMinimum: string,
-): string {
-  return canonical(
-    decimal(effectiveMinimum, "TAKE_PROFIT_EFFECTIVE_RR_INVALID").mul(
-      decimal(TAKE_PROFIT_DISTANCE_DIVISOR).div(
-        decimal(STOP_LOSS_DISTANCE_DIVISOR),
+export interface CommissionAwareMinimumDistances {
+  readonly accepted: boolean;
+  readonly reasonCodes: readonly string[];
+  readonly takeProfitDistance: string | null;
+  readonly stopLossDistance: string | null;
+  readonly buy: CommissionCoverageEvidence | null;
+  readonly sell: CommissionCoverageEvidence | null;
+}
+
+export function deriveCommissionAwareMinimumDistances(input: {
+  readonly buyEntryPrice: string;
+  readonly sellEntryPrice: string;
+  readonly minimumStopDistance: string;
+  readonly maximumStopDistance: string;
+  readonly metadata: SymbolMetadata;
+}): CommissionAwareMinimumDistances {
+  try {
+    const maximumTakeProfitDistance = canonical(
+      decimal(input.maximumStopDistance).div(
+        decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
       ),
-    ),
-  );
-}
-
-function transformedRatio(
-  entry: Decimal,
-  stopLoss: Decimal,
-  takeProfit: Decimal,
-): string {
-  const risk = entry.minus(stopLoss).abs();
-  if (risk.lte(0)) throw new Error("TAKE_PROFIT_TRANSFORM_RISK_INVALID");
-  return canonical(
-    takeProfit
-      .minus(entry)
-      .abs()
-      .div(risk)
-      .toDecimalPlaces(10, Decimal.ROUND_DOWN),
-  );
+    );
+    const minimumTakeProfitDistance = canonical(
+      decimal(input.minimumStopDistance).div(
+        decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
+      ),
+    );
+    const buy = minimumCommissionPositiveTarget({
+      side: "BUY",
+      entryPrice: input.buyEntryPrice,
+      volume: input.metadata.minVolume,
+      minimumTakeProfitDistance,
+      maximumTakeProfitDistance,
+      metadata: input.metadata,
+    });
+    const sell = minimumCommissionPositiveTarget({
+      side: "SELL",
+      entryPrice: input.sellEntryPrice,
+      volume: input.metadata.minVolume,
+      minimumTakeProfitDistance,
+      maximumTakeProfitDistance,
+      metadata: input.metadata,
+    });
+    const reasonCodes = [
+      ...new Set([...buy.reasonCodes, ...sell.reasonCodes]),
+    ].sort();
+    if (
+      !buy.approved ||
+      buy.evidence === null ||
+      !sell.approved ||
+      sell.evidence === null
+    ) {
+      return {
+        accepted: false,
+        reasonCodes,
+        takeProfitDistance: null,
+        stopLossDistance: null,
+        buy: buy.evidence,
+        sell: sell.evidence,
+      };
+    }
+    const buyDistance = decimal(buy.evidence.take_profit).minus(
+      decimal(input.buyEntryPrice),
+    );
+    const sellDistance = decimal(input.sellEntryPrice).minus(
+      decimal(sell.evidence.take_profit),
+    );
+    const takeProfitDistance = Decimal.max(buyDistance, sellDistance);
+    return {
+      accepted: true,
+      reasonCodes: [],
+      takeProfitDistance: canonical(takeProfitDistance),
+      stopLossDistance: canonical(
+        takeProfitDistance.mul(decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO)),
+      ),
+      buy: buy.evidence,
+      sell: sell.evidence,
+    };
+  } catch (error) {
+    return {
+      accepted: false,
+      reasonCodes: [
+        error instanceof Error
+          ? error.message
+          : "COMMISSION_AWARE_DISTANCE_INVALID",
+      ],
+      takeProfitDistance: null,
+      stopLossDistance: null,
+      buy: null,
+      sell: null,
+    };
+  }
 }
 
 function transformLeg(
   side: "BUY" | "SELL",
   proposal: ModelOrderProposal,
-  tickSize: Decimal,
+  metadata: SymbolMetadata,
+  minimumStopDistance: string,
+  maximumStopDistance: string,
 ): {
-  readonly proposal: ModelOrderProposal;
-  readonly details: TakeProfitTransformLegDetails;
+  readonly proposal: ModelOrderProposal | null;
+  readonly details: CommissionAwareTransformLegDetails | null;
   readonly reasonCodes: readonly string[];
 } {
   const entry = decimal(proposal.entry_price);
-  const stopLoss = decimal(proposal.stop_loss);
-  const invalidation = decimal(proposal.invalidation_price);
+  const originalStopLoss = decimal(proposal.stop_loss);
+  const originalInvalidation = decimal(proposal.invalidation_price);
   const originalTakeProfit = decimal(proposal.take_profit);
-  const effectiveStopLoss = entry.plus(
-    stopLoss.minus(entry).div(decimal(STOP_LOSS_DISTANCE_DIVISOR)),
+  const maximumTakeProfitDistance = decimal(maximumStopDistance).div(
+    decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
   );
-  const effectiveTakeProfit = entry.plus(
-    originalTakeProfit.minus(entry).div(decimal(TAKE_PROFIT_DISTANCE_DIVISOR)),
+  const minimumTakeProfitDistance = decimal(minimumStopDistance).div(
+    decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
   );
+  const selected = minimumCommissionPositiveTarget({
+    side,
+    entryPrice: proposal.entry_price,
+    volume: metadata.minVolume,
+    minimumTakeProfitDistance: canonical(minimumTakeProfitDistance),
+    maximumTakeProfitDistance: canonical(maximumTakeProfitDistance),
+    metadata,
+  });
+  if (!selected.approved || selected.evidence === null) {
+    return {
+      proposal: null,
+      details: null,
+      reasonCodes: selected.reasonCodes,
+    };
+  }
+  const effectiveTakeProfit = decimal(selected.evidence.take_profit);
+  const takeProfitDistance = effectiveTakeProfit.minus(entry).abs();
+  const stopLossDistance = takeProfitDistance.mul(
+    decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
+  );
+  const effectiveStopLoss =
+    side === "BUY"
+      ? entry.minus(stopLossDistance)
+      : entry.plus(stopLossDistance);
+  const reasons: string[] = [];
+  const tickSize = decimal(metadata.tickSize);
+  if (!isTickAligned(effectiveStopLoss, tickSize))
+    reasons.push(`${side}_COMMISSION_AWARE_SL_NOT_ON_TICK`);
+  if (
+    (side === "BUY" && !originalTakeProfit.gte(effectiveTakeProfit)) ||
+    (side === "SELL" && !originalTakeProfit.lte(effectiveTakeProfit))
+  ) {
+    reasons.push(`${side}_AI_TARGET_BELOW_COMMISSION_POSITIVE_TP`);
+  }
+  if (
+    (side === "BUY" && !originalStopLoss.lte(effectiveStopLoss)) ||
+    (side === "SELL" && !originalStopLoss.gte(effectiveStopLoss))
+  ) {
+    reasons.push(`${side}_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL`);
+  }
+  if (
+    (side === "BUY" && !originalInvalidation.lte(effectiveStopLoss)) ||
+    (side === "SELL" && !originalInvalidation.gte(effectiveStopLoss))
+  ) {
+    reasons.push(`${side}_AI_INVALIDATION_DOES_NOT_CONTAIN_DOUBLE_SL`);
+  }
   const effectiveStopLossText = canonical(effectiveStopLoss);
   const effectiveTakeProfitText = canonical(effectiveTakeProfit);
-  const reasons: string[] = [];
-  if (
-    (side === "BUY" && !stopLoss.lt(entry)) ||
-    (side === "SELL" && !stopLoss.gt(entry))
-  ) {
-    reasons.push(`${side}_SL_DISTANCE_INVALID`);
-  }
-  if (
-    (side === "BUY" && !originalTakeProfit.gt(entry)) ||
-    (side === "SELL" && !originalTakeProfit.lt(entry))
-  ) {
-    reasons.push(`${side}_TP_DISTANCE_INVALID`);
-  }
-  if (!isTickAligned(effectiveStopLoss, tickSize))
-    reasons.push(`${side}_SL_MIDPOINT_NOT_ON_TICK`);
-  if (!isTickAligned(effectiveTakeProfit, tickSize))
-    reasons.push(`${side}_TP_QUARTER_NOT_ON_TICK`);
-  if (!effectiveStopLoss.eq(invalidation))
-    reasons.push(`${side}_EFFECTIVE_SL_INVALIDATION_MISMATCH`);
-  const effectiveRiskRewardRatio = transformedRatio(
-    entry,
-    effectiveStopLoss,
-    effectiveTakeProfit,
-  );
+  const details: CommissionAwareTransformLegDetails = {
+    ...selected.evidence,
+    original_stop_loss: proposal.stop_loss,
+    effective_stop_loss: effectiveStopLossText,
+    original_take_profit: proposal.take_profit,
+    effective_take_profit: effectiveTakeProfitText,
+    original_invalidation_price: proposal.invalidation_price,
+    effective_invalidation_price: effectiveStopLossText,
+    original_risk_reward_ratio: proposal.risk_reward_ratio,
+    effective_risk_reward_ratio: COMMISSION_AWARE_RISK_REWARD_RATIO,
+    stop_loss_distance: canonical(stopLossDistance),
+  };
   return {
-    proposal: {
-      ...proposal,
-      stop_loss: effectiveStopLossText,
-      take_profit: effectiveTakeProfitText,
-      risk_reward_ratio: effectiveRiskRewardRatio,
-    },
-    details: {
-      entry_price: proposal.entry_price,
-      original_stop_loss: proposal.stop_loss,
-      effective_stop_loss: effectiveStopLossText,
-      original_take_profit: proposal.take_profit,
-      effective_take_profit: effectiveTakeProfitText,
-      original_risk_reward_ratio: proposal.risk_reward_ratio,
-      effective_risk_reward_ratio: effectiveRiskRewardRatio,
-    },
+    proposal:
+      reasons.length === 0
+        ? {
+            ...proposal,
+            stop_loss: effectiveStopLossText,
+            take_profit: effectiveTakeProfitText,
+            invalidation_price: effectiveStopLossText,
+            risk_reward_ratio: COMMISSION_AWARE_RISK_REWARD_RATIO,
+          }
+        : null,
+    details,
     reasonCodes: reasons,
   };
 }
 
-export function halveTakeProfitAndStopLossDistances(
+export function applyCommissionAwareExitPolicy(
   response: ModelResponse,
   metadata: SymbolMetadata,
-): TakeProfitTransformResult {
+  minimumStopDistance: string,
+  maximumStopDistance: string,
+): CommissionAwareTransformResult {
   try {
-    const tickSize = decimal(metadata.tickSize);
-    if (tickSize.lte(0)) {
-      return {
-        accepted: false,
-        response: null,
-        reasonCodes: ["TAKE_PROFIT_TRANSFORM_TICK_INVALID"],
-        details: null,
-      };
-    }
-    const buy = transformLeg("BUY", response.buy_stop, tickSize);
-    const sell = transformLeg("SELL", response.sell_stop, tickSize);
-    const reasonCodes = [...buy.reasonCodes, ...sell.reasonCodes].sort();
-    const details: TakeProfitTransformDetails = {
-      code: "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2",
-      take_profit_divisor: "4",
-      stop_loss_divisor: "2",
-      buy: buy.details,
-      sell: sell.details,
-    };
+    const buy = transformLeg(
+      "BUY",
+      response.buy_stop,
+      metadata,
+      minimumStopDistance,
+      maximumStopDistance,
+    );
+    const sell = transformLeg(
+      "SELL",
+      response.sell_stop,
+      metadata,
+      minimumStopDistance,
+      maximumStopDistance,
+    );
+    const reasonCodes = [
+      ...new Set([...buy.reasonCodes, ...sell.reasonCodes]),
+    ].sort();
+    const details =
+      buy.details === null || sell.details === null
+        ? null
+        : {
+            code: "COMMISSION_COVERING_TP_WITH_DOUBLE_SL" as const,
+            commission_type: "USD_PER_MILLION_USD" as const,
+            commission_rate: metadata.commission.rate,
+            commission_basis_volume: metadata.minVolume,
+            stop_loss_to_take_profit_ratio:
+              STOP_LOSS_TO_TAKE_PROFIT_RATIO as "2",
+            effective_risk_reward_ratio:
+              COMMISSION_AWARE_RISK_REWARD_RATIO as "0.5",
+            buy: buy.details,
+            sell: sell.details,
+          };
     return {
       accepted: reasonCodes.length === 0,
       response:
-        reasonCodes.length === 0
+        reasonCodes.length === 0 &&
+        buy.proposal !== null &&
+        sell.proposal !== null
           ? {
               ...response,
               buy_stop: buy.proposal,
@@ -173,7 +295,7 @@ export function halveTakeProfitAndStopLossDistances(
     return {
       accepted: false,
       response: null,
-      reasonCodes: ["PROPOSAL_DISTANCE_TRANSFORM_DECIMAL_INVALID"],
+      reasonCodes: ["COMMISSION_AWARE_EXIT_DECIMAL_INVALID"],
       details: null,
     };
   }

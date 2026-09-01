@@ -30,6 +30,7 @@ export interface ExecutionConfig {
   readonly accountKey: string;
   readonly baseRiskPercent: string;
   readonly maxRiskPercent: string;
+  readonly minRiskRewardRatio: string;
   readonly maxDailyLossPercent: string;
   readonly maxQuoteAgeMs: number;
   readonly maxOrderBookAgeMs: number;
@@ -260,6 +261,12 @@ export function loadExecutionConfig(
       "MAX_RISK_PERCENT",
       5,
     ),
+    minRiskRewardRatio: boundedPositiveDecimal(
+      environment.MIN_RISK_REWARD_RATIO,
+      "0.5",
+      "MIN_RISK_REWARD_RATIO",
+      "100",
+    ),
     maxDailyLossPercent: decimalPercent(
       environment.MAX_DAILY_LOSS_PERCENT,
       "10",
@@ -297,6 +304,7 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         accountKey: config.accountKey,
         baseRiskPercent: config.baseRiskPercent,
         maxRiskPercent: config.maxRiskPercent,
+        minRiskRewardRatio: config.minRiskRewardRatio,
         maxDailyLossPercent: config.maxDailyLossPercent,
         maxQuoteAgeMs: config.maxQuoteAgeMs,
         maxOrderBookAgeMs: config.maxOrderBookAgeMs,

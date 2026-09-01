@@ -60,15 +60,17 @@ the temporary fail-closed daily-risk reason.
     completed-candle context or execution metadata changed during inference, or
     if broker time regressed; persist the refreshed quote/depth evidence.
 12. Re-run spread protection against the refreshed execution state. Validate
-    the immutable AI proposal at the pre-transform R:R; derive each effective
-    SL at half the AI SL distance and each effective TP at one quarter of the AI
-    TP distance; reject either off-tick result; then validate the effective
-    proposal at the configured execution R:R.
-    For schema 2.1, prove that the entries equal the chart-derived confirmation
-    prices and that each effective TP equals the first returned technical target.
-    Reconcile account state again and reject an unchanged endpoint SL above the
-    current affordable maximum. Run stop, precision, daily loss, volume, margin,
-    exposure, and duplicate checks.
+    the immutable AI proposal, derive each effective TP as the nearest whole
+    broker-pip distance with estimated gross profit greater than round-trip
+    fees, and set each effective SL distance to exactly twice TP distance.
+    Reject unsupported commission metadata or an off-tick result, then validate
+    the effective proposal at numeric reward/risk `0.5`.
+    For schema 2.1, prove that entries equal the chart-derived confirmation
+    prices, endpoint TPs equal the first returned technical targets, and the
+    effective exits remain inside the endpoint target/stop envelope. Reconcile
+    account state again and reject an unchanged endpoint SL above the current
+    affordable maximum. Run stop, precision, daily loss, volume, margin,
+    exposure, commission coverage at actual volume, and duplicate checks.
 13. After sizing/margin work, reconcile the account once more and reject any
     changed equity, balance, available margin, exposure, pending/fill/cancel, or
     certainty state. Reacquire market state again, require unchanged completed

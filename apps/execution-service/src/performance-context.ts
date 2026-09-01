@@ -52,9 +52,7 @@ function setupDimensions(analytics: AnalyticsResponse): Record<string, string> {
 }
 
 export function summarizeTrades(rows: readonly TradeRow[]): PerformanceSummary {
-  const outcomes = rows.map((row) =>
-    new Decimal(row.realized_pnl).minus(row.fees),
-  );
+  const outcomes = rows.map((row) => new Decimal(row.realized_pnl));
   const wins = outcomes.filter((value) => value.gt(0));
   const losses = outcomes.filter((value) => value.lt(0));
   const total = outcomes.reduce(
@@ -185,7 +183,7 @@ export class PostgresPerformanceContext {
     const rows = result.rows;
     const dayStart = tradingDayStart(now, this.#timezone);
     const outcomes = rows.map((row) => ({
-      netPnl: canonical(new Decimal(row.realized_pnl).minus(row.fees)),
+      netPnl: canonical(new Decimal(row.realized_pnl)),
       closedAt: row.closed_at.toISOString(),
     }));
     const [overall, session] = await Promise.all([
@@ -202,7 +200,7 @@ export class PostgresPerformanceContext {
     ].join(":");
     const adjustment = performanceAdjustment(
       rows.map((row, age) => ({
-        won: new Decimal(row.realized_pnl).minus(row.fees).gt(0),
+        won: new Decimal(row.realized_pnl).gt(0),
         age,
       })),
       this.#minimumSamples,
@@ -228,7 +226,7 @@ export class PostgresPerformanceContext {
       recent_outcomes: rows.slice(0, 20).map((row) => ({
         closed_at: row.closed_at.toISOString(),
         direction: row.direction,
-        net_pnl: canonical(new Decimal(row.realized_pnl).minus(row.fees)),
+        net_pnl: canonical(new Decimal(row.realized_pnl)),
         market_regime: row.market_regime,
         confidence_bucket: row.confidence_bucket,
       })),

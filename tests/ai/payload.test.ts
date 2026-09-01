@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v9",
+  promptVersion: "system-v10",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -45,10 +45,12 @@ const common = {
     digits: 2,
     brokerMinStopDistance: "0.1",
     configuredMinStopDistance: "0.1",
-    minRiskRewardRatio: "4",
-    effectiveMinRiskRewardRatio: "2",
-    takeProfitDistanceDivisor: "4" as const,
-    stopLossDistanceDivisor: "2" as const,
+    minRiskRewardRatio: "0.5",
+    effectiveMinRiskRewardRatio: "0.5",
+    pipSize: "0.01",
+    minimumCommissionCoveringTakeProfitDistance: "0.27",
+    stopLossToTakeProfitRatio: "2" as const,
+    effectiveRiskRewardRatio: "0.5" as const,
     maxAffordableStopDistance: "0.5",
     maxStopDistanceAtr: "3",
     maxEntryDistanceAtr: "2.5",
@@ -92,10 +94,12 @@ describe("model payload builder", () => {
       digits: 2,
       broker_min_stop_distance: "0.1",
       configured_min_stop_distance: "0.1",
-      min_risk_reward_ratio: "4",
-      effective_min_risk_reward_ratio: "2",
-      take_profit_distance_divisor: "4",
-      stop_loss_distance_divisor: "2",
+      min_risk_reward_ratio: "0.5",
+      effective_min_risk_reward_ratio: "0.5",
+      pip_size: "0.01",
+      minimum_commission_covering_take_profit_distance: "0.27",
+      stop_loss_to_take_profit_ratio: "2",
+      effective_risk_reward_ratio: "0.5",
       max_affordable_stop_distance: "0.5",
       max_stop_distance_atr: "3",
       max_entry_distance_atr: "2.5",
@@ -127,16 +131,17 @@ describe("model payload builder", () => {
     expect(JSON.stringify(payload)).not.toContain(chart.dataBase64);
   });
 
-  it("versions the TP/SL transform instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v9.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v8.md", "utf8");
-    expect(prompt).toContain("take_profit_distance_divisor");
-    expect(prompt).toContain("stop_loss_distance_divisor");
-    expect(prompt).toContain("effective_min_risk_reward_ratio");
+  it("versions the commission-aware exit instructions in the current prompt", () => {
+    const prompt = readFileSync("prompts/system-v10.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v9.md", "utf8");
     expect(prompt).toContain(
-      "effective_stop_loss=entry_price+(stop_loss-entry_price)/2",
+      "minimum_commission_covering_take_profit_distance",
     );
-    expect(prompt).toContain("quarter-distance TP");
+    expect(prompt).toContain("stop_loss_to_take_profit_ratio");
+    expect(prompt).toContain("effective_risk_reward_ratio");
+    expect(prompt).toContain("selects the smallest");
+    expect(prompt).toContain("whole pip_size take-profit distance");
+    expect(prompt).toContain("expected gross profit strictly exceeds");
     expect(prompt).toContain("max_affordable_stop_distance");
     expect(prompt).toContain("preferred_expires_at");
     expect(prompt).toContain("[buy_entry_minimum,buy_entry_maximum]");
@@ -144,11 +149,8 @@ describe("model payload builder", () => {
     expect(prompt).toContain("[minimum_stop_distance,maximum_stop_distance]");
     expect(prompt).toContain("technical_map.bullish_confirmation.price");
     expect(prompt).toContain("For every zone require lower<upper");
-    expect(prompt).toContain("min_risk_reward_ratio+0.2");
     expect(prompt).toContain("risk_reward_ratio=reward/risk");
-    expect(prompt).toContain(
-      "take_profit=entry_price+4*(primary target-entry_price)",
-    );
+    expect(prompt).toContain("effective_risk_reward_ratio is therefore");
     expect(prompt).toContain("Do not mirror one leg");
     expect(prompt).toContain(
       "Read the attached deterministic 1600x1200 PNG first",

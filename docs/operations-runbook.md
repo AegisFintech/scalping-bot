@@ -303,18 +303,18 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v9` tells the endpoint that the execution service halves the
-distance from entry to its stop loss and uses one quarter of the distance from
-entry to its take profit. It asks for the pre-transform R:R required by the
-configured effective minimum, explicitly self-checks both independent legs and
-transformed targets, and supplies exact tick-aligned BUY/SELL
-entry ranges, an inclusive stop-distance range, and one exact preferred expiry.
-Those ranges combine current quote, broker/configured minimum, M1 ATR caps, and
-the maximum stop affordable at broker minimum volume. They contain no equity,
-budget, volume, or account identity. An off-tick transformed price, mismatched
-invalidation, out-of-range entry,
-or returned stop outside the current limit is rejected without correction, and
-a later broker minute starts a fresh cycle after the rejection becomes terminal.
+Prompt `system-v10` tells the endpoint that execution selects the nearest whole
+broker-pip TP whose gross profit is estimated to exceed opening plus closing
+commission, then sets SL distance to exactly twice TP distance (reward:risk
+`1:2`, numeric reward/risk `0.5`). It supplies the resulting minimum TP/SL
+floor, exact tick-aligned BUY/SELL entry ranges, an inclusive stop-distance
+range, and one exact preferred expiry. Those ranges combine current quote,
+broker/configured minimum, M1 ATR caps, commission metadata, and the maximum
+stop affordable at broker minimum volume. They contain no equity, budget,
+volume, commission rate, or account identity. An unsupported fee schedule,
+off-tick effective price, technical envelope mismatch, out-of-range entry, or
+returned stop outside the current limit is rejected without correction. Final
+sized commands receive a second fee-coverage check before broker submission.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted
@@ -451,11 +451,12 @@ into repository files or logs.
    or filled orders. The displayed local validation, deterministic risk, and
    broker stages remain separate execution authorities.
    The **AI proposal → effective OCO levels** table shows endpoint entry/SL/TP
-   beside the audited effective SL/TP and both R:R values. Absence of that
-   table means the transform stage was not reached.
-   For schema 2.1, verify that the stop entries equal the technical-map
-   confirmation prices and the effective TPs equal the first upside/downside
-   targets.
+   beside the audited effective SL/TP, both R:R values, broker pip count,
+   estimated gross, round-trip fees, and expected net at the displayed basis
+   volume. Absence of that table means the exit-policy stage was not reached.
+   For schema 2.1, verify that stop entries equal technical-map confirmation
+   prices, endpoint TPs equal first upside/downside targets, and effective
+   exits remain inside those technical envelopes.
 5. In **Input & analytics**, verify request/model/prompt/schema/strategy
    versions, payload mode/hash, the hash-verified exact system prompt,
    completed-candle coverage, indicator summary, execution constraints, and
@@ -487,7 +488,7 @@ The closed-demo-trade progress bar is the collection target. Completed AI
 responses are displayed separately against the inference safety limit.
 
 Use **AI proposal versus effective/placed levels** for both BUY and SELL entry,
-SL, and TP. `EFFECTIVE LEVELS — NOT PLACED` means the SL/TP transform was
+SL, and TP. `EFFECTIVE LEVELS — NOT PLACED` means the commission-aware exit policy was
 audited but broker intent was never created. `PLACED ORDER LEVELS` means the
 displayed values are the durable order intents. Select a row to open its exact
 hash-verified prompt, persisted redacted user JSON, parsed AI response,

@@ -24,8 +24,8 @@ function service(name, overrides = {}) {
     env: {
       NODE_ENV: "production",
       APP_ENV: "production",
-      STRATEGY_VERSION: "0.1.0-actionable-oco-auto-demo.35",
-      CODE_VERSION: "0.1.0-actionable-oco-auto-demo.35",
+      STRATEGY_VERSION: "0.1.0-actionable-oco-auto-demo.36",
+      CODE_VERSION: "0.1.0-actionable-oco-auto-demo.36",
       AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "500",
       AUTOMATIC_ANALYSIS_COMPLETED_BASELINE: "0",
       AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT: "100",
@@ -39,6 +39,7 @@ function service(name, overrides = {}) {
       MODEL_COMPACT_RAW_TAIL_5M: "18",
       MODEL_COMPACT_RAW_TAIL_15M: "12",
       MAX_ENTRY_DISTANCE_ATR: "2.5",
+      MIN_RISK_REWARD_RATIO: "0.5",
       ORDER_EXPIRY_MIN_SECONDS: "900",
       ORDER_EXPIRY_MAX_SECONDS: "1800",
       PREFERRED_ORDER_EXPIRY_SECONDS: "1500",

@@ -202,7 +202,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
 | ISSUE-058 | complete    | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
 | ISSUE-059 | complete    | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
-| ISSUE-060 | pending     | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
+| ISSUE-060 | in progress | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
+| ISSUE-061 | in progress | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -491,7 +492,58 @@ never justify empty, noisy, unsafe, or misleading commits.
   not to change in this cohort, but the aggregates and AI feedback omit fee
   drag. The bounded correction is tracked by
   [issue #146](https://github.com/AegisFintech/scalping-bot/issues/146) and is
-  intentionally not mixed into release `.35` after its cohort started.
+  intentionally not mixed into release `.35` after its cohort started. The
+  correction is implemented for release `.36`: all aggregate, outcome,
+  win/loss, and model-feedback paths now use stored fee-inclusive
+  `realized_pnl` exactly once while retaining `fees` as separate evidence.
+  Static Python and executable TypeScript/PostgreSQL regressions include a
+  positive gross move that is a net loss after fees. Full pre-deployment gates
+  passed; rollout remains pending the ISSUE-061 merge and broker-state pause.
+
+### ISSUE-061 delivery details
+
+- Acceptance criteria: ingest and validate cTrader's broker-declared pip
+  position plus precise commission terms; use Decimal arithmetic to choose the
+  smallest whole-pip TP whose minimum-volume gross profit strictly exceeds its
+  estimated opening plus TP-close commission; set SL distance to exactly twice
+  TP distance; retain the immutable endpoint response and require its first
+  directional target/invalidation to contain the effective levels; persist and
+  display the complete calculation; keep missing, unsupported, ambiguous, or
+  currency-unconvertible cost metadata fail closed; and deploy a distinct demo
+  cohort only after exact terminal broker state and all completion gates pass.
+- Dependencies: ISSUE-060's corrected fee-inclusive performance context,
+  ISSUE-059 release `.35`, current cTrader symbol metadata, the existing
+  deterministic sizing/semantic pipeline, and the demo-only authority.
+- Current status: [issue #148](https://github.com/AegisFintech/scalping-bot/issues/148)
+  is open on `issue-061-commission-aware-exits`. Read-only broker evidence
+  reports `digits=2`, `pipPosition=2`, commission type
+  `USD_PER_MILLION_USD`, precise rate `30`, minimum commission `0`, and no P/L
+  conversion fee. At the current one-ounce minimum position and approximately
+  `4445` XAUUSD, one broker pip (`0.01`) earns about `0.01` while estimated
+  round-trip commission is about `0.27`. A literal one-to-four-pip TP is
+  therefore cost-negative; the smallest whole broker-pip target that strictly
+  covers the schedule is 27 pips (`0.27`). This broker fact is being encoded
+  explicitly rather than relabelling price units as pips or ignoring fees.
+  Release `.36`, prompt `system-v10`, complete typed symbol metadata, the
+  Decimal commission calculator, minimum-volume pre-model floor, actual-volume
+  pre-placement recheck, exact `2×` SL, numeric reward/risk `0.5`, dashboard
+  evidence, reason guidance, and `.35` historical compatibility are
+  implemented. A direct read-only connection through the built cTrader client
+  returned XAUUSD pip/tick `0.01`, tick value `0.0001` per native volume,
+  minimum volume `100`, XAU/USD/USD assets, conversion `1`, and the precise
+  `$30 per USD million` schedule with zero minimum/conversion fee. No account or
+  broker identifier was logged.
+
+  Pre-deployment gates on 1 Sep 2026 passed with Node 24.20.0/npm 11.19.0 and
+  Python 3.13.5: Prettier, ESLint, TypeScript typecheck/build, 283 Node tests
+  across 44 files, 17 schema tests, 3 migration tests, all 3 configured isolated
+  PostgreSQL/HTTP integration tests, Ruff format/lint, strict mypy over 17
+  source files, and 87 Python tests. Configured Streamlit AppTest rendered 42
+  dataframes, 65 metrics, and 15 tabs with zero exceptions. Replay/backtest,
+  zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 checks,
+  `git diff --check`, and all five offline systemd security parses at 2.8
+  (`OK`) passed. Merge and paused rollout are next; this is not yet deployed
+  broker-demo evidence.
 
 ### ISSUE-001 delivery details
 

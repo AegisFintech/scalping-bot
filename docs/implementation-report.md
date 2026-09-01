@@ -2416,3 +2416,54 @@ correct stored net is `-82.16`; the affected calculation reports `-70.62`.
 Win classification remains 10/46 for that particular sample, but fee drag is
 missing from aggregates and AI feedback. This correction is not being folded
 silently into `.35` after its comparison cohort began.
+
+## ISSUE-060 fee-inclusive performance correction
+
+The broker close contract already persists `trades.realized_pnl` as signed
+gross profit plus swap, commission, and P/L-conversion fee. Release `.36`
+removes the second subtraction of signed `fees` from Streamlit cumulative,
+daily, grouped, expectancy, and win calculations and from execution's overall,
+session, recent-outcome, and performance-adjustment inputs. Fees remain a
+separate displayed audit column. No historical trade row is rewritten and no
+database migration is needed. Regression coverage includes a positive gross
+move whose stored fee-inclusive result is negative.
+
+## ISSUE-061 commission-aware short exits
+
+Release `.36` extends the typed cTrader/market-data boundary with broker
+`pipPosition`, canonical pip size, base/quote/account assets, quote-to-account
+conversion, and precise commission type/rate/minimum/P/L-conversion terms.
+Missing, unsupported, or unconvertible metadata fails closed. A read-only call
+through the built adapter verified the configured demo XAUUSD contract as pip
+and tick `0.01`, minimum native volume `100` (one ounce), quote/account USD,
+conversion `1`, and `$30 per USD million` per side with no minimum or
+conversion fee.
+
+The risk engine now searches whole broker pips with Decimal arithmetic. It
+selects the nearest TP whose estimated gross profit is strictly greater than
+opening commission, TP-close commission, and positive-P/L conversion fee, then
+sets SL distance to exactly twice TP distance. This is reward:risk `1:2`,
+stored as numeric reward/risk `0.5`. At approximately `4444` and minimum volume,
+one XAUUSD pip earns `$0.01`, round-trip commission is approximately `$0.267`,
+and the first positive-net whole-pip target is therefore 27 pips (`0.27`), not
+the requested literal one to four pips. The value is computed from current
+metadata and entry rather than hard coded.
+
+Before inference the coordinator proves the floor fits the deterministic stop
+ceiling at minimum volume. Prompt `system-v10` asks only for a technical target
+and stop/invalidation envelope containing the effective TP and `2×` SL; no
+money, commission rate, volume, account identity, or sizing authority crosses
+the model boundary. After sizing, both exact commands are rechecked at actual
+volume. The immutable AI response, effective exits, pip count, gross, opening
+and closing fees, conversion fee, and expected net are persisted and rendered
+in Streamlit. Historical prompt/transform records remain readable.
+
+The pre-deployment gate passed Prettier, ESLint, TypeScript typecheck/build, 283
+Node tests across 44 files, 17 schema tests, 3 migration tests, all 3 configured
+isolated-PostgreSQL/HTTP integration tests, Ruff format/lint, strict mypy over
+17 source files, and 87 Python tests. Configured Streamlit AppTest rendered 42
+dataframes, 65 metrics, and 15 tabs with zero exceptions. Replay/backtest,
+zero-vulnerability npm/pip audits, tracked-file secret scanning, shell/PM2 and
+diff checks, and all five offline systemd parses at 2.8 (`OK`) passed. This is
+pre-deployment evidence; broker-demo rollout evidence must be recorded after
+merge under an audited analysis pause.

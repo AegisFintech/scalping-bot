@@ -43,10 +43,14 @@ proposal invalidation at the final quote, refreshed risk input, and PostgreSQL
 persistence that retains the original candle context while advancing the
 analysis depth pointer with distinct refresh phases.
 
-TP-transform tests prove exact Decimal midpoint calculations for buy and sell,
-unchanged endpoint entry/SL, recomputed R:R, doubled pre-transform request
-minimum, off-tick rejection without rounding, risk receipt of effective levels,
-durable validation details, and bounded Streamlit comparison rendering.
+Historical TP-transform tests retain exact Decimal midpoint/quarter coverage.
+Current commission-aware tests prove broker `pipPosition` and precise-fee
+normalization, the smallest whole-pip positive-net BUY/SELL target, strict
+gross-greater-than-fees behavior, exact `2×` SL and reward/risk `0.5`, AI
+technical-envelope containment, unsupported/missing metadata rejection, actual
+sized-volume revalidation, durable calculation details, and bounded Streamlit
+comparison rendering. Fee-accounting regressions prove fee-inclusive stored
+`realized_pnl` is never adjusted by signed fees a second time.
 Minimum-volume affordability tests prove per-leg OCO budget splitting,
 whole-tick downward flooring, below-one-tick rejection before inference,
 non-sizing payload exclusion, exact semantic enforcement, and changed
@@ -848,3 +852,27 @@ minutes 57 seconds with net demo P/L `2.05`, including fees `-0.26`; automation
 returned to `RUNNING` with no blocker. This establishes deployed arithmetic and
 lifecycle operation, not statistically meaningful performance or
 profitability.
+
+## ISSUE-061 commission-aware 1:2 exit policy
+
+The `.36` pre-deployment suite passed Prettier, ESLint, TypeScript
+typecheck/build, 283 Node tests across 44 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 87 Python tests. Configured
+Streamlit AppTest rendered 42 dataframes, 65 metrics, and 15 tabs with zero
+exceptions. Replay/backtest smoke commands, npm and pip audits with zero known
+vulnerabilities, tracked-file secret scan, shell/PM2 syntax, `git diff --check`,
+and five offline systemd security parses at 2.8 (`OK`) passed.
+
+New tests cover cTrader asset/pip/precise-commission discovery, unrelated
+noncanonical broker asset names, exact Decimal fee estimates, the strict
+gross-greater-than-fees boundary, smallest whole-pip BUY/SELL search, exact
+`2×` SL with numeric reward/risk `0.5`, technical-envelope rejection,
+unsupported commission/currency rejection, final sized-volume revalidation,
+current and historical dashboard transform rendering, and fee-inclusive P/L
+without double-subtracting signed fees. A read-only built-client check against
+the configured demo endpoint returned XAUUSD pip/tick `0.01`, minimum native
+volume `100`, XAU/USD/USD assets, conversion `1`, and commission type
+`USD_PER_MILLION_USD` at `30` with zero minimum and P/L-conversion fee. This is
+metadata/contract evidence only; deployment and demo order evidence remain
+separate.

@@ -61,7 +61,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v9",
+    version: "system-v10",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -100,20 +100,20 @@ function ocoProposal(analysisId: string): ModelResponse {
     buy_stop: {
       trigger_price: "2001",
       entry_price: "2001",
-      stop_loss: "2000",
-      take_profit: "2005",
-      risk_reward_ratio: "4",
+      stop_loss: "1999",
+      take_profit: "2002",
+      risk_reward_ratio: "0.5",
       expires_at: expiresAt,
-      invalidation_price: "2000.5",
+      invalidation_price: "1999",
     },
     sell_stop: {
       trigger_price: "1999",
       entry_price: "1999",
-      stop_loss: "2000",
-      take_profit: "1995",
-      risk_reward_ratio: "4",
+      stop_loss: "2001",
+      take_profit: "1998",
+      risk_reward_ratio: "0.5",
       expires_at: expiresAt,
-      invalidation_price: "1999.5",
+      invalidation_price: "2001",
     },
     confidence: {
       overall: 0,
@@ -197,14 +197,28 @@ function snapshot(): MarketSnapshot {
       symbolId: "7",
       symbolName: "XAUUSD",
       digits: 2,
+      pipPosition: 2,
+      pipSize: "0.01",
       tickSize: "0.01",
       tickValue: "0.01",
+      baseAsset: "XAU",
+      quoteAsset: "USD",
+      accountAsset: "USD",
+      quoteToAccountConversionRate: "1",
       contractSize: "100",
       volumeScale: "0.01",
       minVolume: "1",
       maxVolume: "10000",
       volumeStep: "1",
       minStopDistance: "0.1",
+      commission: {
+        type: "USD_PER_MILLION_USD",
+        rate: "30",
+        minimum: "0",
+        minimumType: "QUOTE_CURRENCY",
+        minimumAsset: "USD",
+        pnlConversionFeeRate: "0",
+      },
       metadataTime: now,
     },
     quote: { bid: "1999.9", ask: "2000.1", sourceTime: now, receivedAt: now },
@@ -276,10 +290,10 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v9",
+    promptVersion: "system-v10",
     schemaVersion: "2.1",
     strategyVersion: "test",
-    minRiskRewardRatio: "2",
+    minRiskRewardRatio: "0.5",
     minExpirySeconds: 15,
     maxExpirySeconds: 1800,
     preferredExpirySeconds: 1500,
@@ -388,7 +402,6 @@ describe("analysis coordinator", () => {
         currentAsk: "2000.1",
         tickSize: "0.01",
         minimumStopDistance: "0.1",
-        stopLossDistanceDivisor: "2",
         atr: "1",
         maxEntryDistanceAtr: "2.5",
         maxStopDistanceAtr: "3",
@@ -401,7 +414,7 @@ describe("analysis coordinator", () => {
       buyEntryMaximum: "2002.6",
       sellEntryMinimum: "1997.4",
       sellEntryMaximum: "1999.8",
-      minimumStopDistance: "0.2",
+      minimumStopDistance: "0.1",
       maximumStopDistance: "2",
       preferredExpiresAt: "2026-08-27T00:25:05.000Z",
     });
@@ -414,7 +427,6 @@ describe("analysis coordinator", () => {
         currentAsk: "2000.1",
         tickSize: "0.01",
         minimumStopDistance: "0.2",
-        stopLossDistanceDivisor: "2",
         atr: "0.05",
         maxEntryDistanceAtr: "2.5",
         maxStopDistanceAtr: "3",
@@ -425,18 +437,17 @@ describe("analysis coordinator", () => {
     ).toThrow("MODEL_ENTRY_RANGE_UNSATISFIABLE");
   });
 
-  it("rejects when the original SL range cannot preserve the effective minimum", () => {
+  it("rejects when the SL range cannot preserve the effective minimum", () => {
     expect(() =>
       deriveModelExecutionBounds({
         currentBid: "1999.9",
         currentAsk: "2000.1",
         tickSize: "0.01",
         minimumStopDistance: "0.1",
-        stopLossDistanceDivisor: "2",
         atr: "1",
         maxEntryDistanceAtr: "2.5",
         maxStopDistanceAtr: "3",
-        maxAffordableStopDistance: "0.15",
+        maxAffordableStopDistance: "0.05",
         serverTime: "2026-08-27T00:00:05.000Z",
         preferredExpirySeconds: 1500,
       }),
@@ -509,13 +520,13 @@ describe("analysis coordinator", () => {
     const submitted = place.mock.calls[0]?.[0];
     expect(submitted?.[0]).toMatchObject({
       side: "BUY",
-      stopLoss: "2000.5",
-      takeProfit: "2002",
+      stopLoss: "2000.9",
+      takeProfit: "2001.05",
     });
     expect(submitted?.[1]).toMatchObject({
       side: "SELL",
-      stopLoss: "1999.5",
-      takeProfit: "1998",
+      stopLoss: "1999.1",
+      takeProfit: "1998.95",
     });
     expect(
       trail.events.some((event) => {
@@ -530,7 +541,7 @@ describe("analysis coordinator", () => {
           transform !== null &&
           typeof transform === "object" &&
           (transform as Record<string, unknown>).code ===
-            "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2"
+            "COMMISSION_COVERING_TP_WITH_DOUBLE_SL"
         );
       }),
     ).toBe(true);
@@ -550,6 +561,69 @@ describe("analysis coordinator", () => {
     expect(result.outcome).toBe("PLACED");
     expect(flushExecutionEvents).toHaveBeenCalledOnce();
     expect(trail.events.at(-1)).toMatchObject({ type: "transition" });
+  });
+
+  it("rejects when actual sized commands do not cover round-trip commission", async () => {
+    const place = vi.fn(() => Promise.reject(new Error("must not place")));
+    const expensiveSnapshot = snapshot();
+    const marketSnapshot: MarketSnapshot = {
+      ...expensiveSnapshot,
+      metadata: {
+        ...expensiveSnapshot.metadata,
+        commission: {
+          ...expensiveSnapshot.metadata.commission,
+          minimum: "0.02",
+        },
+      },
+    };
+    const configured = options({
+      market: { snapshot: vi.fn(() => Promise.resolve(marketSnapshot)) },
+      risk: {
+        proposalConstraints: () => proposalRiskConstraints(),
+        evaluate: (input) => {
+          const pending = commands(input.response.analysis_id);
+          return Promise.resolve({
+            approved: true,
+            reasonCodes: [],
+            risk: null,
+            commands: [
+              {
+                ...pending[0],
+                volume: "0.1",
+                stopLoss: input.response.buy_stop.stop_loss,
+                takeProfit: input.response.buy_stop.take_profit,
+              },
+              {
+                ...pending[1],
+                volume: "0.1",
+                stopLoss: input.response.sell_stop.stop_loss,
+                takeProfit: input.response.sell_stop.take_profit,
+              },
+            ] as [PendingOrderCommand, PendingOrderCommand],
+            equity: "10000",
+            perLegRiskPercent: "0.5",
+          });
+        },
+      },
+      gateway: {
+        kind: "paper",
+        canSubmitToBroker: false,
+        placeOco: place,
+        cancelStrategyOrder: () => Promise.reject(new Error("not used")),
+        reconcile: () => Promise.reject(new Error("not used")),
+      },
+    });
+
+    await expect(
+      new AnalysisCoordinator(configured).runOnce(),
+    ).resolves.toMatchObject({
+      outcome: "REJECTED",
+      reasonCodes: [
+        "BUY_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION",
+        "SELL_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION",
+      ],
+    });
+    expect(place).not.toHaveBeenCalled();
   });
 
   it("rejects a mismatched prompt artifact before risk or placement", async () => {
@@ -601,8 +675,8 @@ describe("analysis coordinator", () => {
               ...proposal,
               buy_stop: {
                 ...proposal.buy_stop,
-                take_profit: "2005.01",
-                risk_reward_ratio: "4.01",
+                take_profit: "2002.01",
+                risk_reward_ratio: "0.505",
               },
             },
             rawResponse: "{}",
@@ -725,8 +799,12 @@ describe("analysis coordinator", () => {
       buy_entry_maximum: "2012.6",
       sell_entry_minimum: "1987.4",
       sell_entry_maximum: "1999.8",
-      minimum_stop_distance: "0.2",
+      minimum_stop_distance: "0.1",
       maximum_stop_distance: "0.5",
+      pip_size: "0.01",
+      minimum_commission_covering_take_profit_distance: "0.05",
+      stop_loss_to_take_profit_ratio: "2",
+      effective_risk_reward_ratio: "0.5",
     });
     expect(constraints).not.toHaveProperty("equity");
     expect(constraints).not.toHaveProperty("risk_budget");
@@ -1050,10 +1128,10 @@ describe("analysis coordinator", () => {
     ).resolves.toMatchObject({ outcome: "PLACED" });
     const riskInput = riskEvaluate.mock.calls[0]?.[0];
     expect(riskInput?.quote).toEqual(refreshed.quote);
-    expect(riskInput?.response.buy_stop.stop_loss).toBe("2000.5");
-    expect(riskInput?.response.buy_stop.take_profit).toBe("2002");
-    expect(riskInput?.response.sell_stop.stop_loss).toBe("1999.5");
-    expect(riskInput?.response.sell_stop.take_profit).toBe("1998");
+    expect(riskInput?.response.buy_stop.stop_loss).toBe("2000.9");
+    expect(riskInput?.response.buy_stop.take_profit).toBe("2001.05");
+    expect(riskInput?.response.sell_stop.stop_loss).toBe("1999.1");
+    expect(riskInput?.response.sell_stop.take_profit).toBe("1998.95");
     expect(place).toHaveBeenCalledOnce();
   });
 
