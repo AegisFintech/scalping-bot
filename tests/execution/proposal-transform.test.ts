@@ -40,20 +40,20 @@ function response(): ModelResponse {
     buy_stop: {
       trigger_price: "4444",
       entry_price: "4444",
-      stop_loss: "4443",
+      stop_loss: "4442",
       take_profit: "4445",
-      risk_reward_ratio: "1",
+      risk_reward_ratio: "0.5",
       expires_at: "2026-09-01T00:05:00.000Z",
-      invalidation_price: "4443",
+      invalidation_price: "4442",
     },
     sell_stop: {
       trigger_price: "4443",
       entry_price: "4443",
-      stop_loss: "4444",
+      stop_loss: "4445",
       take_profit: "4442",
-      risk_reward_ratio: "1",
+      risk_reward_ratio: "0.5",
       expires_at: "2026-09-01T00:05:00.000Z",
-      invalidation_price: "4444",
+      invalidation_price: "4445",
     },
     confidence: {
       overall: 50,
@@ -107,41 +107,43 @@ function metadata(): SymbolMetadata {
 }
 
 describe("commission-aware exit transform", () => {
-  it("chooses the first commission-positive pip and sets SL to twice TP", () => {
+  it("chooses the first fee-buffered pip and sets SL to twice TP", () => {
     const original = response();
     const result = applyCommissionAwareExitPolicy(
       original,
       metadata(),
       "0.01",
       "4",
+      "1",
     );
 
     expect(result).toMatchObject({ accepted: true, reasonCodes: [] });
     expect(result.response?.buy_stop).toMatchObject({
       entry_price: "4444",
-      stop_loss: "4443.46",
-      take_profit: "4444.27",
-      invalidation_price: "4443.46",
+      stop_loss: "4442.92",
+      take_profit: "4444.54",
+      invalidation_price: "4442.92",
       risk_reward_ratio: "0.5",
     });
     expect(result.response?.sell_stop).toMatchObject({
       entry_price: "4443",
-      stop_loss: "4443.54",
-      take_profit: "4442.73",
-      invalidation_price: "4443.54",
+      stop_loss: "4444.08",
+      take_profit: "4442.46",
+      invalidation_price: "4444.08",
       risk_reward_ratio: "0.5",
     });
     expect(result.details?.buy).toMatchObject({
       pip_size: "0.01",
-      take_profit_pips: "27",
-      gross_profit: "0.27",
-      total_estimated_fees: "0.2666481",
-      expected_net_profit: "0.0033519",
-      stop_loss_distance: "0.54",
+      take_profit_pips: "54",
+      gross_profit: "0.54",
+      total_estimated_fees: "0.2666562",
+      required_minimum_net_profit: "0.2666562",
+      expected_net_profit: "0.2733438",
+      stop_loss_distance: "1.08",
     });
-    expect(result.details?.sell.take_profit_pips).toBe("27");
+    expect(result.details?.sell.take_profit_pips).toBe("54");
     expect(original.buy_stop.take_profit).toBe("4445");
-    expect(original.buy_stop.stop_loss).toBe("4443");
+    expect(original.buy_stop.stop_loss).toBe("4442");
   });
 
   it("derives a conservative pre-model floor at broker minimum volume", () => {
@@ -150,14 +152,15 @@ describe("commission-aware exit transform", () => {
       sellEntryPrice: "4444",
       minimumStopDistance: "0.01",
       maximumStopDistance: "4",
+      minimumExpectedNetToFeesRatio: "1",
       metadata: metadata(),
     });
 
     expect(result).toMatchObject({
       accepted: true,
       reasonCodes: [],
-      takeProfitDistance: "0.27",
-      stopLossDistance: "0.54",
+      takeProfitDistance: "0.54",
+      stopLossDistance: "1.08",
     });
   });
 
@@ -167,7 +170,7 @@ describe("commission-aware exit transform", () => {
       commission: { ...metadata().commission, type: "USD_PER_LOT" },
     };
     expect(
-      applyCommissionAwareExitPolicy(response(), unsupported, "0.01", "4"),
+      applyCommissionAwareExitPolicy(response(), unsupported, "0.01", "4", "1"),
     ).toMatchObject({
       accepted: false,
       response: null,
@@ -192,27 +195,33 @@ describe("commission-aware exit transform", () => {
     };
 
     expect(
-      applyCommissionAwareExitPolicy(tooNarrow, metadata(), "0.01", "4"),
+      applyCommissionAwareExitPolicy(tooNarrow, metadata(), "0.01", "4", "1"),
     ).toMatchObject({
       accepted: false,
       response: null,
       reasonCodes: [
         "BUY_AI_INVALIDATION_DOES_NOT_CONTAIN_DOUBLE_SL",
         "BUY_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL",
-        "BUY_AI_TARGET_BELOW_COMMISSION_POSITIVE_TP",
+        "BUY_AI_TARGET_BELOW_FEE_BUFFERED_TP",
       ],
     });
   });
 
   it("rejects when no commission-positive target fits the stop ceiling", () => {
     expect(
-      applyCommissionAwareExitPolicy(response(), metadata(), "0.01", "0.4"),
+      applyCommissionAwareExitPolicy(
+        response(),
+        metadata(),
+        "0.01",
+        "0.4",
+        "1",
+      ),
     ).toMatchObject({
       accepted: false,
       response: null,
       reasonCodes: [
-        "BUY_COMMISSION_POSITIVE_TP_UNAVAILABLE",
-        "SELL_COMMISSION_POSITIVE_TP_UNAVAILABLE",
+        "BUY_FEE_BUFFERED_TP_UNAVAILABLE",
+        "SELL_FEE_BUFFERED_TP_UNAVAILABLE",
       ],
     });
   });

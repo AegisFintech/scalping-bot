@@ -22,7 +22,7 @@ import {
   canonical,
   checkSpread,
   decimal,
-  validateCommandCommissionCoverage,
+  validateCommandFeeBuffer,
   validateSemantics,
   type SpreadDecision,
 } from "../../../packages/risk-engine/src/index.js";
@@ -226,10 +226,11 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v10";
+  readonly promptVersion: "system-v11";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
+  readonly minimumExpectedNetToFeesRatio: string;
   readonly minExpirySeconds: number;
   readonly maxExpirySeconds: number;
   readonly preferredExpirySeconds: number;
@@ -722,6 +723,8 @@ export class AnalysisCoordinator {
         sellEntryPrice: modelExecutionBounds.sellEntryMaximum,
         minimumStopDistance: canonical(minimumStopDistance),
         maximumStopDistance: modelExecutionBounds.maximumStopDistance,
+        minimumExpectedNetToFeesRatio:
+          this.#options.minimumExpectedNetToFeesRatio,
         metadata: preModelSnapshot.metadata,
       });
       await this.#options.trail.validation(
@@ -730,9 +733,11 @@ export class AnalysisCoordinator {
         commissionMinimumDistances.accepted,
         commissionMinimumDistances.reasonCodes,
         {
-          validation_scope: "MODEL_COMMISSION_CONSTRAINTS",
-          minimum_commission_covering_take_profit_distance:
+          validation_scope: "MODEL_FEE_BUFFER_CONSTRAINTS",
+          minimum_fee_buffered_take_profit_distance:
             commissionMinimumDistances.takeProfitDistance,
+          minimum_expected_net_to_fees_ratio:
+            this.#options.minimumExpectedNetToFeesRatio,
           minimum_exit_policy_stop_distance:
             commissionMinimumDistances.stopLossDistance,
           commission_basis: {
@@ -758,7 +763,7 @@ export class AnalysisCoordinator {
           decimal(modelExecutionBounds.maximumStopDistance),
         )
       ) {
-        return await reject(["MODEL_COMMISSION_STOP_RANGE_UNSATISFIABLE"]);
+        return await reject(["MODEL_FEE_BUFFER_STOP_RANGE_UNSATISFIABLE"]);
       }
       modelExecutionBounds = {
         ...modelExecutionBounds,
@@ -786,8 +791,10 @@ export class AnalysisCoordinator {
           minRiskRewardRatio: minimumProposalRiskRewardRatio,
           effectiveMinRiskRewardRatio: this.#options.minRiskRewardRatio,
           pipSize: preModelSnapshot.metadata.pipSize,
-          minimumCommissionCoveringTakeProfitDistance:
+          minimumFeeBufferedTakeProfitDistance:
             commissionMinimumDistances.takeProfitDistance,
+          minimumExpectedNetToFeesRatio:
+            this.#options.minimumExpectedNetToFeesRatio,
           stopLossToTakeProfitRatio: STOP_LOSS_TO_TAKE_PROFIT_RATIO,
           effectiveRiskRewardRatio: COMMISSION_AWARE_RISK_REWARD_RATIO,
           maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
@@ -963,7 +970,7 @@ export class AnalysisCoordinator {
         {
           validation_scope: "AI_PROPOSAL",
           required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
-          exit_policy: "COMMISSION_COVERING_TP_WITH_DOUBLE_SL",
+          exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
         },
       );
       if (!proposalSemantic.accepted)
@@ -980,6 +987,7 @@ export class AnalysisCoordinator {
         decisionSnapshot.metadata,
         canonical(minimumStopDistance),
         maximumEffectiveStopDistance,
+        this.#options.minimumExpectedNetToFeesRatio,
       );
       await this.#options.trail.validation(
         analysisId,
@@ -1029,9 +1037,10 @@ export class AnalysisCoordinator {
       if (!risk.approved || risk.commands === null)
         return await reject(risk.reasonCodes);
 
-      const commissionCoverage = validateCommandCommissionCoverage(
+      const commissionCoverage = validateCommandFeeBuffer(
         risk.commands,
         decisionSnapshot.metadata,
+        this.#options.minimumExpectedNetToFeesRatio,
       );
       await this.#options.trail.validation(
         analysisId,
@@ -1039,8 +1048,10 @@ export class AnalysisCoordinator {
         commissionCoverage.approved,
         commissionCoverage.reasonCodes,
         {
-          validation_scope: "ACTUAL_VOLUME_COMMISSION_COVERAGE",
-          commission_coverage: commissionCoverage.evidence,
+          validation_scope: "ACTUAL_VOLUME_FEE_BUFFER",
+          minimum_expected_net_to_fees_ratio:
+            this.#options.minimumExpectedNetToFeesRatio,
+          fee_buffer_evidence: commissionCoverage.evidence,
         },
       );
       if (!commissionCoverage.approved)
@@ -1168,7 +1179,7 @@ export class AnalysisCoordinator {
         {
           validation_scope: "PRE_PLACEMENT_AI_PROPOSAL",
           required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
-          exit_policy: "COMMISSION_COVERING_TP_WITH_DOUBLE_SL",
+          exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
         },
       );
       if (!placementProposalSemantic.accepted)

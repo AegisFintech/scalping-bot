@@ -70,11 +70,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v10` tells the endpoint that execution will select the nearest
-  whole-pip TP whose estimated gross profit strictly exceeds opening plus
-  closing commission, then set SL to exactly twice that TP distance. The
+- Prompt `system-v11` tells the endpoint that execution will select the nearest
+  whole-pip TP whose expected net after estimated fees is strictly greater
+  than one full round-trip fee, then set SL to exactly twice that TP distance. The
   coordinator precomputes inclusive, tick-aligned BUY/SELL entry ranges, a
-  commission-aware minimum TP/SL floor, one stop-distance range, and the exact
+  fee-buffered minimum TP/SL floor, one stop-distance range, and the exact
   preferred expiry from current quotes, M1 ATR, broker distance, configuration,
   and the non-sizing affordable stop ceiling. The prompt explicitly self-checks
   both sides' target/stop envelope, target ordering, and executable ranges. No

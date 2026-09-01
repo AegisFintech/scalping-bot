@@ -2508,3 +2508,41 @@ responses and 1/100 closed trades. At the snapshot all 19,870 observability
 outbox events were delivered. The clean `.36` comparison cohort is running
 automatically; this establishes the new arithmetic and broker-demo path, not
 trading accuracy or profitability.
+
+## ISSUE-062 fee-buffered take profit
+
+Release `.37` raises the deterministic exit threshold from approximate
+commission break-even to a real post-fee buffer. `MIN_EXPECTED_NET_TO_FEES_RATIO`
+defaults to `1` and cannot be configured below it. The nearest eligible whole
+broker-pip TP must satisfy `expected_net > total_estimated_fees * ratio`; at the
+default this is equivalent to gross TP strictly greater than twice all estimated
+opening, TP-close, and positive-P/L conversion fees. Equality rejects.
+
+At the observed XAUUSD `$30 per USD million` schedule near price `4444` and
+one-ounce minimum volume, 53 pips produces gross `0.53`, estimated fees
+`0.2666559`, and expected net `0.2633441`, so it rejects. The first passing
+target is 54 pips: gross `0.54`, fees `0.2666562`, and expected net `0.2733438`.
+The unchanged policy sets SL distance to exactly twice TP, or `1.08`. Prompt
+`system-v11` receives only the derived fee-buffered distance and ratio; fee
+rates, account money, and volume remain outside the endpoint payload.
+
+The pre-model calculation remains conservative at broker minimum volume. After
+the risk engine determines volume, both exact commands are recalculated using
+that final volume before intent persistence. Audit evidence and Streamlit now
+include basis volume, gross, total fees, required minimum net, expected net,
+and expected-net-to-fees ratio. This is ready for a later bounded money-management
+issue because fee estimation already scales with final deterministic volume;
+this issue does not increase size or give the endpoint sizing authority.
+
+No SQL or response-schema migration is required: the new request constraint and
+validation evidence are versioned JSON documents, while response schema 2.1 is
+unchanged. Pre-deployment checks passed on 1 Sep 2026: Prettier, ESLint,
+TypeScript typecheck/build, 286 Node tests across 44 files, 17 schema tests, 3
+migration tests, all 3 configured isolated-PostgreSQL/HTTP integration tests,
+Ruff format/lint, strict mypy over 21 source files, and 89 Python tests.
+Configured Streamlit AppTest rendered 38 dataframes, 69 metrics, and 15 tabs
+with zero exceptions. Replay/backtest smoke commands, npm/pip audits with zero
+known vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
+`git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
+passed. Broker-demo rollout evidence is pending merge and exact terminal-state
+reconciliation.

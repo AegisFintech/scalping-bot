@@ -168,6 +168,9 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
     commission = reason_code_view("BUY_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION")
     assert commission["title"] == "Buy take profit does not cover commission"
     assert "ACTUAL_VOLUME_COMMISSION_COVERAGE" in commission["next_action"]
+    fee_buffer = reason_code_view("BUY_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER")
+    assert "one full" in fee_buffer["meaning"]
+    assert "ACTUAL_VOLUME_FEE_BUFFER" in fee_buffer["next_action"]
     envelope = reason_code_view("SELL_AI_STOP_DOES_NOT_CONTAIN_DOUBLE_SL")
     assert "required 2x stop distance" in envelope["title"]
     unsupported = reason_code_view("COMMISSION_TYPE_UNSUPPORTED")
@@ -602,7 +605,7 @@ def test_take_profit_transform_view_shows_current_original_and_effective_levels(
                         },
                     },
                 }
-            }
+            },
         ]
     )
 
@@ -678,19 +681,79 @@ def test_take_profit_transform_view_shows_commission_coverage() -> None:
                     "proposal_transform": {
                         "code": "COMMISSION_COVERING_TP_WITH_DOUBLE_SL",
                         "commission_type": "USD_PER_MILLION_USD",
+                        "commission_rate": "30",
+                        "commission_basis_volume": "100",
                         "stop_loss_to_take_profit_ratio": "2",
                         "effective_risk_reward_ratio": "0.5",
                         "buy": leg,
                         "sell": leg,
                     },
                 }
-            }
+            },
         ]
     )
 
     assert rows[0]["take_profit_pips"] == "27"
+    assert rows[0]["basis_volume"] == "100"
     assert rows[0]["estimated_round_trip_fees"] == "0.2666481"
     assert rows[0]["expected_net_at_basis_volume"] == "0.0033519"
+
+
+def test_take_profit_transform_view_shows_required_net_fee_buffer() -> None:
+    leg = {
+        "entry_price": "4444",
+        "original_stop_loss": "4442",
+        "effective_stop_loss": "4442.92",
+        "original_take_profit": "4445",
+        "effective_take_profit": "4444.54",
+        "original_risk_reward_ratio": "0.5",
+        "effective_risk_reward_ratio": "0.5",
+        "pip_size": "0.01",
+        "take_profit_pips": "54",
+        "gross_profit": "0.54",
+        "total_estimated_fees": "0.2666562",
+        "minimum_expected_net_to_fees_ratio": "1",
+        "required_minimum_net_profit": "0.2666562",
+        "expected_net_profit": "0.2733438",
+        "expected_net_to_fees_ratio": "1.0258265256",
+    }
+    rows = take_profit_transform_view(
+        [
+            {
+                "details": {
+                    "validation_scope": "TAKE_PROFIT_TRANSFORM",
+                    "proposal_transform": {
+                        "code": "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
+                        "commission_type": "USD_PER_MILLION_USD",
+                        "commission_rate": "30",
+                        "commission_basis_volume": "100",
+                        "stop_loss_to_take_profit_ratio": "2",
+                        "effective_risk_reward_ratio": "0.5",
+                        "minimum_expected_net_to_fees_ratio": "1",
+                        "buy": leg,
+                        "sell": leg,
+                    },
+                }
+            },
+            {
+                "details": {
+                    "validation_scope": "ACTUAL_VOLUME_FEE_BUFFER",
+                    "fee_buffer_evidence": [
+                        {**leg, "side": "BUY", "volume": "500"},
+                        {**leg, "side": "SELL", "volume": "500"},
+                    ],
+                }
+            },
+        ]
+    )
+
+    assert rows[0]["take_profit_pips"] == "54"
+    assert rows[0]["basis_volume"] == "100"
+    assert rows[0]["required_minimum_net_profit"] == "0.2666562"
+    assert rows[0]["expected_net_at_basis_volume"] == "0.2733438"
+    assert rows[0]["expected_net_to_fees_ratio"] == "1.0258265256"
+    assert rows[0]["final_volume"] == "500"
+    assert rows[0]["final_expected_net_profit"] == "0.2733438"
 
 
 def test_take_profit_transform_view_rejects_malformed_audit_details() -> None:
@@ -710,6 +773,55 @@ def test_take_profit_transform_view_rejects_malformed_audit_details() -> None:
                 }
             ]
         )
+
+
+def test_take_profit_transform_view_tolerates_empty_rejected_final_fee_evidence() -> None:
+    leg = {
+        "entry_price": "4444",
+        "original_stop_loss": "4442",
+        "effective_stop_loss": "4442.92",
+        "original_take_profit": "4445",
+        "effective_take_profit": "4444.54",
+        "original_risk_reward_ratio": "0.5",
+        "effective_risk_reward_ratio": "0.5",
+        "pip_size": "0.01",
+        "take_profit_pips": "54",
+        "gross_profit": "0.54",
+        "total_estimated_fees": "0.2666562",
+        "minimum_expected_net_to_fees_ratio": "1",
+        "required_minimum_net_profit": "0.2666562",
+        "expected_net_profit": "0.2733438",
+        "expected_net_to_fees_ratio": "1.0258265256",
+    }
+    rows = take_profit_transform_view(
+        [
+            {
+                "details": {
+                    "validation_scope": "TAKE_PROFIT_TRANSFORM",
+                    "proposal_transform": {
+                        "code": "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
+                        "commission_type": "USD_PER_MILLION_USD",
+                        "commission_rate": "30",
+                        "commission_basis_volume": "100",
+                        "stop_loss_to_take_profit_ratio": "2",
+                        "effective_risk_reward_ratio": "0.5",
+                        "minimum_expected_net_to_fees_ratio": "1",
+                        "buy": leg,
+                        "sell": leg,
+                    },
+                }
+            },
+            {
+                "details": {
+                    "validation_scope": "ACTUAL_VOLUME_FEE_BUFFER",
+                    "fee_buffer_evidence": [],
+                }
+            },
+        ]
+    )
+
+    assert rows[0]["take_profit_pips"] == "54"
+    assert "final_volume" not in rows[0]
 
 
 def test_model_input_summary_counts_but_does_not_render_candle_arrays() -> None:
@@ -811,8 +923,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v10", content, digest)
-    assert current["version"] == "system-v10"
+    current = prompt_artifact_view("system-v11", content, digest)
+    assert current["version"] == "system-v11"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

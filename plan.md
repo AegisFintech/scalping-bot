@@ -204,6 +204,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-059 | complete    | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
 | ISSUE-060 | complete    | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
 | ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
+| ISSUE-062 | in progress | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -572,6 +573,35 @@ never justify empty, noisy, unsafe, or misleading commits.
   all 19,870 Better Stack outbox events were delivered at the evidence
   snapshot. This proves demo execution and observability, not profitability;
   the clean `.36` 100-trade cohort is now collecting automatically.
+
+### ISSUE-062 delivery details
+
+- Acceptance criteria: select the smallest whole-pip TP whose expected net
+  profit is strictly greater than one full estimated round-trip fee; keep SL
+  distance exactly twice TP distance; calculate the pre-model floor at broker
+  minimum volume and revalidate using the final deterministic sized volume;
+  persist and display gross profit, total fees, required net buffer, expected
+  net, ratio, and basis volume; fail closed on incomplete or unsupported broker
+  fee metadata; and deploy a distinct demo cohort only after all completion
+  gates and exact terminal broker reconciliation pass.
+- Dependencies: ISSUE-061 release `.36`, prompt `system-v10`, the typed cTrader
+  commission metadata, deterministic risk sizing, and demo-only authority.
+- Current status: [issue #151](https://github.com/AegisFintech/scalping-bot/issues/151)
+  is in progress on `issue-062-fee-buffered-tp`. The policy floor is one full
+  round-trip fee of expected net profit: gross TP must therefore be strictly
+  greater than twice estimated fees. At the observed XAUUSD schedule and
+  one-ounce minimum volume this is approximately 54 pips (`0.54`) rather than
+  release `.36`'s approximately break-even 27 pips (`0.27`); the corresponding
+  exact `2x` SL distance is `1.08`. Final-volume validation is retained so a
+  later deterministic money-management change cannot ignore scaled fees. This
+  issue does not change lot size or grant the model sizing authority. Release
+  `.37`, prompt `system-v11`, the strict 53-pip reject/54-pip pass boundary,
+  minimum- and final-volume evidence, dashboard display, configuration hashing,
+  and historical rendering are implemented. The full pre-deployment suite
+  passed with 286 Node, 89 Python, 17 schema, 3 migration, and all 3 configured
+  integration tests; formatting, lint, types, build, AppTest, replay/backtest,
+  dependency audits, secret scan, shell/PM2, diff, and all five offline systemd
+  checks also passed. Merge and terminal-safe demo rollout remain.
 
 ### ISSUE-001 delivery details
 

@@ -61,7 +61,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v10",
+    version: "system-v11",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -290,10 +290,11 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v10",
+    promptVersion: "system-v11",
     schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "0.5",
+    minimumExpectedNetToFeesRatio: "1",
     minExpirySeconds: 15,
     maxExpirySeconds: 1800,
     preferredExpirySeconds: 1500,
@@ -541,7 +542,7 @@ describe("analysis coordinator", () => {
           transform !== null &&
           typeof transform === "object" &&
           (transform as Record<string, unknown>).code ===
-            "COMMISSION_COVERING_TP_WITH_DOUBLE_SL"
+            "FEE_BUFFERED_TP_WITH_DOUBLE_SL"
         );
       }),
     ).toBe(true);
@@ -619,8 +620,8 @@ describe("analysis coordinator", () => {
     ).resolves.toMatchObject({
       outcome: "REJECTED",
       reasonCodes: [
-        "BUY_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION",
-        "SELL_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION",
+        "BUY_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER",
+        "SELL_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER",
       ],
     });
     expect(place).not.toHaveBeenCalled();
@@ -802,7 +803,8 @@ describe("analysis coordinator", () => {
       minimum_stop_distance: "0.1",
       maximum_stop_distance: "0.5",
       pip_size: "0.01",
-      minimum_commission_covering_take_profit_distance: "0.05",
+      minimum_fee_buffered_take_profit_distance: "0.05",
+      minimum_expected_net_to_fees_ratio: "1",
       stop_loss_to_take_profit_ratio: "2",
       effective_risk_reward_ratio: "0.5",
     });

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SymbolMetadata } from "../../packages/contracts/src/index.js";
 import {
   evaluateCommissionCoverage,
-  minimumCommissionPositiveTarget,
+  minimumFeeBufferedTarget,
 } from "../../packages/risk-engine/src/index.js";
 
 const metadata: SymbolMetadata = {
@@ -48,6 +48,7 @@ describe("commission coverage", () => {
         entryPrice: "4444",
         takeProfit: target,
         volume: "100",
+        minimumExpectedNetToFeesRatio: "1",
         metadata,
       });
       expect(result.approved, `${pips} pips`).toBe(false);
@@ -55,24 +56,48 @@ describe("commission coverage", () => {
     }
   });
 
-  it("selects 27 pips as the first strictly commission-positive target", () => {
+  it("selects 54 pips as the first target leaving one full fee of net profit", () => {
     expect(
-      minimumCommissionPositiveTarget({
+      minimumFeeBufferedTarget({
         side: "BUY",
         entryPrice: "4444",
         volume: "100",
         maximumTakeProfitDistance: "5",
+        minimumExpectedNetToFeesRatio: "1",
         metadata,
       }),
     ).toMatchObject({
       approved: true,
       reasonCodes: [],
       evidence: {
-        take_profit: "4444.27",
-        take_profit_pips: "27",
-        gross_profit: "0.27",
-        total_estimated_fees: "0.2666481",
-        expected_net_profit: "0.0033519",
+        take_profit: "4444.54",
+        take_profit_pips: "54",
+        gross_profit: "0.54",
+        total_estimated_fees: "0.2666562",
+        required_minimum_net_profit: "0.2666562",
+        expected_net_profit: "0.2733438",
+      },
+    });
+  });
+
+  it("rejects the adjacent 53-pip target below the required net buffer", () => {
+    expect(
+      evaluateCommissionCoverage({
+        side: "BUY",
+        entryPrice: "4444",
+        takeProfit: "4444.53",
+        volume: "100",
+        minimumExpectedNetToFeesRatio: "1",
+        metadata,
+      }),
+    ).toMatchObject({
+      approved: false,
+      reasonCodes: ["BUY_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER"],
+      evidence: {
+        gross_profit: "0.53",
+        total_estimated_fees: "0.2666559",
+        required_minimum_net_profit: "0.2666559",
+        expected_net_profit: "0.2633441",
       },
     });
   });
@@ -81,21 +106,23 @@ describe("commission coverage", () => {
     const result = evaluateCommissionCoverage({
       side: "SELL",
       entryPrice: "4444",
-      takeProfit: "4443.73",
+      takeProfit: "4443.46",
       volume: "500",
+      minimumExpectedNetToFeesRatio: "1",
       metadata,
     });
     expect(result).toMatchObject({
       approved: true,
       evidence: {
-        gross_profit: "1.35",
-        total_estimated_fees: "1.3331595",
-        expected_net_profit: "0.0168405",
+        gross_profit: "2.7",
+        total_estimated_fees: "1.333119",
+        required_minimum_net_profit: "1.333119",
+        expected_net_profit: "1.366881",
       },
     });
   });
 
-  it("requires gross profit to be strictly greater than estimated fees", () => {
+  it("requires expected net to be strictly greater than the fee buffer", () => {
     const equalCost: SymbolMetadata = {
       ...metadata,
       commission: {
@@ -108,17 +135,19 @@ describe("commission coverage", () => {
       evaluateCommissionCoverage({
         side: "BUY",
         entryPrice: "4444",
-        takeProfit: "4444.27",
+        takeProfit: "4444.54",
         volume: "100",
+        minimumExpectedNetToFeesRatio: "1",
         metadata: equalCost,
       }),
     ).toMatchObject({
       approved: false,
-      reasonCodes: ["BUY_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION"],
+      reasonCodes: ["BUY_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER"],
       evidence: {
-        gross_profit: "0.27",
+        gross_profit: "0.54",
         total_estimated_fees: "0.27",
-        expected_net_profit: "0",
+        required_minimum_net_profit: "0.27",
+        expected_net_profit: "0.27",
       },
     });
   });
@@ -134,12 +163,30 @@ describe("commission coverage", () => {
         entryPrice: "4444",
         takeProfit: "4444.27",
         volume: "100",
+        minimumExpectedNetToFeesRatio: "1",
         metadata: unsupported,
       }),
     ).toMatchObject({
       approved: false,
       evidence: null,
       reasonCodes: ["COMMISSION_USD_NOTIONAL_CONVERSION_UNAVAILABLE"],
+    });
+  });
+
+  it("fails closed when the required net-to-fees ratio is below one", () => {
+    expect(
+      evaluateCommissionCoverage({
+        side: "BUY",
+        entryPrice: "4444",
+        takeProfit: "4444.54",
+        volume: "100",
+        minimumExpectedNetToFeesRatio: "0.99",
+        metadata,
+      }),
+    ).toMatchObject({
+      approved: false,
+      evidence: null,
+      reasonCodes: ["COMMISSION_NET_FEE_RATIO_INVALID"],
     });
   });
 });

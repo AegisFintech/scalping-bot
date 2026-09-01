@@ -303,10 +303,12 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v10` tells the endpoint that execution selects the nearest whole
-broker-pip TP whose gross profit is estimated to exceed opening plus closing
-commission, then sets SL distance to exactly twice TP distance (reward:risk
-`1:2`, numeric reward/risk `0.5`). It supplies the resulting minimum TP/SL
+Prompt `system-v11` tells the endpoint that execution selects the nearest whole
+broker-pip TP whose expected net profit is greater than one full estimated
+round-trip fee, then sets SL distance to exactly twice TP distance (reward:risk
+`1:2`, numeric reward/risk `0.5`). `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to
+and cannot be set below `1`; at `1`, gross TP must be strictly greater than
+twice estimated fees. The request supplies the resulting minimum TP/SL
 floor, exact tick-aligned BUY/SELL entry ranges, an inclusive stop-distance
 range, and one exact preferred expiry. Those ranges combine current quote,
 broker/configured minimum, M1 ATR caps, commission metadata, and the maximum
@@ -314,7 +316,8 @@ stop affordable at broker minimum volume. They contain no equity, budget,
 volume, commission rate, or account identity. An unsupported fee schedule,
 off-tick effective price, technical envelope mismatch, out-of-range entry, or
 returned stop outside the current limit is rejected without correction. Final
-sized commands receive a second fee-coverage check before broker submission.
+sized commands receive a second fee-buffer check before broker submission, so
+a later deterministic lot-size change uses the exact final volume.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted

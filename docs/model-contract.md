@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v10` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v11` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -33,9 +33,9 @@ The versioned system prompt tells the model to:
   entries must equal those confirmation prices, and each JSON TP must equal the
   first corresponding technical target;
 - place the first technical target at or beyond the supplied minimum
-  commission-covering TP distance and place its stop/invalidation at or beyond
+  fee-buffered TP distance and place its stop/invalidation at or beyond
   the supplied `2 * TP` effective stop floor. Execution chooses the nearest
-  whole-pip commission-positive TP within that envelope and uses numeric
+  whole-pip fee-buffered TP within that envelope and uses numeric
   reward/risk `0.5` (reward:risk `1:2`). The endpoint does not calculate fees or
   volume;
 - put each BUY/SELL confirmation inside its supplied inclusive, tick-aligned
@@ -56,10 +56,11 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-The exact parsed response remains immutable. For current `system-v10` requests,
+The exact parsed response remains immutable. For current `system-v11` requests,
 the execution coordinator separately selects the smallest whole-pip effective
-TP whose estimated gross profit strictly exceeds opening commission, closing
-commission, and positive-P/L conversion fees at broker minimum volume. It sets
+TP whose expected net after opening commission, closing commission, and
+positive-P/L conversion fees is strictly greater than one full estimated
+round-trip fee at broker minimum volume. It sets
 effective SL distance to exactly twice effective TP distance, recomputes numeric
 reward/risk as `0.5`, and records original/effective levels plus fee evidence.
 The selected effective exits must remain inside the AI technical target and

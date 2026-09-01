@@ -57,6 +57,7 @@ _PROMPT_FILES = {
     "system-v8": "system-v8.md",
     "system-v9": "system-v9.md",
     "system-v10": "system-v10.md",
+    "system-v11": "system-v11.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",
@@ -355,6 +356,19 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
         "No paid AI request or order was made. Review the symbol fee economics and configured "
         "distance ceiling without treating commission as zero.",
     ),
+    "MODEL_FEE_BUFFER_STOP_RANGE_UNSATISFIABLE": (
+        "No fee-buffered target fits the allowed stop range",
+        "The smallest whole-pip TP that leaves the required net profit after fees needs a stop "
+        "outside the deterministic distance ceiling.",
+        "No paid AI request or order was made. Review the fee buffer and distance ceiling; do "
+        "not treat commission as zero.",
+    ),
+    "COMMISSION_NET_FEE_RATIO_INVALID": (
+        "The required net fee buffer is invalid",
+        "The configured expected-net-to-fees ratio is below the hard minimum or is not a valid "
+        "decimal.",
+        "No order was sent. Restore MIN_EXPECTED_NET_TO_FEES_RATIO to 1 or greater.",
+    ),
     "BUY_TP_MIDPOINT_NOT_ON_TICK": (
         "Buy TP midpoint is off the broker tick",
         "Halving the distance from the buy entry to the AI take profit produced a price the "
@@ -469,6 +483,60 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
 }
 
 _PREFIX_REASON_GUIDANCE: tuple[tuple[str, tuple[str, str, str]], ...] = (
+    (
+        "BUY_FEE_BUFFERED_TP_UNAVAILABLE",
+        (
+            "No fee-buffered buy target is available",
+            "No whole-pip buy target inside the allowed range leaves expected net profit greater "
+            "than the required round-trip-fee buffer.",
+            "No buy order was sent; inspect the fee evidence and broker metadata.",
+        ),
+    ),
+    (
+        "SELL_FEE_BUFFERED_TP_UNAVAILABLE",
+        (
+            "No fee-buffered sell target is available",
+            "No whole-pip sell target inside the allowed range leaves expected net profit greater "
+            "than the required round-trip-fee buffer.",
+            "No sell order was sent; inspect the fee evidence and broker metadata.",
+        ),
+    ),
+    (
+        "BUY_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER",
+        (
+            "Buy take profit is too small after commission",
+            "At the final sized volume, expected net profit is not greater than one full "
+            "estimated round-trip fee.",
+            "No buy order was sent; inspect ACTUAL_VOLUME_FEE_BUFFER for the exact calculation.",
+        ),
+    ),
+    (
+        "SELL_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER",
+        (
+            "Sell take profit is too small after commission",
+            "At the final sized volume, expected net profit is not greater than one full "
+            "estimated round-trip fee.",
+            "No sell order was sent; inspect ACTUAL_VOLUME_FEE_BUFFER for the exact calculation.",
+        ),
+    ),
+    (
+        "BUY_AI_TARGET_BELOW_FEE_BUFFERED_TP",
+        (
+            "AI buy target is inside the required fee buffer",
+            "The AI's first upside target does not contain the nearest whole-pip TP that leaves "
+            "the required net profit after commission.",
+            "No buy order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
+    (
+        "SELL_AI_TARGET_BELOW_FEE_BUFFERED_TP",
+        (
+            "AI sell target is inside the required fee buffer",
+            "The AI's first downside target does not contain the nearest whole-pip TP that leaves "
+            "the required net profit after commission.",
+            "No sell order was sent. A later cycle requests a fresh technical envelope.",
+        ),
+    ),
     (
         "BUY_COMMISSION_POSITIVE_TP_UNAVAILABLE",
         (
@@ -1396,6 +1464,43 @@ def take_profit_transform_view(
 ) -> list[dict[str, str]]:
     """Return the audited AI-to-effective price comparison, if that stage ran."""
 
+    actual_fee_buffer: dict[str, Mapping[str, Any]] = {}
+    for validation in reversed(validations):
+        details = validation.get("details")
+        if not isinstance(details, Mapping):
+            continue
+        if details.get("validation_scope") != "ACTUAL_VOLUME_FEE_BUFFER":
+            continue
+        evidence = details.get("fee_buffer_evidence")
+        if not isinstance(evidence, Sequence) or isinstance(evidence, (str, bytes)):
+            raise DecisionViewError("DECISION_VIEW_FINAL_FEE_BUFFER_INVALID")
+        if len(evidence) > 2:
+            raise DecisionViewError("DECISION_VIEW_FINAL_FEE_BUFFER_INVALID")
+        for leg in evidence:
+            if not isinstance(leg, Mapping):
+                raise DecisionViewError("DECISION_VIEW_FINAL_FEE_BUFFER_INVALID")
+            _reject_sensitive_keys(leg)
+            side = leg.get("side")
+            required = (
+                "volume",
+                "total_estimated_fees",
+                "minimum_expected_net_to_fees_ratio",
+                "required_minimum_net_profit",
+                "expected_net_profit",
+            )
+            if side not in {"BUY", "SELL"} or any(
+                not isinstance(leg.get(key), str) for key in required
+            ):
+                raise DecisionViewError("DECISION_VIEW_FINAL_FEE_BUFFER_INVALID")
+            expected_ratio = leg.get("expected_net_to_fees_ratio")
+            if expected_ratio is not None and not isinstance(expected_ratio, str):
+                raise DecisionViewError("DECISION_VIEW_FINAL_FEE_BUFFER_INVALID")
+            side_text = str(side)
+            if side_text in actual_fee_buffer:
+                raise DecisionViewError("DECISION_VIEW_FINAL_FEE_BUFFER_INVALID")
+            actual_fee_buffer[side_text] = leg
+        break
+
     for validation in reversed(validations):
         details = validation.get("details")
         if not isinstance(details, Mapping):
@@ -1409,7 +1514,9 @@ def take_profit_transform_view(
         code = transform.get("code")
         legacy = code == "TAKE_PROFIT_DISTANCE_DIVIDED_BY_2"
         current = code == "TP_DISTANCE_DIVIDED_BY_4_SL_DISTANCE_DIVIDED_BY_2"
-        commission_aware = code == "COMMISSION_COVERING_TP_WITH_DOUBLE_SL"
+        commission_positive = code == "COMMISSION_COVERING_TP_WITH_DOUBLE_SL"
+        fee_buffered = code == "FEE_BUFFERED_TP_WITH_DOUBLE_SL"
+        commission_aware = commission_positive or fee_buffered
         if legacy and transform.get("divisor") != "2":
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         if current and (
@@ -1418,8 +1525,14 @@ def take_profit_transform_view(
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         if commission_aware and (
             transform.get("commission_type") != "USD_PER_MILLION_USD"
+            or not isinstance(transform.get("commission_rate"), str)
+            or not isinstance(transform.get("commission_basis_volume"), str)
             or transform.get("stop_loss_to_take_profit_ratio") != "2"
             or transform.get("effective_risk_reward_ratio") != "0.5"
+        ):
+            raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
+        if fee_buffered and not isinstance(
+            transform.get("minimum_expected_net_to_fees_ratio"), str
         ):
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         if not legacy and not current and not commission_aware:
@@ -1447,6 +1560,13 @@ def take_profit_transform_view(
                         "expected_net_profit",
                     ]
                 )
+            if fee_buffered:
+                keys.extend(
+                    [
+                        "minimum_expected_net_to_fees_ratio",
+                        "required_minimum_net_profit",
+                    ]
+                )
             if any(not isinstance(leg.get(key), str) for key in keys):
                 raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
             ai_stop_loss = str(leg["stop_loss"] if legacy else leg["original_stop_loss"])
@@ -1465,10 +1585,42 @@ def take_profit_transform_view(
                 row.update(
                     {
                         "pip_size": str(leg["pip_size"]),
+                        "basis_volume": str(transform["commission_basis_volume"]),
                         "take_profit_pips": str(leg["take_profit_pips"]),
                         "gross_profit_at_basis_volume": str(leg["gross_profit"]),
                         "estimated_round_trip_fees": str(leg["total_estimated_fees"]),
                         "expected_net_at_basis_volume": str(leg["expected_net_profit"]),
+                    }
+                )
+                actual = actual_fee_buffer.get(side.upper())
+                if actual is not None:
+                    actual_ratio = actual.get("expected_net_to_fees_ratio")
+                    row.update(
+                        {
+                            "final_volume": str(actual["volume"]),
+                            "final_estimated_round_trip_fees": str(actual["total_estimated_fees"]),
+                            "final_required_minimum_net_profit": str(
+                                actual["required_minimum_net_profit"]
+                            ),
+                            "final_expected_net_profit": str(actual["expected_net_profit"]),
+                            "final_expected_net_to_fees_ratio": (
+                                "N/A" if actual_ratio is None else str(actual_ratio)
+                            ),
+                        }
+                    )
+            if fee_buffered:
+                expected_ratio = leg.get("expected_net_to_fees_ratio")
+                if expected_ratio is not None and not isinstance(expected_ratio, str):
+                    raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_LEG_INVALID")
+                row.update(
+                    {
+                        "minimum_expected_net_to_fees_ratio": str(
+                            leg["minimum_expected_net_to_fees_ratio"]
+                        ),
+                        "required_minimum_net_profit": str(leg["required_minimum_net_profit"]),
+                        "expected_net_to_fees_ratio": (
+                            "N/A" if expected_ratio is None else expected_ratio
+                        ),
                     }
                 )
             output.append(row)
