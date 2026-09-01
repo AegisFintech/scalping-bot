@@ -202,8 +202,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
 | ISSUE-058 | complete    | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
 | ISSUE-059 | complete    | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
-| ISSUE-060 | in progress | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
-| ISSUE-061 | in progress | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
+| ISSUE-060 | complete    | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
+| ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -498,7 +498,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   `realized_pnl` exactly once while retaining `fees` as separate evidence.
   Static Python and executable TypeScript/PostgreSQL regressions include a
   positive gross move that is a net loss after fees. Full pre-deployment gates
-  passed; rollout remains pending the ISSUE-061 merge and broker-state pause.
+  passed. The correction merged and deployed with release `.36`; its first
+  model performance context uses stored fee-inclusive results exactly once.
 
 ### ISSUE-061 delivery details
 
@@ -542,8 +543,35 @@ never justify empty, noisy, unsafe, or misleading commits.
   dataframes, 65 metrics, and 15 tabs with zero exceptions. Replay/backtest,
   zero-vulnerability npm/pip audits, tracked-file secret scan, shell/PM2 checks,
   `git diff --check`, and all five offline systemd security parses at 2.8
-  (`OK`) passed. Merge and paused rollout are next; this is not yet deployed
-  broker-demo evidence.
+  (`OK`) passed. [PR #149](https://github.com/AegisFintech/scalping-bot/pull/149)
+  squash-merged as `dff27ca` at 09:59:07 GMT+8.
+
+  New analyses were durably paused while one `.35` OCO was active. Its BUY leg
+  filled, the SELL peer cancelled, and exact terminal broker evidence closed
+  the position at 10:08:23 GMT+8 for net demo P/L `-2.50`, including fees
+  `-0.26`. The final `.35` sample was 5 trades, 1 win/4 losses, net `-7.11`,
+  median hold 2.95 minutes, and mean loss `-2.29`; this is much shorter and a
+  smaller average loss than `.34`, but far too small to establish accuracy or
+  profitability.
+
+  All five `.36` services were reloaded dependency-first under the retained
+  pause. Deployed market metadata reproduced pip/tick `0.01`, minimum volume
+  `100`, XAU/USD/USD conversion `1`, and the precise commission terms.
+  Execution reported startup ready with exact 0/500 and 0/100 baselines;
+  deployed Streamlit AppTest rendered 37 dataframes, 48 metrics, and 15 tabs
+  with zero exceptions. After unpause, readiness returned trading allowed with
+  no blocker. The first automatic `system-v10` request completed in 26.206
+  seconds and passed every schema, semantic, fee, sizing, reconciliation, and
+  placement gate. Both broker-accepted one-ounce stops use TP distance `0.27`
+  (27 pips) and SL distance `0.54`; persisted estimated BUY/SELL round-trip
+  fees are `0.2669181`/`0.2665731`, with positive expected net
+  `0.0030819`/`0.0034269`. The group reached certain `ACTIVE` state, BUY filled,
+  SELL cancelled, and the broker TP closed the position 0.342 seconds later
+  with fee-inclusive net demo P/L `0.09` and fees `-0.26`. Automation returned
+  to `RUNNING` with zero blockers at 1/500 responses and 1/100 closed trades;
+  all 19,870 Better Stack outbox events were delivered at the evidence
+  snapshot. This proves demo execution and observability, not profitability;
+  the clean `.36` 100-trade cohort is now collecting automatically.
 
 ### ISSUE-001 delivery details
 
