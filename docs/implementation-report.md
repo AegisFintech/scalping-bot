@@ -2376,4 +2376,5 @@ Configured Streamlit AppTest rendered 43 dataframes, 69 metrics, and 15 tabs
 with zero exceptions. Replay/backtest smoke tests, zero-vulnerability npm/pip
 audits, tracked-file secret scanning, shell/PM2 checks, and all five offline
 systemd security parses at 2.8 (`OK`) passed. Issue and automatic delivery are
-tracked by [issue #144](https://github.com/AegisFintech/scalping-bot/issues/144).
+tracked by [issue #144](https://github.com/AegisFintech/scalping-bot/issues/144)
+and [PR #145](https://github.com/AegisFintech/scalping-bot/pull/145).

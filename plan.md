@@ -452,7 +452,9 @@ never justify empty, noisy, unsafe, or misleading commits.
   integration tests, and 85 Python tests, plus formatting, lint, strict type
   checks, build, configured Streamlit AppTest, replay/backtest, dependency
   audits, tracked-file secret scanning, shell/PM2 validation, and all five 2.8
-  (`OK`) systemd security parses. PR, merge, and paused rollout remain.
+  (`OK`) systemd security parses. Review and automatic merge are tracked by
+  [PR #145](https://github.com/AegisFintech/scalping-bot/pull/145); paused rollout
+  remains.
 
 ### ISSUE-001 delivery details
 
