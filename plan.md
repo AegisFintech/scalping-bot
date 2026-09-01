@@ -206,7 +206,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
 | ISSUE-062 | complete    | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
 | ISSUE-063 | complete    | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                 | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
-| ISSUE-064 | in progress | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                 | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
+| ISSUE-064 | complete    | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                 | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -688,13 +688,14 @@ never justify empty, noisy, unsafe, or misleading commits.
   spread, deterministic-risk, ownership, and execution gates; expose durable
   all-time and current-release completed-AI-analysis and closed-demo-trade
   counters on Overview; safely persist a broker-documented rejected deal with
-  exactly zero filled volume on a non-fill execution without creating a fill;
+  exactly zero filled volume on a terminal cancel/expire/reject execution
+  without creating a fill;
   keep contradictory or malformed deal evidence fail-closed; and deploy a new
   immutable demo release under the durable pause before resuming automation.
 - Dependencies: the completed ISSUE-054 sample, ISSUE-063 stop-limit execution,
   authoritative PostgreSQL history, cTrader account reconciliation, and the
   existing demo-only authorization gates.
-- Current status: implementation in progress on
+- Current status: implementation completed on
   `issue-064-continuous-demo-counters`, tracked by
   [issue #157](https://github.com/AegisFintech/scalping-bot/issues/157). The
   pre-change audit found zero active groups, orders, positions, or unresolved
@@ -710,8 +711,24 @@ never justify empty, noisy, unsafe, or misleading commits.
   integration tests. Formatting, linting, TypeScript/Python types, build,
   configured AppTest (42 dataframes, 66 metrics, 15 tabs, zero exceptions),
   replay/backtest, dependency audits, tracked-file secret scan, shell/PM2,
-  diff, and all five offline systemd checks also passed. Paused deployment and
-  automatic terminal-to-next-cycle proof remain.
+  diff, and all five offline systemd checks also passed.
+
+  Complete. [PR #158](https://github.com/AegisFintech/scalping-bot/pull/158)
+  squash-merged as `e822606` at 19:27:22 GMT+8 and closed issue #157. Deployment
+  began under a durable analysis pause only after PostgreSQL proved zero active
+  groups, orders, positions, and unresolved execution events. All five services
+  reloaded dependency-first as `.39`; execution then reconciled certain with
+  only `ANALYSES_PAUSED`, limit/baseline values zero, lifetime counts 1,009/172,
+  and current-release counts 0/0. The paused dashboard rendered continuous mode
+  without an exception before automation resumed. The first broker-minute cycle
+  completed a model response and safely rejected unreachable entry geometry;
+  the next minute was automatically claimed without operator action, completed,
+  and placed two broker-confirmed one-ounce demo stops. At handoff the counters
+  are 1,011 lifetime analyses, 172 lifetime closed trades, 2 `.39` analyses,
+  and 0 `.39` closed trades. The OCO is `ACTIVE`, its two orders are `PENDING`,
+  the watchdog is `MANAGING_SETUP`, and post-placement AppTest rendered 42
+  dataframes, 58 metrics, and 15 tabs with zero exceptions. No active order was
+  interrupted; these are demo automation facts, not profitability evidence.
 
 ### ISSUE-001 delivery details
 
