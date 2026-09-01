@@ -5,6 +5,7 @@ import type pg from "pg";
 
 import type {
   AnalyticsResponse,
+  PerformanceFeeCoverageSummary,
   PerformanceOutcome,
   PerformanceSummary,
   TradingMode,
@@ -20,6 +21,7 @@ interface TradeRow {
   readonly closed_at: Date;
   readonly market_regime: string;
   readonly confidence_bucket: string;
+  readonly strategy_version: string;
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -49,6 +51,18 @@ function setupDimensions(analytics: AnalyticsResponse): Record<string, string> {
           ? "ASK_HEAVY"
           : "BALANCED",
   };
+}
+
+function resultAfterFees(
+  row: TradeRow,
+):
+  "NET_PROFIT" | "GROSS_PROFIT_ERASED_BY_FEES" | "NET_LOSS" | "NET_BREAK_EVEN" {
+  const net = new Decimal(row.realized_pnl);
+  const gross = net.minus(new Decimal(row.fees));
+  if (net.gt(0)) return "NET_PROFIT";
+  if (gross.gt(0)) return "GROSS_PROFIT_ERASED_BY_FEES";
+  if (net.lt(0)) return "NET_LOSS";
+  return "NET_BREAK_EVEN";
 }
 
 export function summarizeTrades(rows: readonly TradeRow[]): PerformanceSummary {
@@ -116,6 +130,43 @@ export function summarizeTrades(rows: readonly TradeRow[]): PerformanceSummary {
   };
 }
 
+export function summarizeFeeCoverage(
+  rows: readonly TradeRow[],
+): PerformanceFeeCoverageSummary {
+  let grossPositiveCloses = 0;
+  let netPositiveCloses = 0;
+  let feeDefeatedCloses = 0;
+  let grossPnl = new Decimal(0);
+  let fees = new Decimal(0);
+  let netPnl = new Decimal(0);
+  for (const row of rows) {
+    const net = new Decimal(row.realized_pnl);
+    const signedFees = new Decimal(row.fees);
+    const gross = net.minus(signedFees);
+    if (gross.gt(0)) grossPositiveCloses += 1;
+    if (net.gt(0)) netPositiveCloses += 1;
+    if (gross.gt(0) && net.lte(0)) feeDefeatedCloses += 1;
+    grossPnl = grossPnl.plus(gross);
+    fees = fees.plus(signedFees);
+    netPnl = netPnl.plus(net);
+  }
+  return {
+    sample_size: rows.length,
+    gross_positive_closes: grossPositiveCloses,
+    net_positive_closes: netPositiveCloses,
+    gross_positive_but_net_nonpositive_closes: feeDefeatedCloses,
+    gross_positive_fee_defeat_rate:
+      grossPositiveCloses === 0
+        ? null
+        : statisticText(
+            new Decimal(feeDefeatedCloses).div(grossPositiveCloses),
+          ),
+    gross_pnl: statisticText(grossPnl),
+    fees: statisticText(fees),
+    net_pnl: statisticText(netPnl),
+  };
+}
+
 export class PostgresPerformanceContext {
   readonly #pool: pg.Pool;
   readonly #accountId: string;
@@ -171,7 +222,7 @@ export class PostgresPerformanceContext {
   ): Promise<Readonly<Record<string, unknown>>> {
     const result = await this.#pool.query<TradeRow>(
       `SELECT t.realized_pnl::text, t.fees::text, t.direction, t.closed_at,
-              t.market_regime, t.confidence_bucket
+              t.market_regime, t.confidence_bucket, t.strategy_version
        FROM trades t
        JOIN order_groups og ON og.id = t.order_group_id
        JOIN analysis_runs ar ON ar.id = og.analysis_id
@@ -182,6 +233,7 @@ export class PostgresPerformanceContext {
     );
     const rows = result.rows;
     const dayStart = tradingDayStart(now, this.#timezone);
+    const sessionRows = rows.filter((row) => row.closed_at >= dayStart);
     const outcomes = rows.map((row) => ({
       netPnl: canonical(new Decimal(row.realized_pnl)),
       closedAt: row.closed_at.toISOString(),
@@ -223,10 +275,20 @@ export class PostgresPerformanceContext {
       setup_dimensions: dimensions,
       rolling: overall,
       current_session: session,
+      fee_coverage: {
+        rolling: summarizeFeeCoverage(rows),
+        current_session: summarizeFeeCoverage(sessionRows),
+      },
       recent_outcomes: rows.slice(0, 20).map((row) => ({
         closed_at: row.closed_at.toISOString(),
         direction: row.direction,
+        strategy_version: row.strategy_version,
+        gross_pnl: canonical(
+          new Decimal(row.realized_pnl).minus(new Decimal(row.fees)),
+        ),
+        fees: canonical(new Decimal(row.fees)),
         net_pnl: canonical(new Decimal(row.realized_pnl)),
+        result_after_fees: resultAfterFees(row),
         market_regime: row.market_regime,
         confidence_bucket: row.confidence_bucket,
       })),

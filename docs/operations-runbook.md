@@ -303,7 +303,7 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v11` tells the endpoint that execution selects the nearest whole
+Prompt `system-v12` tells the endpoint that execution selects the nearest whole
 broker-pip TP whose expected net profit is greater than one full estimated
 round-trip fee, then sets SL distance to exactly twice TP distance (reward:risk
 `1:2`, numeric reward/risk `0.5`). `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to
@@ -324,6 +324,11 @@ broker-minute cycle history** for the exact hash-verified prompt, persisted
 redacted user JSON, parsed schema-validated AI response, post-model refresh,
 validation/risk results, scheduler outcome, order events, and terminal demo
 trade outcome.
+The outcome ledger displays gross P/L, signed fees, fee-inclusive net P/L, and
+a plain fee-coverage label. `GROSS PROFIT ERASED BY FEES` is a closed loss.
+For current demo orders, confirm broker order type `STOP_LIMIT`, configured
+slippage points, and that the open position's TP/SL distances are measured from
+its actual fill before treating the fee buffer as preserved.
 The same selected analysis shows the exact hash-verified M15/M5/M1 image sent
 beside the numeric JSON. Confirm its renderer version, completed-candle flag,
 candle counts, latest candle times, and SHA-256 before comparing the schema 2.1

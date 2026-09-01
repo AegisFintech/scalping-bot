@@ -119,6 +119,18 @@ export interface PerformanceSummary {
   readonly consecutive_losses: number;
 }
 
+export interface PerformanceFeeCoverageSummary {
+  readonly sample_size: number;
+  readonly gross_positive_closes: number;
+  readonly net_positive_closes: number;
+  readonly gross_positive_but_net_nonpositive_closes: number;
+  readonly gross_positive_fee_defeat_rate: DecimalString | null;
+  readonly gross_pnl: DecimalString;
+  /** Signed broker terminal fees/swap/conversion adjustment. */
+  readonly fees: DecimalString;
+  readonly net_pnl: DecimalString;
+}
+
 export interface ModelOrderProposal {
   readonly trigger_price: DecimalString;
   readonly entry_price: DecimalString;
@@ -191,7 +203,8 @@ export interface ModelPromptArtifact {
     | "system-v8"
     | "system-v9"
     | "system-v10"
-    | "system-v11";
+    | "system-v11"
+    | "system-v12";
   readonly content: string;
   readonly sha256: string;
 }

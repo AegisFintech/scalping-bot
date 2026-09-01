@@ -924,3 +924,16 @@ final-volume `expected_net > required_minimum_net_profit` evidence. A second
 AppTest with the new persisted analysis rendered 42 dataframes, 65 metrics, and
 15 tabs with zero exceptions. The active OCO was left under normal automated
 management; no order or position was interrupted.
+
+## ISSUE-063 fill-relative fee protection
+
+Broker cohort analysis for `.37` derives gross P/L as stored net P/L minus
+signed terminal fees. The regression fixture covers a stop entry that gaps
+toward TP: the old absolute TP leaves a gross gain smaller than fees. New tests
+prove BUY/SELL `STOP_LIMIT` fields carry configured integer slippage and exact
+relative TP/SL distances, plus rejection of fractional/out-of-range slippage,
+invalid geometry, and protection distances not representable in `1/100000`
+price units. Performance-context tests prove gross-positive but
+net-nonpositive results remain losses and are explicitly sent to prompt
+`system-v12`. Dashboard tests show gross, fees, net, and the fee-erased label
+without weakening malformed-history rejection.

@@ -58,6 +58,7 @@ class MockClient implements CTraderTradingClient {
   readonly tradePermission = true;
   readonly orders: Record<string, unknown>[] = [];
   readonly cancelled: string[] = [];
+  readonly placementSlippagePoints: string[] = [];
   failSecond = false;
   #handler: ((execution: BrokerExecution) => void) | null = null;
 
@@ -68,9 +69,13 @@ class MockClient implements CTraderTradingClient {
     };
   }
 
-  placeStop(order: PendingOrderCommand): Promise<BrokerExecution> {
+  placeStopLimit(
+    order: PendingOrderCommand,
+    maxSlippagePoints: string,
+  ): Promise<BrokerExecution> {
     if (this.failSecond && order.side === "SELL")
       return Promise.reject(new Error("broker rejected"));
+    this.placementSlippagePoints.push(maxSlippagePoints);
     const result = event(order, 1);
     this.orders.push(result.order as Record<string, unknown>);
     this.#handler?.(result);
@@ -229,11 +234,28 @@ describe("cTrader demo gateway", () => {
       maxSlippageBps: "2",
     });
     await gateway.placeOco([command("BUY"), command("SELL")]);
+    expect(client.placementSlippagePoints).toEqual(["5", "5"]);
     client.fill("client-BUY");
     await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
     client.fill("client-BUY");
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(client.cancelled).toEqual(["102"]);
+  });
+
+  it("fails before placement when stop-limit slippage is not a positive integer", () => {
+    expect(
+      () =>
+        new CTraderDemoGateway({
+          client: new MockClient(),
+          symbolId: "7",
+          symbolName: "XAUUSD",
+          placementEnabled: true,
+          acknowledgement: DEMO_ACKNOWLEDGEMENT,
+          tickSize: "0.01",
+          maxSlippagePoints: "0.5",
+          maxSlippageBps: "2",
+        }),
+    ).toThrow("DEMO_SLIPPAGE_CONFIG_INVALID");
   });
 
   it("does not replace the entry identity with a broker closing child", async () => {

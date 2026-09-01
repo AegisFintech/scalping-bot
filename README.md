@@ -31,7 +31,7 @@ New schema 2.1 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Prompt `system-v11` is screenshot-first, self-checks both independent legs, and
+Prompt `system-v12` is screenshot-first, self-checks both independent legs, and
 receives the broker pip size plus the smallest take-profit distance whose
 expected net profit is greater than one complete estimated round-trip fee at
 minimum volume. Execution selects that nearest whole-pip TP inside the AI
@@ -40,6 +40,11 @@ numeric reward/risk `0.5`), and rechecks the fee buffer at the final sized
 volume. The dashboard shows endpoint and effective SL/TP/R:R plus gross, fee,
 required-net, expected-net, ratio, and basis-volume estimates; generated
 proposals remain distinct from queued or broker-submitted orders.
+Demo entries are submitted as slippage-bounded stop-limit orders. Their SL/TP
+are broker-relative distances, so a permitted fill away from the requested
+entry retains the validated fee-buffered TP distance and exact `2x` SL distance.
+The model's bounded performance history separates gross P/L, signed fees, and
+net P/L and labels a positive move erased by fees as a loss.
 After deterministic margin/sizing work, execution reconciles the account and
 reacquires market state once more. It rejects changed account/candle/metadata,
 rechecks spread and both proposal forms, and uses only that final quote/depth
@@ -113,7 +118,7 @@ Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style.
 The Responses style requests strict JSON Schema output where the endpoint
 supports it; all output is size-limited and validated locally regardless.
 System-v6/schema 2.1 require a buy-stop plus sell-stop proposal whenever the
-model is reached; current prompt `system-v11` tells the endpoint how the
+model is reached; current prompt `system-v12` tells the endpoint how the
 fee-buffered TP, 2× SL, R:R, target ordering, and stop limits are
 validated. The exact system
 prompt/hash is persisted per new request.

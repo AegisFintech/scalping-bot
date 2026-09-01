@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v11",
+  promptVersion: "system-v12",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -134,7 +134,7 @@ describe("model payload builder", () => {
   });
 
   it("versions the commission-aware exit instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v11.md", "utf8");
+    const prompt = readFileSync("prompts/system-v12.md", "utf8");
     const previousPrompt = readFileSync("prompts/system-v10.md", "utf8");
     expect(prompt).toContain("minimum_fee_buffered_take_profit_distance");
     expect(prompt).toContain("minimum_expected_net_to_fees_ratio");
@@ -153,6 +153,9 @@ describe("model payload builder", () => {
     expect(prompt).toContain("For every zone require lower<upper");
     expect(prompt).toContain("risk_reward_ratio=reward/risk");
     expect(prompt).toContain("effective_risk_reward_ratio is therefore");
+    expect(prompt).toContain("performance.recent_outcomes.net_pnl");
+    expect(prompt).toContain("GROSS_PROFIT_ERASED_BY_FEES");
+    expect(prompt).toContain("validated distances relative to the");
     expect(prompt).toContain("Do not mirror one leg");
     expect(prompt).toContain(
       "Read the attached deterministic 1600x1200 PNG first",

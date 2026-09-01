@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   PostgresPerformanceContext,
+  summarizeFeeCoverage,
   summarizeTrades,
 } from "../../apps/execution-service/src/performance-context.js";
 import type {
@@ -21,6 +22,7 @@ describe("performance context", () => {
         closed_at: now,
         market_regime: "TRENDING",
         confidence_bucket: "HIGH",
+        strategy_version: "test-v1",
       },
       {
         realized_pnl: "-10",
@@ -29,6 +31,7 @@ describe("performance context", () => {
         closed_at: now,
         market_regime: "RANGING",
         confidence_bucket: "LOW",
+        strategy_version: "test-v1",
       },
     ]);
     expect(summary).toMatchObject({
@@ -51,6 +54,7 @@ describe("performance context", () => {
         closed_at: new Date("2026-01-01T00:00:00.000Z"),
         market_regime: "RANGING",
         confidence_bucket: "LOW",
+        strategy_version: "test-v1",
       },
     ]);
     expect(summary).toMatchObject({
@@ -58,6 +62,49 @@ describe("performance context", () => {
       losses: 1,
       realized_pnl: "-0.02",
       expectancy: "-0.02",
+    });
+  });
+
+  it("separates gross-positive closes whose fees erase the gain", () => {
+    expect(
+      summarizeFeeCoverage([
+        {
+          realized_pnl: "-0.12",
+          fees: "-0.26",
+          direction: "SHORT",
+          closed_at: new Date("2026-09-01T00:00:00.000Z"),
+          market_regime: "VOLATILE",
+          confidence_bucket: "LOW",
+          strategy_version: "release-.37",
+        },
+        {
+          realized_pnl: "0.30",
+          fees: "-0.26",
+          direction: "SHORT",
+          closed_at: new Date("2026-09-01T00:01:00.000Z"),
+          market_regime: "VOLATILE",
+          confidence_bucket: "LOW",
+          strategy_version: "release-.37",
+        },
+        {
+          realized_pnl: "0",
+          fees: "-0.26",
+          direction: "LONG",
+          closed_at: new Date("2026-09-01T00:02:00.000Z"),
+          market_regime: "VOLATILE",
+          confidence_bucket: "LOW",
+          strategy_version: "release-.37",
+        },
+      ]),
+    ).toEqual({
+      sample_size: 3,
+      gross_positive_closes: 3,
+      net_positive_closes: 1,
+      gross_positive_but_net_nonpositive_closes: 2,
+      gross_positive_fee_defeat_rate: "0.6666666666",
+      gross_pnl: "0.96",
+      fees: "-0.78",
+      net_pnl: "0.18",
     });
   });
 
@@ -92,6 +139,7 @@ describe("performance context", () => {
             closed_at: new Date("2026-09-01T00:00:00.000Z"),
             market_regime: "RANGING",
             confidence_bucket: "LOW",
+            strategy_version: "release-.37",
           },
         ],
       })
@@ -123,10 +171,36 @@ describe("performance context", () => {
       {
         closed_at: "2026-09-01T00:00:00.000Z",
         direction: "LONG",
+        strategy_version: "release-.37",
+        gross_pnl: "0.1",
+        fees: "-0.12",
         net_pnl: "-0.02",
+        result_after_fees: "GROSS_PROFIT_ERASED_BY_FEES",
         market_regime: "RANGING",
         confidence_bucket: "LOW",
       },
     ]);
+    expect(result.fee_coverage).toEqual({
+      rolling: {
+        sample_size: 1,
+        gross_positive_closes: 1,
+        net_positive_closes: 0,
+        gross_positive_but_net_nonpositive_closes: 1,
+        gross_positive_fee_defeat_rate: "1",
+        gross_pnl: "0.1",
+        fees: "-0.12",
+        net_pnl: "-0.02",
+      },
+      current_session: {
+        sample_size: 1,
+        gross_positive_closes: 1,
+        net_positive_closes: 0,
+        gross_positive_but_net_nonpositive_closes: 1,
+        gross_positive_fee_defeat_rate: "1",
+        gross_pnl: "0.1",
+        fees: "-0.12",
+        net_pnl: "-0.02",
+      },
+    });
   });
 });

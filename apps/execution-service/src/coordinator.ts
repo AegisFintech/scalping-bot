@@ -226,7 +226,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v11";
+  readonly promptVersion: "system-v12";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;

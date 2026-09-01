@@ -70,7 +70,7 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v11` tells the endpoint that execution will select the nearest
+- Prompt `system-v12` tells the endpoint that execution will select the nearest
   whole-pip TP whose expected net after estimated fees is strictly greater
   than one full round-trip fee, then set SL to exactly twice that TP distance. The
   coordinator precomputes inclusive, tick-aligned BUY/SELL entry ranges, a
@@ -79,6 +79,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   and the non-sizing affordable stop ceiling. The prompt explicitly self-checks
   both sides' target/stop envelope, target ordering, and executable ranges. No
   account money, budget, volume, or identity crosses the endpoint boundary.
+- Supplies bounded broker outcome history as gross P/L, signed fees, net P/L,
+  result-after-fees, and strategy release. Net-positive remains the only win.
+  Demo submission uses cTrader stop-limit slippage enforcement plus relative
+  SL/TP distances so permitted entry slippage cannot consume the validated
+  fee buffer before the position opens.
 - Sends the deterministic image as high-detail multimodal content beside the
   compact numeric JSON. The numeric message contains only hash/provenance
   metadata for the image, not duplicated base64 bytes.

@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v11` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v12` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -25,6 +25,8 @@ The versioned system prompt tells the model to:
   TP, SL, expiration, confidence, invalidation, concise evidence codes, risk
   flags, and warnings;
 - reduce confidence after sufficiently sampled related losses;
+- treat durable net P/L as authoritative, distinguish gross P/L from signed
+  terminal fees, and count gross-positive/net-nonpositive closes as losses;
 - never calculate or suggest final position size or exceed deterministic policy;
 - always return both conditional proposals after deterministic input eligibility
   has passed, including when evidence is conflicting or confidence is low.
@@ -56,7 +58,7 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-The exact parsed response remains immutable. For current `system-v11` requests,
+The exact parsed response remains immutable. For current `system-v12` requests,
 the execution coordinator separately selects the smallest whole-pip effective
 TP whose expected net after opening commission, closing commission, and
 positive-P/L conversion fees is strictly greater than one full estimated
@@ -67,6 +69,11 @@ The selected effective exits must remain inside the AI technical target and
 stop/invalidation envelope. An off-tick result, unsupported commission model,
 missing currency conversion, or invalid Decimal rejects rather than assuming a
 fee or rounding. Historical prompts retain their versioned transformations.
+For demo placement, cTrader receives the validated protection as distances from
+the actual fill, not stale absolute exits from the requested stop price. The
+entry is a stop-limit with configured positive-integer slippage points. Neither
+transport representation changes the immutable AI response or lets it bypass
+the deterministic fee, risk, precision, or final-volume checks.
 
 Deterministic analytics owns input/data eligibility before inference. Model
 warnings, risk flags, regime, and confidence remain visible diagnostics but
