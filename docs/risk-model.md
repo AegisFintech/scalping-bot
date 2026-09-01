@@ -14,7 +14,7 @@ broker-pip TP whose expected net profit after fees is strictly greater than one
 full estimated round-trip fee, and sets SL distance to exactly twice that TP
 distance. At the minimum ratio `1`, gross TP is therefore strictly greater than
 twice fees. This is reward:risk `1:2`, represented internally as numeric
-reward/risk `0.5`. Prompt `system-v11`
+reward/risk `0.5`. Prompt `system-v12`
 asks the endpoint for a technical target/stop envelope that contains those
 effective levels. The coordinator uses Decimal arithmetic, rejects off-tick or
 unsupported fee inputs without rounding, and keeps the original endpoint
@@ -87,6 +87,15 @@ asset conversion, unavailable fee-buffered TP inside the distance ceiling, or
 insufficient expected net rejects without inference/placement as appropriate.
 This final-volume calculation is the integration point for later deterministic
 money management; the model still cannot choose volume.
+
+At broker submission the demo adapter converts the already validated absolute
+intent into cTrader relative SL/TP distances at `1/100000` price units and
+requires exact integer representation. cTrader therefore applies the same TP
+and exact `2x` SL distances from the actual fill. The pending entry is a
+STOP_LIMIT order whose positive integer `MAX_SLIPPAGE_POINTS` is enforced by
+the broker. Unrepresentable protection, invalid geometry, or invalid slippage
+fails before submission. The durable intent retains the original absolute
+levels; the broker position records its actual fill-relative levels.
 
 After sizing and broker margin estimation, the account is reconciled again. Any
 change to equity, balance, available margin, exposure, pending/fill/cancel, or

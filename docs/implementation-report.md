@@ -2582,3 +2582,43 @@ it does not establish forecast accuracy or profitability.
 
 The terminal-safe rollout record is delivered through
 [PR #153](https://github.com/AegisFintech/scalping-bot/pull/153).
+
+## ISSUE-063 fill-relative fee protection
+
+The first 27 terminal `.37` demo trades were analyzed directly from durable
+broker outcomes. They contained 19 gross-positive closes, but only 17
+fee-inclusive net wins. The two mismatches had exact signed fees of `-0.26` and
+gross P/L of only `0.18` and `0.14`. Their stop entries filled 43 and 48 ticks
+beyond the requested trigger while retaining the old absolute TP. The fee
+estimator was accurate; entry slippage had consumed nearly all of the planned
+`0.54` reward before each position opened. The 27-trade cohort remained net
+`-7.36`, so neither its 17/27 net win count nor this correction is a
+profitability claim.
+
+Release `.38` changes only the cTrader demo transport representation and model
+feedback. The already validated OCO entry is submitted as `STOP_LIMIT` with the
+positive integer `MAX_SLIPPAGE_POINTS`. SL/TP are exact relative distances in
+the Open API's `1/100000` price unit, preserving the fee-buffered TP and exact
+`2x` SL from the actual fill. Invalid geometry, zero/fractional/out-of-int32
+slippage, and unrepresentable relative protection fail before submission. The
+durable order intent retains its original absolute values; reconciliation
+continues to record broker-confirmed position values. This follows the
+[official cTrader Open API message contract](https://help.ctrader.com/open-api/messages/).
+
+Prompt `system-v12` receives bounded recent outcomes containing release, gross
+P/L, signed fees, fee-inclusive net P/L, and an explicit result-after-fees
+classification. Net-positive remains the sole definition of a win, including
+for deterministic performance adjustment. Streamlit's outcome ledger now
+shows gross P/L, fees, net P/L, and a plain `GROSS PROFIT ERASED BY FEES` label.
+No model-response schema, SQL migration, position-sizing rule, demo authority,
+or live authority changed.
+
+Pre-deployment gates passed on 1 Sep 2026: Prettier, ESLint, TypeScript
+typecheck/build, 295 Node tests across 45 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 90 Python tests. Configured
+Streamlit AppTest rendered 39 dataframes, 70 metrics, and 15 tabs with zero
+exceptions. Replay/backtest smoke commands, npm/pip audits with zero known
+vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
+`git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
+passed.

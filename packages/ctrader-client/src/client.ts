@@ -100,6 +100,68 @@ export interface PositionUnrealizedPnl {
   readonly capturedAt: string;
 }
 
+export interface StopLimitProtectionFields {
+  readonly orderType: 6;
+  readonly stopPrice: number;
+  readonly slippageInPoints: number;
+  readonly relativeStopLoss: number;
+  readonly relativeTakeProfit: number;
+}
+
+function relativeProtectionDistance(
+  entry: Decimal,
+  protection: Decimal,
+  reason: string,
+): number {
+  const encoded = entry.minus(protection).abs().mul(100_000);
+  if (!encoded.isInteger() || encoded.lte(0)) throw new Error(reason);
+  return protocolInteger(canonical(encoded), reason);
+}
+
+export function stopLimitProtectionFields(
+  command: PendingOrderCommand,
+  metadata: Pick<SymbolMetadata, "digits">,
+  maxSlippagePoints: string,
+): StopLimitProtectionFields {
+  const entry = new Decimal(command.entryPrice);
+  const stopLoss = new Decimal(command.stopLoss);
+  const takeProfit = new Decimal(command.takeProfit);
+  if (
+    !entry.isFinite() ||
+    !stopLoss.isFinite() ||
+    !takeProfit.isFinite() ||
+    entry.lte(0) ||
+    stopLoss.lte(0) ||
+    takeProfit.lte(0) ||
+    (command.side === "BUY" &&
+      (!stopLoss.lt(entry) || !takeProfit.gt(entry))) ||
+    (command.side === "SELL" && (!stopLoss.gt(entry) || !takeProfit.lt(entry)))
+  ) {
+    throw new Error("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
+  }
+  const slippageInPoints = protocolInteger(
+    maxSlippagePoints,
+    "CTRADER_STOP_LIMIT_SLIPPAGE_INVALID",
+  );
+  if (slippageInPoints < 1 || slippageInPoints > 2_147_483_647)
+    throw new Error("CTRADER_STOP_LIMIT_SLIPPAGE_INVALID");
+  return {
+    orderType: 6,
+    stopPrice: exactProtocolDouble(command.entryPrice, metadata.digits),
+    slippageInPoints,
+    relativeStopLoss: relativeProtectionDistance(
+      entry,
+      stopLoss,
+      "CTRADER_RELATIVE_STOP_LOSS_INVALID",
+    ),
+    relativeTakeProfit: relativeProtectionDistance(
+      entry,
+      takeProfit,
+      "CTRADER_RELATIVE_TAKE_PROFIT_INVALID",
+    ),
+  };
+}
+
 export interface ExternalCashFlowSummary {
   readonly netFlows: string;
   readonly operationCount: number;
@@ -911,7 +973,10 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     }));
   }
 
-  async placeStop(command: PendingOrderCommand): Promise<BrokerExecution> {
+  async placeStopLimit(
+    command: PendingOrderCommand,
+    maxSlippagePoints: string,
+  ): Promise<BrokerExecution> {
     this.#requireTradingReady();
     const metadata = [...this.#metadata.values()].find(
       (item) => item.symbolName === command.symbol,
@@ -929,14 +994,11 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
           metadata.symbolId,
           "CTRADER_SYMBOL_ID_INVALID",
         ),
-        orderType: 3,
+        ...stopLimitProtectionFields(command, metadata, maxSlippagePoints),
         tradeSide: command.side === "BUY" ? 1 : 2,
         volume: protocolInteger(command.volume, "CTRADER_ORDER_VOLUME_INVALID"),
-        stopPrice: exactProtocolDouble(command.entryPrice, metadata.digits),
         timeInForce: 1,
         expirationTimestamp: Date.parse(command.expiresAt),
-        stopLoss: exactProtocolDouble(command.stopLoss, metadata.digits),
-        takeProfit: exactProtocolDouble(command.takeProfit, metadata.digits),
         label: command.strategyLabel.slice(0, 100),
         clientOrderId: command.clientOrderId.slice(0, 50),
         stopTriggerMethod: 1,

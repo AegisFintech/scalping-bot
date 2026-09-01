@@ -58,6 +58,7 @@ _PROMPT_FILES = {
     "system-v9": "system-v9.md",
     "system-v10": "system-v10.md",
     "system-v11": "system-v11.md",
+    "system-v12": "system-v12.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",
@@ -1831,7 +1832,7 @@ def _history_execution_levels(row: Mapping[str, Any]) -> tuple[str, dict[str, st
     )
 
 
-def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
+def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str, str, str]:
     position_count = row.get("position_count")
     trade_count = row.get("trade_count")
     if (
@@ -1848,6 +1849,8 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
     triggered_side = "—"
     realized_pnl = "—"
     fees = "—"
+    gross_pnl = "—"
+    fee_coverage = "—"
     if position_count > trade_count:
         side = row.get("position_side")
         state = row.get("position_state")
@@ -1855,9 +1858,23 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
             raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_SIDE_INVALID")
         triggered_side = "BUY + SELL" if side == "BOTH" else str(side)
         if state in {"OPEN", "CLOSING"}:
-            return "TRADE OPEN", triggered_side, realized_pnl, fees
+            return (
+                "TRADE OPEN",
+                triggered_side,
+                realized_pnl,
+                fees,
+                gross_pnl,
+                fee_coverage,
+            )
         if state in {"UNKNOWN", "RECONCILIATION_PENDING"}:
-            return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
+            return (
+                "RECONCILIATION REQUIRED",
+                triggered_side,
+                realized_pnl,
+                fees,
+                gross_pnl,
+                fee_coverage,
+            )
         raise DecisionViewError("DECISION_VIEW_HISTORY_POSITION_OUTCOME_MISSING")
 
     if trade_count > 0:
@@ -1874,11 +1891,24 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
         )
         fees = _history_decimal(row.get("fees"), "DECISION_VIEW_HISTORY_FEES_INVALID")
         pnl = Decimal(realized_pnl)
+        gross = pnl - Decimal(fees)
+        gross_pnl = _history_decimal(gross, "DECISION_VIEW_HISTORY_GROSS_PNL_INVALID")
+        fee_coverage = (
+            "NET PROFIT AFTER FEES"
+            if pnl > 0
+            else "GROSS PROFIT ERASED BY FEES"
+            if gross > 0
+            else "NET LOSS"
+            if pnl < 0
+            else "NET BREAK-EVEN"
+        )
         return (
             "CLOSED WIN" if pnl > 0 else "CLOSED LOSS" if pnl < 0 else "CLOSED BREAK-EVEN",
             triggered_side,
             realized_pnl,
             fees,
+            gross_pnl,
+            fee_coverage,
         )
 
     buy_state = row.get("buy_order_state")
@@ -1895,9 +1925,23 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
     if group_state is None:
         analysis_state = row.get("analysis_state")
         if analysis_state == "REJECTED":
-            return "REJECTED — NO ORDER", triggered_side, realized_pnl, fees
+            return (
+                "REJECTED — NO ORDER",
+                triggered_side,
+                realized_pnl,
+                fees,
+                gross_pnl,
+                fee_coverage,
+            )
         if analysis_state == "EXPIRED":
-            return "ANALYSIS EXPIRED — NO ORDER", triggered_side, realized_pnl, fees
+            return (
+                "ANALYSIS EXPIRED — NO ORDER",
+                triggered_side,
+                realized_pnl,
+                fees,
+                gross_pnl,
+                fee_coverage,
+            )
         if analysis_state in {
             "PENDING",
             "COLLECTING",
@@ -1906,20 +1950,41 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
             "VALIDATING",
             "ACCEPTED",
         }:
-            return "ANALYSIS IN PROGRESS", triggered_side, realized_pnl, fees
+            return (
+                "ANALYSIS IN PROGRESS",
+                triggered_side,
+                realized_pnl,
+                fees,
+                gross_pnl,
+                fee_coverage,
+            )
         raise DecisionViewError("DECISION_VIEW_HISTORY_ANALYSIS_STATE_INVALID")
     if not isinstance(group_state, str):
         raise DecisionViewError("DECISION_VIEW_HISTORY_GROUP_STATE_INVALID")
     if group_state in {"INTENT_RECORDED", "SUBMITTING", "ACTIVE"}:
-        return "STOPS PENDING", triggered_side, realized_pnl, fees
+        return "STOPS PENDING", triggered_side, realized_pnl, fees, gross_pnl, fee_coverage
     if group_state in {"ONE_FILLED", "CANCELLING_PEER"}:
-        return "FILL / PEER CANCELLING", triggered_side, realized_pnl, fees
+        return (
+            "FILL / PEER CANCELLING",
+            triggered_side,
+            realized_pnl,
+            fees,
+            gross_pnl,
+            fee_coverage,
+        )
     if group_state == "EXPIRED":
-        return "EXPIRED — NO TRADE", triggered_side, realized_pnl, fees
+        return "EXPIRED — NO TRADE", triggered_side, realized_pnl, fees, gross_pnl, fee_coverage
     if group_state == "FAILED":
-        return "FAILED — NO TRADE", triggered_side, realized_pnl, fees
+        return "FAILED — NO TRADE", triggered_side, realized_pnl, fees, gross_pnl, fee_coverage
     if group_state == "RECONCILIATION_REQUIRED":
-        return "RECONCILIATION REQUIRED", triggered_side, realized_pnl, fees
+        return (
+            "RECONCILIATION REQUIRED",
+            triggered_side,
+            realized_pnl,
+            fees,
+            gross_pnl,
+            fee_coverage,
+        )
     raise DecisionViewError("DECISION_VIEW_HISTORY_GROUP_OUTCOME_MISSING")
 
 
@@ -2333,7 +2398,9 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
                 )
             model_levels = _history_model_levels(row.get("parsed_payload"))
             level_source, execution_levels = _history_execution_levels(row)
-            outcome, triggered_side, realized_pnl, fees = _history_outcome(row)
+            outcome, triggered_side, realized_pnl, fees, gross_pnl, fee_coverage = _history_outcome(
+                row
+            )
             reasons = _history_reasons(row.get("rejection_reasons"), row.get("cancellation_reason"))
             evidence_status = "CERTAIN"
         except DecisionViewError as error:
@@ -2352,6 +2419,8 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
             triggered_side = "—"
             realized_pnl = "—"
             fees = "—"
+            gross_pnl = "—"
+            fee_coverage = "—"
             reasons = str(error)
             evidence_status = "UNAVAILABLE"
         output.append(
@@ -2367,7 +2436,9 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
                 **execution_levels,
                 "order_expires_at": row.get("group_expires_at"),
                 "realized_pnl": realized_pnl,
+                "gross_pnl": gross_pnl,
                 "fees": fees,
+                "fee_coverage": fee_coverage,
                 "trade_closed_at": row.get("trade_closed_at"),
                 "evidence_status": evidence_status,
             }
@@ -2376,6 +2447,7 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
     wins = sum(row["result"] == "CLOSED WIN" for row in output)
     losses = sum(row["result"] == "CLOSED LOSS" for row in output)
     break_even = sum(row["result"] == "CLOSED BREAK-EVEN" for row in output)
+    fee_defeated = sum(row["fee_coverage"] == "GROSS PROFIT ERASED BY FEES" for row in output)
     closed_rows = [row for row in output if str(row["result"]).startswith("CLOSED ")]
     pnl_total = sum((Decimal(str(row["realized_pnl"])) for row in closed_rows), Decimal(0))
     fee_total = sum((Decimal(str(row["fees"])) for row in closed_rows), Decimal(0))
@@ -2408,6 +2480,7 @@ def analysis_history_view(rows: Sequence[Mapping[str, Any]], expected_count: int
             "wins": wins,
             "losses": losses,
             "break_even": break_even,
+            "gross_profit_erased_by_fees": fee_defeated,
             "realized_pnl": _history_decimal(pnl_total, "DECISION_VIEW_HISTORY_PNL_TOTAL_INVALID"),
             "fees": _history_decimal(fee_total, "DECISION_VIEW_HISTORY_FEES_TOTAL_INVALID"),
             "context_invalidated": context_invalidated,

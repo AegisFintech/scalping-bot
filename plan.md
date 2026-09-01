@@ -205,6 +205,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-060 | complete    | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
 | ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
 | ISSUE-062 | complete    | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
+| ISSUE-063 | in progress | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                 | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -623,6 +624,39 @@ never justify empty, noisy, unsafe, or misleading commits.
   order or position was cancelled or interrupted. This verifies arithmetic,
   placement, and observability only, not profitability. Rollout evidence is in
   [PR #153](https://github.com/AegisFintech/scalping-bot/pull/153).
+
+### ISSUE-063 delivery details
+
+- Acceptance criteria: preserve the validated TP distance and exact `2x` SL
+  distance from the actual broker fill; instruct cTrader not to fill beyond
+  configured `MAX_SLIPPAGE_POINTS`; fail closed when slippage or relative
+  protection cannot be represented exactly; include bounded broker-recorded
+  gross P/L, fee, and net P/L evidence in model performance history while
+  retaining net-positive as the sole definition of a win; cover BUY, SELL,
+  fee-defeated, and invalid-input paths; and deploy a distinct demo cohort only
+  after full gates and certain terminal reconciliation.
+- Dependencies: ISSUE-062 release `.37`, cTrader relative-protection and
+  stop-limit request fields, exact broker fill and close evidence, and the
+  existing demo-only authorization gates.
+- Current status: implementation is in progress on
+  `issue-063-fill-relative-fee-protection`, tracked by
+  [issue #154](https://github.com/AegisFintech/scalping-bot/issues/154).
+  Broker records for `.37` currently contain 27 closed trades: 19 gross-positive
+  closes, 17 net-positive closes, and 2 commission-defeated closes. Both
+  commission-defeated trades filled 43-48 ticks beyond their requested stop
+  entry while retaining the old absolute TP, leaving gross P/L `0.18` and
+  `0.14` against exact fees of `0.26`. The commission estimate was accurate;
+  fill-relative protection and broker-side entry slippage enforcement are the
+  bounded defect fix. Release `.38` and prompt `system-v12` now encode the
+  cTrader entry as `STOP_LIMIT` with configured integer slippage and exact
+  relative SL/TP distances; performance history and Streamlit explicitly
+  separate gross, signed fees, net, and fee-erased results. Pre-deployment
+  gates passed 295 Node tests across 45 files, 90 Python tests, 17 schema tests,
+  3 migration tests, and all 3 configured integration tests. Formatting,
+  linting, TypeScript/Python types, build, configured AppTest (39 dataframes,
+  70 metrics, 15 tabs, zero exceptions), replay/backtest, dependency audits,
+  tracked-file secret scan, shell/PM2, diff, and all five offline systemd checks
+  also passed. These results are demo engineering evidence, not profitability.
 
 ### ISSUE-001 delivery details
 

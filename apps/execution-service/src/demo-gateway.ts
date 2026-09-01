@@ -24,7 +24,10 @@ import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 export interface CTraderTradingClient {
   readonly tokenExpiryKnown: boolean;
   readonly tradePermission: boolean;
-  placeStop(command: PendingOrderCommand): Promise<BrokerExecution>;
+  placeStopLimit(
+    command: PendingOrderCommand,
+    maxSlippagePoints: string,
+  ): Promise<BrokerExecution>;
   cancelOrder(brokerOrderId: string): Promise<BrokerExecution>;
   reconcileRaw(): Promise<RawReconciliation>;
   onExecution(handler: (execution: BrokerExecution) => void): () => void;
@@ -160,7 +163,9 @@ export class CTraderDemoGateway implements ExecutionGateway {
     };
     if (
       new Decimal(this.#options.tickSize).lte(0) ||
-      new Decimal(this.#options.maxSlippagePoints).lt(0) ||
+      !new Decimal(this.#options.maxSlippagePoints).isInteger() ||
+      new Decimal(this.#options.maxSlippagePoints).lt(1) ||
+      new Decimal(this.#options.maxSlippagePoints).gt(2_147_483_647) ||
       new Decimal(this.#options.maxSlippageBps).lt(0)
     ) {
       throw new Error("DEMO_SLIPPAGE_CONFIG_INVALID");
@@ -209,7 +214,10 @@ export class CTraderDemoGateway implements ExecutionGateway {
     for (const item of tracked)
       this.#orders.set(item.command.clientOrderId, item);
 
-    const firstExecution = await this.#options.client.placeStop(commands[0]);
+    const firstExecution = await this.#options.client.placeStopLimit(
+      commands[0],
+      this.#options.maxSlippagePoints,
+    );
     this.#applyExecution(firstExecution);
     if (
       firstExecution.executionType === 3 ||
@@ -221,7 +229,10 @@ export class CTraderDemoGateway implements ExecutionGateway {
     await this.#options.client.reconcileRaw();
 
     try {
-      const secondExecution = await this.#options.client.placeStop(commands[1]);
+      const secondExecution = await this.#options.client.placeStopLimit(
+        commands[1],
+        this.#options.maxSlippagePoints,
+      );
       this.#applyExecution(secondExecution);
       await this.#options.client.reconcileRaw();
     } catch (error) {

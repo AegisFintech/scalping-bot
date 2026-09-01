@@ -1580,8 +1580,8 @@ with tabs[5]:
             summary_columns[2].metric("Pending stop setups", summary["pending_stops"])
             summary_columns[3].metric("Expired without trade", summary["expired_without_trade"])
             summary_columns[4].metric("Open trades", summary["open_trades"])
-            result_columns = st.columns(5)
-            result_columns[0].metric("Closed wins", summary["wins"])
+            result_columns = st.columns(6)
+            result_columns[0].metric("Closed wins after fees", summary["wins"])
             result_columns[1].metric("Closed losses", summary["losses"])
             result_columns[2].metric("Break-even", summary["break_even"])
             result_columns[3].metric(
@@ -1590,6 +1590,14 @@ with tabs[5]:
                 help="Signed cTrader result already includes terminal fees.",
             )
             result_columns[4].metric("Terminal fees", summary["fees"])
+            result_columns[5].metric(
+                "Gross gains erased by fees",
+                summary["gross_profit_erased_by_fees"],
+                help=(
+                    "The price move was positive, but the final broker result was not "
+                    "profitable after fees."
+                ),
+            )
             st.caption(
                 "Rejected means no broker order was placed. These categories separate "
                 "slow/stale context and temporary dependencies from model-level output."
@@ -1611,8 +1619,10 @@ with tabs[5]:
                 "analysis_state",
                 "reasons",
                 "order_expires_at",
-                "realized_pnl",
+                "gross_pnl",
                 "fees",
+                "realized_pnl",
+                "fee_coverage",
                 "trade_closed_at",
                 "evidence_status",
             ]

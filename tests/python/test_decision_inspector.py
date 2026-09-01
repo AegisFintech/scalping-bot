@@ -923,8 +923,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v11", content, digest)
-    assert current["version"] == "system-v11"
+    current = prompt_artifact_view("system-v12", content, digest)
+    assert current["version"] == "system-v12"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]
@@ -1417,6 +1417,7 @@ def test_analysis_history_distinguishes_non_trades_and_terminal_results() -> Non
         "wins": 1,
         "losses": 1,
         "break_even": 0,
+        "gross_profit_erased_by_fees": 0,
         "realized_pnl": "1.5",
         "fees": "-0.55",
         "context_invalidated": 0,
@@ -1480,8 +1481,42 @@ def test_analysis_history_sums_a_genuine_double_fill_outcome() -> None:
     assert view["rows"][0]["result"] == "CLOSED LOSS"
     assert view["rows"][0]["triggered_side"] == "BUY + SELL"
     assert view["rows"][0]["realized_pnl"] == "-10.09"
+    assert view["rows"][0]["gross_pnl"] == "-9.53"
+    assert view["rows"][0]["fee_coverage"] == "NET LOSS"
     assert view["summary"]["losses"] == 1
     assert view["summary"]["realized_pnl"] == "-10.09"
+
+
+def test_analysis_history_labels_a_gross_gain_erased_by_fees() -> None:
+    fee_defeated = history_row(
+        analysis_state="EXPIRED",
+        rejection_reasons=[],
+        group_state="CLOSED",
+        group_expires_at="2026-09-01T08:00:00.000Z",
+        buy_order_state="CANCELLED",
+        buy_order_entry="4420.00",
+        buy_order_stop_loss="4418.92",
+        buy_order_take_profit="4420.54",
+        sell_order_state="FILLED",
+        sell_order_entry="4419.27",
+        sell_order_stop_loss="4420.35",
+        sell_order_take_profit="4418.73",
+        position_count=1,
+        position_side="SELL",
+        position_state="CLOSED",
+        trade_count=1,
+        trade_direction="SHORT",
+        realized_pnl="-0.12",
+        fees="-0.26",
+        trade_closed_at="2026-09-01T08:00:01.000Z",
+    )
+
+    view = analysis_history_view([fee_defeated], 1)
+
+    assert view["rows"][0]["result"] == "CLOSED LOSS"
+    assert view["rows"][0]["gross_pnl"] == "0.14"
+    assert view["rows"][0]["fee_coverage"] == "GROSS PROFIT ERASED BY FEES"
+    assert view["summary"]["gross_profit_erased_by_fees"] == 1
 
 
 def test_analysis_history_rejects_duplicate_identity_and_sanitizes_bad_model_data() -> None:
