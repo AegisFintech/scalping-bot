@@ -2378,3 +2378,39 @@ audits, tracked-file secret scanning, shell/PM2 checks, and all five offline
 systemd security parses at 2.8 (`OK`) passed. Issue and automatic delivery are
 tracked by [issue #144](https://github.com/AegisFintech/scalping-bot/issues/144)
 and [PR #145](https://github.com/AegisFintech/scalping-bot/pull/145).
+
+PR #145 was squash-merged as `42b6e5a` at 1 Sep 2026, 09:12:17 GMT+8. Release
+`.35` was built from merged `main` and deployed under the durable analysis
+pause. The first execution reload raced the market-data restart and failed on
+the loopback dependency; restarting execution after market data became ready
+restored all five services without releasing the pause or creating a cycle.
+Selected PM2 environments then matched `.35`, 0/500 responses, and 0/100 closed
+trades. Streamlit health and configured AppTest passed against the deployed
+source.
+
+The pause was removed at 09:13 GMT+8. Four short cycles ended on finite spread
+reasons and returned to `RUNNING` with no persistent blocker. The first
+completed `system-v9` call used one 26.3-second attempt; final spread widening
+prevented placement. Its immutable response independently passed the deployed
+pure transform with tick-aligned effective levels and no reason code. The next
+automatic call used one 29.0-second attempt and passed the durable transform,
+risk, and placement path. AI SELL entry/SL/TP
+`4444.10 / 4446.10 / 4435.30` became audited and durable broker-order levels
+`4444.10 / 4445.10 / 4441.90`, with effective R:R `2.2`. cTrader accepted both
+pending demo stops; SELL filled and the BUY peer was cancelled. At the rollout
+snapshot the SELL position was initially broker-managed under `MANAGING_SETUP`,
+then closed normally after 2 minutes 57 seconds with net demo P/L `2.05`,
+including fees `-0.26`. Automation returned to `RUNNING` with no blocker and
+the new campaign reached 2/500 responses and 1/100 closed trades. This is demo
+operational evidence only; the requested 100-trade cohort must finish before
+comparing win rate, expectancy, fees, or holding time.
+
+The cohort review also found a separate accounting defect, now bounded as
+[issue #146](https://github.com/AegisFintech/scalping-bot/issues/146). Broker
+close persistence already stores gross profit plus signed fees in
+`trades.realized_pnl`, but dashboard and model-performance code subtract signed
+fees again and thereby label reconstructed gross P/L as net. In `.34`, the
+correct stored net is `-82.16`; the affected calculation reports `-70.62`.
+Win classification remains 10/46 for that particular sample, but fee drag is
+missing from aggregates and AI feedback. This correction is not being folded
+silently into `.35` after its comparison cohort began.

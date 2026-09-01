@@ -201,7 +201,8 @@ evidence precede any broker-capable live implementation.
 | ISSUE-056 | complete    | [Bound PostgreSQL decision storage and restore fast demo cadence](https://github.com/AegisFintech/scalping-bot/issues/135)        | Verified local archive; compact durable evidence; interrupted-run recovery; immutable rollout                 |
 | ISSUE-057 | complete    | [Restore durable demo scalping recovery and throughput visibility](https://github.com/AegisFintech/scalping-bot/issues/138)       | Exact terminal callback recovery; model-valid bounds; latency trail; stalled-cycle alert; immutable rollout   |
 | ISSUE-058 | complete    | [Fit broker preflight inside the automatic analysis window](https://github.com/AegisFintech/scalping-bot/issues/140)              | Ten-second broker window; carried campaign baselines; uninterrupted immutable rollout                         |
-| ISSUE-059 | in progress | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
+| ISSUE-059 | complete    | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
+| ISSUE-060 | pending     | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -453,8 +454,42 @@ never justify empty, noisy, unsafe, or misleading commits.
   checks, build, configured Streamlit AppTest, replay/backtest, dependency
   audits, tracked-file secret scanning, shell/PM2 validation, and all five 2.8
   (`OK`) systemd security parses. Review and automatic merge are tracked by
-  [PR #145](https://github.com/AegisFintech/scalping-bot/pull/145); paused rollout
-  remains.
+  [PR #145](https://github.com/AegisFintech/scalping-bot/pull/145), squash-merged
+  as `42b6e5a`. All five `.35` services are healthy with exact 0/500 and 0/100
+  baselines, and automatic demo analysis is unpaused. The initial seven
+  terminal analyses included six finite spread rejections and two completed
+  `system-v9` responses. The first completed response was one of those
+  rejections after spread widened during inference. The second passed its
+  audited SL/TP transform and all
+  placement checks; cTrader accepted both demo stops, SELL filled, BUY was
+  cancelled, and the SELL position closed normally after 2 minutes 57 seconds.
+  AI values `4444.10 / 4446.10 / 4435.30` became exact
+  durable SELL entry/SL/TP `4444.10 / 4445.10 / 4441.90`, proving both divisors
+  without rounding. The first `.35` trade recorded net demo P/L `2.05`
+  including fees `-0.26`; the campaign reached 2/500 completed endpoint
+  responses and 1/100 closed trades, returned to `RUNNING`, and had no blocker
+  reason. This is broker-demo operational evidence, not a profitability claim.
+
+### ISSUE-060 delivery details
+
+- Acceptance criteria: define stored `trades.realized_pnl` consistently as the
+  fee-inclusive net broker result; use it exactly once for dashboard totals,
+  win classification, rolling/session statistics, recent outcomes, and model
+  performance adjustment; continue showing signed fees separately; preserve
+  immutable historical rows and Decimal arithmetic; add a regression where
+  positive gross movement becomes a net loss after fees; and version the
+  changed model context as a distinct strategy cohort before rollout.
+- Dependencies: ISSUE-059's immutable `.35` cohort evidence and the existing
+  terminal broker accounting contract, which persists gross profit plus signed
+  swap, commission, and conversion fees into `realized_pnl`.
+- Current status: review found that the dashboard and performance-context code
+  subtract signed `fees` from already fee-inclusive `realized_pnl`. For `.34`,
+  stored net P/L is `-82.16` with fees `-11.54`; subtracting fees again reports
+  gross P/L `-70.62` as though it were net. The 10/46 win classification happens
+  not to change in this cohort, but the aggregates and AI feedback omit fee
+  drag. The bounded correction is tracked by
+  [issue #146](https://github.com/AegisFintech/scalping-bot/issues/146) and is
+  intentionally not mixed into release `.35` after its cohort started.
 
 ### ISSUE-001 delivery details
 
