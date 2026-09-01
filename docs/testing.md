@@ -963,3 +963,13 @@ rendered 42 dataframes, 66 metrics, and 15 tabs with zero exceptions.
 Replay/backtest smoke commands, zero-vulnerability npm/pip audits, the tracked-
 file secret scan, shell/PM2 syntax, `git diff --check`, and all five offline
 systemd security checks at 2.8 (`OK`) passed.
+
+PR #158 merged as `e822606`. Paused deployment proved `.39`, certain empty
+broker/local state, zero count boundaries/baselines, and initial durable totals
+of 1,009 analyses and 172 closed trades. The first unpaused automatic cycle
+completed and rejected only at deterministic entry-distance checks; the next
+broker minute was claimed automatically, completed, and placed two pending demo
+stop-limit legs. The counters advanced to 1,011 all-time / 2 current-release
+analyses while closed trades remained 172 all-time / 0 current-release. A
+post-placement configured AppTest rendered 42 dataframes, 58 metrics, 15 tabs,
+the continuous-mode banner, and all four exact counters with zero exceptions.

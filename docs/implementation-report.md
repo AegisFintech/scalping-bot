@@ -2693,6 +2693,30 @@ source Streamlit AppTest rendered 42 dataframes, 66 metrics, and 15 tabs with
 zero exceptions. Replay/backtest smoke commands, npm/pip audits with zero known
 vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
 `git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
-passed. Deployment evidence will be appended after the source change is merged
-and `.39` is rolled out under the durable analysis pause. These counts and
-checks are demo engineering evidence, not a profitability claim.
+passed. The deployment evidence follows. These counts and checks are demo
+engineering evidence, not a profitability claim.
+
+[PR #158](https://github.com/AegisFintech/scalping-bot/pull/158) squash-merged
+as `e822606` at 19:27:22 GMT+8 and closed issue #157. The rollout acquired the
+durable analysis pause and rechecked zero active groups, orders, positions, and
+unresolved execution events before any restart. All five PM2 services reloaded
+dependency-first as `.39`. Execution initially retried once because market data
+had not opened its listener yet, then started normally and reconciled certain;
+the pause remained active throughout. Status showed both count boundaries and
+baselines disabled, lifetime counters 1,009 analyses / 172 closed trades,
+current-release counters 0/0, and no reason beyond `ANALYSES_PAUSED`. Paused
+AppTest rendered continuous mode with zero exceptions.
+
+After audited unpause, the scheduler claimed the next broker-minute window and
+completed a real external-AI response, moving the counters to 1,010/172 and
+1/0 for `.39`. Deterministic entry-distance checks rejected that proposal, so
+no order was fabricated. Without operator action, the following broker minute
+was claimed and completed; its response passed validation/risk and cTrader
+accepted both one-ounce demo stop-limit legs. The durable counters then read
+1,011 lifetime analyses, 172 lifetime closed trades, 2 `.39` analyses, and 0
+`.39` closed trades. The group was `ACTIVE`, both legs were `PENDING`, the
+watchdog was `MANAGING_SETUP`, and no scheduler stall or reconciliation reason
+remained. Post-placement AppTest rendered 42 dataframes, 58 metrics, and 15
+tabs with no exception and the same four counters. The active broker lifecycle
+was left under normal automatic management. This verifies continuous demo
+scheduling and observability, not prediction accuracy or profitability.
