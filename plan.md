@@ -204,7 +204,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-059 | complete    | [Halve effective demo TP and SL distances](https://github.com/AegisFintech/scalping-bot/issues/144)                               | Tick-exact two-distance transform; prompt v9; distinct 100-trade comparison cohort                            |
 | ISSUE-060 | complete    | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
 | ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
-| ISSUE-062 | in progress | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
+| ISSUE-062 | complete    | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -586,8 +586,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   gates and exact terminal broker reconciliation pass.
 - Dependencies: ISSUE-061 release `.36`, prompt `system-v10`, the typed cTrader
   commission metadata, deterministic risk sizing, and demo-only authority.
-- Current status: [issue #151](https://github.com/AegisFintech/scalping-bot/issues/151)
-  is in progress on `issue-062-fee-buffered-tp`. The policy floor is one full
+- Current status: complete. [Issue #151](https://github.com/AegisFintech/scalping-bot/issues/151)
+  was implemented on `issue-062-fee-buffered-tp`. The policy floor is one full
   round-trip fee of expected net profit: gross TP must therefore be strictly
   greater than twice estimated fees. At the observed XAUUSD schedule and
   one-ounce minimum volume this is approximately 54 pips (`0.54`) rather than
@@ -601,9 +601,27 @@ never justify empty, noisy, unsafe, or misleading commits.
   passed with 286 Node, 89 Python, 17 schema, 3 migration, and all 3 configured
   integration tests; formatting, lint, types, build, AppTest, replay/backtest,
   dependency audits, secret scan, shell/PM2, diff, and all five offline systemd
-  checks also passed. Merge and terminal-safe demo rollout remain.
+  checks also passed.
   [PR #152](https://github.com/AegisFintech/scalping-bot/pull/152) contains the
-  reviewed implementation and complete pre-deployment evidence.
+  reviewed implementation and complete pre-deployment evidence. It
+  squash-merged as `264c064` at 10:37:59 GMT+8. The `.36` lifecycle was
+  certainly `CLOSED` before deployment; its final cohort snapshot was 11
+  completed responses and 3 closed trades.
+
+  All five services reloaded dependency-first under the durable analysis pause
+  and reported release `.37`, fee ratio `1`, and healthy status. Execution
+  started with exact 0/500 response and 0/100 trade baselines while broker state
+  remained terminal. The deployed dashboard AppTest passed under pause. After
+  unpause, the first `system-v11` request completed but rejected `QUOTE_STALE`
+  without an order. The next automatic request completed, passed every gate,
+  and cTrader accepted both one-ounce stops. Their TP distance is `0.54` (54
+  pips), SL distance is `1.08`, and final-volume evidence shows expected net
+  `0.2736252`/`0.2740788` strictly greater than required net
+  `0.2663748`/`0.2659212`. Post-placement AppTest rendered 42 dataframes, 65
+  metrics, and 15 tabs without an exception. Automation is managing the active
+  broker-confirmed OCO at 2/500 responses and 0/100 closed trades; no manual
+  order or position was cancelled or interrupted. This verifies arithmetic,
+  placement, and observability only, not profitability.
 
 ### ISSUE-001 delivery details
 

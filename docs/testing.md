@@ -911,5 +911,16 @@ format/lint, strict mypy over 21 source files, and 89 Python tests. Configured
 Streamlit AppTest rendered 38 dataframes, 69 metrics, and 15 tabs with zero
 exceptions. Replay/backtest smoke commands, zero-vulnerability npm/pip audits,
 tracked-file secret scanning, shell/PM2 syntax, `git diff --check`, and all five
-offline systemd security parses at 2.8 (`OK`) passed. Broker-demo rollout
-evidence remains pending merge and exact terminal-state reconciliation.
+offline systemd security parses at 2.8 (`OK`) passed.
+
+PR #152 merged as `264c064`. Deployment waited for certain terminal `.36`
+broker evidence and retained a durable analysis pause through all five
+dependency-ordered `.37` reloads. Startup verified release/ratio consistency,
+0/500 response and 0/100 trade baselines, terminal broker state, and a clean
+deployed AppTest. The first unpaused `system-v11` cycle covered the rejection
+path: `QUOTE_STALE` created no order. The next cycle covered success: two
+broker-confirmed one-ounce stops, each with TP `0.54`, SL `1.08`, and strict
+final-volume `expected_net > required_minimum_net_profit` evidence. A second
+AppTest with the new persisted analysis rendered 42 dataframes, 65 metrics, and
+15 tabs with zero exceptions. The active OCO was left under normal automated
+management; no order or position was interrupted.
