@@ -2544,8 +2544,41 @@ Configured Streamlit AppTest rendered 38 dataframes, 69 metrics, and 15 tabs
 with zero exceptions. Replay/backtest smoke commands, npm/pip audits with zero
 known vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
 `git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
-passed. Broker-demo rollout evidence is pending merge and exact terminal-state
-reconciliation.
+passed.
 
 [PR #152](https://github.com/AegisFintech/scalping-bot/pull/152) contains this
 implementation and its pre-deployment evidence.
+
+PR #152 squash-merged as `264c064` at 10:37:59 GMT+8 and closed issue #151.
+New analyses were durably paused while `.36` was already in certain terminal
+`CLOSED` state; that cohort ended at 11 completed model responses and 3 closed
+demo trades. No managed or manual broker order/position was interrupted.
+
+Analytics, market data, AI, execution, and dashboard reloaded dependency-first
+under the retained pause. All five PM2 environments reported immutable release
+`.37` and `MIN_EXPECTED_NET_TO_FEES_RATIO=1`. Execution recovered terminal
+broker state and exact 0/500 response plus 0/100 trade baselines; the deployed
+dashboard AppTest passed under pause. After the audited unpause, the first real
+`system-v11` request completed but the refreshed quote was stale, so the cycle
+rejected without placing an order. Automation immediately retried on the next
+eligible broker minute.
+
+The second request completed and passed schema, proposal semantics, fee-buffer
+transform, deterministic sizing/risk, actual-volume fee validation, final
+reconciliation/freshness, and placement. The request carried derived minimum TP
+distance `0.54` and net-to-fees ratio `1`. cTrader accepted both one-ounce
+pending stops: BUY and SELL each use 54 pips (`0.54`) TP and 108 pips (`1.08`)
+SL. Persisted final-volume estimates are:
+
+- BUY: gross `0.54`, fees/required net `0.2663748`, expected net `0.2736252`.
+- SELL: gross `0.54`, fees/required net `0.2659212`, expected net `0.2740788`.
+
+Both strict Decimal comparisons pass. Post-placement AppTest rendered 42
+dataframes, 65 metrics, and 15 tabs with no exception, including the new basis-
+and final-volume fee evidence. At the snapshot automation was safely managing
+the active broker-confirmed OCO at 2/500 completed responses and 0/100 closed
+trades. This proves the deployed demo arithmetic, placement, and observability;
+it does not establish forecast accuracy or profitability.
+
+The terminal-safe rollout record is delivered through
+[PR #153](https://github.com/AegisFintech/scalping-bot/pull/153).
