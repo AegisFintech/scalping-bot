@@ -826,3 +826,25 @@ Streamlit AppTest rendered 43 dataframes, 69 metrics, and 15 tabs with zero
 exceptions. Replay/backtest smoke tests, npm/pip audits with zero known
 vulnerabilities, tracked-file secret scanning, shell/PM2 checks, and all five
 offline systemd security parses at 2.8 (`OK`) passed.
+
+PR #145 was squash-merged as `42b6e5a` and deployed as `.35` under the audited
+analysis pause. Selected PM2 environments matched `.35`, 0/500 completed
+responses, and 0/100 closed trades across all five healthy services. A
+dependency-startup race caused execution's first reload to fail while market
+data was still restarting; one restart after market-data readiness restored
+health with the database pause still active. This is a deployment-ordering
+improvement candidate and did not create an analysis or broker command.
+
+After unpause, the first real `system-v9` response completed in one 26.3-second
+attempt and was rejected by the final unchanged point/percentile spread check.
+Running that immutable response through the exact deployed pure transform
+accepted with no reasons and produced tick-aligned SL/TP on both legs. The next
+response completed in one 29.0-second attempt, passed the durable transform,
+and created broker-accepted demo stops. PostgreSQL proves that AI SELL
+entry/SL/TP `4444.10 / 4446.10 / 4435.30` became audited and durable order
+levels `4444.10 / 4445.10 / 4441.90`; effective R:R was `2.2`. SELL filled and
+the BUY peer cancelled. The resulting SELL position closed normally after 2
+minutes 57 seconds with net demo P/L `2.05`, including fees `-0.26`; automation
+returned to `RUNNING` with no blocker. This establishes deployed arithmetic and
+lifecycle operation, not statistically meaningful performance or
+profitability.
