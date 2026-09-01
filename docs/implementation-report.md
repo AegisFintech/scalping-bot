@@ -2467,3 +2467,44 @@ zero-vulnerability npm/pip audits, tracked-file secret scanning, shell/PM2 and
 diff checks, and all five offline systemd parses at 2.8 (`OK`) passed. This is
 pre-deployment evidence; broker-demo rollout evidence must be recorded after
 merge under an audited analysis pause.
+
+PR #149 squash-merged as `dff27ca` at 09:59:07 GMT+8. The execution control
+accepted a durable analysis pause while one `.35` OCO remained active. Its BUY
+leg filled, its SELL peer cancelled, and the broker-created closing deal
+reconciled the group to `CLOSED` at 10:08:23 GMT+8 with net demo P/L `-2.50`
+including fees `-0.26`. No managed order or position was interrupted for the
+rollout. The completed `.35` sample contains only five trades: 1 win, 4 losses,
+net `-7.11`, fees `-1.30`, expectancy `-1.422`, mean loss `-2.29`, median hold
+2.95 minutes, and average hold 4.03 minutes. Relative to `.34`, duration and
+average-loss magnitude improved, but the sample is not statistically adequate
+and makes no profitability claim.
+
+Analytics, market data, AI, execution, and dashboard were reloaded in dependency
+order while the database pause remained active. All process environments report
+release `.36`, zero campaign baselines, and numeric minimum reward/risk `0.5`.
+The deployed market endpoint returned pip/tick `0.01`, tick value `0.0001`, XAU
+base, USD quote/account, conversion `1`, minimum volume `100`, and the exact
+`USD_PER_MILLION_USD` rate `30` with zero minimum/conversion fee. Execution
+startup checks passed and returned trading disabled only by the intentional
+pause. Streamlit health passed; configured deployed AppTest rendered 37
+dataframes, 48 metrics, and 15 tabs with no exception.
+
+After the pause was audited off, readiness returned `trading_allowed=true`,
+automatic analysis entered `STARTING`, and no blocker or AI cooldown remained.
+The first automatic `.36` cycle called `system-v10` for 26.206 seconds and
+persisted a completed request/response. The unchanged endpoint proposal, the
+commission-aware transform, effective semantic validation, deterministic risk,
+actual-volume fee recheck, final reconciliation, and placement checks all
+passed. At one-ounce volume, durable BUY evidence is entry/TP
+`4448.50/4448.77`, gross `0.27`, estimated fees `0.2669181`, expected net
+`0.0030819`, and effective SL `4447.96`; SELL is entry/TP
+`4443.02/4442.75`, gross `0.27`, estimated fees `0.2665731`, expected net
+`0.0034269`, and effective SL `4443.56`. cTrader accepted both stops and the
+group reconciled from transient callbacks to certain `ACTIVE/PENDING` state.
+BUY then filled, SELL cancelled, and cTrader's TP closed the BUY 0.342 seconds
+later. The durable trade result is fee-inclusive net demo P/L `0.09` with fees
+`-0.26`. Automation returned to `RUNNING` with no blocker at 1/500 completed
+responses and 1/100 closed trades. At the snapshot all 19,870 observability
+outbox events were delivered. The clean `.36` comparison cohort is running
+automatically; this establishes the new arithmetic and broker-demo path, not
+trading accuracy or profitability.

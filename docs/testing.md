@@ -876,3 +876,20 @@ volume `100`, XAU/USD/USD assets, conversion `1`, and commission type
 `USD_PER_MILLION_USD` at `30` with zero minimum and P/L-conversion fee. This is
 metadata/contract evidence only; deployment and demo order evidence remain
 separate.
+
+PR #149 squash-merged as `dff27ca`. Under the durable analysis pause, the final
+`.35` BUY position closed from exact broker evidence before any service reload.
+All five services then came online as `.36`; the deployed market endpoint
+reproduced the tested pip, asset, conversion, and commission contract.
+Execution started at exact 0/500 response and 0/100 closed-trade baselines, and
+configured deployed AppTest rendered 37 dataframes, 48 metrics, and 15 tabs
+with zero exceptions. After unpause, the first `system-v10` response completed
+in 26.206 seconds, passed all validations, and produced broker-accepted BUY and
+SELL pending stops with TP distance `0.27`, SL distance `0.54`, and numeric
+reward/risk `0.5`. PostgreSQL retains accepted minimum-volume and actual-volume
+commission evidence for both legs. BUY filled, SELL cancelled, and the broker
+TP closed the position 0.342 seconds later for fee-inclusive net demo P/L
+`0.09` with fees `-0.26`. Automation returned to `RUNNING` without a blocker at
+1/500 responses and 1/100 closed trades; Better Stack delivery had no backlog
+at the snapshot. This is broker-demo operational evidence, not a performance
+result.
