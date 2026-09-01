@@ -205,7 +205,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-060 | complete    | [Use fee-inclusive realized P/L consistently](https://github.com/AegisFintech/scalping-bot/issues/146)                            | One net-P/L definition; correct dashboard and AI feedback; immutable history                                  |
 | ISSUE-061 | complete    | [Make demo exits pip- and commission-aware](https://github.com/AegisFintech/scalping-bot/issues/148)                              | Smallest commission-positive TP; SL twice TP; broker metadata; distinct demo cohort                           |
 | ISSUE-062 | complete    | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                   | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
-| ISSUE-063 | in progress | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                 | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
+| ISSUE-063 | complete    | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                 | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -638,7 +638,7 @@ never justify empty, noisy, unsafe, or misleading commits.
 - Dependencies: ISSUE-062 release `.37`, cTrader relative-protection and
   stop-limit request fields, exact broker fill and close evidence, and the
   existing demo-only authorization gates.
-- Current status: implementation is in progress on
+- Current status: complete. Implementation was delivered on
   `issue-063-fill-relative-fee-protection`, tracked by
   [issue #154](https://github.com/AegisFintech/scalping-bot/issues/154).
   Broker records for `.37` currently contain 27 closed trades: 19 gross-positive
@@ -657,6 +657,27 @@ never justify empty, noisy, unsafe, or misleading commits.
   70 metrics, 15 tabs, zero exceptions), replay/backtest, dependency audits,
   tracked-file secret scan, shell/PM2, diff, and all five offline systemd checks
   also passed. These results are demo engineering evidence, not profitability.
+  [PR #155](https://github.com/AegisFintech/scalping-bot/pull/155) squash-merged
+  as `2444096` at 16:24:15 GMT+8.
+
+  Deployment waited for zero active analyses, orders, positions, and unresolved
+  execution events, then reloaded all five services dependency-first under a
+  durable analysis pause. Process evidence showed `.38`, fee ratio `1`, and
+  maximum stop-limit slippage `5`; startup and the paused Streamlit AppTest
+  passed before automation resumed. A real `system-v12` request proved the
+  external payload contains gross, signed fees, net, result-after-fees, and
+  release fields. Intermittent provider timeouts exercised automatic circuit
+  open/half-open recovery without broker activity. The next completed response
+  passed deterministic validation and cTrader accepted both one-ounce legs as
+  broker order type `6` (`STOP_LIMIT`). BUY/SELL TP distance is `0.53`, SL is
+  exactly `1.06`, and final-volume expected net `0.2672729`/`0.2678453` is
+  strictly greater than required fee buffer `0.2627271`/`0.2621547`. The group
+  is broker-confirmed `ACTIVE`, its execution journal has zero unresolved
+  events, and post-placement AppTest rendered 42 dataframes, 66 metrics, and 15
+  tabs with zero exceptions. Automatic analysis remains enabled and unpaused;
+  new cycles correctly wait while the current OCO is active. This is demo
+  transport and lifecycle evidence, not profitability. Rollout evidence is
+  tracked by [PR #156](https://github.com/AegisFintech/scalping-bot/pull/156).
 
 ### ISSUE-001 delivery details
 

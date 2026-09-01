@@ -2622,3 +2622,34 @@ exceptions. Replay/backtest smoke commands, npm/pip audits with zero known
 vulnerabilities, tracked-file secret scanning, shell/PM2 syntax,
 `git diff --check`, and all five offline systemd security parses at 2.8 (`OK`)
 passed.
+
+[PR #155](https://github.com/AegisFintech/scalping-bot/pull/155) squash-merged
+as `2444096` at 16:24:15 GMT+8 and closed issue #154. Deployment began only
+after the `.37` lifecycle was certainly terminal and PostgreSQL showed zero
+active analyses, active strategy orders/positions, or unresolved execution
+events. All five `.38` services reloaded dependency-first under a durable
+analysis pause. Process evidence confirmed fee ratio `1` and
+`MAX_SLIPPAGE_POINTS=5`; startup checks and a paused configured AppTest passed.
+
+After unpause, a completed `system-v12` request proved that the durable external
+AI payload contains the new gross P/L, signed fees, net P/L,
+result-after-fees, and strategy-release fields. Intermittent provider timeouts
+then exercised the unchanged circuit open/automatic half-open path without any
+broker order. A later automatic response completed, reset the provider failure
+streak, passed every deterministic validation, and placed the first `.38` OCO.
+cTrader accepted both legs as broker order type `6` (`STOP_LIMIT`) with no
+unresolved execution journal event. The one-ounce intents are:
+
+- BUY: TP distance `0.53`, SL distance `1.06`, estimated fees/required net
+  `0.2627271`, expected net `0.2672729`.
+- SELL: TP distance `0.53`, SL distance `1.06`, estimated fees/required net
+  `0.2621547`, expected net `0.2678453`.
+
+Both exact Decimal comparisons satisfy `expected_net > required_minimum_net`.
+The group is broker-confirmed `ACTIVE` and post-placement AppTest rendered 42
+dataframes, 66 metrics, and 15 tabs with no exception. Automatic analysis is
+enabled and unpaused; another cycle is correctly blocked while the managed OCO
+is active. The pending broker lifecycle was not interrupted. This verifies the
+demo transport and observability change, not fill quality, forecast accuracy,
+or profitability. The rollout record is delivered through
+[PR #156](https://github.com/AegisFintech/scalping-bot/pull/156).
