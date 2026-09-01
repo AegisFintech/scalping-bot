@@ -31,14 +31,15 @@ New schema 2.1 analyses always return a mandatory buy-stop and sell-stop
 proposal after deterministic input checks pass; the AI has no `NO_TRADE` or
 leg-disable switch. The same tab shows prompt/request/response history, the
 hash-verified system prompt, and an opt-in exact redacted user-message view.
-Prompt `system-v10` is screenshot-first, self-checks both independent legs, and
-receives the broker pip size plus the smallest take-profit distance whose gross
-profit is estimated to exceed round-trip commission at minimum volume. Execution
-selects that nearest whole-pip TP inside the AI technical target, sets SL to
-exactly twice its distance (reward:risk `1:2`, numeric reward/risk `0.5`), and
-rechecks commission coverage at the final sized volume. The dashboard shows
-endpoint and effective SL/TP/R:R plus gross, fee, and expected-net estimates;
-generated proposals remain distinct from queued or broker-submitted orders.
+Prompt `system-v11` is screenshot-first, self-checks both independent legs, and
+receives the broker pip size plus the smallest take-profit distance whose
+expected net profit is greater than one complete estimated round-trip fee at
+minimum volume. Execution selects that nearest whole-pip TP inside the AI
+technical target, sets SL to exactly twice its distance (reward:risk `1:2`,
+numeric reward/risk `0.5`), and rechecks the fee buffer at the final sized
+volume. The dashboard shows endpoint and effective SL/TP/R:R plus gross, fee,
+required-net, expected-net, ratio, and basis-volume estimates; generated
+proposals remain distinct from queued or broker-submitted orders.
 After deterministic margin/sizing work, execution reconciles the account and
 reacquires market state once more. It rejects changed account/candle/metadata,
 rechecks spread and both proposal forms, and uses only that final quote/depth
@@ -112,8 +113,8 @@ Configure `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, and the supported API style.
 The Responses style requests strict JSON Schema output where the endpoint
 supports it; all output is size-limited and validated locally regardless.
 System-v6/schema 2.1 require a buy-stop plus sell-stop proposal whenever the
-model is reached; current prompt `system-v10` tells the endpoint how the
-commission-aware TP, 2× SL, R:R, target ordering, and stop limits are
+model is reached; current prompt `system-v11` tells the endpoint how the
+fee-buffered TP, 2× SL, R:R, target ordering, and stop limits are
 validated. The exact system
 prompt/hash is persisted per new request.
 Compact mode computes indicators from the full configured 600/500/300 completed

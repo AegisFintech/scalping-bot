@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v10",
+  promptVersion: "system-v11",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -48,7 +48,8 @@ const common = {
     minRiskRewardRatio: "0.5",
     effectiveMinRiskRewardRatio: "0.5",
     pipSize: "0.01",
-    minimumCommissionCoveringTakeProfitDistance: "0.27",
+    minimumFeeBufferedTakeProfitDistance: "0.54",
+    minimumExpectedNetToFeesRatio: "1",
     stopLossToTakeProfitRatio: "2" as const,
     effectiveRiskRewardRatio: "0.5" as const,
     maxAffordableStopDistance: "0.5",
@@ -97,7 +98,8 @@ describe("model payload builder", () => {
       min_risk_reward_ratio: "0.5",
       effective_min_risk_reward_ratio: "0.5",
       pip_size: "0.01",
-      minimum_commission_covering_take_profit_distance: "0.27",
+      minimum_fee_buffered_take_profit_distance: "0.54",
+      minimum_expected_net_to_fees_ratio: "1",
       stop_loss_to_take_profit_ratio: "2",
       effective_risk_reward_ratio: "0.5",
       max_affordable_stop_distance: "0.5",
@@ -132,16 +134,16 @@ describe("model payload builder", () => {
   });
 
   it("versions the commission-aware exit instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v10.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v9.md", "utf8");
-    expect(prompt).toContain(
-      "minimum_commission_covering_take_profit_distance",
-    );
+    const prompt = readFileSync("prompts/system-v11.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v10.md", "utf8");
+    expect(prompt).toContain("minimum_fee_buffered_take_profit_distance");
+    expect(prompt).toContain("minimum_expected_net_to_fees_ratio");
     expect(prompt).toContain("stop_loss_to_take_profit_ratio");
     expect(prompt).toContain("effective_risk_reward_ratio");
     expect(prompt).toContain("selects the smallest");
     expect(prompt).toContain("whole pip_size take-profit distance");
-    expect(prompt).toContain("expected gross profit strictly exceeds");
+    expect(prompt).toContain("expected net profit after estimated");
+    expect(prompt).toContain("gross TP must be strictly greater than twice");
     expect(prompt).toContain("max_affordable_stop_distance");
     expect(prompt).toContain("preferred_expires_at");
     expect(prompt).toContain("[buy_entry_minimum,buy_entry_maximum]");

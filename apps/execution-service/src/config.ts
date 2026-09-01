@@ -31,6 +31,7 @@ export interface ExecutionConfig {
   readonly baseRiskPercent: string;
   readonly maxRiskPercent: string;
   readonly minRiskRewardRatio: string;
+  readonly minimumExpectedNetToFeesRatio: string;
   readonly maxDailyLossPercent: string;
   readonly maxQuoteAgeMs: number;
   readonly maxOrderBookAgeMs: number;
@@ -267,6 +268,20 @@ export function loadExecutionConfig(
       "MIN_RISK_REWARD_RATIO",
       "100",
     ),
+    minimumExpectedNetToFeesRatio: (() => {
+      const value = boundedPositiveDecimal(
+        environment.MIN_EXPECTED_NET_TO_FEES_RATIO,
+        "1",
+        "MIN_EXPECTED_NET_TO_FEES_RATIO",
+        "100",
+      );
+      if (new Decimal(value).lt(1)) {
+        throw new Error(
+          "CONFIG_DECIMAL_OUT_OF_RANGE:MIN_EXPECTED_NET_TO_FEES_RATIO",
+        );
+      }
+      return value;
+    })(),
     maxDailyLossPercent: decimalPercent(
       environment.MAX_DAILY_LOSS_PERCENT,
       "10",
@@ -305,6 +320,7 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         baseRiskPercent: config.baseRiskPercent,
         maxRiskPercent: config.maxRiskPercent,
         minRiskRewardRatio: config.minRiskRewardRatio,
+        minimumExpectedNetToFeesRatio: config.minimumExpectedNetToFeesRatio,
         maxDailyLossPercent: config.maxDailyLossPercent,
         maxQuoteAgeMs: config.maxQuoteAgeMs,
         maxOrderBookAgeMs: config.maxOrderBookAgeMs,

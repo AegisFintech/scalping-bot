@@ -31,7 +31,8 @@ export interface ModelPayloadInput {
     readonly minRiskRewardRatio: string;
     readonly effectiveMinRiskRewardRatio: string;
     readonly pipSize: string;
-    readonly minimumCommissionCoveringTakeProfitDistance: string;
+    readonly minimumFeeBufferedTakeProfitDistance: string;
+    readonly minimumExpectedNetToFeesRatio: string;
     readonly stopLossToTakeProfitRatio: "2";
     readonly effectiveRiskRewardRatio: "0.5";
     readonly maxAffordableStopDistance: string;
@@ -134,8 +135,10 @@ export function buildModelPayload(
       effective_min_risk_reward_ratio:
         input.executionConstraints.effectiveMinRiskRewardRatio,
       pip_size: input.executionConstraints.pipSize,
-      minimum_commission_covering_take_profit_distance:
-        input.executionConstraints.minimumCommissionCoveringTakeProfitDistance,
+      minimum_fee_buffered_take_profit_distance:
+        input.executionConstraints.minimumFeeBufferedTakeProfitDistance,
+      minimum_expected_net_to_fees_ratio:
+        input.executionConstraints.minimumExpectedNetToFeesRatio,
       stop_loss_to_take_profit_ratio:
         input.executionConstraints.stopLossToTakeProfitRatio,
       effective_risk_reward_ratio:

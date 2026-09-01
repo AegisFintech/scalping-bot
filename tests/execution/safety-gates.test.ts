@@ -4,7 +4,10 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { loadExecutionConfig } from "../../apps/execution-service/src/config.js";
+import {
+  loadExecutionConfig,
+  safetyConfigHash,
+} from "../../apps/execution-service/src/config.js";
 import { DisabledLiveGateway } from "../../apps/execution-service/src/live-compatible-gateway.js";
 import {
   LIVE_ACKNOWLEDGEMENT,
@@ -69,7 +72,31 @@ describe("execution safety gates", () => {
       automaticAnalysisStartWindowSeconds: 5,
       maxEntryDistanceAtr: "2.5",
       minRiskRewardRatio: "0.5",
+      minimumExpectedNetToFeesRatio: "1",
     });
+  });
+
+  it("requires at least one full fee of expected net profit", () => {
+    expect(
+      loadExecutionConfig({ MIN_EXPECTED_NET_TO_FEES_RATIO: "1.5" })
+        .minimumExpectedNetToFeesRatio,
+    ).toBe("1.5");
+    for (const value of ["0", "0.999", "101", "invalid"]) {
+      expect(() =>
+        loadExecutionConfig({ MIN_EXPECTED_NET_TO_FEES_RATIO: value }),
+      ).toThrow(
+        /CONFIG_DECIMAL_(?:INVALID|OUT_OF_RANGE):MIN_EXPECTED_NET_TO_FEES_RATIO/,
+      );
+    }
+    expect(
+      safetyConfigHash(
+        loadExecutionConfig({ MIN_EXPECTED_NET_TO_FEES_RATIO: "1" }),
+      ),
+    ).not.toBe(
+      safetyConfigHash(
+        loadExecutionConfig({ MIN_EXPECTED_NET_TO_FEES_RATIO: "1.5" }),
+      ),
+    );
   });
 
   it("requires a positive bounded effective reward-to-risk ratio", () => {

@@ -18,7 +18,10 @@ export interface CommissionCoverageEvidence {
   readonly closing_commission: string;
   readonly pnl_conversion_fee: string;
   readonly total_estimated_fees: string;
+  readonly minimum_expected_net_to_fees_ratio: string;
+  readonly required_minimum_net_profit: string;
   readonly expected_net_profit: string;
+  readonly expected_net_to_fees_ratio: string | null;
 }
 
 export interface CommissionCoverageResult {
@@ -93,12 +96,17 @@ export function evaluateCommissionCoverage(input: {
   readonly entryPrice: string;
   readonly takeProfit: string;
   readonly volume: string;
+  readonly minimumExpectedNetToFeesRatio: string;
   readonly metadata: SymbolMetadata;
 }): CommissionCoverageResult {
   try {
     const entry = decimal(input.entryPrice);
     const target = decimal(input.takeProfit);
     const volume = decimal(input.volume);
+    const minimumExpectedNetToFeesRatio = decimal(
+      input.minimumExpectedNetToFeesRatio,
+      "COMMISSION_NET_FEE_RATIO_INVALID",
+    );
     const tickSize = decimal(
       input.metadata.tickSize,
       "COMMISSION_TICK_SIZE_INVALID",
@@ -111,6 +119,8 @@ export function evaluateCommissionCoverage(input: {
       input.metadata.tickValue,
       "COMMISSION_TICK_VALUE_INVALID",
     );
+    if (minimumExpectedNetToFeesRatio.lt(1))
+      throw new Error("COMMISSION_NET_FEE_RATIO_INVALID");
     if (
       tickSize.lte(0) ||
       pipSize.lte(0) ||
@@ -142,6 +152,12 @@ export function evaluateCommissionCoverage(input: {
       .plus(closingCommission)
       .plus(conversionFee);
     const expectedNet = gross.minus(totalFees);
+    const requiredMinimumNetProfit = totalFees.mul(
+      minimumExpectedNetToFeesRatio,
+    );
+    const expectedNetToFeesRatio = totalFees.eq(0)
+      ? null
+      : expectedNet.div(totalFees);
     const evidence: CommissionCoverageEvidence = {
       side: input.side,
       entry_price: input.entryPrice,
@@ -154,13 +170,22 @@ export function evaluateCommissionCoverage(input: {
       closing_commission: canonical(closingCommission),
       pnl_conversion_fee: canonical(conversionFee),
       total_estimated_fees: canonical(totalFees),
+      minimum_expected_net_to_fees_ratio: canonical(
+        minimumExpectedNetToFeesRatio,
+      ),
+      required_minimum_net_profit: canonical(requiredMinimumNetProfit),
       expected_net_profit: canonical(expectedNet),
+      expected_net_to_fees_ratio:
+        expectedNetToFeesRatio === null
+          ? null
+          : canonical(expectedNetToFeesRatio),
     };
+    const approved = expectedNet.gt(requiredMinimumNetProfit);
     return {
-      approved: expectedNet.gt(0),
-      reasonCodes: expectedNet.gt(0)
+      approved,
+      reasonCodes: approved
         ? []
-        : [`${input.side}_TAKE_PROFIT_DOES_NOT_COVER_COMMISSION`],
+        : [`${input.side}_TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER`],
       evidence,
     };
   } catch (error) {
@@ -174,12 +199,13 @@ export function evaluateCommissionCoverage(input: {
   }
 }
 
-export function minimumCommissionPositiveTarget(input: {
+export function minimumFeeBufferedTarget(input: {
   readonly side: "BUY" | "SELL";
   readonly entryPrice: string;
   readonly volume: string;
   readonly minimumTakeProfitDistance?: string;
   readonly maximumTakeProfitDistance: string;
+  readonly minimumExpectedNetToFeesRatio: string;
   readonly metadata: SymbolMetadata;
 }): CommissionCoverageResult {
   try {
@@ -191,7 +217,7 @@ export function minimumCommissionPositiveTarget(input: {
         : Decimal.max(pipSize, decimal(input.minimumTakeProfitDistance));
     const maximumDistance = decimal(input.maximumTakeProfitDistance);
     if (maximumDistance.lt(minimumDistance))
-      throw new Error("COMMISSION_POSITIVE_TP_UNAVAILABLE");
+      throw new Error("FEE_BUFFERED_TP_UNAVAILABLE");
     const minimumPips = minimumDistance.div(pipSize).ceil();
     const maximumPips = maximumDistance.div(pipSize).floor();
     if (
@@ -214,13 +240,15 @@ export function minimumCommissionPositiveTarget(input: {
         entryPrice: input.entryPrice,
         takeProfit: canonical(target),
         volume: input.volume,
+        minimumExpectedNetToFeesRatio: input.minimumExpectedNetToFeesRatio,
         metadata: input.metadata,
       });
       if (result.approved) return result;
       if (
         result.evidence === null ||
         result.reasonCodes.some(
-          (reason) => !reason.endsWith("TAKE_PROFIT_DOES_NOT_COVER_COMMISSION"),
+          (reason) =>
+            !reason.endsWith("TAKE_PROFIT_DOES_NOT_MEET_NET_FEE_BUFFER"),
         )
       ) {
         return result;
@@ -228,7 +256,7 @@ export function minimumCommissionPositiveTarget(input: {
     }
     return {
       approved: false,
-      reasonCodes: [`${input.side}_COMMISSION_POSITIVE_TP_UNAVAILABLE`],
+      reasonCodes: [`${input.side}_FEE_BUFFERED_TP_UNAVAILABLE`],
       evidence: null,
     };
   } catch (error) {
@@ -242,9 +270,10 @@ export function minimumCommissionPositiveTarget(input: {
   }
 }
 
-export function validateCommandCommissionCoverage(
+export function validateCommandFeeBuffer(
   commands: readonly [PendingOrderCommand, PendingOrderCommand],
   metadata: SymbolMetadata,
+  minimumExpectedNetToFeesRatio: string,
 ): {
   readonly approved: boolean;
   readonly reasonCodes: readonly string[];
@@ -256,6 +285,7 @@ export function validateCommandCommissionCoverage(
       entryPrice: command.entryPrice,
       takeProfit: command.takeProfit,
       volume: command.volume,
+      minimumExpectedNetToFeesRatio,
       metadata,
     }),
   );

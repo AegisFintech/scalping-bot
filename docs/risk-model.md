@@ -10,9 +10,11 @@ spread/slippage, duplicate prevention, and mode gates. Materially invalid
 proposals are rejected, never silently corrected.
 
 The current execution exit policy preserves entry, chooses the smallest whole
-broker-pip TP whose estimated gross profit strictly exceeds round-trip fees,
-and sets SL distance to exactly twice that TP distance. This is reward:risk
-`1:2`, represented internally as numeric reward/risk `0.5`. Prompt `system-v10`
+broker-pip TP whose expected net profit after fees is strictly greater than one
+full estimated round-trip fee, and sets SL distance to exactly twice that TP
+distance. At the minimum ratio `1`, gross TP is therefore strictly greater than
+twice fees. This is reward:risk `1:2`, represented internally as numeric
+reward/risk `0.5`. Prompt `system-v11`
 asks the endpoint for a technical target/stop envelope that contains those
 effective levels. The coordinator uses Decimal arithmetic, rejects off-tick or
 unsupported fee inputs without rounding, and keeps the original endpoint
@@ -49,10 +51,10 @@ Fewer than one affordable tick rejects before the endpoint. The downstream
 position-sizing calculation remains authoritative and can still reject on newer
 account state, margin, notional, or any other risk ceiling. The prompt's minimum
 SL distance includes the larger of the broker/configured minimum and twice the
-commission-positive TP floor, so the policy cannot place an effective stop
+fee-buffered TP floor, so the policy cannot place an effective stop
 inside the broker/configured minimum.
 
-## Commission-aware exit floor
+## Fee-buffered exit floor
 
 The adapter discovers `pipPosition`, commission type/rate/minimum, base/quote
 and account assets, positive-P/L conversion fee rate, and quote-to-account
@@ -71,15 +73,20 @@ gross_at_tp = tp_ticks * tick_value * native_volume
 pnl_conversion_fee = gross_at_tp * pnl_conversion_fee_percent / 100
 expected_net = gross_at_tp - opening_commission - closing_commission
   - pnl_conversion_fee
+required_minimum_net = total_estimated_fees
+  * minimum_expected_net_to_fees_ratio
 ```
 
-The first whole-pip TP with `expected_net > 0` is eligible; equality is not.
+The first whole-pip TP with `expected_net > required_minimum_net` is eligible;
+equality is not. `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to `1`, cannot be
+configured below `1`, and is included in the immutable safety configuration.
 Before inference the calculation uses broker minimum volume and conservative
 BUY/SELL entry bounds. After deterministic sizing it runs again on both exact
 commands and their actual volume. An unsupported commission type, missing
-asset conversion, unavailable commission-positive TP inside the distance
-ceiling, or non-positive expected net rejects without inference/placement as
-appropriate.
+asset conversion, unavailable fee-buffered TP inside the distance ceiling, or
+insufficient expected net rejects without inference/placement as appropriate.
+This final-volume calculation is the integration point for later deterministic
+money management; the model still cannot choose volume.
 
 After sizing and broker margin estimation, the account is reconciled again. Any
 change to equity, balance, available margin, exposure, pending/fill/cancel, or
@@ -138,7 +145,7 @@ units must not be treated as whole lots.
 - Buy: `stop_loss < entry < take_profit`; buy-stop trigger/entry is above current ask plus broker distance.
 - Sell: `take_profit < entry < stop_loss`; sell-stop trigger/entry is below current bid minus broker distance.
 - `reward / risk >= MIN_RISK_REWARD_RATIO`, current default `0.5`.
-- The effective TP is the nearest whole-pip commission-positive target inside
+- The effective TP is the nearest whole-pip fee-buffered target inside
   the AI technical target; effective SL distance is exactly twice TP distance.
 - Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
 - Buy/sell confirmation distance from the current ask/bid must not exceed the

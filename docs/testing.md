@@ -893,3 +893,23 @@ TP closed the position 0.342 seconds later for fee-inclusive net demo P/L
 1/500 responses and 1/100 closed trades; Better Stack delivery had no backlog
 at the snapshot. This is broker-demo operational evidence, not a performance
 result.
+
+## ISSUE-062 net fee-buffer boundary
+
+Targeted tests prove that, for the observed XAUUSD metadata at minimum volume,
+53 pips fails and 54 pips passes the strict `expected_net > fees` boundary.
+They also cover strict equality rejection, an invalid ratio below one,
+unsupported fee metadata, exact `2x` stop geometry, minimum-volume pre-model
+derivation, final sized-volume recalculation, immutable prompt `system-v11`,
+payload fields, readable dashboard evidence/reasons, release identity, and
+historical `system-v10`/commission-positive rendering.
+
+The full 1 Sep 2026 pre-deployment suite passed Prettier, ESLint, TypeScript
+typecheck/build, 286 Node tests across 44 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 21 source files, and 89 Python tests. Configured
+Streamlit AppTest rendered 38 dataframes, 69 metrics, and 15 tabs with zero
+exceptions. Replay/backtest smoke commands, zero-vulnerability npm/pip audits,
+tracked-file secret scanning, shell/PM2 syntax, `git diff --check`, and all five
+offline systemd security parses at 2.8 (`OK`) passed. Broker-demo rollout
+evidence remains pending merge and exact terminal-state reconciliation.

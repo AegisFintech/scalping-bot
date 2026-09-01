@@ -9,7 +9,7 @@ import {
   canonical,
   decimal,
   isTickAligned,
-  minimumCommissionPositiveTarget,
+  minimumFeeBufferedTarget,
   type CommissionCoverageEvidence,
 } from "../../../packages/risk-engine/src/index.js";
 
@@ -29,12 +29,13 @@ export interface CommissionAwareTransformLegDetails extends CommissionCoverageEv
 }
 
 export interface CommissionAwareTransformDetails {
-  readonly code: "COMMISSION_COVERING_TP_WITH_DOUBLE_SL";
+  readonly code: "FEE_BUFFERED_TP_WITH_DOUBLE_SL";
   readonly commission_type: "USD_PER_MILLION_USD";
   readonly commission_rate: string;
   readonly commission_basis_volume: string;
   readonly stop_loss_to_take_profit_ratio: "2";
   readonly effective_risk_reward_ratio: "0.5";
+  readonly minimum_expected_net_to_fees_ratio: string;
   readonly buy: CommissionAwareTransformLegDetails;
   readonly sell: CommissionAwareTransformLegDetails;
 }
@@ -60,6 +61,7 @@ export function deriveCommissionAwareMinimumDistances(input: {
   readonly sellEntryPrice: string;
   readonly minimumStopDistance: string;
   readonly maximumStopDistance: string;
+  readonly minimumExpectedNetToFeesRatio: string;
   readonly metadata: SymbolMetadata;
 }): CommissionAwareMinimumDistances {
   try {
@@ -73,20 +75,22 @@ export function deriveCommissionAwareMinimumDistances(input: {
         decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
       ),
     );
-    const buy = minimumCommissionPositiveTarget({
+    const buy = minimumFeeBufferedTarget({
       side: "BUY",
       entryPrice: input.buyEntryPrice,
       volume: input.metadata.minVolume,
       minimumTakeProfitDistance,
       maximumTakeProfitDistance,
+      minimumExpectedNetToFeesRatio: input.minimumExpectedNetToFeesRatio,
       metadata: input.metadata,
     });
-    const sell = minimumCommissionPositiveTarget({
+    const sell = minimumFeeBufferedTarget({
       side: "SELL",
       entryPrice: input.sellEntryPrice,
       volume: input.metadata.minVolume,
       minimumTakeProfitDistance,
       maximumTakeProfitDistance,
+      minimumExpectedNetToFeesRatio: input.minimumExpectedNetToFeesRatio,
       metadata: input.metadata,
     });
     const reasonCodes = [
@@ -146,6 +150,7 @@ function transformLeg(
   metadata: SymbolMetadata,
   minimumStopDistance: string,
   maximumStopDistance: string,
+  minimumExpectedNetToFeesRatio: string,
 ): {
   readonly proposal: ModelOrderProposal | null;
   readonly details: CommissionAwareTransformLegDetails | null;
@@ -161,12 +166,13 @@ function transformLeg(
   const minimumTakeProfitDistance = decimal(minimumStopDistance).div(
     decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
   );
-  const selected = minimumCommissionPositiveTarget({
+  const selected = minimumFeeBufferedTarget({
     side,
     entryPrice: proposal.entry_price,
     volume: metadata.minVolume,
     minimumTakeProfitDistance: canonical(minimumTakeProfitDistance),
     maximumTakeProfitDistance: canonical(maximumTakeProfitDistance),
+    minimumExpectedNetToFeesRatio,
     metadata,
   });
   if (!selected.approved || selected.evidence === null) {
@@ -193,7 +199,7 @@ function transformLeg(
     (side === "BUY" && !originalTakeProfit.gte(effectiveTakeProfit)) ||
     (side === "SELL" && !originalTakeProfit.lte(effectiveTakeProfit))
   ) {
-    reasons.push(`${side}_AI_TARGET_BELOW_COMMISSION_POSITIVE_TP`);
+    reasons.push(`${side}_AI_TARGET_BELOW_FEE_BUFFERED_TP`);
   }
   if (
     (side === "BUY" && !originalStopLoss.lte(effectiveStopLoss)) ||
@@ -242,6 +248,7 @@ export function applyCommissionAwareExitPolicy(
   metadata: SymbolMetadata,
   minimumStopDistance: string,
   maximumStopDistance: string,
+  minimumExpectedNetToFeesRatio: string,
 ): CommissionAwareTransformResult {
   try {
     const buy = transformLeg(
@@ -250,6 +257,7 @@ export function applyCommissionAwareExitPolicy(
       metadata,
       minimumStopDistance,
       maximumStopDistance,
+      minimumExpectedNetToFeesRatio,
     );
     const sell = transformLeg(
       "SELL",
@@ -257,6 +265,7 @@ export function applyCommissionAwareExitPolicy(
       metadata,
       minimumStopDistance,
       maximumStopDistance,
+      minimumExpectedNetToFeesRatio,
     );
     const reasonCodes = [
       ...new Set([...buy.reasonCodes, ...sell.reasonCodes]),
@@ -265,7 +274,7 @@ export function applyCommissionAwareExitPolicy(
       buy.details === null || sell.details === null
         ? null
         : {
-            code: "COMMISSION_COVERING_TP_WITH_DOUBLE_SL" as const,
+            code: "FEE_BUFFERED_TP_WITH_DOUBLE_SL" as const,
             commission_type: "USD_PER_MILLION_USD" as const,
             commission_rate: metadata.commission.rate,
             commission_basis_volume: metadata.minVolume,
@@ -273,6 +282,7 @@ export function applyCommissionAwareExitPolicy(
               STOP_LOSS_TO_TAKE_PROFIT_RATIO as "2",
             effective_risk_reward_ratio:
               COMMISSION_AWARE_RISK_REWARD_RATIO as "0.5",
+            minimum_expected_net_to_fees_ratio: minimumExpectedNetToFeesRatio,
             buy: buy.details,
             sell: sell.details,
           };
