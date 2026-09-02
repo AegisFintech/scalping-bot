@@ -53,6 +53,12 @@ The versioned system prompt tells the model to:
 - set `valid_until` and both expiries exactly to `preferred_expires_at`. An
   expired response is never extended or reused.
 
+The configured minimum/maximum expiry lifetime is measured from the trusted
+pre-model broker capture used to derive `preferred_expires_at`, not from the
+later post-inference wall clock. This prevents ordinary bounded inference
+latency from shortening an otherwise exact requested lifetime. A response whose
+expiry is already at or before post-inference validation time still rejects.
+
 ## Mandatory proposal
 
 Contracts 2.0 and 2.1 have no decision field, no `NO_TRADE` value, and no per-leg enabled

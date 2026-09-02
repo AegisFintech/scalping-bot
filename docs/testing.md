@@ -1001,3 +1001,19 @@ candidate was fee-negative on the six resolvable trades; the current
 `0.53`/`1.06` candidate replayed at one win, five losses, two same-bar
 ambiguities, and fee-inclusive `-6.33`. This small, ambiguous replay is not
 profitability evidence and does not justify an exit-policy change.
+
+## ISSUE-066 deterministic expiry reference
+
+On 2 Sep 2026, candidate `.41` passed Prettier, ESLint, TypeScript
+typecheck/build, 304 Node tests across 45 files, 18 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 93 Python tests. Configured
+source Streamlit AppTest rendered 39 dataframes, 62 metrics, and 15 tabs with
+zero exceptions. Replay/backtest smoke commands, zero-vulnerability npm/pip
+audits, tracked-file secret scanning, shell/PM2 syntax, `git diff --check`, and
+all five offline systemd security checks at 2.8 (`OK`) passed.
+
+The regression test accepts an exact five-minute model lifetime when validation
+occurs 24 seconds after its trusted pre-model capture, while retaining the full
+configured minimum against that capture. Its failure case moves validation
+past expiry and proves BUY expiry, SELL expiry, and overall validity all reject.

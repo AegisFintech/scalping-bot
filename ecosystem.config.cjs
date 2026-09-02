@@ -24,8 +24,8 @@ function service(name, overrides = {}) {
     env: {
       NODE_ENV: "production",
       APP_ENV: "production",
-      STRATEGY_VERSION: "0.1.0-actionable-oco-auto-demo.40",
-      CODE_VERSION: "0.1.0-actionable-oco-auto-demo.40",
+      STRATEGY_VERSION: "0.1.0-actionable-oco-auto-demo.41",
+      CODE_VERSION: "0.1.0-actionable-oco-auto-demo.41",
       AUTOMATIC_ANALYSIS_COMPLETED_LIMIT: "0",
       AUTOMATIC_ANALYSIS_COMPLETED_BASELINE: "0",
       AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT: "0",

@@ -27,6 +27,11 @@ blocks before inference. The endpoint selects completed-candle structure within
 the preferred band; post-model quote movement, spread, precision, freshness,
 and risk checks remain unchanged and fail closed.
 
+Expiry lifetime bounds use the deterministic pre-model broker capture as their
+reference. Post-model validation separately requires every order expiry and
+`valid_until` to remain in the future. This retains the full configured
+15-minute request while rejecting stale or already-expired output.
+
 Schema 2.1 does not grant the chart or model execution authority. Deterministic
 semantics require each OCO entry to equal its technical-map confirmation price
 and each endpoint TP to equal the first corresponding target. The effective TP
