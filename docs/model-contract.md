@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v12` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v13` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -41,7 +41,9 @@ The versioned system prompt tells the model to:
   reward/risk `0.5` (reward:risk `1:2`). The endpoint does not calculate fees or
   volume;
 - put each BUY/SELL confirmation inside its supplied inclusive, tick-aligned
-  `buy_entry_*` or `sell_entry_*` range. Those ranges already apply current
+  `buy_preferred_entry_*` or `sell_preferred_entry_*` band. Each preferred band
+  is inset by `entry_latency_buffer_atr` inside the containing hard
+  `buy_entry_*` or `sell_entry_*` range. The hard ranges already apply current
   executable quote side, broker/configured minimum distance, and the maximum
   M1-ATR reachability cap;
 - keep each entry-to-SL distance inside the inclusive
@@ -58,7 +60,7 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-The exact parsed response remains immutable. For current `system-v12` requests,
+The exact parsed response remains immutable. For current `system-v13` requests,
 the execution coordinator separately selects the smallest whole-pip effective
 TP whose expected net after opening commission, closing commission, and
 positive-P/L conversion fees is strictly greater than one full estimated

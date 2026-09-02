@@ -380,6 +380,50 @@ def test_broker_lifecycle_prioritizes_live_position_then_pending_orders() -> Non
     assert pending["detail"] == "Active sides: BUY, SELL. No strategy position is currently open."
 
 
+def test_broker_lifecycle_explains_zero_fill_broker_cancellation() -> None:
+    view = broker_lifecycle_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "reasonCodes": [],
+            "automationActivity": {"state": "RUNNING", "reasonCodes": []},
+            "managedSetup": {
+                "status": "LATEST_TERMINAL",
+                "groupState": "FAILED",
+                "cancellationReason": "DEMO_BROKER_ZERO_FILL_CANCELLED",
+                "orders": [
+                    {"side": "BUY", "state": "CANCELLED"},
+                    {"side": "SELL", "state": "CANCELLED"},
+                ],
+                "positions": [],
+                "trades": [],
+            },
+        }
+    )
+
+    assert view["state"] == "SETUP_FAILED"
+    assert view["headline"] == ("Both previous demo stop orders were cancelled without a fill")
+    assert "no reliable cancellation cause" in view["detail"]
+
+
+def test_broker_lifecycle_rejects_unrecognized_terminal_reason() -> None:
+    view = broker_lifecycle_view(
+        {
+            "automaticAnalysisEnabled": True,
+            "reasonCodes": [],
+            "managedSetup": {
+                "status": "LATEST_TERMINAL",
+                "groupState": "FAILED",
+                "cancellationReason": "UNRECOGNIZED_REASON",
+                "orders": [],
+                "positions": [],
+                "trades": [],
+            },
+        }
+    )
+
+    assert view["state"] == "UNKNOWN"
+
+
 def test_broker_lifecycle_reports_both_terminal_oco_positions() -> None:
     view = broker_lifecycle_view(
         {
@@ -947,8 +991,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v12", content, digest)
-    assert current["version"] == "system-v12"
+    current = prompt_artifact_view("system-v13", content, digest)
+    assert current["version"] == "system-v13"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]

@@ -973,3 +973,31 @@ stop-limit legs. The counters advanced to 1,011 all-time / 2 current-release
 analyses while closed trades remained 172 all-time / 0 current-release. A
 post-placement configured AppTest rendered 42 dataframes, 58 metrics, 15 tabs,
 the continuous-mode banner, and all four exact counters with zero exceptions.
+
+## ISSUE-065 conversion cadence and cancellation evidence
+
+On 2 Sep 2026, the pre-deployment suite passed Prettier, ESLint, TypeScript
+typecheck/build, 303 Node tests across 45 files, 17 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 93 Python tests. Configured
+source Streamlit AppTest rendered 42 dataframes, 58 metrics, and 15 tabs with
+zero exceptions. Replay/backtest smoke commands, zero-vulnerability npm/pip
+audits, the tracked-file secret scan, shell/PM2 syntax, `git diff --check`, and
+all five offline systemd security checks at 2.8 (`OK`) passed. `systemd-analyze
+verify` parsed the units and reported only the expected absent
+`/opt/ctrader-ai-scalper/current` deployment paths in this workspace.
+
+Focused tests prove the tick-aligned preferred entry bands remain inside the
+unchanged hard limits and reject an unsatisfiable latency inset. PostgreSQL
+integration proves exactly two strategy-owned, zero-filled cancelled legs with
+no fill/position produce `DEMO_BROKER_ZERO_FILL_CANCELLED`, while a mixed
+rejected/cancelled group does not. Projection/dashboard tests reject malformed
+or unrecognized terminal reasons rather than presenting them as certain.
+
+The distinctly labelled completed-M1 demo replay compared 15 TP/SL candidates
+across 14 `.39` trades. Eight trades closed inside their fill minute and were
+therefore left unresolved rather than reconstructing an intrabar path. Every
+candidate was fee-negative on the six resolvable trades; the current
+`0.53`/`1.06` candidate replayed at one win, five losses, two same-bar
+ambiguities, and fee-inclusive `-6.33`. This small, ambiguous replay is not
+profitability evidence and does not justify an exit-policy change.

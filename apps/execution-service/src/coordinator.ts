@@ -226,7 +226,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v12";
+  readonly promptVersion: "system-v13";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -236,6 +236,7 @@ export interface CoordinatorOptions {
   readonly preferredExpirySeconds: number;
   readonly maxStopDistanceAtr: string;
   readonly maxEntryDistanceAtr: string;
+  readonly entryLatencyBufferAtr: string;
   readonly minStopDistancePoints: string | null;
   readonly maxQuoteAgeMs: number;
   readonly maxMetadataAgeMs: number;
@@ -277,6 +278,11 @@ export interface ModelExecutionBounds {
   readonly buyEntryMaximum: string;
   readonly sellEntryMinimum: string;
   readonly sellEntryMaximum: string;
+  readonly buyPreferredEntryMinimum: string;
+  readonly buyPreferredEntryMaximum: string;
+  readonly sellPreferredEntryMinimum: string;
+  readonly sellPreferredEntryMaximum: string;
+  readonly entryLatencyBufferAtr: string;
   readonly minimumStopDistance: string;
   readonly maximumStopDistance: string;
   readonly preferredExpiresAt: string;
@@ -297,6 +303,7 @@ export function deriveModelExecutionBounds(input: {
   readonly minimumStopDistance: string;
   readonly atr: string;
   readonly maxEntryDistanceAtr: string;
+  readonly entryLatencyBufferAtr: string;
   readonly maxStopDistanceAtr: string;
   readonly maxAffordableStopDistance: string;
   readonly serverTime: string;
@@ -308,6 +315,8 @@ export function deriveModelExecutionBounds(input: {
   const minimumStopDistance = decimal(input.minimumStopDistance);
   const atr = decimal(input.atr);
   const maximumEntryDistance = atr.mul(decimal(input.maxEntryDistanceAtr));
+  const entryLatencyBufferAtr = decimal(input.entryLatencyBufferAtr);
+  const entryLatencyBufferDistance = atr.mul(entryLatencyBufferAtr);
   const maximumStopDistance = floorToTick(
     Decimal.min(
       atr.mul(decimal(input.maxStopDistanceAtr)),
@@ -331,6 +340,39 @@ export function deriveModelExecutionBounds(input: {
   ) {
     throw new Error("MODEL_ENTRY_RANGE_UNSATISFIABLE");
   }
+  const preferredMinimumDistance = Decimal.max(
+    minimumStopDistance,
+    entryLatencyBufferDistance,
+  );
+  const preferredMaximumDistance = maximumEntryDistance.minus(
+    entryLatencyBufferDistance,
+  );
+  const buyPreferredEntryMinimum = ceilToTick(
+    ask.plus(preferredMinimumDistance),
+    tickSize,
+  );
+  const buyPreferredEntryMaximum = floorToTick(
+    ask.plus(preferredMaximumDistance),
+    tickSize,
+  );
+  const sellPreferredEntryMinimum = ceilToTick(
+    bid.minus(preferredMaximumDistance),
+    tickSize,
+  );
+  const sellPreferredEntryMaximum = floorToTick(
+    bid.minus(preferredMinimumDistance),
+    tickSize,
+  );
+  if (
+    buyPreferredEntryMinimum.gt(buyPreferredEntryMaximum) ||
+    sellPreferredEntryMinimum.gt(sellPreferredEntryMaximum) ||
+    buyPreferredEntryMinimum.lt(buyEntryMinimum) ||
+    buyPreferredEntryMaximum.gt(buyEntryMaximum) ||
+    sellPreferredEntryMinimum.lt(sellEntryMinimum) ||
+    sellPreferredEntryMaximum.gt(sellEntryMaximum)
+  ) {
+    throw new Error("MODEL_PREFERRED_ENTRY_RANGE_UNSATISFIABLE");
+  }
   const modelMinimumStopDistance = ceilToTick(minimumStopDistance, tickSize);
   if (maximumStopDistance.lt(modelMinimumStopDistance))
     throw new Error("MODEL_STOP_RANGE_UNSATISFIABLE");
@@ -351,6 +393,11 @@ export function deriveModelExecutionBounds(input: {
     buyEntryMaximum: canonical(buyEntryMaximum),
     sellEntryMinimum: canonical(sellEntryMinimum),
     sellEntryMaximum: canonical(sellEntryMaximum),
+    buyPreferredEntryMinimum: canonical(buyPreferredEntryMinimum),
+    buyPreferredEntryMaximum: canonical(buyPreferredEntryMaximum),
+    sellPreferredEntryMinimum: canonical(sellPreferredEntryMinimum),
+    sellPreferredEntryMaximum: canonical(sellPreferredEntryMaximum),
+    entryLatencyBufferAtr: canonical(entryLatencyBufferAtr),
     minimumStopDistance: canonical(modelMinimumStopDistance),
     maximumStopDistance: canonical(maximumStopDistance),
     preferredExpiresAt: new Date(preferredExpiresAt).toISOString(),
@@ -706,6 +753,7 @@ export class AnalysisCoordinator {
           minimumStopDistance: canonical(minimumStopDistance),
           atr,
           maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
+          entryLatencyBufferAtr: this.#options.entryLatencyBufferAtr,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
           maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
           serverTime: preModelSnapshot.serverTime,

@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v12",
+  promptVersion: "system-v13",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -59,6 +59,11 @@ const common = {
     buyEntryMaximum: "2002.6",
     sellEntryMinimum: "1997.4",
     sellEntryMaximum: "1999.8",
+    buyPreferredEntryMinimum: "2000.85",
+    buyPreferredEntryMaximum: "2001.85",
+    sellPreferredEntryMinimum: "1998.15",
+    sellPreferredEntryMaximum: "1999.15",
+    entryLatencyBufferAtr: "0.75",
     minimumStopDistance: "0.1",
     maximumStopDistance: "0.5",
     preferredExpiresAt: "2026-01-01T00:25:00.000Z",
@@ -109,6 +114,11 @@ describe("model payload builder", () => {
       buy_entry_maximum: "2002.6",
       sell_entry_minimum: "1997.4",
       sell_entry_maximum: "1999.8",
+      buy_preferred_entry_minimum: "2000.85",
+      buy_preferred_entry_maximum: "2001.85",
+      sell_preferred_entry_minimum: "1998.15",
+      sell_preferred_entry_maximum: "1999.15",
+      entry_latency_buffer_atr: "0.75",
       minimum_stop_distance: "0.1",
       maximum_stop_distance: "0.5",
       preferred_expires_at: "2026-01-01T00:25:00.000Z",
@@ -134,8 +144,8 @@ describe("model payload builder", () => {
   });
 
   it("versions the commission-aware exit instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v12.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v10.md", "utf8");
+    const prompt = readFileSync("prompts/system-v13.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v12.md", "utf8");
     expect(prompt).toContain("minimum_fee_buffered_take_profit_distance");
     expect(prompt).toContain("minimum_expected_net_to_fees_ratio");
     expect(prompt).toContain("stop_loss_to_take_profit_ratio");
@@ -146,8 +156,11 @@ describe("model payload builder", () => {
     expect(prompt).toContain("gross TP must be strictly greater than twice");
     expect(prompt).toContain("max_affordable_stop_distance");
     expect(prompt).toContain("preferred_expires_at");
-    expect(prompt).toContain("[buy_entry_minimum,buy_entry_maximum]");
-    expect(prompt).toContain("[sell_entry_minimum,sell_entry_maximum]");
+    expect(prompt).toContain("buy_preferred_entry_minimum");
+    expect(prompt).toContain("buy_preferred_entry_maximum");
+    expect(prompt).toContain("sell_preferred_entry_minimum");
+    expect(prompt).toContain("sell_preferred_entry_maximum");
+    expect(prompt).toContain("entry_latency_buffer_atr");
     expect(prompt).toContain("[minimum_stop_distance,maximum_stop_distance]");
     expect(prompt).toContain("technical_map.bullish_confirmation.price");
     expect(prompt).toContain("For every zone require lower<upper");
@@ -156,7 +169,7 @@ describe("model payload builder", () => {
     expect(prompt).toContain("performance.recent_outcomes.net_pnl");
     expect(prompt).toContain("GROSS_PROFIT_ERASED_BY_FEES");
     expect(prompt).toContain("validated distances relative to the");
-    expect(prompt).toContain("Do not mirror one leg");
+    expect(prompt).toMatch(/Do not mirror\s+one leg/);
     expect(prompt).toContain(
       "Read the attached deterministic 1600x1200 PNG first",
     );

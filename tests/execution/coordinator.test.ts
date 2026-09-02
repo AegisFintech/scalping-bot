@@ -61,7 +61,7 @@ function safety(): SafetyGateInput {
 function promptArtifact(): ModelPromptArtifact {
   const content = "Return a mandatory OCO proposal.";
   return {
-    version: "system-v12",
+    version: "system-v13",
     content,
     sha256: createHash("sha256").update(content).digest("hex"),
   };
@@ -290,7 +290,7 @@ function options(
       expectedCounts: { M1: 1, M5: 1, M15: 1 },
     },
     modelPayloadMode: "compact",
-    promptVersion: "system-v12",
+    promptVersion: "system-v13",
     schemaVersion: "2.1",
     strategyVersion: "test",
     minRiskRewardRatio: "0.5",
@@ -300,6 +300,7 @@ function options(
     preferredExpirySeconds: 1500,
     maxStopDistanceAtr: "3",
     maxEntryDistanceAtr: "2.5",
+    entryLatencyBufferAtr: "0.75",
     minStopDistancePoints: null,
     maxQuoteAgeMs: 3000,
     maxMetadataAgeMs: 86400000,
@@ -405,6 +406,7 @@ describe("analysis coordinator", () => {
         minimumStopDistance: "0.1",
         atr: "1",
         maxEntryDistanceAtr: "2.5",
+        entryLatencyBufferAtr: "0.75",
         maxStopDistanceAtr: "3",
         maxAffordableStopDistance: "2",
         serverTime: "2026-08-27T00:00:05.000Z",
@@ -415,6 +417,11 @@ describe("analysis coordinator", () => {
       buyEntryMaximum: "2002.6",
       sellEntryMinimum: "1997.4",
       sellEntryMaximum: "1999.8",
+      buyPreferredEntryMinimum: "2000.85",
+      buyPreferredEntryMaximum: "2001.85",
+      sellPreferredEntryMinimum: "1998.15",
+      sellPreferredEntryMaximum: "1999.15",
+      entryLatencyBufferAtr: "0.75",
       minimumStopDistance: "0.1",
       maximumStopDistance: "2",
       preferredExpiresAt: "2026-08-27T00:25:05.000Z",
@@ -430,12 +437,31 @@ describe("analysis coordinator", () => {
         minimumStopDistance: "0.2",
         atr: "0.05",
         maxEntryDistanceAtr: "2.5",
+        entryLatencyBufferAtr: "0.75",
         maxStopDistanceAtr: "3",
         maxAffordableStopDistance: "2",
         serverTime: "2026-08-27T00:00:05.000Z",
         preferredExpirySeconds: 1500,
       }),
     ).toThrow("MODEL_ENTRY_RANGE_UNSATISFIABLE");
+  });
+
+  it("rejects a latency-preferred band that cannot fit inside the hard range", () => {
+    expect(() =>
+      deriveModelExecutionBounds({
+        currentBid: "1999.9",
+        currentAsk: "2000.1",
+        tickSize: "0.01",
+        minimumStopDistance: "0.1",
+        atr: "1",
+        maxEntryDistanceAtr: "2.5",
+        entryLatencyBufferAtr: "1.3",
+        maxStopDistanceAtr: "3",
+        maxAffordableStopDistance: "2",
+        serverTime: "2026-08-27T00:00:05.000Z",
+        preferredExpirySeconds: 900,
+      }),
+    ).toThrow("MODEL_PREFERRED_ENTRY_RANGE_UNSATISFIABLE");
   });
 
   it("rejects when the SL range cannot preserve the effective minimum", () => {
@@ -447,6 +473,7 @@ describe("analysis coordinator", () => {
         minimumStopDistance: "0.1",
         atr: "1",
         maxEntryDistanceAtr: "2.5",
+        entryLatencyBufferAtr: "0.75",
         maxStopDistanceAtr: "3",
         maxAffordableStopDistance: "0.05",
         serverTime: "2026-08-27T00:00:05.000Z",

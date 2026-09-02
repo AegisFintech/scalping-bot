@@ -221,6 +221,7 @@ describe("PostgreSQL migrations integration", () => {
         "0011",
         "0012",
         "0013",
+        "0014",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -1460,6 +1461,102 @@ describe("PostgreSQL migrations integration", () => {
         [analysisId],
       );
       expect(terminalAnalysis.rows[0]?.state).toBe("EXPIRED");
+
+      let terminalBrokerSequence = 900;
+      const persistTerminalPair = async (
+        terminalStates: readonly ["CANCELLED" | "REJECTED", "CANCELLED"],
+      ): Promise<string> => {
+        const terminalAnalysisId = randomUUID();
+        const terminalGroupId = randomUUID();
+        await isolated.query(
+          `INSERT INTO analysis_runs
+            (id, account_id, symbol_id, strategy_version_id, mode, state,
+             analysis_time, valid_until)
+           VALUES ($1, $2, $3, $4, 'demo', 'ACCEPTED', now(),
+                   now() + interval '1 hour')`,
+          [terminalAnalysisId, demoAccountId, symbolId, strategyVersionId],
+        );
+        await isolated.query(
+          `INSERT INTO order_groups
+            (id, analysis_id, idempotency_key, mode, state, expires_at)
+           VALUES ($1, $2, $3, 'demo', 'ACTIVE', now() + interval '1 hour')`,
+          [terminalGroupId, terminalAnalysisId, `terminal-${terminalGroupId}`],
+        );
+        for (const [index, side] of ["BUY", "SELL"].entries()) {
+          const clientOrderId = `terminal-${terminalGroupId.slice(0, 8)}-${side.toLowerCase()}`;
+          await isolated.query(
+            `INSERT INTO orders
+              (id, account_id, order_group_id, side, order_type, state,
+               client_order_id, strategy_owned, strategy_label, idempotency_key,
+               entry_price, stop_loss, take_profit, requested_volume,
+               normalized_volume, expires_at)
+             VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true,
+                     'ctrader-ai-scalper:integration', $6, 2001, 1999, 2005,
+                     100, 100, now() + interval '1 hour')`,
+            [
+              randomUUID(),
+              demoAccountId,
+              terminalGroupId,
+              side,
+              clientOrderId,
+              `terminal-order-${terminalGroupId}-${side}`,
+            ],
+          );
+          const raw = structuredClone(acceptedRaw) as unknown as Record<
+            string,
+            unknown
+          >;
+          raw.executionType = terminalStates[index] === "CANCELLED" ? 5 : 7;
+          const rawOrder = raw.order as Record<string, unknown>;
+          rawOrder.orderId = String(terminalBrokerSequence++);
+          rawOrder.orderStatus = terminalStates[index] === "CANCELLED" ? 5 : 3;
+          rawOrder.clientOrderId = clientOrderId;
+          rawOrder.utcLastUpdateTimestamp = 1787544060000 + index;
+          (rawOrder.tradeData as Record<string, unknown>).tradeSide = index + 1;
+          raw.receivedAt = `2026-08-24T04:01:0${index}.100Z`;
+          const normalized = normalizeDemoExecution(
+            raw as unknown as BrokerExecution,
+            { symbolId: "7" },
+          );
+          expect(normalized).not.toBeNull();
+          await store.persist(normalized!);
+        }
+        await isolated.query(
+          "UPDATE analysis_runs SET state = 'EXPIRED' WHERE id = $1",
+          [terminalAnalysisId],
+        );
+        return terminalGroupId;
+      };
+
+      const cancelledGroupId = await persistTerminalPair([
+        "CANCELLED",
+        "CANCELLED",
+      ]);
+      const cancelledGroup = await isolated.query<{
+        state: string;
+        cancellation_reason: string | null;
+      }>(`SELECT state, cancellation_reason FROM order_groups WHERE id = $1`, [
+        cancelledGroupId,
+      ]);
+      expect(cancelledGroup.rows[0]).toEqual({
+        state: "FAILED",
+        cancellation_reason: "DEMO_BROKER_ZERO_FILL_CANCELLED",
+      });
+
+      const rejectedGroupId = await persistTerminalPair([
+        "REJECTED",
+        "CANCELLED",
+      ]);
+      const rejectedGroup = await isolated.query<{
+        state: string;
+        cancellation_reason: string | null;
+      }>(`SELECT state, cancellation_reason FROM order_groups WHERE id = $1`, [
+        rejectedGroupId,
+      ]);
+      expect(rejectedGroup.rows[0]).toEqual({
+        state: "FAILED",
+        cancellation_reason: null,
+      });
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);

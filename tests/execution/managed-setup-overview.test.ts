@@ -12,7 +12,12 @@ function overviewWithRows(input: {
     if (sql.startsWith("BEGIN") || sql === "COMMIT" || sql === "ROLLBACK")
       return Promise.resolve({ rows: [] });
     if (sql.includes("FROM order_groups"))
-      return Promise.resolve({ rows: input.groups });
+      return Promise.resolve({
+        rows: input.groups.map((group) => ({
+          cancellation_reason: null,
+          ...group,
+        })),
+      });
     if (sql.includes("FROM orders"))
       return Promise.resolve({ rows: input.orders ?? [] });
     if (sql.includes("FROM positions"))
@@ -90,12 +95,75 @@ describe("managed setup Overview projection", () => {
       groupState: null,
       groupExpiresAt: null,
       groupUpdatedAt: null,
+      cancellationReason: null,
       orders: [],
       positions: [],
       trades: [],
       position: null,
       trade: null,
     });
+  });
+
+  it("returns a bounded terminal cancellation reason", async () => {
+    const now = new Date("2026-09-02T02:00:00.000Z");
+    const { read } = overviewWithRows({
+      groups: [
+        {
+          id: "group",
+          state: "FAILED",
+          expires_at: now,
+          updated_at: now,
+          cancellation_reason: "DEMO_BROKER_ZERO_FILL_CANCELLED",
+        },
+      ],
+      orders: [
+        {
+          side: "BUY",
+          state: "CANCELLED",
+          entry_price: "3500",
+          stop_loss: "3499",
+          take_profit: "3501",
+          normalized_volume: "100",
+          expires_at: now,
+          updated_at: now,
+        },
+        {
+          side: "SELL",
+          state: "CANCELLED",
+          entry_price: "3490",
+          stop_loss: "3491",
+          take_profit: "3489",
+          normalized_volume: "100",
+          expires_at: now,
+          updated_at: now,
+        },
+      ],
+    });
+
+    await expect(read.read()).resolves.toMatchObject({
+      status: "LATEST_TERMINAL",
+      groupState: "FAILED",
+      cancellationReason: "DEMO_BROKER_ZERO_FILL_CANCELLED",
+    });
+  });
+
+  it("rejects an unsafe terminal cancellation reason", async () => {
+    const now = new Date("2026-09-02T02:00:00.000Z");
+    const { read } = overviewWithRows({
+      groups: [
+        {
+          id: "group",
+          state: "FAILED",
+          expires_at: now,
+          updated_at: now,
+          cancellation_reason: "unsafe reason with spaces",
+        },
+      ],
+    });
+
+    await expect(read.read()).rejects.toThrow(
+      "MANAGED_SETUP_CANCELLATION_REASON_INVALID",
+    );
   });
 
   it("returns the exact durable terminal demo trade result", async () => {

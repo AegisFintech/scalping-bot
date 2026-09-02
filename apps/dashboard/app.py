@@ -405,6 +405,9 @@ with tabs[0]:
                 f"NO ACTIVE MANAGED SETUP — latest terminal group state: {group_state}. "
                 "The levels below are history, not working broker orders."
             )
+        cancellation_reason = managed_setup.get("cancellationReason")
+        if isinstance(cancellation_reason, str):
+            st.caption(f"Terminal reason: {cancellation_reason}")
         st.caption(
             f"Group expires: {format_gmt8_timestamp(managed_setup.get('groupExpiresAt'))} · "
             "last updated: "

@@ -70,14 +70,16 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v12` tells the endpoint that execution will select the nearest
+- Prompt `system-v13` tells the endpoint that execution will select the nearest
   whole-pip TP whose expected net after estimated fees is strictly greater
   than one full round-trip fee, then set SL to exactly twice that TP distance. The
-  coordinator precomputes inclusive, tick-aligned BUY/SELL entry ranges, a
+  coordinator precomputes inclusive, tick-aligned BUY/SELL hard entry ranges,
+  preferred bands inset by the configured M1-ATR latency buffer, a
   fee-buffered minimum TP/SL floor, one stop-distance range, and the exact
   preferred expiry from current quotes, M1 ATR, broker distance, configuration,
   and the non-sizing affordable stop ceiling. The prompt explicitly self-checks
-  both sides' target/stop envelope, target ordering, and executable ranges. No
+  both sides' target/stop envelope, target ordering, and preferred plus hard
+  executable ranges. No
   account money, budget, volume, or identity crosses the endpoint boundary.
 - Supplies bounded broker outcome history as gross P/L, signed fees, net P/L,
   result-after-fees, and strategy release. Net-positive remains the only win.

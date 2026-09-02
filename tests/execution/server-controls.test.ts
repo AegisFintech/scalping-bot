@@ -66,6 +66,7 @@ function server(
           groupState: null,
           groupExpiresAt: null,
           groupUpdatedAt: null,
+          cancellationReason: null,
           orders: [],
           positions: [],
           trades: [],
