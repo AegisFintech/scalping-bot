@@ -2753,3 +2753,26 @@ configured integration tests, Ruff format/lint, strict mypy, 93 Python tests,
 configured Streamlit AppTest, replay/backtest smoke checks, npm/pip audits,
 tracked-file secret scanning, shell/PM2 syntax, and five offline systemd
 security checks. Deployment evidence follows after merge.
+
+[PR #161](https://github.com/AegisFintech/scalping-bot/pull/161) squash-merged
+as `227c9c1`. The rollout activated the durable analysis pause, let the one
+already-running AI request finish, and proved zero active broker groups,
+orders, positions, or unresolved journal events. Migration `0014` applied and
+backfilled four exact `DEMO_BROKER_ZERO_FILL_CANCELLED` groups. All five PM2
+services reloaded dependency-first as `.40`; status retained the pause, showed
+certain terminal broker state, and reset release counters to zero while
+lifetime counters were 1,147 analyses and 187 closed demo trades. The paused
+configured AppTest rendered 33 dataframes, 40 metrics, and 15 tabs with zero
+exceptions.
+
+After audited unpause, automatic analysis immediately resumed. The first cycle
+ended safely with `AI_PROVIDER_TIMEOUT`; without operator action, the scheduler
+claimed the next broker-minute cycle. Its durable `system-v13` response took
+22.833 seconds. BUY entry `4304.82` was within preferred
+`[4302.68,4304.82]` and hard `[4301.07,4306.43]`; SELL entry `4299.37` was
+within preferred `[4297.23,4299.37]` and hard `[4295.62,4300.98]`. Post-model
+spread gates rejected placement, and the following minute was also evaluated
+automatically. At verification, automation was enabled, unpaused, in `RUNNING`
+state, and had no scheduler reason code. This confirms continuous demo
+operation and the new entry contract; it does not weaken spread controls or
+claim profitability.
