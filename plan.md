@@ -208,6 +208,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-063 | complete    | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                        | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
 | ISSUE-064 | complete    | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                        | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
 | ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
+| ISSUE-066 | in progress | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -787,6 +788,28 @@ never justify empty, noisy, unsafe, or misleading commits.
   checks rejected placement, and subsequent broker-minute cycles continued
   automatically. This verifies automated scheduling and entry guidance, not
   profitability or a guaranteed placement rate.
+
+### ISSUE-066 delivery details
+
+- Acceptance criteria: preserve the 15-minute preferred pending lifetime and
+  existing minimum/maximum configuration; validate that requested lifetime
+  against the deterministic pre-model broker capture; separately reject any
+  order/validity timestamp already expired at post-model validation; retain all
+  schema, freshness, spread, risk, reconciliation, and demo-only gates; cover
+  both latency acceptance and stale rejection; deploy immutably and observe one
+  automatic response.
+- Dependencies: ISSUE-065 release `.40`, prompt `system-v13`, and the existing
+  post-model quote/spread/risk refresh.
+- Current status: `.40` produced an exact requested expiry of
+  `2026-09-02T03:16:04.739Z` after a 24.183-second endpoint call, but the old
+  validator measured the 900-second minimum from response time and rejected it
+  as roughly 24 seconds short. Candidate `.41` validates lifetime from the
+  trusted pre-model capture and separately rejects timestamps already expired
+  at post-model validation. Pre-deployment gates passed: 304 Node, 18 schema,
+  3 migration, 3 configured integration, and 93 Python tests, plus formatting,
+  lint, type checks, build, AppTest, replay/backtest, audits, secret scanning,
+  shell/PM2 syntax, and systemd security. Work is tracked by
+  [issue #163](https://github.com/AegisFintech/scalping-bot/issues/163).
 
 ### ISSUE-001 delivery details
 

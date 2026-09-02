@@ -2776,3 +2776,28 @@ automatically. At verification, automation was enabled, unpaused, in `RUNNING`
 state, and had no scheduler reason code. This confirms continuous demo
 operation and the new entry contract; it does not weaken spread controls or
 claim profitability.
+
+## ISSUE-066 deterministic expiry reference
+
+The first `.40` `system-v13` response used the exact requested timestamp for
+`valid_until` and both leg expiries, but a 24.183-second endpoint duration made
+the remaining lifetime 24.183 seconds shorter than the configured 900-second
+minimum. Semantic validation had incorrectly used post-response wall time as
+the lifetime origin, producing `BUY_EXPIRY_INVALID`, `SELL_EXPIRY_INVALID`, and
+`VALID_UNTIL_INVALID` despite exact endpoint compliance.
+
+Candidate `.41` retains the 900-second minimum and 900-second preferred expiry.
+The coordinator supplies the trusted pre-model broker capture as the lifetime
+reference; semantic validation measures minimum/maximum requested lifetime from
+that reference and independently requires all three expiry timestamps to remain
+strictly in the future at post-model validation. Tests cover both ordinary
+inference-latency acceptance and already-expired rejection. All existing quote,
+spread, metadata, schema, precision, risk, ownership, reconciliation, and
+demo-only checks remain unchanged.
+
+Pre-deployment gates passed on 2 Sep 2026: Prettier, ESLint, TypeScript
+typecheck/build, 304 Node tests, 18 schema tests, 3 migration tests, all 3
+configured integration tests, Ruff format/lint, strict mypy, 93 Python tests,
+configured Streamlit AppTest, replay/backtest smoke checks, npm/pip audits,
+tracked-file secret scanning, shell/PM2 syntax, and five offline systemd
+security checks. Deployment evidence follows after merge.

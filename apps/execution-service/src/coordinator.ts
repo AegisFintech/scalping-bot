@@ -960,6 +960,7 @@ export class AnalysisCoordinator {
         analysisId,
         symbol: this.#options.symbol,
         now,
+        expiryReferenceTime: new Date(preModelSnapshot.serverTime),
         quote: decisionSnapshot.quote,
         metadata: decisionSnapshot.metadata,
         atr,

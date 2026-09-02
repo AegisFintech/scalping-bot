@@ -163,6 +163,7 @@ export interface SemanticContext {
   readonly analysisId: string;
   readonly symbol: string;
   readonly now: Date;
+  readonly expiryReferenceTime?: Date;
   readonly quote: Quote;
   readonly metadata: SymbolMetadata;
   readonly atr: string;
@@ -263,9 +264,13 @@ function checkLeg(
     reasons.push(`${side}_STOP_DISTANCE_UNAFFORDABLE_AT_MIN_VOLUME`);
   }
   const expiry = Date.parse(proposal.expires_at);
-  const seconds = (expiry - context.now.getTime()) / 1000;
+  const expiryReferenceMs =
+    context.expiryReferenceTime?.getTime() ?? context.now.getTime();
+  const seconds = (expiry - expiryReferenceMs) / 1000;
   if (
     !Number.isFinite(expiry) ||
+    !Number.isFinite(expiryReferenceMs) ||
+    expiry <= context.now.getTime() ||
     seconds < context.minExpirySeconds ||
     seconds > context.maxExpirySeconds
   ) {
@@ -284,6 +289,7 @@ export function validateSemantics(
   const generatedAt = Date.parse(response.generated_at);
   const validUntil = Date.parse(response.valid_until);
   const nowMs = context.now.getTime();
+  const expiryReferenceMs = context.expiryReferenceTime?.getTime() ?? nowMs;
   if (
     !Number.isFinite(generatedAt) ||
     generatedAt < nowMs - (context.generatedAtPastToleranceMs ?? 600_000) ||
@@ -291,9 +297,11 @@ export function validateSemantics(
   ) {
     reasons.push("GENERATED_AT_IMPLAUSIBLE");
   }
-  const validitySeconds = (validUntil - nowMs) / 1000;
+  const validitySeconds = (validUntil - expiryReferenceMs) / 1000;
   if (
     !Number.isFinite(validUntil) ||
+    !Number.isFinite(expiryReferenceMs) ||
+    validUntil <= nowMs ||
     validitySeconds < context.minExpirySeconds ||
     validitySeconds > context.maxExpirySeconds
   )

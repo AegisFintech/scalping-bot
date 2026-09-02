@@ -210,6 +210,58 @@ describe("model response schema", () => {
     });
   });
 
+  it("validates requested lifetime from deterministic capture after inference latency", () => {
+    const context = {
+      analysisId,
+      symbol: "XAUUSD",
+      now: new Date("2026-01-01T00:00:24.000Z"),
+      expiryReferenceTime: new Date("2026-01-01T00:00:00.000Z"),
+      quote: {
+        bid: "1999.90",
+        ask: "2000.10",
+        sourceTime: "2026-01-01T00:00:24.000Z",
+        receivedAt: "2026-01-01T00:00:24.000Z",
+      },
+      metadata: {
+        ...metadata(),
+        metadataTime: "2026-01-01T00:00:24.000Z",
+      },
+      atr: "5.00",
+      minRiskRewardRatio: "2",
+      minExpirySeconds: 300,
+      maxExpirySeconds: 1800,
+      maxStopDistanceAtr: "3",
+      maxEntryDistanceAtr: "2.5",
+      maxQuoteAgeMs: 3000,
+    } as const;
+
+    expect(validateSemantics(response(), context)).toEqual({
+      accepted: true,
+      reasonCodes: [],
+    });
+    expect(
+      validateSemantics(response(), {
+        ...context,
+        now: new Date("2026-01-01T00:05:01.000Z"),
+        quote: {
+          ...context.quote,
+          sourceTime: "2026-01-01T00:05:01.000Z",
+          receivedAt: "2026-01-01T00:05:01.000Z",
+        },
+        metadata: {
+          ...context.metadata,
+          metadataTime: "2026-01-01T00:05:01.000Z",
+        },
+      }).reasonCodes,
+    ).toEqual(
+      expect.arrayContaining([
+        "BUY_EXPIRY_INVALID",
+        "SELL_EXPIRY_INVALID",
+        "VALID_UNTIL_INVALID",
+      ]),
+    );
+  });
+
   it("rejects confirmations beyond the configured ATR reachability cap", () => {
     const result = validateSemantics(response(), {
       analysisId,
