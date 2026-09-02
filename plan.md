@@ -207,7 +207,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-062 | complete    | [Require demo TP net profit to exceed round-trip fees](https://github.com/AegisFintech/scalping-bot/issues/151)                          | Fee-buffered TP at final volume; SL twice TP; visible evidence; distinct demo cohort                          |
 | ISSUE-063 | complete    | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                        | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
 | ISSUE-064 | complete    | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                        | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
-| ISSUE-065 | in progress | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
+| ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -771,6 +771,22 @@ never justify empty, noisy, unsafe, or misleading commits.
   Pre-deployment gates passed: 303 Node, 17 schema, 3 migration, 3 configured
   integration, and 93 Python tests plus formatting, lint, type checks, build,
   AppTest, replay/backtest, audits, secret scan, shell/PM2, and systemd security.
+  [PR #161](https://github.com/AegisFintech/scalping-bot/pull/161) merged as
+  `227c9c1`. The guarded rollout paused new analyses, allowed one in-flight AI
+  request to close, then proved zero active broker groups, orders, positions,
+  or unresolved execution events before migration/reload. Migration `0014`
+  backfilled the four exact known zero-fill cancellations. All five `.40`
+  services started with prompt `system-v13`, buffer `0.75`, expiry `900` seconds,
+  continuous limits disabled, and the durable pause retained. Paused AppTest
+  rendered 33 dataframes, 40 metrics, and 15 tabs with zero exceptions.
+  Automatic analysis was then resumed. The first cycle timed out at the
+  provider; the scheduler automatically claimed the next minute and completed
+  a 22.833-second `system-v13` response. BUY `4304.82` was inside preferred
+  `[4302.68,4304.82]` and hard `[4301.07,4306.43]`; SELL `4299.37` was inside
+  preferred `[4297.23,4299.37]` and hard `[4295.62,4300.98]`. Refreshed spread
+  checks rejected placement, and subsequent broker-minute cycles continued
+  automatically. This verifies automated scheduling and entry guidance, not
+  profitability or a guaranteed placement rate.
 
 ### ISSUE-001 delivery details
 
