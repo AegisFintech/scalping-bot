@@ -208,7 +208,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-063 | complete    | [Preserve fee-buffered exits across stop-entry slippage](https://github.com/AegisFintech/scalping-bot/issues/154)                        | Relative fill protection; bounded stop-limit slippage; gross/fee/net AI history; distinct demo cohort         |
 | ISSUE-064 | complete    | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                        | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
 | ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
-| ISSUE-066 | in progress | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
+| ISSUE-066 | complete    | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -810,6 +810,18 @@ never justify empty, noisy, unsafe, or misleading commits.
   lint, type checks, build, AppTest, replay/backtest, audits, secret scanning,
   shell/PM2 syntax, and systemd security. Work is tracked by
   [issue #163](https://github.com/AegisFintech/scalping-bot/issues/163).
+  [PR #164](https://github.com/AegisFintech/scalping-bot/pull/164) merged as
+  `7504a81`. The guarded rollout paused new analysis, let the single in-flight
+  cycle finish, proved zero active analysis/broker/journal state, and reloaded
+  all five services as `.41` with the durable pause retained. After unpause,
+  one provider call timed out and the next minute was claimed automatically.
+  The next `system-v13` response completed in 47.681 seconds, passed the new
+  expiry validation, and placed both demo stops. BUY `4301.88` was within
+  preferred `[4300.04,4302.27]`; SELL `4296.20` was within preferred
+  `[4294.33,4296.56]`. Response validity, group expiry, and requested preferred
+  expiry were exactly `2026-09-02T03:22:03.935Z`. The active group remains under
+  normal automated broker management. This is demo transport evidence, not a
+  profitability claim.
 
 ### ISSUE-001 delivery details
 

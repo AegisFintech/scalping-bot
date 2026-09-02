@@ -2754,6 +2754,23 @@ configured Streamlit AppTest, replay/backtest smoke checks, npm/pip audits,
 tracked-file secret scanning, shell/PM2 syntax, and five offline systemd
 security checks. Deployment evidence follows after merge.
 
+[PR #164](https://github.com/AegisFintech/scalping-bot/pull/164) squash-merged
+as `7504a81`. The guarded rollout paused analysis, allowed the one in-flight
+cycle to finish, proved zero active analyses, groups, orders, positions, or
+unresolved journal events, and reloaded all five services dependency-first as
+`.41`. The durable pause survived restart and startup reconciliation was
+certain. After audited unpause, the first provider call timed out safely and
+the scheduler automatically claimed the next broker minute.
+
+That next `system-v13` response took 47.681 seconds—longer than the `.40` call
+that exposed the bug—and passed expiry validation. BUY entry `4301.88` was
+inside preferred `[4300.04,4302.27]`; SELL entry `4296.20` was inside preferred
+`[4294.33,4296.56]`. The response validity, requested preferred expiry, and
+durable broker-group expiry were all exactly `2026-09-02T03:22:03.935Z`.
+cTrader accepted both strategy-owned demo stop orders and the group remained
+`ACTIVE` under normal automatic management. This proves the expiry-reference
+fix and continuous demo workflow, not fill quality or profitability.
+
 [PR #161](https://github.com/AegisFintech/scalping-bot/pull/161) squash-merged
 as `227c9c1`. The rollout activated the durable analysis pause, let the one
 already-running AI request finish, and proved zero active broker groups,
