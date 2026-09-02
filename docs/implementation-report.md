@@ -2720,3 +2720,36 @@ remained. Post-placement AppTest rendered 42 dataframes, 58 metrics, and 15
 tabs with no exception and the same four counters. The active broker lifecycle
 was left under normal automatic management. This verifies continuous demo
 scheduling and observability, not prediction accuracy or profitability.
+
+## ISSUE-065 latency-resistant entries and terminal cancellation evidence
+
+The `.39` baseline showed endpoint latency frequently moved the quote after the
+model selected a hard entry-range edge. Release candidate `.40` keeps all hard
+schema, semantic, precision, freshness, spread, reconciliation, ownership,
+sizing, exposure, and risk checks unchanged. It adds tick-aligned preferred
+entry bands inset by `0.75` completed-M1 ATR and prompt `system-v13` asks the
+endpoint to choose completed-candle structure inside those bands. If the bands
+cannot fit inside the hard executable limits, inference is not called.
+
+Observed `.39` fills all occurred within 12.69 minutes, so the preferred pending
+OCO expiry is reduced from 25 to 15 minutes while the configured maximum remains
+30 minutes. This changes only unfilled waiting time; active-position TP/SL
+management is unchanged. Exactly mapped failed demo groups with two
+strategy-owned cancelled orders, zero filled volume, no fill, and no position
+now retain `DEMO_BROKER_ZERO_FILL_CANCELLED`. The dashboard explains that the
+broker supplied no reliable cause. Mixed, manual, filled, rejected, expired,
+or ambiguous evidence remains unlabelled and fail-closed.
+
+A conservative completed-M1 replay of 15 alternative TP/SL candidates could
+resolve only six of 14 `.39` fills because eight closed inside the fill minute.
+Every candidate was fee-negative on that limited subset, so `.40` retains the
+existing commission-aware `0.53` TP / `1.06` SL behavior rather than optimizing
+against ambiguous data. These are demo engineering observations, not a
+profitability claim.
+
+Pre-deployment gates passed on 2 Sep 2026: Prettier, ESLint, TypeScript
+typecheck/build, 303 Node tests, 17 schema tests, 3 migration tests, all 3
+configured integration tests, Ruff format/lint, strict mypy, 93 Python tests,
+configured Streamlit AppTest, replay/backtest smoke checks, npm/pip audits,
+tracked-file secret scanning, shell/PM2 syntax, and five offline systemd
+security checks. Deployment evidence follows after merge.

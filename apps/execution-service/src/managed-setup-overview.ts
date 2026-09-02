@@ -36,6 +36,7 @@ export interface ManagedSetupOverview {
   readonly groupState: string | null;
   readonly groupExpiresAt: string | null;
   readonly groupUpdatedAt: string | null;
+  readonly cancellationReason: string | null;
   readonly orders: readonly ManagedOrderOverview[];
   readonly positions: readonly ManagedPositionOverview[];
   readonly trades: readonly ManagedTradeOverview[];
@@ -48,6 +49,7 @@ interface GroupRow {
   readonly state: string;
   readonly expires_at: Date;
   readonly updated_at: Date;
+  readonly cancellation_reason: string | null;
 }
 
 interface OrderRow {
@@ -115,7 +117,8 @@ export class PostgresManagedSetupOverview {
     try {
       await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
       const groups = await client.query<GroupRow>(
-        `SELECT og.id, og.state, og.expires_at, og.updated_at
+        `SELECT og.id, og.state, og.expires_at, og.updated_at,
+                og.cancellation_reason
          FROM order_groups og
          JOIN analysis_runs ar ON ar.id = og.analysis_id
          WHERE ar.account_id = $1 AND ar.symbol_id = $2
@@ -139,6 +142,7 @@ export class PostgresManagedSetupOverview {
           groupState: null,
           groupExpiresAt: null,
           groupUpdatedAt: null,
+          cancellationReason: null,
           orders: [],
           positions: [],
           trades: [],
@@ -209,6 +213,12 @@ export class PostgresManagedSetupOverview {
       ) {
         throw new Error("MANAGED_SETUP_TRADE_STATE_INVALID");
       }
+      if (
+        group.cancellation_reason !== null &&
+        !/^[A-Z0-9_:.-]{1,160}$/.test(group.cancellation_reason)
+      ) {
+        throw new Error("MANAGED_SETUP_CANCELLATION_REASON_INVALID");
+      }
       const positionViews = positions.rows.map((position) => ({
         side: position.side,
         state: position.state,
@@ -255,6 +265,7 @@ export class PostgresManagedSetupOverview {
           group.updated_at,
           "MANAGED_SETUP_GROUP_UPDATE_INVALID",
         ),
+        cancellationReason: group.cancellation_reason,
         orders: orders.rows.map((order) => ({
           side: order.side,
           state: order.state,
@@ -292,6 +303,7 @@ export const UNAVAILABLE_MANAGED_SETUP: ManagedSetupOverview = {
   groupState: null,
   groupExpiresAt: null,
   groupUpdatedAt: null,
+  cancellationReason: null,
   orders: [],
   positions: [],
   trades: [],

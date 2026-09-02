@@ -59,6 +59,7 @@ _PROMPT_FILES = {
     "system-v10": "system-v10.md",
     "system-v11": "system-v11.md",
     "system-v12": "system-v12.md",
+    "system-v13": "system-v13.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",
@@ -94,6 +95,12 @@ _OPEN_POSITION_MONITOR_FIELDS = {
 }
 
 _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
+    "DEMO_BROKER_ZERO_FILL_CANCELLED": (
+        "Both demo stop orders were cancelled without a fill",
+        "The durable broker callbacks show two cancelled strategy orders, zero filled "
+        "volume, and no position. The broker supplied no reliable cancellation cause.",
+        "No manual cleanup is required. Automatic analysis can start a fresh cycle.",
+    ),
     "DATABASE_STORAGE_LIMIT_EXCEEDED": (
         "PostgreSQL storage is full",
         "The decision database cannot safely persist another complete cycle, so no new "
@@ -1231,7 +1238,13 @@ def broker_lifecycle_view(
     elif group_state == "EXPIRED":
         headline = "The previous stop orders expired — no trade is active"
     elif group_state == "FAILED":
-        headline = "The previous setup ended — no order or position is active"
+        cancellation_reason = managed.get("cancellationReason")
+        if cancellation_reason == "DEMO_BROKER_ZERO_FILL_CANCELLED":
+            headline = "Both previous demo stop orders were cancelled without a fill"
+        elif cancellation_reason is None:
+            headline = "The previous setup ended — no order or position is active"
+        else:
+            return unavailable
     else:
         return unavailable
 
@@ -1243,6 +1256,14 @@ def broker_lifecycle_view(
                 f"{str(order.get('state', 'UNKNOWN')).replace('_', ' ').lower()}"
                 for order in orders
             )
+        )
+    if (
+        group_state == "FAILED"
+        and managed.get("cancellationReason") == "DEMO_BROKER_ZERO_FILL_CANCELLED"
+    ):
+        details.append(
+            "The broker callbacks contained no reliable cancellation cause; this records "
+            "only that both orders reached cancelled with zero fill and no position"
         )
     raw_trades = managed.get("trades")
     if raw_trades is None:

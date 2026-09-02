@@ -321,7 +321,7 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v12` tells the endpoint that execution selects the nearest whole
+Prompt `system-v13` tells the endpoint that execution selects the nearest whole
 broker-pip TP whose expected net profit is greater than one full estimated
 round-trip fee, then sets SL distance to exactly twice TP distance (reward:risk
 `1:2`, numeric reward/risk `0.5`). `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to

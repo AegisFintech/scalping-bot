@@ -14,11 +14,18 @@ broker-pip TP whose expected net profit after fees is strictly greater than one
 full estimated round-trip fee, and sets SL distance to exactly twice that TP
 distance. At the minimum ratio `1`, gross TP is therefore strictly greater than
 twice fees. This is reward:risk `1:2`, represented internally as numeric
-reward/risk `0.5`. Prompt `system-v12`
+reward/risk `0.5`. Prompt `system-v13`
 asks the endpoint for a technical target/stop envelope that contains those
 effective levels. The coordinator uses Decimal arithmetic, rejects off-tick or
 unsupported fee inputs without rounding, and keeps the original endpoint
 response, effective values, and fee evidence separately auditable.
+
+The coordinator derives tick-aligned preferred entry bands inside the unchanged
+hard executable entry limits. `ENTRY_LATENCY_BUFFER_ATR` defaults to `0.75` and
+insets both ends by that multiple of completed M1 ATR. An unsatisfiable inset
+blocks before inference. The endpoint selects completed-candle structure within
+the preferred band; post-model quote movement, spread, precision, freshness,
+and risk checks remain unchanged and fail closed.
 
 Schema 2.1 does not grant the chart or model execution authority. Deterministic
 semantics require each OCO entry to equal its technical-map confirmation price

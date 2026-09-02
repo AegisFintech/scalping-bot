@@ -198,6 +198,14 @@ remain text at the HTTP boundary. More than two outcomes, an unmatched trade,
 or multiple active groups makes the projection unavailable rather than
 selecting an arbitrary record.
 
+Migration `0014` backfills only failed demo groups with exactly two
+strategy-owned `CANCELLED` orders, zero filled volume, no fill, no position, and
+no existing cancellation reason. It records
+`DEMO_BROKER_ZERO_FILL_CANCELLED`, which is an observed terminal fact rather
+than a guessed broker cause. Mixed, manual, filled, rejected, expired, or
+ambiguous evidence is unchanged. Rollback requires paused analysis/submission
+and operator review before clearing only exact matching reason values.
+
 The open-position monitor adds no table or mutable state. It selects at most one
 active strategy-owned `positions` row in the exact account/symbol/mode scope and
 sums existing `fills.commission` rows owned by that position or its order group.

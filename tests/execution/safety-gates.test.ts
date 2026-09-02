@@ -71,6 +71,7 @@ describe("execution safety gates", () => {
       automaticDemoClosedTradeBaseline: 0,
       automaticAnalysisStartWindowSeconds: 5,
       maxEntryDistanceAtr: "2.5",
+      entryLatencyBufferAtr: "0.75",
       minRiskRewardRatio: "0.5",
       minimumExpectedNetToFeesRatio: "1",
     });
@@ -141,6 +142,29 @@ describe("execution safety gates", () => {
         /CONFIG_DECIMAL_(?:INVALID|OUT_OF_RANGE):MAX_ENTRY_DISTANCE_ATR/,
       );
     }
+  });
+
+  it("requires a positive latency buffer inside half the hard entry range", () => {
+    expect(
+      loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: "0.8" })
+        .entryLatencyBufferAtr,
+    ).toBe("0.8");
+    for (const value of ["0", "1.25", "3", "invalid"]) {
+      expect(() =>
+        loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: value }),
+      ).toThrow(
+        /CONFIG_DECIMAL_(?:INVALID|OUT_OF_RANGE):ENTRY_LATENCY_BUFFER_ATR/,
+      );
+    }
+    expect(
+      safetyConfigHash(
+        loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: "0.7" }),
+      ),
+    ).not.toBe(
+      safetyConfigHash(
+        loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: "0.8" }),
+      ),
+    );
   });
 
   it("bounds the durable completed-analysis campaign limit", () => {

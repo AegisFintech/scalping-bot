@@ -633,6 +633,26 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
              THEN 'FAILED'
            ELSE 'ACTIVE'
          END,
+         cancellation_reason = CASE
+           WHEN og.cancellation_reason IS NULL
+            AND (SELECT count(*) FROM orders o
+                 WHERE o.order_group_id = og.id) = 2
+            AND NOT EXISTS (
+              SELECT 1 FROM orders o
+              WHERE o.order_group_id = og.id
+                AND (o.strategy_owned = false OR o.state <> 'CANCELLED'
+                     OR o.filled_volume <> 0)
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM fills f
+              JOIN orders o ON o.id = f.order_id
+              WHERE o.order_group_id = og.id
+            )
+            AND NOT EXISTS (SELECT 1 FROM positions p
+                            WHERE p.order_group_id = og.id)
+             THEN 'DEMO_BROKER_ZERO_FILL_CANCELLED'
+           ELSE og.cancellation_reason
+         END,
          updated_at = GREATEST(updated_at, $2)
          WHERE id = $1 AND state NOT IN ('CLOSED','EXPIRED')`,
         [orderGroupId, event.occurredAt],

@@ -26,6 +26,7 @@ export interface ExecutionConfig {
   readonly automaticDemoClosedTradeBaseline: number;
   readonly automaticAnalysisStartWindowSeconds: number;
   readonly maxEntryDistanceAtr: string;
+  readonly entryLatencyBufferAtr: string;
   readonly symbol: string;
   readonly accountKey: string;
   readonly baseRiskPercent: string;
@@ -192,6 +193,21 @@ export function loadExecutionConfig(
   if (automaticDemoClosedTradeLimit > 0 && mode !== "demo") {
     throw new Error("CONFIG_DEMO_TRADE_CAMPAIGN_REQUIRES_DEMO_MODE");
   }
+  const maxEntryDistanceAtr = boundedPositiveDecimal(
+    environment.MAX_ENTRY_DISTANCE_ATR,
+    "2.5",
+    "MAX_ENTRY_DISTANCE_ATR",
+    "20",
+  );
+  const entryLatencyBufferAtr = boundedPositiveDecimal(
+    environment.ENTRY_LATENCY_BUFFER_ATR,
+    "0.75",
+    "ENTRY_LATENCY_BUFFER_ATR",
+    "10",
+  );
+  if (new Decimal(entryLatencyBufferAtr).mul(2).gte(maxEntryDistanceAtr)) {
+    throw new Error("CONFIG_DECIMAL_OUT_OF_RANGE:ENTRY_LATENCY_BUFFER_ATR");
+  }
   return {
     appEnv: environment.APP_ENV ?? "development",
     instanceId: environment.INSTANCE_ID ?? "local-1",
@@ -242,12 +258,8 @@ export function loadExecutionConfig(
       }
       return value;
     })(),
-    maxEntryDistanceAtr: boundedPositiveDecimal(
-      environment.MAX_ENTRY_DISTANCE_ATR,
-      "2.5",
-      "MAX_ENTRY_DISTANCE_ATR",
-      "20",
-    ),
+    maxEntryDistanceAtr,
+    entryLatencyBufferAtr,
     symbol,
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
     baseRiskPercent: decimalPercent(
@@ -337,6 +349,7 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         automaticAnalysisStartWindowSeconds:
           config.automaticAnalysisStartWindowSeconds,
         maxEntryDistanceAtr: config.maxEntryDistanceAtr,
+        entryLatencyBufferAtr: config.entryLatencyBufferAtr,
       }),
     )
     .digest("hex");

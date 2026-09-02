@@ -305,7 +305,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v12",
+    promptVersion: "system-v13",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -400,8 +400,8 @@ async function main(): Promise<void> {
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v12.md"),
-    promptVersion: "system-v12",
+    systemPromptPath: path.resolve("prompts/system-v13.md"),
+    promptVersion: "system-v13",
     timeoutMs: aiOrchestratorRequestTimeoutMs({
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
@@ -434,7 +434,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v12",
+    promptVersion: "system-v13",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1035,7 +1035,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v12",
+    promptVersion: "system-v13",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: config.minRiskRewardRatio,
@@ -1045,6 +1045,7 @@ async function main(): Promise<void> {
     preferredExpirySeconds: preferredOrderExpirySeconds,
     maxStopDistanceAtr: environment.MAX_STOP_DISTANCE_ATR ?? "3",
     maxEntryDistanceAtr: config.maxEntryDistanceAtr,
+    entryLatencyBufferAtr: config.entryLatencyBufferAtr,
     minStopDistancePoints: optionalDecimal(
       environment.MIN_STOP_DISTANCE_POINTS,
     ),

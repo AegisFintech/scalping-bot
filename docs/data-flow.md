@@ -179,6 +179,15 @@ On analysis/order expiry, staleness, unsafe spread, account uncertainty, risk br
 
 Manual orders/positions block by default but are not cancelled by default.
 
+The preferred pending-order lifetime is 15 minutes. This remains within the
+configured expiry bounds and was selected because every observed `.39` demo
+fill occurred within 12.69 minutes; it reduces idle lock time without changing
+active-position protection. If both strategy-owned legs durably reach
+`CANCELLED` with zero filled volume, no fill, and no position, the group records
+`DEMO_BROKER_ZERO_FILL_CANCELLED`. This states only the observed terminal fact;
+it does not infer a broker cause. Mixed, manual, or ambiguous evidence is not
+given that reason.
+
 ## Failure behavior
 
 Missing or ambiguous dependency data produces no order. Safe, permitted cleanup may still cancel obsolete strategy pending orders. Reconciliation continues even if remote logging fails. Database/audit unavailability blocks new demo/live commands. Network timeouts after a broker request are uncertain outcomes, not retry authorization.
