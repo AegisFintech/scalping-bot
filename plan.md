@@ -209,7 +209,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-064 | complete    | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                        | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
 | ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
 | ISSUE-066 | complete    | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
-| ISSUE-067 | in progress | [Use microstructure features and signal half-life for faster demo scalping](https://github.com/AegisFintech/scalping-bot/issues/166)     | Depth signals; signal-decay report; one-minute expiry; guarded demo rollout                                   |
+| ISSUE-067 | complete    | [Use microstructure features and signal half-life for faster demo scalping](https://github.com/AegisFintech/scalping-bot/issues/166)     | Depth signals; signal-decay report; one-minute expiry; guarded demo rollout                                   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -848,7 +848,18 @@ never justify empty, noisy, unsafe, or misleading commits.
   3 configured integration, and 95 Python tests plus formatting, lint, type,
   build, AppTest, replay/backtest/decay, dependency audit, secret, shell/PM2,
   diff, and systemd security gates. This requires a distinct forward demo
-  review and is not a profitability claim.
+  review and is not a profitability claim. [PR #167](https://github.com/AegisFintech/scalping-bot/pull/167)
+  merged as `9e00953`. The guarded rollout paused new analysis, let the exact
+  `.41` pending order expire, and proved zero active analyses, groups, orders,
+  or positions before reloading all five healthy services as `.42`. The pause
+  survived restart with startup checks passing and exact expiry configuration
+  `60/60/120` seconds. After unpause, two completed `system-v14` responses were
+  recorded. The first placed two stops that expired cleanly; the next fresh M1
+  cycle placed again and filled SELL within 30 seconds. Its peer cancelled, the
+  broker closing callback completed, readiness restored automatically, and the
+  scheduler returned to `RUNNING`. The first closed `.42` trade lost `-1.88`
+  net including `-0.26` fees, so it is transport/cadence evidence only and does
+  not establish improved accuracy or profitability.
 
 ### ISSUE-001 delivery details
 
