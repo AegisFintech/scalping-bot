@@ -1043,3 +1043,20 @@ Streamlit AppTest rendered 11 tabs with zero exceptions. Replay, conservative
 backtest, and signal-decay commands passed; npm and pip audits found no known
 vulnerabilities; tracked-file secret scanning, shell/PM2 syntax, `git diff
 --check`, and all five offline systemd security checks at 2.8 (`OK`) passed.
+
+PR #167 merged as `9e00953`. During the paused rollout, the final `.41` order
+expired and reconciliation proved no active analysis, group, order, or
+position. All five `.42` services became healthy with the pause retained,
+startup checks passed, and exact 60/60/120-second expiry configuration visible
+in every PM2 process. The deployed AppTest rendered 11 tabs and 19 metrics with
+zero exceptions.
+
+After unpause, automatic analysis first demonstrated an unchanged pre-model
+spread rejection, then completed two `system-v14` responses. The first request
+persisted the new microprice/liquidity fields and an exact 60.000-second
+capture-time lifetime; both broker stops expired unfilled. The next eligible M1
+cycle started automatically, placed another pair, and filled SELL inside the
+new horizon. Peer cancellation and the closing callback reconciled without
+operator action, readiness returned, and the scheduler resumed `RUNNING`. That
+first closed `.42` trade was a net loss, so the rollout proves mechanics and
+cadence, not forecast improvement.

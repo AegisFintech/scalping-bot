@@ -2791,6 +2791,25 @@ passed, dependency audits found no known vulnerabilities, and secret, shell,
 PM2, diff, and five offline systemd security checks passed. Merge and guarded
 rollout evidence follows.
 
+[PR #167](https://github.com/AegisFintech/scalping-bot/pull/167) merged as
+`9e00953`. The guarded deployment enabled the durable analysis pause and waited
+for the one known `.41` BUY stop to expire. Reconciliation then showed zero
+active analyses, groups, orders, and positions. All five services reloaded
+dependency-first as `.42`; health, startup checks, continuous count mode,
+prompt `system-v14`, and expiry `60/60/120` seconds were verified before
+unpausing.
+
+The first eligible minute rejected before inference on the unchanged spread
+limit. A later safe minute completed in 26.501 seconds, persisted normalized
+microstructure fields and an exact 60.000-second capture-to-expiry interval,
+and placed two cTrader demo stops. They expired unfilled and released the next
+cycle. The following eligible M1 cycle completed a second response and filled
+SELL within the `[0,30]` second bucket; BUY cancelled, the broker close callback
+arrived, readiness recovered automatically, and continuous scheduling returned
+to `RUNNING` with no blocker. The trade closed at net `-1.88` including `-0.26`
+fees. One outcome cannot validate the retrospective decay estimate; `.42` must
+continue collecting a distinct forward cohort before any accuracy conclusion.
+
 [PR #164](https://github.com/AegisFintech/scalping-bot/pull/164) squash-merged
 as `7504a81`. The guarded rollout paused analysis, allowed the one in-flight
 cycle to finish, proved zero active analyses, groups, orders, positions, or
