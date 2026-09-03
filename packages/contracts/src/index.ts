@@ -205,7 +205,8 @@ export interface ModelPromptArtifact {
     | "system-v10"
     | "system-v11"
     | "system-v12"
-    | "system-v13";
+    | "system-v13"
+    | "system-v14";
   readonly content: string;
   readonly sha256: string;
 }

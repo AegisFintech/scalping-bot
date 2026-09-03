@@ -70,7 +70,7 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v13` tells the endpoint that execution will select the nearest
+- Prompt `system-v14` tells the endpoint that execution will select the nearest
   whole-pip TP whose expected net after estimated fees is strictly greater
   than one full round-trip fee, then set SL to exactly twice that TP distance. The
   coordinator precomputes inclusive, tick-aligned BUY/SELL hard entry ranges,
@@ -89,6 +89,10 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
 - Sends the deterministic image as high-detail multimodal content beside the
   compact numeric JSON. The numeric message contains only hash/provenance
   metadata for the image, not duplicated base64 bytes.
+- Supplies normalized microprice displacement and 60/300/900-second
+  liquidity-change imbalance beside the existing top-5/10/20 depth imbalance.
+  These Decimal-derived values are short-horizon model context only and cannot
+  bypass chart structure or an execution gate.
 - Calls a configurable Responses- or Chat-Completions-compatible endpoint with
   per-attempt timeouts/retries/circuit breaker. The execution caller derives its
   local HTTP deadline from the complete configured retry budget plus bounded

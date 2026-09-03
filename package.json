@@ -24,7 +24,8 @@
     "test": "vitest run --exclude '**/*.integration.test.ts'",
     "test:integration": "vitest run tests/integration --passWithNoTests",
     "test:schemas": "vitest run tests/schema",
-    "test:migrations": "vitest run tests/migrations"
+    "test:migrations": "vitest run tests/migrations",
+    "demo:signal-decay": "tsx scripts/analyze-demo-signal-decay.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",

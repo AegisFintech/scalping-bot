@@ -53,12 +53,12 @@ describe("PM2 deployment configuration", () => {
     expect(
       config.apps.every(
         (app) =>
-          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.41",
+          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.42",
       ),
     ).toBe(true);
     expect(
       config.apps.every(
-        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.41",
+        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.42",
       ),
     ).toBe(true);
     expect(
@@ -80,9 +80,9 @@ describe("PM2 deployment configuration", () => {
           app.env.ENTRY_LATENCY_BUFFER_ATR === "0.75" &&
           app.env.MIN_RISK_REWARD_RATIO === "0.5" &&
           app.env.MIN_EXPECTED_NET_TO_FEES_RATIO === "1" &&
-          app.env.ORDER_EXPIRY_MIN_SECONDS === "900" &&
-          app.env.ORDER_EXPIRY_MAX_SECONDS === "1800" &&
-          app.env.PREFERRED_ORDER_EXPIRY_SECONDS === "900" &&
+          app.env.ORDER_EXPIRY_MIN_SECONDS === "60" &&
+          app.env.ORDER_EXPIRY_MAX_SECONDS === "120" &&
+          app.env.PREFERRED_ORDER_EXPIRY_SECONDS === "60" &&
           app.env.AI_REASONING_EFFORT === "low",
       ),
     ).toBe(true);

@@ -179,10 +179,11 @@ On analysis/order expiry, staleness, unsafe spread, account uncertainty, risk br
 
 Manual orders/positions block by default but are not cancelled by default.
 
-The preferred pending-order lifetime is 15 minutes. This remains within the
-configured expiry bounds and was selected because every observed `.39` demo
-fill occurred within 12.69 minutes; it reduces idle lock time without changing
-active-position protection. If both strategy-owned legs durably reach
+The `.42` preferred pending-order lifetime is one minute from deterministic
+pre-model capture, inside a two-minute maximum. If inference consumes the
+horizon the response rejects; unfilled confirmed orders expire so the next M1
+cycle can use fresh completed-candle and depth context. Active-position
+protection is unchanged. If both strategy-owned legs durably reach
 `CANCELLED` with zero filled volume, no fill, and no position, the group records
 `DEMO_BROKER_ZERO_FILL_CANCELLED`. This states only the observed terminal fact;
 it does not infer a broker cause. Mixed, manual, or ambiguous evidence is not

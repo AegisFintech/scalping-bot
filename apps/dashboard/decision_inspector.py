@@ -60,6 +60,7 @@ _PROMPT_FILES = {
     "system-v11": "system-v11.md",
     "system-v12": "system-v12.md",
     "system-v13": "system-v13.md",
+    "system-v14": "system-v14.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",

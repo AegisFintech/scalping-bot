@@ -209,6 +209,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-064 | complete    | [Run demo automation continuously with durable counters](https://github.com/AegisFintech/scalping-bot/issues/157)                        | Unbounded scheduler; lifetime/release counters; zero-fill cancel recovery; immutable demo rollout             |
 | ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
 | ISSUE-066 | complete    | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
+| ISSUE-067 | in progress | [Use microstructure features and signal half-life for faster demo scalping](https://github.com/AegisFintech/scalping-bot/issues/166)     | Depth signals; signal-decay report; one-minute expiry; guarded demo rollout                                   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -822,6 +823,32 @@ never justify empty, noisy, unsafe, or misleading commits.
   expiry were exactly `2026-09-02T03:22:03.935Z`. The active group remains under
   normal automated broker management. This is demo transport evidence, not a
   profitability claim.
+
+### ISSUE-067 delivery details
+
+- Acceptance criteria: add bounded Decimal-derived microprice and multi-window
+  liquidity-change pressure without removing raw depth; add a repeatable
+  fee-inclusive signal-decay report; use a distinct prompt/release and a
+  one-minute capture-time pending horizon; preserve every schema, semantic,
+  spread, freshness, risk, ownership, reconciliation, and demo-only gate; run
+  full checks, merge automatically, and deploy under the audited pause.
+- Dependencies: ISSUE-066 release `.41`, completed-candle chart and numeric
+  payload, current cTrader depth aggregation, exact fee-inclusive trade rows,
+  and deterministic capture-time expiry validation.
+- Current status: implementation and pre-deployment gates passed on
+  `issue-067-signal-half-life`, tracked by
+  [issue #166](https://github.com/AegisFintech/scalping-bot/issues/166). The
+  `.41` baseline at review contained 209 completed model responses, 103 placed
+  groups, and 54 closed trades; its 30/54 after-fee wins produced net `-21.21`.
+  The repeatable decay report found 8/9 wins and net `+3.35` for fills within 30
+  seconds of group creation, while every later non-empty bucket was net
+  negative. Candidate `.42` therefore uses prompt `system-v14`, normalized
+  microstructure tie-breakers, and a 60-second preferred/minimum expiry inside
+  a 120-second maximum. Pre-deployment passed 306 Node, 18 schema, 3 migration,
+  3 configured integration, and 95 Python tests plus formatting, lint, type,
+  build, AppTest, replay/backtest/decay, dependency audit, secret, shell/PM2,
+  diff, and systemd security gates. This requires a distinct forward demo
+  review and is not a profitability claim.
 
 ### ISSUE-001 delivery details
 
