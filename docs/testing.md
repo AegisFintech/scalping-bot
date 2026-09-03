@@ -1017,3 +1017,29 @@ The regression test accepts an exact five-minute model lifetime when validation
 occurs 24 seconds after its trusted pre-model capture, while retaining the full
 configured minimum against that capture. Its failure case moves validation
 past expiry and proves BUY expiry, SELL expiry, and overall validity all reject.
+
+## ISSUE-067 microstructure context and signal half-life
+
+The deterministic analytics tests cover half-spread-normalized microprice bias,
+60/300/900-second signed liquidity-change imbalance, neutral zero-change
+windows, and rejection of negative order-book size before feature derivation.
+The signal-decay unit tests prove non-overlapping fill-age buckets, signed-fee
+gross/net accounting, after-fee win classification, and rejection of invalid
+age or money values.
+
+The repeatable demo report for release `.41` included 54 closed trades from 103
+placed groups. The `[0,30]` second fill-age bucket contained 9 trades, 8
+after-fee wins, and net `+3.35`; every later non-empty bucket was net negative.
+Across the full cohort, 30/54 trades won but fee-inclusive net P/L was `-21.21`.
+This retrospective, small-sample evidence selected a one-minute capture-time
+expiry for a distinct `.42` forward demo cohort; it is not backtest or
+profitability evidence.
+
+On 3 Sep 2026, the pre-deployment suite passed Prettier, ESLint, TypeScript
+typecheck/build, 306 Node tests across 46 files, 18 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 21 source files, and 95 Python tests. Source
+Streamlit AppTest rendered 11 tabs with zero exceptions. Replay, conservative
+backtest, and signal-decay commands passed; npm and pip audits found no known
+vulnerabilities; tracked-file secret scanning, shell/PM2 syntax, `git diff
+--check`, and all five offline systemd security checks at 2.8 (`OK`) passed.

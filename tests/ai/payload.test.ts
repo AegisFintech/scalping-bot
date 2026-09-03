@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v13",
+  promptVersion: "system-v14",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -144,8 +144,8 @@ describe("model payload builder", () => {
   });
 
   it("versions the commission-aware exit instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v13.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v12.md", "utf8");
+    const prompt = readFileSync("prompts/system-v14.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v13.md", "utf8");
     expect(prompt).toContain("minimum_fee_buffered_take_profit_distance");
     expect(prompt).toContain("minimum_expected_net_to_fees_ratio");
     expect(prompt).toContain("stop_loss_to_take_profit_ratio");
@@ -161,6 +161,9 @@ describe("model payload builder", () => {
     expect(prompt).toContain("sell_preferred_entry_minimum");
     expect(prompt).toContain("sell_preferred_entry_maximum");
     expect(prompt).toContain("entry_latency_buffer_atr");
+    expect(prompt).toContain("microprice_bias");
+    expect(prompt).toContain("liquidity_change_imbalance");
+    expect(prompt).toContain("short-lived microstructure tie-breakers");
     expect(prompt).toContain("[minimum_stop_distance,maximum_stop_distance]");
     expect(prompt).toContain("technical_map.bullish_confirmation.price");
     expect(prompt).toContain("For every zone require lower<upper");

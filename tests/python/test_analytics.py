@@ -110,6 +110,50 @@ def test_analytics_builds_required_features() -> None:
     assert response.chart.completed_candles_only is True
     assert response.chart.candle_counts == {"M1": 26, "M5": 26, "M15": 26}
     assert len(response.chart.data_base64) < 1_398_104
+    order_book = response.features["order_book"]
+    assert order_book["microprice_bias"] == "-0.0909090909"
+    assert order_book["rolling_aggregates"][0]["net_liquidity_change"] == "0"
+    assert order_book["rolling_aggregates"][0]["liquidity_change_imbalance"] is None
+
+
+def test_analytics_normalizes_multi_window_liquidity_change_pressure() -> None:
+    payload = request_payload()
+    payload["orderBook"]["aggregates"] = [  # type: ignore[index]
+        {
+            "windowMs": 60000,
+            "sampleCount": 4,
+            "bidLiquidityChange": "30",
+            "askLiquidityChange": "-10",
+            "additions": 3,
+            "removals": 1,
+        },
+        {
+            "windowMs": 300000,
+            "sampleCount": 8,
+            "bidLiquidityChange": "-5",
+            "askLiquidityChange": "15",
+            "additions": 5,
+            "removals": 4,
+        },
+        {
+            "windowMs": 900000,
+            "sampleCount": 12,
+            "bidLiquidityChange": "0",
+            "askLiquidityChange": "0",
+            "additions": 8,
+            "removals": 8,
+        },
+    ]
+
+    response = analyze(AnalyticsRequest.model_validate(payload))
+
+    assert response.acceptable
+    aggregates = response.features["order_book"]["rolling_aggregates"]  # type: ignore[index]
+    assert aggregates[0]["net_liquidity_change"] == "40"
+    assert aggregates[0]["liquidity_change_imbalance"] == "1"
+    assert aggregates[1]["net_liquidity_change"] == "-20"
+    assert aggregates[1]["liquidity_change_imbalance"] == "-1"
+    assert aggregates[2]["liquidity_change_imbalance"] is None
 
 
 def test_analysis_chart_is_deterministic_for_the_exact_same_completed_snapshot() -> None:
@@ -144,6 +188,14 @@ def test_price_must_be_a_decimal_string() -> None:
     payload = request_payload()
     payload["candles"][0]["candles"][0]["open"] = 2000.0  # type: ignore[index]
     with pytest.raises(ValidationError):
+        AnalyticsRequest.model_validate(payload)
+
+
+def test_negative_order_book_size_fails_before_feature_derivation() -> None:
+    payload = request_payload()
+    payload["orderBook"]["bids"][0]["size"] = "-1"  # type: ignore[index]
+
+    with pytest.raises(ValidationError, match="canonical non-negative decimal string"):
         AnalyticsRequest.model_validate(payload)
 
 

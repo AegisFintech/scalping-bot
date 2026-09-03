@@ -14,7 +14,7 @@ broker-pip TP whose expected net profit after fees is strictly greater than one
 full estimated round-trip fee, and sets SL distance to exactly twice that TP
 distance. At the minimum ratio `1`, gross TP is therefore strictly greater than
 twice fees. This is reward:risk `1:2`, represented internally as numeric
-reward/risk `0.5`. Prompt `system-v13`
+reward/risk `0.5`. Prompt `system-v14`
 asks the endpoint for a technical target/stop envelope that contains those
 effective levels. The coordinator uses Decimal arithmetic, rejects off-tick or
 unsupported fee inputs without rounding, and keeps the original endpoint
@@ -29,8 +29,22 @@ and risk checks remain unchanged and fail closed.
 
 Expiry lifetime bounds use the deterministic pre-model broker capture as their
 reference. Post-model validation separately requires every order expiry and
-`valid_until` to remain in the future. This retains the full configured
-15-minute request while rejecting stale or already-expired output.
+`valid_until` to remain in the future. This retains the exact configured
+request while rejecting stale or already-expired output.
+
+Release `.42` configures a 60-second preferred/minimum lifetime and a
+120-second hard maximum from that capture. This is a signal-freshness policy,
+not a relaxed execution gate: inference or placement that consumes the horizon
+rejects, and active positions keep their broker TP/SL lifecycle. The selected
+horizon follows `.41` demo evidence in which the 0-30 second fill-age bucket was
+fee-positive while every later bucket was fee-negative; it must be reviewed on
+a new forward cohort and is not a profitability claim.
+
+Analytics also exposes `microprice_bias` normalized to half-spread and
+liquidity-change imbalance normalized by total absolute bid/ask liquidity
+change for 60/300/900-second windows. Both remain in `[-1,1]` when available.
+Zero-change windows are `null`, preventing absence of pressure from being
+misrepresented as measured direction.
 
 Schema 2.1 does not grant the chart or model execution authority. Deterministic
 semantics require each OCO entry to equal its technical-map confirmation price

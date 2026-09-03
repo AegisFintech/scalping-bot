@@ -154,18 +154,41 @@ def _order_book_features(request: AnalyticsRequest) -> dict[str, object]:
         "midpoint": decimal_text(midpoint),
         "discontinuity": book.discontinuity,
         "reconnect_sequence": book.reconnect_sequence,
-        "rolling_aggregates": [
-            aggregate.model_dump(by_alias=True, mode="json") for aggregate in book.aggregates
-        ],
+        "rolling_aggregates": [],
     }
     best_bid_size = Decimal(book.bids[0].size)
     best_ask_size = Decimal(book.asks[0].size)
     top_total = best_bid_size + best_ask_size
-    result["microprice"] = (
-        decimal_text(((best_ask * best_bid_size) + (best_bid * best_ask_size)) / top_total)
+    microprice = (
+        ((best_ask * best_bid_size) + (best_bid * best_ask_size)) / top_total
         if top_total > 0
         else None
     )
+    result["microprice"] = decimal_text(microprice)
+    # Normalize the microprice displacement to half-spread so its sign and
+    # magnitude are comparable across price and spread regimes.
+    result["microprice_bias"] = (
+        decimal_text((microprice - midpoint) / (spread / Decimal(2)))
+        if microprice is not None and spread > 0
+        else None
+    )
+    rolling_aggregates: list[dict[str, object]] = []
+    for aggregate in book.aggregates:
+        bid_change = Decimal(aggregate.bid_liquidity_change)
+        ask_change = Decimal(aggregate.ask_liquidity_change)
+        change_scale = abs(bid_change) + abs(ask_change)
+        rolling_aggregates.append(
+            {
+                **aggregate.model_dump(by_alias=True, mode="json"),
+                "net_liquidity_change": decimal_text(bid_change - ask_change),
+                "liquidity_change_imbalance": (
+                    decimal_text((bid_change - ask_change) / change_scale)
+                    if change_scale > 0
+                    else None
+                ),
+            }
+        )
+    result["rolling_aggregates"] = rolling_aggregates
     for depth in (5, 10, 20):
         bids = book.bids[:depth]
         asks = book.asks[:depth]

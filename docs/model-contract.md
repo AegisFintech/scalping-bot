@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v13` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v14` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -52,6 +52,10 @@ The versioned system prompt tells the model to:
   excludes equity, risk budget, broker volume, and account identity;
 - set `valid_until` and both expiries exactly to `preferred_expires_at`. An
   expired response is never extended or reused.
+- use normalized microprice bias, top-5/10/20 queue imbalance, and
+  60/300/900-second liquidity-change imbalance only as short-lived tie-breakers
+  among otherwise valid completed-candle levels. Missing, sparse, mixed, or
+  discontinuous depth is neutral rather than invented evidence.
 
 The configured minimum/maximum expiry lifetime is measured from the trusted
 pre-model broker capture used to derive `preferred_expires_at`, not from the
@@ -66,7 +70,7 @@ switch. The presence of the two required stop objects means only that the model
 proposed two conditional scenarios. It does not mean an intent was recorded or
 an order was queued, submitted, accepted, or filled.
 
-The exact parsed response remains immutable. For current `system-v13` requests,
+The exact parsed response remains immutable. For current `system-v14` requests,
 the execution coordinator separately selects the smallest whole-pip effective
 TP whose expected net after opening commission, closing commission, and
 positive-P/L conversion fees is strictly greater than one full estimated

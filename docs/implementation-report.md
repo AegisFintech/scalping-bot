@@ -2754,6 +2754,43 @@ configured Streamlit AppTest, replay/backtest smoke checks, npm/pip audits,
 tracked-file secret scanning, shell/PM2 syntax, and five offline systemd
 security checks. Deployment evidence follows after merge.
 
+## ISSUE-067 microstructure and short-lived demo signals
+
+Research and local evidence point to short-horizon order-book state rather than
+more permissive trading gates. Cont, Kukanov, and Stoikov report that short-term
+price changes are more robustly related to order-flow imbalance than raw trade
+volume; Gould and Bonart find queue imbalance predictive of the next mid-price
+move, especially for large-tick instruments. These results do not establish an
+XAUUSD edge, so `.42` uses them only as model tie-breakers and creates a new
+forward demo cohort.
+
+The `.41` PostgreSQL trail contained 421 analysis attempts, 209 completed model
+responses, 103 placed groups, and 54 closed trades at review time. Its 30 wins
+did not cover 24 larger losses and signed fees: net P/L was `-21.21`. The new
+fee-inclusive signal-decay command showed `[0,30]` seconds at 8/9 wins and
+`+3.35` net, while every later non-empty fill-age bucket was net negative. The
+existing 15-minute expiry was therefore retaining stale signals and limiting
+fresh-cycle cadence.
+
+Candidate `.42` adds Decimal-derived `microprice_bias` and normalized
+liquidity-change imbalance over 60/300/900 seconds to the already collected
+depth context. Prompt `system-v14` uses cross-depth/window agreement only to
+choose among technically defensible levels. Pending validity is 60 seconds from
+trusted pre-model capture with a 120-second hard maximum; late inference still
+rejects, spread and all other execution gates are unchanged, and open-position
+TP/SL management is unaffected. The commission-positive TP floor and 2x SL are
+also unchanged to avoid optimizing headline accuracy by reintroducing
+fee-negative wins.
+
+The pre-deployment suite passed on 3 Sep 2026: Prettier, ESLint, TypeScript
+typecheck/build, 306 Node tests across 46 files, 18 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 21 source files, 95 Python tests, and source
+Streamlit AppTest with zero exceptions. Replay/backtest and the new decay report
+passed, dependency audits found no known vulnerabilities, and secret, shell,
+PM2, diff, and five offline systemd security checks passed. Merge and guarded
+rollout evidence follows.
+
 [PR #164](https://github.com/AegisFintech/scalping-bot/pull/164) squash-merged
 as `7504a81`. The guarded rollout paused analysis, allowed the one in-flight
 cycle to finish, proved zero active analyses, groups, orders, positions, or

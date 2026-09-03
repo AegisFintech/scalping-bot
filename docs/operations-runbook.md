@@ -321,7 +321,7 @@ lockout: increasing it does not override the trade target or inference ceiling,
 daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
-Prompt `system-v13` tells the endpoint that execution selects the nearest whole
+Prompt `system-v14` tells the endpoint that execution selects the nearest whole
 broker-pip TP whose expected net profit is greater than one full estimated
 round-trip fee, then sets SL distance to exactly twice TP distance (reward:risk
 `1:2`, numeric reward/risk `0.5`). `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to
@@ -336,6 +336,14 @@ off-tick effective price, technical envelope mismatch, out-of-range entry, or
 returned stop outside the current limit is rejected without correction. Final
 sized commands receive a second fee-buffer check before broker submission, so
 a later deterministic lot-size change uses the exact final volume.
+
+Release `.42` sets the preferred and minimum expiry to 60 seconds from the
+trusted pre-model capture and the hard maximum to 120 seconds. Inference and
+placement consume that same clock; the service never extends a late response.
+This intentionally keeps only the freshest pending signal and allows the next
+broker-M1 cycle after a clean expiry. Run
+`npm run demo:signal-decay -- <exact-strategy-version>` to review closed demo
+trades by fill-age bucket, signed fees, and net P/L before changing the horizon.
 
 Use Streamlit **AI Analysis → Prompt and response history** and **Automatic
 broker-minute cycle history** for the exact hash-verified prompt, persisted
