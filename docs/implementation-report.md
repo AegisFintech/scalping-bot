@@ -2786,6 +2786,25 @@ shell/PM2 checks, `git diff --check`, and five offline systemd security parses
 at 2.8 (`OK`). The implementation is tracked by issue #169 and
 [PR #170](https://github.com/AegisFintech/scalping-bot/pull/170).
 
+PR #170 squash-merged as `c849628`. Deployment occurred under the durable
+analysis pause after the in-flight `.42` cycle completed and database evidence
+showed zero active analyses, groups, orders, positions, or unresolved release
+events. All five `.43` PM2 processes reported online with `system-v15`, the
+`0.25`–`0.75` ATR corridor, unchanged `60/60/120` expiry, and local recording.
+Every health endpoint passed and paused AppTest rendered 15 tabs plus all five
+recorder metrics without exceptions.
+
+After unpause, the first automatic request completed in 22.395 seconds. Its BUY
+entry `4477.20` was inside preferred `[4477.20,4478.12]`; SELL `4476.21` was
+inside `[4475.29,4476.21]`. Both broker-native stops placed, SELL filled within
+28 seconds, the BUY peer cancelled, and cTrader SL/TP lifecycle closed and
+reconciled the position without intervention. The result was demo net `-1.34`
+including `-0.26` fees. The following broker minute automatically completed a
+second v15 response and placed another OCO group. Separately, the recorder
+closed 656 normalized samples into a 22,383-byte gzip segment and its manifest
+SHA-256 matched. This validates faster mechanics and durable local evidence; it
+does not establish profitability or a stable fill rate.
+
 ## ISSUE-067 microstructure and short-lived demo signals
 
 Research and local evidence point to short-horizon order-book state rather than

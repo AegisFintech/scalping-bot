@@ -1092,3 +1092,17 @@ commands passed. npm and pip audits found no known vulnerabilities; tracked-file
 secret scanning, shell/PM2 syntax, `git diff --check`, and all five offline
 systemd security checks at 2.8 (`OK`) passed. `systemd-analyze verify` reported
 only the expected absent `/opt/ctrader-ai-scalper/current` workspace paths.
+
+PR #170 merged as `c849628`. The deployment pause was set before reload and
+released only after the prior cycle finished, all active `.42` database counts
+were zero, five `.43` services returned healthy, the recorder had begun writing,
+and paused AppTest rendered all recorder metrics with zero exceptions. The first
+automatic `system-v15` request completed in 22.395 seconds and selected the near
+edge on each side: BUY `4477.20` in `[4477.20,4478.12]`; SELL `4476.21` in
+`[4475.29,4476.21]`. Both demo stops reached cTrader, SELL filled within 28
+seconds, the BUY peer cancelled, and the resulting position closed and
+reconciled automatically. Its fee-inclusive result was `-1.34`, so this is
+mechanical evidence, not profitability evidence. The next broker minute placed
+a second v15 OCO group automatically. The first local five-minute segment held
+656 samples, compressed to 22,383 bytes, and passed an independent SHA-256 check
+against its manifest.
