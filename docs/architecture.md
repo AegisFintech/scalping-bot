@@ -49,6 +49,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   counts and the `DECISION_COMPACT_V1` profile.
 - Exposes typed snapshot APIs; the execution decision trail persists the raw
   snapshot before analytics/model work.
+- Optionally samples the already-subscribed quote/depth cache every 250 ms into
+  host-local five-minute JSONL segments, closes them as gzip with SHA-256
+  manifests, and bounds retention by segment count. These files contain no
+  account identity or credentials and are not copied to PostgreSQL. Recorder
+  failure is visible but cannot weaken or bypass market/execution safety.
 - Does not decide or submit orders.
 
 ### Analytics service
@@ -70,11 +75,11 @@ All application listeners default to `127.0.0.1`. Remote access belongs behind a
   stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
   two-leg proposal is constructed against the same deterministic rules that
   will validate it.
-- Prompt `system-v14` tells the endpoint that execution will select the nearest
+- Prompt `system-v15` tells the endpoint that execution will select the nearest
   whole-pip TP whose expected net after estimated fees is strictly greater
   than one full round-trip fee, then set SL to exactly twice that TP distance. The
   coordinator precomputes inclusive, tick-aligned BUY/SELL hard entry ranges,
-  preferred bands inset by the configured M1-ATR latency buffer, a
+  preferred bands bounded by configured near/far M1-ATR distances, a
   fee-buffered minimum TP/SL floor, one stop-distance range, and the exact
   preferred expiry from current quotes, M1 ATR, broker distance, configuration,
   and the non-sizing affordable stop ceiling. The prompt explicitly self-checks

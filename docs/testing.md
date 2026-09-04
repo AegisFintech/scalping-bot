@@ -1060,3 +1060,35 @@ new horizon. Peer cancellation and the closing callback reconciled without
 operator action, readiness returned, and the scheduler resumed `RUNNING`. That
 first closed `.42` trade was a net loss, so the rollout proves mechanics and
 cadence, not forecast improvement.
+
+## ISSUE-068 event-path conversion and local evidence
+
+The `.42` review found 262 completed AI responses and 134 placed OCO groups,
+but only 6 closed trades; 130 groups had expired by the final pre-release gate.
+All six fills occurred within 30 seconds, while placed entries were typically
+about one completed-M1 ATR from the captured quote and external inference had a
+24.61-second median duration. Candidate `.43` therefore retains the one-minute
+capture-time lifetime and broker-native cTrader stop trigger, but constrains
+prompt `system-v15` to a deterministic `0.25`–`0.75` M1-ATR preferred corridor
+inside the unchanged hard bounds. This is a forward demo transport experiment,
+not profitability evidence.
+
+The market-data service now optionally samples its normalized quote/depth cache
+every 250 ms. It writes host-local JSONL progressively, closes five-minute gzip
+segments with SHA-256 sidecars, bounds retention to 2,016 completed segments,
+and exposes only bounded health/counter metadata. Tests cover compression,
+checksums, retention, invalid market evidence, I/O failure, and the dashboard's
+strict status view. Recorder failure never changes readiness or grants order
+authority. Streamlit also displays recorder health and placed-setup-to-closed-
+trade conversion separately from profitability.
+
+On 4 Sep 2026, pre-deployment gates passed: Prettier, ESLint, TypeScript
+typecheck/build, 311 Node tests across 47 files, 18 schema tests, 3 migration
+tests, all 3 configured isolated-PostgreSQL/HTTP integration tests, Ruff
+format/lint, strict mypy over 17 source files, and 96 Python tests. Configured
+source Streamlit AppTest rendered 15 tabs, 22 metrics, and 34 dataframes with
+zero exceptions. Replay, conservative backtest, and `.42` signal-decay smoke
+commands passed. npm and pip audits found no known vulnerabilities; tracked-file
+secret scanning, shell/PM2 syntax, `git diff --check`, and all five offline
+systemd security checks at 2.8 (`OK`) passed. `systemd-analyze verify` reported
+only the expected absent `/opt/ctrader-ai-scalper/current` workspace paths.

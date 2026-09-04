@@ -27,6 +27,7 @@ export interface ExecutionConfig {
   readonly automaticAnalysisStartWindowSeconds: number;
   readonly maxEntryDistanceAtr: string;
   readonly entryLatencyBufferAtr: string;
+  readonly preferredMaxEntryDistanceAtr: string;
   readonly symbol: string;
   readonly accountKey: string;
   readonly baseRiskPercent: string;
@@ -205,8 +206,19 @@ export function loadExecutionConfig(
     "ENTRY_LATENCY_BUFFER_ATR",
     "10",
   );
-  if (new Decimal(entryLatencyBufferAtr).mul(2).gte(maxEntryDistanceAtr)) {
+  const preferredMaxEntryDistanceAtr = boundedPositiveDecimal(
+    environment.PREFERRED_MAX_ENTRY_DISTANCE_ATR,
+    maxEntryDistanceAtr,
+    "PREFERRED_MAX_ENTRY_DISTANCE_ATR",
+    "20",
+  );
+  if (new Decimal(entryLatencyBufferAtr).gte(preferredMaxEntryDistanceAtr)) {
     throw new Error("CONFIG_DECIMAL_OUT_OF_RANGE:ENTRY_LATENCY_BUFFER_ATR");
+  }
+  if (new Decimal(preferredMaxEntryDistanceAtr).gt(maxEntryDistanceAtr)) {
+    throw new Error(
+      "CONFIG_DECIMAL_OUT_OF_RANGE:PREFERRED_MAX_ENTRY_DISTANCE_ATR",
+    );
   }
   return {
     appEnv: environment.APP_ENV ?? "development",
@@ -260,6 +272,7 @@ export function loadExecutionConfig(
     })(),
     maxEntryDistanceAtr,
     entryLatencyBufferAtr,
+    preferredMaxEntryDistanceAtr,
     symbol,
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
     baseRiskPercent: decimalPercent(
@@ -350,6 +363,7 @@ export function safetyConfigHash(config: ExecutionConfig): string {
           config.automaticAnalysisStartWindowSeconds,
         maxEntryDistanceAtr: config.maxEntryDistanceAtr,
         entryLatencyBufferAtr: config.entryLatencyBufferAtr,
+        preferredMaxEntryDistanceAtr: config.preferredMaxEntryDistanceAtr,
       }),
     )
     .digest("hex");

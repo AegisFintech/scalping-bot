@@ -21,6 +21,7 @@ from apps.dashboard.decision_inspector import (
     exact_model_input_view,
     execution_status_recovered,
     latest_ai_request_index,
+    local_market_recorder_view,
     model_input_summary,
     model_output_authority_notice,
     model_output_view,
@@ -991,8 +992,8 @@ def test_prompt_artifact_is_hash_verified_and_legacy_prompt_is_explicit() -> Non
     persisted = prompt_artifact_view("system-v2", content, digest)
     assert persisted["provenance"] == "EXACT_PERSISTED_REQUEST_PROMPT"
     assert persisted["content"] == content
-    current = prompt_artifact_view("system-v14", content, digest)
-    assert current["version"] == "system-v14"
+    current = prompt_artifact_view("system-v15", content, digest)
+    assert current["version"] == "system-v15"
     legacy = prompt_artifact_view("system-v1", None, None)
     assert legacy["provenance"] == "TRACKED_LEGACY_ARTIFACT"
     assert "NO_TRADE" in legacy["content"]
@@ -1297,6 +1298,7 @@ def test_analysis_attempt_funnel_explains_each_attempt_once() -> None:
         "completed_ai_responses": 5,
         "ended_before_completed_ai": 3,
         "order_groups": 3,
+        "trade_conversion_percent": "100",
         "positions": 3,
         "trades": 3,
         "wins": 1,
@@ -1315,6 +1317,34 @@ def test_analysis_attempt_funnel_explains_each_attempt_once() -> None:
         "spread_skips": 1,
         "expired_setups": 1,
     }
+
+
+def test_local_market_recorder_view_validates_health_without_paths_or_secrets() -> None:
+    assert local_market_recorder_view({"enabled": False}) == {"enabled": False}
+    status = {
+        "enabled": True,
+        "healthy": True,
+        "format": "jsonl+gzip",
+        "sampleIntervalMs": 250,
+        "segmentDurationSeconds": 300,
+        "maxCompletedSegments": 2016,
+        "samplesWritten": 80,
+        "samplesDropped": 0,
+        "pendingSamples": 0,
+        "segmentsCompleted": 2,
+        "compressedBytesWritten": 4096,
+        "lastSampleAt": "2026-09-04T02:40:00.000Z",
+        "currentSegmentStartedAt": "2026-09-04T02:40:00.000Z",
+        "currentSegmentFile": (
+            "market-xauusd-20260904T024000Z-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.ndjson"
+        ),
+        "lastErrorCode": None,
+    }
+    assert local_market_recorder_view(status)["samplesWritten"] == 80
+    with pytest.raises(DecisionViewError, match="FILE_INVALID"):
+        local_market_recorder_view({**status, "currentSegmentFile": "/root/private.ndjson"})
+    with pytest.raises(DecisionViewError, match="ERROR_INVALID"):
+        local_market_recorder_view({**status, "lastErrorCode": "password=secret"})
 
 
 def test_analysis_attempt_funnel_rejects_ambiguous_or_unsafe_evidence() -> None:

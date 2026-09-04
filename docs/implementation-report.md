@@ -2754,6 +2754,38 @@ configured Streamlit AppTest, replay/backtest smoke checks, npm/pip audits,
 tracked-file secret scanning, shell/PM2 syntax, and five offline systemd
 security checks. Deployment evidence follows after merge.
 
+## ISSUE-068 event-path conversion and local evidence
+
+Release `.42` demonstrated that a one-minute capture-time horizon alone reduced
+rather than increased usable demo trade frequency: 6 of 134 placed groups
+closed while the remainder expired, versus 54 of 103 for `.41`. The six `.42`
+fills were all inside 30 seconds, so candidate `.43` does not restore stale
+15-minute orders. It adds `PREFERRED_MAX_ENTRY_DISTANCE_ATR`, uses a guarded
+`0.25` near edge and `0.75` far edge, and instructs prompt `system-v15` to choose
+the nearest defensible tick inside that corridor. Hard executable bounds,
+post-model quote/spread/freshness checks, deterministic sizing/fees, broker
+precision, ownership, reconciliation, and demo authorization are unchanged.
+
+The cTrader pending stop remains the immediate event-driven trigger; no local
+polling loop replaces broker execution. A separate optional evidence recorder
+samples the already-normalized quote and complete, continuous depth cache at
+250 ms, progressively appends local JSONL, and atomically closes five-minute
+gzip segments with SHA-256 manifests. The queue and retained segment count are
+bounded, malformed or incomplete evidence is dropped, I/O problems are
+reported without entering the trading path, and neither credentials nor
+account/broker identifiers are stored. PostgreSQL remains the compact durable
+decision/lifecycle trail. Dashboard health and conversion metrics make the two
+stores and the current bottleneck explicit.
+
+The complete 4 Sep 2026 pre-deployment gate set passed: 311 Node tests, 18
+schema tests, 3 migration tests, all 3 configured integration tests, 96 Python
+tests, formatting, lint, strict TypeScript/Python types, production build,
+configured Streamlit AppTest with zero exceptions, replay/backtest/decay smoke
+commands, zero-vulnerability npm/pip audits, tracked-file secret scan,
+shell/PM2 checks, `git diff --check`, and five offline systemd security parses
+at 2.8 (`OK`). The implementation is tracked by issue #169 and
+[PR #170](https://github.com/AegisFintech/scalping-bot/pull/170).
+
 ## ISSUE-067 microstructure and short-lived demo signals
 
 Research and local evidence point to short-horizon order-book state rather than
