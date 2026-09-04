@@ -210,7 +210,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
 | ISSUE-066 | complete    | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
 | ISSUE-067 | complete    | [Use microstructure features and signal half-life for faster demo scalping](https://github.com/AegisFintech/scalping-bot/issues/166)     | Depth signals; signal-decay report; one-minute expiry; guarded demo rollout                                   |
-| ISSUE-068 | in progress | [Increase demo scalping conversion with event-path evidence](https://github.com/AegisFintech/scalping-bot/issues/169)                    | Closer valid entries; progressive local quote/depth evidence; broker-native event trigger; funnel telemetry   |
+| ISSUE-068 | complete    | [Increase demo scalping conversion with event-path evidence](https://github.com/AegisFintech/scalping-bot/issues/169)                    | Closer valid entries; progressive local quote/depth evidence; broker-native event trigger; funnel telemetry   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -891,9 +891,22 @@ never justify empty, noisy, unsafe, or misleading commits.
   3 configured integration, and 96 Python tests plus formatting, lint, types,
   build, configured AppTest, replay/backtest/decay smoke, dependency audits,
   tracked-file secret scanning, shell/PM2 checks, diff validation, and all five
-  offline systemd security parses at 2.8 (`OK`). Merge and guarded demo rollout
-  remain pending. Review and automatic merge are tracked by
-  [PR #170](https://github.com/AegisFintech/scalping-bot/pull/170).
+  offline systemd security parses at 2.8 (`OK`). Review and automatic merge were
+  tracked by [PR #170](https://github.com/AegisFintech/scalping-bot/pull/170),
+  merged as `c849628`. The guarded rollout paused new analysis, let the in-flight
+  `.42` cycle finish, and proved zero active release analyses, groups, orders,
+  positions, or unresolved execution events. All five `.43` services then
+  started healthy with the durable pause retained, exact `0.25`/`0.75` corridor,
+  `60/60/120`-second expiry, and local recording enabled. Paused AppTest rendered
+  15 tabs and all five recorder metrics with zero exceptions. After unpause, the
+  first `system-v15` response completed in 22.395 seconds: BUY `4477.20` was
+  inside `[4477.20,4478.12]` and SELL `4476.21` inside `[4475.29,4476.21]`.
+  Both stops were placed; SELL filled within 28 seconds, BUY cancelled, and the
+  position closed/reconciled automatically for demo net `-1.34` including
+  `-0.26` fees. The next broker minute automatically placed another OCO group.
+  The recorder closed 656 samples into a 22,383-byte gzip segment whose SHA-256
+  manifest verified. ISSUE-068 is complete; this proves transport/cadence only,
+  not profitability or an eventual conversion rate.
 
 ### ISSUE-001 delivery details
 
