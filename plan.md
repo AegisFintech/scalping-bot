@@ -892,7 +892,8 @@ never justify empty, noisy, unsafe, or misleading commits.
   build, configured AppTest, replay/backtest/decay smoke, dependency audits,
   tracked-file secret scanning, shell/PM2 checks, diff validation, and all five
   offline systemd security parses at 2.8 (`OK`). Merge and guarded demo rollout
-  remain pending.
+  remain pending. Review and automatic merge are tracked by
+  [PR #170](https://github.com/AegisFintech/scalping-bot/pull/170).
 
 ### ISSUE-001 delivery details
 

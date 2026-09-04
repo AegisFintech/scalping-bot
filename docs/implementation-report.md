@@ -2783,7 +2783,8 @@ tests, formatting, lint, strict TypeScript/Python types, production build,
 configured Streamlit AppTest with zero exceptions, replay/backtest/decay smoke
 commands, zero-vulnerability npm/pip audits, tracked-file secret scan,
 shell/PM2 checks, `git diff --check`, and five offline systemd security parses
-at 2.8 (`OK`). The implementation is tracked by issue #169.
+at 2.8 (`OK`). The implementation is tracked by issue #169 and
+[PR #170](https://github.com/AegisFintech/scalping-bot/pull/170).
 
 ## ISSUE-067 microstructure and short-lived demo signals
 
