@@ -61,6 +61,7 @@ _PROMPT_FILES = {
     "system-v12": "system-v12.md",
     "system-v13": "system-v13.md",
     "system-v14": "system-v14.md",
+    "system-v15": "system-v15.md",
 }
 _AUTOMATION_ACTIVITY_STATES = {
     "UNAVAILABLE",
@@ -94,6 +95,55 @@ _OPEN_POSITION_MONITOR_FIELDS = {
     "quoteReceivedAt",
     "pnlCapturedAt",
 }
+
+
+def local_market_recorder_view(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate the bounded, non-secret market recorder status contract."""
+
+    enabled = value.get("enabled")
+    if enabled is False:
+        return {"enabled": False}
+    if enabled is not True or value.get("format") != "jsonl+gzip":
+        raise DecisionViewError("DECISION_VIEW_LOCAL_RECORDER_STATUS_INVALID")
+    healthy = value.get("healthy")
+    if not isinstance(healthy, bool):
+        raise DecisionViewError("DECISION_VIEW_LOCAL_RECORDER_STATUS_INVALID")
+    limits = {
+        "sampleIntervalMs": (100, 60_000),
+        "segmentDurationSeconds": (1, 86_400),
+        "maxCompletedSegments": (1, 1_000_000),
+        "samplesWritten": (0, 10**15),
+        "samplesDropped": (0, 10**15),
+        "pendingSamples": (0, 1_000),
+        "segmentsCompleted": (0, 10**12),
+        "compressedBytesWritten": (0, 10**18),
+    }
+    output: dict[str, Any] = {"enabled": True, "healthy": healthy, "format": "jsonl+gzip"}
+    for key, (minimum, maximum) in limits.items():
+        item = value.get(key)
+        if not isinstance(item, int) or isinstance(item, bool) or not minimum <= item <= maximum:
+            raise DecisionViewError("DECISION_VIEW_LOCAL_RECORDER_VALUE_INVALID")
+        output[key] = item
+    for key in ("lastSampleAt", "currentSegmentStartedAt"):
+        item = value.get(key)
+        if item is not None:
+            _history_timestamp(item, "DECISION_VIEW_LOCAL_RECORDER_TIME_INVALID")
+        output[key] = item
+    current_file = value.get("currentSegmentFile")
+    if current_file is not None and (
+        not isinstance(current_file, str)
+        or re.fullmatch(r"market-[a-z0-9._-]+-[A-Za-z0-9.-]+\.ndjson", current_file) is None
+    ):
+        raise DecisionViewError("DECISION_VIEW_LOCAL_RECORDER_FILE_INVALID")
+    output["currentSegmentFile"] = current_file
+    last_error = value.get("lastErrorCode")
+    if last_error is not None and (
+        not isinstance(last_error, str) or re.fullmatch(r"[A-Z0-9_:-]{1,160}", last_error) is None
+    ):
+        raise DecisionViewError("DECISION_VIEW_LOCAL_RECORDER_ERROR_INVALID")
+    output["lastErrorCode"] = last_error
+    return output
+
 
 _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
     "DEMO_BROKER_ZERO_FILL_CANCELLED": (
@@ -2364,6 +2414,12 @@ def analysis_attempt_funnel_view(rows: Sequence[Mapping[str, Any]]) -> dict[str,
             "completed_ai_responses": completed_ai,
             "ended_before_completed_ai": len(output) - completed_ai,
             "order_groups": order_groups,
+            "trade_conversion_percent": _history_decimal(
+                Decimal(trades) / Decimal(order_groups) * Decimal(100)
+                if order_groups
+                else Decimal(0),
+                "DECISION_VIEW_ATTEMPT_CONVERSION_INVALID",
+            ),
             "positions": positions,
             "trades": trades,
             "wins": wins,

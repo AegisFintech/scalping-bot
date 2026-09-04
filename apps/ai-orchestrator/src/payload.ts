@@ -47,6 +47,7 @@ export interface ModelPayloadInput {
     readonly sellPreferredEntryMinimum: string;
     readonly sellPreferredEntryMaximum: string;
     readonly entryLatencyBufferAtr: string;
+    readonly preferredMaxEntryDistanceAtr: string;
     readonly minimumStopDistance: string;
     readonly maximumStopDistance: string;
     readonly preferredExpiresAt: string;
@@ -166,6 +167,8 @@ export function buildModelPayload(
         input.executionConstraints.sellPreferredEntryMaximum,
       entry_latency_buffer_atr:
         input.executionConstraints.entryLatencyBufferAtr,
+      preferred_max_entry_distance_atr:
+        input.executionConstraints.preferredMaxEntryDistanceAtr,
       minimum_stop_distance: input.executionConstraints.minimumStopDistance,
       maximum_stop_distance: input.executionConstraints.maximumStopDistance,
       preferred_expires_at: input.executionConstraints.preferredExpiresAt,

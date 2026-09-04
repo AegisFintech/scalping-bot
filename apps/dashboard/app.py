@@ -34,6 +34,7 @@ from decision_inspector import (
     exact_model_input_view,
     execution_status_recovered,
     latest_ai_request_index,
+    local_market_recorder_view,
     model_input_summary,
     model_output_authority_notice,
     model_output_view,
@@ -64,6 +65,14 @@ def execution_url() -> str:
     return value.rstrip("/")
 
 
+def market_data_url() -> str:
+    value = os.getenv("MARKET_DATA_BASE_URL", "http://127.0.0.1:8081")
+    parsed = urlparse(value)
+    if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
+        raise RuntimeError("dashboard market-data API must be loopback HTTP")
+    return value.rstrip("/")
+
+
 def query(sql: str, parameters: Sequence[object] = ()) -> list[dict[str, Any]]:
     database_url = os.getenv("DATABASE_URL", "")
     if not database_url:
@@ -88,6 +97,13 @@ def display_dataframe(data: Any, **kwargs: Any) -> Any:
 
 def api_get(path: str) -> dict[str, Any]:
     response = httpx.get(f"{execution_url()}{path}", timeout=5)
+    response.raise_for_status()
+    value = response.json()
+    return value if isinstance(value, dict) else {}
+
+
+def market_api_get(path: str) -> dict[str, Any]:
+    response = httpx.get(f"{market_data_url()}{path}", timeout=5)
     response.raise_for_status()
     value = response.json()
     return value if isinstance(value, dict) else {}
@@ -282,6 +298,48 @@ with tabs[0]:
             "Durable analysis/trade counters are unavailable or inconsistent. Automation remains "
             "fail-closed until PostgreSQL progress can be verified."
         )
+    st.subheader("High-frequency market-path evidence")
+    try:
+        recorder_status = local_market_recorder_view(market_api_get("/v1/local-recorder"))
+        if recorder_status.get("enabled") is not True:
+            st.warning(
+                "Progressive local quote/depth recording is OFF. Trading can continue, but "
+                "sub-minute entry-path tuning will lack tick evidence."
+            )
+        else:
+            recorder_columns = st.columns(5)
+            recorder_columns[0].metric(
+                "Recorder", "HEALTHY" if recorder_status.get("healthy") is True else "DEGRADED"
+            )
+            recorder_columns[1].metric(
+                "Sample interval", f"{recorder_status.get('sampleIntervalMs', '—')} ms"
+            )
+            recorder_columns[2].metric(
+                "Local samples", str(recorder_status.get("samplesWritten", "—"))
+            )
+            recorder_columns[3].metric(
+                "Compressed segments", str(recorder_status.get("segmentsCompleted", "—"))
+            )
+            recorder_columns[4].metric(
+                "Dropped captures", str(recorder_status.get("samplesDropped", "—"))
+            )
+            last_sample = recorder_status.get("lastSampleAt")
+            rendered_last_sample = (
+                format_gmt8_timestamp(last_sample) if isinstance(last_sample, str) else "waiting"
+            )
+            st.caption(
+                f"Latest local sample: {rendered_last_sample} · "
+                "full quote/depth paths remain on this host as rotating gzip JSONL; PostgreSQL "
+                "keeps the compact decision trail."
+            )
+            if recorder_status.get("healthy") is not True:
+                st.error(
+                    "Local recorder problem: "
+                    f"{recorder_status.get('lastErrorCode', 'UNKNOWN')}. This does not bypass or "
+                    "weaken order safety."
+                )
+    except (httpx.HTTPError, RuntimeError, ValueError):
+        st.info("Local market-path recorder status is temporarily unavailable.")
     if isinstance(trade_campaign, dict) and trade_campaign.get("enabled") is True:
         st.subheader("Closed demo trade collection")
         trade_campaign_columns = st.columns(4)
@@ -1412,6 +1470,14 @@ with tabs[5]:
         attempt_evidence_metrics[4].metric(
             "Maximum analysis-to-response",
             f"{attempt_summary['max_ai_pipeline_seconds']} s",
+        )
+        st.metric(
+            "Placed setup → closed trade conversion",
+            f"{attempt_summary['trade_conversion_percent']}%",
+            help=(
+                "A transport/cadence measure, not profitability: durable closed trades divided "
+                "by placed OCO groups in this displayed collection window."
+            ),
         )
         display_dataframe(
             pd.DataFrame(attempt_funnel["category_counts"]),

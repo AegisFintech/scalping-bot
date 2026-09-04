@@ -72,6 +72,7 @@ describe("execution safety gates", () => {
       automaticAnalysisStartWindowSeconds: 5,
       maxEntryDistanceAtr: "2.5",
       entryLatencyBufferAtr: "0.75",
+      preferredMaxEntryDistanceAtr: "2.5",
       minRiskRewardRatio: "0.5",
       minimumExpectedNetToFeesRatio: "1",
     });
@@ -144,12 +145,12 @@ describe("execution safety gates", () => {
     }
   });
 
-  it("requires a positive latency buffer inside half the hard entry range", () => {
+  it("requires a positive latency buffer below the preferred maximum", () => {
     expect(
       loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: "0.8" })
         .entryLatencyBufferAtr,
     ).toBe("0.8");
-    for (const value of ["0", "1.25", "3", "invalid"]) {
+    for (const value of ["0", "3", "invalid"]) {
       expect(() =>
         loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: value }),
       ).toThrow(
@@ -157,12 +158,40 @@ describe("execution safety gates", () => {
       );
     }
     expect(
+      loadExecutionConfig({
+        ENTRY_LATENCY_BUFFER_ATR: "0.25",
+        PREFERRED_MAX_ENTRY_DISTANCE_ATR: "0.75",
+      }).preferredMaxEntryDistanceAtr,
+    ).toBe("0.75");
+    expect(() =>
+      loadExecutionConfig({
+        ENTRY_LATENCY_BUFFER_ATR: "0.75",
+        PREFERRED_MAX_ENTRY_DISTANCE_ATR: "0.75",
+      }),
+    ).toThrow("CONFIG_DECIMAL_OUT_OF_RANGE:ENTRY_LATENCY_BUFFER_ATR");
+    for (const environment of [
+      {
+        MAX_ENTRY_DISTANCE_ATR: "1",
+        PREFERRED_MAX_ENTRY_DISTANCE_ATR: "1.1",
+      },
+    ]) {
+      expect(() => loadExecutionConfig(environment)).toThrow(
+        "CONFIG_DECIMAL_OUT_OF_RANGE:PREFERRED_MAX_ENTRY_DISTANCE_ATR",
+      );
+    }
+    expect(
       safetyConfigHash(
-        loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: "0.7" }),
+        loadExecutionConfig({
+          ENTRY_LATENCY_BUFFER_ATR: "0.7",
+          PREFERRED_MAX_ENTRY_DISTANCE_ATR: "1.5",
+        }),
       ),
     ).not.toBe(
       safetyConfigHash(
-        loadExecutionConfig({ ENTRY_LATENCY_BUFFER_ATR: "0.8" }),
+        loadExecutionConfig({
+          ENTRY_LATENCY_BUFFER_ATR: "0.7",
+          PREFERRED_MAX_ENTRY_DISTANCE_ATR: "1.6",
+        }),
       ),
     );
   });

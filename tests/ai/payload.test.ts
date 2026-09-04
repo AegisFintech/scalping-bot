@@ -34,7 +34,7 @@ const common = {
     spread_atr_ratio_m1: "1",
   },
   performanceContext: { sample_size: 30, confidence_delta: -5 },
-  promptVersion: "system-v14",
+  promptVersion: "system-v15",
   schemaVersion: "2.1" as const,
   strategyVersion: "test",
   chart,
@@ -64,6 +64,7 @@ const common = {
     sellPreferredEntryMinimum: "1998.15",
     sellPreferredEntryMaximum: "1999.15",
     entryLatencyBufferAtr: "0.75",
+    preferredMaxEntryDistanceAtr: "1.75",
     minimumStopDistance: "0.1",
     maximumStopDistance: "0.5",
     preferredExpiresAt: "2026-01-01T00:25:00.000Z",
@@ -119,6 +120,7 @@ describe("model payload builder", () => {
       sell_preferred_entry_minimum: "1998.15",
       sell_preferred_entry_maximum: "1999.15",
       entry_latency_buffer_atr: "0.75",
+      preferred_max_entry_distance_atr: "1.75",
       minimum_stop_distance: "0.1",
       maximum_stop_distance: "0.5",
       preferred_expires_at: "2026-01-01T00:25:00.000Z",
@@ -144,8 +146,8 @@ describe("model payload builder", () => {
   });
 
   it("versions the commission-aware exit instructions in the current prompt", () => {
-    const prompt = readFileSync("prompts/system-v14.md", "utf8");
-    const previousPrompt = readFileSync("prompts/system-v13.md", "utf8");
+    const prompt = readFileSync("prompts/system-v15.md", "utf8");
+    const previousPrompt = readFileSync("prompts/system-v14.md", "utf8");
     expect(prompt).toContain("minimum_fee_buffered_take_profit_distance");
     expect(prompt).toContain("minimum_expected_net_to_fees_ratio");
     expect(prompt).toContain("stop_loss_to_take_profit_ratio");
@@ -161,6 +163,7 @@ describe("model payload builder", () => {
     expect(prompt).toContain("sell_preferred_entry_minimum");
     expect(prompt).toContain("sell_preferred_entry_maximum");
     expect(prompt).toContain("entry_latency_buffer_atr");
+    expect(prompt).toContain("preferred_max_entry_distance_atr");
     expect(prompt).toContain("microprice_bias");
     expect(prompt).toContain("liquidity_change_imbalance");
     expect(prompt).toContain("short-lived microstructure tie-breakers");

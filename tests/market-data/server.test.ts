@@ -87,6 +87,32 @@ const orderBook: OrderBookSnapshot = {
 afterEach(() => vi.restoreAllMocks());
 
 describe("market-data freshness", () => {
+  it("exposes bounded local-recorder health without changing readiness", async () => {
+    const app = createMarketDataServer({
+      adapter: adapter(
+        {
+          bid: "4499.99",
+          ask: "4500.01",
+          sourceTime: "2026-08-24T00:00:00.050Z",
+          receivedAt: "2026-08-24T00:00:00.080Z",
+        },
+        orderBook,
+      ),
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+      localRecorderStatus: () => ({ enabled: false }),
+    });
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/local-recorder",
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ enabled: false });
+    expect((await app.inject("/health/ready")).statusCode).toBe(200);
+    await app.close();
+  });
+
   it("compares quote and book receive times in the same clock domain", async () => {
     vi.spyOn(Date, "now").mockReturnValue(
       Date.parse("2026-08-24T00:00:00.100Z"),

@@ -226,7 +226,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v14";
+  readonly promptVersion: "system-v15";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -237,6 +237,7 @@ export interface CoordinatorOptions {
   readonly maxStopDistanceAtr: string;
   readonly maxEntryDistanceAtr: string;
   readonly entryLatencyBufferAtr: string;
+  readonly preferredMaxEntryDistanceAtr: string;
   readonly minStopDistancePoints: string | null;
   readonly maxQuoteAgeMs: number;
   readonly maxMetadataAgeMs: number;
@@ -283,6 +284,7 @@ export interface ModelExecutionBounds {
   readonly sellPreferredEntryMinimum: string;
   readonly sellPreferredEntryMaximum: string;
   readonly entryLatencyBufferAtr: string;
+  readonly preferredMaxEntryDistanceAtr: string;
   readonly minimumStopDistance: string;
   readonly maximumStopDistance: string;
   readonly preferredExpiresAt: string;
@@ -304,6 +306,7 @@ export function deriveModelExecutionBounds(input: {
   readonly atr: string;
   readonly maxEntryDistanceAtr: string;
   readonly entryLatencyBufferAtr: string;
+  readonly preferredMaxEntryDistanceAtr: string;
   readonly maxStopDistanceAtr: string;
   readonly maxAffordableStopDistance: string;
   readonly serverTime: string;
@@ -317,6 +320,10 @@ export function deriveModelExecutionBounds(input: {
   const maximumEntryDistance = atr.mul(decimal(input.maxEntryDistanceAtr));
   const entryLatencyBufferAtr = decimal(input.entryLatencyBufferAtr);
   const entryLatencyBufferDistance = atr.mul(entryLatencyBufferAtr);
+  const preferredMaxEntryDistanceAtr = decimal(
+    input.preferredMaxEntryDistanceAtr,
+  );
+  const preferredMaximumDistance = atr.mul(preferredMaxEntryDistanceAtr);
   const maximumStopDistance = floorToTick(
     Decimal.min(
       atr.mul(decimal(input.maxStopDistanceAtr)),
@@ -342,9 +349,6 @@ export function deriveModelExecutionBounds(input: {
   }
   const preferredMinimumDistance = Decimal.max(
     minimumStopDistance,
-    entryLatencyBufferDistance,
-  );
-  const preferredMaximumDistance = maximumEntryDistance.minus(
     entryLatencyBufferDistance,
   );
   const buyPreferredEntryMinimum = ceilToTick(
@@ -398,6 +402,7 @@ export function deriveModelExecutionBounds(input: {
     sellPreferredEntryMinimum: canonical(sellPreferredEntryMinimum),
     sellPreferredEntryMaximum: canonical(sellPreferredEntryMaximum),
     entryLatencyBufferAtr: canonical(entryLatencyBufferAtr),
+    preferredMaxEntryDistanceAtr: canonical(preferredMaxEntryDistanceAtr),
     minimumStopDistance: canonical(modelMinimumStopDistance),
     maximumStopDistance: canonical(maximumStopDistance),
     preferredExpiresAt: new Date(preferredExpiresAt).toISOString(),
@@ -754,6 +759,8 @@ export class AnalysisCoordinator {
           atr,
           maxEntryDistanceAtr: this.#options.maxEntryDistanceAtr,
           entryLatencyBufferAtr: this.#options.entryLatencyBufferAtr,
+          preferredMaxEntryDistanceAtr:
+            this.#options.preferredMaxEntryDistanceAtr,
           maxStopDistanceAtr: this.#options.maxStopDistanceAtr,
           maxAffordableStopDistance: proposalRiskConstraints.maxStopDistance,
           serverTime: preModelSnapshot.serverTime,

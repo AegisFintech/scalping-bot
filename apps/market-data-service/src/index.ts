@@ -11,12 +11,29 @@ import type {
 import { CTraderClient } from "../../../packages/ctrader-client/src/client.js";
 import { CTraderTokenManager } from "../../../packages/ctrader-client/src/token-manager.js";
 import { SecureTokenFileStore } from "../../../packages/ctrader-client/src/token-store.js";
+import {
+  LocalMarketRecorder,
+  type LocalMarketRecorderStatus,
+} from "./local-market-recorder.js";
 
 export interface MarketDataServerOptions {
   readonly adapter: MarketDataAdapter;
   readonly maxQuoteAgeMs: number;
   readonly maxOrderBookAgeMs: number;
   readonly maxSnapshotSkewMs: number;
+  readonly localRecorderStatus?: () =>
+    LocalMarketRecorderStatus | { readonly enabled: false };
+}
+
+function configuredBoolean(
+  value: string | undefined,
+  fallback: boolean,
+  name: string,
+): boolean {
+  if (value === undefined || value === "") return fallback;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  throw new Error(`CONFIG_BOOLEAN_INVALID:${name}`);
 }
 
 function configuredNumber(
@@ -40,6 +57,10 @@ export function createMarketDataServer(
     ready
       ? reply.send({ status: "ready" })
       : reply.code(503).send({ status: "not_ready" }),
+  );
+  app.get(
+    "/v1/local-recorder",
+    () => options.localRecorderStatus?.() ?? { enabled: false },
   );
   app.post<{ Body: { symbol: string } }>(
     "/v1/quote",
@@ -217,6 +238,75 @@ async function main(): Promise<void> {
     ),
   });
   await adapter.connect();
+  const localRecordingEnabled = configuredBoolean(
+    process.env.LOCAL_MARKET_RECORDING_ENABLED,
+    false,
+    "LOCAL_MARKET_RECORDING_ENABLED",
+  );
+  const recorder = localRecordingEnabled
+    ? new LocalMarketRecorder({
+        directory:
+          process.env.LOCAL_MARKET_RECORD_DIRECTORY ?? ".runtime/market-data",
+        sampleIntervalMs: configuredNumber(
+          process.env.LOCAL_MARKET_RECORD_INTERVAL_MS,
+          250,
+          "LOCAL_MARKET_RECORD_INTERVAL_MS",
+        ),
+        segmentDurationSeconds: configuredNumber(
+          process.env.LOCAL_MARKET_RECORD_SEGMENT_SECONDS,
+          300,
+          "LOCAL_MARKET_RECORD_SEGMENT_SECONDS",
+        ),
+        maxCompletedSegments: configuredNumber(
+          process.env.LOCAL_MARKET_RECORD_MAX_SEGMENTS,
+          2016,
+          "LOCAL_MARKET_RECORD_MAX_SEGMENTS",
+        ),
+      })
+    : null;
+  let recorderTimer: NodeJS.Timeout | null = null;
+  let captureInFlight: Promise<void> | null = null;
+  if (recorder !== null) {
+    const metadata = await adapter.discoverSymbol(
+      process.env.TRADING_SYMBOL ?? "XAUUSD",
+    );
+    const depth = configuredNumber(
+      process.env.ORDER_BOOK_DEPTH,
+      20,
+      "ORDER_BOOK_DEPTH",
+    );
+    const capture = (): void => {
+      if (captureInFlight !== null) {
+        recorder.noteCaptureFailure("LOCAL_MARKET_CAPTURE_OVERLAP");
+        return;
+      }
+      captureInFlight = Promise.all([
+        adapter.getQuote(metadata.symbolId),
+        adapter.getOrderBookSnapshot(metadata.symbolId, depth),
+      ])
+        .then(([quote, orderBook]) => {
+          recorder.record({
+            schemaVersion: "1.0",
+            symbol: metadata.symbolName,
+            capturedAt: new Date().toISOString(),
+            quote,
+            orderBook,
+          });
+        })
+        .catch((error: unknown) => {
+          recorder.noteCaptureFailure(
+            error instanceof Error && /^[A-Z0-9_:-]{1,160}$/.test(error.message)
+              ? error.message
+              : "LOCAL_MARKET_CAPTURE_FAILED",
+          );
+        })
+        .finally(() => {
+          captureInFlight = null;
+        });
+    };
+    capture();
+    recorderTimer = setInterval(capture, recorder.status.sampleIntervalMs);
+  }
   const app = createMarketDataServer({
     adapter,
     maxQuoteAgeMs: configuredNumber(
@@ -234,8 +324,12 @@ async function main(): Promise<void> {
       5_000,
       "MAX_CANDLE_SKEW_MS",
     ),
+    localRecorderStatus: () => recorder?.status ?? { enabled: false },
   });
   const shutdown = async (): Promise<void> => {
+    if (recorderTimer !== null) clearInterval(recorderTimer);
+    await captureInFlight;
+    if (recorder !== null) await recorder.stop();
     await app.close();
     await adapter.disconnect();
   };

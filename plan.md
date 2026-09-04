@@ -210,6 +210,7 @@ evidence precede any broker-capable live implementation.
 | ISSUE-065 | complete    | [Improve continuous demo conversion, expiry cadence, and cancellation evidence](https://github.com/AegisFintech/scalping-bot/issues/160) | Latency-resistant entry guidance; replayed 15-minute expiry; explained zero-fill cancellations; exit replay   |
 | ISSUE-066 | complete    | [Validate pending expiry from deterministic capture time](https://github.com/AegisFintech/scalping-bot/issues/163)                       | Preserve 15-minute requested lifetime across bounded inference latency; reject already-expired output         |
 | ISSUE-067 | complete    | [Use microstructure features and signal half-life for faster demo scalping](https://github.com/AegisFintech/scalping-bot/issues/166)     | Depth signals; signal-decay report; one-minute expiry; guarded demo rollout                                   |
+| ISSUE-068 | in progress | [Increase demo scalping conversion with event-path evidence](https://github.com/AegisFintech/scalping-bot/issues/169)                    | Closer valid entries; progressive local quote/depth evidence; broker-native event trigger; funnel telemetry   |
 
 Each issue is implemented on a dedicated branch with tests and documentation.
 Push meaningful checkpoints periodically; merge only after acceptance criteria,
@@ -860,6 +861,38 @@ never justify empty, noisy, unsafe, or misleading commits.
   scheduler returned to `RUNNING`. The first closed `.42` trade lost `-1.88`
   net including `-0.26` fees, so it is transport/cadence evidence only and does
   not establish improved accuracy or profitability.
+
+### ISSUE-068 delivery details
+
+- Acceptance criteria: retain cTrader broker-native pending stops as the
+  immediate event-driven trigger; reduce the static ATR entry-latency inset in
+  a distinct immutable prompt/release; add bounded progressive local quote and
+  depth recording with rotation, compression, checksums, and health evidence;
+  expose analysis-to-placement and placement-to-fill cadence clearly; preserve
+  schema, freshness, spread, reconciliation, ownership, deterministic risk,
+  fee, and demo-only gates; cover successful and failure paths; merge and
+  deploy only after all required checks pass.
+- Dependencies: ISSUE-067 release `.42`, prompt `system-v14`, broker-native
+  stop-limit execution, and exact fee-inclusive order/trade history.
+- Current status: implementation is in progress on
+  `issue-068-event-path-conversion`, tracked by
+  [issue #169](https://github.com/AegisFintech/scalping-bot/issues/169). Release
+  `.42` produced 262 completed AI responses and 134 OCO groups in its first
+  review window, but only 6 groups filled while 128 expired. All 6 fills were
+  within 30 seconds. By comparison, `.41` filled 54 of 103 groups with a
+  15-minute lifetime, but every non-empty fill-age bucket after 30 seconds was
+  fee-inclusive net negative. The candidate therefore keeps short-lived
+  broker-native triggers and targets faster valid activation rather than
+  restoring stale 15-minute orders. These are demo observations, not a
+  profitability claim. Candidate `.43` uses prompt `system-v15`, a guarded
+  `0.25`–`0.75` M1-ATR preferred entry corridor, and a local 250 ms normalized
+  quote/depth recorder with five-minute gzip/checksum rotation and bounded
+  retention. Pre-deployment gates passed 311 Node, 18 schema, 3 migration, all
+  3 configured integration, and 96 Python tests plus formatting, lint, types,
+  build, configured AppTest, replay/backtest/decay smoke, dependency audits,
+  tracked-file secret scanning, shell/PM2 checks, diff validation, and all five
+  offline systemd security parses at 2.8 (`OK`). Merge and guarded demo rollout
+  remain pending.
 
 ### ISSUE-001 delivery details
 
