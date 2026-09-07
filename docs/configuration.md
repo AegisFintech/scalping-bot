@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.2-fixed-risk.3` uses policy `fixed-risk-v2` in
+Release `0.2.2-fixed-risk.4` uses policy `fixed-risk-v2` in
 `packages/config/src/policy.ts`. The normal template has 21 assignments, previously
 176: 155 fewer, an 88.1% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration

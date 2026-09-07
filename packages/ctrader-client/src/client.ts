@@ -1064,7 +1064,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     const balance = money(stringField(trader, "balance"), moneyDigits);
     const pnlDigits = numberField(pnl.payload, "moneyDigits");
     const pnlRows = recordsField(pnl.payload, "positionUnrealizedPnL");
-    validateAccountPnlEvidence(raw.positions, pnlRows);
+    validateAccountPnlEvidence(raw.positions, pnlRows, raw.orders);
     const unrealized = pnlRows.reduce(
       (total, row) =>
         total.plus(money(stringField(row, "netUnrealizedPnL"), pnlDigits)),

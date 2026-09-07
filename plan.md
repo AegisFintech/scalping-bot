@@ -2,6 +2,33 @@
 
 ## Scope
 
+### ISSUE-077 — Preserve correctly reconciled pending orders (implemented; demo verification in progress)
+
+- Branch: `issue-077-pending-order-reconciliation`.
+- Issue: [#184](https://github.com/AegisFintech/scalping-bot/issues/184).
+- Dependencies: ISSUE-076 / PR #183; existing cTrader account adapter and protected OCO lifecycle.
+- Authorization: operator requested a repair after the September 7 status audit;
+  retain existing demo authority, fixed 1% setup / 5% daily limits and disabled live execution.
+- Acceptance: reproduce the post-placement account uncertainty; correct its cause
+  without hiding missing/invalid exposure or P/L; preserve redacted diagnostic reasons;
+  test pending-to-fill/expiry and genuine uncertainty/emergency failure paths; validate
+  the authorized demo lifecycle and run all required quality gates before delivery.
+- Baseline: 17 accepted OCO pairs / 34 orders between 16:38 and 20:35 SGT were
+  cancelled in 1.657–7.254 seconds. All 17 coincide with
+  `DAILY_RISK_ACCOUNT_UNCERTAIN`; no fill occurred and neither durable loss lock was set.
+- Root cause: the broker returns zero P/L for pending position identities even
+  when the open-position list is empty. Reproduced `CTRADER_ACCOUNT_PNL_INCOMPLETE`
+  at 20:55 SGT; strict matching to accepted, explicitly unfilled pending orders
+  fixes the mismatch while preserving unknown/missing/partial/nonzero rejection.
+- Validation: all required gates passed after correcting seven require-await
+  lint findings in new test mocks; 445 Node / 118 Python, 22 schema, three migration
+  and all three configured integration tests; zero known dependency vulnerabilities.
+  Exact commands and broker reproduction: `docs/evidence/pending-reconciliation-validation.json`.
+- Rollout: paused at 20:55:37 SGT, execution service upgraded to `.4` on stable
+  Node 22; healthy paused preflight and existing demo authority restored at
+  21:00:57 SGT. Credentials/environment and all risk limits remain unchanged.
+  Awaiting the next qualifying demo setup to verify its full order lifecycle.
+
 ### ISSUE-076 — Fixed percentage risk without an absolute floor (implemented; validated; demo restored)
 
 - Branch: `issue-076-fixed-percentage-risk`.

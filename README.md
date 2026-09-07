@@ -5,12 +5,15 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.2-fixed-risk.3`, policy `fixed-risk-v2`.
+The current source release is `0.2.2-fixed-risk.4`, policy `fixed-risk-v2`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
 See the [current risk-policy and rollout report](docs/fixed-risk-report.md) and
 [scenario implementation evidence](docs/reusable-scenario-report.md).
+The [pending-order reconciliation repair](docs/pending-order-reconciliation-report.md)
+accounts for broker-reported zero P/L on unfilled orders, preventing the erroneous
+immediate safety cancellation observed in release `.3`.
 
 The original [completed-candle directional research](docs/scenario-automation-report.md)
 remains a separate observe/replay tool. Its hold/failed-reclaim confirmations and

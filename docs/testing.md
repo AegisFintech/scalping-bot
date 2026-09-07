@@ -1,5 +1,14 @@
 # Current acceptance and research
 
+ISSUE-077 reproduces zero-P/L records associated with accepted, wholly unfilled
+pending orders. Coverage includes actual account-adapter wire normalization,
+unchanged equity/margin and pending counts across polls/restart, daily-risk admission,
+transition to a priced fill, missing open P/L, ambiguous/partial/unknown/nonzero
+evidence, other-symbol exposure, diagnostic redaction, and expiry maintenance.
+Results and broker lifecycle observations are recorded in
+[the repair report](pending-order-reconciliation-report.md). Passing unit tests
+or an idle health endpoint alone cannot establish post-placement correctness.
+
 ISSUE-076 verifies the fixed 1% setup / 5% daily policy with no absolute floor.
 Tests cover percentage overrides, OCO combined cost exposure, small-account
 minimum rejection, remaining daily capacity, deposits/withdrawals, concurrent

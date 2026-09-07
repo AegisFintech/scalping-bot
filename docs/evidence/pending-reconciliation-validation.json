@@ -1,0 +1,306 @@
+{
+  "release": "0.2.2-fixed-risk.4",
+  "label": "SOFTWARE_CORRECTNESS_NOT_PROFITABILITY",
+  "node": "22.23.2",
+  "node_tests": 445,
+  "node_files": 61,
+  "python_tests": 118,
+  "schema_tests": 22,
+  "migration_tests": 3,
+  "configured_integration_tests": 3,
+  "known_dependency_vulnerabilities": 0,
+  "commands": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "00.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 14.06,
+      "log": "00.log",
+      "phase": "after_test_mock_lint_correction"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 26.36,
+      "log": "01.log",
+      "phase": "after_test_mock_lint_correction"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 11.06,
+      "log": "02.log",
+      "phase": "after_test_mock_lint_correction"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 8.46,
+      "log": "04.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 24.0,
+      "log": "03.log",
+      "phase": "after_test_mock_lint_correction"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 2.4,
+      "log": "06.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 0.97,
+      "log": "07.log",
+      "phase": "initial"
+    },
+    {
+      "command": "node --input-type=module -e \"import 'dotenv/config'; import {spawnSync} from 'node:child_process'; const r=spawnSync('npm',['run','test:integration'],{env:{...process.env,TEST_DATABASE_URL:process.env.DATABASE_URL},stdio:'inherit'}); process.exitCode=r.status ?? 1;\"",
+      "exit_code": 0,
+      "seconds": 8.0,
+      "log": "08.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "10.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.88,
+      "log": "11.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 5.86,
+      "log": "12.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.62,
+      "log": "13.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.57,
+      "log": "14.log",
+      "phase": "initial"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.12,
+      "log": "15.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.98,
+      "log": "16.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 19.93,
+      "log": "17.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "18.log",
+      "phase": "initial"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-077/backtest-fixture-delivery.json",
+      "exit_code": 0,
+      "seconds": 0.22,
+      "log": "19.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-077/base-delivery.json",
+      "exit_code": 0,
+      "seconds": 0.88,
+      "log": "20.log",
+      "phase": "initial"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-077/stress-delivery.json --stress",
+      "exit_code": 0,
+      "seconds": 1.17,
+      "log": "21.log",
+      "phase": "initial"
+    }
+  ],
+  "initial_corrections": [
+    "Seven require-await lint findings in new test mocks fixed with explicit Promise.resolve/reject; full format/lint/type/Node checks rerun successfully."
+  ],
+  "broker_before": [
+    {
+      "at": "2026-09-07T12:54:20.904Z",
+      "orders": 0,
+      "positions": [],
+      "orderShapes": []
+    },
+    {
+      "at": "2026-09-07T12:55:31.781Z",
+      "orders": 2,
+      "positions": [],
+      "orderShapes": [
+        {
+          "symbolMatches": true,
+          "status": 1,
+          "executedVolumeType": "number",
+          "executedVolumeZero": true
+        },
+        {
+          "symbolMatches": true,
+          "status": 1,
+          "executedVolumeType": "number",
+          "executedVolumeZero": true
+        }
+      ]
+    },
+    {
+      "at": "2026-09-07T12:55:32.046Z",
+      "accountError": "CTRADER_ACCOUNT_PNL_INCOMPLETE",
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          },
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-09-07T12:55:32.854Z",
+      "accountError": "CTRADER_ACCOUNT_PNL_INCOMPLETE",
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          },
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-09-07T12:55:33.662Z",
+      "accountError": "CTRADER_ACCOUNT_PNL_INCOMPLETE",
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          },
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-09-07T12:55:34.469Z",
+      "accountError": "CTRADER_ACCOUNT_PNL_INCOMPLETE",
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          },
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-09-07T12:55:35.277Z",
+      "accountError": "CTRADER_ACCOUNT_PNL_INCOMPLETE",
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          },
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-09-07T12:55:36.086Z",
+      "accountError": "CTRADER_ACCOUNT_PNL_INCOMPLETE",
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-09-07T12:55:36.629Z",
+      "orders": 0,
+      "positions": [],
+      "orderShapes": []
+    },
+    {
+      "finished": "2026-09-07T12:55:36.630Z",
+      "observedPending": true
+    }
+  ]
+}
