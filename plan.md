@@ -6,6 +6,8 @@
 
 - Branch: `issue-076-fixed-percentage-risk`.
 - Issue: [#182](https://github.com/AegisFintech/scalping-bot/issues/182).
+- Pull request: [#183](https://github.com/AegisFintech/scalping-bot/pull/183);
+  implementation checkpoint `302f23b` is committed and pushed.
 - Dependencies: ISSUE-075 / PR #181; existing cost-inclusive risk engine and capital accounting.
 - Authorization: operator explicitly removed the absolute account-equity floor and
   selected hard-coded 1% setup / 5% daily risk on 2026-09-07. Existing demo authority

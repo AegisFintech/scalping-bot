@@ -1,6 +1,8 @@
 # ISSUE-076 — Fixed percentage money management
 
 Date: 2026-09-07. Issue: [#182](https://github.com/AegisFintech/scalping-bot/issues/182).
+Pull request: [#183](https://github.com/AegisFintech/scalping-bot/pull/183).
+Implementation checkpoint: `302f23b` (committed and pushed).
 Branch: `issue-076-fixed-percentage-risk`. Source: `0.2.2-fixed-risk.3`.
 Policy: `fixed-risk-v2`. This policy change is explicitly authorized by the operator;
 it does not establish a trading edge or increase measured strategy accuracy.
