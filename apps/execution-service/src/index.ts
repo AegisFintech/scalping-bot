@@ -1,4 +1,5 @@
 import { CapitalRiskStore } from "./capital-risk-store.js";
+import { reconcileAccountSafely } from "./account-reconciliation.js";
 import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
 import { IndependentMaintenance } from "./independent-maintenance.js";
 import "dotenv/config";
@@ -20,7 +21,6 @@ import {
 } from "./scenario-context.js";
 import type {
   AccountAdapter,
-  AccountState,
   ExecutionGateway,
   MarketSnapshot,
   Timeframe,
@@ -797,23 +797,16 @@ async function main(): Promise<void> {
       accountKey: config.accountKey,
       configHash,
     });
-    let state: AccountState;
-    try {
-      state = await account.reconcile(latestSnapshot!.metadata.symbolId);
-    } catch {
-      state = {
-        reconciledAt: new Date().toISOString(),
-        certain: false,
-        equity: "0",
-        balance: "0",
-        availableMargin: "0",
-        relevantPositionCount: 0,
-        relevantPendingOrderCount: 0,
-        hasPartialFill: false,
-        hasCancellationPending: false,
-        reasonCodes: ["ACCOUNT_RECONCILIATION_FAILED"],
-      };
-    }
+    const state = await reconcileAccountSafely(
+      account,
+      latestSnapshot!.metadata.symbolId,
+      (reason) =>
+        logger.log("error", {
+          event_name: "account_reconciliation_failed",
+          outcome: "blocked",
+          reason_code: reason,
+        }),
+    );
     const external = await gateway.reconcile(config.symbol);
     const demoExecutionState =
       demoExecutionRecorder === null

@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.2-fixed-risk.3`, fixed risk policy v2. Previous release
+Current source: `0.2.2-fixed-risk.4`, fixed risk policy v2. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -82,6 +82,15 @@ loopback and deployments support Debian/systemd.
 10. Broker events are durably deduplicated/mapped. Unknown, partial, conflicting
     or incomplete outcomes remain reconciliation blockers. Existing recovery
     handles duplicate callbacks, peer-cancel retries and both OCO legs filling.
+
+Account P/L matching requires exactly one row per open position. This broker also
+reports zero P/L for the position identities reserved by pending orders. Such a
+row is valid only when gross and net are both zero and its identity matches exactly
+one accepted order with explicit zero executed volume. These orders remain counted
+as pending exposure; other-symbol exposure still blocks. Unknown, duplicate,
+nonzero unmatched, partial and missing open-position evidence reject. Known account
+failure codes are retained in status/logs without raw exceptions. See
+[the reconciliation report](pending-order-reconciliation-report.md).
 
 ## Independent protective path
 

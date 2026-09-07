@@ -14,6 +14,15 @@ Current policy: `fixed-risk-v2`. All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
+Release `.4` corrects account P/L matching for pending orders. The broker can report
+zero P/L for a position identity reserved by an accepted, unfilled order. Exactly
+one matching order, explicit zero executed volume, and zero gross/net P/L are required
+to accept that extra row. All open positions still require exactly one P/L row;
+unknown, duplicate, nonzero unmatched, partially filled and other-symbol exposure
+remain blocked. Pending orders retain their OCO risk reservation and exposure count.
+This changes neither risk percentages nor entry/stop/target distances. See
+[the repair evidence](pending-order-reconciliation-report.md).
+
 The separate chart-scenario research runner uses the same `sizePosition`, spread
 and commission functions. Each confirmed directional entry is capped at the old
 half-setup budget; it does not claim the unused opposite leg's budget. It retains

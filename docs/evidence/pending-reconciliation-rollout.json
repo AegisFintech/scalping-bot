@@ -1,0 +1,146 @@
+{
+  "capturedAt": "2026-09-07T13:04:42.803Z",
+  "release": "0.2.2-fixed-risk.4",
+  "mode": "demo",
+  "riskPolicy": {
+    "version": "fixed-risk-v2",
+    "setupRiskPercent": "1",
+    "dailyLossLimitPercent": "5",
+    "drawdownLimitPercent": "5"
+  },
+  "healthy": true,
+  "enabled": true,
+  "paused": false,
+  "automatic": true,
+  "emergencyStopped": false,
+  "reasonCodes": [],
+  "latestGroup": "LATEST_TERMINAL",
+  "lastOutcome": "DEFERRED",
+  "lastReasons": ["SCENARIO_MAP_CONSUMED"],
+  "requestedModel": "gpt-6-astra/u64",
+  "context": {
+    "state": "READY",
+    "requested_at": "2026-09-07T13:01:11.362Z",
+    "valid_until": "2026-09-07T13:06:10.116Z",
+    "duration_ms": 18621,
+    "requested_model": "gpt-6-astra/u64",
+    "returned_model": "gpt-6-astra",
+    "consumed": true
+  },
+  "environmentUnchanged": true,
+  "environmentMode": "600",
+  "services": [
+    {
+      "name": "scalper-analytics",
+      "status": "online"
+    },
+    {
+      "name": "scalper-market-data",
+      "status": "online"
+    },
+    {
+      "name": "scalper-ai",
+      "status": "online"
+    },
+    {
+      "name": "scalper-dashboard",
+      "status": "online"
+    },
+    {
+      "name": "scalper-execution",
+      "status": "online"
+    }
+  ],
+  "brokerObservation": {
+    "transitions": [
+      {
+        "at": "2026-09-07T13:01:04.567Z",
+        "orders": 0,
+        "positions": [],
+        "orderShapes": []
+      },
+      {
+        "at": "2026-09-07T13:02:04.220Z",
+        "orders": 1,
+        "positions": [],
+        "orderShapes": [
+          {
+            "symbolMatches": true,
+            "status": 1,
+            "executedVolumeType": "number",
+            "executedVolumeZero": true
+          }
+        ]
+      },
+      {
+        "at": "2026-09-07T13:02:54.856Z",
+        "orders": 0,
+        "positions": [],
+        "orderShapes": []
+      },
+      {
+        "finished": "2026-09-07T13:02:54.856Z",
+        "observedPending": true
+      }
+    ],
+    "successfulAccountChecks": 62,
+    "failedAccountChecks": 0,
+    "firstSuccessfulCheck": {
+      "at": "2026-09-07T13:02:04.490Z",
+      "accountCertain": true,
+      "reasons": [],
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    },
+    "lastSuccessfulCheck": {
+      "at": "2026-09-07T13:02:54.307Z",
+      "accountCertain": true,
+      "reasons": [],
+      "pnlShape": {
+        "moneyDigitsPresent": true,
+        "rows": [
+          {
+            "grossZero": true,
+            "netZero": true
+          }
+        ]
+      }
+    }
+  },
+  "groups": [
+    {
+      "created_at": "2026-09-07T13:02:02.590Z",
+      "updated_at": "2026-09-07T13:02:56.211Z",
+      "state": "EXPIRED",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "expires_at": "2026-09-07T13:02:54.597Z",
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "CANCELLED",
+          "updated_at": "2026-09-07T13:02:03.394+00:00",
+          "submitted_at": "2026-09-07T13:02:03.394+00:00",
+          "filled_volume": "0.0000000000",
+          "broker_updated_at": "2026-09-07T13:02:03.23+00:00"
+        },
+        {
+          "side": "SELL",
+          "state": "EXPIRED",
+          "updated_at": "2026-09-07T13:02:54.766+00:00",
+          "submitted_at": "2026-09-07T13:02:03.6+00:00",
+          "filled_volume": "0.0000000000",
+          "broker_updated_at": "2026-09-07T13:02:54.598+00:00"
+        }
+      ],
+      "closed_trades": 0
+    }
+  ],
+  "runtimeAccountAndRecoveryErrors": []
+}

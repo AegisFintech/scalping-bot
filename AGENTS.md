@@ -51,6 +51,11 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   Observed `gpt-6-astra` return normalization is documented. Unknown cost is null.
 - Preserve model-independent protective maintenance and account/symbol ownership
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.
+- Read `docs/pending-order-reconciliation-report.md` before changing account P/L
+  matching. Every open position still requires one P/L row. A zero gross/net P/L
+  row may instead match exactly one accepted, explicitly unfilled pending order's
+  position identity. Unknown, duplicate, nonzero or partial evidence must reject.
+  Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
 - Production context uses `scenario-v2` / `scenario-1.0`; local derived OCO

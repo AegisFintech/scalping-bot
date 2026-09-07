@@ -1,6 +1,7 @@
 # Current release operations
 
-For release `0.2.2-fixed-risk.3`, follow [the fixed-policy rollout record](fixed-risk-report.md).
+For release `0.2.2-fixed-risk.4`, follow [the reconciliation repair record](pending-order-reconciliation-report.md)
+and the unchanged [fixed-policy rollout record](fixed-risk-report.md).
 The operator removed the absolute equity-floor requirement and authorized a fixed
 1% setup ceiling / 5% UTC daily budget. Recreate processes from the reviewed small
 environment to remove cached policy overrides. Verify the exact requested model
@@ -12,11 +13,19 @@ Never reset accounting or enable live submission to pass readiness.
 map is not an order. Check active strategy orders and fresh broker reconciliation
 separately. Context refresh attempts are journaled before dispatch and may include
 pre-provider/transport failures; unknown costs remain null. Protective maintenance
-runs during a pending request. A five-minute refresh cooldown is not a stalled bot. The current stopped PM2
+runs during a pending request. A five-minute refresh cooldown is not a stalled bot. The PM2
 deployment uses the verified Node 22.23.2 binary at `/opt/scalper-node22/bin/node`;
 service recreation must use that binary, not the system Node 24 or an ephemeral
 package cache. Verify risk budgets and reconciliation under the maintenance hold before
 restoring previously authorized demo controls.
+
+For premature `AUTOMATIC_SAFETY_CANCELLATION`, inspect the preceding
+`account_reconciliation_failed` and `daily_risk_reconciliation_failed` codes.
+`CTRADER_ACCOUNT_PNL_INCOMPLETE` must never be bypassed or repaired by resetting
+daily accounting. Release `.4` correctly matches zero P/L for confirmed unfilled
+pending position identities. Validate the entire accepted-order lifecycle, including
+several maintenance passes and eventual fill/cancel/expiry; an idle healthy status
+does not establish that orders will survive after submission.
 
 Chart-scenario research commands are described in
 [the scenario report](scenario-automation-report.md). Observation uses the existing
