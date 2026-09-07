@@ -2,6 +2,8 @@
 
 Date: 2026-09-07. Branch: `issue-075-efficient-scenario-execution`.
 Issue: [#179](https://github.com/AegisFintech/scalping-bot/issues/179).
+Delivery: [PR #181](https://github.com/AegisFintech/scalping-bot/pull/181),
+implementation checkpoint `e5da2fd` committed and pushed.
 Baseline source: `f5fe93f`; running baseline: `.43` / `gpt-5.6-sol/u40`.
 New source: `0.2.1-reusable-scenarios.1`. Live execution remains disabled.
 
@@ -190,6 +192,11 @@ A final concurrency review canonicalized the database advisory-lock scope. The
 configured integration tests passed with independent stores receiving differently
 ordered scope properties. Node lint, typecheck, build and all 406 tests passed
 again after that change; the exact final build was restarted under the same stop.
+Final formatting, staged-diff review and repository secret scans passed; an
+additional exact-value comparison found no populated credential in the 52 staged
+implementation files. The GitHub repository currently has no main-branch protection
+or matching rules and has automatic merge disabled. These facts do not replace
+the local completion gates or authorize bypassing any later required check.
 
 Early formatting/lint findings were corrected and rechecked. The deliberate
 negative startup check against the unchanged populated file still rejects with

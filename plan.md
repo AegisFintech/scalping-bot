@@ -28,6 +28,8 @@
 
 - Branch: `issue-075-efficient-scenario-execution`.
 - Issue: [#179](https://github.com/AegisFintech/scalping-bot/issues/179).
+- Pull request: [#181](https://github.com/AegisFintech/scalping-bot/pull/181);
+  implementation checkpoint `e5da2fd` is committed and pushed.
 - Dependencies: ISSUE-074 scenario contract, ISSUE-069 risk/capital changes,
   additive migrations 0015–0016 and an explicit equity floor for enabled demo.
 - Authorization: the operator explicitly approved the integrated overhaul and a
@@ -47,6 +49,10 @@
   tests; full formatter/lint/type/build, replay/fail-closed, secret scan and audits.
   Both dashboard themes preserved controls/focus/navigation/chart state across
   background updates. Exact commands: `docs/evidence/reusable-validation.json`.
+- Final review: canonical database lock scope verified with concurrent independent
+  clients; all three configured integration tests and Node lint/type/build/406
+  tests passed again. Final formatting and staged-secret scans passed; no populated
+  credential value occurs in the 52-file implementation checkpoint.
 - Delivery state: migrations 0015–0016 applied after a protected database backup;
   all five services recreated on stable Node 22.23.2, with the new release/model
   verified from the running API. Two bounded real provider checks passed; requested
