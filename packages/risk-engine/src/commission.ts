@@ -52,7 +52,7 @@ function minimumCommissionInAccountCurrency(metadata: SymbolMetadata): Decimal {
   throw new Error("COMMISSION_MINIMUM_CURRENCY_UNSUPPORTED");
 }
 
-function oneWayCommission(
+export function oneWayCommission(
   metadata: SymbolMetadata,
   price: Decimal,
   volume: Decimal,

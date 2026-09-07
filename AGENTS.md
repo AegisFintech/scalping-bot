@@ -46,6 +46,14 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   Durable daily/high-water accounting and risk reductions must survive restarts.
 - Current prompt is `system-v16`, response schema remains `2.1`; provider telemetry
   has its own strict `1.0` schema. Historical prompts/schemas remain immutable.
+- `scenario-v1` / `scenario-1.0` are separate research contracts, not replacements
+  for the production OCO contract. Read `docs/scenario-automation-report.md` before
+  changing their assumptions. Observe/replay commands have no broker submission
+  authority. Never promote them or relabel synthetic fixtures as strategy evidence.
+- Scenario confirmation consumes completed candles after plan availability;
+  inference cannot backdate eligibility. Preserve strict event order, duplicate
+  conflict handling, checkpoint failure latches and censored/unknown P&L. Structural
+  and time exits cannot await the provider. Reuse the existing risk engine.
 - Sampled quotes have their own source/receive/capture times, checksum, ordering,
   freshness and censoring rules. Do not describe them as a complete tick tape.
   Keep faster/directional candidates research-only until independent evidence

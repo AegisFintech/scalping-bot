@@ -4,6 +4,15 @@ Current policy: `conservative-v1`. All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
+The separate chart-scenario research runner uses the same `sizePosition`, spread
+and commission functions. Each confirmed directional entry is capped at the old
+half-setup budget; it does not claim the unused opposite leg's budget. It retains
+daily remaining budget, bounded reduction multipliers, capital floor, notional,
+margin and minimum-volume checks. These inputs must come from trusted reconciled
+state for future broker integration; a research fixture is not such evidence.
+Structural stops, first-target exits, confirmation invalidation and a ten-minute
+maximum hold are explicit candidate assumptions, not production policy changes.
+
 ## Fixed policy and capital limits
 
 The normal configuration retains only an explicit `ACCOUNT_EQUITY_FLOOR` and

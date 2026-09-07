@@ -10,6 +10,16 @@ The current source release is `0.2.0-overhaul.1`, policy `conservative-v1`, prom
 trading or deploy services. See the [implementation and evidence report](docs/overhaul-report.md)
 for what was measured, what changed, and what remains unverified.
 
+The [automatic chart-scenario research workflow](docs/scenario-automation-report.md)
+adds chart capture and conditional recovery/failed-reclaim/extension plans, with
+deterministic confirmation, sizing and automatic exits in an executable replay.
+It is **not connected to broker execution** and does not replace the running bot.
+`npm run scenario:observe -- artifacts/scenario-observation.json` makes one bounded,
+potentially chargeable model request from current local market/analytics services.
+`npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/scenario-replay.json`
+runs the operator-example software fixture without a network connection.
+Both commands refuse to overwrite their output files. Neither enables trading.
+
 ## Overview
 
 ![Dashboard overview](docs/images/dashboard-overview.png)

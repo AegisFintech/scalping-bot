@@ -28,7 +28,9 @@
     "demo:signal-decay": "tsx scripts/analyze-demo-signal-decay.ts",
     "config:check": "tsx scripts/check-config.ts",
     "provider:benchmark": "tsx scripts/benchmark-provider.ts",
-    "evaluation:export": "tsx scripts/export-evaluation.ts"
+    "evaluation:export": "tsx scripts/export-evaluation.ts",
+    "scenario:replay": "tsx scripts/replay-scenarios.ts",
+    "scenario:observe": "tsx scripts/observe-scenario.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",

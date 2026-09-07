@@ -1,0 +1,300 @@
+{
+  "label": "SCENARIO_RESEARCH_SOFTWARE_VALIDATION_NOT_PROFITABILITY",
+  "date": "2026-09-07",
+  "node_tests": 380,
+  "python_tests": 116,
+  "scenario_tests": 45,
+  "schema_tests": 22,
+  "static_migration_tests": 3,
+  "configured_integration_tests": 3,
+  "gates": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 10.78,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 21,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 9.03,
+      "log": "03.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 8.43,
+      "log": "04.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 22,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 2.73,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.03,
+      "log": "07.log"
+    },
+    {
+      "command": "node --input-type=module -e \"import 'dotenv/config'; import {spawnSync} from 'node:child_process'; const r=spawnSync('npm',['run','test:integration'],{env:{...process.env,TEST_DATABASE_URL:process.env.DATABASE_URL},stdio:'inherit'}); process.exitCode=r.status ?? 1;\"",
+      "exit_code": 0,
+      "seconds": 5.13,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.57,
+      "log": "11.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 3.98,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "14.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.06,
+      "log": "15.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 10.65,
+      "log": "17.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "18.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/scenario-automation/backtest-fixture-acceptance.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "19.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/scenario-automation/base-acceptance.json",
+      "exit_code": 0,
+      "seconds": 0.72,
+      "log": "20.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/scenario-automation/stress-acceptance.json --stress",
+      "exit_code": 0,
+      "seconds": 0.67,
+      "log": "21.log"
+    }
+  ],
+  "observations": [
+    {
+      "stage": "market_data",
+      "reason": "MARKET_DATA_HTTP_ERROR:503",
+      "provider_invoked": false
+    },
+    {
+      "stage": "market_data",
+      "reason": "MARKET_DATA_HTTP_ERROR:503",
+      "provider_invoked": false
+    },
+    {
+      "stage": "provider",
+      "completed": true,
+      "trading_enabled": false,
+      "captured_at": "2026-09-07T04:31:46.087Z",
+      "available_at": "2026-09-07T04:32:07.316Z",
+      "latency_ms": 19448,
+      "telemetry": {
+        "requestedModel": "gpt-6-astra/u64",
+        "returnedModel": "gpt-6-astra",
+        "inputProfile": "chart",
+        "requestBytes": 133344,
+        "responseBytes": 29979,
+        "inputTokens": 22116,
+        "outputTokens": 466,
+        "totalTokens": 22582,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "schema_and_semantics_valid": true
+    }
+  ],
+  "synthetic_base": {
+    "policy": "chart-scenarios-v1",
+    "label": "SYNTHETIC",
+    "brokerConnected": false,
+    "economicEvidence": "SOFTWARE_FIXTURE_ONLY",
+    "assumptions": {
+      "latencyMs": 500,
+      "entrySlippageTicks": 2,
+      "exitSlippageTicks": 5,
+      "stopLimitRangeTicks": 5
+    },
+    "events": 5,
+    "closedTrades": 1,
+    "pathCensored": false,
+    "halted": false,
+    "openPosition": false,
+    "pendingOrder": false,
+    "awaitingAdmission": false,
+    "netBeforeModelCosts": "8.9103692",
+    "modelCosts": null,
+    "netAfterModelCosts": null,
+    "lifecycle": [
+      {
+        "at": "2026-09-07T00:02:00.000Z",
+        "outcome": "CONFIRMED",
+        "reasons": [],
+        "scenario": "RECOVERY_HOLD"
+      },
+      {
+        "at": "2026-09-07T00:02:00.500Z",
+        "outcome": "PENDING",
+        "reasons": [],
+        "scenario": "RECOVERY_HOLD"
+      },
+      {
+        "at": "2026-09-07T00:02:00.750Z",
+        "outcome": "FILLED",
+        "reasons": [],
+        "scenario": "RECOVERY_HOLD"
+      },
+      {
+        "at": "2026-09-07T00:02:01.000Z",
+        "outcome": "CLOSED",
+        "reasons": ["FIRST_TARGET"],
+        "scenario": "RECOVERY_HOLD"
+      }
+    ],
+    "trades": [
+      {
+        "side": "BUY",
+        "entry": "4411.23",
+        "exit": "4415.95",
+        "volume": "2",
+        "openedAt": "2026-09-07T00:02:00.750Z",
+        "closedAt": "2026-09-07T00:02:01.000Z",
+        "reason": "FIRST_TARGET",
+        "gross": "9.44",
+        "fees": "0.5296308",
+        "net": "8.9103692"
+      }
+    ]
+  },
+  "synthetic_stress": {
+    "policy": "chart-scenarios-v1",
+    "label": "SYNTHETIC",
+    "brokerConnected": false,
+    "economicEvidence": "SOFTWARE_FIXTURE_ONLY",
+    "assumptions": {
+      "latencyMs": 1500,
+      "entrySlippageTicks": 4,
+      "exitSlippageTicks": 10,
+      "stopLimitRangeTicks": 5
+    },
+    "events": 5,
+    "closedTrades": 0,
+    "pathCensored": true,
+    "halted": false,
+    "openPosition": false,
+    "pendingOrder": false,
+    "awaitingAdmission": true,
+    "netBeforeModelCosts": null,
+    "modelCosts": null,
+    "netAfterModelCosts": null,
+    "lifecycle": [
+      {
+        "at": "2026-09-07T00:02:00.000Z",
+        "outcome": "CONFIRMED",
+        "reasons": [],
+        "scenario": "RECOVERY_HOLD"
+      }
+    ],
+    "trades": []
+  },
+  "real_model_scenario_compatibility": "unverified",
+  "old_versus_new_out_of_sample_performance": "unavailable",
+  "broker_execution_connected": false,
+  "market_diagnostic": {
+    "reason": "CTRADER_DEPTH_TIMEOUT",
+    "requested_depth_before": 20,
+    "requested_depth_after": 4,
+    "policy": "conservative-v1"
+  },
+  "actual_environment_startup": {
+    "exit_code": 1,
+    "reason": "CONFIG_DEMO_EQUITY_FLOOR_REQUIRED",
+    "trading_services_restarted": false
+  },
+  "prospective_observation": {
+    "label": "PROSPECTIVE_SAMPLED_PATH_NOT_TRADING_PERFORMANCE",
+    "start": "2026-09-07T04:32:35.434Z",
+    "end": "2026-09-07T04:36:47.256Z",
+    "quote_responses": 455,
+    "completed_candles": 2,
+    "local_read_failures": 17,
+    "stale_quote_failures": 3,
+    "rejected_source_ages_ms": [3107, 3059, 3086],
+    "risk_context_supplied": false,
+    "broker_connected": false,
+    "path_censored": true,
+    "halted": true,
+    "usable_strategy_pnl": null
+  }
+}

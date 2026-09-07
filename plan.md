@@ -2,6 +2,38 @@
 
 ## Scope
 
+### ISSUE-074 — Automatic chart-scenario research (implemented; validated)
+
+- Branch: `issue-074-automatic-chart-scenarios`.
+- Issue: [#178](https://github.com/AegisFintech/scalping-bot/issues/178).
+- Dependencies: ISSUE-069 provider/risk engine, ISSUE-073 baseline, operator's
+  decision-zone / recovery / failed-reclaim / extension example.
+- Acceptance: automatic typed market/analytics/chart capture and exact-model
+  scenario adapter; explicit completed-M1 confirmation and structural/target/time
+  exits; existing cost-inclusive money management; ordered bid/ask research replay,
+  independent exits, restart/duplicate/failure coverage and reproducible evidence.
+- Boundary: research commands cannot submit broker orders. No trading launch,
+  live enablement, invented capital floor or production strategy promotion.
+  Broker-connected directional submission and discretionary-exit replacement
+  require durable close-command recovery and prospective evidence.
+- Validation: 380 Node / 116 Python; 45 new scenario tests; 22 schema, 3 static
+  migration and all 3 configured integration tests; all formatting/lint/type/build,
+  replay fixtures, secret scan and dependency audits passed. Two initial snapshot
+  failures exposed an erroneous 20-level request; using the established four-level
+  policy fixed it. One real scenario request passed in 19,448 ms with exact requested
+  model `gpt-6-astra/u64`, returned `gpt-6-astra`; provider cost remains unknown.
+- Results and remaining work: `docs/scenario-automation-report.md`.
+
+### ISSUE-075 — Scenario broker lifecycle and prospective validation (pending)
+
+- Issue: [#179](https://github.com/AegisFintech/scalping-bot/issues/179).
+- Dependencies: ISSUE-074, reviewed capital floor/migrations, prospective timestamped
+  maps and quote paths, supervised demo authorization.
+- Acceptance: durable directional intent, acknowledged cancellation before
+  replacement, idempotent full-position closes, partial/disconnect/restart recovery,
+  risk/account integration, and same-data cost-aware out-of-sample comparison before
+  promotion. Never infer a guaranteed order or fill from the existence of a scenario.
+
 ### ISSUE-073 — Dashboard contrast and background refresh (implemented; validated)
 
 - Branch: `issue-073-dashboard-background-refresh`.
