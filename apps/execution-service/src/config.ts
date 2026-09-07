@@ -145,6 +145,13 @@ export function loadExecutionConfig(
       throw new Error("CONFIG_DEMO_ORDER_LIMIT_REQUIRED");
     if (maxPositionNotional === null)
       throw new Error("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
+    if (
+      optionalPositiveDecimal(
+        environment.ACCOUNT_EQUITY_FLOOR,
+        "ACCOUNT_EQUITY_FLOOR",
+      ) === null
+    )
+      throw new Error("CONFIG_DEMO_EQUITY_FLOOR_REQUIRED");
   }
   const automaticAnalysisCompletedLimit = integerValue(
     environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,
@@ -277,13 +284,13 @@ export function loadExecutionConfig(
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
     baseRiskPercent: decimalPercent(
       environment.BASE_RISK_PERCENT,
-      "1",
+      "0.001",
       "BASE_RISK_PERCENT",
       5,
     ),
     maxRiskPercent: decimalPercent(
       environment.MAX_RISK_PERCENT,
-      "5",
+      "0.001",
       "MAX_RISK_PERCENT",
       5,
     ),
@@ -309,7 +316,7 @@ export function loadExecutionConfig(
     })(),
     maxDailyLossPercent: decimalPercent(
       environment.MAX_DAILY_LOSS_PERCENT,
-      "10",
+      "1",
       "MAX_DAILY_LOSS_PERCENT",
       10,
     ),

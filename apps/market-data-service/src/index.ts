@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
 import { pathToFileURL } from "node:url";
 
@@ -171,21 +172,22 @@ export function createMarketDataServer(
 }
 
 async function main(): Promise<void> {
+  const environment = resolveRuntimeEnvironment(process.env);
   const connectionMode =
-    process.env.CTRADER_CONNECTION_MODE === "live" ? "live" : "demo";
-  const expiry = process.env.CTRADER_ACCESS_TOKEN_EXPIRES_AT;
+    environment.CTRADER_CONNECTION_MODE === "live" ? "live" : "demo";
+  const expiry = environment.CTRADER_ACCESS_TOKEN_EXPIRES_AT;
   const tokenStore = new SecureTokenFileStore(
-    process.env.CTRADER_TOKEN_STATE_FILE ?? ".runtime/ctrader-token-state.json",
+    environment.CTRADER_TOKEN_STATE_FILE ?? ".runtime/ctrader-token-state.json",
   );
   const stored = await tokenStore.read();
   const tokenManager = new CTraderTokenManager({
-    clientId: process.env.CTRADER_CLIENT_ID ?? "",
-    clientSecret: process.env.CTRADER_CLIENT_SECRET ?? "",
+    clientId: environment.CTRADER_CLIENT_ID ?? "",
+    clientSecret: environment.CTRADER_CLIENT_SECRET ?? "",
     tokenUrl:
-      process.env.CTRADER_TOKEN_URL ?? "https://openapi.ctrader.com/apps/token",
-    accessToken: stored?.accessToken ?? process.env.CTRADER_ACCESS_TOKEN ?? "",
+      environment.CTRADER_TOKEN_URL ?? "https://openapi.ctrader.com/apps/token",
+    accessToken: stored?.accessToken ?? environment.CTRADER_ACCESS_TOKEN ?? "",
     refreshToken:
-      stored?.refreshToken ?? process.env.CTRADER_REFRESH_TOKEN ?? "",
+      stored?.refreshToken ?? environment.CTRADER_REFRESH_TOKEN ?? "",
     ...(stored !== null
       ? { accessTokenExpiresAt: stored.expiresAt }
       : expiry === undefined || expiry === ""
@@ -196,69 +198,69 @@ async function main(): Promise<void> {
       tokenStore.coordinateRefresh(refreshToken, refresh),
   });
   const adapter = new CTraderClient({
-    clientId: process.env.CTRADER_CLIENT_ID ?? "",
-    clientSecret: process.env.CTRADER_CLIENT_SECRET ?? "",
-    ...(process.env.ACCOUNT_ID === undefined || process.env.ACCOUNT_ID === ""
+    clientId: environment.CTRADER_CLIENT_ID ?? "",
+    clientSecret: environment.CTRADER_CLIENT_SECRET ?? "",
+    ...(environment.ACCOUNT_ID === undefined || environment.ACCOUNT_ID === ""
       ? {}
-      : { accountId: process.env.ACCOUNT_ID }),
+      : { accountId: environment.ACCOUNT_ID }),
     connectionMode,
     allowOrderCommands: false,
     tokenManager,
     transportOptions: {
       host:
-        process.env.CTRADER_API_HOST ??
+        environment.CTRADER_API_HOST ??
         (connectionMode === "live"
           ? "live.ctraderapi.com"
           : "demo.ctraderapi.com"),
       port: configuredNumber(
-        process.env.CTRADER_API_PORT,
+        environment.CTRADER_API_PORT,
         5036,
         "CTRADER_API_PORT",
       ),
       requestTimeoutMs: configuredNumber(
-        process.env.CTRADER_REQUEST_TIMEOUT_MS,
+        environment.CTRADER_REQUEST_TIMEOUT_MS,
         10_000,
         "CTRADER_REQUEST_TIMEOUT_MS",
       ),
       reconnectMinMs: configuredNumber(
-        process.env.CTRADER_RECONNECT_MIN_MS,
+        environment.CTRADER_RECONNECT_MIN_MS,
         1_000,
         "CTRADER_RECONNECT_MIN_MS",
       ),
       reconnectMaxMs: configuredNumber(
-        process.env.CTRADER_RECONNECT_MAX_MS,
+        environment.CTRADER_RECONNECT_MAX_MS,
         30_000,
         "CTRADER_RECONNECT_MAX_MS",
       ),
     },
     orderBookTimeoutMs: configuredNumber(
-      process.env.ORDER_BOOK_SNAPSHOT_TIMEOUT_MS,
+      environment.ORDER_BOOK_SNAPSHOT_TIMEOUT_MS,
       3_000,
       "ORDER_BOOK_SNAPSHOT_TIMEOUT_MS",
     ),
   });
   await adapter.connect();
   const localRecordingEnabled = configuredBoolean(
-    process.env.LOCAL_MARKET_RECORDING_ENABLED,
+    environment.LOCAL_MARKET_RECORDING_ENABLED,
     false,
     "LOCAL_MARKET_RECORDING_ENABLED",
   );
   const recorder = localRecordingEnabled
     ? new LocalMarketRecorder({
         directory:
-          process.env.LOCAL_MARKET_RECORD_DIRECTORY ?? ".runtime/market-data",
+          environment.LOCAL_MARKET_RECORD_DIRECTORY ?? ".runtime/market-data",
         sampleIntervalMs: configuredNumber(
-          process.env.LOCAL_MARKET_RECORD_INTERVAL_MS,
+          environment.LOCAL_MARKET_RECORD_INTERVAL_MS,
           250,
           "LOCAL_MARKET_RECORD_INTERVAL_MS",
         ),
         segmentDurationSeconds: configuredNumber(
-          process.env.LOCAL_MARKET_RECORD_SEGMENT_SECONDS,
+          environment.LOCAL_MARKET_RECORD_SEGMENT_SECONDS,
           300,
           "LOCAL_MARKET_RECORD_SEGMENT_SECONDS",
         ),
         maxCompletedSegments: configuredNumber(
-          process.env.LOCAL_MARKET_RECORD_MAX_SEGMENTS,
+          environment.LOCAL_MARKET_RECORD_MAX_SEGMENTS,
           2016,
           "LOCAL_MARKET_RECORD_MAX_SEGMENTS",
         ),
@@ -268,10 +270,10 @@ async function main(): Promise<void> {
   let captureInFlight: Promise<void> | null = null;
   if (recorder !== null) {
     const metadata = await adapter.discoverSymbol(
-      process.env.TRADING_SYMBOL ?? "XAUUSD",
+      environment.TRADING_SYMBOL ?? "XAUUSD",
     );
     const depth = configuredNumber(
-      process.env.ORDER_BOOK_DEPTH,
+      environment.ORDER_BOOK_DEPTH,
       20,
       "ORDER_BOOK_DEPTH",
     );
@@ -310,17 +312,17 @@ async function main(): Promise<void> {
   const app = createMarketDataServer({
     adapter,
     maxQuoteAgeMs: configuredNumber(
-      process.env.MAX_QUOTE_AGE_MS,
+      environment.MAX_QUOTE_AGE_MS,
       3_000,
       "MAX_QUOTE_AGE_MS",
     ),
     maxOrderBookAgeMs: configuredNumber(
-      process.env.ORDER_BOOK_MAX_AGE_MS,
+      environment.ORDER_BOOK_MAX_AGE_MS,
       3_000,
       "ORDER_BOOK_MAX_AGE_MS",
     ),
     maxSnapshotSkewMs: configuredNumber(
-      process.env.MAX_CANDLE_SKEW_MS,
+      environment.MAX_CANDLE_SKEW_MS,
       5_000,
       "MAX_CANDLE_SKEW_MS",
     ),
@@ -336,9 +338,9 @@ async function main(): Promise<void> {
   process.once("SIGTERM", () => void shutdown());
   process.once("SIGINT", () => void shutdown());
   await app.listen({
-    host: process.env.HOST ?? "127.0.0.1",
+    host: environment.HOST ?? "127.0.0.1",
     port: configuredNumber(
-      process.env.MARKET_DATA_PORT,
+      environment.MARKET_DATA_PORT,
       8081,
       "MARKET_DATA_PORT",
     ),

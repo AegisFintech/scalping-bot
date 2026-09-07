@@ -25,7 +25,10 @@
     "test:integration": "vitest run tests/integration --passWithNoTests",
     "test:schemas": "vitest run tests/schema",
     "test:migrations": "vitest run tests/migrations",
-    "demo:signal-decay": "tsx scripts/analyze-demo-signal-decay.ts"
+    "demo:signal-decay": "tsx scripts/analyze-demo-signal-decay.ts",
+    "config:check": "tsx scripts/check-config.ts",
+    "provider:benchmark": "tsx scripts/benchmark-provider.ts",
+    "evaluation:export": "tsx scripts/export-evaluation.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",

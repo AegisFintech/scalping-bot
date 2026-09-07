@@ -53,6 +53,31 @@ afterEach(async () => {
 });
 
 describe("local market recorder", () => {
+  it("rejects duplicate timestamps and stale observations without corrupting the tape", async () => {
+    const recorder = new LocalMarketRecorder({
+      directory: await temporaryDirectory(),
+      sampleIntervalMs: 250,
+      segmentDurationSeconds: 60,
+      maxCompletedSegments: 10,
+    });
+    const value = sample("2026-09-04T00:00:00.100Z");
+    recorder.record(value);
+    recorder.record(value);
+    await recorder.flush();
+    expect(recorder.status).toMatchObject({
+      samplesWritten: 1,
+      samplesDropped: 1,
+      lastErrorCode: "LOCAL_MARKET_SAMPLE_NOT_ORDERED",
+    });
+    recorder.record({ ...value, capturedAt: "2026-09-04T00:00:10.100Z" });
+    await recorder.flush();
+    expect(recorder.status).toMatchObject({
+      samplesWritten: 1,
+      samplesDropped: 2,
+      lastErrorCode: "LOCAL_MARKET_SAMPLE_STALE_OR_FUTURE",
+    });
+    await recorder.stop();
+  });
   it("progressively writes and closes checksummed compressed segments", async () => {
     const directory = await temporaryDirectory();
     const recorder = new LocalMarketRecorder({

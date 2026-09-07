@@ -76,6 +76,7 @@ describe("migrations", () => {
       "0012_analysis_chart_artifacts.sql",
       "0013_demo_oco_multi_position_outcomes.sql",
       "0014_demo_zero_fill_cancellation_reason.sql",
+      "0015_provider_and_capital_risk.sql",
     ]);
     const sql = (
       await Promise.all(

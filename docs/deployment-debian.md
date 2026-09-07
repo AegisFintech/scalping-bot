@@ -1,3 +1,15 @@
+# Current release migration
+
+Before deploying `0.2.0-overhaul.1`, follow [configuration.md](configuration.md).
+Policy validation rejects stale `.env`, systemd drop-in or PM2-cached strategy
+overrides. The PM2 ecosystem now contains deployment identity only; the typed
+policy owns strategy/model defaults. Preserve stopped mode and migrate/recreate
+processes only as part of the reviewed rollout. Migration `0015` is additive;
+this source update has not deployed it or enabled any service/trading mode.
+Older operational examples below must be interpreted through that migration guide.
+
+---
+
 # Debian Deployment
 
 ## Layout and identities

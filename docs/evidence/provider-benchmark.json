@@ -1,0 +1,67 @@
+{
+  "label": "HISTORICAL_INPUT_COMPATIBILITY_NOT_STRATEGY_PERFORMANCE",
+  "results": [
+    {
+      "index": 0,
+      "profile": "chart",
+      "schemaValid": true,
+      "latencyMs": 40799,
+      "requestedModel": "gpt-6-astra/u64",
+      "returnedModel": "gpt-6-astra",
+      "inputProfile": "chart",
+      "requestBytes": 125350,
+      "responseBytes": 40745,
+      "inputTokens": 19214,
+      "outputTokens": 1191,
+      "totalTokens": 20405,
+      "costAmount": null,
+      "costCurrency": null,
+      "costSource": "unavailable"
+    },
+    {
+      "index": 0,
+      "profile": "structured",
+      "schemaValid": true,
+      "latencyMs": 43684,
+      "requestedModel": "gpt-6-astra/u64",
+      "returnedModel": "gpt-6-astra",
+      "inputProfile": "structured",
+      "requestBytes": 42870,
+      "responseBytes": 41253,
+      "inputTokens": 16933,
+      "outputTokens": 1322,
+      "totalTokens": 18255,
+      "costAmount": null,
+      "costCurrency": null,
+      "costSource": "unavailable"
+    },
+    {
+      "index": 1,
+      "profile": "chart",
+      "schemaValid": false,
+      "latencyMs": 1176,
+      "reason": "AI_HTTP_ERROR:403"
+    },
+    {
+      "index": 1,
+      "profile": "structured",
+      "schemaValid": false,
+      "latencyMs": 1016,
+      "reason": "AI_HTTP_ERROR:403"
+    },
+    {
+      "index": 2,
+      "profile": "chart",
+      "schemaValid": false,
+      "latencyMs": 1170,
+      "reason": "AI_HTTP_ERROR:403"
+    },
+    {
+      "index": 2,
+      "profile": "structured",
+      "schemaValid": false,
+      "latencyMs": 600,
+      "reason": "AI_HTTP_ERROR:403"
+    }
+  ]
+}

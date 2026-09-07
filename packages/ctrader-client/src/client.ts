@@ -1,3 +1,4 @@
+import { validateAccountPnlEvidence } from "./account-evidence.js";
 import { Decimal } from "decimal.js";
 
 import type {
@@ -1062,10 +1063,9 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     const moneyDigits = numberField(trader, "moneyDigits");
     const balance = money(stringField(trader, "balance"), moneyDigits);
     const pnlDigits = numberField(pnl.payload, "moneyDigits");
-    const unrealized = recordsField(
-      pnl.payload,
-      "positionUnrealizedPnL",
-    ).reduce(
+    const pnlRows = recordsField(pnl.payload, "positionUnrealizedPnL");
+    validateAccountPnlEvidence(raw.positions, pnlRows);
+    const unrealized = pnlRows.reduce(
       (total, row) =>
         total.plus(money(stringField(row, "netUnrealizedPnL"), pnlDigits)),
       new Decimal(0),
@@ -1086,7 +1086,9 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     const equity = balance.plus(unrealized);
     return {
       reconciledAt: raw.receivedAt,
-      certain: true,
+      certain:
+        positions.length === raw.positions.length &&
+        orders.length === raw.orders.length,
       equity: canonical(equity),
       balance: canonical(balance),
       availableMargin: canonical(Decimal.max(0, equity.minus(usedMargin))),
@@ -1096,7 +1098,11 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
         new Decimal(optionalStringField(order, "executedVolume") ?? 0).gt(0),
       ),
       hasCancellationPending: false,
-      reasonCodes: [],
+      reasonCodes:
+        positions.length === raw.positions.length &&
+        orders.length === raw.orders.length
+          ? []
+          : ["ACCOUNT_OTHER_SYMBOL_EXPOSURE_UNPRICED"],
     };
   }
 

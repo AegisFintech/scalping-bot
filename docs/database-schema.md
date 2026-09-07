@@ -212,3 +212,21 @@ sums existing `fills.commission` rows owned by that position or its order group.
 The broker position ID is used only for an internal exact cTrader P/L match and
 is never returned to Streamlit. Zero rows means no open trade; multiple rows or
 any non-`OPEN` active state makes the monitor unavailable.
+
+## Migration 0015: provider and capital evidence
+
+Additive tables: `model_call_telemetry` (one strict bounded JSON object per model
+request), `provider_failures` (one idempotent allowlisted failure/latency record per
+analysis), and `capital_risk_state` (one flow-adjusted high-water/risk-reduction row
+per account). Foreign keys preserve existing identity boundaries. No existing
+migration or audit row is rewritten. `capital_risk_state.reconciled_at` is the
+immutable initial account-observation reference; `observed_at` prevents an older
+account snapshot from replacing newer capital evidence, and `updated_at` records
+the last write. Cash-flow queries end at the account observation timestamp. A sticky drawdown lockout cannot clear on upsert or restart.
+
+Successful telemetry is part of the request/response transaction; failed writes
+fail closed. Isolated migration tests cover fresh installs and upgrades, flow
+adjustment, reduction persistence, stale-account rejection and invalid telemetry.
+During rollback retain these tables and restore the old release/environment;
+never drop audit data or edit applied checksums. This repository update did not
+apply 0015 to the deployed schema. See `configuration.md` for the reviewed rollout.

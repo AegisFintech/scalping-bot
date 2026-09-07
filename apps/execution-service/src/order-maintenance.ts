@@ -10,7 +10,12 @@ export class OrderMaintenance {
   readonly #gateway: ExecutionGateway;
   readonly #symbol: string;
 
-  constructor(pool: pg.Pool, gateway: ExecutionGateway, symbol: string) {
+  constructor(
+    pool: pg.Pool,
+    gateway: ExecutionGateway,
+    symbol: string,
+    private readonly scope: { accountId: string; symbolId: string },
+  ) {
     this.#pool = pool;
     this.#gateway = gateway;
     this.#symbol = symbol;
@@ -20,7 +25,7 @@ export class OrderMaintenance {
     await this.#pool.query(
       `UPDATE analysis_runs a
        SET state = 'EXPIRED', updated_at = now()
-       WHERE a.state = 'ACCEPTED'
+       WHERE a.state = 'ACCEPTED' AND a.account_id=$1 AND a.symbol_id=$2
          AND NOT EXISTS (
            SELECT 1 FROM order_groups og
            WHERE og.analysis_id = a.id
@@ -34,6 +39,7 @@ export class OrderMaintenance {
                AND og.state IN ('CLOSED', 'EXPIRED', 'FAILED')
            )
          )`,
+      [this.scope.accountId, this.scope.symbolId],
     );
     const filledPeer = await this.#pool.query<{
       client_order_id: string;
@@ -43,7 +49,8 @@ export class OrderMaintenance {
       `SELECT o.client_order_id, o.order_group_id, og.analysis_id
        FROM orders o
        JOIN order_groups og ON og.id = o.order_group_id
-       WHERE o.strategy_owned = true
+       JOIN analysis_runs ar ON ar.id=og.analysis_id
+       WHERE ar.account_id=$1 AND ar.symbol_id=$2 AND o.strategy_owned = true
          AND o.state IN ('PENDING', 'CANCEL_PENDING')
          AND EXISTS (
            SELECT 1 FROM orders filled
@@ -52,6 +59,7 @@ export class OrderMaintenance {
              AND filled.strategy_owned = true
              AND filled.state = 'FILLED'
          )`,
+      [this.scope.accountId, this.scope.symbolId],
     );
     if (filledPeer.rows.length > 0) {
       await this.#cancelRows(filledPeer.rows, "OCO_PEER_FILLED");
@@ -65,9 +73,11 @@ export class OrderMaintenance {
       `SELECT o.client_order_id, o.order_group_id, og.analysis_id
        FROM orders o
        JOIN order_groups og ON og.id = o.order_group_id
-       WHERE o.strategy_owned = true
+       JOIN analysis_runs ar ON ar.id=og.analysis_id
+       WHERE ar.account_id=$1 AND ar.symbol_id=$2 AND o.strategy_owned = true
          AND o.state IN ('INTENT', 'SUBMITTING', 'PENDING', 'PARTIALLY_FILLED', 'CANCEL_PENDING', 'UNKNOWN')
          AND og.expires_at <= now()`,
+      [this.scope.accountId, this.scope.symbolId],
     );
     if (result.rows.length === 0) return;
     await this.#cancelRows(result.rows, "ANALYSIS_EXPIRED");
@@ -82,8 +92,10 @@ export class OrderMaintenance {
       `SELECT o.client_order_id, o.order_group_id, og.analysis_id
        FROM orders o
        JOIN order_groups og ON og.id = o.order_group_id
-       WHERE o.strategy_owned = true
+       JOIN analysis_runs ar ON ar.id=og.analysis_id
+       WHERE ar.account_id=$1 AND ar.symbol_id=$2 AND o.strategy_owned = true
          AND o.state IN ('INTENT', 'SUBMITTING', 'PENDING', 'PARTIALLY_FILLED', 'CANCEL_PENDING', 'UNKNOWN')`,
+      [this.scope.accountId, this.scope.symbolId],
     );
     if (result.rows.length > 0) await this.#cancelRows(result.rows, reasonCode);
   }

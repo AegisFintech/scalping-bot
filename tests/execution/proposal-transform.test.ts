@@ -107,6 +107,25 @@ function metadata(): SymbolMetadata {
 }
 
 describe("commission-aware exit transform", () => {
+  it("projects fractional internal bounds inward without relaxing boundary precision", () => {
+    const result = applyCommissionAwareExitPolicy(
+      response(),
+      metadata(),
+      "0.01",
+      "4.8635288115",
+      "1",
+    );
+    expect(result.accepted).toBe(true);
+    expect(result.response?.buy_stop.take_profit).toBe("4444.54");
+    const impossible = applyCommissionAwareExitPolicy(
+      response(),
+      metadata(),
+      "1.0800000001",
+      "1.0899999999",
+      "1",
+    );
+    expect(impossible.accepted).toBe(false);
+  });
   it("chooses the first fee-buffered pip and sets SL to twice TP", () => {
     const original = response();
     const result = applyCommissionAwareExitPolicy(

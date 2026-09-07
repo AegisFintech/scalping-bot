@@ -12,6 +12,7 @@ import {
   migrate,
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
+import { CapitalRiskStore } from "../../apps/execution-service/src/capital-risk-store.js";
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { PostgresAutomaticAnalysisCampaign } from "../../apps/execution-service/src/automatic-analysis-campaign.js";
 import { PostgresAutomaticTradeCampaign } from "../../apps/execution-service/src/automatic-trade-campaign.js";
@@ -222,6 +223,7 @@ describe("PostgreSQL migrations integration", () => {
         "0012",
         "0013",
         "0014",
+        "0015",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -324,6 +326,55 @@ describe("PostgreSQL migrations integration", () => {
         [demoAccountId],
       );
       expect(persisted.rows[0]?.baseline_equity).toBe("10000.0000000000");
+      const capitalStore = new CapitalRiskStore(isolated);
+      const capitalInput = {
+        accountId: demoAccountId,
+        account: baselineInput.account,
+        netFlowsSinceReference: "0",
+        dailyLossPercent: "0",
+        now: baselineInput.now,
+      };
+      expect((await capitalStore.reconcile(capitalInput)).riskMultiplier).toBe(
+        "1",
+      );
+      await expect(
+        capitalStore.reconcile({
+          ...capitalInput,
+          account: {
+            ...baselineInput.account,
+            reconciledAt: new Date(
+              Date.parse(baselineInput.account.reconciledAt) - 100,
+            ).toISOString(),
+          },
+        }),
+      ).rejects.toThrow("CAPITAL_OBSERVATION_REGRESSED");
+      expect(
+        (
+          await capitalStore.reconcile({
+            ...capitalInput,
+            account: { ...baselineInput.account, equity: "12005" },
+            netFlowsSinceReference: "2000",
+          })
+        ).drawdownPercent,
+      ).toBe("0");
+      expect(
+        (
+          await capitalStore.reconcile({
+            ...capitalInput,
+            account: { ...baselineInput.account, equity: "9504.75" },
+          })
+        ).lockedOut,
+      ).toBe(true);
+      expect(
+        (await new CapitalRiskStore(isolated).reconcile(capitalInput))
+          .lockedOut,
+      ).toBe(true);
+      await expect(
+        capitalStore.reconcile({
+          ...capitalInput,
+          now: new Date(baselineInput.now.getTime() + 11000),
+        }),
+      ).rejects.toThrow("CAPITAL_ACCOUNT_STALE_OR_UNCERTAIN");
       await expect(
         risk.initializeReconciledBaseline(baselineInput),
       ).rejects.toThrow("DAILY_RISK_BASELINE_ALREADY_EXISTS");
@@ -696,9 +747,68 @@ describe("PostgreSQL migrations integration", () => {
           ocoResponse(analysisId),
           '{"status":"completed"}',
           promptArtifact,
-          { latencyMs: 1234, retryCount: 1 },
+          {
+            latencyMs: 1234,
+            retryCount: 1,
+            telemetry: {
+              requestedModel: "integration-model",
+              returnedModel: "integration-model",
+              inputProfile: "structured",
+              requestBytes: 100,
+              responseBytes: 200,
+              inputTokens: 10,
+              outputTokens: 5,
+              totalTokens: 15,
+              costAmount: null,
+              costCurrency: null,
+              costSource: "unavailable",
+            },
+          },
         ),
       ).resolves.toBeUndefined();
+      expect(
+        (
+          await isolated.query<{ telemetry: unknown }>(
+            "SELECT telemetry FROM model_call_telemetry",
+          )
+        ).rows[0]?.telemetry,
+      ).toMatchObject({
+        requestedModel: "integration-model",
+        costAmount: null,
+      });
+      await expect(
+        trail.modelFailure(analysisId, "private URL must never persist", 20),
+      ).rejects.toThrow("MODEL_FAILURE_DIAGNOSTIC_INVALID");
+      await trail.modelFailure(analysisId, "AI_HTTP_ERROR:403", 20, {
+        requestedModel: "integration-model",
+        returnedModel: "integration-model",
+        inputProfile: "structured",
+        requestBytes: 100,
+        responseBytes: 200,
+        inputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        costAmount: null,
+        costCurrency: null,
+        costSource: "unavailable",
+      });
+      expect(
+        (
+          await isolated.query<{ telemetry: { inputTokens: number } }>(
+            "SELECT telemetry FROM provider_failures WHERE analysis_id=$1",
+            [analysisId],
+          )
+        ).rows[0]?.telemetry.inputTokens,
+      ).toBe(10);
+      await trail.modelFailure(analysisId, "AI_HTTP_ERROR:403", 21);
+      expect(
+        (
+          await isolated.query(
+            "SELECT reason,duration_ms FROM provider_failures WHERE analysis_id=$1",
+            [analysisId],
+          )
+        ).rows,
+      ).toEqual([{ reason: "AI_HTTP_ERROR:403", duration_ms: 20 }]);
       const modelTrail = await isolated.query<{
         id_matches_request_id: boolean;
         requests: string;
@@ -1454,6 +1564,7 @@ describe("PostgreSQL migrations integration", () => {
         isolated,
         unusedGateway,
         "XAUUSD",
+        { accountId: demoAccountId, symbolId },
       );
       await maintenance.expireAndReconcile();
       const terminalAnalysis = await isolated.query<{ state: string }>(

@@ -1,390 +1,111 @@
 # Architecture
 
-## Goals and boundaries
+Current source: `0.2.0-overhaul.1`, conservative policy v1. Previous release
+observations are historical evidence in `plan.md`, not the current source contract.
 
-The platform separates uncertain analysis from deterministic authority. After
-deterministic input eligibility passes, AI always proposes a waiting area and
-two conditional scenarios. Deterministic services decide whether the proposal
-is coherent, affordable, broker-valid, fresh, unique, and permitted in the
-current mode.
+## Services and authority
 
-This is a modular monorepo because shared contracts, risk code, migrations, test fixtures, and deployment files must change atomically. Node.js owns stateful external I/O and execution. Python owns numerical analytics and historical simulation. PostgreSQL is the durable coordination/audit boundary.
-
-## Runtime topology
-
-```text
-cTrader Open API
-      |
-market-data-service ---- PostgreSQL ---- Streamlit dashboard
-      |                       ^                 |
-      v                       |                 v (protected controls)
-Python analytics API --> ai-orchestrator --> execution-service
-                                |                 |
-                         AI-compatible API   paper/demo/shadow/live gateway
-                                                  |             |
-                                            cTrader Open API  Better Stack
+```mermaid
+flowchart LR
+  Broker[cTrader] --> Market[Market data service]
+  Market --> Analytics[Python completed-candle analytics]
+  Analytics --> Coordinator[Execution coordinator]
+  Coordinator --> AI[AI orchestrator / EPRToken]
+  AI --> Coordinator
+  Coordinator --> Risk[Deterministic risk engine]
+  Risk --> Gateway[Paper / demo / shadow / disabled live]
+  Gateway --> Broker
+  Maintenance[Independent protective maintenance] --> Gateway
+  Coordinator --> DB[(PostgreSQL audit and state)]
+  Broker --> Journal[Execution journal and recovery]
+  Journal --> DB
+  DB --> UI[Streamlit]
+  UI --> Controls[Authenticated local controls]
 ```
 
-All application listeners default to `127.0.0.1`. Remote access belongs behind an authenticated TLS reverse proxy. No service depends on Docker.
+Node owns broker connectivity, stateful coordination and risk. Python owns
+analytics/replay and presentation. Communication with analytics is typed local
+HTTP, not a shell pipeline. No service requires Docker; listeners default to
+loopback and deployments support Debian/systemd.
 
-## Services
+## Data to order trace
 
-### Market data service
+1. `packages/ctrader-client` authenticates, renews tokens, discovers account and
+   symbol metadata, and maintains quote/depth subscriptions. It validates weekly
+   broker sessions. Unknown holiday gaps remain fail-closed.
+2. `apps/market-data-service` exposes typed snapshots and quotes. Source,
+   receipt and capture times are distinct. Recording is a bounded local cache
+   sampler, not a complete tick feed. Freshness/order checks precede writes;
+   gzip segments carry checksum/count manifests and bounded retention.
+3. `python.analytics` validates completed M1/M5/M15 candles, alignment, depth
+   and canonical decimal strings. Full 600/500/300 histories feed indicators;
+   bounded numerical features/raw tails and a deterministic chart are produced.
+4. `coordinator.ts` records input provenance, checks safety/spread/account and
+   derives feasible tick-aligned price bounds before paying for inference.
+   Production scheduler admission still uses a durable account/symbol/M1 claim.
+5. `ai-orchestrator` sends exact model `gpt-6-astra/u64` through Responses,
+   using prompt v16, strict schema 2.1 and structured numerical input. The
+   adapter also supports chart experiments and mocked Chat Completions. It
+   bounds request/response sizes, output tokens, concurrency, timeout and retries.
+6. Local schema validation is repeated across the HTTP boundary. The coordinator
+   independently checks identity, expiry, precision, technical levels, geometry,
+   spread and the unchanged completed-candle context after inference.
+7. The existing fee-buffered TP / double-SL transform is recorded separately from
+   immutable model output. Bound arithmetic projects inward onto the pip grid;
+   no broker price or untrusted model value is rounded into acceptance.
+8. `risk-engine` sizes both race-exposed legs with cost reserves, current equity,
+   remaining daily budget, durable capital risk, broker volume steps, currency
+   conversion, exact margin estimates and notional limits. It never rounds up to
+   minimum volume. Existing/unpriced account exposure blocks replacement.
+9. Account and market data are refreshed again; changes invalidate the plan.
+   Final risk-cap reductions also reject previously sized commands. Transactional
+   idempotent intent precedes gateway calls. cTrader STOP_LIMIT entries and
+   fill-relative protections handle the immediate broker event path.
+10. Broker events are durably deduplicated/mapped. Unknown, partial, conflicting
+    or incomplete outcomes remain reconciliation blockers. Existing recovery
+    handles duplicate callbacks, peer-cancel retries and both OCO legs filling.
 
-- Authenticates a configured/discovered account and discovers symbol metadata.
-- Maintains quotes and top-N depth with reconnect/discontinuity flags.
-- Requests/assembles completed 1m, 5m, and 15m candles. It validates the exact
-  symbol weekly schedule/timezone and marks a gap only when the entire bounded
-  interval is outside broker trading sessions. Open-session missing bars and
-  unmodeled holiday overrides remain rejected.
-- Creates logically aligned candle/depth snapshots with distinct broker-source,
-  local-receive, and final broker-server timestamps. Depth is unavailable until
-  a broker timestamp exists, and future quote/book sources reject the snapshot.
-- Analytics still receives the full configured completed-candle history. The
-  PostgreSQL decision trail stores only the configured 30/18/12 M1/M5/M15 raw
-  tails (with a hard 60/36/24 ceiling), scalar/short-array indicator evidence,
-  the exact compact model payload, and the exact rendered chart. It does not
-  duplicate full candle and per-candle indicator series on every rejected or
-  completed analysis. Snapshot audit metadata records source versus persisted
-  counts and the `DECISION_COMPACT_V1` profile.
-- Exposes typed snapshot APIs; the execution decision trail persists the raw
-  snapshot before analytics/model work.
-- Optionally samples the already-subscribed quote/depth cache every 250 ms into
-  host-local five-minute JSONL segments, closes them as gzip with SHA-256
-  manifests, and bounds retention by segment count. These files contain no
-  account identity or credentials and are not copied to PostgreSQL. Recorder
-  failure is visible but cannot weaken or bypass market/execution safety.
-- Does not decide or submit orders.
+## Independent protective path
 
-### Analytics service
+`IndependentMaintenance` serializes the two-second maintenance loop separately
+from the analysis promise. It runs expiry, journal recovery, peer cancellation,
+and authenticated/file/environment emergency checks while a model call is in
+flight. Maintenance SQL is scoped to the exact account and symbol and selects
+strategy-owned orders only. Shutdown drains the maintenance promise before
+closing broker/database resources. Broker stops do not depend on this process.
 
-- FastAPI with Pydantic request/response models.
-- Uses `Decimal` for prices at boundaries and explicit numeric conversions for indicators.
-- Normalizes candles, validates completeness/order, computes deterministic features and bounded statistics.
-- Renders one bounded 1600x1200 PNG from the exact accepted M15/M5/M1
-  completed candles and their per-candle EMA/ATR series. The response carries
-  the bytes, SHA-256, dimensions, renderer version, candle counts, and last
-  candle times; a rejected analysis carries no partial image.
-- Runs replay/backtest through the same feature API.
-- Never holds broker credentials or submits orders.
+This separation removes an avoidable inference/maintenance coupling. It does
+not relax order admission, candle validity, expiry or reconciliation.
 
-### AI orchestrator
+## Persistence and boundaries
 
-- Builds full/compact payloads, applies token/size bounds, and records prompt/model/schema versions.
-- Supplies non-sizing execution constraints—current bid/ask, precision, tick,
-  stop-distance, reward/risk, ATR stop/entry-distance, and expiry bounds—so the mandatory
-  two-leg proposal is constructed against the same deterministic rules that
-  will validate it.
-- Prompt `system-v15` tells the endpoint that execution will select the nearest
-  whole-pip TP whose expected net after estimated fees is strictly greater
-  than one full round-trip fee, then set SL to exactly twice that TP distance. The
-  coordinator precomputes inclusive, tick-aligned BUY/SELL hard entry ranges,
-  preferred bands bounded by configured near/far M1-ATR distances, a
-  fee-buffered minimum TP/SL floor, one stop-distance range, and the exact
-  preferred expiry from current quotes, M1 ATR, broker distance, configuration,
-  and the non-sizing affordable stop ceiling. The prompt explicitly self-checks
-  both sides' target/stop envelope, target ordering, and preferred plus hard
-  executable ranges. No
-  account money, budget, volume, or identity crosses the endpoint boundary.
-- Supplies bounded broker outcome history as gross P/L, signed fees, net P/L,
-  result-after-fees, and strategy release. Net-positive remains the only win.
-  Demo submission uses cTrader stop-limit slippage enforcement plus relative
-  SL/TP distances so permitted entry slippage cannot consume the validated
-  fee buffer before the position opens.
-- Sends the deterministic image as high-detail multimodal content beside the
-  compact numeric JSON. The numeric message contains only hash/provenance
-  metadata for the image, not duplicated base64 bytes.
-- Supplies normalized microprice displacement and 60/300/900-second
-  liquidity-change imbalance beside the existing top-5/10/20 depth imbalance.
-  These Decimal-derived values are short-horizon model context only and cannot
-  bypass chart structure or an execution gate.
-- Calls a configurable Responses- or Chat-Completions-compatible endpoint with
-  per-attempt timeouts/retries/circuit breaker. The execution caller derives its
-  local HTTP deadline from the complete configured retry budget plus bounded
-  response-processing grace, so it cannot abandon a legitimate in-process
-  retry early.
-- Requests JSON Schema output when supported and validates the response schema
-  locally. The execution coordinator independently performs semantic and risk
-  validation.
-- Treats refusal, incomplete output, extra prose, malformed JSON, endpoint ambiguity, or timeout as `NO_ACTION`.
-- Returns the exact versioned non-secret system prompt and hash over the
-  loopback contract so the execution trail can persist what was actually sent.
+PostgreSQL is authoritative for intervals, intents, groups, orders, fills,
+positions, trades, daily accounting, runtime controls and audit events. Migration
+0015 adds provider telemetry/failures and durable capital state. Models cannot
+write those controls. Financial boundaries use decimal strings; prices and money
+use Decimal arithmetic. Daily utilization rounds conservatively to eight decimal
+places, matching storage instead of emitting unbounded recurring decimals.
 
-### Execution service
+Successful provider calls retain requested/returned identifiers and usage;
+failed calls retain requested model, bounded reason and elapsed time. A failed
+call has no trusted returned-model/usage record. Pricing is unverified and stays
+unavailable. Prompts/charts and legacy evidence remain auditable even when the
+new structured input profile omits the chart from the provider request.
 
-- Owns cycle eligibility, deterministic risk, gateway selection, OCO state, expiry, cancellation, and reconciliation.
-- After model inference, reacquires the full market snapshot. The completed
-  candle context and execution metadata must still exactly match the model
-  input; otherwise the cycle rejects. The refreshed quote and depth are
-  persisted and drive final spread, semantic, risk, and placement-freshness
-  checks.
-- After margin estimation and deterministic sizing, reconciles account state
-  again and rejects any changed money/exposure/order certainty. It then
-  reacquires a final market snapshot, requires the same completed candles and
-  execution metadata, and repeats spread plus original/effective semantics.
-  Only this final quote/depth drives the unchanged placement freshness gate.
-- Keeps the parsed endpoint JSON immutable and records a separate Decimal exit
-  policy. It uses broker pip/commission/currency metadata to select the smallest
-  whole-pip TP with positive estimated net profit at broker minimum volume, sets
-  SL distance to exactly `2 * TP distance`, and requires both effective exits to
-  remain inside the AI technical envelope. Off-tick results reject without
-  broker-price rounding. Deterministic sizing and the gateway use only the
-  validated effective SL/TP, then commission coverage is recomputed at the
-  actual sized volume before placement.
-- Rejects invalid/overflowing AI timeout and circuit-threshold configuration at
-  startup. A local AI timeout, transport loss, or HTTP 503 becomes a stable
-  reason code and cannot create a model row, risk intent, or order command.
-  Consecutive transient failures open the execution-side circuit only at the
-  configured threshold; one failed cycle is still rejected immediately, but a
-  sub-threshold failure does not suppress the next fresh broker-minute attempt.
-  A locally validated success resets the count. Once open, the caller circuit
-  blocks for the configured reset interval, then half-opens at the exact
-  boundary; another threshold-reaching transient failure reopens it.
-- Writes intent and idempotency state transactionally before broker calls.
-- On startup, pre-placement analyses interrupted in `PENDING` through
-  `VALIDATING` are atomically rejected and audited as
-  `ANALYSIS_INTERRUPTED_BY_PROCESS_RESTART`. Accepted analyses and every broker
-  order/position lifecycle remain untouched and must reconcile normally.
-- Starts automatic cycles only in a configured opening window of the broker's
-  M1 interval. A PostgreSQL claim keyed by account, symbol, and broker minute is
-  committed before the cycle, so restarts cannot issue a second model request
-  for that interval. Provider failure retries on the next fresh interval; the
-  post-model completed-candle identity check remains unchanged. The existing
-  scheduler frequency is phase-aligned to wall-clock boundaries with a bounded
-  lead so reconciliation can finish near the broker minute open; broker time,
-  not host time, remains authoritative for admission.
-- Separately bounds automatic operation by distinct durable completed model
-  responses and by durable closed demo trades for the exact account, symbol,
-  and immutable strategy release. The response boundary is an inference-cost
-  ceiling; the closed-trade boundary is the evidence-collection target.
-  Pre-model rejection and failed/unavailable provider attempts do not consume a
-  response slot or closed-trade target. The scheduler checks PostgreSQL before
-  every claim and again after each cycle. Reaching either configured limit
-  persists `PAUSE_NEW_ANALYSES`; no later result can start when either count is
-  unavailable or at its limit. Broker callback processing, expiry,
-  cancellation, position management, and reconciliation continue while paused.
-- Projects automatic activity from the exact release's interval/lifecycle
-  timestamps plus recent spread observations. A market-active free scheduler
-  with no durable progress beyond the configured threshold reports `STALLED`
-  and emits one durable alert; recovery emits one corresponding event. Closed
-  market, pause, disabled automation, and managed setups are distinct states.
-- Normalizes and durably journals cTrader demo callbacks, atomically maps
-  order/fill/position state, and replays bounded broker history after startup or
-  reconnect before restoring readiness. Placement callbacks queue until the
-  returned broker IDs commit, then may use that broker ID as a fallback when a
-  strategy-labelled cTrader event omits its client order ID. Readiness is
-  recalculated from current unresolved journal evidence after each drain.
-  A non-deal `ORDER_ACCEPTED` event establishes only its pending order; an
-  optional unpriced cTrader position placeholder on that event is not persisted
-  as an opened position. Fill and partial-fill events still require their deal
-  plus a fully normalized, priced position. A CLOSED terminal callback may use
-  the deal's close-detail entry price only when the same callback also carries
-  a complete terminal deal and positive execution price; an OPEN position or
-  incomplete close remains strictly priced and fail-closed.
-  Callback failures expose only a stable allowlisted reason, processing stage,
-  numeric event/status enums, and field-presence booleans; raw callbacks,
-  labels, client IDs, broker IDs, and database error text are never logged.
-  Within one process, a broker deal ID is remembered only after certain durable
-  persistence. An exact repeated deal can then be discarded before strict
-  contextual-position normalization; a new or first malformed deal remains
-  fail-closed, and PostgreSQL uniqueness/recovery remain authoritative.
-- Uses paper, demo, shadow, and live-compatible gateways behind one interface.
-- Samples the typed fresh-quote endpoint once per minute into an idempotent,
-  account/symbol-scoped spread history even while analysis and trading are
-  stopped. The sampler depends only on quote retrieval and persistence; it has
-  no coordinator, model, risk-intent, gateway, or broker-command capability.
-- Exposes a separate read-only open-position monitor for the dashboard. It
-  requires exactly one durable, strategy-owned `OPEN` position in the configured
-  account/symbol/mode scope, matches that position to cTrader's per-position
-  unrealized-P/L response, and combines it with the typed fresh quote and
-  persisted fill commission. It returns no account or broker identifiers and
-  has no path to the coordinator, risk engine, or broker commands.
-- Mirrors newly inserted audit events through a durable PostgreSQL outbox. The
-  exporter claims rows with leases, sends bounded redacted summaries with
-  stable correlation/event IDs, and retries with bounded backoff. Better Stack
-  is searchable operational telemetry, not trading authority or the system of
-  record.
-- Shadow gateway cannot submit. The production composition uses a disabled live
-  gateway. A separately tested live-compatible decorator exists for future
-  review but is not wired to a broker-capable gateway.
+The dashboard exposes a compact overview and mode/account/symbol-scoped history.
+Diagnostics lazily render selected detailed views. Financial freshness is explicit;
+missing capital-policy telemetry on an older deployment is not inferred. Pause
+and emergency actions require a separate token and durable audit.
 
-### Dashboard
+## Modes and remaining limits
 
-- Streamlit queries read-only views for overview, P/L, performance, market, analysis, orders, risk, operations, and server metrics.
-- Pure Plotly builders validate and visualize completed candles/volume,
-  deterministic indicators, spread/freshness/depth imbalance, mode-separated
-  daily risk, cTrader execution mapping, audit severity, and host resources.
-  Queries are bounded to the current account environment and symbol where the
-  data is trading-specific; chart floating-point conversion is presentation-only
-  and never feeds a decision boundary.
-- Controls call a loopback API with a control token and are audited.
-- The Operations tab shows Better Stack outbox backlog, attempts, errors, and
-  recent delivery checkpoints alongside the authoritative audit-event chart.
-- The AI Analysis tab scopes recent analyses to the active account environment
-  and symbol, then correlates completed-candle coverage, bounded indicator and
-  model-input summaries, the exact parsed/schema-validated AI response,
-  refreshed market evidence, local validation/risk, broker outcome, and each
-  PostgreSQL audit event with its Better Stack delivery checkpoint. Missing
-  stages render as not reached rather than successful.
-- The AI output view places endpoint entry/SL/TP and effective transformed SL/TP
-  side by side, including original/effective R:R, broker pip count, estimated
-  gross, round-trip fees, and expected net at the conservative basis volume,
-  even when later risk sizing or broker placement is not reached.
-- The Analysis History tab projects the active campaign's reviewed carry-forward
-  plus current-release durable completed model responses into a chronological
-  ledger. It cross-checks their sum against the runtime snapshot and keeps rejected and
-  expired no-order results separate from broker outcomes, and labels WIN, LOSS,
-  or BREAK-EVEN only from an immutable closed `trades` row. A second table keeps
-  original AI levels beside effective transformed or persisted order levels;
-  ambiguous lifecycle evidence is withheld rather than guessed.
-- The Overview distinguishes scheduler enablement from immediate order
-  eligibility. Temporary AI cooldowns show their exact automatic retry time and
-  retain the authoritative reason code alongside plain-language impact and
-  operator action. Broker-minute history shows UTC and Asia/Singapore time so a
-  bounded cooldown is not mistaken for a stopped process.
-- A two-second Streamlit fragment shows an open trade's current bid/ask,
-  side-correct close mark (bid for BUY, ask for SELL), and cTrader-reported
-  gross/net unrealized P/L. Persisted commission incurred so far is shown
-  separately. Missing, ambiguous, mismatched, malformed, or unreconciled
-  evidence renders unavailable and is never estimated.
-- The closed-demo-trade target and completed-AI inference ceiling have separate
-  immutable-release counts, remaining values, progress bars, and completion
-  states. An unavailable or invalid count is displayed as a fail-closed
-  scheduler condition rather than zero progress.
-- With both optional count boundaries disabled, Overview labels the scheduler
-  continuous and still exposes database-derived all-time and current-release
-  completed-AI-analysis and closed-demo-trade counters. These counters are
-  scoped to the configured account, symbol, and mode and survive process/release
-  restarts; they do not aggregate rejected attempts or unfilled expiries as
-  trades.
-- Prompt history shows prior request/response versions and hashes. Each selected
-  run defaults to the newest durable AI request and prominently shows the exact
-  hash-verified system prompt with the exact persisted redacted user JSON. New
-  prompts are persisted per completed request; a run without one is explicitly
-  labelled as having no durable AI request record, and legacy versions use an
-  explicit tracked-artifact fallback.
-- The selected run also displays the exact hash-verified chart artifact that
-  accompanied the numeric request and the schema 2.1 technical map.
-- Dashboard acknowledgement is a short-lived database record; it never creates the filesystem sentinel or modifies environment gates.
+Paper uses its own account identity/ledger; demo requires explicit acknowledgement
+and capital limits. Shadow has a non-submitting gateway. Live uses
+`DisabledLiveGateway` and cannot place orders in this composition. Credentials
+cannot select mode or authorize execution.
 
-## Typed boundaries
-
-Node/Python traffic uses JSON over local HTTP with versioned Pydantic/JSON Schema models. Prices, money, sizes, tick values, and ratios that affect decisions are decimal strings. Timestamps are UTC ISO-8601. Each request includes a schema version, request ID, analysis ID, symbol, and snapshot timestamp.
-
-Derived analytics decimals are canonicalized with Python `Decimal` to no more
-than ten fractional places before crossing back to Node. Positive values are
-truncated toward zero, never rounded upward; the Node risk engine independently
-parses the bounded string and rejects invalid or non-finite inputs.
-
-The cTrader adapter is the authority for the broker-declared weekly session
-schedule. Analytics accepts only the adapter's single
-`BROKER_SESSION_GAP_BEFORE` marker on a bounded positive gap; a marker on the
-first/contiguous/overlapping candle, a duplicate/unknown flag, an unmarked gap,
-or an excessive gap fails closed. Per-timeframe marker counts are exposed as
-model context, not as execution authority. The schedule semantics follow the
-official [cTrader model messages](https://help.ctrader.com/open-api/model-messages/);
-cTrader also documents in its [Open API FAQ](https://help.ctrader.com/open-api/faq/)
-that a no-tick interval does not produce a trendbar, so an absent bar during an
-open session is not silently treated as a closure.
-
-Adaptive spread observations preserve broker-source, local-receive, and final
-broker-server timestamps plus canonical bid/ask/spread decimals. Source-minute
-uniqueness makes retries and restarts idempotent. Stale, future, malformed,
-crossed, symbol-mismatched, unavailable, and database-failed samples do not
-contribute to history; fewer than the configured minimum observations remains a
-hard rejection.
-
-Broker behavior is expressed by `MarketDataAdapter`, `AccountAdapter`, and `ExecutionGateway`. Gateways accept already normalized command objects; they do not accept raw model output. AI behavior is expressed by `ModelClient`, while local validators are independent of the provider.
-
-## Mode isolation
-
-| Mode     | Data            | Fill/order target         | Broker submission          |
-| -------- | --------------- | ------------------------- | -------------------------- |
-| replay   | historical      | event replay              | impossible                 |
-| backtest | historical      | conservative simulator    | impossible                 |
-| paper    | live or fixture | paper ledger              | impossible                 |
-| demo     | cTrader demo    | demo broker               | explicit demo checks       |
-| shadow   | live            | hypothetical intents only | impossible by gateway type |
-| live     | live            | disabled boundary         | impossible in this release |
-
-Account environment and endpoint are checked against mode. Paper uses a
-dedicated database provider/environment/type and cannot share broker demo/live
-daily-risk or performance history. A demo process cannot select a live endpoint;
-a shadow process cannot construct a submitting gateway.
-
-The scheduler's analysis gate is independent from reconciliation and order
-maintenance. `AUTOMATIC_ANALYSIS_ENABLED` defaults false, so a supervised demo
-can use an authenticated single-cycle request while expiry, cancellation, and
-reconciliation continue. Broker demo submission additionally refuses startup
-without the exact demo acknowledgement, a positive daily order-group limit, and
-a positive per-position notional cap.
-
-## Live safety gates
-
-Any future submitting live composition must require: `TRADING_MODE=live`;
-`LIVE_TRADING_ENABLED=true`; exact acknowledgement; manually created enablement
-file with correct restrictive permissions/content; completed startup checks;
-unexpired dashboard/database acknowledgement; no environment/file/database
-emergency stop; no risk lockout; fresh aligned market data; reconciled account;
-no relevant position/pending/partial/unknown state; validated current symbol
-metadata; schema/semantically valid AI response; deterministic risk approval;
-healthy audit database; and an unused idempotency key. This release additionally
-fails the startup check and uses `DisabledLiveGateway`, so these gates cannot be
-mistaken for live enablement.
-
-Failure of any gate returns structured denial reason codes and emits an audit event/alert. No service automatically creates the enablement file, acknowledgement, or control row.
-
-## Consistency and recovery
-
-PostgreSQL transactions establish intent before side effects. Broker callbacks are inserted with unique event/idempotency keys. Entry and broker-created closing-order identities remain distinct even when cTrader reuses a client order ID; closing children map through the durable broker position and resolve only from exact terminal deal evidence. On any uncertain network result, the service records `RECONCILIATION_REQUIRED` instead of retrying submission blindly. Startup, reconnect, and throttled same-process reconciliation compare unresolved local intent with bounded broker order/deal/position history and block cycles until certainty is restored. Timer and reconnect attempts are serialized; a missing, ambiguous, paginated, multiple, or invalid terminal result remains fail-closed.
-
-A same-key callback payload conflict remains preserved as `CONFLICT`. It may be
-marked resolved only when the same strategy-owned demo group is durably closed
-with exactly two terminal OCO orders, one closed position and trade, and a later
-mapped broker-generated SL/TP fill carrying complete close details. The
-terminal event key is retained as the resolution evidence. A process-local
-callback failure is acknowledged once for a new certain terminal proof. The
-same proof may acknowledge a later duplicate failure only when its private
-broker fill identity exactly matches the fill in that durable proof. Another
-fill, missing fill identity, uncertain recovery, or failure beyond a different
-proof remains blocking.
-
-A broker deal whose explicit status is rejected, internally rejected, error,
-or missed can accompany a terminal cancel/expire/reject order lifecycle event. The normalizer
-persists it as a distinct non-fill deal attempt only with integer zero filled
-volume and no close detail, so cancellation/expiry can reconcile without a
-fabricated fill. Any contradictory status, volume, or close evidence remains
-blocking.
-
-Read-only open-position telemetry is independent from execution eligibility.
-For one durable strategy-owned `OPEN` position, an exact single-match cTrader
-P/L response for its durable broker position identity may be displayed while
-the containing group is `RECONCILIATION_REQUIRED`. Contract 1.1 labels that
-condition explicitly. It does not change the group, clear evidence, or make
-analysis/placement eligible; an ambiguous position, an uncertain position
-state, an unsupported group state, or a missing/ambiguous broker lookup still
-returns no value.
-
-Streamlit treats transport-level execution-status loss separately from an
-invalid durable state. A bounded two-second fragment probes the loopback status
-contract only after the initial full-page request fails and triggers a full app
-rerun after a complete response. It never supplies placeholder campaign or
-broker values. Terminal managed-setup projection selects the internal position
-identity needed to prove a one-to-one match with each durable trade; missing,
-duplicate, or mismatched identities remain unavailable.
-
-## Dependency rationale
-
-- TypeScript: type-safe external orchestration and protocol handling.
-- Fastify: maintained, schema-oriented Node HTTP server with low overhead.
-- Pino: structured JSON logs with redaction support.
-- PostgreSQL/`pg`: durable transactions and Neon compatibility.
-- Ajv plus formats: local JSON Schema validation.
-- `decimal.js`: deterministic decimal arithmetic in Node.
-- Prometheus client: health/service metrics.
-- FastAPI/Pydantic: typed, observable Node/Python interface.
-- pandas/Plotly: dashboard tabulation and visualization; deterministic analytics
-  use Python `Decimal` at decision boundaries.
-- Streamlit/Plotly: maintainable first operational dashboard.
-
-Production versions are pinned in lockfiles. Dependency changes require tests and audits.
+Current research does not justify directional/single-leg production contracts or
+sub-M1 production scheduling. Schema 2.1 remains a two-leg proposal; uncertainty
+is rejected deterministically when safety/validation fails. Full tick history,
+prospective model ablation and broker-specific partial/multiple-close validation
+remain readiness work. See `overhaul-report.md` and `risk-model.md`.

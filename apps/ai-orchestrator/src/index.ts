@@ -1,4 +1,6 @@
+import { ProviderFailure } from "../../../packages/ai-client/src/telemetry.js";
 import "dotenv/config";
+import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -67,6 +69,9 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
       return reply.code(503).send({
         error: "AI_ANALYSIS_UNAVAILABLE",
         reason: normalizeAiAnalysisError(error),
+        ...(error instanceof ProviderFailure
+          ? { telemetry: error.telemetry }
+          : {}),
       });
     }
   });
@@ -74,32 +79,35 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
 }
 
 async function main(): Promise<void> {
-  const reasoningEffort = aiReasoningEffort(process.env.AI_REASONING_EFFORT);
+  const environment = resolveRuntimeEnvironment(process.env);
+  const reasoningEffort = aiReasoningEffort(environment.AI_REASONING_EFFORT);
   const client = new OpenAiCompatibleClient({
-    baseUrl: process.env.AI_BASE_URL ?? "",
-    apiKey: process.env.AI_API_KEY ?? "",
-    model: process.env.AI_MODEL ?? "",
+    baseUrl: environment.AI_BASE_URL ?? "",
+    apiKey: environment.AI_API_KEY ?? "",
+    model: environment.AI_MODEL ?? "",
+    inputProfile:
+      environment.MODEL_INPUT_PROFILE === "structured" ? "structured" : "chart",
     apiStyle:
-      process.env.AI_API_STYLE === "chat_completions"
+      environment.AI_API_STYLE === "chat_completions"
         ? "chat_completions"
         : "responses",
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v15.md"),
-    promptVersion: "system-v15",
-    timeoutMs: Number(process.env.AI_TIMEOUT_MS ?? 30_000),
-    maxRetries: Number(process.env.AI_MAX_RETRIES ?? 0),
-    maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 3_000),
+    systemPromptPath: path.resolve("prompts/system-v16.md"),
+    promptVersion: "system-v16",
+    timeoutMs: Number(environment.AI_TIMEOUT_MS ?? 30_000),
+    maxRetries: Number(environment.AI_MAX_RETRIES ?? 0),
+    maxOutputTokens: Number(environment.AI_MAX_OUTPUT_TOKENS ?? 3_000),
     ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
     circuitBreakerFailures: Number(
-      process.env.AI_CIRCUIT_BREAKER_FAILURES ?? 3,
+      environment.AI_CIRCUIT_BREAKER_FAILURES ?? 3,
     ),
     circuitBreakerResetMs:
-      Number(process.env.AI_CIRCUIT_BREAKER_RESET_SECONDS ?? 300) * 1_000,
+      Number(environment.AI_CIRCUIT_BREAKER_RESET_SECONDS ?? 300) * 1_000,
   });
   const app = createAiServer({ client });
   await app.listen({
-    host: process.env.HOST ?? "127.0.0.1",
-    port: Number(process.env.AI_ORCHESTRATOR_PORT ?? 8082),
+    host: environment.HOST ?? "127.0.0.1",
+    port: Number(environment.AI_ORCHESTRATOR_PORT ?? 8082),
   });
 }
 

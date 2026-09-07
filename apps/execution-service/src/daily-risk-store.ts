@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { Decimal } from "decimal.js";
 
 import type pg from "pg";
 
@@ -195,7 +196,11 @@ export class DailyRiskStore {
     readonly allowBaselineBootstrap: boolean;
     readonly baselineCaptureGraceSeconds: number;
     readonly now?: Date;
-  }): Promise<{ readonly lockedOut: boolean; readonly lossPercent: string }> {
+  }): Promise<{
+    readonly lockedOut: boolean;
+    readonly lossPercent: string;
+    readonly remainingLossBudget: string;
+  }> {
     if (!input.account.certain) throw new Error("DAILY_RISK_ACCOUNT_UNCERTAIN");
     const now = input.now ?? new Date();
     const day = tradingDay(now, input.timezone);
@@ -276,6 +281,18 @@ export class DailyRiskStore {
         locked ? "DAILY_LOSS_LOCKOUT" : null,
       ],
     );
-    return { lockedOut: locked, lossPercent: result.lossPercent };
+    const remaining = Decimal.max(
+      0,
+      decimal(baseline)
+        .mul(decimal(input.thresholdPercent).minus(decimal(result.lossPercent)))
+        .div(100),
+    );
+    return {
+      lockedOut: locked,
+      lossPercent: result.lossPercent,
+      remainingLossBudget: locked
+        ? "0"
+        : canonical(remaining.toDecimalPlaces(10, Decimal.ROUND_DOWN)),
+    };
   }
 }

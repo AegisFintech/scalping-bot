@@ -1,3 +1,7 @@
+import {
+  ProviderFailure,
+  type ProviderTelemetry,
+} from "../../../packages/ai-client/src/telemetry.js";
 import { randomUUID } from "node:crypto";
 
 import { Decimal } from "decimal.js";
@@ -77,10 +81,17 @@ export interface ModelProvider {
     readonly promptArtifact: ModelPromptArtifact;
     readonly latencyMs?: number;
     readonly retryCount?: number;
+    readonly telemetry?: ProviderTelemetry;
   }>;
 }
 
 export interface DecisionTrail {
+  modelFailure?(
+    analysisId: string,
+    reason: string,
+    latencyMs: number,
+    telemetry?: ProviderTelemetry,
+  ): Promise<void>;
   start(input: {
     readonly analysisId: string;
     readonly mode: string;
@@ -100,7 +111,11 @@ export interface DecisionTrail {
     response: ModelResponse,
     rawResponse: string,
     promptArtifact: ModelPromptArtifact,
-    timing?: { readonly latencyMs: number; readonly retryCount: number },
+    timing?: {
+      readonly latencyMs: number;
+      readonly retryCount: number;
+      readonly telemetry?: ProviderTelemetry;
+    },
   ): Promise<void>;
   validation(
     analysisId: string,
@@ -114,9 +129,11 @@ export interface DecisionTrail {
 }
 
 export interface OcoRiskProvider {
+  currentSetupRiskPercent?(): string;
   proposalConstraints(input: {
     readonly account: AccountState;
     readonly metadata: SymbolMetadata;
+    readonly quote?: Quote;
   }): OcoProposalRiskConstraints;
   evaluate(input: {
     readonly response: ModelResponse;
@@ -176,7 +193,11 @@ export class InMemoryDecisionTrail implements DecisionTrail {
     response: ModelResponse,
     rawResponse: string,
     promptArtifact: ModelPromptArtifact,
-    timing?: { readonly latencyMs: number; readonly retryCount: number },
+    timing?: {
+      readonly latencyMs: number;
+      readonly retryCount: number;
+      readonly telemetry?: ProviderTelemetry;
+    },
   ): Promise<void> {
     this.events.push({
       type: "model",
@@ -226,7 +247,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v15";
+  readonly promptVersion: "system-v15" | "system-v16";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -641,6 +662,7 @@ export class AnalysisCoordinator {
       const proposalRiskConstraints = this.#options.risk.proposalConstraints({
         account: proposalAccount,
         metadata: snapshot.metadata,
+        quote: snapshot.quote,
       });
       await this.#options.trail.validation(
         analysisId,
@@ -862,13 +884,28 @@ export class AnalysisCoordinator {
         },
       });
       await this.#recordTransition(analysisId, machine, "MODEL_PENDING");
-      const model = await this.#options.model.analyze({
-        analysisId,
-        symbol: this.#options.symbol,
-        payload,
-        chart: analytics.chart,
-        timeoutMs: modelTimeoutMs,
-      });
+      const modelStartedAt = Date.now();
+      const model = await this.#options.model
+        .analyze({
+          analysisId,
+          symbol: this.#options.symbol,
+          payload,
+          chart: analytics.chart,
+          timeoutMs: modelTimeoutMs,
+        })
+        .catch(async (error: unknown) => {
+          const reason =
+            error instanceof Error && /^[A-Z0-9_:]{1,160}$/.test(error.message)
+              ? error.message
+              : "AI_ANALYSIS_FAILED";
+          await this.#options.trail.modelFailure?.(
+            analysisId,
+            reason,
+            Date.now() - modelStartedAt,
+            error instanceof ProviderFailure ? error.telemetry : undefined,
+          );
+          throw error;
+        });
       if (model.promptArtifact.version !== this.#options.promptVersion) {
         return await reject(["MODEL_PROMPT_VERSION_MISMATCH"]);
       }
@@ -881,6 +918,9 @@ export class AnalysisCoordinator {
         {
           latencyMs: model.latencyMs ?? 0,
           retryCount: model.retryCount ?? 0,
+          ...(model.telemetry === undefined
+            ? {}
+            : { telemetry: model.telemetry }),
         },
       );
       await this.#recordTransition(analysisId, machine, "VALIDATING");
@@ -944,6 +984,7 @@ export class AnalysisCoordinator {
       const currentRiskConstraints = this.#options.risk.proposalConstraints({
         account,
         metadata: decisionSnapshot.metadata,
+        quote: decisionSnapshot.quote,
       });
       await this.#options.trail.validation(
         analysisId,
@@ -1119,6 +1160,7 @@ export class AnalysisCoordinator {
       const placementRiskConstraints = this.#options.risk.proposalConstraints({
         account: placementAccount,
         metadata: decisionSnapshot.metadata,
+        quote: decisionSnapshot.quote,
       });
       await this.#options.trail.validation(
         analysisId,
@@ -1265,6 +1307,14 @@ export class AnalysisCoordinator {
         return await reject(placementEffectiveSemantic.reasonCodes);
 
       const currentSafety = await this.#options.safety();
+      if (
+        this.#options.risk.currentSetupRiskPercent &&
+        risk.perLegRiskPercent !== null &&
+        decimal(risk.perLegRiskPercent)
+          .mul(2)
+          .gt(decimal(this.#options.risk.currentSetupRiskPercent()))
+      )
+        return await reject(["CAPITAL_RISK_CHANGED_BEFORE_PLACEMENT"]);
       const quoteAge =
         Date.now() - Date.parse(placementSnapshot.quote.sourceTime);
       const bookAge =

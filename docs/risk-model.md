@@ -1,271 +1,114 @@
-# Deterministic Risk Model
+# Deterministic risk model
 
-## Authority
+Current policy: `conservative-v1`. All money authority lives in the existing
+risk engine and execution coordinator. The model cannot select size, leverage,
+risk, broker precision, credentials, mode or a reset.
 
-The AI always proposes two conditional price scenarios after deterministic
-input eligibility passes. Its confidence, risk flags, regime, and warnings are
-diagnostic only. Deterministic code owns risk percent, volume, broker
-normalization, exposure, margin, eligibility, precision, freshness,
-spread/slippage, duplicate prevention, and mode gates. Materially invalid
-proposals are rejected, never silently corrected.
+## Fixed policy and capital limits
 
-The current execution exit policy preserves entry, chooses the smallest whole
-broker-pip TP whose expected net profit after fees is strictly greater than one
-full estimated round-trip fee, and sets SL distance to exactly twice that TP
-distance. At the minimum ratio `1`, gross TP is therefore strictly greater than
-twice fees. This is reward:risk `1:2`, represented internally as numeric
-reward/risk `0.5`. Prompt `system-v15`
-asks the endpoint for a technical target/stop envelope that contains those
-effective levels. The coordinator uses Decimal arithmetic, rejects off-tick or
-unsupported fee inputs without rounding, and keeps the original endpoint
-response, effective values, and fee evidence separately auditable.
+The normal configuration retains only an explicit `ACCOUNT_EQUITY_FLOOR` and
+`MAX_POSITION_NOTIONAL` for capital limits, plus trading authorization. The fixed
+policy preserves the audited deployment's 0.001% setup risk, 1% daily loss cap,
+1% margin-use ceiling and 10 broker-point absolute spread cap. ATR-relative
+spread (0.10) and historical percentile (95, at least 30 samples) remain required.
+The order-count ceiling is 100 per day (formerly configured as 103).
+These choices do not increase the previous deployment's risk to manufacture trades.
+They can make the broker minimum unaffordable for a small account; rejection is
+intentional. Changes to the policy require code review and a new release identity.
 
-The coordinator derives tick-aligned preferred entry bands inside the unchanged
-hard executable entry limits. `ENTRY_LATENCY_BUFFER_ATR` defines the preferred
-band's near edge and `PREFERRED_MAX_ENTRY_DISTANCE_ATR` defines its far edge,
-both as completed M1 ATR multiples. Defaults remain backward compatible at
-`0.75` and the hard maximum. Release `.43` uses the narrower `0.25`–`0.75` ATR
-corridor after `.42` expired 128 of 134 placed groups while typically waiting
-about one ATR away. An unsatisfiable corridor blocks before inference. The
-endpoint selects the nearest defensible tick in the preferred band; post-model
-quote movement, spread, precision, freshness, and risk checks remain unchanged
-and fail closed.
+One setup is admitted only with certain reconciled state. Positions/pending
+orders, partial fills and cancellation/reconciliation uncertainty block new risk.
+Other-symbol account exposure is treated as unpriced and blocks placement, rather
+than assuming zero correlated exposure. Manual orders are not cancelled.
 
-Expiry lifetime bounds use the deterministic pre-model broker capture as their
-reference. Post-model validation separately requires every order expiry and
-`valid_until` to remain in the future. This retains the exact configured
-request while rejecting stale or already-expired output.
+## Sizing and OCO race exposure
 
-Release `.43` retains the `.42` 60-second preferred/minimum lifetime and a
-120-second hard maximum from that capture. This is a signal-freshness policy,
-not a relaxed execution gate: inference or placement that consumes the horizon
-rejects, and active positions keep their broker TP/SL lifecycle. The selected
-horizon follows `.41` demo evidence in which the 0-30 second fill-age bucket was
-fee-positive while every later bucket was fee-negative; it must be reviewed on
-a new forward cohort and is not a profitability claim. cTrader's broker-native
-pending stops remain the immediate event trigger after placement; local
-sampling is evidence collection, not an order-authority path.
-
-Analytics also exposes `microprice_bias` normalized to half-spread and
-liquidity-change imbalance normalized by total absolute bid/ask liquidity
-change for 60/300/900-second windows. Both remain in `[-1,1]` when available.
-Zero-change windows are `null`, preventing absence of pressure from being
-misrepresented as measured direction.
-
-Schema 2.1 does not grant the chart or model execution authority. Deterministic
-semantics require each OCO entry to equal its technical-map confirmation price
-and each endpoint TP to equal the first corresponding target. The effective TP
-must remain inside that target; the effective SL must remain inside both the
-endpoint stop and invalidation. A mismatch, off-tick zone/target, or
-directionally unordered target rejects; code does not invent a technical
-envelope.
-
-Before inference, reconciled equity and the configured setup-risk percent are
-split across the two race-exposed OCO legs. The service floors the affordable
-loss budget at broker minimum volume to whole ticks and sends only the resulting
-maximum stop distance to the endpoint. It never sends equity, money budget,
-volume, or account identity. The same constraint is recomputed after inference;
-lower equity or changed metadata can only reject the unchanged endpoint SL.
-Before the request, the same Decimal inputs produce exact tick-aligned BUY and
-SELL entry intervals, an inclusive stop-distance interval, and one preferred
-expiry timestamp. These are instructions to improve proposal compliance, not
-an authority bypass: the unchanged response still passes schema, semantic,
-freshness, spread, account, sizing, margin, and placement validation.
+For each leg, derive a stop-only upper volume, then search downward on the broker
+volume grid for a cost-inclusive volume inside half the setup budget:
 
 ```text
-per_leg_budget = equity * setup_risk_percent / 100 / 2
-loss_per_tick_at_minimum = tick_value * min_volume
-affordable_ticks = floor(per_leg_budget / loss_per_tick_at_minimum)
-max_affordable_stop_distance = affordable_ticks * tick_size
+setup budget = min(equity * 0.001% * risk multiplier, remaining daily loss budget)
+leg budget = setup budget / 2
+modeled leg loss = stop ticks * tick value * native volume
+                + conservative opening/closing commissions
+                + ten ticks * tick value * native volume
+                + conservative P/L conversion-fee reserve
 ```
 
-Fewer than one affordable tick rejects before the endpoint. The downstream
-position-sizing calculation remains authoritative and can still reject on newer
-account state, margin, notional, or any other risk ceiling. The prompt's minimum
-SL distance includes the larger of the broker/configured minimum and twice the
-fee-buffered TP floor, so the policy cannot place an effective stop
-inside the broker/configured minimum.
+Commission is estimated at the highest bounded entry/stop price plus the adverse
+execution allowance. Minimum commissions are included. Ten ticks are an explicit
+model reserve, not a claim that a stop caps realized slippage. Stop gaps can exceed
+it and are modeled adversely in research. Spread is already represented by
+executable entry/exit sides and is not added a second time to realized P&L.
 
-## Fee-buffered exit floor
+The grid search respects minimum, maximum and step, including an off-grid broker
+maximum. Both modeled losses are added against the one setup budget; both margins
+are added against available margin and the margin-use ceiling. Actual broker
+margin estimates are rechecked at the final sized volume. Notional is capped per
+position in account currency using the discovered quote conversion. Unavailable fees/conversion/metadata, insufficient margin or an
+unaffordable minimum rejects. No martingale, averaging down or loss chasing exists.
 
-The adapter discovers `pipPosition`, commission type/rate/minimum, base/quote
-and account assets, positive-P/L conversion fee rate, and quote-to-account
-conversion from current broker metadata. No zero-fee default is permitted. The
-currently supported cTrader calculation is `USD_PER_MILLION_USD` for a
-USD-quoted symbol:
+cTrader volume and lotSize are in hundredths of a base unit. Orders retain native
+integer volume; metadata provides scale, tick value, commission and currency
+conversion. Unsupported conversions or commission types block. Account currency
+is discovered from broker metadata. See the official
+[cTrader model definitions](https://help.ctrader.com/open-api/model-messages/).
 
-```text
-base_units = native_volume * volume_scale
-one_way_commission = max(
-  entry_or_exit_price * base_units * commission_rate / 1_000_000
-    * quote_to_account_rate,
-  converted_minimum_commission
-)
-gross_at_tp = tp_ticks * tick_value * native_volume
-pnl_conversion_fee = gross_at_tp * pnl_conversion_fee_percent / 100
-expected_net = gross_at_tp - opening_commission - closing_commission
-  - pnl_conversion_fee
-required_minimum_net = total_estimated_fees
-  * minimum_expected_net_to_fees_ratio
-```
+## Daily and lifetime capital accounting
 
-The first whole-pip TP with `expected_net > required_minimum_net` is eligible;
-equality is not. `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to `1`, cannot be
-configured below `1`, and is included in the immutable safety configuration.
-Before inference the calculation uses broker minimum volume and conservative
-BUY/SELL entry bounds. After deterministic sizing it runs again on both exact
-commands and their actual volume. An unsupported commission type, missing
-asset conversion, unavailable fee-buffered TP inside the distance ceiling, or
-insufficient expected net rejects without inference/placement as appropriate.
-This final-volume calculation is the integration point for later deterministic
-money management; the model still cannot choose volume.
+The existing reconciled UTC daily baseline and broker capital-flow history remain
+authoritative. Missing history or a missing late-start baseline fails closed.
+Signed flows are strictly parsed; NaN cannot turn a daily lockout into false.
+Utilization is rounded upward to eight decimal places. The remaining monetary
+budget is rounded down and caps every new setup, including a final risk-cap check.
+Daily lockout is durable until the next valid day; neither AI nor restart resets it.
 
-At broker submission the demo adapter converts the already validated absolute
-intent into cTrader relative SL/TP distances at `1/100000` price units and
-requires exact integer representation. cTrader therefore applies the same TP
-and exact `2x` SL distances from the actual fill. The pending entry is a
-STOP_LIMIT order whose positive integer `MAX_SLIPPAGE_POINTS` is enforced by
-the broker. Unrepresentable protection, invalid geometry, or invalid slippage
-fails before submission. The durable intent retains the original absolute
-levels; the broker position records its actual fill-relative levels.
+`capital_risk_state` begins at the first reconciled observation after migration.
+It does not invent historical intraday high-water marks or reset daily losses.
+The reference uses the account observation timestamp; regressed observations reject.
+All broker capital flows since that reference through the current account observation
+are queried again, including across
+restarts/downtime. Flow-history failure blocks new risk. Deposits/withdrawals adjust
+capital, not trading performance. A transaction/advisory lock protects the high
+water and persisted reduction state.
 
-After sizing and broker margin estimation, the account is reconciled again. Any
-change to equity, balance, available margin, exposure, pending/fill/cancel, or
-certainty state rejects the cycle rather than reusing a decision calculated on
-older state. A final market snapshot must preserve the completed candles and
-execution metadata; spread and both original/effective proposal semantics are
-rechecked against its quote. Freshness thresholds are not extended—the final
-quote and depth replace the older timestamps at the placement gate.
+- At 2% drawdown or 0.5% daily loss, multiplier is at most 0.5.
+- At 4% drawdown or 0.75% daily loss, multiplier is at most 0.25.
+- At 5% drawdown, lockout and zero multiplier persist across deposits/restarts.
+- A nonlocked reduction recovers only below **both** 1% drawdown and 0.25% daily
+  loss. It returns at most to the original fixed policy, never above it.
+- There is no automatic drawdown-reset endpoint. An operator-reviewed capital
+  transition and evidence are required to change a locked reference.
 
-## Decimal arithmetic
+## Price validation and exits
 
-Inputs arrive as canonical decimal strings and are parsed with arbitrary-precision decimal libraries. Binary floating-point is not used to compare execution levels or money. A price is valid only when `price / tick_size` is integral at broker precision.
+Schema 2.1 still requires two conditional legs. The production exit hypothesis
+remains the first whole-pip TP whose expected net exceeds a full round-trip fee,
+with SL twice TP. Model output remains immutable; effective values must fit inside
+its technical target, stop and invalidation envelope. Current experiments do not
+establish a better production relationship.
 
-Analytics feature decimals cross the Node/Python boundary with at most ten
-fractional places. Python truncates toward zero using `Decimal`, matching the
-risk parser's canonical string contract. For positive ATR and volatility inputs,
-truncation cannot increase the value and therefore cannot relax an ATR-relative
-spread or stop-distance check. Non-finite values fail before model or risk work.
+ATR-derived bounds may have ten decimal places. Dividing by two can create an
+extra decimal internally. The transform now floors upper bounds and ceils lower
+bounds onto the mandatory pip grid before the fee search. This eliminates a
+reproduced `INVALID_DECIMAL` bottleneck while tightening the feasible interval.
+Strict boundary precision is unchanged.
 
-## Position sizing
+Preferred entries remain 0.25–0.75 completed-M1 ATR from the executable side,
+inside the hard 2.5-ATR cap. Preferred expiry is 60 seconds from pre-model capture,
+hard maximum 120 seconds. Inference cannot extend validity; changed completed
+candles, moved-through entries or expired plans reject. Broker-held STOP_LIMIT
+slippage and relative SL/TP are documented in
+[cTrader order messages](https://help.ctrader.com/open-api/messages/).
 
-For one leg:
+## Failure behavior
 
-```text
-risk_fraction = min(configured_base_risk_percent, configured_max_risk_percent, 5) / 100
-risk_budget = max(0, account_equity * risk_fraction)
-stop_ticks = abs(entry - stop_loss) / tick_size
-loss_per_volume_unit = stop_ticks * tick_value_per_volume_unit
-raw_volume = risk_budget / loss_per_volume_unit
-risk_normalized_volume = floor((raw_volume - min_volume) / volume_step) * volume_step + min_volume
-notional_raw_volume = max_position_notional / (entry_price * broker_volume_scale)
-notional_normalized_volume = floor((notional_raw_volume - min_volume) / volume_step) * volume_step + min_volume
-normalized_volume = min(risk_normalized_volume, notional_normalized_volume, max_volume)
-```
+Maintenance is independent of inference. Pause prevents new analyses; emergency
+stop also requests strategy-owned pending cancellation. Existing positions keep
+broker protection and are not implicitly flattened. Partial fills, double OCO
+fills, duplicate callbacks and disconnect recovery retain the existing durable
+journal. Multiple partial closing deals remain fail-closed pending reconciliation;
+this overhaul does not claim unsupported broker lifecycle completion.
 
-The notional branch is used only when a positive cap is configured. The result
-is rejected if metadata is missing/non-positive, raw risk volume is below the
-minimum, the notional cap cannot support the minimum, normalized volume exceeds
-raw volume/risk budget/maximum/notional volume, or broker units are unclear.
-Normalize down only. Recalculate realized maximum loss, margin, and notional
-after normalization and reject any ceiling breach.
-
-Tick value currency conversion and contract semantics must come from current
-broker metadata/account currency. The adapter currently supports a matching
-quote/deposit asset or a supplied conversion-rate provider; an absent conversion
-blocks placement.
-
-cTrader Open API reports both trade volume and symbol `lotSize` in hundredths
-of a base unit. The adapter keeps broker-native integer volume for order calls,
-uses `0.01` base units per native volume integer for notional and tick-value
-calculations, and reports contract size separately as base units per lot. These
-units must not be treated as whole lots.
-
-## Reward-to-risk and levels
-
-- Buy: `stop_loss < entry < take_profit`; buy-stop trigger/entry is above current ask plus broker distance.
-- Sell: `take_profit < entry < stop_loss`; sell-stop trigger/entry is below current bid minus broker distance.
-- `reward / risk >= MIN_RISK_REWARD_RATIO`, current default `0.5`.
-- The effective TP is the nearest whole-pip fee-buffered target inside
-  the AI technical target; effective SL distance is exactly twice TP distance.
-- Stop distance must meet broker/config minimum and not exceed configured ATR multiple.
-- Buy/sell confirmation distance from the current ask/bid must not exceed the
-  configured M1-ATR reachability cap. This is checked after the model response
-  and again against the final pre-placement quote.
-- Entry/SL/TP/invalidation/expiration must all remain coherent at validation immediately before placement.
-- A mathematically incompatible minimum/maximum stop-distance interval rejects before inference, so the model is never asked for an impossible proposal.
-
-## Account and exposure checks
-
-Reject when equity is missing/below floor; margin data is stale; estimated margin
-exceeds available margin or configured usage; the notional cap cannot support
-broker minimum volume or remains exceeded after downward normalization;
-symbol/account currency conversion is unknown; open/pending counts exceed
-limits; or any relevant state is uncertain. The configured setup risk is split
-across the two OCO legs. Their normalized maximum losses are then added and must
-remain within the single setup budget, which covers a possible
-simultaneous-fill/cancellation race rather than assuming OCO is atomic.
-
-## Daily loss lockout
-
-The trading day is calculated in `DAILY_RISK_TIMEZONE`, default UTC. Baseline
-equity is captured only after start-of-day account reconciliation. Broker capital
-flows are queried and separated from trading P/L; unknown operation types or
-missing flow history fail closed. Starting a broker-backed process after the
-configured opening grace period without a persisted baseline also fails closed.
-For a first demo startup after that grace, an authenticated operator may request
-a one-time reconciled baseline while the environment emergency stop is active
-and demo submission is disabled. The service rejects the request unless two
-account-wide reconciliations are empty, cTrader deal history since the day
-boundary is empty, capital-flow history is available, and no baseline already
-exists. Initialization and its evidence counts are committed with an audit
-event; an existing baseline is never overwritten.
-Loss utilization includes trading P/L, fees/commissions, and configured negative
-unrealized P/L:
-
-```text
-loss = max(0, baseline_equity - current_equity_adjusted_for_deposits_withdrawals)
-utilization_percent = loss / baseline_equity * 100
-```
-
-At the configured threshold (default 10%): record a durable lockout, cancel strategy-owned pending orders safely, place no new orders, alert, and display status. Existing positions are not automatically closed by this control; their management needs a separately approved policy. Reset requires a new configured day plus successful reconciliation. AI cannot reset it.
-
-## Spread protection
-
-Adaptive mode evaluates all configured/available dimensions:
-
-- absolute spread in broker points;
-- spread basis points relative to midpoint;
-- spread/ATR ratio;
-- percentile against recent account/symbol history with a minimum sample;
-- broker-session abnormality and reconnect/discontinuity flags.
-
-Live mode refuses startup if every spread dimension is disabled. Missing ATR/history never turns protection off; an absolute conservative cap or explicit broker-reviewed fallback is required.
-
-The current adaptive history is a bounded 24-hour account/symbol window backed
-by one validated broker-source observation per UTC minute. At least 30 distinct
-minutes are required by the protected demo configuration. Percentiles are
-truncated toward zero to ten fractional places before crossing into risk. Quote
-or database failure, invalid timestamp ordering/freshness, crossed prices, and
-insufficient rows return no percentile and therefore retain
-`SPREAD_HISTORY_MISSING` whenever the percentile gate is configured.
-
-## Slippage
-
-Allowed deviation is the stricter configured broker-native points and basis-points cap. A 1% price move is not an appropriate default scalping tolerance. Actual/simulated fills outside the cap are rejected where cancel is possible, otherwise flagged for reconciliation/risk handling; they never authorize size increases.
-
-## Performance adjustment
-
-Setup statistics are computed over a documented rolling window with exponential
-decay and minimum sample size. Poor recent cohort results reduce contextual
-confidence using bounded reason-coded deltas. The model must echo the
-deterministic adjustment exactly and supply original plus adjusted confidence;
-the validator recomputes the relationship. Low adjusted confidence remains
-diagnostic and does not suppress an otherwise valid two-leg proposal. A
-mismatched or risk-increasing adjustment is invalid, and the adjustment can
-never increase permitted risk or volume. Exact tag-specific cohort selection
-remains a future enhancement.
-
-## Fail-closed reason codes
-
-Examples include `RISK_METADATA_MISSING`, `RISK_TICK_VALUE_INVALID`, `RISK_VOLUME_BELOW_MIN`, `RISK_DAILY_LOCKOUT`, `RISK_MARGIN_STALE`, `RISK_EXPOSURE_LIMIT`, `SPREAD_UNSAFE`, `SLIPPAGE_POLICY_MISSING`, `PRICE_NOT_ON_TICK`, `STOP_DISTANCE_INVALID`, `REWARD_RISK_TOO_LOW`, and `ACCOUNT_STATE_UNCERTAIN`.
+Testing proves rejection/idempotency properties, not profitability or maximum
+realized loss. See `overhaul-report.md` for stress assumptions and missing evidence.

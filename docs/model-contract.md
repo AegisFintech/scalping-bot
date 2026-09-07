@@ -5,7 +5,7 @@
 The model receives deterministic market/performance context and returns a bounded proposal. It has no authority to select volume, risk percent, account, broker IDs, mode, credentials, or execution eligibility.
 
 The normative response schema for new requests is
-`schemas/model-response-2.1.json`. Prompt `system-v14` is current; immutable
+`schemas/model-response-2.1.json`. Prompt `system-v16` is current; immutable
 earlier prompts plus schemas 1.0 and 2.0 remain available to interpret
 historical runs.
 `additionalProperties: false` applies to every object. Decimal execution values
@@ -16,9 +16,9 @@ arrays and strings are length-limited, and timestamps use ISO-8601 formats.
 
 The versioned system prompt tells the model to:
 
-- analyze the supplied deterministic completed-candle EMA/ATR image together
-  with its exact numeric candles, indicators, session, depth, spread, quality,
-  and bounded performance context;
+- analyze exact numeric completed candles, indicators, session, depth, spread,
+  quality and bounded historical performance context; an optional archived
+  EMA/ATR image is used only in benchmark profiles and is not assumed present;
 - describe possible structure/SMC interpretations as uncertain evidence, not objective facts;
 - output JSON only, matching the supplied schema;
 - return a waiting area and one mandatory buy-stop and sell-stop proposal with
@@ -184,3 +184,21 @@ legacy requests retain their recorded prompt version and use an explicitly
 labelled tracked-artifact fallback in Streamlit. Full redacted user JSON and
 the parsed response are restricted to the authenticated dashboard/database
 boundary, while Better Stack continues to receive only bounded summaries.
+
+## Current provider boundary (ISSUE-069)
+
+The production adapter requests `gpt-6-astra/u64` through the existing EPRToken
+Responses endpoint. The literal identifier, strict JSON Schema, image acceptance
+and observed returned `gpt-6-astra` normalization have bounded compatibility
+evidence, followed by HTTP 403 failures. See `overhaul-report.md`; Chat-Completions
+is mock-tested only. No model fallback, temperature or reasoning-effort override
+is enabled. One in-flight request, 45-second deadline, no automatic retries,
+bounded payload/response bodies and a three-failure/five-minute circuit contain
+outages. Provider cost is null until independently verified.
+
+`provider-telemetry-1.0.json` and its runtime schema define requested/returned
+identifiers, input profile, byte/token counts and explicit nullable cost evidence.
+Migration `0015` persists telemetry with successful requests and allowlisted
+reason/latency for failed analyses. Raw provider errors and credentials are never
+displayed. Schema 2.1 still requires both conditional legs; the rejection of a
+proposal is a deterministic execution outcome, not a model-controlled risk decision.

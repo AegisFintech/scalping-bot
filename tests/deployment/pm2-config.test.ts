@@ -50,47 +50,11 @@ describe("PM2 deployment configuration", () => {
     expect(config.apps.every((app) => app.env.APP_ENV === "production")).toBe(
       true,
     );
-    expect(
-      config.apps.every(
-        (app) =>
-          app.env.STRATEGY_VERSION === "0.1.0-actionable-oco-auto-demo.43",
-      ),
-    ).toBe(true);
-    expect(
-      config.apps.every(
-        (app) => app.env.CODE_VERSION === "0.1.0-actionable-oco-auto-demo.43",
-      ),
-    ).toBe(true);
-    expect(
-      config.apps.every(
-        (app) =>
-          app.env.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT === "0" &&
-          app.env.AUTOMATIC_ANALYSIS_COMPLETED_BASELINE === "0" &&
-          app.env.AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT === "0" &&
-          app.env.AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE === "0" &&
-          app.env.AUTOMATIC_ANALYSIS_START_WINDOW_SECONDS === "10" &&
-          app.env.AUTOMATIC_ANALYSIS_STALL_SECONDS === "180" &&
-          app.env.ANALYSIS_SCHEDULER_LEAD_MS === "1000" &&
-          app.env.MODEL_MINIMUM_CALL_BUDGET_SECONDS === "40" &&
-          app.env.MODEL_POST_RESPONSE_RESERVE_SECONDS === "5" &&
-          app.env.MODEL_COMPACT_RAW_TAIL_1M === "30" &&
-          app.env.MODEL_COMPACT_RAW_TAIL_5M === "18" &&
-          app.env.MODEL_COMPACT_RAW_TAIL_15M === "12" &&
-          app.env.MAX_ENTRY_DISTANCE_ATR === "2.5" &&
-          app.env.ENTRY_LATENCY_BUFFER_ATR === "0.25" &&
-          app.env.PREFERRED_MAX_ENTRY_DISTANCE_ATR === "0.75" &&
-          app.env.MIN_RISK_REWARD_RATIO === "0.5" &&
-          app.env.MIN_EXPECTED_NET_TO_FEES_RATIO === "1" &&
-          app.env.ORDER_EXPIRY_MIN_SECONDS === "60" &&
-          app.env.ORDER_EXPIRY_MAX_SECONDS === "120" &&
-          app.env.PREFERRED_ORDER_EXPIRY_SECONDS === "60" &&
-          app.env.AI_REASONING_EFFORT === "low" &&
-          app.env.LOCAL_MARKET_RECORDING_ENABLED === "true" &&
-          app.env.LOCAL_MARKET_RECORD_DIRECTORY === ".runtime/market-data" &&
-          app.env.LOCAL_MARKET_RECORD_INTERVAL_MS === "250" &&
-          app.env.LOCAL_MARKET_RECORD_SEGMENT_SECONDS === "300" &&
-          app.env.LOCAL_MARKET_RECORD_MAX_SEGMENTS === "2016",
-      ),
-    ).toBe(true);
+    for (const app of config.apps) {
+      expect(app.env).toEqual({
+        NODE_ENV: "production",
+        APP_ENV: "production",
+      });
+    }
   });
 });

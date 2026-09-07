@@ -2,6 +2,51 @@
 
 ## Scope
 
+### ISSUE-069 — Evidence-led operational overhaul (implemented; delivery checks recorded)
+
+- Branch: `issue-069-evidence-led-overhaul`; baseline `2ee59bb`.
+- Issue: [#172](https://github.com/AegisFintech/scalping-bot/issues/172).
+- Dependencies: ISSUE-068, broker journals, and immutable model contracts.
+- Acceptance: trace data, analytics, inference, scheduling, execution, risk,
+  persistence, and UI; record baseline and chronological same-data comparisons;
+  verify exact `gpt-6-astra/u64` behavior or label compatibility unavailable;
+  harden bounded/redacted inference and usage evidence; reserve execution costs
+  in deterministic risk and enforce durable drawdown/risk reductions; simplify
+  normal configuration with a validated conservative policy; deliver a compact
+  dashboard with screenshots; update documentation and pass required checks.
+- Constraints: no service rollout, trading launch, live enablement, credential
+  changes, or fabricated performance. Sampled quotes are not a complete broker
+  tick tape. Strategy promotion requires out-of-sample evidence.
+- Checkpoints: audit/provider/configuration; money management/evaluation;
+  dashboard/documentation/full delivery checks.
+- Evidence and exact commands: `docs/overhaul-report.md` and
+  `docs/evidence/validation.json`. Node 22: 331 unit, 19 schema, 3 static migration
+  and all 3 configured integration tests passed; Python: 107 passed; formatting,
+  lint, types/build, fixture replay/backtest, browser screenshots, secret scan and
+  both dependency audits passed. Normal settings: 176 → 25.
+- Provider: literal model route/Responses/strict schema and image acceptance
+  observed; later HTTP 403 and unavailable pricing remain readiness limits.
+- Evaluation: negative observed closed returns, censored sampled-quote paths and
+  one legacy holdout fill do not support strategy promotion or profitability.
+- Rollout remains separate: populated `.env` and deployed migration state were preserved; no deployed service
+  restart or trading enablement was performed; live gateway remains disabled.
+
+### ISSUE-070 — Prospective strategy evidence (pending external data)
+
+- Dependencies: ISSUE-069, complete prospective quote/event recording and known model costs.
+- Acceptance: freeze candidate/model contexts before observation; preserve an untouched
+  chronological holdout; compare production baseline and candidates on identical
+  risk/costs; report net expectancy, uncertainty, execution quality and ablation.
+  No candidate promotion without supported net benefit.
+
+### ISSUE-071 — Provider readiness and reviewed rollout (pending operator/external prerequisites)
+
+- Dependencies: ISSUE-069, restored provider authorization and authoritative tariff,
+  reviewed environment migration and separate deployment/demo authorization.
+- Acceptance: bounded repeatable exact-model compatibility and cost accounting;
+  apply additive migration with protected backup/rollback; verify stopped services,
+  capital-flow recovery and supervised broker failure drills. Live remains disabled.
+
 Build a Debian/systemd-compatible, AI-assisted cTrader analysis and execution platform for a configurable symbol (initially XAUUSD), delivered in strict progression: architecture/contracts, replay/backtest, paper, demo, shadow, then dormant live-compatible interfaces. Live order submission remains disabled unless every independent safety gate passes.
 
 ## Assumptions

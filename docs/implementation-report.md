@@ -1,3 +1,15 @@
+# Current implementation report
+
+The current release is `0.2.0-overhaul.1`. Read [ISSUE-069's complete report](overhaul-report.md)
+for the audit, implemented changes, configuration reduction, screenshots, exact
+validation, research results, sources and readiness limits. No new release was
+traded or deployed in this task; strategy profitability is not established.
+
+The original implementation record below is historical and does not describe
+current model/configuration/dashboard defaults.
+
+---
+
 # Implementation Report
 
 Date: 2026-08-24

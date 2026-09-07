@@ -1,3 +1,30 @@
+# Current acceptance and research
+
+The exact current commands/results are in [ISSUE-069's report](overhaul-report.md).
+Run Node 22 and Python 3.13 checks, including dashboard Python modules. Set
+`TEST_DATABASE_URL` through an approved environment/credential store for the three
+configured integration checks; a skipped database test is not an integration pass.
+The integration suite creates/drops isolated schemas and does not migrate deployment.
+
+New failure coverage includes cost-inclusive minimum-volume rejection, off-grid
+maximum volume, currency conversion, missing/duplicate account P/L, daily-flow
+NaN rejection, drawdown/deposit/restart behavior, stale capital observation,
+maintenance concurrency, exact provider identity, response size and ambiguous
+outputs, circuit failures, rejected-output usage persistence, redacted diagnostics, runtime/JSON telemetry schema,
+additive migration/transactional persistence, timestamped recorder rejection and
+sampled-quote look-ahead/censoring/OCO-race behavior. Render the dashboard's three
+views and verify unavailable data and mode labels without submitting controls.
+
+Reproduce the fixed-cutoff research with the README CLI. It compares earlier
+completed sampled-minute features on chronological holdouts and writes exposure,
+fill/rejection rates, costs, latency percentiles, drawdown and uncertainty. Incomplete
+quote paths censor outcomes; no M1/fixture result proves sub-minute execution
+quality. Model-delay ablation is an illustrative cost experiment, not model alpha.
+
+The detailed historical test catalog follows; older totals/defaults are historical.
+
+---
+
 # Testing
 
 ## Layers

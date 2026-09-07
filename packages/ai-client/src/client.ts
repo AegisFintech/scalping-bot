@@ -8,6 +8,13 @@ import type {
 } from "../../contracts/src/index.js";
 import { ModelResponseValidator } from "../../risk-engine/src/model-validator.js";
 import { record, recordsField } from "../../ctrader-client/src/protocol.js";
+import {
+  boundedResponseText,
+  ProviderFailure,
+  providerTelemetrySchema,
+  usageTelemetry,
+  type ProviderTelemetry,
+} from "./telemetry.js";
 
 export type AiApiStyle = "responses" | "chat_completions";
 export type AiReasoningEffort = "low" | "medium" | "high";
@@ -30,6 +37,7 @@ export interface AiClientOptions {
   readonly maxRequestBytes?: number;
   readonly fetchImpl?: typeof fetch;
   readonly now?: () => number;
+  readonly inputProfile?: "chart" | "structured";
 }
 
 export interface AiAnalysisRequest {
@@ -47,12 +55,26 @@ export interface AiAnalysisResult {
   readonly retryCount: number;
   readonly model: string;
   readonly promptArtifact: ModelPromptArtifact;
+  readonly telemetry: ProviderTelemetry;
 }
 
 function endpoint(baseUrl: string, style: AiApiStyle): string {
-  const parsed = new URL(baseUrl);
-  if (parsed.username || parsed.password)
+  let parsed: URL;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new Error("AI_URL_INVALID");
+  }
+  if (parsed.username || parsed.password || parsed.search || parsed.hash)
     throw new Error("AI_URL_CREDENTIALS_FORBIDDEN");
+  if (
+    parsed.protocol !== "https:" &&
+    !(
+      parsed.protocol === "http:" &&
+      ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname)
+    )
+  )
+    throw new Error("AI_HTTPS_REQUIRED");
   const suffix = style === "responses" ? "/responses" : "/chat/completions";
   if (!parsed.pathname.endsWith(suffix))
     parsed.pathname = `${parsed.pathname.replace(/\/$/, "")}${suffix}`;
@@ -60,22 +82,30 @@ function endpoint(baseUrl: string, style: AiApiStyle): string {
 }
 
 function extractResponses(payload: Record<string, unknown>): string {
-  if (payload.status === "incomplete")
+  if (payload.status !== undefined && payload.status !== "completed")
     throw new Error("AI_RESPONSE_INCOMPLETE");
-  if (typeof payload.output_text === "string") return payload.output_text;
+  const texts = new Set<string>();
+  if (typeof payload.output_text === "string") texts.add(payload.output_text);
   for (const output of recordsField(payload, "output")) {
     for (const content of recordsField(output, "content")) {
       if (content.type === "refusal") throw new Error("AI_RESPONSE_REFUSAL");
       if (content.type === "output_text" && typeof content.text === "string")
-        return content.text;
+        texts.add(content.text);
     }
   }
-  throw new Error("AI_RESPONSE_TEXT_MISSING");
+  if (texts.size > 1) throw new Error("AI_RESPONSE_TEXT_AMBIGUOUS");
+  const text = [...texts][0];
+  if (text === undefined) throw new Error("AI_RESPONSE_TEXT_MISSING");
+  return text;
 }
 
 function extractChat(payload: Record<string, unknown>): string {
-  const choice = recordsField(payload, "choices")[0];
+  const choices = recordsField(payload, "choices");
+  if (choices.length !== 1) throw new Error("AI_CHAT_CHOICE_AMBIGUOUS");
+  const choice = choices[0];
   if (choice === undefined) throw new Error("AI_CHAT_CHOICE_MISSING");
+  if (choice.finish_reason !== undefined && choice.finish_reason !== "stop")
+    throw new Error("AI_RESPONSE_INCOMPLETE");
   const message = record(choice.message, "AI_CHAT_MESSAGE_MISSING");
   if (typeof message.refusal === "string" && message.refusal.length > 0)
     throw new Error("AI_RESPONSE_REFUSAL");
@@ -118,11 +148,31 @@ export class OpenAiCompatibleClient {
   readonly #validator: ModelResponseValidator;
   #failureCount = 0;
   #openUntil = 0;
+  #inFlight = false;
 
   constructor(options: AiClientOptions) {
     this.#options = options;
     if (!options.apiKey) throw new Error("AI_API_KEY_REQUIRED");
     if (!options.model) throw new Error("AI_MODEL_REQUIRED");
+    endpoint(options.baseUrl, options.apiStyle);
+    for (const [value, min, max] of [
+      [options.timeoutMs ?? 30_000, 1_000, 120_000],
+      [options.maxRetries ?? 0, 0, 2],
+      [options.maxOutputTokens ?? 3_000, 128, 16_384],
+      [options.maxRequestBytes ?? 5_600_000, 1, 5_600_000],
+      [options.circuitBreakerFailures ?? 3, 1, 10],
+      [options.circuitBreakerResetMs ?? 300_000, 1_000, 900_000],
+    ]) {
+      if (
+        value === undefined ||
+        min === undefined ||
+        max === undefined ||
+        !Number.isSafeInteger(value) ||
+        value < min ||
+        value > max
+      )
+        throw new Error("AI_CONFIG_BOUNDS_INVALID");
+    }
     this.#schema = record(
       JSON.parse(readFileSync(options.schemaPath, "utf8")),
       "AI_SCHEMA_INVALID",
@@ -147,6 +197,16 @@ export class OpenAiCompatibleClient {
   }
 
   async analyze(request: AiAnalysisRequest): Promise<AiAnalysisResult> {
+    if (this.#inFlight) throw new Error("AI_REQUEST_ALREADY_IN_FLIGHT");
+    this.#inFlight = true;
+    try {
+      return await this.#analyze(request);
+    } finally {
+      this.#inFlight = false;
+    }
+  }
+
+  async #analyze(request: AiAnalysisRequest): Promise<AiAnalysisResult> {
     const now = this.#options.now ?? Date.now;
     if (this.#openUntil > now()) throw new Error("AI_CIRCUIT_OPEN");
     const payloadText = JSON.stringify(request.payload);
@@ -156,7 +216,12 @@ export class OpenAiCompatibleClient {
     ) {
       throw new Error("AI_REQUEST_OVERSIZED");
     }
-    const body = this.#requestBody(payloadText, chartDataUrl(request.chart));
+    const body = this.#requestBody(
+      payloadText,
+      this.#options.inputProfile === "structured"
+        ? null
+        : chartDataUrl(request.chart),
+    );
     if (
       Buffer.byteLength(JSON.stringify(body), "utf8") >
       (this.#options.maxRequestBytes ?? 5_600_000)
@@ -176,6 +241,7 @@ export class OpenAiCompatibleClient {
     const started = now();
     let lastError: Error = new Error("AI_REQUEST_FAILED");
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      let attemptTelemetry: ProviderTelemetry | undefined;
       try {
         const remainingTimeoutMs = requestTimeoutMs - (now() - started);
         if (remainingTimeoutMs < 1_000) {
@@ -192,18 +258,40 @@ export class OpenAiCompatibleClient {
             },
             body: JSON.stringify(body),
             signal: AbortSignal.timeout(remainingTimeoutMs),
+            redirect: "error",
           },
         );
         if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined);
           lastError = new Error(`AI_HTTP_ERROR:${response.status}`);
           if (attempt < maxRetries && retryableStatus(response.status))
             continue;
           throw lastError;
         }
+        const responseText = await boundedResponseText(response);
         const envelope = record(
-          await response.json(),
+          JSON.parse(responseText),
           "AI_RESPONSE_ENVELOPE_INVALID",
         );
+        const returnedModel = envelope.model ?? null;
+        if (
+          returnedModel !== null &&
+          returnedModel !== this.#options.model &&
+          !(
+            this.#options.model === "gpt-6-astra/u64" &&
+            returnedModel === "gpt-6-astra"
+          )
+        )
+          throw new Error("AI_RETURNED_MODEL_MISMATCH");
+        const telemetry = providerTelemetrySchema.parse({
+          requestedModel: this.#options.model,
+          returnedModel,
+          inputProfile: this.#options.inputProfile ?? "chart",
+          requestBytes: Buffer.byteLength(JSON.stringify(body)),
+          responseBytes: Buffer.byteLength(responseText),
+          ...usageTelemetry(envelope),
+        });
+        attemptTelemetry = telemetry;
         const raw =
           this.#options.apiStyle === "responses"
             ? extractResponses(envelope)
@@ -227,10 +315,15 @@ export class OpenAiCompatibleClient {
           retryCount: attempt,
           model: this.#options.model,
           promptArtifact: this.#promptArtifact,
+          telemetry,
         };
       } catch (error) {
-        lastError =
+        const failure =
           error instanceof Error ? error : new Error("AI_REQUEST_FAILED");
+        lastError =
+          attemptTelemetry === undefined
+            ? failure
+            : new ProviderFailure(failure.message, attemptTelemetry);
         if (
           attempt < maxRetries &&
           (lastError.name === "TimeoutError" || lastError.name === "TypeError")
@@ -243,9 +336,12 @@ export class OpenAiCompatibleClient {
     throw lastError;
   }
 
-  #requestBody(payloadText: string, imageUrl: string): Record<string, unknown> {
+  #requestBody(
+    payloadText: string,
+    imageUrl: string | null,
+  ): Record<string, unknown> {
     const maxOutputTokens = this.#options.maxOutputTokens ?? 3_000;
-    const temperature = this.#options.temperature ?? 0;
+    const temperature = this.#options.temperature;
     if (this.#options.apiStyle === "responses") {
       return {
         model: this.#options.model,
@@ -261,7 +357,15 @@ export class OpenAiCompatibleClient {
             role: "user",
             content: [
               { type: "input_text", text: payloadText },
-              { type: "input_image", image_url: imageUrl, detail: "high" },
+              ...(imageUrl === null
+                ? []
+                : [
+                    {
+                      type: "input_image",
+                      image_url: imageUrl,
+                      detail: "high",
+                    },
+                  ]),
             ],
           },
         ],
@@ -274,7 +378,8 @@ export class OpenAiCompatibleClient {
           },
         },
         max_output_tokens: maxOutputTokens,
-        temperature,
+        ...(temperature === undefined ? {} : { temperature }),
+        store: false,
       };
     }
     return {
@@ -288,10 +393,14 @@ export class OpenAiCompatibleClient {
           role: "user",
           content: [
             { type: "text", text: payloadText },
-            {
-              type: "image_url",
-              image_url: { url: imageUrl, detail: "high" },
-            },
+            ...(imageUrl === null
+              ? []
+              : [
+                  {
+                    type: "image_url",
+                    image_url: { url: imageUrl, detail: "high" },
+                  },
+                ]),
           ],
         },
       ],
@@ -303,8 +412,9 @@ export class OpenAiCompatibleClient {
           schema: this.#schema,
         },
       },
-      max_tokens: maxOutputTokens,
-      temperature,
+      max_completion_tokens: maxOutputTokens,
+      ...(temperature === undefined ? {} : { temperature }),
+      store: false,
     };
   }
 

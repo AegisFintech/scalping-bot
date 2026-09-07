@@ -1,0 +1,215 @@
+{
+  "versions": [
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.43",
+      "mode": "demo",
+      "trades": 23,
+      "net_pnl": "-11.8800000000",
+      "fees": "-5.9800000000",
+      "first_open": "2026-09-04T02:59:05.098Z",
+      "last_close": "2026-09-07T00:08:06.505Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.42",
+      "mode": "demo",
+      "trades": 6,
+      "net_pnl": "-3.6900000000",
+      "fees": "-1.5600000000",
+      "first_open": "2026-09-03T01:59:45.524Z",
+      "last_close": "2026-09-04T02:34:58.259Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.41",
+      "mode": "demo",
+      "trades": 54,
+      "net_pnl": "-21.2100000000",
+      "fees": "-14.0400000000",
+      "first_open": "2026-09-02T03:20:06.925Z",
+      "last_close": "2026-09-03T01:09:43.208Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.39",
+      "mode": "demo",
+      "trades": 15,
+      "net_pnl": "-1.2700000000",
+      "fees": "-3.9000000000",
+      "first_open": "2026-09-01T12:19:21.343Z",
+      "last_close": "2026-09-02T02:54:42.679Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.37",
+      "mode": "demo",
+      "trades": 27,
+      "net_pnl": "-7.3600000000",
+      "fees": "-7.0200000000",
+      "first_open": "2026-09-01T02:43:52.804Z",
+      "last_close": "2026-09-01T08:12:19.247Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.36",
+      "mode": "demo",
+      "trades": 3,
+      "net_pnl": "-0.2200000000",
+      "fees": "-0.7800000000",
+      "first_open": "2026-09-01T02:12:40.546Z",
+      "last_close": "2026-09-01T02:30:01.539Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.35",
+      "mode": "demo",
+      "trades": 5,
+      "net_pnl": "-7.1100000000",
+      "fees": "-1.3000000000",
+      "first_open": "2026-09-01T01:19:51.690Z",
+      "last_close": "2026-09-01T02:08:23.733Z"
+    },
+    {
+      "strategy_version": "0.1.0-actionable-oco-auto-demo.34",
+      "mode": "demo",
+      "trades": 46,
+      "net_pnl": "-82.1600000000",
+      "fees": "-11.5400000000",
+      "first_open": "2026-08-31T01:33:04.478Z",
+      "last_close": "2026-09-01T01:01:09.626Z"
+    }
+  ],
+  "latency": {
+    "window": "2026-09-01T00:00:00Z to 2026-09-07T01:20:00Z",
+    "results": [
+      {
+        "model": "gpt-5.6-sol/u40",
+        "requests": 1011,
+        "p50_ms": 24307,
+        "p95_ms": 41291.49999999999
+      }
+    ]
+  },
+  "schema": [
+    {
+      "version": "0001"
+    },
+    {
+      "version": "0002"
+    },
+    {
+      "version": "0003"
+    },
+    {
+      "version": "0004"
+    },
+    {
+      "version": "0005"
+    },
+    {
+      "version": "0006"
+    },
+    {
+      "version": "0007"
+    },
+    {
+      "version": "0008"
+    },
+    {
+      "version": "0009"
+    },
+    {
+      "version": "0010"
+    },
+    {
+      "version": "0011"
+    },
+    {
+      "version": "0012"
+    },
+    {
+      "version": "0013"
+    },
+    {
+      "version": "0014"
+    }
+  ],
+  "analysis": [
+    {
+      "state": "REJECTED",
+      "rejection_reasons": [
+        "SPREAD_PERCENTILE_EXCEEDED",
+        "SPREAD_POINTS_EXCEEDED"
+      ],
+      "attempts": 220
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SPREAD_POINTS_EXCEEDED"],
+      "attempts": 207
+    },
+    {
+      "state": "EXPIRED",
+      "rejection_reasons": [],
+      "attempts": 199
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": [
+        "SPREAD_ATR_EXCEEDED",
+        "SPREAD_PERCENTILE_EXCEEDED",
+        "SPREAD_POINTS_EXCEEDED"
+      ],
+      "attempts": 53
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["INVALID_DECIMAL"],
+      "attempts": 47
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["BUY_ENTRY_TOO_CLOSE"],
+      "attempts": 43
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SELL_ENTRY_TOO_CLOSE"],
+      "attempts": 28
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["MARKET_DATA_HTTP_ERROR:503"],
+      "attempts": 24
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["MARKET_DATA_STALE", "ORDER_BOOK_STALE"],
+      "attempts": 23
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["AI_PROVIDER_TIMEOUT"],
+      "attempts": 21
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SPREAD_HISTORY_MISSING"],
+      "attempts": 19
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SPREAD_ATR_EXCEEDED", "SPREAD_POINTS_EXCEEDED"],
+      "attempts": 11
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["DECISION_MARKET_REFRESH_FAILED"],
+      "attempts": 10
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SPREAD_ATR_EXCEEDED"],
+      "attempts": 9
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["CONFIDENCE_ADJUSTMENT_INVALID"],
+      "attempts": 8
+    }
+  ]
+}
