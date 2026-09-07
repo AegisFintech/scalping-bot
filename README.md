@@ -16,14 +16,20 @@ for what was measured, what changed, and what remains unverified.
 
 The Streamlit dashboard has **Overview**, **Trade history**, and **Diagnostics**.
 Overview shows operating state and reasons, fresh equity and net P&L, drawdown,
-remaining budget, active exposure and the latest decision/execution. It refreshes
-every ten seconds. Financial observations older than 30 seconds are withheld.
+remaining budget, active exposure and the latest decision/execution. Read-only
+snapshots refresh in a background worker every ten seconds; small live sections
+update independently while navigation and control inputs stay in place.
+Light and dark themes retain readable contrast. Financial observations older
+than 30 seconds are withheld.
 The screenshots show the new UI reading the existing demo deployment; new
 capital-policy telemetry remains unavailable until its migration and reviewed
 rollout. Prompts, analytics, provider details and infrastructure live in diagnostics.
 Authenticated pause and emergency controls remain available in the sidebar.
 
 [Trade history screenshot](docs/images/dashboard-history.png)
+
+[Dark theme screenshot](docs/images/dashboard-overview-dark.png) ·
+[Refresh and contrast validation](docs/dashboard-refresh-report.md)
 
 ## Safety and money management
 

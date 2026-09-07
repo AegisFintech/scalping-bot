@@ -5,6 +5,9 @@ The subsequent [environment migration report](environment-migration-report.md)
 records ISSUE-072's full checks and the real startup blocker. Configuration tests
 exercise actual CLI success/rejection, secret redaction and file immutability;
 policy compatibility alone does not establish startup readiness.
+The [dashboard refresh report](dashboard-refresh-report.md) records ISSUE-073's
+light/dark browser checks, control-input persistence and background-read failure
+coverage. A passing unit suite alone does not prove fragment/browser stability.
 Run Node 22 and Python 3.13 checks, including dashboard Python modules. Set
 `TEST_DATABASE_URL` through an approved environment/credential store for the three
 configured integration checks; a skipped database test is not an integration pass.

@@ -2,6 +2,22 @@
 
 ## Scope
 
+### ISSUE-073 — Dashboard contrast and background refresh (implemented; validated)
+
+- Branch: `issue-073-dashboard-background-refresh`.
+- Issue: [#176](https://github.com/AegisFintech/scalping-bot/issues/176).
+- Dependencies: ISSUE-069 dashboard; ISSUE-072 / merged PR #175.
+- Acceptance: readable light/dark theme colors; stable navigation and controls;
+  bounded read-only background queries and updates confined to live content;
+  no periodic whole-app redraw; preserve account/mode scope and stale/unavailable
+  states; failure-path tests, browser checks and screenshots; full required gates.
+- Scope: dashboard-only activation; no execution restart or trading enablement.
+- Validation: 335 Node, 116 Python, 19 schema, 3 migration and all 3 configured
+  integration tests; formatting/lint/types/build, replay/backtest fixtures, secret
+  scan and dependency audits passed. Browser checks in both themes preserve inputs,
+  focus, cursor, navigation and chart nodes across background updates. Exact
+  results and the corrected fee-accounting guard are in `docs/dashboard-refresh-report.md`.
+
 ### ISSUE-072 — Populated environment simplification (implemented; validated)
 
 - Branch: `issue-072-local-environment-simplification`.

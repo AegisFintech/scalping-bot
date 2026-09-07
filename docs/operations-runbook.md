@@ -311,9 +311,12 @@ start, stop, resize, place, cancel, or close a trade.
 
 If the execution API briefly restarts while Streamlit is rendering, the page
 shows `Execution service is reconnecting` and explicitly says PostgreSQL
-history is retained. The dashboard probes every two seconds and reruns the
-whole app after a complete status response; no manual browser refresh should be
-needed. If `Managed setup status is unavailable` remains after recovery, that
+history is retained. Overview/history read new snapshots in the background and
+update their live sections without rerunning navigation or controls. Diagnostics
+probe recovery every two seconds without resetting the selected inspection; after
+recovery, use **Reload diagnostic snapshot** to deliberately fetch that inspection
+again. There is no automatic whole-app rerun. If
+`Managed setup status is unavailable` remains after recovery, that
 is a durable projection failure rather than a transport outage and must be
 investigated.
 

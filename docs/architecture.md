@@ -97,6 +97,14 @@ Diagnostics lazily render selected detailed views. Financial freshness is explic
 missing capital-policy telemetry on an older deployment is not inferred. Pause
 and emergency actions require a separate token and durable audit.
 
+Overview/history snapshots are read by a cached worker per view, with one in-flight
+read and ten-second admission intervals. Rendering polls completion without waiting
+on network/database work. Two-second fragments emit stable keyed live sections;
+the title, navigation and control form remain outside the timer. Observation age
+starts before IO and values older than 30 seconds are withheld. Failed reads clear
+the previous display value. The workers never call Streamlit, execute orders or
+send controls. Diagnostics retain the user's selected snapshot during recovery.
+
 ## Modes and remaining limits
 
 Paper uses its own account identity/ledger; demo requires explicit acknowledgement
