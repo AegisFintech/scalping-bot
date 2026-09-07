@@ -1,5 +1,15 @@
 # Deterministic risk model
 
+ISSUE-075 integrates reusable scenario maps without changing the account risk
+policy below. Local `scenarioOco` constructs prices only; `OcoRiskEvaluator` remains
+the sole sizing/margin authority. The account risk cap reserves the explicit
+equity floor before allocating risk; it becomes zero at or below the floor.
+Both race-exposed legs share the same cost-inclusive
+budget. One durable intent consumes a map; no averaging, retries after uncertain
+submission, or model-selected risk increases are introduced. Stops/targets remain
+broker-held. The new candidate does not automate discretionary structural/time
+closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
+
 Current policy: `conservative-v1`. All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
@@ -36,7 +46,8 @@ For each leg, derive a stop-only upper volume, then search downward on the broke
 volume grid for a cost-inclusive volume inside half the setup budget:
 
 ```text
-setup budget = min(equity * 0.001% * risk multiplier, remaining daily loss budget)
+setup budget = min(equity * 0.001% * risk multiplier,
+                   remaining daily loss budget, max(equity - equity floor, 0))
 leg budget = setup budget / 2
 modeled leg loss = stop ticks * tick value * native volume
                 + conservative opening/closing commissions

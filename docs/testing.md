@@ -1,5 +1,13 @@
 # Current acceptance and research
 
+ISSUE-075 validation is recorded in [the integration report](reusable-scenario-report.md).
+New coverage exercises background inference, durable concurrent claims, restart
+cooldown, one-map/one-intent uniqueness, tampered maps and prompt/model identities,
+threshold crossing, cost/expiry deferral, no placement while waiting, provider
+failures and independent existing execution safeguards. All synthetic fixtures
+remain software checks, with no profitability inference. Configured integration
+tests migrate isolated database schemas and drop only those test-owned schemas.
+
 [ISSUE-074's scenario report](scenario-automation-report.md) records strict plan
 schema/identity/precision checks, post-availability confirmation, automatic exits,
 fixed risk reuse, unavailable inference, ordered quotes/candles, duplicate/conflict

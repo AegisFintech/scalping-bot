@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-09-07T08:16:04.444Z",
+  "mode": "demo",
+  "release": "0.2.1-reusable-scenarios.1",
+  "requestedModel": "gpt-6-astra/u64",
+  "healthy": true,
+  "tradingEnabled": false,
+  "automaticAnalysisEnabled": false,
+  "pauseNewAnalyses": true,
+  "emergencyStopped": true,
+  "reasonCodes": [
+    "ACCOUNT_EQUITY_FLOOR_REQUIRED",
+    "ANALYSES_PAUSED",
+    "DEMO_TRADING_DISABLED",
+    "EMERGENCY_STOP_ENV"
+  ],
+  "latestGroup": "CLOSED",
+  "environmentByteIdentical": true,
+  "services": [
+    {
+      "name": "scalper-analytics",
+      "status": "online",
+      "nodeVersion": "v22.23.2",
+      "stableNodePath": true,
+      "submissionEnabled": false
+    },
+    {
+      "name": "scalper-market-data",
+      "status": "online",
+      "nodeVersion": "v22.23.2",
+      "stableNodePath": true,
+      "submissionEnabled": false
+    },
+    {
+      "name": "scalper-ai",
+      "status": "online",
+      "nodeVersion": "v22.23.2",
+      "stableNodePath": true,
+      "submissionEnabled": false
+    },
+    {
+      "name": "scalper-dashboard",
+      "status": "online",
+      "nodeVersion": "v22.23.2",
+      "stableNodePath": true,
+      "submissionEnabled": false
+    },
+    {
+      "name": "scalper-execution",
+      "status": "online",
+      "nodeVersion": "v22.23.2",
+      "stableNodePath": true,
+      "submissionEnabled": false
+    }
+  ],
+  "supervisorSaved": true
+}

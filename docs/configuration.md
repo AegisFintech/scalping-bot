@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.0-overhaul.1` uses policy `conservative-v1` in
+Release `0.2.1-reusable-scenarios.1` uses policy `conservative-v1` in
 `packages/config/src/policy.ts`. The normal template has 22 assignments, previously
 176: 154 fewer, an 87.5% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -8,10 +8,10 @@ reduced the populated environment from 176 to 26 entries: the 22 normal keys plu
 four retained deployment credentials/identifiers. No credentials were changed.
 See [the migration report](environment-migration-report.md) for exact checks and
 remaining rollout blockers. There is no operator strategy tuning file.
-Chart-scenario research adds no environment variables or tuning file. Its fixed
-assumptions and observe/replay commands are documented in
-[the scenario report](scenario-automation-report.md). Existing credentials are
-read only for an explicitly invoked observation; replay needs no credentials.
+Reusable scenario maps add no environment variables or tuning file. Five-minute
+refresh/cooldown, one intent per map, five-second local decisions, 60-second
+pending expiry and 45-second provider timeout are engineering policy, not operator
+knobs. The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
@@ -76,10 +76,9 @@ credentials, fresh metadata and account evidence. Errors name keys only.
 
 The migrated local file passes compatibility and pins the requested model. Its
 `--startup` check rejects with `CONFIG_DEMO_EQUITY_FLOOR_REQUIRED`: that preexisting
-capital bound was blank and remains blank. The existing services were not
-restarted. They retain old in-memory configuration and PM2 overrides until the
-coordinated rollout described below; an edited file does not update a running
-process.
+capital bound was blank and remains blank. That was the pre-ISSUE-075 runtime blocker. See the current
+[rollout report](reusable-scenario-report.md) for process state. A file edit alone
+does not update a running process; an enabled demo startup still requires the floor.
 
 Nonempty fixed overrides must match the policy exactly or startup rejects with
 `CONFIG_POLICY_CONFLICT`. Ambiguous legacy `SHADOW_MODE` also rejects; use the
@@ -92,15 +91,16 @@ but an existing ignored credential used for delivery must remain private.
 
 1. Pause new analyses using authenticated controls and verify strategy exposure,
    pending cancellations and reconciliation. Preserve broker protection for open
-   positions. This repository change has not performed that operational action.
+   positions. ISSUE-075 applied an audited maintenance pause before implementation.
 2. Back up the populated environment and database to the approved protected
    location. Preserve mode-0600 permissions. Do not copy credentials into commands,
    reports or Git; do not run `cp .env.sample .env` over an existing file.
 3. Review each conflicting key reported by `config:check`. Retain credentials,
    endpoints, instance identity, control authorization and explicit capital limits.
    Remove reviewed legacy internals. Choose paper/stopped for the first check.
-4. Apply additive migration `0015` with the existing migration CLI during the
-   reviewed rollout. It adds provider telemetry/failures and capital state; there
+4. Apply additive migrations `0015` and `0016` with the existing migration CLI during the
+   reviewed rollout. They add provider telemetry, capital state, reusable-context audit,
+   five-second claims and terminal deferral; there
    is no destructive transition or historical audit rewrite.
 5. The PM2 ecosystem now contains deployment identity only; strategy defaults come
    from the typed policy. Under the reviewed stopped rollout, recreate the named
@@ -112,14 +112,15 @@ but an existing ignored credential used for delivery must remain private.
    account-scoped reconciliation, freshness, capital state, mode and controls.
    An absent late-start daily baseline needs the existing audited initialization
    procedure; do not synthesize it or reset a loss lockout.
-7. Review provider access/pricing and run a bounded compatibility call. Supervised
-   demo validation is a separate authorization. No new strategy candidate is enabled.
+7. Review provider access/pricing and run a bounded compatibility call. The operator authorized a controlled demo rollout for ISSUE-075. Missing
+   capital limits or reconciliation still block placement; authorization does not
+   supply those missing values.
 
 ## Rollback
 
 Keep a protected copy of the former environment and release artifact. Pause new
 analysis, reconcile outstanding orders, then restore the previous reviewed release
-and its environment through the normal supervisor. Keep migration `0015` tables
+and its environment through the normal supervisor. Keep migration `0015`/`0016` tables
 and their audit data: the older release can ignore them. Do not drop tables, edit
 migration checksums, reset daily/capital rows, or resurrect expired proposals.
 Rollback does not transfer live authority or prove older risk behavior sufficient.

@@ -44,12 +44,21 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Current prompt is `system-v16`, response schema remains `2.1`; provider telemetry
-  has its own strict `1.0` schema. Historical prompts/schemas remain immutable.
-- `scenario-v1` / `scenario-1.0` are separate research contracts, not replacements
-  for the production OCO contract. Read `docs/scenario-automation-report.md` before
-  changing their assumptions. Observe/replay commands have no broker submission
-  authority. Never promote them or relabel synthetic fixtures as strategy evidence.
+- Production context uses `scenario-v2` / `scenario-1.0`; local derived OCO
+  proposals use `scenario-execution-v1` / schema `2.1`. Historical contracts remain
+  immutable. Read `docs/reusable-scenario-report.md` before changing this path.
+- The operator authorized integrated demo evaluation in ISSUE-075. One context
+  request per five minutes is durably claimed before inference. A unique context
+  link consumes the map at order intent, including uncertain/failed submission.
+  Do not count derived local proposals as paid provider requests.
+- Provider inference runs outside the execution promise. Reuse a validated map
+  across ordinary candle advances, but never relax the fresh completed-candle
+  context checks for each individual execution decision. Crossed thresholds wait;
+  do not move them to manufacture entries. `DEFERRED` is terminal waiting, not
+  acceptance, rejection, an order or a fill.
+- `scenario-v1` and the completed-candle directional replay remain research-only.
+  Observe/replay commands have no broker authority. They are distinct from the
+  protected OCO integration, whose profitability remains unproven.
 - Scenario confirmation consumes completed candles after plan availability;
   inference cannot backdate eligibility. Preserve strict event order, duplicate
   conflict handling, checkpoint failure latches and censored/unknown P&L. Structural

@@ -1,0 +1,19 @@
+{
+  "label": "REAL_ENDPOINT_COMPATIBILITY_NOT_STRATEGY_PERFORMANCE",
+  "started": "2026-09-07T07:56:26.887Z",
+  "completed": "2026-09-07T07:56:47.554Z",
+  "prompt": "scenario-v2",
+  "schema": "scenario-1.0",
+  "latencyMs": 17685,
+  "requestedModel": "gpt-6-astra/u64",
+  "returnedModel": "gpt-6-astra",
+  "inputProfile": "chart",
+  "requestBytes": 135040,
+  "responseBytes": 29647,
+  "inputTokens": 22105,
+  "outputTokens": 359,
+  "totalTokens": 22464,
+  "costAmount": null,
+  "costCurrency": null,
+  "costSource": "unavailable"
+}

@@ -1,5 +1,22 @@
 # Current release operations
 
+For release `0.2.1-reusable-scenarios.1`, follow the current
+[rollout and rollback record](reusable-scenario-report.md). Preserve the durable
+analysis pause, reconcile broker state, back up before migrations 0015–0016, and
+recreate PM2 processes with the reviewed small environment to remove stale model
+and policy overrides. Verify literal requested model from actual adapter telemetry.
+Do not clear stops or reset daily/capital accounting to pass readiness. A blank
+`ACCOUNT_EQUITY_FLOOR` blocks enabled demo startup; credentials are insufficient.
+
+`DEFERRED` means a local decision is waiting, with no order attempted. A READY
+map is not an order. Check active strategy orders and fresh broker reconciliation
+separately. Context refresh attempts are journaled before dispatch and may include
+pre-provider/transport failures; unknown costs remain null. Protective maintenance
+runs during a pending request. A five-minute refresh cooldown is not a stalled bot. The current stopped PM2
+deployment uses the verified Node 22.23.2 binary at `/opt/scalper-node22/bin/node`;
+service recreation must use that binary, not the system Node 24 or an ephemeral
+package cache. Keep the current maintenance hold until the equity floor is supplied.
+
 Chart-scenario research commands are described in
 [the scenario report](scenario-automation-report.md). Observation uses the existing
 local market/analytics services and makes at most one model call. Replay is offline.

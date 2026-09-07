@@ -2027,6 +2027,15 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str, str, s
     group_state = row.get("group_state")
     if group_state is None:
         analysis_state = row.get("analysis_state")
+        if analysis_state == "DEFERRED":
+            return (
+                "WAITING — NO ORDER ATTEMPTED",
+                triggered_side,
+                realized_pnl,
+                fees,
+                gross_pnl,
+                fee_coverage,
+            )
         if analysis_state == "REJECTED":
             return (
                 "REJECTED — NO ORDER",
@@ -2092,6 +2101,7 @@ def _history_outcome(row: Mapping[str, Any]) -> tuple[str, str, str, str, str, s
 
 
 _ANALYSIS_STATES = {
+    "DEFERRED",
     "PENDING",
     "COLLECTING",
     "FEATURED",
@@ -2313,7 +2323,9 @@ def analysis_attempt_funnel_view(rows: Sequence[Mapping[str, Any]]) -> dict[str,
                 category = "AI_PROPOSAL_INVALID"
         else:
             stage = "BEFORE COMPLETED AI RESPONSE"
-            if (
+            if state == "DEFERRED":
+                category = "SCENARIO_WAITING"
+            elif (
                 state
                 in {
                     "PENDING",

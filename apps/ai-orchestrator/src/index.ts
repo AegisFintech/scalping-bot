@@ -1,4 +1,5 @@
 import { ProviderFailure } from "../../../packages/ai-client/src/telemetry.js";
+import { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
 import "dotenv/config";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
@@ -15,6 +16,7 @@ import type { AnalysisChartArtifact } from "../../../packages/contracts/src/inde
 
 export interface AiServerOptions {
   readonly client: OpenAiCompatibleClient;
+  readonly scenarioPlanner?: ScenarioPlanner;
 }
 
 export function normalizeAiAnalysisError(error: unknown): string {
@@ -45,6 +47,27 @@ export function aiReasoningEffort(
 
 export function createAiServer(options: AiServerOptions): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 5_600_000 });
+  app.post<{ Body: Parameters<ScenarioPlanner["generate"]>[0] }>(
+    "/v1/scenario",
+    async (request, reply) => {
+      if (options.scenarioPlanner === undefined)
+        return reply.code(503).send({ reason: "SCENARIO_NOT_CONFIGURED" });
+      try {
+        return reply.send(await options.scenarioPlanner.generate(request.body));
+      } catch (error) {
+        return reply.code(503).send({
+          reason:
+            error instanceof Error &&
+            /^(AI|SCENARIO)_[A-Z0-9_:]{1,120}$/.test(error.message)
+              ? error.message
+              : normalizeAiAnalysisError(error),
+          ...(error instanceof ProviderFailure
+            ? { telemetry: error.telemetry }
+            : {}),
+        });
+      }
+    },
+  );
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", (_request, reply) => {
     if (options.client.circuitOpen)
@@ -104,7 +127,12 @@ async function main(): Promise<void> {
     circuitBreakerResetMs:
       Number(environment.AI_CIRCUIT_BREAKER_RESET_SECONDS ?? 300) * 1_000,
   });
-  const app = createAiServer({ client });
+  const scenarioPlanner = new ScenarioPlanner({
+    baseUrl: environment.AI_BASE_URL ?? "",
+    apiKey: environment.AI_API_KEY ?? "",
+    executionContext: true,
+  });
+  const app = createAiServer({ client, scenarioPlanner });
   await app.listen({
     host: environment.HOST ?? "127.0.0.1",
     port: Number(environment.AI_ORCHESTRATOR_PORT ?? 8082),

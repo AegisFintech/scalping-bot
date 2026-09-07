@@ -69,6 +69,11 @@ export interface AnalyticsProvider {
 
 export interface ModelProvider {
   readonly circuitOpen: boolean;
+  prepare?(input: {
+    snapshot: MarketSnapshot;
+    chart: AnalysisChartArtifact;
+    payload: Readonly<Record<string, unknown>>;
+  }): Promise<string | null>;
   analyze(request: {
     readonly analysisId: string;
     readonly symbol: string;
@@ -82,6 +87,7 @@ export interface ModelProvider {
     readonly latencyMs?: number;
     readonly retryCount?: number;
     readonly telemetry?: ProviderTelemetry;
+    readonly contextPlanId?: string;
   }>;
 }
 
@@ -115,6 +121,7 @@ export interface DecisionTrail {
       readonly latencyMs: number;
       readonly retryCount: number;
       readonly telemetry?: ProviderTelemetry;
+      readonly contextPlanId?: string;
     },
   ): Promise<void>;
   validation(
@@ -247,7 +254,7 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v15" | "system-v16";
+  readonly promptVersion: "system-v15" | "system-v16" | "scenario-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -290,7 +297,7 @@ export interface CoordinatorOptions {
 
 export interface CycleResult {
   readonly analysisId: string;
-  readonly outcome: "PLACED" | "REJECTED";
+  readonly outcome: "PLACED" | "REJECTED" | "DEFERRED";
   readonly reasonCodes: readonly string[];
   readonly placement: OcoPlacementResult | null;
 }
@@ -579,7 +586,7 @@ export class AnalysisCoordinator {
       const unique = [...new Set(reasons)].sort();
       if (
         started &&
-        !["REJECTED", "ACCEPTED", "EXPIRED"].includes(machine.state)
+        !["REJECTED", "ACCEPTED", "EXPIRED", "DEFERRED"].includes(machine.state)
       ) {
         const event = machine.transition("REJECTED", unique);
         await this.#options.trail.transition(analysisId, event);
@@ -883,6 +890,25 @@ export class AnalysisCoordinator {
           preferredOrderExpirySeconds: this.#options.preferredExpirySeconds,
         },
       });
+      if (this.#options.model.prepare !== undefined) {
+        const waiting = await this.#options.model.prepare({
+          snapshot: preModelSnapshot,
+          chart: analytics.chart,
+          payload,
+        });
+        if (waiting !== null) {
+          await this.#options.trail.transition(
+            analysisId,
+            machine.transition("DEFERRED", [waiting]),
+          );
+          return {
+            analysisId,
+            outcome: "DEFERRED",
+            reasonCodes: [waiting],
+            placement: null,
+          };
+        }
+      }
       await this.#recordTransition(analysisId, machine, "MODEL_PENDING");
       const modelStartedAt = Date.now();
       const model = await this.#options.model
@@ -918,6 +944,9 @@ export class AnalysisCoordinator {
         {
           latencyMs: model.latencyMs ?? 0,
           retryCount: model.retryCount ?? 0,
+          ...(model.contextPlanId === undefined
+            ? {}
+            : { contextPlanId: model.contextPlanId }),
           ...(model.telemetry === undefined
             ? {}
             : { telemetry: model.telemetry }),

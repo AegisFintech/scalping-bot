@@ -2,6 +2,7 @@ import type {
   AnalysisChartArtifact,
   CandleSeries,
 } from "../../contracts/src/index.js";
+import { ProviderFailure } from "../../ai-client/src/telemetry.js";
 import {
   OpenAiCompatibleClient,
   type AiAnalysisResult,
@@ -22,6 +23,7 @@ export class ScenarioPlanner {
     apiKey: string;
     fetchImpl?: typeof fetch;
     now?: () => number;
+    executionContext?: boolean;
   }) {
     this.client = new OpenAiCompatibleClient<ScenarioPlan>({
       ...options,
@@ -29,8 +31,10 @@ export class ScenarioPlanner {
       apiStyle: "responses",
       schemaPath: "schemas/scenario-plan-1.0.json",
       outputSchemaName: "chart_scenario_1_0",
-      systemPromptPath: "prompts/scenario-v1.md",
-      promptVersion: "scenario-v1",
+      systemPromptPath: options.executionContext
+        ? "prompts/scenario-v2.md"
+        : "prompts/scenario-v1.md",
+      promptVersion: options.executionContext ? "scenario-v2" : "scenario-v1",
       inputProfile: "chart",
       timeoutMs: 45_000,
       maxRetries: 0,
@@ -109,6 +113,7 @@ export class ScenarioPlanner {
         },
       })
       .catch((error: unknown) => {
+        if (error instanceof ProviderFailure) throw error;
         const reason =
           error instanceof Error &&
           /^(AI|SCENARIO)_[A-Z0-9_:]{1,120}$/.test(error.message)
@@ -119,10 +124,19 @@ export class ScenarioPlanner {
               : "SCENARIO_PROVIDER_UNAVAILABLE";
         throw new Error(reason);
       });
-    validatePlan(result.rawResponse, {
-      ...input,
-      availableAt: new Date(this.now()).toISOString(),
-    });
+    try {
+      validatePlan(result.rawResponse, {
+        ...input,
+        availableAt: new Date(this.now()).toISOString(),
+      });
+    } catch (error) {
+      if (result.telemetry !== undefined)
+        throw new ProviderFailure(
+          error instanceof Error ? error.message : "SCENARIO_VALIDATION_FAILED",
+          result.telemetry,
+        );
+      throw error;
+    }
     return result;
   }
 }

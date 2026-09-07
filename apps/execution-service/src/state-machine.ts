@@ -6,16 +6,18 @@ export type AnalysisState =
   | "VALIDATING"
   | "ACCEPTED"
   | "REJECTED"
+  | "DEFERRED"
   | "EXPIRED";
 
 const TRANSITIONS: Readonly<Record<AnalysisState, readonly AnalysisState[]>> = {
   PENDING: ["COLLECTING", "REJECTED"],
   COLLECTING: ["FEATURED", "REJECTED"],
-  FEATURED: ["MODEL_PENDING", "REJECTED"],
+  FEATURED: ["MODEL_PENDING", "REJECTED", "DEFERRED"],
   MODEL_PENDING: ["VALIDATING", "REJECTED"],
   VALIDATING: ["ACCEPTED", "REJECTED"],
   ACCEPTED: ["EXPIRED"],
   REJECTED: [],
+  DEFERRED: [],
   EXPIRED: [],
 };
 

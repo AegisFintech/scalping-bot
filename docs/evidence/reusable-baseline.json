@@ -1,0 +1,99 @@
+{
+  "label": "SELECTED_LEGACY_DEMO_WINDOW_NOT_MATCHED_PERFORMANCE",
+  "cycleCounts": [
+    {
+      "outcome": "REJECTED",
+      "count": 183,
+      "first": "2026-09-07T03:10:01.972Z",
+      "last": "2026-09-07T07:38:02.171Z"
+    },
+    {
+      "outcome": null,
+      "count": 1,
+      "first": "2026-09-07T07:39:02.659Z",
+      "last": "2026-09-07T07:39:02.659Z"
+    }
+  ],
+  "successfulRequestLatencies": [
+    {
+      "status": "COMPLETED",
+      "count": 46,
+      "median_ms": 38555,
+      "p95_ms": 46172.75
+    }
+  ],
+  "rejectionReasons": [
+    {
+      "reason": "SPREAD_POINTS_EXCEEDED",
+      "count": 86
+    },
+    {
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "count": 56
+    },
+    {
+      "reason": "SPREAD_PERCENTILE_EXCEEDED",
+      "count": 48
+    },
+    {
+      "reason": "SPREAD_ATR_EXCEEDED",
+      "count": 15
+    },
+    {
+      "reason": "BUY_ENTRY_TOO_CLOSE",
+      "count": 8
+    },
+    {
+      "reason": "QUOTE_STALE",
+      "count": 7
+    },
+    {
+      "reason": "SELL_ENTRY_TOO_CLOSE",
+      "count": 7
+    },
+    {
+      "reason": "ORDER_BOOK_STALE",
+      "count": 6
+    },
+    {
+      "reason": "MARKET_DATA_STALE",
+      "count": 6
+    },
+    {
+      "reason": "INVALID_DECIMAL",
+      "count": 5
+    },
+    {
+      "reason": "MARKET_DATA_HTTP_ERROR:503",
+      "count": 4
+    },
+    {
+      "reason": "DECISION_MARKET_REFRESH_FAILED",
+      "count": 2
+    },
+    {
+      "reason": "SELL_REWARD_RISK_MISMATCH",
+      "count": 1
+    },
+    {
+      "reason": "MODEL_DEADLINE_INSUFFICIENT",
+      "count": 1
+    },
+    {
+      "reason": "SELL_REWARD_RISK_TOO_LOW",
+      "count": 1
+    },
+    {
+      "reason": "PLACEMENT_MARKET_REFRESH_FAILED",
+      "count": 1
+    },
+    {
+      "reason": "BUY_REWARD_RISK_MISMATCH",
+      "count": 1
+    },
+    {
+      "reason": "DECISION_CANDLE_CONTEXT_CHANGED",
+      "count": 1
+    }
+  ]
+}

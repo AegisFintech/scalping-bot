@@ -209,6 +209,8 @@ export interface ModelPromptArtifact {
     | "system-v14"
     | "system-v15"
     | "system-v16"
+    | "scenario-execution-v1"
+    | "scenario-v2"
     | "scenario-v1";
   readonly content: string;
   readonly sha256: string;

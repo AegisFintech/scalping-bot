@@ -327,6 +327,7 @@ if diagnostic_section == "AI Analysis":
                       ar.state, ar.valid_until, ar.rejection_reasons,
                       EXISTS (
                         SELECT 1 FROM model_requests mq WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                       ) AS ai_request_recorded
                FROM analysis_runs ar
                JOIN accounts a ON a.id = ar.account_id
@@ -940,6 +941,7 @@ if diagnostic_section == "Analysis History":
                      FROM model_requests mq
                      JOIN model_responses mr ON mr.model_request_id = mq.id
                      WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                        AND mq.status = 'COMPLETED'
                        AND mr.status = 'COMPLETED'
                    )
@@ -957,12 +959,14 @@ if diagnostic_section == "Analysis History":
                       ar.rejection_reasons,
                       EXISTS (
                         SELECT 1 FROM model_requests mq WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                       ) AS model_request_present,
                       EXISTS (
                         SELECT 1
                         FROM model_requests mq
                         JOIN model_responses mr ON mr.model_request_id = mq.id
                         WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                           AND mq.status = 'COMPLETED'
                           AND mr.status = 'COMPLETED'
                       ) AS model_completed,
@@ -985,6 +989,7 @@ if diagnostic_section == "Analysis History":
                  FROM model_requests mq
                  JOIN model_responses mr ON mr.model_request_id = mq.id
                  WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                    AND mq.status = 'COMPLETED'
                    AND mr.status = 'COMPLETED'
                  ORDER BY mr.received_at DESC
@@ -1114,6 +1119,7 @@ if diagnostic_section == "Analysis History":
                          FROM model_requests mq
                          JOIN model_responses mr ON mr.model_request_id = mq.id
                          WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                            AND mq.status = 'COMPLETED'
                            AND mr.status = 'COMPLETED'
                        )
@@ -1129,6 +1135,7 @@ if diagnostic_section == "Analysis History":
                          FROM model_requests mq
                          JOIN model_responses mr ON mr.model_request_id = mq.id
                          WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                            AND mq.status = 'COMPLETED'
                            AND mr.status = 'COMPLETED'
                        )
@@ -1192,6 +1199,7 @@ if diagnostic_section == "Analysis History":
                      FROM model_requests mq
                      JOIN model_responses mr ON mr.model_request_id = mq.id
                      WHERE mq.analysis_id = ar.id
+                          AND COALESCE(to_jsonb(mq)->>'decision_source','PROVIDER')='PROVIDER'
                        AND mq.status = 'COMPLETED' AND mr.status = 'COMPLETED'
                      ORDER BY mq.requested_at DESC LIMIT 1
                    ) model ON true
@@ -1551,6 +1559,22 @@ if diagnostic_section == "Provider":
             mode.lower(),
             selected_symbol,
         )
+        if query("SELECT to_regclass('scenario_contexts') AS present")[0]["present"]:
+            context_rows = query(
+                """SELECT c.requested_at, c.state, c.requested_model, c.duration_ms,
+                    c.valid_until, c.reason, c.telemetry
+                FROM scenario_contexts c JOIN accounts a ON a.id=c.account_id
+                JOIN symbols s ON s.id=c.symbol_id
+                WHERE a.provider_account_key_hash=%s AND c.mode=%s AND s.name=%s
+                ORDER BY c.requested_at DESC LIMIT 50""",
+                provider_scope,
+            )
+            st.caption(
+                "Reusable-map requests include failures and interrupted requests. "
+                "Derived local decisions incur no new model request."
+            )
+            if context_rows:
+                display_dataframe(pd.json_normalize(context_rows), hide_index=True, width="stretch")
         if not query("SELECT to_regclass('model_call_telemetry') AS present")[0]["present"]:
             st.info(
                 "Provider telemetry requires migration 0015 and new adapter calls. "

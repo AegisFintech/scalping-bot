@@ -21,6 +21,17 @@ def test_control_and_position_precedence() -> None:
     assert overview.operating_state(status)[0] == "Paused"
     status["emergencyStopped"] = True
     assert overview.operating_state(status)[0] == "Stopped"
+    status["reasonCodes"] = ["ACCOUNT_EQUITY_FLOOR_REQUIRED"]
+    assert "minimum equity" in overview.operating_state(status)[1]
+
+
+def test_context_validity_and_consumption_are_distinct_from_provider_success() -> None:
+    now = datetime(2026, 9, 7, tzinfo=UTC)
+    assert overview.context_state(
+        {"state": "READY", "valid_until": now.isoformat()}, now
+    ).startswith("Expired")
+    assert overview.context_state({"state": "READY", "valid_until": "bad"}, now) == "Unavailable"
+    assert overview.context_state({"consumed": True}, now).startswith("Consumed")
 
 
 def test_stale_and_future_equity_are_withheld() -> None:
@@ -44,6 +55,10 @@ def test_budget_is_unavailable_without_current_policy_and_reduced_inside_it() ->
     result = overview.risk_summary(daily, capital, now)
     assert result["setup_budget"] == "0.05"
     assert result["daily_remaining"] == "50.00"
+    capital["risk_cap_percent"] = "0.0001"
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "0.01"
+    capital["risk_cap_percent"] = None
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "Unavailable"
 
 
 def test_rendered_dashboard_withholds_unavailable_data_and_rejects_unauthorized_control(
