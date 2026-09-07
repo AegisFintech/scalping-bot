@@ -1,5 +1,10 @@
-/** Versioned conservative defaults. These are code-reviewed values, not a tuning file. */
-export const POLICY_VERSION = "conservative-v1";
+/** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
+export const POLICY_VERSION = "fixed-risk-v2";
+export const MONEY_MANAGEMENT = {
+  setupRiskPercent: "1",
+  dailyLossLimitPercent: "5",
+  drawdownLimitPercent: "5",
+} as const;
 export const FIXED_DEFAULTS = {
   LOG_LEVEL: "info",
   LIVE_TRADING_ENABLED: "false",
@@ -71,9 +76,9 @@ export const FIXED_DEFAULTS = {
   AI_REASONING_EFFORT: "",
   AI_CIRCUIT_BREAKER_FAILURES: "3",
   AI_CIRCUIT_BREAKER_RESET_SECONDS: "300",
-  BASE_RISK_PERCENT: "0.001",
-  MAX_RISK_PERCENT: "0.001",
-  MAX_DAILY_LOSS_PERCENT: "1",
+  BASE_RISK_PERCENT: MONEY_MANAGEMENT.setupRiskPercent,
+  MAX_RISK_PERCENT: MONEY_MANAGEMENT.setupRiskPercent,
+  MAX_DAILY_LOSS_PERCENT: MONEY_MANAGEMENT.dailyLossLimitPercent,
   DAILY_RISK_TIMEZONE: "UTC",
   DAILY_BASELINE_CAPTURE_GRACE_SECONDS: "300",
   INCLUDE_UNREALIZED_IN_DAILY_LOSS: "true",
@@ -107,14 +112,13 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.1-reusable-scenarios.1",
-  CODE_VERSION: "0.2.1-reusable-scenarios.1",
+  STRATEGY_VERSION: "0.2.2-fixed-risk.3",
+  CODE_VERSION: "0.2.2-fixed-risk.3",
   MODEL_INPUT_PROFILE: "structured",
-  MAX_DRAWDOWN_PERCENT: "5",
+  MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
 
 export const OPERATOR_KEYS = [
-  "ACCOUNT_EQUITY_FLOOR",
   "ACCOUNT_ID",
   "ACCOUNT_KEY",
   "AI_API_KEY",
@@ -163,6 +167,7 @@ export const BROKER_DISCOVERED_KEYS = [
   "SYMBOL_DISCOVERY_ENABLED",
 ] as const;
 export const OBSOLETE_KEYS = [
+  "ACCOUNT_EQUITY_FLOOR",
   "AI_MAX_INPUT_TOKENS",
   "AI_STRICT_JSON",
   "APP_NAME",
@@ -220,7 +225,7 @@ export function resolveRuntimeEnvironment(
     throw new Error("CONFIG_CONNECTION_MODE_INVALID");
   if (source.DATABASE_SSL_MODE === "disable" && source.TRADING_MODE !== "paper")
     throw new Error("CONFIG_BROKER_DATABASE_TLS_REQUIRED");
-  return {
+  const resolved: NodeJS.ProcessEnv = {
     ...source,
     ...FIXED_DEFAULTS,
     CTRADER_API_HOST:
@@ -238,4 +243,7 @@ export function resolveRuntimeEnvironment(
         ? "true"
         : "false",
   };
+  // Removed by explicit operator policy change. A cached legacy floor has no authority.
+  delete resolved.ACCOUNT_EQUITY_FLOOR;
+  return resolved;
 }

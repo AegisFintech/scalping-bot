@@ -1,5 +1,11 @@
 # Current acceptance and research
 
+ISSUE-076 verifies the fixed 1% setup / 5% daily policy with no absolute floor.
+Tests cover percentage overrides, OCO combined cost exposure, small-account
+minimum rejection, remaining daily capacity, deposits/withdrawals, concurrent
+daily locks, restart/next-day recovery, and policy-driven dashboard budgets.
+Exact commands and rollout evidence are in [the policy report](fixed-risk-report.md).
+
 ISSUE-075 validation is recorded in [the integration report](reusable-scenario-report.md).
 New coverage exercises background inference, durable concurrent claims, restart
 cooldown, one-map/one-intent uniqueness, tampered maps and prompt/model identities,

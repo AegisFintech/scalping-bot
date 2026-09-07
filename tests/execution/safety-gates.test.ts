@@ -284,19 +284,12 @@ describe("execution safety gates", () => {
         MAX_POSITION_NOTIONAL: "0",
       }),
     ).toThrow("CONFIG_DECIMAL_INVALID:MAX_POSITION_NOTIONAL");
-    expect(() =>
-      loadExecutionConfig({
-        ...enabled,
-        MAX_ORDERS_PER_DAY: "1",
-        MAX_POSITION_NOTIONAL: "5500",
-      }),
-    ).toThrow("CONFIG_DEMO_EQUITY_FLOOR_REQUIRED");
+
     expect(
       loadExecutionConfig({
         ...enabled,
         MAX_ORDERS_PER_DAY: "1",
         MAX_POSITION_NOTIONAL: "5500",
-        ACCOUNT_EQUITY_FLOOR: "1000",
       }),
     ).toMatchObject({
       demoTradingEnabled: true,

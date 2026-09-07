@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { Decimal } from "decimal.js";
 
 import type { TradingMode } from "../../../packages/contracts/src/index.js";
+import { MONEY_MANAGEMENT } from "../../../packages/config/src/policy.js";
 import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 
 export interface ExecutionConfig {
@@ -64,21 +65,16 @@ function integerValue(
   return parsed;
 }
 
-function decimalPercent(
+function policyPercent(
   value: string | undefined,
-  fallback: string,
+  expected: string,
   name: string,
-  maximum: number,
 ): string {
-  const text = value ?? fallback;
-  if (
-    !/^\d+(?:\.\d+)?$/.test(text) ||
-    Number(text) <= 0 ||
-    Number(text) > maximum
-  ) {
-    throw new Error(`CONFIG_PERCENT_INVALID:${name}`);
-  }
-  return text;
+  if (value !== undefined && value !== "" && value !== expected)
+    throw new Error(
+      `CONFIG_POLICY_CONFLICT:${name}:remove legacy override; risk percentages are fixed in code`,
+    );
+  return expected;
 }
 
 function optionalPositiveDecimal(
@@ -145,13 +141,6 @@ export function loadExecutionConfig(
       throw new Error("CONFIG_DEMO_ORDER_LIMIT_REQUIRED");
     if (maxPositionNotional === null)
       throw new Error("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
-    if (
-      optionalPositiveDecimal(
-        environment.ACCOUNT_EQUITY_FLOOR,
-        "ACCOUNT_EQUITY_FLOOR",
-      ) === null
-    )
-      throw new Error("CONFIG_DEMO_EQUITY_FLOOR_REQUIRED");
   }
   const automaticAnalysisCompletedLimit = integerValue(
     environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,
@@ -282,17 +271,15 @@ export function loadExecutionConfig(
     preferredMaxEntryDistanceAtr,
     symbol,
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
-    baseRiskPercent: decimalPercent(
+    baseRiskPercent: policyPercent(
       environment.BASE_RISK_PERCENT,
-      "0.001",
+      MONEY_MANAGEMENT.setupRiskPercent,
       "BASE_RISK_PERCENT",
-      5,
     ),
-    maxRiskPercent: decimalPercent(
+    maxRiskPercent: policyPercent(
       environment.MAX_RISK_PERCENT,
-      "0.001",
+      MONEY_MANAGEMENT.setupRiskPercent,
       "MAX_RISK_PERCENT",
-      5,
     ),
     minRiskRewardRatio: boundedPositiveDecimal(
       environment.MIN_RISK_REWARD_RATIO,
@@ -314,11 +301,10 @@ export function loadExecutionConfig(
       }
       return value;
     })(),
-    maxDailyLossPercent: decimalPercent(
+    maxDailyLossPercent: policyPercent(
       environment.MAX_DAILY_LOSS_PERCENT,
-      "1",
+      MONEY_MANAGEMENT.dailyLossLimitPercent,
       "MAX_DAILY_LOSS_PERCENT",
-      10,
     ),
     maxQuoteAgeMs: integerValue(
       environment.MAX_QUOTE_AGE_MS,
@@ -340,7 +326,10 @@ export function loadExecutionConfig(
   };
 }
 
-export function safetyConfigHash(config: ExecutionConfig): string {
+function configurationHash(
+  config: ExecutionConfig,
+  includeAutomationAuthority: boolean,
+): string {
   return createHash("sha256")
     .update(
       JSON.stringify({
@@ -359,7 +348,9 @@ export function safetyConfigHash(config: ExecutionConfig): string {
         maxMetadataAgeMs: config.maxMetadataAgeMs,
         maxOrdersPerDay: config.maxOrdersPerDay,
         maxPositionNotional: config.maxPositionNotional,
-        automaticAnalysisEnabled: config.automaticAnalysisEnabled,
+        ...(includeAutomationAuthority
+          ? { automaticAnalysisEnabled: config.automaticAnalysisEnabled }
+          : {}),
         automaticAnalysisCompletedLimit: config.automaticAnalysisCompletedLimit,
         automaticAnalysisCompletedBaseline:
           config.automaticAnalysisCompletedBaseline,
@@ -374,4 +365,14 @@ export function safetyConfigHash(config: ExecutionConfig): string {
       }),
     )
     .digest("hex");
+}
+
+/** Bind controls/audit to the full safety configuration, including automation authority. */
+export function safetyConfigHash(config: ExecutionConfig): string {
+  return configurationHash(config, true);
+}
+
+/** Starting/stopping the scheduler does not redefine immutable strategy economics. */
+export function strategyConfigHash(config: ExecutionConfig): string {
+  return configurationHash(config, false);
 }

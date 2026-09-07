@@ -29,11 +29,6 @@ def operating_state(status: dict[str, Any]) -> tuple[str, str]:
     if status.get("unavailable") or not status.get("mode"):
         return "Unavailable", "Execution status could not be verified."
     if status.get("emergencyStopped") is True:
-        if "ACCOUNT_EQUITY_FLOOR_REQUIRED" in status.get("reasonCodes", []):
-            return "Stopped", (
-                "An explicit minimum equity is needed before demo orders can resume. "
-                "Protective management continues."
-            )
         return "Stopped", "Emergency stop is active. Protective management continues."
     if status.get("pauseNewAnalyses") is True:
         return "Paused", "New analysis is paused. Existing orders and positions remain managed."
@@ -65,7 +60,15 @@ def context_state(context: dict[str, Any], now: datetime) -> str:
 
 def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) -> dict[str, str]:
     unavailable = dict.fromkeys(
-        ["equity", "realized", "unrealized", "daily_remaining", "drawdown", "setup_budget"],
+        [
+            "equity",
+            "realized",
+            "unrealized",
+            "daily_remaining",
+            "drawdown",
+            "setup_budget",
+            "policy",
+        ],
         "Unavailable",
     )
     if not fresh(daily.get("reconciled_at"), now):
@@ -76,7 +79,6 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
         loss = Decimal(str(daily["loss_percent"]))
         if not all(v.is_finite() for v in [equity, baseline, loss]):
             return unavailable
-        remaining = max(Decimal(0), baseline * (Decimal(1) - loss) / 100)
         result = {
             **unavailable,
             "equity": money(equity),
@@ -85,25 +87,36 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
             "daily_remaining": "Unavailable",
         }
         if fresh(capital.get("updated_at"), now):
+            result["drawdown"] = money(capital.get("drawdown_percent")) + "%"
+            policy = capital.get("risk_policy", {})
+            if not isinstance(policy, dict) or policy.get("version") != "fixed-risk-v2":
+                return result
+            setup_percent = Decimal(str(policy["setupRiskPercent"]))
+            daily_percent = Decimal(str(policy["dailyLossLimitPercent"]))
+            cap = Decimal(str(capital["risk_cap_percent"]))
+            if (
+                not all(value.is_finite() for value in [setup_percent, daily_percent, cap])
+                or not Decimal(0) < setup_percent <= Decimal(1)
+                or not Decimal(0) < daily_percent <= Decimal(5)
+                or cap < 0
+                or equity <= 0
+                or baseline <= 0
+                or not isinstance(daily.get("locked_out"), bool)
+            ):
+                return result
             multiplier = Decimal(str(capital["risk_multiplier"]))
             if multiplier not in [Decimal(0), Decimal("0.25"), Decimal("0.5"), Decimal(1)]:
                 return result
+            remaining = (
+                Decimal(0)
+                if daily["locked_out"]
+                else max(Decimal(0), baseline * (daily_percent - loss) / 100)
+            )
             result["daily_remaining"] = money(remaining)
-            result["drawdown"] = money(capital.get("drawdown_percent")) + "%"
-            result["setup_budget"] = money(min(remaining, equity * Decimal("0.00001") * multiplier))
-            if "risk_cap_percent" in capital:
-                cap = capital["risk_cap_percent"]
-                result["setup_budget"] = (
-                    "Unavailable"
-                    if cap is None
-                    else money(
-                        min(
-                            remaining,
-                            equity * Decimal("0.00001") * multiplier,
-                            equity * max(Decimal(0), Decimal(str(cap))) / 100,
-                        )
-                    )
-                )
+            result["setup_budget"] = money(
+                min(remaining, equity * setup_percent * multiplier / 100, equity * cap / 100)
+            )
+            result["policy"] = f"{setup_percent}% setup / {daily_percent}% daily"
         return result
     except (KeyError, InvalidOperation, ValueError):
         return unavailable

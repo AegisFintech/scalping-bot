@@ -67,6 +67,7 @@ export function scenarioOco(
   const performance = payload.performance as {
     performance_adjustment?: ModelResponse["performance_adjustment"];
   };
+  const adjustment = performance.performance_adjustment;
   const response: ModelResponse = {
     schema_version: "2.1",
     analysis_id: String(payload.analysis_id),
@@ -108,11 +109,20 @@ export function scenarioOco(
     setup_tags: ["REUSABLE_SCENARIO_OCO"],
     evidence_codes: ["DETERMINISTIC_PLAN_DERIVATION"],
     risk_flags: [],
-    performance_adjustment: performance.performance_adjustment ?? {
-      applied: false,
-      confidence_delta: 0,
-      reason_codes: [],
-    },
+    // Analytics also carries sample size/decay diagnostics. Project only the
+    // execution contract's fields; its strict schema and semantic check remain intact.
+    performance_adjustment:
+      adjustment == null
+        ? {
+            applied: false,
+            confidence_delta: 0,
+            reason_codes: [],
+          }
+        : {
+            applied: adjustment.applied,
+            confidence_delta: adjustment.confidence_delta,
+            reason_codes: adjustment.reason_codes,
+          },
     data_quality: { warnings: [] },
   };
   if (!validator.parse(JSON.stringify(response)).accepted)

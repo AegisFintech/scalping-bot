@@ -5,11 +5,12 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.1-reusable-scenarios.1`, policy `conservative-v1`.
+The current source release is `0.2.2-fixed-risk.3`, policy `fixed-risk-v2`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
-See the [integrated implementation and rollout report](docs/reusable-scenario-report.md).
+See the [current risk-policy and rollout report](docs/fixed-risk-report.md) and
+[scenario implementation evidence](docs/reusable-scenario-report.md).
 
 The original [completed-candle directional research](docs/scenario-automation-report.md)
 remains a separate observe/replay tool. Its hold/failed-reclaim confirmations and
@@ -21,7 +22,7 @@ is a synthetic software check, not evidence of strategy performance.
 
 ## Overview
 
-![Dashboard overview](docs/images/dashboard-overview.png)
+![Dashboard overview](docs/images/fixed-risk-overview-light.png)
 
 The Streamlit dashboard has **Overview**, **Trade history**, and **Diagnostics**.
 Overview shows operating state and reasons, fresh equity and net P&L, drawdown,
@@ -30,14 +31,14 @@ snapshots refresh in a background worker every ten seconds; small live sections
 update independently while navigation and control inputs stay in place.
 Light and dark themes retain readable contrast. Financial observations older
 than 30 seconds are withheld.
-The screenshots show the integrated deployment under a maintenance stop.
-Capital telemetry is available; the next setup ceiling is withheld while the
-explicit equity floor remains unset. Prompts, analytics, provider details and infrastructure live in diagnostics.
+The overview screenshots show the current fixed-risk policy. Money values use
+the policy reported by execution; missing policy data is shown as unavailable.
+Prompts, analytics, provider details and infrastructure live in diagnostics.
 Authenticated pause and emergency controls remain available in the sidebar.
 
 [Trade history screenshot](docs/images/dashboard-history.png)
 
-[Dark theme screenshot](docs/images/dashboard-overview-dark.png) ·
+[Dark theme screenshot](docs/images/fixed-risk-overview-dark.png) ·
 [Refresh and contrast validation](docs/dashboard-refresh-report.md)
 
 ## Safety and money management
@@ -47,12 +48,14 @@ Authenticated pause and emergency controls remain available in the sidebar.
 - One strategy setup at a time. Other-symbol account exposure, partial fills,
   unknown orders and incomplete reconciliation block new risk. Manual orders
   are never cancelled. Maintenance selects only the configured account/symbol.
-- The conservative policy preserves the audited deployment's **0.001% total
-  setup risk**, **1% daily loss limit**, **1% margin ceiling**, and **10-point
+- The fixed policy permits **up to 1% total setup risk** and **5% daily loss**.
+  It retains the **1% margin ceiling** and **10-point
   absolute spread ceiling**, alongside ATR/percentile spread checks. Both OCO
   legs share the setup budget, including simultaneous-fill race exposure.
 - Sizing reserves round-trip commission and ten ticks of adverse execution,
-  floors broker-native volume, and respects explicit notional/equity limits.
+  floors broker-native volume, and respects notional and remaining daily limits.
+  No absolute starting-equity floor is required; the existing notional ceiling
+  can make actual risk smaller than 1%.
   Minimum volume is rejected when unaffordable. Stops cannot cap gap losses.
 - Cash-flow-adjusted high-water accounting survives restarts. Drawdown/daily
   losses can reduce risk to half or quarter; a 5% drawdown lockout is durable.
@@ -93,16 +96,16 @@ with a polling decision loop, not institutional HFT. `DEFERRED` means waiting;
 
 ## Configuration and migration
 
-The normal [.env.sample](.env.sample) has **22 settings, down from 176 (87.5%)**.
+The normal [.env.sample](.env.sample) has **21 settings, down from 176 (88.1%)**.
 It contains deployment identity, credentials/endpoints, explicit authorization,
-and two capital limits. Stable internals are fixed in a typed policy, not another
+and notional authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
 `AI_MODEL=gpt-6-astra/u64` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
-26** entries, preserving all credentials and existing capital/mode choices. Its
+25** entries, preserving credentials and all values except the removed floor. Its
 four additional entries preserve deployment credentials. See the
-[migration evidence and rollout blockers](docs/environment-migration-report.md).
+[current migration and rollout evidence](docs/fixed-risk-report.md).
 
 For an existing installation, **do not overwrite `.env`**. Read the
 [configuration inventory and migration instructions](docs/configuration.md), then:

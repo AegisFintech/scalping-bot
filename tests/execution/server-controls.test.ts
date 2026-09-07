@@ -24,8 +24,14 @@ function server(
     status: () =>
       Promise.resolve({
         mode,
-        strategyVersion: "0.2.1-reusable-scenarios.1",
+        strategyVersion: "0.2.2-fixed-risk.3",
         requestedModel: "gpt-6-astra/u64",
+        riskPolicy: {
+          version: "fixed-risk-v2",
+          setupRiskPercent: "1",
+          dailyLossLimitPercent: "5",
+          drawdownLimitPercent: "5",
+        },
         symbol: "XAUUSD",
         accountType: "demo",
         emergencyStopped: true,
@@ -92,8 +98,13 @@ describe("demo baseline control", () => {
     const app = server("demo", vi.fn());
     const response = await app.inject({ method: "GET", url: "/v1/status" });
     expect(response.json()).toMatchObject({
-      strategyVersion: "0.2.1-reusable-scenarios.1",
+      strategyVersion: "0.2.2-fixed-risk.3",
       requestedModel: "gpt-6-astra/u64",
+      riskPolicy: {
+        version: "fixed-risk-v2",
+        setupRiskPercent: "1",
+        dailyLossLimitPercent: "5",
+      },
       tradingEnabled: false,
       emergencyStopped: true,
     });

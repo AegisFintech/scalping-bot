@@ -28,15 +28,24 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 ## Current implementation contracts
 
 - Read `docs/overhaul-report.md`, `docs/configuration.md`, `docs/architecture.md`
-  and `docs/risk-model.md` before changing the current `conservative-v1` system.
+  and `docs/risk-model.md` before changing the current `fixed-risk-v2` system.
 - Normal operator configuration is intentionally small. Change fixed policy only
   with a reviewed release and evidence; never migrate a populated `.env` by replacement.
-- The normal template has 22 keys, including the exact model pin. A populated
+- The normal template has 21 keys, including the exact model pin. A populated
   file may also retain private deployment credentials. Back up and preserve
   those values during an explicitly authorized migration; never copy the sample
   over them. Run both policy and `--startup` configuration checks, and report
-  PM2-cached configuration separately from the file. A blank capital floor blocks
-  enabled demo startup; do not invent an account limit to pass validation.
+  PM2-cached configuration separately from the file. The operator removed the
+  absolute account-equity floor in ISSUE-076. Do not reintroduce a minimum starting
+  balance. Fixed policy permits at most 1% current-equity risk per setup and a 5%
+  UTC daily loss budget; both OCO legs share that 1%. Cost, margin, notional,
+  remaining daily capacity and drawdown reductions can require smaller positions.
+  These are limits, not guaranteed realized maximum losses or profit claims.
+- Keep automation authorization in the full safety audit hash, separate from the
+  immutable strategy-definition hash. Economic changes still require a new release.
+- Preserve existing daily/drawdown locks when applying a policy update. Risk
+  percentages are release constants, not environment tuning controls. Read
+  `docs/fixed-risk-report.md` before changing the money-management policy.
 - Request `gpt-6-astra/u64` literally through the configured EPRToken Responses
   endpoint. Record requested/returned identities; never add a silent fallback.
   Observed `gpt-6-astra` return normalization is documented. Unknown cost is null.

@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.1-reusable-scenarios.1`, conservative policy v1. Previous release
+Current source: `0.2.2-fixed-risk.3`, fixed risk policy v2. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -70,7 +70,7 @@ loopback and deployments support Debian/systemd.
    immutable model output. Bound arithmetic projects inward onto the pip grid;
    no broker price or untrusted model value is rounded into acceptance.
 8. `risk-engine` sizes both race-exposed legs with cost reserves, current equity,
-   remaining daily budget, durable capital risk, broker volume steps, currency
+   the fixed 1% setup ceiling, remaining 5% daily budget, durable capital risk, broker volume steps, currency
    conversion, exact margin estimates and notional limits. It never rounds up to
    minimum volume. Existing/unpriced account exposure blocks replacement.
 9. Account and market data are refreshed again; changes invalidate the plan.
@@ -96,6 +96,11 @@ This separation removes an avoidable inference/maintenance coupling. It does
 not relax order admission, candle validity, expiry or reconciliation.
 
 ## Persistence and boundaries
+
+The immutable strategy-definition hash excludes the operational scheduler-enabled
+flag. Full safety/control audit hashes still include it; all economic parameters
+remain in both hashes. Activation therefore does not redefine strategy economics,
+while altered risk or notional parameters still require a new release identity.
 
 PostgreSQL is authoritative for intervals, intents, groups, orders, fills,
 positions, trades, daily accounting, runtime controls and audit events. Migration
@@ -126,12 +131,12 @@ send controls. Diagnostics retain the user's selected snapshot during recovery.
 ## Modes and remaining limits
 
 Paper uses its own account identity/ledger; demo requires explicit acknowledgement
-and capital limits. Shadow has a non-submitting gateway. Live uses
+and notional authorization. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
 `DisabledLiveGateway` and cannot place orders in this composition. Credentials
 cannot select mode or authorize execution.
 
-Current research does not justify directional/single-leg production contracts or
-sub-M1 production scheduling. Schema 2.1 remains a two-leg proposal; uncertainty
+Current research does not establish an economic benefit from the five-second
+local cadence or justify directional/single-leg production contracts. Schema 2.1 remains a two-leg proposal; uncertainty
 is rejected deterministically when safety/validation fails. Full tick history,
 prospective model ablation and broker-specific partial/multiple-close validation
 remain readiness work. See `overhaul-report.md` and `risk-model.md`.

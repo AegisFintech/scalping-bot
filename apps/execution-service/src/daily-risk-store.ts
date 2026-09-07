@@ -240,7 +240,7 @@ export class DailyRiskStore {
     const unrealized = decimal(input.account.equity).minus(
       decimal(input.account.balance),
     );
-    await this.#pool.query(
+    const persistedLock = await this.#pool.query<{ locked_out: boolean }>(
       `INSERT INTO daily_risk_state
         (id, account_id, trading_day, timezone, baseline_equity, current_equity,
          net_flows, realized_pnl, unrealized_pnl, loss_percent, locked_out, lockout_reason,
@@ -261,7 +261,8 @@ export class DailyRiskStore {
            WHEN (daily_risk_state.locked_out OR EXCLUDED.locked_out)
              THEN COALESCE(daily_risk_state.locked_at, now())
            ELSE NULL END,
-         reconciled_at = now(), updated_at = now()`,
+         reconciled_at = now(), updated_at = now()
+       RETURNING locked_out`,
       [
         randomUUID(),
         input.accountId,
@@ -281,6 +282,11 @@ export class DailyRiskStore {
         locked ? "DAILY_LOSS_LOCKOUT" : null,
       ],
     );
+    // An overlapping reconciler may have latched the daily lock since our read.
+    // Respect the persisted OR result, including across processes and policy updates.
+    const effectiveLocked = persistedLock.rows[0]?.locked_out;
+    if (typeof effectiveLocked !== "boolean")
+      throw new Error("DAILY_RISK_PERSISTENCE_UNAVAILABLE");
     const remaining = Decimal.max(
       0,
       decimal(baseline)
@@ -288,9 +294,9 @@ export class DailyRiskStore {
         .div(100),
     );
     return {
-      lockedOut: locked,
+      lockedOut: effectiveLocked,
       lossPercent: result.lossPercent,
-      remainingLossBudget: locked
+      remainingLossBudget: effectiveLocked
         ? "0"
         : canonical(remaining.toDecimalPlaces(10, Decimal.ROUND_DOWN)),
     };
