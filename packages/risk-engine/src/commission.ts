@@ -91,6 +91,40 @@ function oneWayCommission(
   );
 }
 
+/** Conservative commission reserve at the highest bounded entry/stop price. */
+export function stopCostReserve(input: {
+  readonly metadata: SymbolMetadata;
+  readonly entryPrice: string;
+  readonly stopLoss: string;
+  readonly volume: string;
+  readonly adverseSlippagePoints: string;
+}): Decimal {
+  const tick = decimal(input.metadata.tickSize);
+  const points = decimal(input.adverseSlippagePoints);
+  if (!points.isInteger() || points.lte(0) || tick.lte(0))
+    throw new Error("RISK_SLIPPAGE_RESERVE_INVALID");
+  const adverseDistance = tick.mul(points);
+  const price = Decimal.max(
+    decimal(input.entryPrice),
+    decimal(input.stopLoss),
+  ).plus(adverseDistance);
+  const volume = decimal(input.volume);
+  const adverseLoss = decimal(input.entryPrice)
+    .minus(decimal(input.stopLoss))
+    .abs()
+    .div(tick)
+    .plus(points)
+    .mul(decimal(input.metadata.tickValue))
+    .mul(volume);
+  const conversionReserve = adverseLoss
+    .mul(decimal(input.metadata.commission.pnlConversionFeeRate))
+    .div(100);
+  return oneWayCommission(input.metadata, price, volume)
+    .mul(2)
+    .plus(points.mul(decimal(input.metadata.tickValue)).mul(volume))
+    .plus(conversionReserve);
+}
+
 export function evaluateCommissionCoverage(input: {
   readonly side: "BUY" | "SELL";
   readonly entryPrice: string;

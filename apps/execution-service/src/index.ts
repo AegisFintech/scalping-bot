@@ -1,4 +1,7 @@
+import { CapitalRiskStore } from "./capital-risk-store.js";
+import { IndependentMaintenance } from "./independent-maintenance.js";
 import "dotenv/config";
+import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -204,7 +207,7 @@ async function buildCTraderClient(
 
 async function main(): Promise<void> {
   const serviceStartedAt = new Date();
-  const environment = process.env;
+  const environment = resolveRuntimeEnvironment(process.env);
   const config = loadExecutionConfig(environment);
   if (!["paper", "demo", "shadow", "live"].includes(config.tradingMode)) {
     throw new Error("EXECUTION_SERVICE_MODE_UNSUPPORTED");
@@ -298,14 +301,14 @@ async function main(): Promise<void> {
     provider: config.tradingMode === "paper" ? "paper" : "ctrader",
     environment: config.tradingMode === "paper" ? "paper" : connectionMode,
     accountType: config.tradingMode === "paper" ? "paper" : connectionMode,
-    currency: environment.ACCOUNT_CURRENCY ?? "USD",
+    currency: latestSnapshot.metadata.accountAsset,
     metadata: latestSnapshot.metadata,
     strategyVersion,
     codeHash: createHash("sha256")
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v15",
+    promptVersion: "system-v16",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -400,8 +403,8 @@ async function main(): Promise<void> {
       environment.AI_ORCHESTRATOR_BASE_URL ??
       `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v15.md"),
-    promptVersion: "system-v15",
+    systemPromptPath: path.resolve("prompts/system-v16.md"),
+    promptVersion: "system-v16",
     timeoutMs: aiOrchestratorRequestTimeoutMs({
       providerTimeoutMs: aiProviderTimeoutMs,
       maxRetries: aiMaxRetries,
@@ -415,7 +418,12 @@ async function main(): Promise<void> {
       3,
     ),
   });
+  let capitalMultiplier = "0";
+  let capitalRiskCap = "0";
+  const capitalRiskStore = new CapitalRiskStore(pool);
   const risk = new OcoRiskEvaluator({
+    riskMultiplier: () => capitalMultiplier,
+    riskPercentCap: () => capitalRiskCap,
     marginEstimator: margin,
     baseRiskPercent: config.baseRiskPercent,
     maxRiskPercent: config.maxRiskPercent,
@@ -434,7 +442,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v15",
+    promptVersion: "system-v16",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -718,7 +726,12 @@ async function main(): Promise<void> {
       abnormalMultiplier: spreadAbnormalMultiplier,
     });
   };
-  const maintenance = new OrderMaintenance(pool, gateway, config.symbol);
+  const maintenance = new OrderMaintenance(
+    pool,
+    gateway,
+    config.symbol,
+    identity,
+  );
   const metrics = new MetricsCollector({
     pool,
     instanceId: config.instanceId,
@@ -814,27 +827,51 @@ async function main(): Promise<void> {
     try {
       const riskNow = new Date();
       const netFlows = await dailyNetFlows(riskNow);
-      dailyLocked = (
-        await dailyRisk.reconcile({
-          accountId: identity.accountId,
-          account: state,
-          timezone: dailyRiskTimezone,
-          thresholdPercent: config.maxDailyLossPercent,
-          includeUnrealized:
-            environment.INCLUDE_UNREALIZED_IN_DAILY_LOSS !== "false",
-          netFlows,
-          allowBaselineBootstrap: brokerClient === null,
-          baselineCaptureGraceSeconds,
-          now: riskNow,
-        })
-      ).lockedOut;
+      const dailyResult = await dailyRisk.reconcile({
+        accountId: identity.accountId,
+        account: state,
+        timezone: dailyRiskTimezone,
+        thresholdPercent: config.maxDailyLossPercent,
+        includeUnrealized:
+          environment.INCLUDE_UNREALIZED_IN_DAILY_LOSS !== "false",
+        netFlows,
+        allowBaselineBootstrap: brokerClient === null,
+        baselineCaptureGraceSeconds,
+        now: riskNow,
+      });
+      const reference = await capitalRiskStore.reference(identity.accountId);
+      const capitalFlows =
+        brokerClient === null || reference.equity === "0"
+          ? "0"
+          : (
+              await brokerClient.externalCashFlows(
+                reference.start,
+                new Date(state.reconciledAt),
+              )
+            ).netFlows;
+      const capital = await capitalRiskStore.reconcile({
+        accountId: identity.accountId,
+        account: state,
+        netFlowsSinceReference: capitalFlows,
+        dailyLossPercent: dailyResult.lossPercent,
+        now: new Date(),
+      });
+      capitalMultiplier = capital.riskMultiplier;
+      capitalRiskCap = decimal(dailyResult.remainingLossBudget)
+        .div(decimal(state.equity))
+        .mul(100)
+        .toDecimalPlaces(10, Decimal.ROUND_DOWN)
+        .toFixed();
+      dailyLocked = dailyResult.lockedOut || capital.lockedOut;
     } catch (error) {
       dailyLocked = true;
+      capitalMultiplier = "0";
+      capitalRiskCap = "0";
       logger.log("error", {
         event_name: "daily_risk_reconciliation_failed",
         outcome: "failed",
         reason_code:
-          error instanceof Error
+          error instanceof Error && /^[A-Z0-9_:]{1,160}$/.test(error.message)
             ? error.message
             : "DAILY_RISK_RECONCILIATION_FAILED",
       });
@@ -1035,7 +1072,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v15",
+    promptVersion: "system-v16",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: config.minRiskRewardRatio,
@@ -1183,6 +1220,7 @@ async function main(): Promise<void> {
     return {
       mode: config.tradingMode,
       symbol: config.symbol,
+      policyVersion: "conservative-v1",
       accountType: connectionMode,
       emergencyStopped:
         current.environmentEmergencyStop ||
@@ -1394,6 +1432,54 @@ async function main(): Promise<void> {
       limit: config.automaticDemoClosedTradeLimit,
     });
   };
+  const protectiveMaintenance = new IndependentMaintenance(async () => {
+    if (paperGateway !== null && paperAccount !== null) {
+      const quote = await marketClient.quote(config.symbol);
+      const changes = paperGateway.processQuote(
+        config.symbol,
+        quote.quote.bid,
+        quote.quote.ask,
+        new Date(quote.quote.sourceTime),
+      );
+      paperAccount.update(
+        paperGateway.accountMark(
+          config.symbol,
+          quote.quote.bid,
+          quote.quote.ask,
+        ),
+      );
+      await trail.paperState(changes, paperGateway.positions());
+    }
+    const filesystem = await readFilesystemControls({
+      emergencyStopFile: config.emergencyStopFile,
+      liveEnablementFile: config.liveEnablementFile,
+      instanceId: config.instanceId,
+      accountKey: config.accountKey,
+    });
+    const runtime = await controls.snapshot(config.instanceId, {
+      instanceId: config.instanceId,
+      accountKey: config.accountKey,
+      configHash,
+    });
+    if (
+      config.emergencyStop ||
+      filesystem.emergencyStop ||
+      runtime.emergencyStop
+    )
+      await maintenance.cancelAll("INDEPENDENT_EMERGENCY_CANCELLATION");
+    await maintenance.expireAndReconcile();
+    await refreshDemoRecovery();
+  });
+  const protectiveTimer = setInterval(() => {
+    void protectiveMaintenance.run().catch(() =>
+      logger.log("error", {
+        event_name: "protective_maintenance_failed",
+        outcome: "failed",
+        reason_code: "PROTECTIVE_MAINTENANCE_UNAVAILABLE",
+      }),
+    );
+  }, 2_000);
+  protectiveTimer.unref();
   const tick = async (): Promise<void> => {
     if (ticking) return;
     ticking = true;
@@ -1403,25 +1489,7 @@ async function main(): Promise<void> {
       managedSetupActive: boolean;
     } | null = null;
     try {
-      await refreshDemoRecovery();
-      await maintenance.expireAndReconcile();
-      if (paperGateway !== null && paperAccount !== null) {
-        const quote = await marketClient.quote(config.symbol);
-        const changes = paperGateway.processQuote(
-          config.symbol,
-          quote.quote.bid,
-          quote.quote.ask,
-          new Date(quote.quote.sourceTime),
-        );
-        paperAccount.update(
-          paperGateway.accountMark(
-            config.symbol,
-            quote.quote.bid,
-            quote.quote.ask,
-          ),
-        );
-        await trail.paperState(changes, paperGateway.positions());
-      }
+      await protectiveMaintenance.run();
       const current = await safety();
       watchdogContext = {
         automaticAnalysisEnabled: config.automaticAnalysisEnabled,
@@ -1632,6 +1700,8 @@ async function main(): Promise<void> {
     if (timer !== null) clearInterval(timer);
     clearInterval(spreadTimer);
     clearInterval(observabilityTimer);
+    clearInterval(protectiveTimer);
+    await protectiveMaintenance.settled().catch(() => undefined);
     await observabilityTail;
     metrics.stop();
     unsubscribeDemoExecutions?.();

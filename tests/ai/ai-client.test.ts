@@ -15,6 +15,7 @@ import {
   aiOrchestratorCircuitResetMs,
   aiOrchestratorRequestTimeoutMs,
 } from "../../packages/ai-client/src/http-client.js";
+import { ProviderFailure } from "../../packages/ai-client/src/telemetry.js";
 import { analysisChart } from "../helpers/analysis-chart.js";
 
 const analysisId = "22222222-2222-4222-8222-222222222222";
@@ -82,6 +83,135 @@ function orchestratorEnvelope(rawResponse: string) {
 }
 
 describe("OpenAI-compatible client", () => {
+  it("retains sanitized usage for rejected output through the HTTP adapter", async () => {
+    const client = new OpenAiCompatibleClient({
+      baseUrl: "https://example.com/v1",
+      apiKey: "fixture",
+      model: "gpt-6-astra/u64",
+      apiStyle: "responses",
+      schemaPath: "schemas/model-response-2.0.json",
+      systemPromptPath,
+      promptVersion: "system-v2",
+      inputProfile: "structured",
+      fetchImpl: vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            status: "completed",
+            model: "gpt-6-astra",
+            output_text: '{"invalid":true}',
+            usage: {
+              input_tokens: 100,
+              output_tokens: 10,
+              total_tokens: 110,
+            },
+          }),
+          { status: 200 },
+        ),
+      ),
+    });
+    const server = createAiServer({ client });
+    const reply = await server.inject({
+      method: "POST",
+      url: "/v1/analyze",
+      payload: analysisRequest,
+    });
+    const body = JSON.parse(reply.body) as {
+      reason: string;
+      telemetry: { inputTokens: number };
+    };
+    expect(reply.statusCode).toBe(503);
+    expect(body.telemetry.inputTokens).toBe(100);
+    const http = new AiOrchestratorHttpClient({
+      baseUrl: "http://127.0.0.1:8082",
+      schemaPath: "schemas/model-response-2.0.json",
+      systemPromptPath,
+      promptVersion: "system-v2",
+      fetchImpl: vi
+        .fn()
+        .mockResolvedValue(new Response(reply.body, { status: 503 })),
+    });
+    const failure: unknown = await http
+      .analyze(analysisRequest)
+      .catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(ProviderFailure);
+    expect((failure as ProviderFailure).telemetry).toMatchObject({
+      requestedModel: "gpt-6-astra/u64",
+      returnedModel: "gpt-6-astra",
+      inputTokens: 100,
+      costAmount: null,
+    });
+    await server.close();
+  });
+  it("records exact route and provider model with structured input and rejects substitution", async () => {
+    const fetchMock = vi.fn(
+      (_url: string | URL | Request, init?: RequestInit) => {
+        const body = JSON.parse(
+          typeof init?.body === "string" ? init.body : "{}",
+        ) as {
+          model: string;
+          input: Array<{ content: Array<{ type: string }> }>;
+        };
+        expect(body.model).toBe("gpt-6-astra/u64");
+        expect(body.input[1]?.content.map((x) => x.type)).toEqual([
+          "input_text",
+        ]);
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              model: "gpt-6-astra",
+              output_text: JSON.stringify(validResponse()),
+              usage: {
+                input_tokens: 100,
+                output_tokens: 200,
+                total_tokens: 300,
+              },
+            }),
+          ),
+        );
+      },
+    );
+    const options = {
+      baseUrl: "https://ai.example.invalid/v1",
+      apiKey: "hidden",
+      model: "gpt-6-astra/u64",
+      apiStyle: "responses" as const,
+      schemaPath: path.resolve("schemas/model-response-2.0.json"),
+      systemPromptPath,
+      promptVersion: "system-v2" as const,
+      inputProfile: "structured" as const,
+      fetchImpl: fetchMock,
+    };
+    const result = await new OpenAiCompatibleClient(options).analyze(
+      analysisRequest,
+    );
+    expect(result.telemetry).toMatchObject({
+      requestedModel: "gpt-6-astra/u64",
+      returnedModel: "gpt-6-astra",
+      inputTokens: 100,
+      costAmount: null,
+    });
+    await expect(
+      new OpenAiCompatibleClient({
+        ...options,
+        fetchImpl: () =>
+          Promise.resolve(new Response(JSON.stringify({ model: "different" }))),
+      }).analyze(analysisRequest),
+    ).rejects.toThrow("AI_RETURNED_MODEL_MISMATCH");
+    await expect(
+      new OpenAiCompatibleClient({
+        ...options,
+        fetchImpl: () =>
+          Promise.resolve(
+            new Response(
+              JSON.stringify({
+                output_text: "a",
+                output: [{ content: [{ type: "output_text", text: "b" }] }],
+              }),
+            ),
+          ),
+      }).analyze(analysisRequest),
+    ).rejects.toThrow("AI_RESPONSE_TEXT_AMBIGUOUS");
+  });
   it("rejects a per-cycle deadline outside the configured provider budget", async () => {
     const fetchMock = vi.fn(() => Promise.reject(new Error("must not fetch")));
     const client = new OpenAiCompatibleClient({

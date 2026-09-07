@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 
 import { Decimal } from "decimal.js";
+import { stopCostReserve } from "../../../packages/risk-engine/src/commission.js";
 
 import type {
   AccountState,
@@ -34,6 +35,8 @@ export interface OcoRiskEvaluatorOptions {
   readonly maxPositionNotional: string | null;
   readonly strategyVersion: string;
   readonly strategyLabelPrefix?: string;
+  readonly riskMultiplier?: () => string;
+  readonly riskPercentCap?: () => string;
 }
 
 export interface OcoEvaluation {
@@ -61,6 +64,7 @@ export class OcoRiskEvaluator {
   proposalConstraints(input: {
     readonly account: AccountState;
     readonly metadata: SymbolMetadata;
+    readonly quote?: Quote;
   }): OcoProposalRiskConstraints {
     if (!input.account.certain) {
       return {
@@ -69,12 +73,69 @@ export class OcoRiskEvaluator {
         maxStopDistance: null,
       };
     }
-    return maximumAffordableStopDistance({
+    const result = maximumAffordableStopDistance({
       equity: input.account.equity,
-      setupRiskPercent: this.#options.baseRiskPercent,
+      setupRiskPercent: this.#effectiveRisk(),
       maxRiskPercent: this.#options.maxRiskPercent,
       metadata: input.metadata,
     });
+    if (
+      !result.approved ||
+      result.maxStopDistance === null ||
+      input.quote === undefined
+    )
+      return result;
+    try {
+      const reserve = stopCostReserve({
+        metadata: input.metadata,
+        entryPrice: input.quote.ask,
+        stopLoss: canonical(
+          decimal(input.quote.ask).plus(decimal(result.maxStopDistance)),
+        ),
+        volume: input.metadata.minVolume,
+        adverseSlippagePoints: "10",
+      });
+      const budget = decimal(input.account.equity)
+        .mul(this.#effectiveRisk())
+        .div(200)
+        .minus(reserve);
+      const ticks = budget
+        .div(
+          decimal(input.metadata.tickValue).mul(
+            decimal(input.metadata.minVolume),
+          ),
+        )
+        .floor();
+      if (ticks.lt(1)) throw new Error("RISK_COSTS_VOLUME_BELOW_MIN");
+      return {
+        ...result,
+        maxStopDistance: canonical(ticks.mul(decimal(input.metadata.tickSize))),
+      };
+    } catch {
+      return {
+        approved: false,
+        reasonCodes: ["RISK_COSTS_VOLUME_BELOW_MIN"],
+        maxStopDistance: null,
+      };
+    }
+  }
+
+  currentSetupRiskPercent(): string {
+    return this.#effectiveRisk();
+  }
+
+  #effectiveRisk(): string {
+    const multiplier = this.#options.riskMultiplier?.() ?? "1";
+    if (!["1", "0.5", "0.25"].includes(multiplier))
+      throw new Error("CAPITAL_RISK_UNAVAILABLE_OR_LOCKED");
+    const risk = Decimal.min(
+      decimal(this.#options.baseRiskPercent).mul(multiplier),
+      decimal(
+        this.#options.riskPercentCap?.() ?? this.#options.baseRiskPercent,
+      ),
+    );
+    if (risk.lte(0)) throw new Error("CAPITAL_RISK_BUDGET_EXHAUSTED");
+    return canonical(risk);
   }
 
   async evaluate(input: {
@@ -84,6 +145,13 @@ export class OcoRiskEvaluator {
     readonly quote: Quote;
   }): Promise<OcoEvaluation> {
     if (!input.account.certain) return this.#reject("RISK_ACCOUNT_UNCERTAIN");
+    if (
+      input.account.relevantPositionCount > 0 ||
+      input.account.relevantPendingOrderCount > 0 ||
+      input.account.hasPartialFill ||
+      input.account.hasCancellationPending
+    )
+      return this.#reject("RISK_EXISTING_EXPOSURE");
     try {
       const minimum = input.metadata.minVolume;
       const [buyMinimumMargin, sellMinimumMargin] = await Promise.all([
@@ -107,7 +175,7 @@ export class OcoRiskEvaluator {
       const shared = {
         equity: input.account.equity,
         availableMargin: input.account.availableMargin,
-        baseRiskPercent: this.#options.baseRiskPercent,
+        baseRiskPercent: this.#effectiveRisk(),
         maxRiskPercent: this.#options.maxRiskPercent,
         currentMargin: canonical(currentMargin),
         maxMarginUsagePercent: this.#options.maxMarginUsagePercent,
@@ -127,7 +195,7 @@ export class OcoRiskEvaluator {
         ),
       });
       const risk = sizeOcoPair({
-        setupRiskPercent: this.#options.baseRiskPercent,
+        setupRiskPercent: this.#effectiveRisk(),
         buy: leg(
           input.response.buy_stop.entry_price,
           input.response.buy_stop.stop_loss,
@@ -150,9 +218,7 @@ export class OcoRiskEvaluator {
           risk,
           commands: null,
           equity: input.account.equity,
-          perLegRiskPercent: canonical(
-            decimal(this.#options.baseRiskPercent).div(2),
-          ),
+          perLegRiskPercent: canonical(decimal(this.#effectiveRisk()).div(2)),
         };
       }
       const [buyMargin, sellMargin] = await Promise.all([
@@ -187,9 +253,7 @@ export class OcoRiskEvaluator {
           risk,
           commands: null,
           equity: input.account.equity,
-          perLegRiskPercent: canonical(
-            decimal(this.#options.baseRiskPercent).div(2),
-          ),
+          perLegRiskPercent: canonical(decimal(this.#effectiveRisk()).div(2)),
         };
       const orderGroupId = randomUUID();
       const make = (
@@ -234,9 +298,7 @@ export class OcoRiskEvaluator {
           make("SELL", risk.sell.normalizedVolume),
         ],
         equity: input.account.equity,
-        perLegRiskPercent: canonical(
-          decimal(this.#options.baseRiskPercent).div(2),
-        ),
+        perLegRiskPercent: canonical(decimal(this.#effectiveRisk()).div(2)),
       };
     } catch (error) {
       return this.#reject(

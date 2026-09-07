@@ -4,7 +4,8 @@ import type {
   DecimalString,
   SymbolMetadata,
 } from "../../contracts/src/index.js";
-import { canonical, decimal } from "./decimal.js";
+import { canonical, decimal, signedDecimal } from "./decimal.js";
+import { stopCostReserve } from "./commission.js";
 
 export interface PositionRiskInput {
   readonly equity: DecimalString;
@@ -18,6 +19,7 @@ export interface PositionRiskInput {
   readonly maxMarginUsagePercent: DecimalString;
   readonly maxPositionNotional: DecimalString | null;
   readonly metadata: SymbolMetadata;
+  readonly adverseSlippagePoints?: DecimalString;
 }
 
 export interface PositionRiskDecision {
@@ -159,6 +161,12 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
     ) {
       return reject("RISK_METADATA_INVALID");
     }
+    const conversion = decimal(
+      input.metadata.quoteToAccountConversionRate,
+      "RISK_CURRENCY_CONVERSION_INVALID",
+    );
+    if (conversion.lte(0) || maxVolume.lt(minVolume))
+      return reject("RISK_METADATA_INVALID");
     const stopDistance = entry.minus(stop).abs();
     if (stopDistance.lte(0) || !stopDistance.div(tickSize).isInteger())
       return reject("RISK_STOP_DISTANCE_INVALID");
@@ -168,13 +176,18 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
     const rawVolume = riskBudget.div(lossPerVolume);
     if (rawVolume.lt(minVolume)) return reject("RISK_VOLUME_BELOW_MIN");
     const steps = rawVolume.minus(minVolume).div(volumeStep).floor();
+    const maximumAligned = minVolume.plus(
+      maxVolume.minus(minVolume).div(volumeStep).floor().mul(volumeStep),
+    );
     let normalized = Decimal.min(
       minVolume.plus(steps.mul(volumeStep)),
-      maxVolume,
+      maximumAligned,
     );
     if (input.maxPositionNotional !== null) {
       const maxNotional = decimal(input.maxPositionNotional);
-      const rawNotionalVolume = maxNotional.div(entry.mul(volumeScale));
+      const rawNotionalVolume = maxNotional.div(
+        entry.mul(volumeScale).mul(conversion),
+      );
       if (rawNotionalVolume.lt(minVolume))
         return reject("RISK_NOTIONAL_EXCEEDED");
       const notionalSteps = rawNotionalVolume
@@ -183,17 +196,42 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
         .floor();
       const notionalVolume = Decimal.min(
         minVolume.plus(notionalSteps.mul(volumeStep)),
-        maxVolume,
+        maximumAligned,
       );
       normalized = Decimal.min(normalized, notionalVolume);
     }
     if (normalized.gt(rawVolume) || normalized.lt(minVolume))
       return reject("RISK_VOLUME_NORMALIZATION_INVALID");
-    const maximumLoss = normalized.mul(lossPerVolume);
+    const totalLoss = (volume: Decimal): Decimal =>
+      volume.mul(lossPerVolume).plus(
+        stopCostReserve({
+          metadata: input.metadata,
+          entryPrice: input.entryPrice,
+          stopLoss: input.stopLoss,
+          volume: canonical(volume),
+          adverseSlippagePoints: input.adverseSlippagePoints ?? "10",
+        }),
+      );
+    // Fees may have a minimum. Binary search the monotone cost-inclusive loss on
+    // the native volume grid; rounding up to broker minimum is never allowed.
+    if (totalLoss(minVolume).gt(riskBudget))
+      return reject("RISK_COSTS_VOLUME_BELOW_MIN");
+    let low = new Decimal(0);
+    let high = normalized.minus(minVolume).div(volumeStep).floor();
+    while (low.lt(high)) {
+      const mid = low.plus(high).plus(1).div(2).floor();
+      if (totalLoss(minVolume.plus(mid.mul(volumeStep))).lte(riskBudget))
+        low = mid;
+      else high = mid.minus(1);
+    }
+    normalized = minVolume.plus(low.mul(volumeStep));
+    const maximumLoss = totalLoss(normalized);
     if (maximumLoss.gt(riskBudget)) return reject("RISK_BUDGET_EXCEEDED");
     const estimatedMargin = normalized.mul(
       decimal(input.estimatedMarginPerVolume),
     );
+    if (estimatedMargin.lte(0) || availableMargin.lt(0))
+      return reject("RISK_MARGIN_INVALID");
     if (estimatedMargin.gt(availableMargin))
       return reject("RISK_MARGIN_INSUFFICIENT");
     const totalMargin = estimatedMargin.plus(decimal(input.currentMargin));
@@ -206,6 +244,7 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
       entry
         .mul(normalized)
         .mul(volumeScale)
+        .mul(conversion)
         .gt(decimal(input.maxPositionNotional))
     )
       return reject("RISK_NOTIONAL_EXCEEDED");
@@ -273,6 +312,36 @@ export function sizeOcoPair(input: OcoRiskInput): OcoRiskDecision {
     );
     const setupBudget = equity.mul(setupRisk).div(100);
     if (combined.gt(setupBudget)) reasons.push("OCO_COMBINED_RISK_EXCEEDED");
+    const combinedMargin = decimal(buy.estimatedMargin!).plus(
+      decimal(sell.estimatedMargin!),
+    );
+    if (
+      combinedMargin.gt(
+        Decimal.min(
+          decimal(input.buy.availableMargin),
+          decimal(input.sell.availableMargin),
+        ),
+      )
+    )
+      reasons.push("OCO_COMBINED_MARGIN_INSUFFICIENT");
+    if (
+      combinedMargin
+        .plus(
+          Decimal.max(
+            decimal(input.buy.currentMargin),
+            decimal(input.sell.currentMargin),
+          ),
+        )
+        .div(equity)
+        .mul(100)
+        .gt(
+          Decimal.min(
+            decimal(input.buy.maxMarginUsagePercent),
+            decimal(input.sell.maxMarginUsagePercent),
+          ),
+        )
+    )
+      reasons.push("OCO_COMBINED_MARGIN_USAGE_EXCEEDED");
     return {
       approved: reasons.length === 0,
       reasonCodes: reasons,
@@ -314,12 +383,15 @@ export function dailyLoss(input: DailyLossInput): {
         lossPercent: "0",
         reasonCode: "DAILY_BASELINE_INVALID",
       };
-    const adjustedBaseline = baseline.plus(new Decimal(input.netFlows));
+    const adjustedBaseline = baseline.plus(signedDecimal(input.netFlows));
     const loss = Decimal.max(
       0,
       adjustedBaseline.minus(decimal(input.currentEquity)),
     );
-    const percent = loss.div(baseline).mul(100);
+    const percent = loss
+      .div(baseline)
+      .mul(100)
+      .toDecimalPlaces(8, Decimal.ROUND_UP);
     const threshold = decimal(input.thresholdPercent);
     return {
       lockedOut: percent.gte(threshold),

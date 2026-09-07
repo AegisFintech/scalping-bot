@@ -10,6 +10,7 @@ import type { ManagedSetupOverview } from "./managed-setup-overview.js";
 import type { AutomaticAnalysisActivity } from "./automatic-analysis-watchdog.js";
 
 export interface ExecutionStatus {
+  readonly policyVersion?: "conservative-v1";
   readonly mode: string;
   readonly symbol: string;
   readonly accountType: string;

@@ -75,10 +75,24 @@ function validateSample(sample: LocalMarketSample): number {
     sample.capturedAt,
     "LOCAL_MARKET_SAMPLE_CAPTURE_TIME_INVALID",
   );
-  dateMs(sample.quote.sourceTime, "LOCAL_MARKET_SAMPLE_QUOTE_TIME_INVALID");
+  const sourceTime = dateMs(
+    sample.quote.sourceTime,
+    "LOCAL_MARKET_SAMPLE_QUOTE_TIME_INVALID",
+  );
   dateMs(sample.quote.receivedAt, "LOCAL_MARKET_SAMPLE_QUOTE_TIME_INVALID");
-  dateMs(sample.orderBook.sourceTime, "LOCAL_MARKET_SAMPLE_BOOK_TIME_INVALID");
+  const bookTime = dateMs(
+    sample.orderBook.sourceTime,
+    "LOCAL_MARKET_SAMPLE_BOOK_TIME_INVALID",
+  );
   dateMs(sample.orderBook.receivedAt, "LOCAL_MARKET_SAMPLE_BOOK_TIME_INVALID");
+  if (
+    [sourceTime, bookTime].some(
+      (time) => capturedAt - time < 0 || capturedAt - time > 3000,
+    ) ||
+    Date.parse(sample.quote.receivedAt) > capturedAt ||
+    Date.parse(sample.orderBook.receivedAt) > capturedAt
+  )
+    throw new Error("LOCAL_MARKET_SAMPLE_STALE_OR_FUTURE");
   if (!sample.orderBook.complete || sample.orderBook.discontinuity)
     throw new Error("LOCAL_MARKET_SAMPLE_BOOK_INCOMPLETE");
   const bid = new Decimal(sample.quote.bid);
@@ -214,6 +228,11 @@ export class LocalMarketRecorder {
 
   async #writeSample(sample: LocalMarketSample): Promise<void> {
     const capturedAtMs = validateSample(sample);
+    if (
+      this.#lastSampleAt !== null &&
+      capturedAtMs <= Date.parse(this.#lastSampleAt)
+    )
+      throw new Error("LOCAL_MARKET_SAMPLE_NOT_ORDERED");
     const segmentMs = this.#options.segmentDurationSeconds * 1_000;
     const bucket = Math.floor(capturedAtMs / segmentMs) * segmentMs;
     if (this.#segmentBucket !== null && bucket !== this.#segmentBucket)

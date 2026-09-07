@@ -1,3 +1,30 @@
+# Current release operations
+
+For `0.2.0-overhaul.1`, start with [configuration/migration](configuration.md) and
+[the implementation report](overhaul-report.md). The existing environment has not
+been migrated or restarted. Fixed policy conflicts must be reviewed before startup.
+Older command examples below describe historical deployments; they cannot override
+`conservative-v1` or enable live submission in this build.
+
+The Overview identifies state/reason, fresh money values, active exposure and last
+decision. Details remain under Diagnostics. Pause blocks new analysis; authenticated
+emergency stop also cancels owned pending orders without implicitly flattening
+positions. Verify the recorded control state and reconciliation after every action.
+Unknown response is not a successful control. Never cancel a manual order.
+
+Provider 403/circuit-open, stale market/account state, capital-flow failure, daily
+lockout or drawdown lockout must remain fail closed. Provider outages must not stop
+maintenance. A 5% drawdown lockout has no automatic reset endpoint; preserve the
+reference and audit state pending a reviewed capital transition. Deposits are not
+performance, and a restart must not restore reduced risk prematurely.
+
+Use only the reviewed rollout and rollback steps in `configuration.md`. Candidate
+research CLIs never place orders. Provider benchmarking can incur costs and has
+bounded inputs/calls; it is not a trading launch. Source/UI acceptance does not
+satisfy supervised broker, backup/restore or live-readiness requirements.
+
+---
+
 # Operations Runbook
 
 ## Start of session

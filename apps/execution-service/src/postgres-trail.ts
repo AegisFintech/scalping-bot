@@ -1,3 +1,7 @@
+import {
+  providerTelemetrySchema,
+  type ProviderTelemetry,
+} from "../../../packages/ai-client/src/telemetry.js";
 import { createHash, randomUUID } from "node:crypto";
 
 import { Decimal } from "decimal.js";
@@ -474,13 +478,45 @@ export class PostgresDecisionTrail implements DecisionTrail {
     }
   }
 
+  async modelFailure(
+    analysisId: string,
+    reason: string,
+    latencyMs: number,
+    telemetry?: ProviderTelemetry,
+  ): Promise<void> {
+    if (
+      !/^[A-Z0-9_:]{1,160}$/.test(reason) ||
+      !Number.isSafeInteger(latencyMs) ||
+      latencyMs < 0
+    )
+      throw new Error("MODEL_FAILURE_DIAGNOSTIC_INVALID");
+    const usage =
+      telemetry === undefined ? null : providerTelemetrySchema.parse(telemetry);
+    if (usage !== null && usage.requestedModel !== this.#options.model)
+      throw new Error("MODEL_TELEMETRY_IDENTITY_MISMATCH");
+    await this.#options.pool.query(
+      `INSERT INTO provider_failures (analysis_id,requested_model,reason,duration_ms,telemetry) VALUES ($1,$2,$3,$4,$5::jsonb) ON CONFLICT (analysis_id) DO NOTHING`,
+      [
+        analysisId,
+        this.#options.model,
+        reason,
+        latencyMs,
+        usage === null ? null : JSON.stringify(usage),
+      ],
+    );
+  }
+
   async model(
     analysisId: string,
     requestPayload: Readonly<Record<string, unknown>>,
     response: ModelResponse,
     rawResponse: string,
     promptArtifact: ModelPromptArtifact,
-    timing: { readonly latencyMs: number; readonly retryCount: number } = {
+    timing: {
+      readonly latencyMs: number;
+      readonly retryCount: number;
+      readonly telemetry?: ProviderTelemetry;
+    } = {
       latencyMs: 0,
       retryCount: 0,
     },
@@ -542,6 +578,15 @@ export class PostgresDecisionTrail implements DecisionTrail {
           timing.latencyMs,
         ],
       );
+      if (timing.telemetry !== undefined) {
+        const telemetry = providerTelemetrySchema.parse(timing.telemetry);
+        if (telemetry.requestedModel !== this.#options.model)
+          throw new Error("MODEL_TELEMETRY_IDENTITY_MISMATCH");
+        await client.query(
+          "INSERT INTO model_call_telemetry (model_request_id, telemetry) VALUES ($1, $2::jsonb)",
+          [requestId, JSON.stringify(telemetry)],
+        );
+      }
       await client.query(
         `INSERT INTO model_responses
           (id, model_request_id, status, raw_redacted, parsed_payload, received_at)

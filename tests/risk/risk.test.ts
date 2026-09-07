@@ -39,6 +39,71 @@ const metadata = {
 };
 
 describe("risk engine", () => {
+  it("reserves costs before minimum volume and floors an off-grid broker maximum", () => {
+    const input = {
+      equity: "10000",
+      availableMargin: "10000",
+      baseRiskPercent: "1",
+      maxRiskPercent: "1",
+      entryPrice: "2000",
+      stopLoss: "1999",
+      estimatedMarginPerVolume: "1",
+      currentMargin: "0",
+      maxMarginUsagePercent: "30",
+      maxPositionNotional: null,
+      metadata,
+    };
+    expect(sizePosition({ ...input, equity: "100" })).toMatchObject({
+      approved: false,
+      reasonCodes: ["RISK_COSTS_VOLUME_BELOW_MIN"],
+    });
+    expect(
+      sizePosition({
+        ...input,
+        metadata: {
+          ...metadata,
+          minVolume: "2",
+          maxVolume: "10",
+          volumeStep: "3",
+        },
+      }),
+    ).toMatchObject({ approved: true, normalizedVolume: "8" });
+    expect(
+      sizePosition({
+        ...input,
+        metadata: { ...metadata, quoteToAccountConversionRate: "0" },
+      }).approved,
+    ).toBe(false);
+    expect(
+      sizePosition({
+        ...input,
+        maxPositionNotional: "2000",
+        metadata: {
+          ...metadata,
+          accountAsset: "EUR",
+          quoteToAccountConversionRate: "2",
+        },
+      }).approved,
+    ).toBe(false);
+  });
+  it("fails closed on nonfinite capital flows and bounds recurring loss ratios conservatively", () => {
+    expect(
+      dailyLoss({
+        baselineEquity: "999834.02",
+        currentEquity: "999833.99",
+        netFlows: "NaN",
+        thresholdPercent: "1",
+      }).lockedOut,
+    ).toBe(true);
+    expect(
+      dailyLoss({
+        baselineEquity: "999834.02",
+        currentEquity: "999833.99",
+        netFlows: "0",
+        thresholdPercent: "1",
+      }).lossPercent,
+    ).toBe("0.00000301");
+  });
   it("floors the broker-minimum affordable OCO stop distance to whole ticks", () => {
     const result = maximumAffordableStopDistance({
       equity: "10000",
@@ -91,7 +156,7 @@ describe("risk engine", () => {
     });
     expect(result.approved).toBe(true);
     expect(result.rawVolume).toBe("76.92307692307692307692307692307692307692");
-    expect(result.normalizedVolume).toBe("76");
+    expect(result.normalizedVolume).toBe("65");
     expect(Number(result.maximumLoss)).toBeLessThanOrEqual(100);
   });
 
@@ -134,7 +199,7 @@ describe("risk engine", () => {
       approved: true,
       rawVolume: "100",
       normalizedVolume: "5",
-      maximumLoss: "5",
+      maximumLoss: "6.10003",
     });
   });
 
@@ -204,7 +269,7 @@ describe("risk engine", () => {
     expect(result).toMatchObject({
       approved: true,
       normalizedVolume: "100",
-      maximumLoss: "2.3",
+      maximumLoss: "2.679012",
     });
   });
 
@@ -315,5 +380,23 @@ describe("risk engine", () => {
     });
     expect(result.approved).toBe(true);
     expect(Number(result.combinedMaximumLoss)).toBeLessThanOrEqual(100);
+    const combinedMargin = sizeOcoPair({
+      setupRiskPercent: "1",
+      buy: { ...leg, availableMargin: "70" },
+      sell: { ...leg, availableMargin: "70" },
+    });
+    expect(combinedMargin.buy.approved).toBe(true);
+    expect(combinedMargin.sell.approved).toBe(true);
+    expect(combinedMargin.reasonCodes).toContain(
+      "OCO_COMBINED_MARGIN_INSUFFICIENT",
+    );
+    const combinedUsage = sizeOcoPair({
+      setupRiskPercent: "1",
+      buy: { ...leg, maxMarginUsagePercent: "0.5" },
+      sell: { ...leg, maxMarginUsagePercent: "0.5" },
+    });
+    expect(combinedUsage.reasonCodes).toContain(
+      "OCO_COMBINED_MARGIN_USAGE_EXCEEDED",
+    );
   });
 });

@@ -16,6 +16,21 @@ import {
 export const STOP_LOSS_TO_TAKE_PROFIT_RATIO = "2";
 export const COMMISSION_AWARE_RISK_REWARD_RATIO = "0.5";
 
+function pipBound(
+  stopDistance: string,
+  metadata: SymbolMetadata,
+  minimum: boolean,
+): string {
+  const pip = decimal(metadata.pipSize);
+  if (pip.lte(0)) throw new Error("COMMISSION_PIP_SIZE_INVALID");
+  const count = decimal(stopDistance)
+    .div(decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO))
+    .div(pip);
+  // Internal division may produce an eleventh decimal. Project the bound onto
+  // the already mandatory whole-pip search grid, tightening in both directions.
+  return canonical((minimum ? count.ceil() : count.floor()).mul(pip));
+}
+
 export interface CommissionAwareTransformLegDetails extends CommissionCoverageEvidence {
   readonly original_stop_loss: string;
   readonly effective_stop_loss: string;
@@ -65,15 +80,15 @@ export function deriveCommissionAwareMinimumDistances(input: {
   readonly metadata: SymbolMetadata;
 }): CommissionAwareMinimumDistances {
   try {
-    const maximumTakeProfitDistance = canonical(
-      decimal(input.maximumStopDistance).div(
-        decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
-      ),
+    const maximumTakeProfitDistance = pipBound(
+      input.maximumStopDistance,
+      input.metadata,
+      false,
     );
-    const minimumTakeProfitDistance = canonical(
-      decimal(input.minimumStopDistance).div(
-        decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
-      ),
+    const minimumTakeProfitDistance = pipBound(
+      input.minimumStopDistance,
+      input.metadata,
+      true,
     );
     const buy = minimumFeeBufferedTarget({
       side: "BUY",
@@ -160,18 +175,22 @@ function transformLeg(
   const originalStopLoss = decimal(proposal.stop_loss);
   const originalInvalidation = decimal(proposal.invalidation_price);
   const originalTakeProfit = decimal(proposal.take_profit);
-  const maximumTakeProfitDistance = decimal(maximumStopDistance).div(
-    decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
+  const maximumTakeProfitDistance = pipBound(
+    maximumStopDistance,
+    metadata,
+    false,
   );
-  const minimumTakeProfitDistance = decimal(minimumStopDistance).div(
-    decimal(STOP_LOSS_TO_TAKE_PROFIT_RATIO),
+  const minimumTakeProfitDistance = pipBound(
+    minimumStopDistance,
+    metadata,
+    true,
   );
   const selected = minimumFeeBufferedTarget({
     side,
     entryPrice: proposal.entry_price,
     volume: metadata.minVolume,
-    minimumTakeProfitDistance: canonical(minimumTakeProfitDistance),
-    maximumTakeProfitDistance: canonical(maximumTakeProfitDistance),
+    minimumTakeProfitDistance,
+    maximumTakeProfitDistance,
     minimumExpectedNetToFeesRatio,
     metadata,
   });

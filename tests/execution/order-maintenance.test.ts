@@ -16,6 +16,14 @@ function maintenanceFixture(input: {
 }) {
   const updates: Array<readonly unknown[]> = [];
   const query = vi.fn((sql: string, values?: readonly unknown[]) => {
+    if (
+      sql.includes("FROM orders o") ||
+      sql.includes("UPDATE analysis_runs a")
+    ) {
+      expect(values).toEqual(["account", "symbol"]);
+      expect(sql).toContain("account_id=$1");
+      expect(sql).toContain("symbol_id=$2");
+    }
     if (sql.includes("UPDATE analysis_runs"))
       return Promise.resolve({ rows: [] });
     if (sql.includes("filled.id <> o.id")) {
@@ -68,7 +76,10 @@ function maintenanceFixture(input: {
     ),
   } satisfies ExecutionGateway;
   return {
-    maintenance: new OrderMaintenance({ query } as never, gateway, "XAUUSD"),
+    maintenance: new OrderMaintenance({ query } as never, gateway, "XAUUSD", {
+      accountId: "account",
+      symbolId: "symbol",
+    }),
     cancelStrategyOrder,
     updates,
   };

@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Provider telemetry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "requestedModel": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9._/:-]{1,128}$"
+    },
+    "returnedModel": {
+      "type": ["string", "null"],
+      "pattern": "^[a-zA-Z0-9._/:-]{1,128}$"
+    },
+    "inputProfile": {
+      "enum": ["chart", "structured"]
+    },
+    "requestBytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5600000
+    },
+    "responseBytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1048576
+    },
+    "inputTokens": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 1000000000
+    },
+    "outputTokens": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 1000000000
+    },
+    "totalTokens": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 1000000000
+    },
+    "costAmount": {
+      "type": ["string", "null"],
+      "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$"
+    },
+    "costCurrency": {
+      "enum": ["USD", null]
+    },
+    "costSource": {
+      "enum": ["unavailable", "provider"]
+    }
+  },
+  "required": [
+    "requestedModel",
+    "returnedModel",
+    "inputProfile",
+    "requestBytes",
+    "responseBytes",
+    "inputTokens",
+    "outputTokens",
+    "totalTokens",
+    "costAmount",
+    "costCurrency",
+    "costSource"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "costSource": {
+            "const": "unavailable"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "costAmount": {
+            "type": "null"
+          },
+          "costCurrency": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "costAmount": {
+            "type": "string"
+          },
+          "costCurrency": {
+            "const": "USD"
+          }
+        }
+      }
+    }
+  ]
+}

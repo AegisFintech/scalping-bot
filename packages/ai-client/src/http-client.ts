@@ -1,4 +1,10 @@
 import { createHash } from "node:crypto";
+import {
+  boundedResponseText,
+  ProviderFailure,
+  providerTelemetrySchema,
+  type ProviderTelemetry,
+} from "./telemetry.js";
 import { readFileSync } from "node:fs";
 
 import type {
@@ -144,6 +150,7 @@ export class AiOrchestratorHttpClient {
     readonly promptArtifact: ModelPromptArtifact;
     readonly latencyMs: number;
     readonly retryCount: number;
+    readonly telemetry?: ProviderTelemetry;
   }> {
     if (this.circuitOpen) throw new Error("AI_ORCHESTRATOR_CIRCUIT_OPEN");
     const configuredTimeoutMs = this.#options.timeoutMs ?? 35_000;
@@ -183,17 +190,25 @@ export class AiOrchestratorHttpClient {
     if (!response.ok) {
       if (response.status === 503) this.#recordTransientFailure();
       let reason: string | null = null;
+      let telemetry: ProviderTelemetry | undefined;
       try {
-        reason = orchestratorFailureReason(await response.json());
+        const failure = record(
+          JSON.parse(await boundedResponseText(response)),
+          "AI_FAILURE_ENVELOPE_INVALID",
+        );
+        reason = orchestratorFailureReason(failure);
+        if (failure.telemetry !== undefined)
+          telemetry = providerTelemetrySchema.parse(failure.telemetry);
       } catch {
         // Non-JSON and malformed upstream failures retain the bounded HTTP code.
       }
-      throw new Error(
-        reason ?? `AI_ORCHESTRATOR_HTTP_ERROR:${response.status}`,
-      );
+      const code = reason ?? `AI_ORCHESTRATOR_HTTP_ERROR:${response.status}`;
+      throw telemetry === undefined
+        ? new Error(code)
+        : new ProviderFailure(code, telemetry);
     }
     const envelope = record(
-      await response.json(),
+      JSON.parse(await boundedResponseText(response)),
       "AI_ORCHESTRATOR_RESPONSE_INVALID",
     );
     if (typeof envelope.rawResponse !== "string")
@@ -252,6 +267,9 @@ export class AiOrchestratorHttpClient {
       },
       latencyMs: envelope.latencyMs,
       retryCount: envelope.retryCount,
+      ...(envelope.telemetry === undefined
+        ? {}
+        : { telemetry: providerTelemetrySchema.parse(envelope.telemetry) }),
     };
   }
 }
