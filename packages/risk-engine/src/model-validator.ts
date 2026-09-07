@@ -19,14 +19,14 @@ import { decimal, isTickAligned } from "./decimal.js";
 
 const MAX_MODEL_RESPONSE_BYTES = 1_048_576;
 
-export interface SchemaResult {
+export interface SchemaResult<T = ModelResponse> {
   readonly accepted: boolean;
-  readonly response: ModelResponse | null;
+  readonly response: T | null;
   readonly reasonCodes: readonly string[];
   readonly errors: readonly string[];
 }
 
-function schemaValidator(schemaPath: string): ValidateFunction<ModelResponse> {
+function schemaValidator<T>(schemaPath: string): ValidateFunction<T> {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   const addFormats = formatsModule.default as unknown as (
     instance: Ajv2020,
@@ -36,17 +36,17 @@ function schemaValidator(schemaPath: string): ValidateFunction<ModelResponse> {
   if (parsed === null || typeof parsed !== "object") {
     throw new Error("MODEL_SCHEMA_NOT_AN_OBJECT");
   }
-  return ajv.compile<ModelResponse>(parsed as AnySchema);
+  return ajv.compile<T>(parsed as AnySchema);
 }
 
-export class ModelResponseValidator {
-  readonly #validate: ValidateFunction<ModelResponse>;
+export class ModelResponseValidator<T = ModelResponse> {
+  readonly #validate: ValidateFunction<T>;
 
   constructor(schemaPath: string) {
-    this.#validate = schemaValidator(schemaPath);
+    this.#validate = schemaValidator<T>(schemaPath);
   }
 
-  parse(raw: string): SchemaResult {
+  parse(raw: string): SchemaResult<T> {
     if (Buffer.byteLength(raw, "utf8") > MAX_MODEL_RESPONSE_BYTES) {
       return {
         accepted: false,

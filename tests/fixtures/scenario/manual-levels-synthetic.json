@@ -1,0 +1,183 @@
+{
+  "label": "SYNTHETIC",
+  "plan": {
+    "schema_version": "scenario-1.0",
+    "analysis_id": "00000000-0000-4000-8000-000000000074",
+    "symbol": "XAUUSD",
+    "captured_at": "2026-09-07T00:00:00.000Z",
+    "valid_until": "2026-09-07T00:05:00.000Z",
+    "decision_zone": {
+      "lower": "4400",
+      "upper": "4406"
+    },
+    "rebound_resistance": {
+      "lower": "4406",
+      "upper": "4410"
+    },
+    "recovery_above": "4410",
+    "recovery_targets": ["4416", "4422"],
+    "bearish_below": "4400",
+    "extension_below": "4396",
+    "extension_targets": ["4392", "4388"],
+    "broader_resistance": [
+      {
+        "lower": "4422",
+        "upper": "4428"
+      },
+      {
+        "lower": "4436",
+        "upper": "4440"
+      }
+    ]
+  },
+  "availableAt": "2026-09-07T00:00:00.000Z",
+  "metadata": {
+    "symbolId": "fixture-symbol",
+    "symbolName": "XAUUSD",
+    "digits": 2,
+    "pipPosition": 2,
+    "pipSize": "0.01",
+    "tickSize": "0.01",
+    "tickValue": "0.01",
+    "baseAsset": "XAU",
+    "quoteAsset": "USD",
+    "accountAsset": "USD",
+    "quoteToAccountConversionRate": "1",
+    "contractSize": "1",
+    "volumeScale": "1",
+    "minVolume": "1",
+    "maxVolume": "1000",
+    "volumeStep": "1",
+    "minStopDistance": "0.10",
+    "commission": {
+      "type": "USD_PER_MILLION_USD",
+      "rate": "30",
+      "minimum": "0",
+      "minimumType": "QUOTE_CURRENCY",
+      "minimumAsset": "USD",
+      "pnlConversionFeeRate": "0"
+    },
+    "metadataTime": "2026-09-07T00:00:00.000Z"
+  },
+  "events": [
+    {
+      "id": "c60",
+      "type": "candle",
+      "at": "2026-09-07T00:01:00.000Z",
+      "candle": {
+        "startTime": "2026-09-07T00:00:00.000Z",
+        "endTime": "2026-09-07T00:01:00.000Z",
+        "open": "4410.20",
+        "high": "4411",
+        "low": "4409.80",
+        "close": "4410.70",
+        "complete": true,
+        "qualityFlags": [],
+        "volume": null
+      }
+    },
+    {
+      "id": "c120",
+      "type": "candle",
+      "at": "2026-09-07T00:02:00.000Z",
+      "candle": {
+        "startTime": "2026-09-07T00:01:00.000Z",
+        "endTime": "2026-09-07T00:02:00.000Z",
+        "open": "4410.70",
+        "high": "4411.20",
+        "low": "4410.50",
+        "close": "4411",
+        "complete": true,
+        "qualityFlags": [],
+        "volume": null
+      }
+    },
+    {
+      "id": "q120.5",
+      "type": "quote",
+      "at": "2026-09-07T00:02:00.500Z",
+      "quote": {
+        "sourceTime": "2026-09-07T00:02:00.500Z",
+        "receivedAt": "2026-09-07T00:02:00.500Z",
+        "bid": "4411",
+        "ask": "4411.05"
+      },
+      "risk": {
+        "account": {
+          "reconciledAt": "2026-09-07T00:02:00.500Z",
+          "certain": true,
+          "equity": "1000000",
+          "balance": "1000000",
+          "availableMargin": "1000000",
+          "relevantPositionCount": 0,
+          "relevantPendingOrderCount": 0,
+          "hasPartialFill": false,
+          "hasCancellationPending": false,
+          "reasonCodes": []
+        },
+        "metadata": {
+          "symbolId": "fixture-symbol",
+          "symbolName": "XAUUSD",
+          "digits": 2,
+          "pipPosition": 2,
+          "pipSize": "0.01",
+          "tickSize": "0.01",
+          "tickValue": "0.01",
+          "baseAsset": "XAU",
+          "quoteAsset": "USD",
+          "accountAsset": "USD",
+          "quoteToAccountConversionRate": "1",
+          "contractSize": "1",
+          "volumeScale": "1",
+          "minVolume": "1",
+          "maxVolume": "1000",
+          "volumeStep": "1",
+          "minStopDistance": "0.10",
+          "commission": {
+            "type": "USD_PER_MILLION_USD",
+            "rate": "30",
+            "minimum": "0",
+            "minimumType": "QUOTE_CURRENCY",
+            "minimumAsset": "USD",
+            "pnlConversionFeeRate": "0"
+          },
+          "metadataTime": "2026-09-07T00:00:00.000Z"
+        },
+        "atr": "3",
+        "observedSpreadPercentile": "50",
+        "spreadSamples": 30,
+        "sessionAbnormal": false,
+        "riskMultiplier": "1",
+        "remainingDailyBudget": "10000",
+        "equityFloor": "990000",
+        "maxPositionNotional": "20000",
+        "estimatedMarginPerVolume": "10",
+        "entryAllowed": true
+      }
+    },
+    {
+      "id": "q120.75",
+      "type": "quote",
+      "at": "2026-09-07T00:02:00.750Z",
+      "quote": {
+        "sourceTime": "2026-09-07T00:02:00.750Z",
+        "receivedAt": "2026-09-07T00:02:00.750Z",
+        "bid": "4411.16",
+        "ask": "4411.21"
+      },
+      "risk": null
+    },
+    {
+      "id": "q121",
+      "type": "quote",
+      "at": "2026-09-07T00:02:01.000Z",
+      "quote": {
+        "sourceTime": "2026-09-07T00:02:01.000Z",
+        "receivedAt": "2026-09-07T00:02:01.000Z",
+        "bid": "4416",
+        "ask": "4416.05"
+      },
+      "risk": null
+    }
+  ]
+}

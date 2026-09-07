@@ -1,8 +1,17 @@
 # Current release operations
 
+Chart-scenario research commands are described in
+[the scenario report](scenario-automation-report.md). Observation uses the existing
+local market/analytics services and makes at most one model call. Replay is offline.
+Neither command changes controls, starts a broker trading process or deploys the
+candidate. A market-data 503 stops observation before paid inference. No restart
+or risk-limit change is justified merely to turn a waiting cycle into an order.
+
 For `0.2.0-overhaul.1`, start with [configuration/migration](configuration.md) and
-[the implementation report](overhaul-report.md). The existing environment has not
-been migrated or restarted. Fixed policy conflicts must be reviewed before startup.
+[the implementation report](overhaul-report.md). The populated environment was
+simplified in ISSUE-072; the AI and execution processes still retain their previous
+release and in-memory settings. Only the dashboard was subsequently restarted.
+Fixed policy conflicts and the missing capital floor must be resolved before startup.
 Older command examples below describe historical deployments; they cannot override
 `conservative-v1` or enable live submission in this build.
 

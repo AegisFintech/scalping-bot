@@ -38,6 +38,7 @@ export interface AiClientOptions {
   readonly fetchImpl?: typeof fetch;
   readonly now?: () => number;
   readonly inputProfile?: "chart" | "structured";
+  readonly outputSchemaName?: string;
 }
 
 export interface AiAnalysisRequest {
@@ -48,8 +49,8 @@ export interface AiAnalysisRequest {
   readonly timeoutMs?: number;
 }
 
-export interface AiAnalysisResult {
-  readonly response: ModelResponse;
+export interface AiAnalysisResult<T = ModelResponse> {
+  readonly response: T;
   readonly rawResponse: string;
   readonly latencyMs: number;
   readonly retryCount: number;
@@ -140,12 +141,15 @@ function chartDataUrl(chart: AnalysisChartArtifact): string {
   return `data:image/png;base64,${chart.dataBase64}`;
 }
 
-export class OpenAiCompatibleClient {
+export class OpenAiCompatibleClient<
+  T extends { readonly analysis_id: string; readonly symbol: string } =
+    ModelResponse,
+> {
   readonly #options: AiClientOptions;
   readonly #schema: Record<string, unknown>;
   readonly #systemPrompt: string;
   readonly #promptArtifact: ModelPromptArtifact;
-  readonly #validator: ModelResponseValidator;
+  readonly #validator: ModelResponseValidator<T>;
   #failureCount = 0;
   #openUntil = 0;
   #inFlight = false;
@@ -154,6 +158,11 @@ export class OpenAiCompatibleClient {
     this.#options = options;
     if (!options.apiKey) throw new Error("AI_API_KEY_REQUIRED");
     if (!options.model) throw new Error("AI_MODEL_REQUIRED");
+    if (
+      options.outputSchemaName !== undefined &&
+      !/^[a-zA-Z0-9_-]{1,64}$/.test(options.outputSchemaName)
+    )
+      throw new Error("AI_SCHEMA_NAME_INVALID");
     endpoint(options.baseUrl, options.apiStyle);
     for (const [value, min, max] of [
       [options.timeoutMs ?? 30_000, 1_000, 120_000],
@@ -189,14 +198,14 @@ export class OpenAiCompatibleClient {
       content: this.#systemPrompt,
       sha256: createHash("sha256").update(this.#systemPrompt).digest("hex"),
     };
-    this.#validator = new ModelResponseValidator(options.schemaPath);
+    this.#validator = new ModelResponseValidator<T>(options.schemaPath);
   }
 
   get circuitOpen(): boolean {
     return this.#openUntil > (this.#options.now ?? Date.now)();
   }
 
-  async analyze(request: AiAnalysisRequest): Promise<AiAnalysisResult> {
+  async analyze(request: AiAnalysisRequest): Promise<AiAnalysisResult<T>> {
     if (this.#inFlight) throw new Error("AI_REQUEST_ALREADY_IN_FLIGHT");
     this.#inFlight = true;
     try {
@@ -206,7 +215,7 @@ export class OpenAiCompatibleClient {
     }
   }
 
-  async #analyze(request: AiAnalysisRequest): Promise<AiAnalysisResult> {
+  async #analyze(request: AiAnalysisRequest): Promise<AiAnalysisResult<T>> {
     const now = this.#options.now ?? Date.now;
     if (this.#openUntil > now()) throw new Error("AI_CIRCUIT_OPEN");
     const payloadText = JSON.stringify(request.payload);
@@ -372,7 +381,7 @@ export class OpenAiCompatibleClient {
         text: {
           format: {
             type: "json_schema",
-            name: "market_analysis_2_1",
+            name: this.#options.outputSchemaName ?? "market_analysis_2_1",
             strict: true,
             schema: this.#schema,
           },
@@ -407,7 +416,7 @@ export class OpenAiCompatibleClient {
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "market_analysis_2_1",
+          name: this.#options.outputSchemaName ?? "market_analysis_2_1",
           strict: true,
           schema: this.#schema,
         },

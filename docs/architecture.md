@@ -3,6 +3,15 @@
 Current source: `0.2.0-overhaul.1`, conservative policy v1. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
+The separate `packages/scenario-engine` research path captures typed market data,
+uses existing Python analytics to render M15/M5/M1, and calls the bounded provider
+with a strict scenario-only schema. A deterministic replay consumes subsequent
+completed candles and bid/ask observations, reuses `sizePosition`/commission/spread
+validation and simulates entry plus automatic exit. Model inference and replay are
+independent promises. It has no broker gateway or SQL mutations. Replay recovery
+rebuilds state from a checksummed event journal; this is not broker reconciliation.
+See [its implementation boundary](scenario-automation-report.md).
+
 ## Services and authority
 
 ```mermaid

@@ -8,6 +8,10 @@ reduced the populated environment from 176 to 26 entries: the 22 normal keys plu
 four retained deployment credentials/identifiers. No credentials were changed.
 See [the migration report](environment-migration-report.md) for exact checks and
 remaining rollout blockers. There is no operator strategy tuning file.
+Chart-scenario research adds no environment variables or tuning file. Its fixed
+assumptions and observe/replay commands are documented in
+[the scenario report](scenario-automation-report.md). Existing credentials are
+read only for an explicitly invoked observation; replay needs no credentials.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.

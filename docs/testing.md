@@ -1,5 +1,11 @@
 # Current acceptance and research
 
+[ISSUE-074's scenario report](scenario-automation-report.md) records strict plan
+schema/identity/precision checks, post-availability confirmation, automatic exits,
+fixed risk reuse, unavailable inference, ordered quotes/candles, duplicate/conflict
+replay recovery and CLI overwrite/redaction tests. Its dated manual-level fixture
+is synthetic, including its timestamps; no profitable historical test is implied.
+
 The overhaul commands/results are in [ISSUE-069's report](overhaul-report.md).
 The subsequent [environment migration report](environment-migration-report.md)
 records ISSUE-072's full checks and the real startup blocker. Configuration tests
