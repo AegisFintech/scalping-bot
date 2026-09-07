@@ -1,6 +1,8 @@
 # ISSUE-077 — Pending-order reconciliation repair
 
 Date: September 7, 2026. Issue: [#184](https://github.com/AegisFintech/scalping-bot/issues/184).
+Pull request: [#185](https://github.com/AegisFintech/scalping-bot/pull/185).
+Implementation checkpoint: `5ed2622` (committed and pushed).
 Branch: `issue-077-pending-order-reconciliation`. Release: `0.2.2-fixed-risk.4`.
 Policy remains `fixed-risk-v2`. The operator requested this repair after the status
 audit; existing demo authority remains, and live submission is disabled.
@@ -67,8 +69,29 @@ The populated environment and previous compiled release are backed up privately.
 The execution service was recreated on stable Node 22.23.2 with release `.4`; its
 healthy paused preflight confirmed unchanged 1%/5% policy and healthy reconciliation.
 Existing demo authorization was restored at 21:00:57 SGT. No environment value changed.
-The next qualifying demo setup is being observed at this implementation checkpoint;
-post-repair broker lifecycle evidence is not yet claimed.
+
+The first post-repair OCO setup was created at **21:02:02.590 SGT**. Its SELL
+order remained pending from local submission at 21:02:03.600 until broker expiry
+at 21:02:54.598: **50.998 seconds**, matching its 21:02:54.597 deadline. The
+read-only observer made **62 successful account checks and zero failed checks**
+while that pending order's zero-P/L record was present. The execution logs contain
+no account/daily-risk/callback/recovery errors during this observation. The group
+reconciled to EXPIRED with `ANALYSIS_EXPIRED`, not the prior premature safety cancellation.
+
+The BUY leg was accepted and then cancelled by the broker without a fill or a
+detailed error reason, before SELL became pending. Its cause is not inferred from
+the cancellation alone. **Neither leg filled; no closed trade or improvement in
+net returns is claimed.** This observation establishes that valid pending exposure
+survives repeated account checks until its proper expiry; it does not establish
+a fill rate or eliminate broker-side cancellation/slippage constraints. Tests cover
+two simultaneous pending P/L records, fills and restart; this prospective observation
+contained one surviving pending order.
+
+At 21:04:42 SGT all five services were online; `.4` was healthy, demo automation
+enabled, emergency/pause off, and no strategy order or position remained active.
+The exact model request remained `gpt-6-astra/u64`, with returned `gpt-6-astra` and
+18,621 ms for the first refresh. The populated environment was byte-for-byte unchanged
+and remained mode 0600. [Sanitized rollout evidence](evidence/pending-reconciliation-rollout.json).
 
 Rollback: pause new analyses, verify broker exposure and reconciliation, restore
 the prior reviewed build through the stable Node 22 supervisor, and retain all

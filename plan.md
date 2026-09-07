@@ -2,10 +2,12 @@
 
 ## Scope
 
-### ISSUE-077 — Preserve correctly reconciled pending orders (implemented; demo verification in progress)
+### ISSUE-077 — Preserve correctly reconciled pending orders (implemented; validated; demo restored)
 
 - Branch: `issue-077-pending-order-reconciliation`.
 - Issue: [#184](https://github.com/AegisFintech/scalping-bot/issues/184).
+- Pull request: [#185](https://github.com/AegisFintech/scalping-bot/pull/185);
+  implementation checkpoint `5ed2622` is committed and pushed.
 - Dependencies: ISSUE-076 / PR #183; existing cTrader account adapter and protected OCO lifecycle.
 - Authorization: operator requested a repair after the September 7 status audit;
   retain existing demo authority, fixed 1% setup / 5% daily limits and disabled live execution.
@@ -27,7 +29,11 @@
 - Rollout: paused at 20:55:37 SGT, execution service upgraded to `.4` on stable
   Node 22; healthy paused preflight and existing demo authority restored at
   21:00:57 SGT. Credentials/environment and all risk limits remain unchanged.
-  Awaiting the next qualifying demo setup to verify its full order lifecycle.
+  First post-repair setup: SELL stayed pending for 50.998 seconds until broker
+  expiry at its deadline; 62 independent account checks succeeded and zero account,
+  daily-risk or recovery errors were logged. BUY was cancelled by the broker with
+  zero fills and no detailed reason; no filled trade is claimed. Final reconciliation
+  was healthy. Evidence: `docs/evidence/pending-reconciliation-rollout.json`.
 
 ### ISSUE-076 — Fixed percentage risk without an absolute floor (implemented; validated; demo restored)
 
