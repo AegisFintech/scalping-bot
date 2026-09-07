@@ -52,6 +52,10 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   supports promotion; fixture success is not economic validation.
 - Keep the dashboard's Overview / Trade history / Diagnostics structure, distinct
   trading modes, authenticated controls and explicit unavailable/stale values.
+- Keep navigation and control forms outside timed dashboard fragments. Background
+  workers perform bounded reads only and never call Streamlit or broker mutations.
+  Verify light/dark contrast and browser state across timed updates; fragment-owned
+  elements must be emitted on every tick or Streamlit can remove them.
 
 ## Required completion checks
 

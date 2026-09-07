@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import psycopg
 import streamlit as st
+from background import BackgroundReader
 from charts import (
     ChartDataError,
     audit_events_figure,
@@ -122,13 +123,17 @@ def control(path: str, payload: dict[str, object]) -> tuple[bool, str]:
         return False, str(error)
 
 
+@st.cache_resource(show_spinner=False)
+def recovery_reader() -> BackgroundReader[dict[str, Any]]:
+    return BackgroundReader(lambda: api_get("/v1/status"), interval=2, maximum_age=10)
+
+
 @st.fragment(run_every="2s")
 def execution_status_recovery_probe() -> None:
-    """Rerun the full app after a transient execution-status outage recovers."""
+    """Update the recovery notice without resetting the inspected diagnostic snapshot."""
 
-    try:
-        recovered = api_get("/v1/status")
-    except (httpx.HTTPError, RuntimeError, ValueError):
+    recovered = recovery_reader().poll().value
+    if recovered is None:
         st.warning(
             "Execution service is reconnecting. Current broker and campaign status is "
             "temporarily unavailable; PostgreSQL history has not been deleted. Retrying "
@@ -136,7 +141,10 @@ def execution_status_recovery_probe() -> None:
         )
         return
     if execution_status_recovered(recovered):
-        st.rerun()
+        st.success("Execution service recovered. Your diagnostic selection is preserved.")
+        if st.button("Reload diagnostic snapshot", key="reload_recovered_diagnostics"):
+            st.rerun()
+        return
     st.warning(
         "Execution service responded without a complete status snapshot. Durable history "
         "is retained; retrying every 2 seconds."
@@ -212,6 +220,10 @@ account_key_hash = hashlib.sha256(os.getenv("ACCOUNT_KEY", "unconfigured").encod
 automation_view = automation_status_view(status)
 broker_view = broker_lifecycle_view(status, automation_view)
 st.caption("Detailed audit records · read-only diagnostics")
+st.caption(
+    "Diagnostic snapshots update when you change the selection; "
+    "recovery checks run in the background."
+)
 diagnostic_section = st.selectbox(
     "Inspect", ["Market", "AI Analysis", "Analysis History", "Provider", "Operations", "Server"]
 )
