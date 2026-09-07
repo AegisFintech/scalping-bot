@@ -1,6 +1,6 @@
 # Complete configuration inventory
 
-Baseline `2ee59bb`: 176 assignments; current normal template: 25.
+Baseline `2ee59bb`: 176 assignments; current normal template: 22 (ISSUE-072).
 This inventory classifies every former setting by its implemented disposition.
 No environment setting controls an optimizer; bounded adaptive risk multipliers
 are internal state, not operator knobs. Ports/paths/TLS remain deployment options.
@@ -60,13 +60,13 @@ are internal state, not operator knobs. Ports/paths/TLS remain deployment option
 | `CTRADER_CLIENT_ID`                        | Secret or deployment identity                    | Normal template.                                          |
 | `CTRADER_CLIENT_SECRET`                    | Secret or deployment identity                    | Normal template.                                          |
 | `CTRADER_ACCESS_TOKEN`                     | Secret or deployment identity                    | Normal template.                                          |
-| `CTRADER_ACCESS_TOKEN_EXPIRES_AT`          | Secret or deployment identity                    | Normal template.                                          |
+| `CTRADER_ACCESS_TOKEN_EXPIRES_AT`          | Secret or deployment identity                    | Advanced deployment override only.                        |
 | `CTRADER_REFRESH_TOKEN`                    | Secret or deployment identity                    | Normal template.                                          |
 | `CTRADER_TOKEN_STATE_FILE`                 | Secret or deployment identity                    | Advanced deployment override only.                        |
 | `CTRADER_TOKEN_URL`                        | Secret or deployment identity                    | Advanced deployment override only.                        |
-| `CTRADER_API_HOST`                         | Secret or deployment identity                    | Normal template.                                          |
-| `CTRADER_API_PORT`                         | Secret or deployment identity                    | Normal template.                                          |
-| `CTRADER_CONNECTION_MODE`                  | Secret or deployment identity                    | Normal template.                                          |
+| `CTRADER_API_HOST`                         | Secret or deployment identity                    | Advanced deployment override only.                        |
+| `CTRADER_API_PORT`                         | Secret or deployment identity                    | Advanced deployment override only.                        |
+| `CTRADER_CONNECTION_MODE`                  | Secret or deployment identity                    | Advanced deployment override only.                        |
 | `CTRADER_RECONNECT_MIN_MS`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `CTRADER_RECONNECT_MAX_MS`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `CTRADER_REQUEST_TIMEOUT_MS`               | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
@@ -121,7 +121,7 @@ are internal state, not operator knobs. Ports/paths/TLS remain deployment option
 | `LOCAL_MARKET_RECORD_MAX_SEGMENTS`         | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `AI_BASE_URL`                              | Secret or deployment identity                    | Normal template.                                          |
 | `AI_API_KEY`                               | Secret or deployment identity                    | Normal template.                                          |
-| `AI_MODEL`                                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
+| `AI_MODEL`                                 | Internal engineering default                     | Exact model pin in template; other models reject.         |
 | `AI_API_STYLE`                             | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `AI_TIMEOUT_MS`                            | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `AI_MAX_RETRIES`                           | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |

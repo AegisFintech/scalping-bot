@@ -7,6 +7,12 @@ validation, not a service rollout. No new trading was launched, no live gateway
 was enabled, no populated environment was rewritten, and migration `0015` was
 only exercised in isolated test schemas.
 
+Subsequent authorized work in ISSUE-072 migrated the actual populated `.env` to
+26 entries and made the exact model pin visible. The normal template now has 22
+entries. [The migration report](environment-migration-report.md) records that
+separate change, validation and unchanged running-service state. Counts and
+deployment observations below describe the original ISSUE-069 checkpoint.
+
 ## Outcome
 
 The implementation simplifies operation and strengthens execution/accounting.
