@@ -24,15 +24,45 @@
   model `gpt-6-astra/u64`, returned `gpt-6-astra`; provider cost remains unknown.
 - Results and remaining work: `docs/scenario-automation-report.md`.
 
-### ISSUE-075 — Scenario broker lifecycle and prospective validation (pending)
+### ISSUE-075 — Efficient reusable maps and integrated execution (implemented; stopped rollout verified)
 
+- Branch: `issue-075-efficient-scenario-execution`.
 - Issue: [#179](https://github.com/AegisFintech/scalping-bot/issues/179).
-- Dependencies: ISSUE-074, reviewed capital floor/migrations, prospective timestamped
-  maps and quote paths, supervised demo authorization.
-- Acceptance: durable directional intent, acknowledged cancellation before
-  replacement, idempotent full-position closes, partial/disconnect/restart recovery,
-  risk/account integration, and same-data cost-aware out-of-sample comparison before
-  promotion. Never infer a guaranteed order or fill from the existence of a scenario.
+- Pull request: [#181](https://github.com/AegisFintech/scalping-bot/pull/181);
+  implementation checkpoint `e5da2fd` is committed and pushed.
+- Dependencies: ISSUE-074 scenario contract, ISSUE-069 risk/capital changes,
+  additive migrations 0015–0016 and an explicit equity floor for enabled demo.
+- Authorization: the operator explicitly approved the integrated overhaul and a
+  controlled demo rollout on 2026-09-07. Live execution remains unavailable.
+- Acceptance: exact EPRToken model in the actual service; durable five-minute
+  request budget; asynchronous reusable chart maps; deterministic protected OCO
+  execution under all existing risk/precision/freshness/reconciliation checks;
+  durable one-intent-per-map and restart recovery; independent maintenance;
+  honest waiting/provider/order diagnostics; full gates, screenshots and rollout
+  evidence in `docs/reusable-scenario-report.md`.
+- Scope decision: reuse the tested OCO broker lifecycle for the integrated demo
+  candidate. Completed-candle directional confirmation and discretionary
+  structural/time closes remain separate research; they are not required to
+  remove the synchronous model bottleneck and are not silently promoted.
+- Validation: all 22 release commands passed on Node 22.23.2: 406 Node and
+  117 Python tests, 22 schemas, three migration and all three configured integration
+  tests; full formatter/lint/type/build, replay/fail-closed, secret scan and audits.
+  Both dashboard themes preserved controls/focus/navigation/chart state across
+  background updates. Exact commands: `docs/evidence/reusable-validation.json`.
+- Final review: canonical database lock scope verified with concurrent independent
+  clients; all three configured integration tests and Node lint/type/build/406
+  tests passed again. Final formatting and staged-secret scans passed; no populated
+  credential value occurs in the 52-file implementation checkpoint.
+- Delivery state: migrations 0015–0016 applied after a protected database backup;
+  all five services recreated on stable Node 22.23.2, with the new release/model
+  verified from the running API. Two bounded real provider checks passed; requested
+  `gpt-6-astra/u64`, returned `gpt-6-astra`, 17,685 / 18,825 ms. Costs unknown.
+- Activation blocker: `ACCOUNT_EQUITY_FLOOR` is still blank. The operator was asked
+  for the amount; it was not invented. The deployment is explicitly stopped,
+  demo submission/automation disabled, and the durable pause retained. The actual
+  26-key environment remains byte-for-byte intact. No new strategy trade or live
+  execution was launched. Prospective profitability and directional-close work
+  remain unproved/open, as documented in the report.
 
 ### ISSUE-073 — Dashboard contrast and background refresh (implemented; validated)
 

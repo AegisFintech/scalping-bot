@@ -1,4 +1,5 @@
 import { CapitalRiskStore } from "./capital-risk-store.js";
+import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
 import { IndependentMaintenance } from "./independent-maintenance.js";
 import "dotenv/config";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
@@ -10,11 +11,11 @@ import { pathToFileURL } from "node:url";
 import { Decimal } from "decimal.js";
 
 import { AnalyticsHttpClient } from "../../../packages/analytics-client/src/client.js";
+import { ScenarioHttpPlanner } from "../../../packages/scenario-engine/src/http-planner.js";
 import {
-  AiOrchestratorHttpClient,
-  aiOrchestratorCircuitResetMs,
-  aiOrchestratorRequestTimeoutMs,
-} from "../../../packages/ai-client/src/http-client.js";
+  PostgresContextStore,
+  ReusableScenarioModel,
+} from "./scenario-context.js";
 import type {
   AccountAdapter,
   AccountState,
@@ -44,7 +45,7 @@ import {
 import { AnalysisCoordinator, type CycleResult } from "./coordinator.js";
 import {
   alignedSchedulerDelayMs,
-  evaluateAutomaticAnalysisWindow,
+  evaluateScenarioExecutionWindow,
   PostgresAutomaticAnalysisSchedule,
 } from "./automatic-analysis-schedule.js";
 import { PostgresAutomaticAnalysisWatchdog } from "./automatic-analysis-watchdog.js";
@@ -308,7 +309,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash,
-    promptVersion: "system-v16",
+    promptVersion: "scenario-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -396,28 +397,25 @@ async function main(): Promise<void> {
       `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
     timeoutMs: 15_000,
   });
-  const aiProviderTimeoutMs = integer(environment, "AI_TIMEOUT_MS", 30_000);
-  const aiMaxRetries = integer(environment, "AI_MAX_RETRIES", 0);
-  const model = new AiOrchestratorHttpClient({
-    baseUrl:
-      environment.AI_ORCHESTRATOR_BASE_URL ??
-      `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
-    schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v16.md"),
-    promptVersion: "system-v16",
-    timeoutMs: aiOrchestratorRequestTimeoutMs({
-      providerTimeoutMs: aiProviderTimeoutMs,
-      maxRetries: aiMaxRetries,
-    }),
-    circuitResetMs: aiOrchestratorCircuitResetMs(
-      integer(environment, "AI_CIRCUIT_BREAKER_RESET_SECONDS", 300),
-    ),
-    circuitBreakerFailures: integer(
-      environment,
-      "AI_CIRCUIT_BREAKER_FAILURES",
-      3,
-    ),
+  const contextStore = new PostgresContextStore(pool, {
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+    mode: config.tradingMode,
   });
+  const model = new ReusableScenarioModel(
+    contextStore,
+    new ScenarioHttpPlanner(
+      environment.AI_ORCHESTRATOR_BASE_URL ??
+        `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
+    ),
+    Date.now,
+    (reason) =>
+      logger.log("warn", {
+        event_name: "scenario_refresh_failed",
+        outcome: "failed",
+        reason_code: reason,
+      }),
+  );
   let capitalMultiplier = "0";
   let capitalRiskCap = "0";
   const capitalRiskStore = new CapitalRiskStore(pool);
@@ -442,7 +440,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "system-v16",
+    promptVersion: "scenario-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -463,6 +461,7 @@ async function main(): Promise<void> {
     pool,
     accountId: identity.accountId,
     symbolId: identity.symbolId,
+    scenarioCadence: true,
   });
   const automaticAnalysisCampaign = new PostgresAutomaticAnalysisCampaign({
     pool,
@@ -488,6 +487,7 @@ async function main(): Promise<void> {
     mode: config.tradingMode,
   });
   const automaticAnalysisWatchdog = new PostgresAutomaticAnalysisWatchdog({
+    scenarioCadence: true,
     pool,
     accountId: identity.accountId,
     symbolId: identity.symbolId,
@@ -857,11 +857,11 @@ async function main(): Promise<void> {
         now: new Date(),
       });
       capitalMultiplier = capital.riskMultiplier;
-      capitalRiskCap = decimal(dailyResult.remainingLossBudget)
-        .div(decimal(state.equity))
-        .mul(100)
-        .toDecimalPlaces(10, Decimal.ROUND_DOWN)
-        .toFixed();
+      capitalRiskCap = availableCapitalRiskPercent(
+        state.equity,
+        dailyResult.remainingLossBudget,
+        accountEquityFloor,
+      );
       dailyLocked = dailyResult.lockedOut || capital.lockedOut;
     } catch (error) {
       dailyLocked = true;
@@ -1010,7 +1010,7 @@ async function main(): Promise<void> {
         !demoExecutionState.certain ||
         (accountEquityFloor !== null &&
           (!state.certain ||
-            new Decimal(state.equity).lt(accountEquityFloor))) ||
+            new Decimal(state.equity).lte(accountEquityFloor))) ||
         (config.maxOrdersPerDay > 0 && ordersToday >= config.maxOrdersPerDay),
       aiCircuitOpen: model.circuitOpen,
       symbolMetadataValid: latestSnapshot !== null,
@@ -1072,7 +1072,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "system-v16",
+    promptVersion: "scenario-execution-v1",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: config.minRiskRewardRatio,
@@ -1094,7 +1094,7 @@ async function main(): Promise<void> {
     maxSpreadAtrRatio: optionalDecimal(environment.MAX_SPREAD_ATR_RATIO),
     maxSpreadPercentile: optionalDecimal(environment.MAX_SPREAD_PERCENTILE),
     preModelStabilityCheck: true,
-    enforceModelDeadline: true,
+    enforceModelDeadline: false,
     minimumModelBudgetMs: boundedSecondsMs(
       environment,
       "MODEL_MINIMUM_CALL_BUDGET_SECONDS",
@@ -1201,6 +1201,9 @@ async function main(): Promise<void> {
       config.tradingMode === "demo"
         ? [
             ...(config.demoTradingEnabled ? [] : ["DEMO_TRADING_DISABLED"]),
+            ...(accountEquityFloor === null
+              ? ["ACCOUNT_EQUITY_FLOOR_REQUIRED"]
+              : []),
             ...(config.demoAcknowledgement === DEMO_ACKNOWLEDGEMENT
               ? []
               : ["DEMO_ACKNOWLEDGEMENT_INVALID"]),
@@ -1253,6 +1256,16 @@ async function main(): Promise<void> {
       automationActivity,
       managedSetup,
       aiCircuitOpenUntil: model.circuitOpenUntil,
+      strategyVersion,
+      requestedModel: environment.AI_MODEL ?? "unconfigured",
+      remainingCapitalRiskPercent:
+        config.tradingMode === "demo" && accountEquityFloor === null
+          ? null
+          : capitalRiskCap,
+      scenarioContext: await contextStore
+        .summary()
+        .then((value) => value ?? { state: "NOT_REQUESTED" })
+        .catch(() => ({ state: "UNAVAILABLE" })),
       tradingEnabled:
         eligibility.allowed &&
         gateway.canSubmitToBroker &&
@@ -1531,16 +1544,12 @@ async function main(): Promise<void> {
         ) {
           return;
         }
+        if (!model.canEvaluate) return;
         const quote = await marketClient.quote(config.symbol);
-        const window = evaluateAutomaticAnalysisWindow({
-          serverTime: quote.serverTime,
-          startWindowSeconds: config.automaticAnalysisStartWindowSeconds,
-        });
+        const window = evaluateScenarioExecutionWindow(quote.serverTime);
         if (
           !window.allowed &&
-          !window.reasonCodes.includes(
-            "AUTOMATIC_ANALYSIS_OUTSIDE_M1_START_WINDOW",
-          )
+          !window.reasonCodes.includes("SCENARIO_CANDLE_BOUNDARY_RESERVE")
         ) {
           logger.log("error", {
             event_name: "automatic_analysis_window_rejected",

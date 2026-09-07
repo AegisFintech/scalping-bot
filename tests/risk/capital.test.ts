@@ -2,6 +2,7 @@ import { OcoRiskEvaluator } from "../../apps/execution-service/src/oco-risk-eval
 import { describe, expect, it } from "vitest";
 import {
   capitalRisk,
+  availableCapitalRiskPercent,
   type CapitalState,
 } from "../../packages/risk-engine/src/capital.js";
 
@@ -20,6 +21,17 @@ const evaluate = (
     observedHighWater: "10000",
   });
 describe("capital-aware risk reductions", () => {
+  it("reserves the equity floor inside the shared risk budget, including exact-floor and exhausted states", () => {
+    expect(availableCapitalRiskPercent("10000", "100", "9999")).toBe("0.01");
+    expect(availableCapitalRiskPercent("10000", "0.5", "9999")).toBe("0.005");
+    expect(availableCapitalRiskPercent("10000", "100", "10000")).toBe("0");
+    expect(availableCapitalRiskPercent("10000", "100", "10001")).toBe("0");
+    expect(availableCapitalRiskPercent("10000", "100", null)).toBe("1");
+    expect(() => availableCapitalRiskPercent("0", "100", null)).toThrow(
+      "CAPITAL_EQUITY_INVALID",
+    );
+    expect(() => availableCapitalRiskPercent("10000", "bad", "9999")).toThrow();
+  });
   it("does not mistake deposits or withdrawals for performance", () => {
     expect(evaluate("12000", "2000")).toMatchObject({
       drawdownPercent: "0",

@@ -11,7 +11,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from background import BackgroundReader
-from overview import operating_state, risk_summary
+from overview import context_state, operating_state, risk_summary
 from snapshot import api_url, load_snapshot
 from time_display import dataframe_for_display, format_gmt8_timestamp
 
@@ -174,8 +174,27 @@ def render_exposure(model: dict[str, Any]) -> None:
 
 def render_decision(model: dict[str, Any]) -> None:
     st.subheader("Latest decision & execution")
+    context = model.get("context", {})
+    if context:
+        state = context_state(context, datetime.now(UTC))
+        st.caption(
+            f"Market map: {state} · Refresh attempts in 24h: "
+            f"{context.get('calls_24h', 'Unavailable')} · "
+            f"Valid until: {format_gmt8_timestamp(context.get('valid_until'))}"
+        )
+        with st.expander("Model identity & refresh"):
+            st.write(f"Requested: {context.get('requested_model', 'Not requested')}")
+            st.write(f"Returned: {context.get('returned_model') or 'Unavailable'}")
+            st.write(f"Last request duration: {context.get('duration_ms', 'Unavailable')} ms")
+            st.caption(
+                "Maps refresh at most once per five minutes. "
+                "Local decisions are not paid API calls. Provider cost is unavailable."
+            )
     if model["outcome"] is not None:
-        st.write(f"Last completed analysis: **{model['outcome']}**")
+        outcome = (
+            "Waiting — no order attempted" if model["outcome"] == "DEFERRED" else model["outcome"]
+        )
+        st.write(f"Last completed analysis: **{outcome}**")
         st.caption(" · ".join(str(x) for x in model["reasons"]))
     if model["latest"]:
         table(model["latest"], "latest_decision")
@@ -278,6 +297,10 @@ else:
                     "latest": snapshot.get("latest", []),
                     "outcome": latest.get("outcome"),
                     "reasons": latest.get("reasonCodes", []),
+                    "context": {
+                        "requested_model": status.get("requestedModel", "Unavailable"),
+                        **status.get("scenarioContext", {}),
+                    },
                 },
                 render_decision,
             )

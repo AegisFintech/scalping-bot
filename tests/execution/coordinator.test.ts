@@ -398,6 +398,30 @@ function options(
 }
 
 describe("analysis coordinator", () => {
+  it("defers for a background context without requesting a model decision or placing orders", async () => {
+    const o = options();
+    o.model.prepare = vi.fn().mockResolvedValue("SCENARIO_REFRESH_STARTED");
+    const analyze = vi.spyOn(o.model, "analyze");
+    const place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+      "DEFERRED",
+    );
+    expect(analyze).not.toHaveBeenCalled();
+    expect(place).not.toHaveBeenCalled();
+  });
+  it("rejects an unavailable context journal without any broker placement", async () => {
+    const o = options();
+    const analyze = vi.spyOn(o.model, "analyze");
+    const place = vi.spyOn(o.gateway, "placeOco");
+    o.model.prepare = vi
+      .fn()
+      .mockRejectedValue(new Error("SCENARIO_JOURNAL_UNAVAILABLE"));
+    expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+      "REJECTED",
+    );
+    expect(analyze).not.toHaveBeenCalled();
+    expect(place).not.toHaveBeenCalled();
+  });
   it("derives exact tick-aligned entry, stop, and expiry bounds for the model", () => {
     expect(
       deriveModelExecutionBounds({

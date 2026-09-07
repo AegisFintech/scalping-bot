@@ -5,20 +5,19 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.0-overhaul.1`, policy `conservative-v1`, prompt
-`system-v16`, model-response schema `2.1`. This repository update does not launch
-trading or deploy services. See the [implementation and evidence report](docs/overhaul-report.md)
-for what was measured, what changed, and what remains unverified.
+The current source release is `0.2.1-reusable-scenarios.1`, policy `conservative-v1`.
+The model creates a reusable five-minute chart map with `scenario-v2` / schema
+`scenario-1.0`; local code derives protected OCO proposals using
+`scenario-execution-v1` and the unchanged strict schema `2.1`.
+See the [integrated implementation and rollout report](docs/reusable-scenario-report.md).
 
-The [automatic chart-scenario research workflow](docs/scenario-automation-report.md)
-adds chart capture and conditional recovery/failed-reclaim/extension plans, with
-deterministic confirmation, sizing and automatic exits in an executable replay.
-It is **not connected to broker execution** and does not replace the running bot.
-`npm run scenario:observe -- artifacts/scenario-observation.json` makes one bounded,
-potentially chargeable model request from current local market/analytics services.
+The original [completed-candle directional research](docs/scenario-automation-report.md)
+remains a separate observe/replay tool. Its hold/failed-reclaim confirmations and
+simulated structural/time closes are not the production OCO trigger rule.
+`npm run scenario:observe -- artifacts/scenario-observation.json` makes one
+potentially chargeable observation without broker submission authority.
 `npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/scenario-replay.json`
-runs the operator-example software fixture without a network connection.
-Both commands refuse to overwrite their output files. Neither enables trading.
+is a synthetic software check, not evidence of strategy performance.
 
 ## Overview
 
@@ -31,9 +30,9 @@ snapshots refresh in a background worker every ten seconds; small live sections
 update independently while navigation and control inputs stay in place.
 Light and dark themes retain readable contrast. Financial observations older
 than 30 seconds are withheld.
-The screenshots show the new UI reading the existing demo deployment; new
-capital-policy telemetry remains unavailable until its migration and reviewed
-rollout. Prompts, analytics, provider details and infrastructure live in diagnostics.
+The screenshots show the integrated deployment under a maintenance stop.
+Capital telemetry is available; the next setup ceiling is withheld while the
+explicit equity floor remains unset. Prompts, analytics, provider details and infrastructure live in diagnostics.
 Authenticated pause and emergency controls remain available in the sidebar.
 
 [Trade history screenshot](docs/images/dashboard-history.png)
@@ -66,24 +65,31 @@ Authenticated pause and emergency controls remain available in the sidebar.
 
 The existing EPRToken endpoint accepted the exact requested identifier
 `gpt-6-astra/u64` with Responses and strict JSON Schema, returning `gpt-6-astra`.
-Both identifiers, timing and available token usage are retained. Later benchmark
+Both identifiers, timing and available token usage are retained. Revised staging
+and production-service probes passed in 17.7 and 18.8 seconds. Earlier benchmark
 requests returned HTTP 403; continuous availability and pricing remain unresolved.
 No fallback model is substituted. Temperature and reasoning-effort parameters
 are omitted; the `/u64` suffix is sent literally, not interpreted by this code.
 
-The default provider input is bounded structured data. A small matched benchmark
-saved 65.8% of request bytes without the image but did **not** demonstrate lower
-latency or better trading quality. Image benchmarking remains available. Every
-output still passes local schema and semantic checks. Timeouts, one in-flight
-request, bounded response bodies and circuit breaking contain provider failures.
-Unknown model cost is `null`, never zero.
+The active scenario input contains the exact M15/M5/M1 chart and bounded completed
+candle tails (12/18/30). The earlier matched image/structured benchmark did not
+establish a decision-quality winner. Chart input is retained for the requested
+workflow; no claim of superior net performance is made. Every response crosses
+strict schema, identity, tick-precision and fixed-validity checks. Requests have a
+45-second deadline, no automatic retry, bounded bodies and a circuit breaker.
 
-Production analysis retains one durable claim per completed M1 context and
-60-second preferred pending validity (120-second hard maximum). After inference
-and again before placement, quotes/account state are refreshed and the completed
-candle identity must still match. Broker STOP_LIMIT orders provide the event
-trigger. This is not institutional HFT. Faster/directional alternatives are
-research candidates; the available evidence does not justify enabling them.
+A database claim limits paid map requests to one per five minutes, including
+failures and restarts. Local execution can evaluate every five seconds (with a
+five-second candle-rollover reserve), without waiting for inference. A map can
+produce one OCO intent. Crossed levels, insufficient reward, short remaining
+validity or consumed maps wait without another paid call. Individual decisions
+still require fresh quotes, matching completed-candle context and full account,
+spread, fee, margin and risk approval. Pending orders retain 60-second validity,
+starting from the fresh local decision and bounded by the map's expiry.
+
+Broker STOP_LIMIT orders handle triggers. This is retail event-triggered execution
+with a polling decision loop, not institutional HFT. `DEFERRED` means waiting;
+`REJECTED` retains actual validation failures. Neither means orders are open.
 
 ## Configuration and migration
 

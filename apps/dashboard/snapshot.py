@@ -97,6 +97,8 @@ def load_snapshot(view: str) -> dict[str, Any]:
                         (scope[0],),
                     )
                     data["capital"] = capital[0] if capital else {}
+                    if "remainingCapitalRiskPercent" in status:
+                        data["capital"]["risk_cap_percent"] = status["remainingCapitalRiskPercent"]
                 data["positions"] = rows(
                     """SELECT p.side, p.state, p.volume, p.entry_price,
                         p.stop_loss, p.take_profit, p.updated_at
@@ -118,7 +120,9 @@ def load_snapshot(view: str) -> dict[str, Any]:
                 )
                 data["latest"] = rows(
                     """SELECT ar.analysis_time, ar.state AS analysis,
-                        ar.rejection_reasons AS reasons, og.state AS order_group,
+                        CASE WHEN ar.state='DEFERRED'
+                          THEN jsonb_build_array(to_jsonb(ar)->>'deferral_reason')
+                          ELSE ar.rejection_reasons END AS reasons, og.state AS order_group,
                     (SELECT count(*) FROM fills f JOIN orders o ON o.id=f.order_id
                         WHERE o.order_group_id=og.id) AS fills,
                     (SELECT sum(t.realized_pnl) FROM trades t

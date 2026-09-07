@@ -13,6 +13,7 @@ import {
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { CapitalRiskStore } from "../../apps/execution-service/src/capital-risk-store.js";
+import { PostgresContextStore } from "../../apps/execution-service/src/scenario-context.js";
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { PostgresAutomaticAnalysisCampaign } from "../../apps/execution-service/src/automatic-analysis-campaign.js";
 import { PostgresAutomaticTradeCampaign } from "../../apps/execution-service/src/automatic-trade-campaign.js";
@@ -224,6 +225,7 @@ describe("PostgreSQL migrations integration", () => {
         "0013",
         "0014",
         "0015",
+        "0016",
       ]);
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
@@ -633,6 +635,66 @@ describe("PostgreSQL migrations integration", () => {
         environment: "test",
         persistedCandleTails: { M1: 1, M5: 1, M15: 1 },
       });
+      const contextStore = new PostgresContextStore(isolated, {
+        accountId: demoAccountId,
+        symbolId,
+        mode: "demo",
+      });
+      const contextClaim = {
+        id: randomUUID(),
+        sourceAnalysisId: analysisId,
+        capturedAt: new Date().toISOString(),
+        tickSize: "0.01",
+      };
+      const claims = await Promise.all([
+        contextStore.claim(contextClaim),
+        new PostgresContextStore(isolated, {
+          mode: "demo",
+          symbolId,
+          accountId: demoAccountId,
+        }).claim({ ...contextClaim, id: randomUUID() }),
+      ]);
+      expect(claims.filter(Boolean)).toHaveLength(1);
+      const currentContext = await contextStore.latest();
+      expect(currentContext?.state).toBe("REQUESTING");
+      await contextStore.finish(
+        currentContext!.id,
+        null,
+        "AI_PROVIDER_TIMEOUT",
+      );
+      expect((await contextStore.latest())?.state).toBe("FAILED");
+      expect(
+        await new PostgresContextStore(isolated, {
+          accountId: demoAccountId,
+          symbolId,
+          mode: "demo",
+        }).claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+      const scenarioSchedule = new PostgresAutomaticAnalysisSchedule({
+        pool: isolated,
+        accountId: demoAccountId,
+        symbolId,
+        scenarioCadence: true,
+      });
+      const slot = "2026-08-24T00:00:25.000Z";
+      expect(
+        await scenarioSchedule.claim({
+          intervalStart: slot,
+          brokerServerTime: "2026-08-24T00:00:26.000Z",
+        }),
+      ).toBe(true);
+      await scenarioSchedule.complete(slot, {
+        analysisId,
+        outcome: "DEFERRED",
+        reasonCodes: ["SCENARIO_REFRESH_STARTED"],
+        placement: null,
+      });
+      expect(
+        await scenarioSchedule.claim({
+          intervalStart: slot,
+          brokerServerTime: "2026-08-24T00:00:27.000Z",
+        }),
+      ).toBe(false);
       const analysisCampaign = new PostgresAutomaticAnalysisCampaign({
         pool: isolated,
         accountId: demoAccountId,
@@ -1668,6 +1730,18 @@ describe("PostgreSQL migrations integration", () => {
         state: "FAILED",
         cancellation_reason: null,
       });
+      // The database, not an in-memory cache, prevents map reuse after any intent.
+      await isolated.query(
+        "UPDATE order_groups SET context_plan_id=$2 WHERE id=$1",
+        [cancelledGroupId, currentContext!.id],
+      );
+      await expect(
+        isolated.query(
+          "UPDATE order_groups SET context_plan_id=$2 WHERE id=$1",
+          [rejectedGroupId, currentContext!.id],
+        ),
+      ).rejects.toMatchObject({ code: "23505" });
+      expect((await contextStore.latest())?.consumed).toBe(true);
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);

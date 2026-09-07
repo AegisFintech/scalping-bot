@@ -124,13 +124,16 @@ export class PostgresDecisionTrail implements DecisionTrail {
     await this.#options.pool.query(
       `UPDATE analysis_runs
        SET state = $2, rejection_reasons = CASE WHEN $2 = 'REJECTED' THEN $3::jsonb ELSE rejection_reasons END,
-           updated_at = $4
+           updated_at = $4, deferral_reason = CASE WHEN $2='DEFERRED' THEN $5 ELSE deferral_reason END
        WHERE id = $1`,
       [
         analysisId,
         transition.to,
         JSON.stringify(terminal),
         transition.occurredAt,
+        transition.to === "DEFERRED"
+          ? (transition.reasonCodes[0] ?? null)
+          : null,
       ],
     );
     await this.#audit(
@@ -516,6 +519,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
       readonly latencyMs: number;
       readonly retryCount: number;
       readonly telemetry?: ProviderTelemetry;
+      readonly contextPlanId?: string;
     } = {
       latencyMs: 0,
       retryCount: 0,
@@ -552,15 +556,29 @@ export class PostgresDecisionTrail implements DecisionTrail {
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
+      if (timing.contextPlanId !== undefined) {
+        const plan = await client.query(
+          `SELECT id FROM scenario_contexts WHERE id=$1 AND account_id=$2 AND symbol_id=$3 AND mode=$4 AND state='READY' AND valid_until >= $5`,
+          [
+            timing.contextPlanId,
+            this.#options.accountId,
+            this.#options.symbolId,
+            this.#options.mode,
+            response.valid_until,
+          ],
+        );
+        if (plan.rowCount !== 1 || timing.telemetry !== undefined)
+          throw new Error("CONTEXT_PLAN_SCOPE_INVALID");
+      }
       await client.query(
         `INSERT INTO model_requests
           (id, analysis_id, request_id, api_style, model, prompt_version, schema_version,
            payload_mode, system_prompt, system_prompt_sha256, payload_redacted,
            payload_sha256, status, attempt_count, requested_at, completed_at,
-           duration_ms)
+           duration_ms, context_plan_id, decision_source)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12,
                  'COMPLETED', $13, now() - ($14 * interval '1 millisecond'),
-                 now(), $14)`,
+                 now(), $14, $15, $16)`,
         [
           requestId,
           analysisId,
@@ -576,6 +594,10 @@ export class PostgresDecisionTrail implements DecisionTrail {
           createHash("sha256").update(redactedRequest).digest("hex"),
           timing.retryCount + 1,
           timing.latencyMs,
+          timing.contextPlanId ?? null,
+          timing.contextPlanId === undefined
+            ? "PROVIDER"
+            : "DETERMINISTIC_PLAN",
         ],
       );
       if (timing.telemetry !== undefined) {
@@ -703,8 +725,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
       }
       await client.query(
-        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at)
-         VALUES ($1, $2, $3, $4, 'INTENT_RECORDED', $5)`,
+        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, context_plan_id)
+         VALUES ($1, $2, $3, $4, 'INTENT_RECORDED', $5,
+           (SELECT context_plan_id FROM model_requests WHERE analysis_id=$2 ORDER BY completed_at DESC LIMIT 1))`,
         [
           buyCommand.orderGroupId,
           analysisId,

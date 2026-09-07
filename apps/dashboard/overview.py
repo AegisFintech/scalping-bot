@@ -29,6 +29,11 @@ def operating_state(status: dict[str, Any]) -> tuple[str, str]:
     if status.get("unavailable") or not status.get("mode"):
         return "Unavailable", "Execution status could not be verified."
     if status.get("emergencyStopped") is True:
+        if "ACCOUNT_EQUITY_FLOOR_REQUIRED" in status.get("reasonCodes", []):
+            return "Stopped", (
+                "An explicit minimum equity is needed before demo orders can resume. "
+                "Protective management continues."
+            )
         return "Stopped", "Emergency stop is active. Protective management continues."
     if status.get("pauseNewAnalyses") is True:
         return "Paused", "New analysis is paused. Existing orders and positions remain managed."
@@ -42,6 +47,20 @@ def operating_state(status: dict[str, Any]) -> tuple[str, str]:
     if status.get("automaticAnalysisEnabled") is not True:
         return "Manual analysis", "Automatic analysis is disabled."
     return "Monitoring", "Waiting for a qualified opportunity; no trade is guaranteed."
+
+
+def context_state(context: dict[str, Any], now: datetime) -> str:
+    if context.get("consumed"):
+        return "Consumed — waiting for next map"
+    if context.get("state") == "READY":
+        try:
+            expiry = datetime.fromisoformat(str(context["valid_until"]))
+            if expiry.tzinfo is None:
+                return "Unavailable"
+            return "Ready" if expiry > now else "Expired — waiting for refresh"
+        except (KeyError, ValueError):
+            return "Unavailable"
+    return str(context.get("state", "Unavailable"))
 
 
 def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) -> dict[str, str]:
@@ -72,6 +91,19 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
             result["daily_remaining"] = money(remaining)
             result["drawdown"] = money(capital.get("drawdown_percent")) + "%"
             result["setup_budget"] = money(min(remaining, equity * Decimal("0.00001") * multiplier))
+            if "risk_cap_percent" in capital:
+                cap = capital["risk_cap_percent"]
+                result["setup_budget"] = (
+                    "Unavailable"
+                    if cap is None
+                    else money(
+                        min(
+                            remaining,
+                            equity * Decimal("0.00001") * multiplier,
+                            equity * max(Decimal(0), Decimal(str(cap))) / 100,
+                        )
+                    )
+                )
         return result
     except (KeyError, InvalidOperation, ValueError):
         return unavailable

@@ -1,6 +1,27 @@
 import { Decimal } from "decimal.js";
 import { canonical, decimal, signedDecimal } from "./decimal.js";
 
+/** Account-wide remaining loss capacity, before allocating the OCO race budget. */
+export function availableCapitalRiskPercent(
+  equity: string,
+  dailyRemaining: string,
+  equityFloor: string | null,
+): string {
+  const current = decimal(equity);
+  if (current.lte(0)) throw new Error("CAPITAL_EQUITY_INVALID");
+  const remaining = Decimal.min(
+    decimal(dailyRemaining),
+    equityFloor === null
+      ? current
+      : Decimal.max(0, current.minus(decimal(equityFloor))),
+  );
+  return remaining
+    .div(current)
+    .mul(100)
+    .toDecimalPlaces(10, Decimal.ROUND_DOWN)
+    .toFixed();
+}
+
 export interface CapitalState {
   readonly referenceEquity: string;
   readonly highWaterEquity: string;

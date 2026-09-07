@@ -35,6 +35,34 @@ export interface AutomaticAnalysisWindow {
   readonly reasonCodes: readonly string[];
 }
 
+/** Five-second local decisions; reserve the final five seconds for candle rollover. */
+export function evaluateScenarioExecutionWindow(
+  serverTime: string,
+): AutomaticAnalysisWindow {
+  const ms = Date.parse(serverTime);
+  if (
+    !/(Z|[+-]\d{2}:\d{2})$/.test(serverTime) ||
+    !Number.isSafeInteger(ms) ||
+    ms < 0
+  )
+    return {
+      allowed: false,
+      intervalStart: null,
+      reasonCodes: ["SCENARIO_SERVER_TIME_INVALID"],
+    };
+  if (ms % 60_000 >= 55_000)
+    return {
+      allowed: false,
+      intervalStart: null,
+      reasonCodes: ["SCENARIO_CANDLE_BOUNDARY_RESERVE"],
+    };
+  return {
+    allowed: true,
+    intervalStart: new Date(Math.floor(ms / 5000) * 5000).toISOString(),
+    reasonCodes: [],
+  };
+}
+
 export function evaluateAutomaticAnalysisWindow(input: {
   readonly serverTime: string;
   readonly startWindowSeconds: number;
@@ -79,15 +107,21 @@ export class PostgresAutomaticAnalysisSchedule {
   readonly #pool: pg.Pool;
   readonly #accountId: string;
   readonly #symbolId: string;
+  readonly #table:
+    "automatic_analysis_intervals" | "scenario_decision_intervals";
 
   constructor(input: {
     readonly pool: pg.Pool;
     readonly accountId: string;
     readonly symbolId: string;
+    readonly scenarioCadence?: boolean;
   }) {
     this.#pool = input.pool;
     this.#accountId = input.accountId;
     this.#symbolId = input.symbolId;
+    this.#table = input.scenarioCadence
+      ? "scenario_decision_intervals"
+      : "automatic_analysis_intervals";
   }
 
   async claim(input: {
@@ -95,7 +129,7 @@ export class PostgresAutomaticAnalysisSchedule {
     readonly brokerServerTime: string;
   }): Promise<boolean> {
     const result = await this.#pool.query(
-      `INSERT INTO automatic_analysis_intervals
+      `INSERT INTO ${this.#table}
         (account_id, symbol_id, interval_start, broker_server_time)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (account_id, symbol_id, interval_start) DO NOTHING
@@ -112,7 +146,7 @@ export class PostgresAutomaticAnalysisSchedule {
 
   async complete(intervalStart: string, result: CycleResult): Promise<void> {
     const updated = await this.#pool.query(
-      `UPDATE automatic_analysis_intervals
+      `UPDATE ${this.#table}
        SET cycle_id = $4,
            analysis_id = (SELECT id FROM analysis_runs WHERE id = $4),
            outcome = $5, completed_at = now()

@@ -24,6 +24,8 @@ function server(
     status: () =>
       Promise.resolve({
         mode,
+        strategyVersion: "0.2.1-reusable-scenarios.1",
+        requestedModel: "gpt-6-astra/u64",
         symbol: "XAUUSD",
         accountType: "demo",
         emergencyStopped: true,
@@ -86,6 +88,17 @@ function server(
 }
 
 describe("demo baseline control", () => {
+  it("reports loaded release and model without granting execution authority", async () => {
+    const app = server("demo", vi.fn());
+    const response = await app.inject({ method: "GET", url: "/v1/status" });
+    expect(response.json()).toMatchObject({
+      strategyVersion: "0.2.1-reusable-scenarios.1",
+      requestedModel: "gpt-6-astra/u64",
+      tradingEnabled: false,
+      emergencyStopped: true,
+    });
+    await app.close();
+  });
   it("requires control authentication and demo mode", async () => {
     const initialize = vi.fn(() =>
       Promise.resolve({ tradingDay: "2026-08-24", timezone: "UTC" }),

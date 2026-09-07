@@ -1,16 +1,13 @@
 # Architecture
 
-Current source: `0.2.0-overhaul.1`, conservative policy v1. Previous release
+Current source: `0.2.1-reusable-scenarios.1`, conservative policy v1. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
-The separate `packages/scenario-engine` research path captures typed market data,
-uses existing Python analytics to render M15/M5/M1, and calls the bounded provider
-with a strict scenario-only schema. A deterministic replay consumes subsequent
-completed candles and bid/ask observations, reuses `sizePosition`/commission/spread
-validation and simulates entry plus automatic exit. Model inference and replay are
-independent promises. It has no broker gateway or SQL mutations. Replay recovery
-rebuilds state from a checksummed event journal; this is not broker reconciliation.
-See [its implementation boundary](scenario-automation-report.md).
+Production uses a five-minute immutable scenario context, a durable request journal,
+and deterministic protected OCO execution. Paid inference runs separately from
+execution and independent maintenance. The original directional replay remains
+research-only; its confirmation/structural-close rules are distinct from OCO price
+triggers. See [the integration report](reusable-scenario-report.md).
 
 ## Services and authority
 
@@ -19,8 +16,10 @@ flowchart LR
   Broker[cTrader] --> Market[Market data service]
   Market --> Analytics[Python completed-candle analytics]
   Analytics --> Coordinator[Execution coordinator]
-  Coordinator --> AI[AI orchestrator / EPRToken]
-  AI --> Coordinator
+  Coordinator --> Claim[Durable context request claim]
+  Claim --> AI[Asynchronous AI orchestrator / EPRToken]
+  AI --> Context[Immutable five-minute map]
+  Context --> Coordinator
   Coordinator --> Risk[Deterministic risk engine]
   Risk --> Gateway[Paper / demo / shadow / disabled live]
   Gateway --> Broker
@@ -49,16 +48,24 @@ loopback and deployments support Debian/systemd.
 3. `python.analytics` validates completed M1/M5/M15 candles, alignment, depth
    and canonical decimal strings. Full 600/500/300 histories feed indicators;
    bounded numerical features/raw tails and a deterministic chart are produced.
-4. `coordinator.ts` records input provenance, checks safety/spread/account and
-   derives feasible tick-aligned price bounds before paying for inference.
-   Production scheduler admission still uses a durable account/symbol/M1 claim.
-5. `ai-orchestrator` sends exact model `gpt-6-astra/u64` through Responses,
-   using prompt v16, strict schema 2.1 and structured numerical input. The
-   adapter also supports chart experiments and mocked Chat Completions. It
-   bounds request/response sizes, output tokens, concurrency, timeout and retries.
-6. Local schema validation is repeated across the HTTP boundary. The coordinator
-   independently checks identity, expiry, precision, technical levels, geometry,
-   spread and the unchanged completed-candle context after inference.
+4. `coordinator.ts` records completed-candle provenance and checks safety,
+   spread, account, affordable stops and fee coverage before a refresh can start.
+   Five-second broker-time claims admit local decisions; the final five seconds
+   before M1 rollover are reserved. `DEFERRED` is terminal waiting with a separate
+   deferral reason; actual validation failures remain `REJECTED`.
+5. `scenario-context.ts` claims at most one refresh per account/symbol/mode per
+   five minutes using a transaction/advisory lock. The source analysis links the
+   archived chart and market inputs. A separate task calls `/v1/scenario`, using
+   exact `gpt-6-astra/u64`, prompt `scenario-v2`, strict `scenario-1.0`, chart and
+   bounded candle tails. Completion/failure and usage are durable. An interrupted
+   request is not retried during its cooldown, because provider acceptance is unknown.
+6. `ScenarioHttpPlanner` independently validates raw JSON, identity, prompt hash,
+   timing, model request pin and telemetry. `scenarioOco` derives a schema-2.1 pair
+   from an unconsumed map. Thresholds are not chased; distant entries, insufficient
+   reward or short remaining validity defer. Each local decision still uses fresh
+   quotes and unchanged completed-candle context checks across its own short path.
+   `model_requests.decision_source` distinguishes local artifacts from paid calls;
+   real refresh attempts live in `scenario_contexts`.
 7. The existing fee-buffered TP / double-SL transform is recorded separately from
    immutable model output. Bound arithmetic projects inward onto the pip grid;
    no broker price or untrusted model value is rounded into acceptance.
@@ -67,7 +74,9 @@ loopback and deployments support Debian/systemd.
    conversion, exact margin estimates and notional limits. It never rounds up to
    minimum volume. Existing/unpriced account exposure blocks replacement.
 9. Account and market data are refreshed again; changes invalidate the plan.
-   Final risk-cap reductions also reject previously sized commands. Transactional
+   Final risk-cap reductions also reject previously sized commands. A unique
+   `order_groups.context_plan_id` consumes each map at intent, even when broker
+   submission later fails or becomes uncertain. Transactional
    idempotent intent precedes gateway calls. cTrader STOP_LIMIT entries and
    fill-relative protections handle the immediate broker event path.
 10. Broker events are durably deduplicated/mapped. Unknown, partial, conflicting

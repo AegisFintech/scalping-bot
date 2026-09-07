@@ -138,6 +138,8 @@ export class PostgresAutomaticAnalysisWatchdog {
   readonly #serviceStartedAt: Date;
   readonly #stallAfterMs: number;
   readonly #marketActiveWithinMs: number;
+  readonly #intervalTable:
+    "automatic_analysis_intervals" | "scenario_decision_intervals";
 
   constructor(input: {
     readonly pool: pg.Pool;
@@ -153,6 +155,7 @@ export class PostgresAutomaticAnalysisWatchdog {
     readonly serviceStartedAt: Date;
     readonly stallAfterMs: number;
     readonly marketActiveWithinMs?: number;
+    readonly scenarioCadence?: boolean;
   }) {
     this.#pool = input.pool;
     this.#accountId = input.accountId;
@@ -167,6 +170,9 @@ export class PostgresAutomaticAnalysisWatchdog {
     this.#serviceStartedAt = input.serviceStartedAt;
     this.#stallAfterMs = input.stallAfterMs;
     this.#marketActiveWithinMs = input.marketActiveWithinMs ?? 120_000;
+    this.#intervalTable = input.scenarioCadence
+      ? "scenario_decision_intervals"
+      : "automatic_analysis_intervals";
   }
 
   async snapshot(input: {
@@ -178,7 +184,7 @@ export class PostgresAutomaticAnalysisWatchdog {
     const result = await this.#pool.query<ActivityRows>(
       `SELECT
          (SELECT max(ai.claimed_at)
-          FROM automatic_analysis_intervals ai
+          FROM ${this.#intervalTable} ai
           JOIN strategy_versions sv ON sv.id = $3
           LEFT JOIN analysis_runs ar ON ar.id = ai.analysis_id
           WHERE ai.account_id = $1 AND ai.symbol_id = $2
@@ -186,7 +192,7 @@ export class PostgresAutomaticAnalysisWatchdog {
                  OR (ai.analysis_id IS NULL AND ai.claimed_at >= sv.created_at)))
            AS last_claimed_at,
          (SELECT max(ai.completed_at)
-          FROM automatic_analysis_intervals ai
+          FROM ${this.#intervalTable} ai
           JOIN analysis_runs ar ON ar.id = ai.analysis_id
           WHERE ai.account_id = $1 AND ai.symbol_id = $2
             AND ar.strategy_version_id = $3) AS last_completed_at,
