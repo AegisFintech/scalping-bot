@@ -21,8 +21,6 @@ def test_control_and_position_precedence() -> None:
     assert overview.operating_state(status)[0] == "Paused"
     status["emergencyStopped"] = True
     assert overview.operating_state(status)[0] == "Stopped"
-    status["reasonCodes"] = ["ACCOUNT_EQUITY_FLOOR_REQUIRED"]
-    assert "minimum equity" in overview.operating_state(status)[1]
 
 
 def test_context_validity_and_consumption_are_distinct_from_provider_success() -> None:
@@ -46,19 +44,60 @@ def test_budget_is_unavailable_without_current_policy_and_reduced_inside_it() ->
         "reconciled_at": now,
         "current_equity": "9900",
         "baseline_equity": "10000",
-        "loss_percent": "0.5",
+        "loss_percent": "1",
+        "locked_out": False,
         "realized_pnl": "-90",
         "unrealized_pnl": "-10",
     }
     assert overview.risk_summary(daily, {}, now)["setup_budget"] == "Unavailable"
-    capital = {"updated_at": now, "risk_multiplier": "0.5", "drawdown_percent": "1"}
+    capital = {
+        "updated_at": now,
+        "risk_multiplier": "0.5",
+        "drawdown_percent": "1",
+        "risk_cap_percent": "4",
+        "risk_policy": {
+            "version": "fixed-risk-v2",
+            "setupRiskPercent": "1",
+            "dailyLossLimitPercent": "5",
+        },
+    }
     result = overview.risk_summary(daily, capital, now)
-    assert result["setup_budget"] == "0.05"
-    assert result["daily_remaining"] == "50.00"
+    assert result["setup_budget"] == "49.50"
+    assert result["daily_remaining"] == "400.00"
     capital["risk_cap_percent"] = "0.0001"
     assert overview.risk_summary(daily, capital, now)["setup_budget"] == "0.01"
+    daily["locked_out"] = True
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "0.00"
+    assert overview.risk_summary(daily, capital, now)["daily_remaining"] == "0.00"
     capital["risk_cap_percent"] = None
     assert overview.risk_summary(daily, capital, now)["setup_budget"] == "Unavailable"
+
+
+def test_budget_never_guesses_a_missing_or_invalid_execution_policy() -> None:
+    now = datetime(2026, 9, 7, tzinfo=UTC)
+    daily = {
+        "reconciled_at": now,
+        "current_equity": "10000",
+        "baseline_equity": "10000",
+        "loss_percent": "0",
+        "locked_out": False,
+    }
+    for policy in [
+        None,
+        {},
+        {"version": "unknown"},
+        {"version": "fixed-risk-v2", "setupRiskPercent": "NaN", "dailyLossLimitPercent": "5"},
+    ]:
+        capital = {
+            "updated_at": now,
+            "risk_multiplier": "1",
+            "drawdown_percent": "0",
+            "risk_cap_percent": "5",
+            "risk_policy": policy,
+        }
+        result = overview.risk_summary(daily, capital, now)
+        assert result["setup_budget"] == "Unavailable"
+        assert result["daily_remaining"] == "Unavailable"
 
 
 def test_rendered_dashboard_withholds_unavailable_data_and_rejects_unauthorized_control(

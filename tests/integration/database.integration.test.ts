@@ -12,6 +12,11 @@ import {
   migrate,
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
+import { ensureRuntimeIdentity } from "../../packages/database/src/registry.js";
+import {
+  loadExecutionConfig,
+  strategyConfigHash,
+} from "../../apps/execution-service/src/config.js";
 import { CapitalRiskStore } from "../../apps/execution-service/src/capital-risk-store.js";
 import { PostgresContextStore } from "../../apps/execution-service/src/scenario-context.js";
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
@@ -227,6 +232,43 @@ describe("PostgreSQL migrations integration", () => {
         "0015",
         "0016",
       ]);
+      const stoppedConfig = loadExecutionConfig({});
+      const registryInput = {
+        accountKey: "fixed-risk-identity-fixture",
+        provider: "paper" as const,
+        environment: "paper" as const,
+        accountType: "paper" as const,
+        currency: "USD",
+        metadata: decisionSnapshot("2026-09-07T00:00:00Z").metadata,
+        strategyVersion: "fixed-risk-identity-test",
+        codeHash: "fixed-risk-code",
+        configHash: strategyConfigHash(stoppedConfig),
+        promptVersion: "scenario-execution-v1",
+        schemaVersion: "2.1",
+        featureVersion: "1.1",
+      };
+      const stoppedIdentity = await ensureRuntimeIdentity(
+        isolated,
+        registryInput,
+      );
+      expect(
+        await ensureRuntimeIdentity(isolated, {
+          ...registryInput,
+          configHash: strategyConfigHash({
+            ...stoppedConfig,
+            automaticAnalysisEnabled: true,
+          }),
+        }),
+      ).toEqual(stoppedIdentity);
+      await expect(
+        ensureRuntimeIdentity(isolated, {
+          ...registryInput,
+          configHash: strategyConfigHash({
+            ...stoppedConfig,
+            maxPositionNotional: "1000",
+          }),
+        }),
+      ).rejects.toThrow("STRATEGY_VERSION_IMMUTABILITY_VIOLATION");
       const column = await isolated.query<{ exists: boolean }>(
         `SELECT EXISTS (
            SELECT 1 FROM information_schema.columns
@@ -328,6 +370,47 @@ describe("PostgreSQL migrations integration", () => {
         [demoAccountId],
       );
       expect(persisted.rows[0]?.baseline_equity).toBe("10000.0000000000");
+      const dailyInput = {
+        accountId: demoAccountId,
+        account: baselineInput.account,
+        timezone: "UTC",
+        thresholdPercent: "5",
+        includeUnrealized: true,
+        netFlows: "5",
+        allowBaselineBootstrap: false,
+        baselineCaptureGraceSeconds: 300,
+        now: baselineInput.now,
+      };
+      expect(await risk.reconcile(dailyInput)).toMatchObject({
+        lockedOut: false,
+        remainingLossBudget: "500",
+      });
+      expect(
+        await risk.reconcile({
+          ...dailyInput,
+          account: { ...baselineInput.account, equity: "9505" },
+        }),
+      ).toMatchObject({
+        lockedOut: true,
+        remainingLossBudget: "0",
+        lossPercent: "5",
+      });
+      expect(
+        await new DailyRiskStore(isolated).reconcile(dailyInput),
+      ).toMatchObject({
+        lockedOut: true,
+        remainingLossBudget: "0",
+      });
+      expect(
+        await new DailyRiskStore(isolated).reconcile({
+          ...dailyInput,
+          now: new Date("2026-08-25T00:00:01Z"),
+          account: {
+            ...baselineInput.account,
+            reconciledAt: "2026-08-25T00:00:01Z",
+          },
+        }),
+      ).toMatchObject({ lockedOut: false, remainingLossBudget: "500" });
       const capitalStore = new CapitalRiskStore(isolated);
       const capitalInput = {
         accountId: demoAccountId,

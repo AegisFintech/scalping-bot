@@ -1,12 +1,12 @@
 # Current release operations
 
-For release `0.2.1-reusable-scenarios.1`, follow the current
-[rollout and rollback record](reusable-scenario-report.md). Preserve the durable
-analysis pause, reconcile broker state, back up before migrations 0015–0016, and
-recreate PM2 processes with the reviewed small environment to remove stale model
-and policy overrides. Verify literal requested model from actual adapter telemetry.
-Do not clear stops or reset daily/capital accounting to pass readiness. A blank
-`ACCOUNT_EQUITY_FLOOR` blocks enabled demo startup; credentials are insufficient.
+For release `0.2.2-fixed-risk.3`, follow [the fixed-policy rollout record](fixed-risk-report.md).
+The operator removed the absolute equity-floor requirement and authorized a fixed
+1% setup ceiling / 5% UTC daily budget. Recreate processes from the reviewed small
+environment to remove cached policy overrides. Verify the exact requested model
+and fixed risk policy in the running status. Preserve loss locks, capital-flow
+history, drawdown reference, notional authorization and broker reconciliation.
+Never reset accounting or enable live submission to pass readiness.
 
 `DEFERRED` means a local decision is waiting, with no order attempted. A READY
 map is not an order. Check active strategy orders and fresh broker reconciliation
@@ -15,7 +15,8 @@ pre-provider/transport failures; unknown costs remain null. Protective maintenan
 runs during a pending request. A five-minute refresh cooldown is not a stalled bot. The current stopped PM2
 deployment uses the verified Node 22.23.2 binary at `/opt/scalper-node22/bin/node`;
 service recreation must use that binary, not the system Node 24 or an ephemeral
-package cache. Keep the current maintenance hold until the equity floor is supplied.
+package cache. Verify risk budgets and reconciliation under the maintenance hold before
+restoring previously authorized demo controls.
 
 Chart-scenario research commands are described in
 [the scenario report](scenario-automation-report.md). Observation uses the existing
@@ -28,9 +29,9 @@ For `0.2.0-overhaul.1`, start with [configuration/migration](configuration.md) a
 [the implementation report](overhaul-report.md). The populated environment was
 simplified in ISSUE-072; the AI and execution processes still retain their previous
 release and in-memory settings. Only the dashboard was subsequently restarted.
-Fixed policy conflicts and the missing capital floor must be resolved before startup.
+Those historical release observations do not describe the current policy.
 Older command examples below describe historical deployments; they cannot override
-`conservative-v1` or enable live submission in this build.
+`fixed-risk-v2` or enable live submission in this build.
 
 The Overview identifies state/reason, fresh money values, active exposure and last
 decision. Details remain under Diagnostics. Pause blocks new analysis; authenticated

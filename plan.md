@@ -2,6 +2,36 @@
 
 ## Scope
 
+### ISSUE-076 — Fixed percentage risk without an absolute floor (implemented; validated; demo restored)
+
+- Branch: `issue-076-fixed-percentage-risk`.
+- Issue: [#182](https://github.com/AegisFintech/scalping-bot/issues/182).
+- Dependencies: ISSUE-075 / PR #181; existing cost-inclusive risk engine and capital accounting.
+- Authorization: operator explicitly removed the absolute account-equity floor and
+  selected hard-coded 1% setup / 5% daily risk on 2026-09-07. Existing demo authority
+  remains; live execution is unavailable.
+- Acceptance: remove floor admission/configuration requirement; share one 1% budget
+  across both OCO legs; cap by daily capacity and bounded adverse-condition reductions;
+  preserve broker/notional/margin limits, capital-flow accounting, locks and protection;
+  migrate only the floor key in the populated file; update actual AGENTS and all current
+  configuration/risk/UI contracts; failure-path coverage and full required quality gates.
+- Local migration: 26 → 25 keys, normal template 22 → 21. Credentials and all other
+  values preserved; protected backup retained. Enabled-demo configuration now validates.
+- Validation: all 22 required commands passed after corrections; 421 Node / 118 Python tests, 22 schema,
+  three migration and all three configured integration tests; formatter/lint/type/build,
+  replay/fail-closed, secret scan and zero-vulnerability dependency audits.
+- Rollout: `0.2.2-fixed-risk.3`, all five services on Node 22.23.2; healthy stopped
+  preflight and authenticated demo restoration at 16:38 SGT after the projection fix. The first bounded map
+  refresh reached READY with the exact requested model and normalized returned identity.
+  Final local outcome: `SCENARIO_WAIT_PRICE_RETURN` without an extra provider call;
+  no active strategy order or position at the recorded observation.
+  No live execution or accounting reset. Runtime/gate evidence: `docs/fixed-risk-report.md`.
+- Activation fix: operational automation authority remains in the full safety audit
+  hash but is excluded from immutable strategy identity. Changed economics still
+  fail registration under the same version; no historical database hashes were edited.
+- Projection fix: rich performance diagnostics no longer leak into the strict derived
+  order schema; permitted fields are selected and malformed adjustment values still reject.
+
 ### ISSUE-074 — Automatic chart-scenario research (implemented; validated)
 
 - Branch: `issue-074-automatic-chart-scenarios`.
@@ -57,7 +87,7 @@
   all five services recreated on stable Node 22.23.2, with the new release/model
   verified from the running API. Two bounded real provider checks passed; requested
   `gpt-6-astra/u64`, returned `gpt-6-astra`, 17,685 / 18,825 ms. Costs unknown.
-- Activation blocker: `ACCOUNT_EQUITY_FLOOR` is still blank. The operator was asked
+- Historical activation blocker (superseded by ISSUE-076): `ACCOUNT_EQUITY_FLOOR` was blank. The operator was asked
   for the amount; it was not invented. The deployment is explicitly stopped,
   demo submission/automation disabled, and the durable pause retained. The actual
   26-key environment remains byte-for-byte intact. No new strategy trade or live

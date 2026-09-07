@@ -1,5 +1,8 @@
 # ISSUE-075 — Reusable chart maps and integrated execution
 
+This is the historical ISSUE-075 checkpoint. ISSUE-076 removes its absolute-floor
+blocker and changes risk policy; see [the current report](fixed-risk-report.md).
+
 Date: 2026-09-07. Branch: `issue-075-efficient-scenario-execution`.
 Issue: [#179](https://github.com/AegisFintech/scalping-bot/issues/179).
 Delivery: [PR #181](https://github.com/AegisFintech/scalping-bot/pull/181),

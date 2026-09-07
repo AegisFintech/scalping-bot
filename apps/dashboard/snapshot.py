@@ -84,7 +84,8 @@ def load_snapshot(view: str) -> dict[str, Any]:
             if view == "Overview":
                 daily = rows(
                     "SELECT current_equity, baseline_equity, loss_percent, realized_pnl, "
-                    "unrealized_pnl, reconciled_at FROM daily_risk_state WHERE account_id=%s "
+                    "unrealized_pnl, locked_out, reconciled_at FROM daily_risk_state "
+                    "WHERE account_id=%s "
                     "ORDER BY trading_day DESC LIMIT 1",
                     (scope[0],),
                 )
@@ -97,6 +98,7 @@ def load_snapshot(view: str) -> dict[str, Any]:
                         (scope[0],),
                     )
                     data["capital"] = capital[0] if capital else {}
+                    data["capital"]["risk_policy"] = status.get("riskPolicy", {})
                     if "remainingCapitalRiskPercent" in status:
                         data["capital"]["risk_cap_percent"] = status["remainingCapitalRiskPercent"]
                 data["positions"] = rows(

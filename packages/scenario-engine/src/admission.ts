@@ -17,6 +17,10 @@ import { evaluateCommissionCoverage } from "../../risk-engine/src/commission.js"
 import type { ScenarioEntry } from "./rules.js";
 import { time } from "./plan.js";
 
+// Freeze the historical directional-replay budget. Production risk-policy changes
+// must not silently reprice earlier research evidence; this path has no broker authority.
+const RESEARCH_SETUP_RISK_PERCENT = "0.001";
+
 export interface ScenarioRiskContext {
   readonly account: AccountState;
   readonly metadata: SymbolMetadata;
@@ -137,14 +141,14 @@ export function admitEntry(
       return reject("SCENARIO_EXIT_GEOMETRY_INVALID");
     // Retain the existing half-setup ceiling even for a single confirmed leg.
     const percent = Decimal.min(
-      decimal(FIXED_DEFAULTS.BASE_RISK_PERCENT).mul(c.riskMultiplier).div(2),
+      decimal(RESEARCH_SETUP_RISK_PERCENT).mul(c.riskMultiplier).div(2),
       decimal(c.remainingDailyBudget).div(a.equity).mul(100),
     ).toDecimalPlaces(8, Decimal.ROUND_DOWN);
     const decision = sizePosition({
       equity: a.equity,
       availableMargin: a.availableMargin,
       baseRiskPercent: canonical(percent),
-      maxRiskPercent: FIXED_DEFAULTS.MAX_RISK_PERCENT,
+      maxRiskPercent: RESEARCH_SETUP_RISK_PERCENT,
       entryPrice: entry.entry,
       stopLoss: entry.stop,
       estimatedMarginPerVolume: c.estimatedMarginPerVolume,

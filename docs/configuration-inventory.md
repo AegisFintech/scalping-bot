@@ -1,14 +1,14 @@
 # Complete configuration inventory
 
-Baseline `2ee59bb`: 176 assignments; current normal template: 22 (ISSUE-072).
+Baseline `2ee59bb`: 176 assignments; current normal template: 21 (ISSUE-076).
 This inventory classifies every former setting by its implemented disposition.
 No environment setting controls an optimizer; bounded adaptive risk multipliers
 are internal state, not operator knobs. Ports/paths/TLS remain deployment options.
 
 - Secret or deployment identity: 31
-- Obsolete setting: 29
+- Obsolete setting: 30
 - Internal engineering default: 105
-- Essential operator choice / safety authorization: 7
+- Essential operator choice / safety authorization: 6
 - Broker-discovered value: 4
 - Bounded adaptive strategy parameter: 0 environment assignments.
 
@@ -152,7 +152,7 @@ are internal state, not operator knobs. Ports/paths/TLS remain deployment option
 | `LOSS_COOLDOWN_SECONDS`                    | Obsolete setting                                 | Remove during review; no current runtime behavior.        |
 | `MAX_OPEN_POSITIONS_PER_SYMBOL`            | Obsolete setting                                 | Remove during review; no current runtime behavior.        |
 | `MAX_PENDING_ORDERS_PER_SYMBOL`            | Obsolete setting                                 | Remove during review; no current runtime behavior.        |
-| `ACCOUNT_EQUITY_FLOOR`                     | Essential operator choice / safety authorization | Normal template.                                          |
+| `ACCOUNT_EQUITY_FLOOR`                     | Obsolete setting                                 | Removed in fixed-risk-v2; ignored legacy value.           |
 | `ORDER_EXPIRY_MIN_SECONDS`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `ORDER_EXPIRY_MAX_SECONDS`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PREFERRED_ORDER_EXPIRY_SECONDS`           | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |

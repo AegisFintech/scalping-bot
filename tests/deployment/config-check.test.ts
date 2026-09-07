@@ -33,7 +33,7 @@ describe("concise environment and read-only preflight", () => {
   it("keeps the template concise, stopped and explicit about the exact model", () => {
     const template = parse(readFileSync(".env.sample"));
     expect(Object.keys(template).sort()).toEqual([...OPERATOR_KEYS].sort());
-    expect(Object.keys(template)).toHaveLength(22);
+    expect(Object.keys(template)).toHaveLength(21);
     expect(template.AI_MODEL).toBe("gpt-6-astra/u64");
     expect(template).toMatchObject({
       TRADING_MODE: "paper",
@@ -56,22 +56,24 @@ describe("concise environment and read-only preflight", () => {
     expect(JSON.parse(result.output)).toMatchObject({
       valid: true,
       scope: "execution_configuration",
-      normalSettings: 22,
+      normalSettings: 21,
       fileSettings: 3,
       requestedModel: "gpt-6-astra/u64",
     });
     expect(result.output).not.toContain("fixture-");
     expect(result.unchanged).toBe(true);
   });
-  it("distinguishes policy compatibility from the missing demo capital floor", () => {
+  it("starts authorized demo without an absolute floor and reports ignored legacy floors", () => {
     const content =
       "TRADING_MODE=demo\nDEMO_TRADING_ENABLED=true\nDEMO_TRADING_ACKNOWLEDGEMENT=I_UNDERSTAND_DEMO_ORDERS_USE_A_BROKER_DEMO_ACCOUNT\nMAX_POSITION_NOTIONAL=1000\nACCOUNT_EQUITY_FLOOR=\n";
     expect(check(content).status).toBe(0);
     const result = check(content, ["--startup"]);
-    expect(result.status).toBe(1);
+    expect(result.status).toBe(0);
     expect(JSON.parse(result.output)).toMatchObject({
-      valid: false,
-      reason: "CONFIG_DEMO_EQUITY_FLOOR_REQUIRED",
+      valid: true,
+      obsoleteSettings: [
+        "ACCOUNT_EQUITY_FLOOR:ignored; remove this obsolete setting",
+      ],
     });
     expect(result.unchanged).toBe(true);
   });

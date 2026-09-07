@@ -97,6 +97,35 @@ function stored(): StoredContext {
   };
 }
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
+  it("projects real performance-context diagnostics into the strict execution contract", () => {
+    const p = payload();
+    Object.assign(p.performance, {
+      performance_adjustment: {
+        applied: true,
+        confidence_delta: -5,
+        reason_codes: ["UNDERPERFORMANCE"],
+        effective_sample_size: 23.5,
+        minimum_sample_size: 20,
+        decay: "0.97",
+      },
+    });
+    expect(scenarioOco(fixture.plan, p).performance_adjustment).toEqual({
+      applied: true,
+      confidence_delta: -5,
+      reason_codes: ["UNDERPERFORMANCE"],
+    });
+    Object.assign(p.performance, {
+      performance_adjustment: {
+        applied: true,
+        confidence_delta: "invalid",
+        reason_codes: ["UNDERPERFORMANCE"],
+        effective_sample_size: 23.5,
+      },
+    });
+    expect(() => scenarioOco(fixture.plan, p)).toThrow(
+      "SCENARIO_DERIVED_SCHEMA_INVALID",
+    );
+  });
   it("derives tick-aligned two-sided proposals passing unchanged semantic guards", () => {
     const response = scenarioOco(fixture.plan, payload());
     expect(response.buy_stop.entry_price).toBe("4410.01");

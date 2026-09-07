@@ -31,6 +31,9 @@ try {
       normalSettings: OPERATOR_KEYS.length,
       fileSettings: Object.keys(source).length,
       requestedModel: resolved.AI_MODEL,
+      obsoleteSettings: Object.hasOwn(source, "ACCOUNT_EQUITY_FLOOR")
+        ? ["ACCOUNT_EQUITY_FLOOR:ignored; remove this obsolete setting"]
+        : [],
     }),
   );
 } catch (error) {

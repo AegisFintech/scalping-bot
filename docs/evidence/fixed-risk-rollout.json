@@ -1,0 +1,64 @@
+{
+  "capturedAt": "2026-09-07T08:39:24.887Z",
+  "release": "0.2.2-fixed-risk.3",
+  "model": "gpt-6-astra/u64",
+  "mode": "demo",
+  "riskPolicy": {
+    "version": "fixed-risk-v2",
+    "setupRiskPercent": "1",
+    "dailyLossLimitPercent": "5",
+    "drawdownLimitPercent": "5"
+  },
+  "remainingCapitalRiskPercent": "4.9998052112",
+  "healthy": true,
+  "enabled": true,
+  "paused": false,
+  "emergencyStopped": false,
+  "automatic": true,
+  "latestGroup": "CLOSED",
+  "lastOutcome": "DEFERRED",
+  "lastReasons": ["SCENARIO_WAIT_PRICE_RETURN"],
+  "reasonCodes": [],
+  "context": {
+    "state": "READY",
+    "requested_at": "2026-09-07T08:38:45.990Z",
+    "valid_until": "2026-09-07T08:43:44.602Z",
+    "duration_ms": 19404,
+    "reason": null,
+    "requested_model": "gpt-6-astra/u64",
+    "returned_model": "gpt-6-astra",
+    "consumed": false,
+    "calls_24h": 2
+  },
+  "services": [
+    {
+      "name": "scalper-analytics",
+      "status": "online",
+      "stableNodePath": true
+    },
+    {
+      "name": "scalper-market-data",
+      "status": "online",
+      "stableNodePath": true
+    },
+    {
+      "name": "scalper-ai",
+      "status": "online",
+      "stableNodePath": true
+    },
+    {
+      "name": "scalper-execution",
+      "status": "online",
+      "stableNodePath": true
+    },
+    {
+      "name": "scalper-dashboard",
+      "status": "online",
+      "stableNodePath": true
+    }
+  ],
+  "allOtherEnvironmentValuesPreserved": true,
+  "floorRemoved": true,
+  "supervisorSaved": true,
+  "demoSubmissionAuthorizedByFile": true
+}

@@ -1,20 +1,15 @@
 import { Decimal } from "decimal.js";
+import { MONEY_MANAGEMENT } from "../../config/src/policy.js";
 import { canonical, decimal, signedDecimal } from "./decimal.js";
 
 /** Account-wide remaining loss capacity, before allocating the OCO race budget. */
 export function availableCapitalRiskPercent(
   equity: string,
   dailyRemaining: string,
-  equityFloor: string | null,
 ): string {
   const current = decimal(equity);
   if (current.lte(0)) throw new Error("CAPITAL_EQUITY_INVALID");
-  const remaining = Decimal.min(
-    decimal(dailyRemaining),
-    equityFloor === null
-      ? current
-      : Decimal.max(0, current.minus(decimal(equityFloor))),
-  );
+  const remaining = Decimal.min(decimal(dailyRemaining), current);
   return remaining
     .div(current)
     .mul(100)
@@ -56,16 +51,23 @@ export function capitalRisk(input: {
     throw new Error("CAPITAL_STATE_INVALID");
   const drawdown = high.minus(adjusted).div(high).mul(100);
   const daily = decimal(input.dailyLossPercent);
-  const locked = input.previous?.lockedOut === true || drawdown.gte(5);
+  const dailyBudgetUsed = daily.div(MONEY_MANAGEMENT.dailyLossLimitPercent);
+  const locked =
+    input.previous?.lockedOut === true ||
+    drawdown.gte(MONEY_MANAGEMENT.drawdownLimitPercent);
   let multiplier: CapitalState["riskMultiplier"] = locked
     ? "0"
-    : drawdown.gte(4) || daily.gte(0.75)
+    : drawdown.gte(4) || dailyBudgetUsed.gte("0.75")
       ? "0.25"
-      : drawdown.gte(2) || daily.gte(0.5)
+      : drawdown.gte(2) || dailyBudgetUsed.gte("0.5")
         ? "0.5"
         : "1";
   // Hysteresis: recover only below both thresholds; restarting does not reset it.
-  if (!locked && input.previous && !(drawdown.lt(1) && daily.lt(0.25))) {
+  if (
+    !locked &&
+    input.previous &&
+    !(drawdown.lt(1) && dailyBudgetUsed.lt("0.25"))
+  ) {
     multiplier = Decimal.min(
       multiplier,
       input.previous.riskMultiplier,

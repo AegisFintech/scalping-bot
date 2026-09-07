@@ -2,13 +2,15 @@ import { CapitalRiskStore } from "./capital-risk-store.js";
 import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
 import { IndependentMaintenance } from "./independent-maintenance.js";
 import "dotenv/config";
-import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
+import {
+  resolveRuntimeEnvironment,
+  POLICY_VERSION,
+  MONEY_MANAGEMENT,
+} from "../../../packages/config/src/policy.js";
 
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-
-import { Decimal } from "decimal.js";
 
 import { AnalyticsHttpClient } from "../../../packages/analytics-client/src/client.js";
 import { ScenarioHttpPlanner } from "../../../packages/scenario-engine/src/http-planner.js";
@@ -57,7 +59,11 @@ import {
   enforceAutomaticTradeCampaign,
   PostgresAutomaticTradeCampaign,
 } from "./automatic-trade-campaign.js";
-import { loadExecutionConfig, safetyConfigHash } from "./config.js";
+import {
+  loadExecutionConfig,
+  safetyConfigHash,
+  strategyConfigHash,
+} from "./config.js";
 import { compactTailCounts } from "./analytics-config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
 import { CTraderDemoGateway, DEMO_ACKNOWLEDGEMENT } from "./demo-gateway.js";
@@ -308,7 +314,7 @@ async function main(): Promise<void> {
     codeHash: createHash("sha256")
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
-    configHash,
+    configHash: strategyConfigHash(config),
     promptVersion: "scenario-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
@@ -753,9 +759,6 @@ async function main(): Promise<void> {
     "DAILY_BASELINE_CAPTURE_GRACE_SECONDS",
     300,
   );
-  const accountEquityFloor = optionalDecimal(environment.ACCOUNT_EQUITY_FLOOR);
-  if (accountEquityFloor !== null)
-    decimal(accountEquityFloor, "ACCOUNT_EQUITY_FLOOR_INVALID");
   let cashFlowCache: {
     readonly dayStart: string;
     readonly capturedAt: number;
@@ -860,7 +863,6 @@ async function main(): Promise<void> {
       capitalRiskCap = availableCapitalRiskPercent(
         state.equity,
         dailyResult.remainingLossBudget,
-        accountEquityFloor,
       );
       dailyLocked = dailyResult.lockedOut || capital.lockedOut;
     } catch (error) {
@@ -1008,9 +1010,6 @@ async function main(): Promise<void> {
       operationalRiskLockout:
         !demoRecoveryState.certain ||
         !demoExecutionState.certain ||
-        (accountEquityFloor !== null &&
-          (!state.certain ||
-            new Decimal(state.equity).lte(accountEquityFloor))) ||
         (config.maxOrdersPerDay > 0 && ordersToday >= config.maxOrdersPerDay),
       aiCircuitOpen: model.circuitOpen,
       symbolMetadataValid: latestSnapshot !== null,
@@ -1201,9 +1200,6 @@ async function main(): Promise<void> {
       config.tradingMode === "demo"
         ? [
             ...(config.demoTradingEnabled ? [] : ["DEMO_TRADING_DISABLED"]),
-            ...(accountEquityFloor === null
-              ? ["ACCOUNT_EQUITY_FLOOR_REQUIRED"]
-              : []),
             ...(config.demoAcknowledgement === DEMO_ACKNOWLEDGEMENT
               ? []
               : ["DEMO_ACKNOWLEDGEMENT_INVALID"]),
@@ -1223,7 +1219,13 @@ async function main(): Promise<void> {
     return {
       mode: config.tradingMode,
       symbol: config.symbol,
-      policyVersion: "conservative-v1",
+      policyVersion: POLICY_VERSION,
+      riskPolicy: {
+        version: POLICY_VERSION,
+        setupRiskPercent: config.baseRiskPercent,
+        dailyLossLimitPercent: config.maxDailyLossPercent,
+        drawdownLimitPercent: MONEY_MANAGEMENT.drawdownLimitPercent,
+      },
       accountType: connectionMode,
       emergencyStopped:
         current.environmentEmergencyStop ||
@@ -1258,10 +1260,7 @@ async function main(): Promise<void> {
       aiCircuitOpenUntil: model.circuitOpenUntil,
       strategyVersion,
       requestedModel: environment.AI_MODEL ?? "unconfigured",
-      remainingCapitalRiskPercent:
-        config.tradingMode === "demo" && accountEquityFloor === null
-          ? null
-          : capitalRiskCap,
+      remainingCapitalRiskPercent: capitalRiskCap,
       scenarioContext: await contextStore
         .summary()
         .then((value) => value ?? { state: "NOT_REQUESTED" })

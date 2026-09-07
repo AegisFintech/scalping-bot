@@ -14,7 +14,13 @@ export interface ExecutionStatus {
   readonly requestedModel?: string;
   readonly remainingCapitalRiskPercent?: string | null;
   readonly scenarioContext?: Readonly<Record<string, unknown>>;
-  readonly policyVersion?: "conservative-v1";
+  readonly policyVersion?: "fixed-risk-v2";
+  readonly riskPolicy?: {
+    readonly version: "fixed-risk-v2";
+    readonly setupRiskPercent: string;
+    readonly dailyLossLimitPercent: string;
+    readonly drawdownLimitPercent: string;
+  };
   readonly mode: string;
   readonly symbol: string;
   readonly accountType: string;

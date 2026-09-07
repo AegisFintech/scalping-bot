@@ -11,7 +11,9 @@ describe("bounded provider and configuration", () => {
     const env = resolveRuntimeEnvironment({ AI_API_KEY: "fixture-secret" });
     expect(env.AI_MODEL).toBe("gpt-6-astra/u64");
     expect(env.LIVE_TRADING_ENABLED).toBe("false");
-    expect(env.BASE_RISK_PERCENT).toBe("0.001");
+    expect(env.BASE_RISK_PERCENT).toBe("1");
+    expect(env.MAX_RISK_PERCENT).toBe("1");
+    expect(env.MAX_DAILY_LOSS_PERCENT).toBe("5");
     expect(env.MAX_ORDERS_PER_DAY).toBe("100");
     expect(env.AI_API_KEY).toBe("fixture-secret");
     expect(

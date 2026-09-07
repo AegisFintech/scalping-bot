@@ -140,7 +140,8 @@ def render_money(model: dict[str, Any]) -> None:
     ):
         column.metric(label, values[key])
     st.caption(
-        f"{model['currency']} · Daily loss capacity: {values['daily_remaining']} · "
+        f"{model['currency']} · {values['policy']} · "
+        f"Daily loss capacity: {values['daily_remaining']} · "
         f"Next setup ceiling: {values['setup_budget']} · Reconciled: {model['reconciled']}"
     )
     if values["equity"] == "Unavailable":
