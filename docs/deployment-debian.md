@@ -7,6 +7,10 @@ policy owns strategy/model defaults. Preserve stopped mode and migrate/recreate
 processes only as part of the reviewed rollout. Migration `0015` is additive;
 this source update has not deployed it or enabled any service/trading mode.
 Older operational examples below must be interpreted through that migration guide.
+The local populated environment was subsequently simplified in ISSUE-072; see
+[its report](environment-migration-report.md). That file migration did not restart
+services or clear their cached PM2 settings. Run the `--startup` configuration
+check before the coordinated rollout; the existing blank equity floor blocks it.
 
 ---
 

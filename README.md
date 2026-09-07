@@ -71,11 +71,16 @@ research candidates; the available evidence does not justify enabling them.
 
 ## Configuration and migration
 
-The normal [.env.sample](.env.sample) has **25 settings, down from 176 (85.8%)**.
+The normal [.env.sample](.env.sample) has **22 settings, down from 176 (87.5%)**.
 It contains deployment identity, credentials/endpoints, explicit authorization,
 and two capital limits. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
+`AI_MODEL=gpt-6-astra/u64` is explicit; other AI and strategy tuning is fixed in
+code. The authorized local migration reduced the populated `.env` from **176 to
+26** entries, preserving all credentials and existing capital/mode choices. Its
+four additional entries preserve deployment credentials. See the
+[migration evidence and rollout blockers](docs/environment-migration-report.md).
 
 For an existing installation, **do not overwrite `.env`**. Read the
 [configuration inventory and migration instructions](docs/configuration.md), then:
@@ -84,11 +89,14 @@ For an existing installation, **do not overwrite `.env`**. Read the
 npm ci
 npm run config:check -- .env.sample
 npm run config:check -- .env
+npm run config:check -- .env --startup
 npm run build
 ```
 
-The second check intentionally fails until conflicting legacy settings are
-reviewed. Keep secrets in ignored mode-0600 files or a credential store. Migration
+The policy check rejects conflicting legacy settings; `--startup` also checks
+execution configuration, including explicit demo capital limits. Neither check
+contacts the broker or authorizes trading. Keep secrets in ignored mode-0600 files
+or a credential store. Migration
 `0015` is additive and must be applied as a separate reviewed rollout while new
 analysis is paused. Historical migrations and audit data remain intact.
 

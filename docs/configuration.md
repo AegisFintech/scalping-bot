@@ -1,31 +1,44 @@
 # Configuration and migration
 
 Release `0.2.0-overhaul.1` uses policy `conservative-v1` in
-`packages/config/src/policy.ts`. The normal template has 25 assignments, previously
-176: 151 fewer, an 85.8% reduction. The 25 include secrets and deployment identity;
-they are not 25 strategy controls. There is no operator strategy tuning file.
+`packages/config/src/policy.ts`. The normal template has 22 assignments, previously
+176: 154 fewer, an 87.5% reduction. These include secrets and deployment identity;
+there are no strategy tuning controls. The actual authorized local migration
+reduced the populated environment from 176 to 26 entries: the 22 normal keys plus
+four retained deployment credentials/identifiers. No credentials were changed.
+See [the migration report](environment-migration-report.md) for exact checks and
+remaining rollout blockers. There is no operator strategy tuning file.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
 
 ## Normal choices
 
-| Purpose                                       | Keys                                                                                                                                                                                                |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Instance and account identity                 | `INSTANCE_ID`, `ACCOUNT_ID`, `ACCOUNT_KEY`, `TRADING_SYMBOL`                                                                                                                                        |
-| Explicit operation                            | `TRADING_MODE`, `EMERGENCY_STOP`, `AUTOMATIC_ANALYSIS_ENABLED`, `DEMO_TRADING_ENABLED`, `DEMO_TRADING_ACKNOWLEDGEMENT`                                                                              |
-| Capital bounds in account currency            | `ACCOUNT_EQUITY_FLOOR`, `MAX_POSITION_NOTIONAL`                                                                                                                                                     |
-| cTrader credentials and deployment            | `CTRADER_CLIENT_ID`, `CTRADER_CLIENT_SECRET`, `CTRADER_ACCESS_TOKEN`, `CTRADER_ACCESS_TOKEN_EXPIRES_AT`, `CTRADER_REFRESH_TOKEN`, `CTRADER_API_HOST`, `CTRADER_API_PORT`, `CTRADER_CONNECTION_MODE` |
-| EPRToken deployment                           | `AI_BASE_URL`, `AI_API_KEY`                                                                                                                                                                         |
-| Persistence, controls, optional observability | `DATABASE_URL`, `DASHBOARD_CONTROL_TOKEN`, `BETTERSTACK_SOURCE_TOKEN`, `BETTERSTACK_INGESTING_HOST`                                                                                                 |
+| Purpose                                       | Keys                                                                                                                   |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Instance and account identity                 | `INSTANCE_ID`, `ACCOUNT_ID`, `ACCOUNT_KEY`, `TRADING_SYMBOL`                                                           |
+| Explicit operation                            | `TRADING_MODE`, `EMERGENCY_STOP`, `AUTOMATIC_ANALYSIS_ENABLED`, `DEMO_TRADING_ENABLED`, `DEMO_TRADING_ACKNOWLEDGEMENT` |
+| Capital bounds in account currency            | `ACCOUNT_EQUITY_FLOOR`, `MAX_POSITION_NOTIONAL`                                                                        |
+| cTrader credentials                           | `CTRADER_CLIENT_ID`, `CTRADER_CLIENT_SECRET`, `CTRADER_ACCESS_TOKEN`, `CTRADER_REFRESH_TOKEN`                          |
+| EPRToken deployment                           | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`                                                                                |
+| Persistence, controls, optional observability | `DATABASE_URL`, `DASHBOARD_CONTROL_TOKEN`, `BETTERSTACK_SOURCE_TOKEN`, `BETTERSTACK_INGESTING_HOST`                    |
 
 Blank cTrader host/port use the official selected demo/live connection host and
-port 5036. A supplied deployment endpoint is preserved; it grants no trading
+port 5036. Host, port, connection environment and optional access-token expiry
+remain advanced deployment overrides; ordinary installations need not set them.
+A supplied custom deployment endpoint must be preserved; it grants no trading
 authority. Paper/stopped/no automation are the defaults. Demo execution additionally needs
 the existing exact acknowledgement and successful broker/account/recovery checks.
 No setting can make this build submit live orders. Shadow uses a separately
 specified connection environment without submission authority. An API key or
 broker token is not an authorization to trade.
+
+The model pin is visible as `AI_MODEL=gpt-6-astra/u64`, and a different nonempty
+model is rejected. API style, request limits, indicator periods, scheduling,
+execution thresholds and risk percentages are managed in the versioned policy.
+Removing redundant default endpoints/paths is safe only after comparing them to
+their effective code defaults. Keep unknown credentials or custom deployments
+until reviewed; unused monitoring credentials must not disappear accidentally.
 
 The conservative policy preserves the audited deployment's 0.001% setup risk,
 1% daily loss limit, 1% margin-use ceiling and 10-point spread ceiling. The
@@ -47,14 +60,22 @@ loss reduction and documented hysteresis; no return-optimizing tuner runs.
 ```sh
 npm run config:check -- .env.sample
 npm run config:check -- .env
+npm run config:check -- .env --startup
 ```
 
-This checks **policy compatibility**, not connectivity or permission to place an
-order. Service startup separately validates required credentials, explicit demo
-capital limits, acknowledgements, fresh metadata and account evidence. Errors name
-keys only. The existing populated environment failed compatibility as expected:
-it contains the old model, strategy identity and policy overrides. It was not
-rewritten, and the existing deployment was not restarted.
+The default checks **policy compatibility** and reports actual file and normal
+template counts separately. `--startup` additionally runs the execution
+configuration parser, including mode/acknowledgement and explicit demo capital
+limits. Both are read-only; neither checks provider/broker connectivity, runtime
+state or permission to place an order. Service startup separately validates
+credentials, fresh metadata and account evidence. Errors name keys only.
+
+The migrated local file passes compatibility and pins the requested model. Its
+`--startup` check rejects with `CONFIG_DEMO_EQUITY_FLOOR_REQUIRED`: that preexisting
+capital bound was blank and remains blank. The existing services were not
+restarted. They retain old in-memory configuration and PM2 overrides until the
+coordinated rollout described below; an edited file does not update a running
+process.
 
 Nonempty fixed overrides must match the policy exactly or startup rejects with
 `CONFIG_POLICY_CONFLICT`. Ambiguous legacy `SHADOW_MODE` also rejects; use the

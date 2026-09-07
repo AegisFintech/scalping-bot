@@ -2,6 +2,26 @@
 
 ## Scope
 
+### ISSUE-072 — Populated environment simplification (implemented; validated)
+
+- Branch: `issue-072-local-environment-simplification`.
+- Issue: [#174](https://github.com/AegisFintech/scalping-bot/issues/174).
+- Dependencies: ISSUE-069 / merged PR #173.
+- Acceptance: migrate the actual protected `.env` with a mode-0600 backup;
+  preserve credentials, identity, effective endpoints, capital limits and mode;
+  pin `gpt-6-astra/u64`; remove reviewed internals; match the concise template and
+  documentation; verify key counts, credentials and failure paths; inspect PM2
+  cached overrides and distinguish file validation from deployment readiness.
+- Scope: no trading launch, production database migration or execution restart.
+  The existing blank equity floor was preserved and blocks upgraded demo startup.
+- Outcome: actual `.env` 176 → 26; normal template 22. All credentials and
+  capital/mode values preserved; exact model pinned and a bounded provider probe
+  returned HTTP 200 / valid strict JSON. PM2 remains on its existing cached release.
+- Validation: 335 Node tests, 107 Python tests, 19 schema, 3 migration and all
+  3 configured integration tests; formatter/lint/types/build, replay/backtest
+  fixtures, secret scan and dependency audits passed. Exact commands and the
+  startup rejection are in `docs/environment-migration-report.md`.
+
 ### ISSUE-069 — Evidence-led operational overhaul (implemented; delivery checks recorded)
 
 - Branch: `issue-069-evidence-led-overhaul`; baseline `2ee59bb`.

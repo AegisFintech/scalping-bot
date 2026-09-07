@@ -31,6 +31,12 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   and `docs/risk-model.md` before changing the current `conservative-v1` system.
 - Normal operator configuration is intentionally small. Change fixed policy only
   with a reviewed release and evidence; never migrate a populated `.env` by replacement.
+- The normal template has 22 keys, including the exact model pin. A populated
+  file may also retain private deployment credentials. Back up and preserve
+  those values during an explicitly authorized migration; never copy the sample
+  over them. Run both policy and `--startup` configuration checks, and report
+  PM2-cached configuration separately from the file. A blank capital floor blocks
+  enabled demo startup; do not invent an account limit to pass validation.
 - Request `gpt-6-astra/u64` literally through the configured EPRToken Responses
   endpoint. Record requested/returned identities; never add a silent fallback.
   Observed `gpt-6-astra` return normalization is documented. Unknown cost is null.
