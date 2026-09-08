@@ -1,5 +1,14 @@
 # Current release operations
 
+For `0.2.3-equity-risk.2` / `fixed-risk-v3`, follow the
+[equity sizing and storage recovery procedure](equity-sizing-recovery-report.md).
+The old fixed-dollar notional override is obsolete. Credentials, model, risk locks
+and prior demo authority remain intact. Migration 0018 adds local chart references
+without removing existing bytes. A database-capacity failure means blocked
+execution, even when all processes are alive. Repair storage before expecting fills.
+
+Historical release instructions follow; use the current policy for new operation.
+
 For release `0.2.2-fixed-risk.5`, the active model pin is `gpt-5.6-sol/u40`.
 Update this assignment and the matching AI/execution builds together under an
 authenticated maintenance pause, applying additive compatibility migration 0017; verify the actual provider response before
@@ -239,7 +248,8 @@ the 100-trade campaign review are complete.
 Release `.32` stores only the configured completed-candle tails and removes
 duplicated `full_candles`/`raw_tail` arrays from `indicator_snapshots.features`.
 The exact compact payload sent to the endpoint remains in `model_requests`, and
-the exact 1600x1200 chart remains in `analysis_chart_artifacts`. Startup also
+the exact 1600x1200 chart retains its metadata in `analysis_chart_artifacts`;
+new bytes reside in protected local SHA-256 storage after ISSUE-079. Startup also
 closes only abandoned pre-placement analysis states; it does not infer or alter
 broker outcomes.
 

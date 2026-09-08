@@ -200,6 +200,32 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
       );
       normalized = Decimal.min(normalized, notionalVolume);
     }
+    const marginPerVolume = decimal(input.estimatedMarginPerVolume);
+    const currentMargin = decimal(input.currentMargin);
+    const marginPercent = decimal(input.maxMarginUsagePercent);
+    if (
+      marginPerVolume.lte(0) ||
+      currentMargin.lt(0) ||
+      availableMargin.lt(0) ||
+      marginPercent.lte(0) ||
+      marginPercent.gt(100)
+    )
+      return reject("RISK_MARGIN_INVALID");
+    const marginBudget = Decimal.min(
+      availableMargin,
+      equity.mul(marginPercent).div(100).minus(currentMargin),
+    );
+    if (marginBudget.lt(minVolume.mul(marginPerVolume)))
+      return reject("RISK_MARGIN_MIN_VOLUME_UNAFFORDABLE");
+    const marginVolume = minVolume.plus(
+      marginBudget
+        .div(marginPerVolume)
+        .minus(minVolume)
+        .div(volumeStep)
+        .floor()
+        .mul(volumeStep),
+    );
+    normalized = Decimal.min(normalized, marginVolume);
     if (normalized.gt(rawVolume) || normalized.lt(minVolume))
       return reject("RISK_VOLUME_NORMALIZATION_INVALID");
     const totalLoss = (volume: Decimal): Decimal =>
@@ -282,11 +308,47 @@ export interface OcoRiskDecision {
 export function sizeOcoPair(input: OcoRiskInput): OcoRiskDecision {
   try {
     const setupRisk = decimal(input.setupRiskPercent);
-    if (setupRisk.lte(0) || setupRisk.gt(5))
+    if (
+      setupRisk.lte(0) ||
+      setupRisk.gt(5) ||
+      setupRisk.gt(
+        Decimal.min(
+          decimal(input.buy.maxRiskPercent),
+          decimal(input.sell.maxRiskPercent),
+        ),
+      )
+    )
       throw new Error("OCO_RISK_PERCENT_INVALID");
-    const perLegRisk = canonical(setupRisk.div(2));
-    const buy = sizePosition({ ...input.buy, baseRiskPercent: perLegRisk });
-    const sell = sizePosition({ ...input.sell, baseRiskPercent: perLegRisk });
+    const perLegRisk = canonical(
+      setupRisk.div(2).toDecimalPlaces(10, Decimal.ROUND_DOWN),
+    );
+    // Reserve half of the available shared margin for each race-exposed leg
+    // before sizing. Post-sizing checks below remain independent safeguards.
+    const perLegMargin = Decimal.min(
+      decimal(input.buy.availableMargin),
+      decimal(input.sell.availableMargin),
+      decimal(input.buy.equity)
+        .mul(decimal(input.buy.maxMarginUsagePercent))
+        .div(100)
+        .minus(decimal(input.buy.currentMargin)),
+      decimal(input.sell.equity)
+        .mul(decimal(input.sell.maxMarginUsagePercent))
+        .div(100)
+        .minus(decimal(input.sell.currentMargin)),
+    )
+      .div(2)
+      .toDecimalPlaces(10, Decimal.ROUND_DOWN);
+    if (perLegMargin.lte(0)) throw new Error("OCO_MARGIN_BUDGET_EXHAUSTED");
+    const buy = sizePosition({
+      ...input.buy,
+      baseRiskPercent: perLegRisk,
+      availableMargin: canonical(perLegMargin),
+    });
+    const sell = sizePosition({
+      ...input.sell,
+      baseRiskPercent: perLegRisk,
+      availableMargin: canonical(perLegMargin),
+    });
     const reasons = [
       ...buy.reasonCodes.map((reason) => `BUY_${reason}`),
       ...sell.reasonCodes.map((reason) => `SELL_${reason}`),

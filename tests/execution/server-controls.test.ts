@@ -10,6 +10,7 @@ function server(
   mode: string,
   initialize: () => Promise<{ tradingDay: string; timezone: string }>,
   openPositionMonitor?: () => Promise<OpenPositionMonitor>,
+  operationalReady = true,
 ) {
   return createExecutionServer({
     coordinator: {} as AnalysisCoordinator,
@@ -24,6 +25,7 @@ function server(
     status: () =>
       Promise.resolve({
         mode,
+        operationalReady,
         strategyVersion: "0.2.2-fixed-risk.3",
         requestedModel: "gpt-5.6-sol/u40",
         riskPolicy: {
@@ -94,6 +96,22 @@ function server(
 }
 
 describe("demo baseline control", () => {
+  it("returns unavailable readiness and refuses an authenticated cycle during an operational failure", async () => {
+    const app = server("demo", vi.fn(), undefined, false);
+    expect(
+      (await app.inject({ method: "GET", url: "/health/ready" })).statusCode,
+    ).toBe(503);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/cycle",
+      headers: { "x-control-token": "x".repeat(32) },
+    });
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toMatchObject({
+      error: "EXECUTION_OPERATIONALLY_BLOCKED",
+    });
+    await app.close();
+  });
   it("reports loaded release and model without granting execution authority", async () => {
     const app = server("demo", vi.fn());
     const response = await app.inject({ method: "GET", url: "/v1/status" });

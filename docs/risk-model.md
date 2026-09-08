@@ -10,7 +10,7 @@ submission, or model-selected risk increases are introduced. Stops/targets remai
 broker-held. The new candidate does not automate discretionary structural/time
 closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
 
-Current policy: `fixed-risk-v2`. All money authority lives in the existing
+Current policy: `fixed-risk-v3`. All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
@@ -38,8 +38,9 @@ Risk percentages are hard-coded in `packages/config/src/policy.ts`: **1% of
 current reconciled equity per setup**, **5% of the cash-flow-adjusted UTC day's
 starting-equity baseline as the daily loss budget**, and the existing **5%
 high-water drawdown lock**. No absolute starting-equity floor is required.
-`MAX_POSITION_NOTIONAL` remains an explicit exposure authorization; the current
-local value is unchanged. The 1% margin-use ceiling, 10-point absolute spread cap,
+The obsolete fixed-dollar notional limit is replaced by a fixed cap of five times
+current equity per leg, at most ten times across an OCO pair. This bounds exposure
+without pinning every account to one minimum lot. Broker leverage is unchanged. The 1% margin-use ceiling, 10-point absolute spread cap,
 0.10 ATR spread cap, historical percentile cap and 100-order daily ceiling remain.
 
 This explicitly raises the prior 0.001% setup / 1% daily policy at the operator's
@@ -74,9 +75,11 @@ it and are modeled adversely in research. Spread is already represented by
 executable entry/exit sides and is not added a second time to realized P&L.
 
 The grid search respects minimum, maximum and step, including an off-grid broker
-maximum. Both modeled losses are added against the one setup budget; both margins
-are added against available margin and the margin-use ceiling. Actual broker
-margin estimates are rechecked at the final sized volume. Notional is capped per
+maximum. Both modeled losses are added against the one setup budget. Before sizing, each
+leg receives half the shared available margin after the 1% margin-use ceiling and
+existing margin are applied. Volumes are floored to that allowance instead of
+rejecting an otherwise affordable smaller order. Exact broker margin is confirmed
+at final volume, with at most two further downward recalculations for margin tiers. Notional is capped per
 position in account currency using the discovered quote conversion. Unavailable fees/conversion/metadata, insufficient margin or an
 unaffordable minimum rejects. No martingale, averaging down or loss chasing exists.
 
@@ -148,3 +151,11 @@ this overhaul does not claim unsupported broker lifecycle completion.
 
 Testing proves rejection/idempotency properties, not profitability or maximum
 realized loss. See `overhaul-report.md` for stress assumptions and missing evidence.
+
+ISSUE-079 sizing comparison uses the same recorded prices, current broker metadata
+and cost assumptions, not a profitable backtest. At the observed million-dollar
+demo equity, the old USD 5,500 notional cap admitted only 0.01 lot. The current
+policy admits much larger affordable volumes, but the unchanged 1% margin ceiling
+can still bind before the 1% loss ceiling. Treat the latter as a maximum, never a
+requirement to force leverage or spend every dollar of risk. See the current
+[equity-sizing report](equity-sizing-recovery-report.md).

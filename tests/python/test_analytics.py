@@ -159,7 +159,10 @@ def test_analytics_normalizes_multi_window_liquidity_change_pressure() -> None:
 def test_analysis_chart_is_deterministic_for_the_exact_same_completed_snapshot() -> None:
     request = AnalyticsRequest.model_validate(request_payload())
     first = analyze(request, now=request.analysis_time)
-    second = analyze(request, now=request.analysis_time)
+    later = request.model_copy(
+        update={"analysis_time": request.analysis_time + timedelta(seconds=5)}
+    )
+    second = analyze(later, now=later.analysis_time)
 
     assert first.chart is not None
     assert second.chart is not None

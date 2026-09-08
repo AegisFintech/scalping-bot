@@ -28,10 +28,10 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 ## Current implementation contracts
 
 - Read `docs/overhaul-report.md`, `docs/configuration.md`, `docs/architecture.md`
-  and `docs/risk-model.md` before changing the current `fixed-risk-v2` system.
+  and `docs/risk-model.md` before changing the current `fixed-risk-v3` system.
 - Normal operator configuration is intentionally small. Change fixed policy only
   with a reviewed release and evidence; never migrate a populated `.env` by replacement.
-- The normal template has 21 keys, including the exact model pin. A populated
+- The normal template has 20 keys, including the exact model pin. A populated
   file may also retain private deployment credentials. Back up and preserve
   those values during an explicitly authorized migration; never copy the sample
   over them. Run both policy and `--startup` configuration checks, and report
@@ -91,6 +91,16 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   workers perform bounded reads only and never call Streamlit or broker mutations.
   Verify light/dark contrast and browser state across timed updates; fragment-owned
   elements must be emitted on every tick or Streamlit can remove them.
+
+- ISSUE-079 replaces the obsolete fixed-dollar cap with a fixed five-times-equity
+  gross notional ceiling per leg, inside the unchanged combined 1% margin and loss
+  limits. Use the same risk engine; broker margin tiers cause bounded downsizing.
+  A populated legacy `MAX_POSITION_NOTIONAL` must fail migration checks.
+- Exact chart bytes now use protected local SHA-256 storage. Back up it and the
+  database together. Never delete audit rows or silently discard PNGs. Migration
+  0018 leaves old bytes intact; their relocation requires operator review after
+  verified archive/restore preparation. Preserve operational fault latches across
+  restarts; only a successful durable cycle clears an analysis/storage failure.
 
 ## Required completion checks
 

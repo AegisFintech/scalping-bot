@@ -230,3 +230,13 @@ adjustment, reduction persistence, stale-account rejection and invalid telemetry
 During rollback retain these tables and restore the old release/environment;
 never drop audit data or edit applied checksums. This repository update did not
 apply 0015 to the deployed schema. See `configuration.md` for the reviewed rollout.
+
+Migration `0018` adds `analysis_chart_artifacts.storage_kind` (`database` or
+`local_sha256`) and permits null `image_bytes` only for a local reference. Existing
+rows stay in `database` mode with all bytes intact. New files are durably flushed
+and verified before inserting a local reference; SHA-256, dimensions, source
+metadata and analysis linkage remain in PostgreSQL. Dashboard reads verify either
+storage kind, with explicit failure for missing/corrupt archives. No other table
+is changed. Exact-byte relocation/restore uses conditional, idempotent updates
+and requires operator review. See the [transition and rollback procedure](equity-sizing-recovery-report.md).
+Include local chart files in database backup/recovery.

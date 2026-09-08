@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
@@ -1521,7 +1522,29 @@ def analysis_chart_view(value: Mapping[str, Any]) -> dict[str, Any] | None:
     """Verify a persisted model chart before returning bounded display data."""
 
     raw = value.get("chart_image_bytes")
+    storage = value.get("chart_storage_kind")
+    if storage == "local_sha256":
+        digest = value.get("chart_sha256")
+        if (
+            raw is not None
+            or not isinstance(digest, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)
+        ):
+            raise DecisionViewError("DECISION_VIEW_CHART_STORAGE_INVALID")
+        directory = Path(".runtime/analysis-charts")
+        try:
+            if directory.is_symlink() or not directory.is_dir():
+                raise OSError("archive unavailable")
+            fd = os.open(directory / f"{digest}.png", os.O_RDONLY | os.O_NOFOLLOW)
+            with os.fdopen(fd, "rb") as file:
+                raw = file.read(_MAX_CHART_BYTES + 1)
+        except OSError as error:
+            raise DecisionViewError("DECISION_VIEW_CHART_ARCHIVE_UNAVAILABLE") from error
+    elif storage not in (None, "database"):
+        raise DecisionViewError("DECISION_VIEW_CHART_STORAGE_INVALID")
     if raw is None:
+        if storage is not None:
+            raise DecisionViewError("DECISION_VIEW_CHART_ARCHIVE_UNAVAILABLE")
         return None
     if isinstance(raw, memoryview):
         image = raw.tobytes()

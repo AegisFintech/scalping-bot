@@ -1,9 +1,11 @@
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
-export const POLICY_VERSION = "fixed-risk-v2";
+export const POLICY_VERSION = "fixed-risk-v3";
 export const MONEY_MANAGEMENT = {
   setupRiskPercent: "1",
   dailyLossLimitPercent: "5",
   drawdownLimitPercent: "5",
+  maxPositionNotionalEquityMultiple: "5",
+  maxMarginUsagePercent: "1",
 } as const;
 export const FIXED_DEFAULTS = {
   LOG_LEVEL: "info",
@@ -99,7 +101,7 @@ export const FIXED_DEFAULTS = {
   MAX_ENTRY_DISTANCE_ATR: "2.5",
   ENTRY_LATENCY_BUFFER_ATR: "0.25",
   PREFERRED_MAX_ENTRY_DISTANCE_ATR: "0.75",
-  MAX_MARGIN_USAGE_PERCENT: "1",
+  MAX_MARGIN_USAGE_PERCENT: MONEY_MANAGEMENT.maxMarginUsagePercent,
   PAPER_ACCOUNT_EQUITY: "10000",
   PAPER_ACCOUNT_BALANCE: "10000",
   PAPER_AVAILABLE_MARGIN: "10000",
@@ -112,8 +114,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.2-fixed-risk.5",
-  CODE_VERSION: "0.2.2-fixed-risk.5",
+  STRATEGY_VERSION: "0.2.3-equity-risk.2",
+  CODE_VERSION: "0.2.3-equity-risk.2",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
@@ -137,7 +139,6 @@ export const OPERATOR_KEYS = [
   "DEMO_TRADING_ENABLED",
   "EMERGENCY_STOP",
   "INSTANCE_ID",
-  "MAX_POSITION_NOTIONAL",
   "TRADING_MODE",
   "TRADING_SYMBOL",
 ] as const;
@@ -179,6 +180,7 @@ export const OBSOLETE_KEYS = [
   "GH_USER",
   "LOSS_COOLDOWN_SECONDS",
   "MAX_OPEN_POSITIONS_PER_SYMBOL",
+  "MAX_POSITION_NOTIONAL",
   "MAX_PENDING_ORDERS_PER_SYMBOL",
   "METRICS_ENABLED",
   "METRICS_PORT",
@@ -213,6 +215,7 @@ export function resolveRuntimeEnvironment(
     if (source[key]) conflicts.push(key);
   if (source.SHADOW_MODE !== undefined && source.SHADOW_MODE !== "")
     conflicts.push("SHADOW_MODE");
+  if (source.MAX_POSITION_NOTIONAL) conflicts.push("MAX_POSITION_NOTIONAL");
   // Credentials, endpoints and populated environment files are never rewritten.
   if (conflicts.length)
     throw new Error(

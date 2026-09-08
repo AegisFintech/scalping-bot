@@ -1,3 +1,5 @@
+import { transitionCharts } from "../../packages/database/src/chart-archive.js";
+import { readChart } from "../../packages/database/src/chart-store.js";
 import { createHash, randomUUID } from "node:crypto";
 import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
@@ -232,6 +234,7 @@ describe("PostgreSQL migrations integration", () => {
         "0015",
         "0016",
         "0017",
+        "0018",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -834,19 +837,58 @@ describe("PostgreSQL migrations integration", () => {
       });
       const persistedChart = await isolated.query<{
         image_sha256: string;
-        byte_count: number;
+        byte_count: number | null;
+        storage_kind: string;
         completed_only: boolean;
       }>(
-        `SELECT image_sha256, octet_length(image_bytes) AS byte_count,
+        `SELECT image_sha256, octet_length(image_bytes) AS byte_count, storage_kind,
                 (source_metadata->>'completed_candles_only')::boolean AS completed_only
          FROM analysis_chart_artifacts WHERE analysis_id = $1`,
         [analysisId],
       );
       expect(persistedChart.rows[0]).toEqual({
         image_sha256: chart.sha256,
-        byte_count: Buffer.from(chart.dataBase64, "base64").length,
+        byte_count: null,
+        storage_kind: "local_sha256",
         completed_only: true,
       });
+      expect(await readChart(chart.sha256)).toEqual(
+        Buffer.from(chart.dataBase64, "base64"),
+      );
+      await expect(
+        isolated.query(
+          "UPDATE analysis_chart_artifacts SET storage_kind = 'database' WHERE analysis_id = $1",
+          [analysisId],
+        ),
+      ).rejects.toThrow();
+      const chartId = (
+        await isolated.query<{ id: string }>(
+          "SELECT id::text FROM analysis_chart_artifacts WHERE analysis_id = $1",
+          [analysisId],
+        )
+      ).rows[0]!.id;
+      const manifest = [
+        {
+          id: chartId,
+          digest: chart.sha256,
+          bytes: Buffer.from(chart.dataBase64, "base64").length,
+        },
+      ];
+      expect(await transitionCharts(isolated, manifest, "restore")).toBe(1);
+      expect(await transitionCharts(isolated, manifest, "restore")).toBe(0);
+      await expect(
+        transitionCharts(isolated, [{ ...manifest[0]!, bytes: 1 }], "relocate"),
+      ).rejects.toThrow("CHART_ARCHIVE_SIZE_MISMATCH");
+      expect(
+        (
+          await isolated.query<{ image_bytes: Buffer }>(
+            "SELECT image_bytes FROM analysis_chart_artifacts WHERE id = $1",
+            [chartId],
+          )
+        ).rows[0]!.image_bytes,
+      ).toEqual(Buffer.from(chart.dataBase64, "base64"));
+      expect(await transitionCharts(isolated, manifest, "relocate")).toBe(1);
+      expect(await transitionCharts(isolated, manifest, "relocate")).toBe(0);
       const initialMarketIds = await isolated.query<{
         candle_snapshot_id: string;
         order_book_snapshot_id: string;

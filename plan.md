@@ -2718,3 +2718,38 @@ runtime.
       resurrection on this VPS; all listeners remain on loopback. The current PM2
       daemon runs as root because the repository is under `/root`; migrate to the
       least-privilege release layout before any live-readiness review.
+
+### ISSUE-079 — Equity-sized execution and durable operational recovery
+
+- Status: implementation validated and deployed under maintenance pause on `issue-079-equity-sized-execution`, tracked by
+  [issue #188](https://github.com/AegisFintech/scalping-bot/issues/188).
+- Dependencies: ISSUE-076, ISSUE-077, ISSUE-078.
+- Acceptance: replace fixed-dollar exposure with bounded equity-relative sizing in
+  the existing risk engine; fit both OCO margins before admission; recognize broker
+  holiday closures; expose and back off persistence failures independently of exits;
+  preserve chart history with verified storage/restore and operator-reviewed data
+  transition; validate and restore already authorized demo operation without live
+  enablement. All 1% setup / 5% daily and drawdown limits remain enforced.
+- Baseline: reconciled demo equity/free margin USD 999,832.16, no positions/orders
+  at 09:10 SGT on 2026-09-08. Prior approved legs each budgeted USD 4,999.1608
+  but used native volume 100 (0.01 lot) because MAX_POSITION_NOTIONAL=5500.
+  Database storage errors began at 01:50 SGT; 3,914 chart blobs occupy about
+  253 MB. Broker supplied a Labor Day early-close override that was ignored.
+  Six `.4` closed demo trades total -1.14; software repair is not profit evidence.
+- Validation: 465 Node, 121 Python, 22 schema, 3 migration and 3 isolated TLS
+  database/analytics integration tests passed. Format/lint/type/build, Ruff/mypy,
+  configuration checks, replay/fail-closed fixtures, secret scan and both dependency
+  audits passed (zero known vulnerabilities). Exact commands and corrected initial
+  findings: `docs/evidence/equity-sizing-validation.json`.
+- Migration 0018 applied without changing old chart bytes. All five services are
+  online; final `.2` reports the storage block and HTTP 503 under the authenticated
+  maintenance pause. Both dashboard themes passed background-update checks.
+- Same-input read-only sizing: 0.01 → 11.25 lots per leg; modeled combined loss
+  3,205.8981 versus 9,998.3216 budget, constrained by the unchanged margin ceiling.
+  Arithmetic median 0.771 ms; one broker-confirmed sizing check 517.30 ms. No orders
+  were submitted by the comparison; no improved profitability is claimed.
+- Remaining acceptance: operator review of the verified 3,914-image archive
+  transition, capacity recovery, then restoration of prior demo operation and
+  observation. Both exact archive copies and restore tests are prepared. No
+  database image bytes or financial rows have been removed. Delivery details:
+  `docs/equity-sizing-recovery-report.md`.

@@ -1,6 +1,6 @@
 # Complete configuration inventory
 
-Baseline `2ee59bb`: 176 assignments; current normal template: 21 (ISSUE-076).
+Baseline `2ee59bb`: 176 assignments; current normal template: 20 (ISSUE-079).
 This inventory classifies every former setting by its implemented disposition.
 No environment setting controls an optimizer; bounded adaptive risk multipliers
 are internal state, not operator knobs. Ports/paths/TLS remain deployment options.
@@ -161,7 +161,7 @@ are internal state, not operator knobs. Ports/paths/TLS remain deployment option
 | `MAX_ENTRY_DISTANCE_ATR`                   | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `ENTRY_LATENCY_BUFFER_ATR`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PREFERRED_MAX_ENTRY_DISTANCE_ATR`         | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
-| `MAX_POSITION_NOTIONAL`                    | Essential operator choice / safety authorization | Normal template.                                          |
+| `MAX_POSITION_NOTIONAL`                    | Obsolete setting                                 | Removed in v3; explicit migration required.               |
 | `MAX_MARGIN_USAGE_PERCENT`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PAPER_ACCOUNT_EQUITY`                     | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PAPER_ACCOUNT_BALANCE`                    | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |

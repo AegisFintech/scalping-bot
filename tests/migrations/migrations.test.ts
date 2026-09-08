@@ -79,6 +79,7 @@ describe("migrations", () => {
       "0015_provider_and_capital_risk.sql",
       "0016_reusable_scenario_context.sql",
       "0017_sol_context_model.sql",
+      "0018_local_chart_storage.sql",
     ]);
     const sql = (
       await Promise.all(

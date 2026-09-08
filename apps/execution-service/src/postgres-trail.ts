@@ -1,3 +1,4 @@
+import { writeChart } from "../../../packages/database/src/chart-store.js";
 import {
   providerTelemetrySchema,
   type ProviderTelemetry,
@@ -363,11 +364,12 @@ export class PostgresDecisionTrail implements DecisionTrail {
         ) {
           throw new Error("TRAIL_ANALYSIS_CHART_INVALID");
         }
+        await writeChart(bytes, response.chart.sha256);
         await client.query(
           `INSERT INTO analysis_chart_artifacts
             (id, analysis_id, renderer_version, mime_type, width, height,
-             image_sha256, image_bytes, source_metadata)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
+             image_sha256, image_bytes, source_metadata, storage_kind)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8::jsonb, 'local_sha256')`,
           [
             randomUUID(),
             analysisId,
@@ -376,7 +378,6 @@ export class PostgresDecisionTrail implements DecisionTrail {
             response.chart.width,
             response.chart.height,
             response.chart.sha256,
-            bytes,
             safeJson({
               completed_candles_only: response.chart.completedCandlesOnly,
               candle_counts: response.chart.candleCounts,

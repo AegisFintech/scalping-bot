@@ -1,3 +1,4 @@
+import { OperationalFault } from "./operational-fault.js";
 import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
 import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
@@ -752,6 +753,9 @@ async function main(): Promise<void> {
   startupChecksPassed =
     config.tradingMode !== "live" && demoRecoveryState.certain;
   let lastCycle: CycleResult | null = null;
+  const operationalFault = new OperationalFault(
+    ".runtime/execution-fault.json",
+  );
   let lastSafetyReasons: readonly string[] = [];
   const dailyRiskTimezone = environment.DAILY_RISK_TIMEZONE ?? "UTC";
   const baselineCaptureGraceSeconds = integer(
@@ -1201,6 +1205,9 @@ async function main(): Promise<void> {
     lastSafetyReasons = [
       ...new Set([
         ...eligibility.reasonCodes,
+        ...(operationalFault.snapshot
+          ? [operationalFault.snapshot.reasonCode]
+          : []),
         ...modeReasons,
         ...latestDemoExecutionReasonCodes,
         ...latestSafetyDetailReasonCodes,
@@ -1218,6 +1225,9 @@ async function main(): Promise<void> {
         setupRiskPercent: config.baseRiskPercent,
         dailyLossLimitPercent: config.maxDailyLossPercent,
         drawdownLimitPercent: MONEY_MANAGEMENT.drawdownLimitPercent,
+        maxPositionNotionalEquityMultiple:
+          MONEY_MANAGEMENT.maxPositionNotionalEquityMultiple,
+        maxMarginUsagePercent: MONEY_MANAGEMENT.maxMarginUsagePercent,
       },
       accountType: connectionMode,
       emergencyStopped:
@@ -1258,7 +1268,10 @@ async function main(): Promise<void> {
         .summary()
         .then((value) => value ?? { state: "NOT_REQUESTED" })
         .catch(() => ({ state: "UNAVAILABLE" })),
+      operationalReady: operationalFault.snapshot === null,
+      operationalFault: operationalFault.snapshot,
       tradingEnabled:
+        operationalFault.snapshot === null &&
         eligibility.allowed &&
         gateway.canSubmitToBroker &&
         modeReasons.length === 0,
@@ -1536,7 +1549,7 @@ async function main(): Promise<void> {
         ) {
           return;
         }
-        if (!model.canEvaluate) return;
+        if (!operationalFault.canRetry || !model.canEvaluate) return;
         const quote = await marketClient.quote(config.symbol);
         const window = evaluateScenarioExecutionWindow(quote.serverTime);
         if (
@@ -1566,6 +1579,13 @@ async function main(): Promise<void> {
               window.intervalStart,
               lastCycle,
             );
+            if (
+              lastCycle.reasonCodes.includes("DATABASE_STORAGE_LIMIT_EXCEEDED")
+            )
+              operationalFault.fail(
+                new Error("DATABASE_STORAGE_LIMIT_EXCEEDED"),
+              );
+            else operationalFault.recovered();
             logger.log("info", {
               event_name: "automatic_analysis_interval_completed",
               outcome: lastCycle.outcome.toLowerCase(),
@@ -1587,6 +1607,7 @@ async function main(): Promise<void> {
         }
       }
     } catch (error) {
+      operationalFault.fail(error);
       logger.log("error", {
         event_name: "scheduler_tick_failed",
         outcome: "failed",
@@ -1635,7 +1656,7 @@ async function main(): Promise<void> {
   });
   let spreadSampling = false;
   const sampleSpread = async (): Promise<void> => {
-    if (spreadSampling) return;
+    if (spreadSampling || !operationalFault.canRetry) return;
     spreadSampling = true;
     try {
       const inserted = await spreadSampler.sample();
@@ -1644,6 +1665,11 @@ async function main(): Promise<void> {
         outcome: inserted ? "success" : "duplicate",
       });
     } catch (error) {
+      if (
+        stableFailureReason(error, "SPREAD_OBSERVATION_FAILED") ===
+        "DATABASE_STORAGE_LIMIT_EXCEEDED"
+      )
+        operationalFault.fail(error);
       logger.log("warn", {
         event_name: "spread_observation_failed",
         outcome: "rejected",

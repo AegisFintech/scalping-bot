@@ -24,17 +24,41 @@ export interface WeeklyTradingInterval {
 export interface WeeklyTradingSchedule {
   readonly timeZone: string;
   readonly intervals: readonly WeeklyTradingInterval[];
+  readonly holidays: readonly TradingHoliday[];
+}
+
+export interface TradingHoliday {
+  readonly holidayDate: number;
+  readonly isRecurring: boolean;
+  readonly startSecond: number;
+  readonly endSecond: number;
+  readonly timeZone: string;
+}
+
+// Bound the cache; broker timezones are validated before use.
+const formatters = new Map<string, Intl.DateTimeFormat>();
+function localParts(at: Date, timeZone: string): Intl.DateTimeFormatPart[] {
+  let formatter = formatters.get(timeZone);
+  if (formatter === undefined) {
+    formatter = new Intl.DateTimeFormat("en-US-u-ca-gregory", {
+      timeZone,
+      weekday: "short",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    });
+    if (formatters.size >= 100) formatters.clear();
+    formatters.set(timeZone, formatter);
+  }
+  return formatter.formatToParts(at);
 }
 
 function weekSecond(at: Date, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat("en-US-u-ca-gregory", {
-    timeZone,
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(at);
+  const parts = localParts(at, timeZone);
   const value = (type: Intl.DateTimeFormatPartTypes): string | undefined =>
     parts.find((part) => part.type === type)?.value;
   const weekday = WEEKDAYS[value("weekday") ?? ""];
@@ -61,6 +85,7 @@ function weekSecond(at: Date, timeZone: string): number {
 export function weeklyTradingSchedule(
   timeZone: string,
   intervals: readonly WeeklyTradingInterval[],
+  holidays: readonly TradingHoliday[] = [],
 ): WeeklyTradingSchedule {
   if (
     timeZone.length < 1 ||
@@ -92,11 +117,61 @@ export function weeklyTradingSchedule(
     if (previous !== undefined && previous.endSecond > interval.startSecond)
       throw new Error("CTRADER_SCHEDULE_INTERVAL_OVERLAP");
   }
-  return { timeZone, intervals: ordered };
+  if (holidays.length > 366) throw new Error("CTRADER_HOLIDAYS_INVALID");
+  for (const holiday of holidays) {
+    if (
+      !Number.isSafeInteger(holiday.holidayDate) ||
+      holiday.holidayDate < 0 ||
+      holiday.holidayDate > 100000 ||
+      typeof holiday.isRecurring !== "boolean" ||
+      !Number.isSafeInteger(holiday.startSecond) ||
+      !Number.isSafeInteger(holiday.endSecond) ||
+      holiday.startSecond < 0 ||
+      holiday.endSecond > DAY_SECONDS ||
+      holiday.startSecond >= holiday.endSecond ||
+      typeof holiday.timeZone !== "string" ||
+      holiday.timeZone.length < 1 ||
+      holiday.timeZone.length > 100 ||
+      holiday.timeZone.trim() !== holiday.timeZone
+    )
+      throw new Error("CTRADER_HOLIDAY_INVALID");
+    try {
+      localParts(new Date(0), holiday.timeZone);
+    } catch {
+      throw new Error("CTRADER_HOLIDAY_TIMEZONE_INVALID");
+    }
+  }
+  return {
+    timeZone,
+    intervals: ordered,
+    holidays: holidays.map((h) => ({ ...h })),
+  };
 }
 
 function isOpen(at: Date, schedule: WeeklyTradingSchedule): boolean {
   const second = weekSecond(at, schedule.timeZone);
+  for (const holiday of schedule.holidays) {
+    const parts = localParts(at, holiday.timeZone);
+    const part = (type: Intl.DateTimeFormatPartTypes): string =>
+      parts.find((p) => p.type === type)!.value;
+    const date = `${part("year")}-${part("month")}-${part("day")}`;
+    const declared = new Date(holiday.holidayDate * DAY_SECONDS * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const dateMatches = holiday.isRecurring
+      ? date.slice(5) === declared.slice(5)
+      : date === declared;
+    const daySecond =
+      Number(part("hour")) * 3600 +
+      Number(part("minute")) * 60 +
+      Number(part("second"));
+    if (
+      dateMatches &&
+      daySecond >= holiday.startSecond &&
+      daySecond < holiday.endSecond
+    )
+      return false;
+  }
   return schedule.intervals.some(
     (interval) => second >= interval.startSecond && second < interval.endSecond,
   );
@@ -113,6 +188,20 @@ export function markBrokerSessionGaps(
     timeframeMs % MINUTE_MS !== 0
   )
     throw new Error("CTRADER_SCHEDULE_TIMEFRAME_INVALID");
+  // Inspect every possible session/holiday edge within each minute too. This
+  // catches sub-minute open intervals between overrides instead of hiding them.
+  const offsets = [
+    ...new Set([
+      0,
+      59999,
+      ...[...schedule.intervals, ...schedule.holidays]
+        .flatMap((i) => [i.startSecond, i.endSecond])
+        .flatMap((second) => [
+          (second % 60) * 1000,
+          ((second % 60) * 1000 + 59999) % 60000,
+        ]),
+    ]),
+  ];
   return candles.map((candle, index) => {
     const previous = candles[index - 1];
     if (previous === undefined) return candle;
@@ -132,7 +221,13 @@ export function markBrokerSessionGaps(
     // exact broker schedule. A no-tick interval while the session is open is
     // intentionally left unmarked so analytics rejects it.
     for (let cursor = previousEnd; cursor < currentStart; cursor += MINUTE_MS) {
-      if (isOpen(new Date(cursor), schedule)) return candle;
+      for (const offset of offsets) {
+        if (
+          cursor + offset < currentStart &&
+          isOpen(new Date(cursor + offset), schedule)
+        )
+          return candle;
+      }
     }
     if (isOpen(new Date(currentStart - 1), schedule)) return candle;
     return {

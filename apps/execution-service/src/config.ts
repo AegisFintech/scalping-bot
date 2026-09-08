@@ -139,8 +139,6 @@ export function loadExecutionConfig(
       throw new Error("CONFIG_DEMO_ACKNOWLEDGEMENT_REQUIRED");
     if (maxOrdersPerDay < 1)
       throw new Error("CONFIG_DEMO_ORDER_LIMIT_REQUIRED");
-    if (maxPositionNotional === null)
-      throw new Error("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
   }
   const automaticAnalysisCompletedLimit = integerValue(
     environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,
@@ -348,6 +346,8 @@ function configurationHash(
         maxMetadataAgeMs: config.maxMetadataAgeMs,
         maxOrdersPerDay: config.maxOrdersPerDay,
         maxPositionNotional: config.maxPositionNotional,
+        maxPositionNotionalEquityMultiple:
+          MONEY_MANAGEMENT.maxPositionNotionalEquityMultiple,
         ...(includeAutomationAuthority
           ? { automaticAnalysisEnabled: config.automaticAnalysisEnabled }
           : {}),

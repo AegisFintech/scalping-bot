@@ -31,7 +31,26 @@ def operating_state(status: dict[str, Any]) -> tuple[str, str]:
     if status.get("emergencyStopped") is True:
         return "Stopped", "Emergency stop is active. Protective management continues."
     if status.get("pauseNewAnalyses") is True:
+        fault = status.get("operationalFault", {})
+        if isinstance(fault, dict) and fault.get("reasonCode") == "DATABASE_STORAGE_LIMIT_EXCEEDED":
+            return (
+                "Paused · storage blocked",
+                "Database capacity must be restored before resuming. "
+                "Protective management continues.",
+            )
         return "Paused", "New analysis is paused. Existing orders and positions remain managed."
+    if status.get("operationalReady") is False:
+        fault = status.get("operationalFault", {})
+        if isinstance(fault, dict) and fault.get("reasonCode") == "DATABASE_STORAGE_LIMIT_EXCEEDED":
+            return (
+                "Blocked",
+                "Database capacity is exhausted. New analysis waits for storage recovery; "
+                "protective management continues.",
+            )
+        return (
+            "Blocked",
+            "An execution service failure blocks new analysis; recovery checks run automatically.",
+        )
     if status.get("startupChecksPassed") is not True:
         return "Blocked", "Startup or reconciliation checks have not passed."
     managed = status.get("managedSetup", {})
@@ -89,7 +108,10 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
         if fresh(capital.get("updated_at"), now):
             result["drawdown"] = money(capital.get("drawdown_percent")) + "%"
             policy = capital.get("risk_policy", {})
-            if not isinstance(policy, dict) or policy.get("version") != "fixed-risk-v2":
+            if not isinstance(policy, dict) or policy.get("version") not in (
+                "fixed-risk-v2",
+                "fixed-risk-v3",
+            ):
                 return result
             setup_percent = Decimal(str(policy["setupRiskPercent"]))
             daily_percent = Decimal(str(policy["dailyLossLimitPercent"]))

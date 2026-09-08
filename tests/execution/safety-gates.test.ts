@@ -274,9 +274,9 @@ describe("execution safety gates", () => {
     expect(() => loadExecutionConfig(enabled)).toThrow(
       "CONFIG_DEMO_ORDER_LIMIT_REQUIRED",
     );
-    expect(() =>
+    expect(
       loadExecutionConfig({ ...enabled, MAX_ORDERS_PER_DAY: "1" }),
-    ).toThrow("CONFIG_DEMO_NOTIONAL_LIMIT_REQUIRED");
+    ).toMatchObject({ maxPositionNotional: null, demoTradingEnabled: true });
     expect(() =>
       loadExecutionConfig({
         ...enabled,
