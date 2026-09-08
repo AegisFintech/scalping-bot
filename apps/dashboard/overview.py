@@ -111,6 +111,7 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
             if not isinstance(policy, dict) or policy.get("version") not in (
                 "fixed-risk-v2",
                 "fixed-risk-v3",
+                "fixed-risk-v4",
             ):
                 return result
             setup_percent = Decimal(str(policy["setupRiskPercent"]))

@@ -162,7 +162,7 @@ are internal state, not operator knobs. Ports/paths/TLS remain deployment option
 | `ENTRY_LATENCY_BUFFER_ATR`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PREFERRED_MAX_ENTRY_DISTANCE_ATR`         | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `MAX_POSITION_NOTIONAL`                    | Obsolete setting                                 | Removed in v3; explicit migration required.               |
-| `MAX_MARGIN_USAGE_PERCENT`                 | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
+| `MAX_MARGIN_USAGE_PERCENT`                 | Internal engineering default                     | Fixed collateral check; legacy 1% override rejects.       |
 | `PAPER_ACCOUNT_EQUITY`                     | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PAPER_ACCOUNT_BALANCE`                    | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |
 | `PAPER_AVAILABLE_MARGIN`                   | Internal engineering default                     | Fixed versioned policy; conflicting legacy values reject. |

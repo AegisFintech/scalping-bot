@@ -247,6 +247,17 @@ export class InMemoryDecisionTrail implements DecisionTrail {
   }
 }
 
+export type PlacementControls = Pick<
+  SafetyGateInput,
+  | "filesystemControlsCertain"
+  | "filesystemEmergencyStop"
+  | "liveEnablementFileValid"
+  | "runtimeControlsCertain"
+  | "databaseEmergencyStop"
+  | "dashboardAcknowledged"
+  | "pauseNewAnalyses"
+>;
+
 export interface CoordinatorOptions {
   readonly symbol: string;
   readonly mode: "paper" | "demo" | "shadow" | "live";
@@ -289,6 +300,7 @@ export interface CoordinatorOptions {
   readonly gateway: ExecutionGateway;
   readonly trail: DecisionTrail;
   readonly safety: () => Promise<SafetyGateInput>;
+  readonly placementControls: () => Promise<PlacementControls>;
   readonly flushExecutionEvents?: () => Promise<void>;
   readonly performance: (
     analytics: AnalyticsResponse,
@@ -1183,6 +1195,9 @@ export class AnalysisCoordinator {
       if (!commissionCoverage.approved)
         return await reject(commissionCoverage.reasonCodes);
 
+      // Full account/capital/reconciliation work must precede the final market
+      // refresh. Otherwise its network latency can age an otherwise valid quote.
+      const currentSafety = await this.#options.safety();
       const placementAccount = await this.#options.account.reconcile(
         decisionSnapshot.metadata.symbolId,
       );
@@ -1335,7 +1350,9 @@ export class AnalysisCoordinator {
       if (!placementEffectiveSemantic.accepted)
         return await reject(placementEffectiveSemantic.reasonCodes);
 
-      const currentSafety = await this.#options.safety();
+      // Re-read cheap authorization controls immediately before admission, so a
+      // pause/emergency arriving during the market refresh still blocks orders.
+      const finalControls = await this.#options.placementControls();
       if (
         this.#options.risk.currentSetupRiskPercent &&
         risk.perLegRiskPercent !== null &&
@@ -1351,13 +1368,44 @@ export class AnalysisCoordinator {
       const placementGate = evaluatePlacementEligibility({
         ...currentSafety,
         aiCircuitOpen: this.#options.model.circuitOpen,
-        relevantPositionCount: placementAccount.relevantPositionCount,
-        relevantPendingOrderCount: placementAccount.relevantPendingOrderCount,
-        partialFillPresent: placementAccount.hasPartialFill,
-        cancellationPending: placementAccount.hasCancellationPending,
+        filesystemControlsCertain:
+          currentSafety.filesystemControlsCertain &&
+          finalControls.filesystemControlsCertain,
+        filesystemEmergencyStop:
+          currentSafety.filesystemEmergencyStop ||
+          finalControls.filesystemEmergencyStop,
+        liveEnablementFileValid:
+          currentSafety.liveEnablementFileValid &&
+          finalControls.liveEnablementFileValid,
+        runtimeControlsCertain:
+          currentSafety.runtimeControlsCertain &&
+          finalControls.runtimeControlsCertain,
+        databaseEmergencyStop:
+          currentSafety.databaseEmergencyStop ||
+          finalControls.databaseEmergencyStop,
+        dashboardAcknowledged:
+          currentSafety.dashboardAcknowledged &&
+          finalControls.dashboardAcknowledged,
+        pauseNewAnalyses:
+          currentSafety.pauseNewAnalyses || finalControls.pauseNewAnalyses,
+        relevantPositionCount: Math.max(
+          currentSafety.relevantPositionCount,
+          placementAccount.relevantPositionCount,
+        ),
+        relevantPendingOrderCount: Math.max(
+          currentSafety.relevantPendingOrderCount,
+          placementAccount.relevantPendingOrderCount,
+        ),
+        partialFillPresent:
+          currentSafety.partialFillPresent || placementAccount.hasPartialFill,
+        cancellationPending:
+          currentSafety.cancellationPending ||
+          placementAccount.hasCancellationPending,
         previousAnalysisExpired: true,
-        accountReconciled: true,
-        reconciliationCertain: placementAccount.certain,
+        accountReconciled:
+          currentSafety.accountReconciled && placementAccount.certain,
+        reconciliationCertain:
+          currentSafety.reconciliationCertain && placementAccount.certain,
         marketDataFresh:
           quoteAge >= 0 && quoteAge <= this.#options.maxQuoteAgeMs,
         orderBookFresh:

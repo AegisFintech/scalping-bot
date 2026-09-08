@@ -1,5 +1,10 @@
 # ISSUE-079 — Equity sizing and blocked execution recovery
 
+This report records the earlier paused revision `.2` checkpoint. The operator's
+subsequent cap-removal request and completed storage recovery are documented in
+[the revision `.3` report](risk-budget-recovery-report.md). Intermediate limits
+and pending-review statements below are historical, not the current policy.
+
 Date: 2026-09-08. [Issue #188](https://github.com/AegisFintech/scalping-bot/issues/188).
 Branch `issue-079-equity-sized-execution`; source `0.2.3-equity-risk.2`, policy
 `fixed-risk-v3`. Implementation is validated and deployed under a maintenance pause. Database recovery awaits operator review. No profitability claim.

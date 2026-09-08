@@ -1114,6 +1114,30 @@ async function main(): Promise<void> {
     gateway,
     trail,
     safety,
+    placementControls: async () => {
+      const [filesystem, runtime] = await Promise.all([
+        readFilesystemControls({
+          emergencyStopFile: config.emergencyStopFile,
+          liveEnablementFile: config.liveEnablementFile,
+          instanceId: config.instanceId,
+          accountKey: config.accountKey,
+        }),
+        controls.snapshot(config.instanceId, {
+          instanceId: config.instanceId,
+          accountKey: config.accountKey,
+          configHash,
+        }),
+      ]);
+      return {
+        filesystemControlsCertain: filesystem.certain,
+        filesystemEmergencyStop: filesystem.emergencyStop,
+        liveEnablementFileValid: filesystem.liveEnablementValid,
+        runtimeControlsCertain: runtime.certain,
+        databaseEmergencyStop: runtime.emergencyStop,
+        dashboardAcknowledged: runtime.dashboardAcknowledged,
+        pauseNewAnalyses: config.pauseNewAnalyses || runtime.pauseNewAnalyses,
+      };
+    },
     ...(demoExecutionRecorder === null
       ? {}
       : {

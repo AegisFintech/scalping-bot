@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Decimal } from "decimal.js";
 import { describe, expect, it, vi } from "vitest";
+import { MONEY_MANAGEMENT } from "../../packages/config/src/policy.js";
 import { OcoRiskEvaluator } from "../../apps/execution-service/src/oco-risk-evaluator.js";
 import type {
   AccountState,
@@ -202,5 +203,84 @@ describe("equity sizing on identical synthetic execution inputs", () => {
     expect(result.approved).toBe(false);
     expect(result.commands).toBeNull();
     expect(estimate.mock.calls.length).toBeLessThanOrEqual(8);
+  });
+});
+
+describe("risk-budget sizing without artificial exposure caps", () => {
+  const run = (overrides: Partial<AccountState> = {}, rate = "0.0442") =>
+    new OcoRiskEvaluator({
+      marginEstimator: {
+        estimate: (_symbol, _side, volume) =>
+          Promise.resolve(new Decimal(volume).mul(rate).toFixed()),
+      },
+      baseRiskPercent: MONEY_MANAGEMENT.setupRiskPercent,
+      maxRiskPercent: MONEY_MANAGEMENT.setupRiskPercent,
+      maxMarginUsagePercent: MONEY_MANAGEMENT.maxMarginUsagePercent,
+      maxPositionNotional: null,
+      strategyVersion: "fixture-no-cap",
+    }).evaluate({
+      account: { ...account, ...overrides },
+      response,
+      metadata: leg.metadata,
+      quote: {} as Quote,
+    });
+
+  it("uses the current equity loss budget beyond the former margin and notional ceilings", async () => {
+    expect(MONEY_MANAGEMENT.maxPositionNotionalEquityMultiple).toBeNull();
+    const r = await run();
+    expect(r.approved).toBe(true);
+    const equity = new Decimal(account.equity);
+    const loss = new Decimal(r.risk!.combinedMaximumLoss!);
+    expect(loss.lte(equity.div(100))).toBe(true);
+    expect(loss.gt(equity.mul("0.0099"))).toBe(true);
+    const buyVolume = new Decimal(r.risk!.buy.normalizedVolume!);
+    expect(
+      buyVolume
+        .mul(leg.metadata.volumeScale)
+        .mul(leg.entryPrice)
+        .gt(equity.mul(5)),
+    ).toBe(true);
+    expect(
+      new Decimal(r.risk!.buy.estimatedMargin!)
+        .plus(r.risk!.sell.estimatedMargin!)
+        .gt(equity.div(100)),
+    ).toBe(true);
+    const smaller = await run({
+      equity: "499916.08",
+      balance: "499916.08",
+      availableMargin: "499916.08",
+    });
+    expect(smaller.approved).toBe(true);
+    expect(new Decimal(smaller.risk!.buy.normalizedVolume!).lt(buyVolume)).toBe(
+      true,
+    );
+    expect(
+      new Decimal(smaller.risk!.combinedMaximumLoss!).lte(
+        new Decimal("4999.1608"),
+      ),
+    ).toBe(true);
+  });
+
+  it("reserves modeled loss in free margin and reduces size to real broker collateral", async () => {
+    const r = await run({}, "2");
+    expect(r.approved).toBe(true);
+    const margin = new Decimal(r.risk!.buy.estimatedMargin!).plus(
+      r.risk!.sell.estimatedMargin!,
+    );
+    expect(
+      margin
+        .plus(new Decimal(account.equity).div(100))
+        .lte(account.availableMargin),
+    ).toBe(true);
+    expect(
+      new Decimal(r.risk!.combinedMaximumLoss!).lt(
+        new Decimal(account.equity).div(100),
+      ),
+    ).toBe(true);
+    const blocked = await run({ availableMargin: "9998.3216" });
+    expect(blocked.approved).toBe(false);
+    expect(blocked.commands).toBeNull();
+    expect((await run({ certain: false })).approved).toBe(false);
+    expect((await run({ relevantPendingOrderCount: 1 })).approved).toBe(false);
   });
 });

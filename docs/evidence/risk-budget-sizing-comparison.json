@@ -1,0 +1,173 @@
+{
+  "capturedAt": "2026-09-08T02:16:50.105Z",
+  "evidenceType": "read-only sizing comparison on recorded order prices; not an execution or profitability backtest",
+  "equity": "999832.16",
+  "freeMargin": "999832.16",
+  "contractSize": "100",
+  "volumeScale": "0.01",
+  "minVolume": "100",
+  "step": "100",
+  "old": {
+    "approved": true,
+    "reasons": [],
+    "equity": "999832.16",
+    "perLegRiskPercent": "0.5",
+    "buy": {
+      "approved": true,
+      "reasonCodes": [],
+      "riskBudget": "4999.1608",
+      "rawVolume": "471618.9433962264150943396226415094339622",
+      "normalizedVolume": "100",
+      "maximumLoss": "1.424855",
+      "estimatedMargin": "4.43"
+    },
+    "sell": {
+      "approved": true,
+      "reasonCodes": [],
+      "riskBudget": "4999.1608",
+      "rawVolume": "471618.9433962264150943396226415094339622",
+      "normalizedVolume": "100",
+      "maximumLoss": "1.4248322",
+      "estimatedMargin": "4.43"
+    },
+    "combinedMaximumLoss": "2.8496872",
+    "elapsedMs": 505.2115310000004,
+    "ordersSubmitted": 0
+  },
+  "intermediate": {
+    "approved": true,
+    "reasons": [],
+    "equity": "999832.16",
+    "perLegRiskPercent": "0.5",
+    "buy": {
+      "approved": true,
+      "reasonCodes": [],
+      "riskBudget": "4999.1608",
+      "rawVolume": "471618.9433962264150943396226415094339622",
+      "normalizedVolume": "112800",
+      "maximumLoss": "1607.23644",
+      "estimatedMargin": "4993.98"
+    },
+    "sell": {
+      "approved": true,
+      "reasonCodes": [],
+      "riskBudget": "4999.1608",
+      "rawVolume": "471618.9433962264150943396226415094339622",
+      "normalizedVolume": "112800",
+      "maximumLoss": "1607.2107216",
+      "estimatedMargin": "4993.92"
+    },
+    "combinedMaximumLoss": "3214.4471616",
+    "elapsedMs": 503.4208980000003,
+    "ordersSubmitted": 0
+  },
+  "revised": {
+    "approved": true,
+    "reasons": [],
+    "equity": "999832.16",
+    "perLegRiskPercent": "0.5",
+    "buy": {
+      "approved": true,
+      "reasonCodes": [],
+      "riskBudget": "4999.1608",
+      "rawVolume": "471618.9433962264150943396226415094339622",
+      "normalizedVolume": "350800",
+      "maximumLoss": "4998.39134",
+      "estimatedMargin": "15531.07"
+    },
+    "sell": {
+      "approved": true,
+      "reasonCodes": [],
+      "riskBudget": "4999.1608",
+      "rawVolume": "471618.9433962264150943396226415094339622",
+      "normalizedVolume": "350800",
+      "maximumLoss": "4998.3113576",
+      "estimatedMargin": "15530.86"
+    },
+    "combinedMaximumLoss": "9996.7026976",
+    "elapsedMs": 512.9304320000001,
+    "ordersSubmitted": 0
+  },
+  "marginQueries": [
+    {
+      "side": "BUY",
+      "volume": "100",
+      "ms": 226.69549099999995,
+      "margin": "4.43"
+    },
+    {
+      "side": "SELL",
+      "volume": "100",
+      "ms": 250.191151,
+      "margin": "4.43"
+    },
+    {
+      "side": "BUY",
+      "volume": "100",
+      "ms": 226.2698539999992,
+      "margin": "4.43"
+    },
+    {
+      "side": "SELL",
+      "volume": "100",
+      "ms": 246.6438360000002,
+      "margin": "4.43"
+    },
+    {
+      "side": "BUY",
+      "volume": "100",
+      "ms": 230.26563999999962,
+      "margin": "4.43"
+    },
+    {
+      "side": "SELL",
+      "volume": "100",
+      "ms": 251.931012,
+      "margin": "4.43"
+    },
+    {
+      "side": "BUY",
+      "volume": "112800",
+      "ms": 227.0631000000003,
+      "margin": "4993.98"
+    },
+    {
+      "side": "SELL",
+      "volume": "112800",
+      "ms": 247.2062590000005,
+      "margin": "4993.92"
+    },
+    {
+      "side": "BUY",
+      "volume": "100",
+      "ms": 227.5773419999996,
+      "margin": "4.43"
+    },
+    {
+      "side": "SELL",
+      "volume": "100",
+      "ms": 247.897919,
+      "margin": "4.43"
+    },
+    {
+      "side": "BUY",
+      "volume": "350800",
+      "ms": 227.05238499999996,
+      "margin": "15531.07"
+    },
+    {
+      "side": "SELL",
+      "volume": "350800",
+      "ms": 252.36583000000064,
+      "margin": "15530.86"
+    }
+  ],
+  "arithmeticBenchmark": {
+    "samples": 1000,
+    "p50Ms": 0.9510780000000523,
+    "p95Ms": 5.240841000000728,
+    "p99Ms": 8.942468999999619
+  },
+  "model": "gpt-5.6-sol/u40",
+  "ordersSubmitted": 0
+}

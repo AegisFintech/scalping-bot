@@ -1189,3 +1189,17 @@ execution, restore and failed verification without financial-row deletion.
 Operational-failure tests cover redaction, restart retention, backoff, HTTP readiness
 and authenticated cycle refusal. Python tests verify blocked rendering, current
 policy budgets and stable completed-candle images across analysis times.
+
+Revision `.3` adds explicit tests that current-equity sizing can exceed the old
+five-times-notional and 1% collateral ceilings while remaining below 1% modeled
+loss. Halving equity reduces size; expensive broker margin downsizes; a minimum
+that would exhaust the free-margin loss reserve rejects. Uncertain accounts and
+existing pending exposure still reject. The updated policy is displayed as v4.
+Real broker margin comparisons are read-only and retain the same historic entry/
+stop prices for all three alternatives; larger size is not profit evidence.
+
+Revision `.4` coordinator regressions simulate a four-second capital audit, then
+verify a fresh final market snapshot without extending the three-second limit.
+The old implementation fails these regressions. Additional cases preserve newer
+exposure/partial/cancellation/reconciliation blockers and reject late pause,
+emergency, unavailable controls and quotes aged during the final control read.

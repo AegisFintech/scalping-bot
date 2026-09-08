@@ -1,7 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { MONEY_MANAGEMENT } from "../../../packages/config/src/policy.js";
-
 import { Decimal } from "decimal.js";
 import { stopCostReserve } from "../../../packages/risk-engine/src/commission.js";
 
@@ -174,23 +172,26 @@ export class OcoRiskEvaluator {
           decimal(input.account.availableMargin),
         ),
       );
+      // Reserve one full modeled setup loss in free margin. The former 1%
+      // margin-use cap confused collateral with stop risk. Broker collateral,
+      // volume limits and the cost-inclusive risk budget now bound sizing.
+      const freeMarginAfterLossReserve = Decimal.max(
+        0,
+        decimal(input.account.availableMargin).minus(
+          decimal(input.account.equity)
+            .mul(this.#effectiveRisk())
+            .div(100)
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
+        ),
+      );
       const shared = {
         equity: input.account.equity,
-        availableMargin: input.account.availableMargin,
+        availableMargin: canonical(freeMarginAfterLossReserve),
         baseRiskPercent: this.#effectiveRisk(),
         maxRiskPercent: this.#options.maxRiskPercent,
         currentMargin: canonical(currentMargin),
         maxMarginUsagePercent: this.#options.maxMarginUsagePercent,
-        maxPositionNotional: canonical(
-          Decimal.min(
-            decimal(input.account.equity).mul(
-              MONEY_MANAGEMENT.maxPositionNotionalEquityMultiple,
-            ),
-            this.#options.maxPositionNotional === null
-              ? Infinity
-              : decimal(this.#options.maxPositionNotional),
-          ),
-        ),
+        maxPositionNotional: this.#options.maxPositionNotional,
         metadata: input.metadata,
       };
       const leg = (
@@ -249,7 +250,7 @@ export class OcoRiskEvaluator {
           throw new Error("RISK_MARGIN_INVALID");
         const combinedMargin = decimal(buyMargin).plus(decimal(sellMargin));
         marginReasons = [];
-        if (combinedMargin.gt(decimal(input.account.availableMargin)))
+        if (combinedMargin.gt(freeMarginAfterLossReserve))
           marginReasons.push("OCO_MARGIN_INSUFFICIENT");
         if (
           currentMargin

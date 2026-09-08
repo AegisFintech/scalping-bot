@@ -5,11 +5,11 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.3-equity-risk.2`, policy `fixed-risk-v3`.
+The current source release is `0.2.3-equity-risk.4`, policy `fixed-risk-v4`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
-See the [current risk-policy and rollout report](docs/fixed-risk-report.md) and
+See the [current risk-policy and recovery report](docs/risk-budget-recovery-report.md) and
 [scenario implementation evidence](docs/reusable-scenario-report.md).
 The [pending-order reconciliation repair](docs/pending-order-reconciliation-report.md)
 accounts for broker-reported zero P/L on unfilled orders, preventing the erroneous
@@ -58,14 +58,15 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
   unknown orders and incomplete reconciliation block new risk. Manual orders
   are never cancelled. Maintenance selects only the configured account/symbol.
 - The fixed policy permits **up to 1% total setup risk** and **5% daily loss**.
-  It retains the **1% margin ceiling** and **10-point
-  absolute spread ceiling**, alongside ATR/percentile spread checks. Both OCO
+  It retains the **10-point absolute spread ceiling**, alongside ATR/percentile
+  spread checks. Both OCO
   legs share the setup budget, including simultaneous-fill race exposure.
 - Sizing reserves round-trip commission and ten ticks of adverse execution,
-  floors broker-native volume, and respects notional and remaining daily limits.
-  No absolute starting-equity floor is required. Exposure is bounded at five times
-  current equity per leg; combined margin remains at most 1% of equity. These
-  limits can make actual stop-loss risk smaller than 1%. Broker margin tier changes
+  floors broker-native volume, and respects remaining daily limits.
+  No absolute starting-equity floor or artificial notional cap is required.
+  Broker margin and volume limits still apply; one full modeled setup loss is
+  reserved in free margin. Risk is recalculated from current equity immediately
+  before placement. Collateral is distinct from stop risk. Broker margin tier changes
   trigger bounded downward sizing with exact-volume confirmation.
   Minimum volume is rejected when unaffordable. Stops cannot cap gap losses.
 - Cash-flow-adjusted high-water accounting survives restarts. Drawdown/daily

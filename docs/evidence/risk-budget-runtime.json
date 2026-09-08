@@ -1,0 +1,63 @@
+{
+  "at": "2026-09-08T02:28:39.806Z",
+  "release": "0.2.3-equity-risk.4",
+  "policy": {
+    "version": "fixed-risk-v4",
+    "setupRiskPercent": "1",
+    "dailyLossLimitPercent": "5",
+    "drawdownLimitPercent": "5",
+    "maxPositionNotionalEquityMultiple": null,
+    "maxMarginUsagePercent": "100"
+  },
+  "mode": "demo",
+  "paused": false,
+  "emergency": false,
+  "tradingEnabled": true,
+  "operationalReady": true,
+  "readyHttp": 200,
+  "fault": null,
+  "reasonCodes": [],
+  "lastOutcome": "REJECTED",
+  "lastReasons": ["SPREAD_PERCENTILE_EXCEEDED", "SPREAD_POINTS_EXCEEDED"],
+  "requestedModel": "gpt-5.6-sol/u40",
+  "scenarioContext": {
+    "state": "READY",
+    "requested_at": "2026-09-08T02:27:56.830Z",
+    "valid_until": "2026-09-08T02:32:55.252Z",
+    "duration_ms": 32471,
+    "reason": null,
+    "requested_model": "gpt-5.6-sol/u40",
+    "returned_model": "gpt-5.6-sol",
+    "consumed": false,
+    "calls_24h": 100
+  },
+  "managedStatus": "LATEST_TERMINAL",
+  "normalEnvironmentKeys": 20,
+  "actualEnvironmentKeys": 24,
+  "previousCredentialsAndOtherValuesPreserved": true,
+  "environmentMode": "600",
+  "services": [
+    {
+      "name": "scalper-analytics",
+      "status": "online"
+    },
+    {
+      "name": "scalper-market-data",
+      "status": "online"
+    },
+    {
+      "name": "scalper-ai",
+      "status": "online"
+    },
+    {
+      "name": "scalper-execution",
+      "status": "online"
+    },
+    {
+      "name": "scalper-dashboard",
+      "status": "online"
+    }
+  ],
+  "financialLocksReset": false,
+  "liveEnabled": false
+}

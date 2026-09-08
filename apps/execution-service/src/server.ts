@@ -20,13 +20,13 @@ export interface ExecutionStatus {
   readonly requestedModel?: string;
   readonly remainingCapitalRiskPercent?: string | null;
   readonly scenarioContext?: Readonly<Record<string, unknown>>;
-  readonly policyVersion?: "fixed-risk-v2" | "fixed-risk-v3";
+  readonly policyVersion?: "fixed-risk-v2" | "fixed-risk-v3" | "fixed-risk-v4";
   readonly riskPolicy?: {
-    readonly version: "fixed-risk-v2" | "fixed-risk-v3";
+    readonly version: "fixed-risk-v2" | "fixed-risk-v3" | "fixed-risk-v4";
     readonly setupRiskPercent: string;
     readonly dailyLossLimitPercent: string;
     readonly drawdownLimitPercent: string;
-    readonly maxPositionNotionalEquityMultiple?: string;
+    readonly maxPositionNotionalEquityMultiple?: string | null;
     readonly maxMarginUsagePercent?: string;
   };
   readonly mode: string;

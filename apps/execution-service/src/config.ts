@@ -348,6 +348,7 @@ function configurationHash(
         maxPositionNotional: config.maxPositionNotional,
         maxPositionNotionalEquityMultiple:
           MONEY_MANAGEMENT.maxPositionNotionalEquityMultiple,
+        maxMarginUsagePercent: MONEY_MANAGEMENT.maxMarginUsagePercent,
         ...(includeAutomationAuthority
           ? { automaticAnalysisEnabled: config.automaticAnalysisEnabled }
           : {}),

@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.2`, fixed risk policy v3. Previous release
+Current source: `0.2.3-equity-risk.4`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -73,9 +73,13 @@ loopback and deployments support Debian/systemd.
    no broker price or untrusted model value is rounded into acceptance.
 8. `risk-engine` sizes both race-exposed legs with cost reserves, current equity,
    the fixed 1% setup ceiling, remaining 5% daily budget, durable capital risk, broker volume steps, currency
-   conversion, exact margin estimates and notional limits. It never rounds up to
+   conversion and exact margin estimates. Free margin reserves one modeled setup loss;
+   there is no artificial notional or 1% collateral ceiling. It never rounds up to
    minimum volume. Existing/unpriced account exposure blocks replacement.
-9. Account and market data are refreshed again; changes invalidate the plan.
+9. Account/capital safety and account state are refreshed before the final market
+   snapshot; changes invalidate the plan. Cheap authorization controls are read
+   again after semantic checks. Final admission preserves blockers from both
+   safety and account observations; no newer exposure/uncertainty is overwritten.
    Final risk-cap reductions also reject previously sized commands. A unique
    `order_groups.context_plan_id` consumes each map at intent, even when broker
    submission later fails or becomes uncertain. Transactional
@@ -142,7 +146,7 @@ send controls. Diagnostics retain the user's selected snapshot during recovery.
 ## Modes and remaining limits
 
 Paper uses its own account identity/ledger; demo requires explicit acknowledgement
-and fixed equity-relative exposure limits. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
+and fixed equity-relative loss limits. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
 `DisabledLiveGateway` and cannot place orders in this composition. Credentials
 cannot select mode or authorize execution.
 

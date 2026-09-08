@@ -10,7 +10,7 @@ submission, or model-selected risk increases are introduced. Stops/targets remai
 broker-held. The new candidate does not automate discretionary structural/time
 closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
 
-Current policy: `fixed-risk-v3`. All money authority lives in the existing
+Current policy: `fixed-risk-v4`. All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
@@ -38,15 +38,18 @@ Risk percentages are hard-coded in `packages/config/src/policy.ts`: **1% of
 current reconciled equity per setup**, **5% of the cash-flow-adjusted UTC day's
 starting-equity baseline as the daily loss budget**, and the existing **5%
 high-water drawdown lock**. No absolute starting-equity floor is required.
-The obsolete fixed-dollar notional limit is replaced by a fixed cap of five times
-current equity per leg, at most ten times across an OCO pair. This bounds exposure
-without pinning every account to one minimum lot. Broker leverage is unchanged. The 1% margin-use ceiling, 10-point absolute spread cap,
-0.10 ATR spread cap, historical percentile cap and 100-order daily ceiling remain.
+At the operator's request, revision `.3` removes both the old fixed-dollar and
+intermediate five-times-equity notional caps, and the unrelated 1% margin-use cap.
+One percent refers to modeled loss at the stop, including costs, not collateral.
+Broker leverage is unchanged. Sizing retains broker maximum/step volume and exact
+margin requirements. Free margin must cover both legs plus a reserve equal to one
+modeled setup loss. The 10-point absolute spread cap, 0.10 ATR spread cap,
+historical percentile cap and 100-order daily ceiling remain.
 
 This explicitly raises the prior 0.001% setup / 1% daily policy at the operator's
 request. It does not establish improved expectancy. One percent is a modeled
 ceiling, not a required exposure: costs, volume increments, remaining daily
-capacity, notional, margin and adverse-condition reductions can lower actual size.
+capacity, broker volume/margin and adverse-condition reductions can lower actual size.
 There is no leverage increase or upward rounding to make the trade reach 1%.
 
 One setup is admitted only with certain reconciled state. Positions/pending
@@ -76,11 +79,11 @@ executable entry/exit sides and is not added a second time to realized P&L.
 
 The grid search respects minimum, maximum and step, including an off-grid broker
 maximum. Both modeled losses are added against the one setup budget. Before sizing, each
-leg receives half the shared available margin after the 1% margin-use ceiling and
-existing margin are applied. Volumes are floored to that allowance instead of
+leg receives half the shared broker free margin after reserving one full setup
+loss. Total collateral cannot exceed equity or available broker margin. Volumes are floored to that allowance instead of
 rejecting an otherwise affordable smaller order. Exact broker margin is confirmed
-at final volume, with at most two further downward recalculations for margin tiers. Notional is capped per
-position in account currency using the discovered quote conversion. Unavailable fees/conversion/metadata, insufficient margin or an
+at final volume, with at most two further downward recalculations for margin tiers.
+Discovered currency conversion is required for fees and exposure calculations. Unavailable fees/conversion/metadata, insufficient margin or an
 unaffordable minimum rejects. No martingale, averaging down or loss chasing exists.
 
 cTrader volume and lotSize are in hundredths of a base unit. Orders retain native

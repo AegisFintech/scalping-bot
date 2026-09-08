@@ -1,0 +1,68 @@
+{
+  "at": "2026-09-08T02:30:46.742Z",
+  "analyses": [
+    {
+      "state": "REJECTED",
+      "rejection_reasons": [
+        "SPREAD_PERCENTILE_EXCEEDED",
+        "SPREAD_POINTS_EXCEEDED"
+      ],
+      "deferral_reason": null,
+      "n": 16,
+      "first_at": "2026-09-08T02:28:31.789Z",
+      "last_at": "2026-09-08T02:30:41.332Z"
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_WAIT_PRICE_RETURN",
+      "n": 1,
+      "first_at": "2026-09-08T02:29:41.492Z",
+      "last_at": "2026-09-08T02:29:41.492Z"
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_REFRESH_STARTED",
+      "n": 1,
+      "first_at": "2026-09-08T02:27:51.881Z",
+      "last_at": "2026-09-08T02:27:51.881Z"
+    }
+  ],
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol",
+      "duration_ms": 36374,
+      "requested_at": "2026-09-08T02:20:11.415Z",
+      "available_at": "2026-09-08T02:20:47.790Z",
+      "valid_until": "2026-09-08T02:25:09.658Z",
+      "input_tokens": 17736,
+      "output_tokens": 823
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol",
+      "duration_ms": 32471,
+      "requested_at": "2026-09-08T02:27:56.830Z",
+      "available_at": "2026-09-08T02:28:29.302Z",
+      "valid_until": "2026-09-08T02:32:55.252Z",
+      "input_tokens": 17735,
+      "output_tokens": 758
+    }
+  ],
+  "orders": [],
+  "risk": [],
+  "storage": [
+    {
+      "database_bytes": "250200064",
+      "chart_rows": 3943,
+      "remaining_database_images": 0
+    }
+  ],
+  "evidenceType": "short forward demo observation; no new orders or fills in this window; not a profitability test"
+}

@@ -1,12 +1,12 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.2` uses policy `fixed-risk-v3` in
+Release `0.2.3-equity-risk.4` uses policy `fixed-risk-v4` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
 reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
 four retained deployment credentials/identifiers. No credentials were changed.
-See [the current policy report](equity-sizing-recovery-report.md) for migration and validation. There is no operator strategy tuning file.
+See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file.
 Reusable scenario maps add no environment variables or tuning file. Five-minute
 refresh/cooldown, one intent per map, five-second local decisions, 60-second
 pending expiry and 45-second provider timeout are engineering policy, not operator
@@ -46,18 +46,22 @@ their effective code defaults. Keep unknown credentials or custom deployments
 until reviewed; unused monitoring credentials must not disappear accidentally.
 
 The operator-authorized fixed policy uses a 1% setup risk ceiling and 5% daily
-loss limit, with no absolute equity floor. The 1% margin-use ceiling and 10-point
-spread ceiling remain. The
-order-count ceiling is 100 per day, below the former configured 103. Sizing includes execution costs and bounded risk reductions; AI cannot raise risk.
-The obsolete fixed-dollar `MAX_POSITION_NOTIONAL` override must be removed after
-review; leaving it populated produces a key-only migration error, including in a
-cached supervisor environment. Fixed policy caps gross notional at **5 × current
-equity per leg** (at most 10 × equity across the two race-exposed legs), subject to
-the unchanged 1% combined margin and 1% combined modeled-loss ceilings. This is a
-maximum exposure, not a target or a request to change broker leverage. Notional
-conversion uses discovered broker currency metadata. The risk engine floors size
-to the broker grid before confirming exact-volume margin; an unaffordable minimum
-still rejects. No money-management tuning file replaces the removed setting.
+loss limit, with no absolute equity floor. The 10-point spread ceiling and
+100-order daily ceiling remain. Sizing includes execution costs and bounded risk
+reductions; AI cannot raise risk. Revision `.3` removes the artificial notional
+and 1% collateral ceilings at the operator's request. The risk engine calculates
+size from current equity and cost-inclusive stop risk, floors to broker increments,
+reserves one full setup loss in free margin and confirms broker margin at the final
+volume. The two race-exposed legs share the 1% loss budget. Broker leverage is
+unchanged; broker maximum volume, available margin and adverse-condition reductions
+can still produce less than 1% actual modeled risk.
+
+The obsolete `MAX_POSITION_NOTIONAL` override must be removed after review;
+leaving it populated produces a key-only migration error. A cached
+`MAX_MARGIN_USAGE_PERCENT=1` also conflicts with revision `.3`; remove the legacy
+internal override and recreate supervisor processes. The internal 100% bound means
+collateral cannot exceed equity, with the separate loss reserve and broker free
+margin checks still applied. No new `.env` choices or tuning file are needed.
 A broker minimum can be unaffordable; do not enlarge risk to force a fill.
 
 Symbol ID, account currency/type, volume increments, precision, commissions and
@@ -81,7 +85,7 @@ limits. Both are read-only; neither checks provider/broker connectivity, runtime
 state or permission to place an order. Service startup separately validates
 credentials, fresh metadata and account evidence. Errors name keys only.
 
-The migrated local file passes both compatibility and startup checks with 25
+The migrated local file passes both compatibility and startup checks with 24
 keys and the exact model pin. `ACCOUNT_EQUITY_FLOOR` is obsolete: any legacy value
 is ignored and removed from the resolved runtime environment; the read-only
 checker names it as removable without printing its value. Remove its assignment

@@ -56,7 +56,7 @@ def test_budget_is_unavailable_without_current_policy_and_reduced_inside_it() ->
         "drawdown_percent": "1",
         "risk_cap_percent": "4",
         "risk_policy": {
-            "version": "fixed-risk-v3",
+            "version": "fixed-risk-v4",
             "setupRiskPercent": "1",
             "dailyLossLimitPercent": "5",
         },

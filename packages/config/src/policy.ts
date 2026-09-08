@@ -1,11 +1,11 @@
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
-export const POLICY_VERSION = "fixed-risk-v3";
+export const POLICY_VERSION = "fixed-risk-v4";
 export const MONEY_MANAGEMENT = {
   setupRiskPercent: "1",
   dailyLossLimitPercent: "5",
   drawdownLimitPercent: "5",
-  maxPositionNotionalEquityMultiple: "5",
-  maxMarginUsagePercent: "1",
+  maxPositionNotionalEquityMultiple: null,
+  maxMarginUsagePercent: "100",
 } as const;
 export const FIXED_DEFAULTS = {
   LOG_LEVEL: "info",
@@ -114,8 +114,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.3-equity-risk.2",
-  CODE_VERSION: "0.2.3-equity-risk.2",
+  STRATEGY_VERSION: "0.2.3-equity-risk.4",
+  CODE_VERSION: "0.2.3-equity-risk.4",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
