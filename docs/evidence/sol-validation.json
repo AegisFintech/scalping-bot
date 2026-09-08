@@ -1,0 +1,190 @@
+{
+  "label": "SOFTWARE_AND_PROVIDER_COMPATIBILITY_NOT_STRATEGY_PERFORMANCE",
+  "release": "0.2.2-fixed-risk.5",
+  "nodeTests": 452,
+  "pythonTests": 118,
+  "schemaTests": 22,
+  "migrationTests": 3,
+  "isolatedTlsIntegrationTests": 3,
+  "dependencyVulnerabilities": 0,
+  "effectiveCommands": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "00.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 12.42,
+      "log": "00.log",
+      "phase": "gates-final"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 22.58,
+      "log": "01.log",
+      "phase": "gates-final"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.3,
+      "log": "02.log",
+      "phase": "gates-final"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.19,
+      "log": "04.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 28.2,
+      "log": "03.log",
+      "phase": "gates-recheck"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 2.69,
+      "log": "06.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.02,
+      "log": "03.log",
+      "phase": "gates-final"
+    },
+    {
+      "command": "node --input-type=module -e \"import 'dotenv/config'; import {spawnSync} from 'node:child_process'; const r=spawnSync('npm',['run','test:integration'],{env:{...process.env,TEST_DATABASE_URL:process.env.DATABASE_URL},stdio:'inherit'}); process.exitCode=r.status ?? 1;\"",
+      "exit_code": 1,
+      "seconds": 3.65,
+      "log": "08.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "10.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.57,
+      "log": "11.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 5.58,
+      "log": "12.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 1.03,
+      "log": "13.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 1.69,
+      "log": "14.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.17,
+      "log": "15.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 1.73,
+      "log": "16.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 21.27,
+      "log": "17.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.57,
+      "log": "18.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-078/backtest-fixture-delivery.json",
+      "exit_code": 0,
+      "seconds": 0.31,
+      "log": "19.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-078/base-delivery.json",
+      "exit_code": 0,
+      "seconds": 1.38,
+      "log": "20.log",
+      "phase": "gates-delivery"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-078/stress-delivery.json --stress",
+      "exit_code": 0,
+      "seconds": 1.02,
+      "log": "21.log",
+      "phase": "gates-delivery"
+    }
+  ],
+  "isolatedDatabaseValidation": {
+    "command": "NODE_EXTRA_CA_CERTS=<temporary-trusted-test-certificate> TEST_DATABASE_URL=<isolated-loopback-PostgreSQL-17.11> npm run test:integration",
+    "exit_code": 0,
+    "tests": 3,
+    "tlsCertificateVerification": true
+  },
+  "hostedDatabaseBlocker": "Two hosted DB integration tests failed because project storage exceeded its 512 MB limit; analytics integration passed. No hosted data was deleted. Final database contract validation passed against isolated PostgreSQL. Migration 0017 was then applied successfully to the hosted deployment with unchanged context row counts.",
+  "corrections": [
+    "New test mocks initially had two lint findings and one missing timeout argument; corrected and full Node/lint/type checks passed.",
+    "Isolated test setup required an extracted server package, a private socket directory and a locally trusted certificate with matching DNS/IP names; verification was never disabled.",
+    "The isolated integration test caught the historical Astra-only journal constraint; forward migration 0017 fixed it while preserving historical migration bytes and rejecting unknown model strings."
+  ],
+  "providerIdentityProbe": {
+    "requestedModel": "gpt-5.6-sol/u40",
+    "httpStatus": 200,
+    "latencyMs": 3258,
+    "returnedModel": "gpt-5.6-sol",
+    "schemaValid": true,
+    "usage": {
+      "inputTokens": 31,
+      "outputTokens": 13,
+      "totalTokens": 44
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { FIXED_DEFAULTS } from "../../config/src/policy.js";
+import { returnedModelMatches } from "../../ai-client/src/model-identity.js";
 import {
   boundedResponseText,
   ProviderFailure,
@@ -69,10 +71,9 @@ export class ScenarioHttpPlanner {
       throw new Error("SCENARIO_PROMPT_MISMATCH");
     const telemetry = providerTelemetrySchema.parse(envelope.telemetry);
     if (
-      envelope.model !== "gpt-6-astra/u64" ||
-      telemetry.requestedModel !== "gpt-6-astra/u64" ||
-      (telemetry.returnedModel !== null &&
-        !["gpt-6-astra/u64", "gpt-6-astra"].includes(telemetry.returnedModel))
+      envelope.model !== FIXED_DEFAULTS.AI_MODEL ||
+      telemetry.requestedModel !== FIXED_DEFAULTS.AI_MODEL ||
+      !returnedModelMatches(FIXED_DEFAULTS.AI_MODEL, telemetry.returnedModel)
     )
       throw new Error("SCENARIO_PROVIDER_IDENTITY_MISMATCH");
     const plan = validatePlan(envelope.rawResponse, {
@@ -80,7 +81,7 @@ export class ScenarioHttpPlanner {
       availableAt: new Date().toISOString(),
     });
     return {
-      model: "gpt-6-astra/u64",
+      model: FIXED_DEFAULTS.AI_MODEL,
       response: plan,
       rawResponse: envelope.rawResponse,
       promptArtifact: expected,

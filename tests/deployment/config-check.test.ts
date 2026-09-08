@@ -34,7 +34,7 @@ describe("concise environment and read-only preflight", () => {
     const template = parse(readFileSync(".env.sample"));
     expect(Object.keys(template).sort()).toEqual([...OPERATOR_KEYS].sort());
     expect(Object.keys(template)).toHaveLength(21);
-    expect(template.AI_MODEL).toBe("gpt-6-astra/u64");
+    expect(template.AI_MODEL).toBe("gpt-5.6-sol/u40");
     expect(template).toMatchObject({
       TRADING_MODE: "paper",
       EMERGENCY_STOP: "true",
@@ -49,7 +49,7 @@ describe("concise environment and read-only preflight", () => {
   });
   it("reports actual file counts separately from the normal template without exposing credentials", () => {
     const result = check(
-      "AI_MODEL=gpt-6-astra/u64\nAI_API_KEY=fixture-private-value\nGH_PAT=fixture-delivery-value\n",
+      "AI_MODEL=gpt-5.6-sol/u40\nAI_API_KEY=fixture-private-value\nGH_PAT=fixture-delivery-value\n",
       ["--startup"],
     );
     expect(result.status).toBe(0);
@@ -58,7 +58,7 @@ describe("concise environment and read-only preflight", () => {
       scope: "execution_configuration",
       normalSettings: 21,
       fileSettings: 3,
-      requestedModel: "gpt-6-astra/u64",
+      requestedModel: "gpt-5.6-sol/u40",
     });
     expect(result.output).not.toContain("fixture-");
     expect(result.unchanged).toBe(true);

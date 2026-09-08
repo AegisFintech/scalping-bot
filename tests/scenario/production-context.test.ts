@@ -60,6 +60,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
       if (this.row) return Promise.resolve(false);
       this.row = {
         id: i.id,
+        requestedModel: "gpt-5.6-sol/u40",
         state: "REQUESTING",
         requestedAt: at(0),
         capturedAt: i.capturedAt,
@@ -86,6 +87,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
 function stored(): StoredContext {
   return {
     id: fixture.plan.analysis_id,
+    requestedModel: "gpt-5.6-sol/u40",
     state: "READY",
     requestedAt: at(0),
     capturedAt: at(0),
@@ -97,6 +99,27 @@ function stored(): StoredContext {
   };
 }
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
+  it("does not reuse an old-model map after restart or bypass its paid-request cooldown", async () => {
+    const store = memory();
+    store.row = { ...stored(), requestedModel: "gpt-6-astra/u64" };
+    const generate = vi.fn();
+    const model = new ReusableScenarioModel(
+      store,
+      { generate },
+      () => base + 40_000,
+    );
+    expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
+    expect(generate).not.toHaveBeenCalled();
+    await expect(
+      model.analyze({
+        analysisId: String(payload().analysis_id),
+        symbol: "XAUUSD",
+        payload: payload(),
+        chart: analysisChart(),
+        timeoutMs: 5000,
+      }),
+    ).rejects.toThrow("SCENARIO_PREPARED_DECISION_MISSING");
+  });
   it("projects real performance-context diagnostics into the strict execution contract", () => {
     const p = payload();
     Object.assign(p.performance, {
@@ -183,7 +206,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     now = base + 40_000;
     const plan = { ...fixture.plan, analysis_id: store.row!.id };
     release({
-      model: "gpt-6-astra/u64",
+      model: "gpt-5.6-sol/u40",
       response: plan,
       rawResponse: JSON.stringify(plan),
       promptArtifact: {
@@ -194,8 +217,8 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       latencyMs: 40_000,
       retryCount: 0,
       telemetry: {
-        requestedModel: "gpt-6-astra/u64",
-        returnedModel: "gpt-6-astra",
+        requestedModel: "gpt-5.6-sol/u40",
+        returnedModel: "gpt-5.6-sol",
         inputProfile: "chart",
         requestBytes: 100,
         responseBytes: 100,

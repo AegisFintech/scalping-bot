@@ -9,7 +9,7 @@ import { resolveRuntimeEnvironment } from "../../packages/config/src/policy.js";
 describe("bounded provider and configuration", () => {
   it("keeps exact model identity and explicit stopped authority", () => {
     const env = resolveRuntimeEnvironment({ AI_API_KEY: "fixture-secret" });
-    expect(env.AI_MODEL).toBe("gpt-6-astra/u64");
+    expect(env.AI_MODEL).toBe("gpt-5.6-sol/u40");
     expect(env.LIVE_TRADING_ENABLED).toBe("false");
     expect(env.BASE_RISK_PERCENT).toBe("1");
     expect(env.MAX_RISK_PERCENT).toBe("1");
@@ -37,6 +37,9 @@ describe("bounded provider and configuration", () => {
     expect(() => resolveRuntimeEnvironment({ AI_MODEL: "other" })).toThrow(
       "AI_MODEL",
     );
+    expect(() =>
+      resolveRuntimeEnvironment({ AI_MODEL: "gpt-6-astra/u64" }),
+    ).toThrow("CONFIG_POLICY_CONFLICT:AI_MODEL");
   });
   it("rejects ambiguous legacy mode and keeps unknown costs unavailable", () => {
     expect(() => resolveRuntimeEnvironment({ SHADOW_MODE: "false" })).toThrow(
@@ -77,7 +80,7 @@ describe("bounded provider and configuration", () => {
     const options = {
       baseUrl: "http://example.com/v1",
       apiKey: "fixture",
-      model: "gpt-6-astra/u64",
+      model: "gpt-5.6-sol/u40",
       apiStyle: "responses" as const,
       schemaPath: "schemas/model-response-2.1.json",
       systemPromptPath: "prompts/system-v16.md",

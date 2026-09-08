@@ -25,7 +25,7 @@ function server(
       Promise.resolve({
         mode,
         strategyVersion: "0.2.2-fixed-risk.3",
-        requestedModel: "gpt-6-astra/u64",
+        requestedModel: "gpt-5.6-sol/u40",
         riskPolicy: {
           version: "fixed-risk-v2",
           setupRiskPercent: "1",
@@ -99,7 +99,7 @@ describe("demo baseline control", () => {
     const response = await app.inject({ method: "GET", url: "/v1/status" });
     expect(response.json()).toMatchObject({
       strategyVersion: "0.2.2-fixed-risk.3",
-      requestedModel: "gpt-6-astra/u64",
+      requestedModel: "gpt-5.6-sol/u40",
       riskPolicy: {
         version: "fixed-risk-v2",
         setupRiskPercent: "1",

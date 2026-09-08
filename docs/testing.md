@@ -1,5 +1,10 @@
 # Current acceptance and research
 
+ISSUE-078 tests the exact Sol request pin, observed returned identity, rejection of
+Astra/other routes, and prevention of old-model context reuse without bypassing
+the durable cooldown. Historical fixtures and performance evidence remain intact.
+See [the model-switch report](model-switch-report.md) for gates and endpoint checks.
+
 ISSUE-077 reproduces zero-P/L records associated with accepted, wholly unfilled
 pending orders. Coverage includes actual account-adapter wire normalization,
 unchanged equity/margin and pending counts across polls/restart, daily-risk admission,

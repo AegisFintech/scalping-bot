@@ -1,0 +1,19 @@
+{
+  "label": "SYNTHETIC_INPUT_REAL_RUNNING_PROVIDER_COMPATIBILITY_ONLY",
+  "started": "2026-09-08T01:02:45.145Z",
+  "completed": "2026-09-08T01:03:20.789Z",
+  "prompt": "scenario-v2",
+  "schema": "scenario-1.0",
+  "latencyMs": 35185,
+  "requestedModel": "gpt-5.6-sol/u40",
+  "returnedModel": "gpt-5.6-sol",
+  "inputProfile": "chart",
+  "requestBytes": 121431,
+  "responseBytes": 11872,
+  "inputTokens": 16568,
+  "outputTokens": 891,
+  "totalTokens": 17459,
+  "costAmount": null,
+  "costCurrency": null,
+  "costSource": "unavailable"
+}

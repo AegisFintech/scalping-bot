@@ -46,9 +46,13 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 - Preserve existing daily/drawdown locks when applying a policy update. Risk
   percentages are release constants, not environment tuning controls. Read
   `docs/fixed-risk-report.md` before changing the money-management policy.
-- Request `gpt-6-astra/u64` literally through the configured EPRToken Responses
+- Request `gpt-5.6-sol/u40` literally through the configured EPRToken Responses
   endpoint. Record requested/returned identities; never add a silent fallback.
-  Observed `gpt-6-astra` return normalization is documented. Unknown cost is null.
+  Observed `gpt-5.6-sol` return normalization is documented in `docs/model-switch-report.md`.
+  Unknown cost is null. Historical Astra records remain immutable; a previous-model
+  map cannot authorize new execution after a switch. Its five-minute cooldown still applies.
+  Migration 0017 admits both historical Astra and current Sol journal identities;
+  never rewrite prior migration checksums or model history.
 - Preserve model-independent protective maintenance and account/symbol ownership
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.
 - Read `docs/pending-order-reconciliation-report.md` before changing account P/L

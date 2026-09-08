@@ -1,0 +1,56 @@
+{
+  "at": "2026-09-08T01:05:22.198Z",
+  "model": "gpt-5.6-sol/u40",
+  "release": "0.2.2-fixed-risk.5",
+  "mode": "demo",
+  "healthy": true,
+  "paused": false,
+  "automatic": true,
+  "emergencyStopped": false,
+  "reasons": [],
+  "riskPolicy": {
+    "version": "fixed-risk-v2",
+    "setupRiskPercent": "1",
+    "dailyLossLimitPercent": "5",
+    "drawdownLimitPercent": "5"
+  },
+  "environment": {
+    "changedKeys": ["AI_MODEL"],
+    "keys": 25,
+    "credentialsAndEndpointPreserved": true,
+    "permissions": "600"
+  },
+  "services": [
+    {
+      "name": "scalper-analytics",
+      "state": "online",
+      "cachedModel": null
+    },
+    {
+      "name": "scalper-market-data",
+      "state": "online",
+      "cachedModel": null
+    },
+    {
+      "name": "scalper-dashboard",
+      "state": "online",
+      "cachedModel": null
+    },
+    {
+      "name": "scalper-ai",
+      "state": "online",
+      "cachedModel": null
+    },
+    {
+      "name": "scalper-execution",
+      "state": "online",
+      "cachedModel": null
+    }
+  ],
+  "migration": {
+    "at": "2026-09-08T01:04:49.712Z",
+    "applied": ["0017"],
+    "historyPreserved": true,
+    "rowsRewritten": 0
+  }
+}
