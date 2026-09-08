@@ -25,7 +25,7 @@ def fresh(timestamp: object, now: datetime, maximum_seconds: int = 30) -> bool:
         return False
 
 
-def operating_state(status: dict[str, Any]) -> tuple[str, str]:
+def operating_state(status: dict[str, Any], now: datetime | None = None) -> tuple[str, str]:
     if status.get("unavailable") or not status.get("mode"):
         return "Unavailable", "Execution status could not be verified."
     if status.get("emergencyStopped") is True:
@@ -56,10 +56,37 @@ def operating_state(status: dict[str, Any]) -> tuple[str, str]:
     managed = status.get("managedSetup", {})
     if isinstance(managed, dict) and managed.get("status") == "ACTIVE":
         return "Managing a setup", "An existing position or pending order blocks replacement."
+    if status.get("reasonCodes") == ["PREVIOUS_ANALYSIS_ACTIVE"]:
+        return "Checking setup", "An execution check is in progress; another check cannot overlap."
     if status.get("reasonCodes"):
         return "Blocked", "A safety or market-quality gate currently blocks new orders."
     if status.get("automaticAnalysisEnabled") is not True:
         return "Manual analysis", "Automatic analysis is disabled."
+    context = status.get("scenarioContext")
+    if not isinstance(context, dict) or not context:
+        return "Waiting for map", "No verified market map is available for new orders."
+    current = now or datetime.now(UTC)
+    if context.get("state") == "FAILED":
+        detail = {
+            "AI_PROVIDER_TIMEOUT": "The model request timed out.",
+            "AI_CIRCUIT_OPEN": "The provider circuit is temporarily open after repeated failures.",
+        }.get(str(context.get("reason")), "The latest market-map request failed.")
+        return "Entries blocked · model unavailable", (
+            f"{detail} No valid map authorizes new orders. "
+            "Recovery checks are automatic; protective management continues."
+        )
+    if context.get("state") == "REQUESTING":
+        if fresh(context.get("requested_at"), current, maximum_seconds=95):
+            return "Preparing market map", (
+                "Background model analysis is running. No new orders until its map is validated."
+            )
+        return "Entries blocked · map overdue", (
+            "The market-map request has no timely completion. "
+            "Recovery checks are automatic; protective management continues."
+        )
+    map_state = context_state(context, current)
+    if map_state != "Ready":
+        return "Waiting for map", f"{map_state}. No replacement order has been submitted."
     return "Monitoring", "Waiting for a qualified opportunity; no trade is guaranteed."
 
 
@@ -71,10 +98,17 @@ def context_state(context: dict[str, Any], now: datetime) -> str:
             expiry = datetime.fromisoformat(str(context["valid_until"]))
             if expiry.tzinfo is None:
                 return "Unavailable"
-            return "Ready" if expiry > now else "Expired — waiting for refresh"
+            remaining = (expiry - now).total_seconds()
+            if remaining <= 0:
+                return "Expired — waiting for refresh"
+            if remaining < 65:
+                return "Expiring — waiting for refresh"
+            return "Ready"
         except (KeyError, ValueError):
             return "Unavailable"
-    return str(context.get("state", "Unavailable"))
+    if context.get("state") == "FAILED":
+        return "Failed — no usable map"
+    return "Refreshing" if context.get("state") == "REQUESTING" else "Unavailable"
 
 
 def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) -> dict[str, str]:

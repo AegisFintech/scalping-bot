@@ -10,6 +10,7 @@ import {
 import type { AiAnalysisResult } from "../../ai-client/src/client.js";
 import { validatePlan, type ScenarioPlan } from "./plan.js";
 import type { ScenarioPlanner } from "./planner.js";
+import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 
 export class ScenarioHttpPlanner {
   constructor(
@@ -25,7 +26,10 @@ export class ScenarioHttpPlanner {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(input),
-        signal: AbortSignal.timeout(50_000),
+        signal: AbortSignal.timeout(
+          SCENARIO_REQUEST_POLICY.providerTimeoutMs +
+            SCENARIO_REQUEST_POLICY.transportGraceMs,
+        ),
       });
     } catch {
       throw new Error("SCENARIO_ORCHESTRATOR_UNAVAILABLE");
@@ -52,7 +56,7 @@ export class ScenarioHttpPlanner {
       typeof envelope.latencyMs !== "number" ||
       !Number.isSafeInteger(envelope.latencyMs) ||
       envelope.latencyMs < 0 ||
-      envelope.latencyMs > 45_000 ||
+      envelope.latencyMs > SCENARIO_REQUEST_POLICY.providerTimeoutMs ||
       envelope.retryCount !== 0
     )
       throw new Error("SCENARIO_ORCHESTRATOR_ENVELOPE_INVALID");

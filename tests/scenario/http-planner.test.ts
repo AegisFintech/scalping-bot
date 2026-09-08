@@ -87,7 +87,7 @@ it.each([
     };
   }
   if (kind === "prompt") e.promptArtifact.content = "different";
-  if (kind === "latency") e.latencyMs = 50001;
+  if (kind === "latency") e.latencyMs = 90001;
   if (kind === "schema")
     e.rawResponse = JSON.stringify({ ...plan, volume: "100" });
   if (kind === "expiry")
@@ -121,4 +121,29 @@ it("redacts network errors", async () => {
       vi.fn().mockRejectedValue(new Error("private URL")),
     ).generate(input),
   ).rejects.toThrow("SCENARIO_ORCHESTRATOR_UNAVAILABLE");
+});
+it("accepts a bounded 75-second response while retaining original plan expiry", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-07T00:01:15Z"));
+  const e = { ...envelope(), latencyMs: 75_000 };
+  const timeout = vi.spyOn(AbortSignal, "timeout");
+  const result = await new ScenarioHttpPlanner(
+    "http://127.0.0.1",
+    vi.fn().mockResolvedValue(Response.json(e)),
+  ).generate(input);
+  expect(timeout).toHaveBeenCalledWith(95_000);
+  expect(result.response.valid_until).toBe(plan.valid_until);
+  timeout.mockRestore();
+});
+it("rejects an expired map even if its reported provider latency is within the bound", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-07T00:05:00Z"));
+  await expect(
+    new ScenarioHttpPlanner(
+      "http://127.0.0.1",
+      vi
+        .fn()
+        .mockResolvedValue(Response.json({ ...envelope(), latencyMs: 75_000 })),
+    ).generate(input),
+  ).rejects.toThrow("SCENARIO_IDENTITY_OR_VALIDITY_INVALID");
 });

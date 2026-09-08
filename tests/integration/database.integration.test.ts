@@ -775,6 +775,68 @@ describe("PostgreSQL migrations integration", () => {
           mode: "demo",
         }).claim({ ...contextClaim, id: randomUUID() }),
       ).toBe(false);
+      // Separate scope: local circuit failures cannot spend a fresh five-minute
+      // dispatch budget, but every local retry still has a durable one-minute floor.
+      const recoveryScope = {
+        accountId: demoAccountId,
+        symbolId,
+        mode: "shadow",
+      };
+      const recoveryStore = new PostgresContextStore(isolated, recoveryScope);
+      const recoveryId = randomUUID();
+      expect(
+        await recoveryStore.claim({ ...contextClaim, id: recoveryId }),
+      ).toBe(true);
+      await recoveryStore.finish(recoveryId, null, "AI_CIRCUIT_OPEN");
+      expect(
+        await recoveryStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+      await isolated.query(
+        "UPDATE scenario_contexts SET requested_at=clock_timestamp()-interval '61 seconds' WHERE id=$1",
+        [recoveryId],
+      );
+      const recoveryClaims = await Promise.all([
+        recoveryStore.claim({ ...contextClaim, id: randomUUID() }),
+        new PostgresContextStore(isolated, recoveryScope).claim({
+          ...contextClaim,
+          id: randomUUID(),
+        }),
+      ]);
+      expect(recoveryClaims.filter(Boolean)).toHaveLength(1);
+      const recoveryCurrent = (await recoveryStore.latest())!;
+      await recoveryStore.finish(
+        recoveryCurrent.id,
+        null,
+        "AI_PROVIDER_TIMEOUT",
+      );
+      await isolated.query(
+        "UPDATE scenario_contexts SET requested_at=clock_timestamp()-interval '61 seconds' WHERE id=$1",
+        [recoveryCurrent.id],
+      );
+      expect(
+        await new PostgresContextStore(isolated, recoveryScope).claim({
+          ...contextClaim,
+          id: randomUUID(),
+        }),
+      ).toBe(false);
+      // A later local rejection cannot conceal an earlier potentially paid request.
+      await isolated.query(
+        `INSERT INTO scenario_contexts
+        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id,reason)
+        SELECT $1,account_id,symbol_id,mode,clock_timestamp()-interval '60 seconds',captured_at,valid_until,'FAILED',requested_model,tick_size,source_analysis_id,'AI_CIRCUIT_OPEN'
+        FROM scenario_contexts WHERE id=$2`,
+        [randomUUID(), recoveryId],
+      );
+      expect(
+        await recoveryStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+      await isolated.query(
+        "UPDATE scenario_contexts SET requested_at=clock_timestamp()-interval '301 seconds' WHERE id=$1",
+        [recoveryCurrent.id],
+      );
+      expect(
+        await recoveryStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(true);
       const scenarioSchedule = new PostgresAutomaticAnalysisSchedule({
         pool: isolated,
         accountId: demoAccountId,

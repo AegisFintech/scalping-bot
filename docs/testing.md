@@ -1,5 +1,15 @@
 # Current acceptance and research
 
+ISSUE-080 tests local-circuit recovery without weakening the durable paid-request
+ceiling, including restart, concurrent claims and an earlier unknown request hidden
+by a later local failure. It covers the 90/95-second provider/HTTP bounds, expired
+map rejection, active-client readiness and provider/expired-map dashboard states.
+The observed sell-target spacing is reproduced against the old build; the
+corrected constructor passes unchanged semantic checks and rejects insufficient
+room before the first actual downside target, even if a later target is farther.
+The [incident report](provider-recovery-report.md) records exact gates and observed
+provider/broker evidence; one successful response is not a reliability distribution.
+
 ISSUE-078 tests the exact Sol request pin, observed returned identity, rejection of
 Astra/other routes, and prevention of old-model context reuse without bypassing
 the durable cooldown. Historical fixtures and performance evidence remain intact.

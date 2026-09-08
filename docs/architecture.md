@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.4`, fixed risk policy v4. Previous release
+Current source: `0.2.3-equity-risk.6`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -53,7 +53,7 @@ loopback and deployments support Debian/systemd.
    Five-second broker-time claims admit local decisions; the final five seconds
    before M1 rollover are reserved. `DEFERRED` is terminal waiting with a separate
    deferral reason; actual validation failures remain `REJECTED`.
-5. `scenario-context.ts` claims at most one refresh per account/symbol/mode per
+5. `scenario-context.ts` claims at most one potentially dispatched refresh per account/symbol/mode per
    five minutes using a transaction/advisory lock. The source analysis links the
    archived chart and market inputs. A separate task calls `/v1/scenario`, using
    exact `gpt-5.6-sol/u40`, prompt `scenario-v2`, strict `scenario-1.0`, chart and
@@ -176,3 +176,18 @@ restarts, returns HTTP 503 readiness and blocks manual cycle requests. Automatic
 analysis retries at most once a minute; only a completed durable cycle clears it.
 Spread writes respect the same backoff. Independent protective maintenance retains
 its two-second schedule and all durable-write requirements.
+
+## ISSUE-080 provider recovery
+
+The scenario client now has a 90-second deadline with a 95-second HTTP envelope.
+Original five-minute map expiry and the minimum remaining execution lifetime are
+unchanged. Failed/unknown requests consume the full five-minute dispatch budget.
+Only a known local circuit rejection can recheck after one minute; SQL admission
+checks every earlier potentially dispatched request and separately enforces the
+one-minute local floor under the existing scope lock. No journal rows are rewritten.
+The sell constructor checks its fixed cost-buffered TP against the first actual
+downside target, matching the buy constructor. It never treats the intermediate
+extension trigger as a target or skips the first target to obtain more room.
+Provider work remains detached from protective order maintenance. The AI readiness
+endpoint checks the active scenario client, and dashboard entry availability is
+distinct from process health, broker exposure, and local execution checks.

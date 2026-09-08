@@ -65,10 +65,20 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 - Production context uses `scenario-v2` / `scenario-1.0`; local derived OCO
   proposals use `scenario-execution-v1` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
-- The operator authorized integrated demo evaluation in ISSUE-075. One context
-  request per five minutes is durably claimed before inference. A unique context
-  link consumes the map at order intent, including uncertain/failed submission.
+- The operator authorized integrated demo evaluation in ISSUE-075. One potential
+  provider dispatch per five minutes is durably claimed before inference.
+  Only FAILED / `AI_CIRCUIT_OPEN`, emitted before provider dispatch, may use the
+  one-minute local recheck. All unknown/timeout outcomes retain the full durable
+  cooldown; prior requests across the entire scope still constrain admission.
+  A unique context link consumes the map at order intent, including uncertain/failed submission.
   Do not count derived local proposals as paid provider requests.
+- Sell target room is measured against `extension_targets[0]`, matching the buy
+  leg’s first recovery target. `extension_below` is a continuation trigger, not a
+  take-profit boundary. Never skip the first actual target or increase stop/size
+  to make a proposal fit; all existing semantic/risk/fee checks remain required.
+- Scenario provider requests have a 90-second deadline and five-second HTTP grace,
+  within the unchanged five-minute map lifetime. Preserve original capture/expiry,
+  output validation and independent maintenance. See `docs/provider-recovery-report.md`.
 - Provider inference runs outside the execution promise. Reuse a validated map
   across ordinary candle advances, but never relax the fresh completed-candle
   context checks for each individual execution decision. Crossed thresholds wait;

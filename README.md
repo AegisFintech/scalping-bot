@@ -5,15 +5,16 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.3-equity-risk.4`, policy `fixed-risk-v4`.
+The current source release is `0.2.3-equity-risk.6`, policy `fixed-risk-v4`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
-See the [current risk-policy and recovery report](docs/risk-budget-recovery-report.md) and
+See the [provider recovery and no-orders incident](docs/provider-recovery-report.md),
+[current risk-policy and recovery report](docs/risk-budget-recovery-report.md) and
 [scenario implementation evidence](docs/reusable-scenario-report.md).
 The [pending-order reconciliation repair](docs/pending-order-reconciliation-report.md)
 accounts for broker-reported zero P/L on unfilled orders, preventing the erroneous
-immediate safety cancellation observed in release `.3`.
+immediate safety cancellation observed in `0.2.2-fixed-risk.3`.
 
 The original [completed-candle directional research](docs/scenario-automation-report.md)
 remains a separate observe/replay tool. Its hold/failed-reclaim confirmations and
@@ -25,7 +26,7 @@ is a synthetic software check, not evidence of strategy performance.
 
 ## Overview
 
-![Dashboard overview](docs/images/equity-sizing-overview-light.png)
+![Dashboard overview](docs/images/provider-recovery-current.png)
 
 The Streamlit dashboard has **Overview**, **Trade history**, and **Diagnostics**.
 Overview shows operating state and reasons, fresh equity and net P&L, drawdown,
@@ -41,7 +42,7 @@ Authenticated pause and emergency controls remain available in the sidebar.
 
 [Trade history screenshot](docs/images/equity-sizing-history-light.png)
 
-[Dark theme screenshot](docs/images/equity-sizing-overview-dark.png) ·
+[Dark theme screenshot](docs/images/provider-recovery-overview-dark.png) ·
 [Refresh and contrast validation](docs/dashboard-refresh-report.md)
 
 Broker-declared holiday closures now participate in completed-candle gap checks.
@@ -87,14 +88,17 @@ remain omitted; `/u40` is sent literally, without inferred client-side semantics
 Historical Astra observations are preserved and do not establish Sol performance.
 
 The active scenario input contains the exact M15/M5/M1 chart and bounded completed
-candle tails (12/18/30). The earlier matched image/structured benchmark did not
+candle tails matching the chart (up to 80 per frame). The earlier matched
+image/structured benchmark did not
 establish a decision-quality winner. Chart input is retained for the requested
 workflow; no claim of superior net performance is made. Every response crosses
 strict schema, identity, tick-precision and fixed-validity checks. Requests have a
-45-second deadline, no automatic retry, bounded bodies and a circuit breaker.
+90-second background deadline, no automatic retry, bounded bodies and a circuit breaker.
 
-A database claim limits paid map requests to one per five minutes, including
-failures and restarts. Local execution can evaluate every five seconds (with a
+A database claim limits potentially dispatched map requests to one per five minutes,
+including failures and restarts. A proven local circuit block is rechecked after
+one minute without bypassing earlier requests or making a paid retry. Local
+execution can evaluate every five seconds (with a
 five-second candle-rollover reserve), without waiting for inference. A map can
 produce one OCO intent. Crossed levels, insufficient reward, short remaining
 validity or consumed maps wait without another paid call. Individual decisions

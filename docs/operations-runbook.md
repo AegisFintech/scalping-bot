@@ -1,7 +1,10 @@
 # Current release operations
 
-For `0.2.3-equity-risk.4` / `fixed-risk-v4`, follow the
+For `0.2.3-equity-risk.6` / `fixed-risk-v4`, follow the
 [risk-budget sizing and storage recovery procedure](risk-budget-recovery-report.md).
+For missing pending orders, check [the provider recovery report](provider-recovery-report.md).
+A healthy execution process does not imply an available model map. Provider failures,
+expired/consumed maps and active orders have separate dashboard states.
 The old fixed-dollar notional override is obsolete. Credentials, model, risk locks
 and prior demo authority remain intact. Migration 0018 adds local chart references
 without removing existing bytes. A database-capacity failure means blocked

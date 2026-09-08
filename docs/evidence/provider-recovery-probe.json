@@ -1,0 +1,22 @@
+{
+  "label": "ONE_BOUNDED_NON_TRADING_PROVIDER_OBSERVATION",
+  "observedAt": "2026-09-08T04:24:48.329Z",
+  "deadlineMs": 90000,
+  "latencyMs": 62824,
+  "promptVersion": "scenario-v2",
+  "validityRemainingMs": 235512,
+  "strictValidation": true,
+  "telemetry": {
+    "requestedModel": "gpt-5.6-sol/u40",
+    "returnedModel": "gpt-5.6-sol",
+    "inputProfile": "chart",
+    "requestBytes": 128990,
+    "responseBytes": 11607,
+    "inputTokens": 17740,
+    "outputTokens": 938,
+    "totalTokens": 18678,
+    "costAmount": null,
+    "costCurrency": null,
+    "costSource": "unavailable"
+  }
+}

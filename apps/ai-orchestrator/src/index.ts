@@ -70,7 +70,10 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
   );
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", (_request, reply) => {
-    if (options.client.circuitOpen)
+    if (
+      options.client.circuitOpen ||
+      options.scenarioPlanner?.client.circuitOpen
+    )
       return reply
         .code(503)
         .send({ status: "not_ready", reason: "AI_CIRCUIT_OPEN" });
