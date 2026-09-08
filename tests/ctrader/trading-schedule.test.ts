@@ -87,3 +87,96 @@ describe("cTrader weekly trading schedule", () => {
     );
   });
 });
+
+describe("broker-declared holiday overrides", () => {
+  const intervals = [
+    { startSecond: 64920, endSecond: 147540 },
+    { startSecond: 151320, endSecond: 233940 },
+    { startSecond: 237720, endSecond: 320340 },
+    { startSecond: 324120, endSecond: 406740 },
+    { startSecond: 410520, endSecond: 493020 },
+  ];
+  const holiday = {
+    holidayDate: 20703,
+    isRecurring: false,
+    startSecond: 77340,
+    endSecond: 86399,
+    timeZone: "Europe/Minsk",
+  };
+  it("accepts the observed Labor Day closure in its own timezone while rejecting missing open-session bars", () => {
+    const schedule = weeklyTradingSchedule("America/New_York", intervals, [
+      holiday,
+    ]);
+    const bars = [
+      candle("2026-09-07T18:28:00Z"),
+      candle("2026-09-07T22:02:00Z"),
+    ];
+    expect(
+      markBrokerSessionGaps(bars, 60000, schedule)[1]?.qualityFlags,
+    ).toContain(BROKER_SESSION_GAP_BEFORE);
+    expect(
+      markBrokerSessionGaps(
+        bars,
+        60000,
+        weeklyTradingSchedule("America/New_York", intervals),
+      )[1]?.qualityFlags,
+    ).toEqual([]);
+    expect(
+      markBrokerSessionGaps(
+        [candle("2026-09-07T18:27:00Z"), bars[1]!],
+        60000,
+        schedule,
+      )[1]?.qualityFlags,
+    ).toEqual([]);
+  });
+  it("only repeats a holiday when the broker explicitly marks it recurring", () => {
+    const bars = [
+      candle("2027-09-07T18:28:00Z"),
+      candle("2027-09-07T22:02:00Z"),
+    ];
+    expect(
+      markBrokerSessionGaps(
+        bars,
+        60000,
+        weeklyTradingSchedule("America/New_York", intervals, [holiday]),
+      )[1]?.qualityFlags,
+    ).toEqual([]);
+    expect(
+      markBrokerSessionGaps(
+        bars,
+        60000,
+        weeklyTradingSchedule("America/New_York", intervals, [
+          { ...holiday, isRecurring: true },
+        ]),
+      )[1]?.qualityFlags,
+    ).toContain(BROKER_SESSION_GAP_BEFORE);
+  });
+  it("detects a short open interval between holiday boundaries and rejects malformed overrides", () => {
+    const base = { ...holiday, timeZone: "UTC" };
+    const schedule = weeklyTradingSchedule(
+      "UTC",
+      [{ startSecond: 0, endSecond: 604800 }],
+      [
+        { ...base, startSecond: 0, endSecond: 43215 },
+        { ...base, startSecond: 43230, endSecond: 86400 },
+      ],
+    );
+    expect(
+      markBrokerSessionGaps(
+        [candle("2026-09-07T11:59:00Z"), candle("2026-09-07T12:01:00Z")],
+        60000,
+        schedule,
+      )[1]?.qualityFlags,
+    ).toEqual([]);
+    for (const patch of [
+      { holidayDate: -1 },
+      { holidayDate: 1.5 },
+      { startSecond: 86400 },
+      { endSecond: 86401 },
+      { timeZone: "bad/timezone" },
+    ])
+      expect(() =>
+        weeklyTradingSchedule("UTC", intervals, [{ ...holiday, ...patch }]),
+      ).toThrow(/CTRADER_HOLIDAY/);
+  });
+});

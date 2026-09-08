@@ -1,0 +1,55 @@
+{
+  "at": "2026-09-08T02:24:07.663Z",
+  "analyses": [
+    {
+      "state": "REJECTED",
+      "rejection_reasons": [
+        "SPREAD_PERCENTILE_EXCEEDED",
+        "SPREAD_POINTS_EXCEEDED"
+      ],
+      "deferral_reason": null,
+      "n": 9,
+      "first_at": "2026-09-08T02:21:06.099Z",
+      "last_at": "2026-09-08T02:22:11.564Z"
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["MARKET_DATA_STALE", "ORDER_BOOK_STALE"],
+      "deferral_reason": null,
+      "n": 1,
+      "first_at": "2026-09-08T02:20:51.599Z",
+      "last_at": "2026-09-08T02:20:51.599Z"
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_REFRESH_STARTED",
+      "n": 1,
+      "first_at": "2026-09-08T02:20:06.715Z",
+      "last_at": "2026-09-08T02:20:06.715Z"
+    }
+  ],
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol",
+      "duration_ms": 36374,
+      "requested_at": "2026-09-08T02:20:11.415Z",
+      "available_at": "2026-09-08T02:20:47.790Z",
+      "valid_until": "2026-09-08T02:25:09.658Z",
+      "input_tokens": 17736,
+      "output_tokens": 823
+    }
+  ],
+  "orders": [],
+  "risk": [],
+  "storage": [
+    {
+      "database_bytes": "249831424",
+      "chart_rows": 3925,
+      "remaining_database_images": 0
+    }
+  ]
+}

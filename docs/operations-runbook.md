@@ -1,5 +1,14 @@
 # Current release operations
 
+For `0.2.3-equity-risk.4` / `fixed-risk-v4`, follow the
+[risk-budget sizing and storage recovery procedure](risk-budget-recovery-report.md).
+The old fixed-dollar notional override is obsolete. Credentials, model, risk locks
+and prior demo authority remain intact. Migration 0018 adds local chart references
+without removing existing bytes. A database-capacity failure means blocked
+execution, even when all processes are alive. Repair storage before expecting fills.
+
+Historical release instructions follow; use the current policy for new operation.
+
 For release `0.2.2-fixed-risk.5`, the active model pin is `gpt-5.6-sol/u40`.
 Update this assignment and the matching AI/execution builds together under an
 authenticated maintenance pause, applying additive compatibility migration 0017; verify the actual provider response before
@@ -12,7 +21,7 @@ The operator removed the absolute equity-floor requirement and authorized a fixe
 1% setup ceiling / 5% UTC daily budget. Recreate processes from the reviewed small
 environment to remove cached policy overrides. Verify the exact requested model
 and fixed risk policy in the running status. Preserve loss locks, capital-flow
-history, drawdown reference, notional authorization and broker reconciliation.
+history, drawdown reference, remaining loss budget and broker reconciliation.
 Never reset accounting or enable live submission to pass readiness.
 
 `DEFERRED` means a local decision is waiting, with no order attempted. A READY
@@ -239,7 +248,8 @@ the 100-trade campaign review are complete.
 Release `.32` stores only the configured completed-candle tails and removes
 duplicated `full_candles`/`raw_tail` arrays from `indicator_snapshots.features`.
 The exact compact payload sent to the endpoint remains in `model_requests`, and
-the exact 1600x1200 chart remains in `analysis_chart_artifacts`. Startup also
+the exact 1600x1200 chart retains its metadata in `analysis_chart_artifacts`;
+new bytes reside in protected local SHA-256 storage after ISSUE-079. Startup also
 closes only abandoned pre-placement analysis states; it does not infer or alter
 broker outcomes.
 
@@ -658,3 +668,14 @@ Capture UTC interval, instance/service/mode, trace/request/analysis/order group 
 ## End of session
 
 Pause new analyses, reconcile, safely cancel policy-required strategy pending orders, inspect positions, ensure audit persistence and backup health, then stop services gracefully. Leave emergency stop active for unattended development systems unless intentionally operating paper/shadow monitoring.
+
+ISSUE-079 continuation: the operator approved the prepared archive recovery on
+2026-09-08. Under an authenticated analysis pause, error `53100` can require
+repeating the idempotent relocation after `VACUUM (ANALYZE)
+analysis_chart_artifacts`; inspect progress each time and stop on non-storage
+errors or no progress. No truncation or financial-row deletion is part of this
+recovery. Keep both verified image copies and the manifest. Release `.3` sizes
+against 1% modeled setup loss, with broker volume and free-margin constraints;
+the former dollar/equity notional and 1% collateral caps no longer apply. Retain
+one modeled setup loss in free margin. A successful durable cycle, not a manual
+fault-file reset, must clear the storage latch before readiness returns.

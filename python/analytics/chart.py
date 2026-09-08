@@ -244,7 +244,7 @@ def render_analysis_chart(
     draw.text((32, 18), f"{request.symbol} completed-candle EMA/ATR context", fill="#f8fafc")
     draw.text(
         (32, 40),
-        f"Analysis time {request.analysis_time.isoformat()}   No forming candles   UTC timestamps",
+        "Completed candles only   Candle timestamps shown in each panel are UTC",
         fill="#94a3b8",
     )
 

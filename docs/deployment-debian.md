@@ -1,16 +1,18 @@
 # Current release migration
 
-Before deploying `0.2.0-overhaul.1`, follow [configuration.md](configuration.md).
-Policy validation rejects stale `.env`, systemd drop-in or PM2-cached strategy
-overrides. The PM2 ecosystem now contains deployment identity only; the typed
-policy owns strategy/model defaults. Preserve stopped mode and migrate/recreate
-processes only as part of the reviewed rollout. Migration `0015` is additive;
-this source update has not deployed it or enabled any service/trading mode.
-Older operational examples below must be interpreted through that migration guide.
-The local populated environment was subsequently simplified in ISSUE-072; see
-[its report](environment-migration-report.md). That file migration did not restart
-services or clear their cached PM2 settings. Run the `--startup` configuration
-check before the coordinated rollout; the existing blank equity floor blocks it.
+For `0.2.3-equity-risk.2`, follow [configuration.md](configuration.md) and the
+[equity sizing/storage recovery report](equity-sizing-recovery-report.md). Remove
+only the obsolete fixed-dollar notional override from a protected backup of the
+populated environment; preserve credentials, model and authorization. There is no
+account-equity floor. Recreate services to discard cached overrides under an
+authenticated analysis pause. Apply additive migration 0018 before the new readers
+and writers; relocating old chart bytes is a separate operator-reviewed step.
+
+Systemd deployments must keep `.runtime` on persistent writable state, including
+charts and the operational-failure latch. The fresh-release installation below
+links it to the existing permitted `/var/lib/ctrader-ai-scalper` directory. PM2
+in-place deployments retain their protected local `.runtime` directory. Back up
+this directory and PostgreSQL together; never discard it during a release switch.
 
 ---
 
@@ -21,7 +23,7 @@ check before the coordinated rollout; the existing blank equity floor blocks it.
 - Releases: `/opt/ctrader-ai-scalper/releases/<release-id>` (read-only to runtime user after deploy)
 - Active application: atomic symlink `/opt/ctrader-ai-scalper/current`
 - Environment: `/etc/ctrader-ai-scalper/ctrader-ai-scalper.env` (`root:ctrader-scalper`, mode `0640`)
-- Runtime: `/run/ctrader-ai-scalper` or configured persistent safety directory
+- Runtime: `/var/lib/ctrader-ai-scalper`, linked from each release as `.runtime`
 - Logs: `/var/log/ctrader-ai-scalper`
 - Service user/group: `ctrader-scalper`, no login shell, no sudo
 
@@ -34,14 +36,20 @@ sudo ./scripts/setup-debian.sh
 release_id=20260824T000000Z
 release_dir=/opt/ctrader-ai-scalper/releases/$release_id
 sudo install -d -o ctrader-scalper -g ctrader-scalper -m 0750 "$release_dir"
-sudo rsync -a --delete --exclude .git --exclude .env --exclude .venv --exclude node_modules ./ "$release_dir/"
+sudo rsync -a --delete --exclude .git --exclude .env --exclude .venv --exclude node_modules --exclude .runtime --exclude logs --exclude artifacts ./ "$release_dir/"
 sudo -u ctrader-scalper npm --prefix "$release_dir" ci
 sudo -u ctrader-scalper npm --prefix "$release_dir" run build
 sudo -u ctrader-scalper python3 -m venv "$release_dir/.venv"
 sudo -u ctrader-scalper "$release_dir/.venv/bin/pip" install -r "$release_dir/requirements.lock"
 sudo chown -R root:ctrader-scalper "$release_dir"
 sudo chmod -R go-w "$release_dir"
+sudo ln -s /var/lib/ctrader-ai-scalper "$release_dir/.runtime"
 ```
+
+The link command is for a fresh release and fails if `.runtime` already exists.
+Do not overwrite a populated runtime directory: preserve and verify its state
+before any reviewed relocation. The existing systemd `ReadWritePaths` admits the
+persistent target while application code stays read-only.
 
 Run tests and migrations from the release directory before switching the
 `current` symlink. Use a separate migration credential where possible. After all

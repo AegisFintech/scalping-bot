@@ -5,11 +5,11 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.2-fixed-risk.5`, policy `fixed-risk-v2`.
+The current source release is `0.2.3-equity-risk.4`, policy `fixed-risk-v4`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
-See the [current risk-policy and rollout report](docs/fixed-risk-report.md) and
+See the [current risk-policy and recovery report](docs/risk-budget-recovery-report.md) and
 [scenario implementation evidence](docs/reusable-scenario-report.md).
 The [pending-order reconciliation repair](docs/pending-order-reconciliation-report.md)
 accounts for broker-reported zero P/L on unfilled orders, preventing the erroneous
@@ -25,7 +25,7 @@ is a synthetic software check, not evidence of strategy performance.
 
 ## Overview
 
-![Dashboard overview](docs/images/fixed-risk-overview-light.png)
+![Dashboard overview](docs/images/equity-sizing-overview-light.png)
 
 The Streamlit dashboard has **Overview**, **Trade history**, and **Diagnostics**.
 Overview shows operating state and reasons, fresh equity and net P&L, drawdown,
@@ -39,10 +39,16 @@ the policy reported by execution; missing policy data is shown as unavailable.
 Prompts, analytics, provider details and infrastructure live in diagnostics.
 Authenticated pause and emergency controls remain available in the sidebar.
 
-[Trade history screenshot](docs/images/dashboard-history.png)
+[Trade history screenshot](docs/images/equity-sizing-history-light.png)
 
-[Dark theme screenshot](docs/images/fixed-risk-overview-dark.png) ·
+[Dark theme screenshot](docs/images/equity-sizing-overview-dark.png) ·
 [Refresh and contrast validation](docs/dashboard-refresh-report.md)
+
+Broker-declared holiday closures now participate in completed-candle gap checks.
+Unexplained missing open-session bars still block execution. Persistence failures
+are visible as **Blocked**, survive restart, and back off analysis while protective
+maintenance continues. Exact chart PNGs are stored by hash in protected local
+storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Safety and money management
 
@@ -52,13 +58,16 @@ Authenticated pause and emergency controls remain available in the sidebar.
   unknown orders and incomplete reconciliation block new risk. Manual orders
   are never cancelled. Maintenance selects only the configured account/symbol.
 - The fixed policy permits **up to 1% total setup risk** and **5% daily loss**.
-  It retains the **1% margin ceiling** and **10-point
-  absolute spread ceiling**, alongside ATR/percentile spread checks. Both OCO
+  It retains the **10-point absolute spread ceiling**, alongside ATR/percentile
+  spread checks. Both OCO
   legs share the setup budget, including simultaneous-fill race exposure.
 - Sizing reserves round-trip commission and ten ticks of adverse execution,
-  floors broker-native volume, and respects notional and remaining daily limits.
-  No absolute starting-equity floor is required; the existing notional ceiling
-  can make actual risk smaller than 1%.
+  floors broker-native volume, and respects remaining daily limits.
+  No absolute starting-equity floor or artificial notional cap is required.
+  Broker margin and volume limits still apply; one full modeled setup loss is
+  reserved in free margin. Risk is recalculated from current equity immediately
+  before placement. Collateral is distinct from stop risk. Broker margin tier changes
+  trigger bounded downward sizing with exact-volume confirmation.
   Minimum volume is rejected when unaffordable. Stops cannot cap gap losses.
 - Cash-flow-adjusted high-water accounting survives restarts. Drawdown/daily
   losses can reduce risk to half or quarter; a 5% drawdown lockout is durable.
@@ -99,16 +108,15 @@ with a polling decision loop, not institutional HFT. `DEFERRED` means waiting;
 
 ## Configuration and migration
 
-The normal [.env.sample](.env.sample) has **21 settings, down from 176 (88.1%)**.
-It contains deployment identity, credentials/endpoints, explicit authorization,
-and notional authorization. Stable internals are fixed in a typed policy, not another
+The normal [.env.sample](.env.sample) has **20 settings, down from 176 (88.6%)**.
+It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
 `AI_MODEL=gpt-5.6-sol/u40` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
-25** entries, preserving credentials and all values except the removed floor. Its
+24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the
-[current migration and rollout evidence](docs/fixed-risk-report.md).
+[current migration and rollout evidence](docs/equity-sizing-recovery-report.md).
 
 For an existing installation, **do not overwrite `.env`**. Read the
 [configuration inventory and migration instructions](docs/configuration.md), then:

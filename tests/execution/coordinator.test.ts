@@ -392,6 +392,7 @@ function options(
     },
     trail: new InMemoryDecisionTrail(),
     safety: () => Promise.resolve(safety()),
+    placementControls: () => Promise.resolve(safety()),
     performance: () => Promise.resolve({ sample_size: 0 }),
     ...overrides,
   };
@@ -1466,5 +1467,97 @@ describe("analysis coordinator", () => {
       reasonCodes: ["PLACEMENT_SYMBOL_METADATA_CHANGED"],
     });
     expect(place).not.toHaveBeenCalled();
+  });
+});
+
+describe("final placement freshness and safety intersection", () => {
+  it("refreshes market data after slow capital reconciliation without extending freshness limits", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-08-24T08:00:10.000Z"));
+      let reads = 0;
+      const o = options({
+        market: { snapshot: () => Promise.resolve(snapshot()) },
+        safety: () => {
+          if (++reads === 2) vi.setSystemTime(Date.now() + 4000);
+          return Promise.resolve(safety());
+        },
+      });
+      const place = vi.spyOn(o.gateway, "placeOco");
+      expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+        "PLACED",
+      );
+      expect(reads).toBe(2);
+      expect(place).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([
+    [{ relevantPendingOrderCount: 1 }, "RELEVANT_PENDING_ORDER_EXISTS"],
+    [{ relevantPositionCount: 1 }, "RELEVANT_POSITION_EXISTS"],
+    [{ partialFillPresent: true }, "PARTIAL_FILL_BLOCKING"],
+    [{ cancellationPending: true }, "CANCELLATION_PENDING"],
+    [{ reconciliationCertain: false }, "RECONCILIATION_UNCERTAIN"],
+  ] as const)("preserves newly observed blockers %j", async (block, reason) => {
+    let reads = 0;
+    const o = options({
+      safety: () =>
+        Promise.resolve({ ...safety(), ...(++reads === 2 ? block : {}) }),
+    });
+    const place = vi.spyOn(o.gateway, "placeOco");
+    const result = await new AnalysisCoordinator(o).runOnce();
+    expect(result.outcome).toBe("REJECTED");
+    expect(result.reasonCodes).toContain(reason);
+    expect(place).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [{ pauseNewAnalyses: true }, "ANALYSES_PAUSED"],
+    [{ databaseEmergencyStop: true }, "EMERGENCY_STOP_DATABASE"],
+    [{ filesystemEmergencyStop: true }, "EMERGENCY_STOP_FILE"],
+    [{ runtimeControlsCertain: false }, "RUNTIME_CONTROLS_UNCERTAIN"],
+  ] as const)(
+    "checks authorization after the final market refresh %j",
+    async (block, reason) => {
+      const o = options({
+        placementControls: () => Promise.resolve({ ...safety(), ...block }),
+      });
+      const place = vi.spyOn(o.gateway, "placeOco");
+      const result = await new AnalysisCoordinator(o).runOnce();
+      expect(result.outcome).toBe("REJECTED");
+      expect(result.reasonCodes).toContain(reason);
+      expect(place).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects unavailable final controls and quotes aged during that read", async () => {
+    const unavailable = options({
+      placementControls: () => Promise.reject(new Error("CONTROL_READ_FAILED")),
+    });
+    const unavailablePlace = vi.spyOn(unavailable.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(unavailable).runOnce()).outcome).toBe(
+      "REJECTED",
+    );
+    expect(unavailablePlace).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-08-24T08:00:10.000Z"));
+      const o = options({
+        placementControls: () => {
+          vi.setSystemTime(Date.now() + 4000);
+          return Promise.resolve(safety());
+        },
+      });
+      const place = vi.spyOn(o.gateway, "placeOco");
+      const result = await new AnalysisCoordinator(o).runOnce();
+      expect(result.outcome).toBe("REJECTED");
+      expect(result.reasonCodes).toContain("MARKET_DATA_STALE");
+      expect(result.reasonCodes).toContain("ORDER_BOOK_STALE");
+      expect(place).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

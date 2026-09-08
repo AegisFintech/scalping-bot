@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.2-fixed-risk.5`, fixed risk policy v2. Previous release
+Current source: `0.2.3-equity-risk.4`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -40,7 +40,7 @@ loopback and deployments support Debian/systemd.
 
 1. `packages/ctrader-client` authenticates, renews tokens, discovers account and
    symbol metadata, and maintains quote/depth subscriptions. It validates weekly
-   broker sessions. Unknown holiday gaps remain fail-closed.
+   broker sessions. Validated broker holiday overrides use their declared date, recurrence and timezone. Unexplained gaps remain fail-closed.
 2. `apps/market-data-service` exposes typed snapshots and quotes. Source,
    receipt and capture times are distinct. Recording is a bounded local cache
    sampler, not a complete tick feed. Freshness/order checks precede writes;
@@ -73,9 +73,13 @@ loopback and deployments support Debian/systemd.
    no broker price or untrusted model value is rounded into acceptance.
 8. `risk-engine` sizes both race-exposed legs with cost reserves, current equity,
    the fixed 1% setup ceiling, remaining 5% daily budget, durable capital risk, broker volume steps, currency
-   conversion, exact margin estimates and notional limits. It never rounds up to
+   conversion and exact margin estimates. Free margin reserves one modeled setup loss;
+   there is no artificial notional or 1% collateral ceiling. It never rounds up to
    minimum volume. Existing/unpriced account exposure blocks replacement.
-9. Account and market data are refreshed again; changes invalidate the plan.
+9. Account/capital safety and account state are refreshed before the final market
+   snapshot; changes invalidate the plan. Cheap authorization controls are read
+   again after semantic checks. Final admission preserves blockers from both
+   safety and account observations; no newer exposure/uncertainty is overwritten.
    Final risk-cap reductions also reject previously sized commands. A unique
    `order_groups.context_plan_id` consumes each map at intent, even when broker
    submission later fails or becomes uncertain. Transactional
@@ -142,7 +146,7 @@ send controls. Diagnostics retain the user's selected snapshot during recovery.
 ## Modes and remaining limits
 
 Paper uses its own account identity/ledger; demo requires explicit acknowledgement
-and notional authorization. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
+and fixed equity-relative loss limits. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
 `DisabledLiveGateway` and cannot place orders in this composition. Credentials
 cannot select mode or authorize execution.
 
@@ -151,3 +155,24 @@ local cadence or justify directional/single-leg production contracts. Schema 2.1
 is rejected deterministically when safety/validation fails. Full tick history,
 prospective model ablation and broker-specific partial/multiple-close validation
 remain readiness work. See `overhaul-report.md` and `risk-model.md`.
+
+## ISSUE-079 storage and operational recovery
+
+The risk engine allocates half the available combined margin to each OCO leg before
+sizing. Exact broker margin at the candidate volume may cause at most two additional
+downward recalculations; only a confirmed affordable pair proceeds. Fresh account
+fingerprints are checked again before placement. Costs, losses and volumes use Decimal.
+
+Migration 0018 adds `storage_kind` to chart artifacts. Existing rows retain database
+bytes; new rows refer to the exact PNG by SHA-256 in `.runtime/analysis-charts`.
+The file is flushed and hash-verified before the database pointer commits. Dashboard
+reads recheck dimensions/hash and reject missing, corrupt or redirected files.
+Unchanged completed-candle inputs now produce the same chart despite a later capture
+time; the exact analysis timestamp stays in the journal. An uncommitted file can be
+an orphan, never a valid order or chart pointer. No financial rows are deleted.
+
+A protected local operational-failure latch reports scheduler/storage errors across
+restarts, returns HTTP 503 readiness and blocks manual cycle requests. Automatic
+analysis retries at most once a minute; only a completed durable cycle clears it.
+Spread writes respect the same backoff. Independent protective maintenance retains
+its two-second schedule and all durable-write requirements.

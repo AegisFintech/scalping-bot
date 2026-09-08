@@ -1,0 +1,54 @@
+{
+  "capturedAt": "2026-09-08T01:31:55.360Z",
+  "release": "0.2.3-equity-risk.2",
+  "mode": "demo",
+  "requestedModel": "gpt-5.6-sol/u40",
+  "riskPolicy": {
+    "version": "fixed-risk-v3",
+    "setupRiskPercent": "1",
+    "dailyLossLimitPercent": "5",
+    "drawdownLimitPercent": "5",
+    "maxPositionNotionalEquityMultiple": "5",
+    "maxMarginUsagePercent": "1"
+  },
+  "paused": true,
+  "tradingEnabled": false,
+  "operationalReady": false,
+  "operationalFault": {
+    "reasonCode": "DATABASE_STORAGE_LIMIT_EXCEEDED",
+    "failedAt": "2026-09-08T01:31:19.843Z",
+    "retryAt": "2026-09-08T01:32:19.843Z"
+  },
+  "readyHttp": 503,
+  "reasonCodes": ["ANALYSES_PAUSED", "DATABASE_STORAGE_LIMIT_EXCEEDED"],
+  "managedSetup": "LATEST_TERMINAL",
+  "originalChartRows": 3914,
+  "originalDatabaseBytes": "252895795",
+  "localChartReferences": 0,
+  "newReleaseOrders": 0,
+  "priorEnvironmentValuesPreserved": true,
+  "environmentMode": "600",
+  "services": [
+    {
+      "name": "scalper-analytics",
+      "status": "online"
+    },
+    {
+      "name": "scalper-market-data",
+      "status": "online"
+    },
+    {
+      "name": "scalper-ai",
+      "status": "online"
+    },
+    {
+      "name": "scalper-execution",
+      "status": "online"
+    },
+    {
+      "name": "scalper-dashboard",
+      "status": "online"
+    }
+  ],
+  "recovery": "Awaiting operator review before replacing database PNG copies with verified local references; no data relocated"
+}

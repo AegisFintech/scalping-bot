@@ -56,7 +56,7 @@ def test_budget_is_unavailable_without_current_policy_and_reduced_inside_it() ->
         "drawdown_percent": "1",
         "risk_cap_percent": "4",
         "risk_policy": {
-            "version": "fixed-risk-v2",
+            "version": "fixed-risk-v4",
             "setupRiskPercent": "1",
             "dailyLossLimitPercent": "5",
         },
@@ -127,3 +127,30 @@ def test_rendered_dashboard_withholds_unavailable_data_and_rejects_unauthorized_
     assert any("authorization are required" in error.value for error in app.error)
     app.radio[0].set_value("Trade history").run()
     assert not app.exception
+
+
+def test_operational_storage_failure_is_blocked_even_after_successful_startup() -> None:
+    state, detail = overview.operating_state(
+        {
+            "mode": "demo",
+            "startupChecksPassed": True,
+            "operationalReady": False,
+            "operationalFault": {"reasonCode": "DATABASE_STORAGE_LIMIT_EXCEEDED"},
+        }
+    )
+    assert state == "Blocked"
+    assert "Database capacity" in detail
+
+
+def test_maintenance_pause_keeps_the_underlying_storage_block_visible() -> None:
+    state, detail = overview.operating_state(
+        {
+            "mode": "demo",
+            "startupChecksPassed": True,
+            "pauseNewAnalyses": True,
+            "operationalReady": False,
+            "operationalFault": {"reasonCode": "DATABASE_STORAGE_LIMIT_EXCEEDED"},
+        }
+    )
+    assert state == "Paused · storage blocked"
+    assert "before resuming" in detail

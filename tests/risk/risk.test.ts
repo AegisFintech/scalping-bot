@@ -387,16 +387,20 @@ describe("risk engine", () => {
     });
     expect(combinedMargin.buy.approved).toBe(true);
     expect(combinedMargin.sell.approved).toBe(true);
-    expect(combinedMargin.reasonCodes).toContain(
-      "OCO_COMBINED_MARGIN_INSUFFICIENT",
-    );
+    expect(combinedMargin.approved).toBe(true);
+    expect(
+      Number(combinedMargin.buy.estimatedMargin) +
+        Number(combinedMargin.sell.estimatedMargin),
+    ).toBeLessThanOrEqual(70);
     const combinedUsage = sizeOcoPair({
       setupRiskPercent: "1",
       buy: { ...leg, maxMarginUsagePercent: "0.5" },
       sell: { ...leg, maxMarginUsagePercent: "0.5" },
     });
-    expect(combinedUsage.reasonCodes).toContain(
-      "OCO_COMBINED_MARGIN_USAGE_EXCEEDED",
-    );
+    expect(combinedUsage.approved).toBe(true);
+    expect(
+      Number(combinedUsage.buy.estimatedMargin) +
+        Number(combinedUsage.sell.estimatedMargin),
+    ).toBeLessThanOrEqual(50);
   });
 });

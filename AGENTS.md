@@ -28,17 +28,17 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 ## Current implementation contracts
 
 - Read `docs/overhaul-report.md`, `docs/configuration.md`, `docs/architecture.md`
-  and `docs/risk-model.md` before changing the current `fixed-risk-v2` system.
+  and `docs/risk-model.md` before changing the current `fixed-risk-v4` system.
 - Normal operator configuration is intentionally small. Change fixed policy only
   with a reviewed release and evidence; never migrate a populated `.env` by replacement.
-- The normal template has 21 keys, including the exact model pin. A populated
+- The normal template has 20 keys, including the exact model pin. A populated
   file may also retain private deployment credentials. Back up and preserve
   those values during an explicitly authorized migration; never copy the sample
   over them. Run both policy and `--startup` configuration checks, and report
   PM2-cached configuration separately from the file. The operator removed the
   absolute account-equity floor in ISSUE-076. Do not reintroduce a minimum starting
   balance. Fixed policy permits at most 1% current-equity risk per setup and a 5%
-  UTC daily loss budget; both OCO legs share that 1%. Cost, margin, notional,
+  UTC daily loss budget; both OCO legs share that 1%. Cost, broker margin, volume increments,
   remaining daily capacity and drawdown reductions can require smaller positions.
   These are limits, not guaranteed realized maximum losses or profit claims.
 - Keep automation authorization in the full safety audit hash, separate from the
@@ -91,6 +91,23 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
   workers perform bounded reads only and never call Streamlit or broker mutations.
   Verify light/dark contrast and browser state across timed updates; fragment-owned
   elements must be emitted on every tick or Streamlit can remove them.
+
+- ISSUE-079 revision `.3` removes the artificial dollar/equity notional and 1%
+  margin-use caps at the operator's request. The unchanged 1% cost-inclusive loss
+  budget is shared across both OCO legs. Reserve one setup loss in free margin;
+  broker collateral and volume limits still constrain sizing. Never change broker
+  leverage, round volume upward or target a guaranteed loss. The existing risk
+  engine confirms exact-volume margin and bounds tier downsizing. A populated
+  legacy `MAX_POSITION_NOTIONAL` must fail migration checks. Preserve daily locks.
+- Revision `.4` refreshes market data after full account/capital checks. Preserve
+  the required late authorization re-read, strict quote/book ages and the union
+  of newer/placement exposure blockers. Never overwrite reconciliation uncertainty
+  or newer open-order counts with an earlier empty account snapshot.
+- Exact chart bytes now use protected local SHA-256 storage. Back up it and the
+  database together. Never delete audit rows or silently discard PNGs. Migration
+  0018 leaves old bytes intact; their relocation requires operator review after
+  verified archive/restore preparation. Preserve operational fault latches across
+  restarts; only a successful durable cycle clears an analysis/storage failure.
 
 ## Required completion checks
 

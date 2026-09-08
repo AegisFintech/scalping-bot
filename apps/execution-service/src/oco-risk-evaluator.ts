@@ -172,9 +172,21 @@ export class OcoRiskEvaluator {
           decimal(input.account.availableMargin),
         ),
       );
+      // Reserve one full modeled setup loss in free margin. The former 1%
+      // margin-use cap confused collateral with stop risk. Broker collateral,
+      // volume limits and the cost-inclusive risk budget now bound sizing.
+      const freeMarginAfterLossReserve = Decimal.max(
+        0,
+        decimal(input.account.availableMargin).minus(
+          decimal(input.account.equity)
+            .mul(this.#effectiveRisk())
+            .div(100)
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
+        ),
+      );
       const shared = {
         equity: input.account.equity,
-        availableMargin: input.account.availableMargin,
+        availableMargin: canonical(freeMarginAfterLossReserve),
         baseRiskPercent: this.#effectiveRisk(),
         maxRiskPercent: this.#options.maxRiskPercent,
         currentMargin: canonical(currentMargin),
@@ -191,70 +203,118 @@ export class OcoRiskEvaluator {
         entryPrice,
         stopLoss,
         estimatedMarginPerVolume: canonical(
-          decimal(minimumMargin).div(decimal(minimum)),
+          decimal(minimumMargin)
+            .div(decimal(minimum))
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
         ),
       });
-      const risk = sizeOcoPair({
-        setupRiskPercent: this.#effectiveRisk(),
-        buy: leg(
-          input.response.buy_stop.entry_price,
-          input.response.buy_stop.stop_loss,
-          buyMinimumMargin,
-        ),
-        sell: leg(
-          input.response.sell_stop.entry_price,
-          input.response.sell_stop.stop_loss,
-          sellMinimumMargin,
-        ),
+      let buyInput = leg(
+        input.response.buy_stop.entry_price,
+        input.response.buy_stop.stop_loss,
+        buyMinimumMargin,
+      );
+      let sellInput = leg(
+        input.response.sell_stop.entry_price,
+        input.response.sell_stop.stop_loss,
+        sellMinimumMargin,
+      );
+      let risk: OcoRiskDecision = sizeOcoPair({
+        setupRiskPercent: shared.baseRiskPercent,
+        buy: buyInput,
+        sell: sellInput,
       });
+      let marginConfirmed = false;
+      let marginReasons: string[] = [];
+      // Broker tiering need not scale linearly. At most three exact-volume
+      // confirmations; revised estimates only increase, and never enlarge size.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (
+          !risk.approved ||
+          risk.buy.normalizedVolume === null ||
+          risk.sell.normalizedVolume === null
+        )
+          break;
+        const [buyMargin, sellMargin] = await Promise.all([
+          this.#options.marginEstimator.estimate(
+            input.metadata.symbolId,
+            "BUY",
+            risk.buy.normalizedVolume,
+          ),
+          this.#options.marginEstimator.estimate(
+            input.metadata.symbolId,
+            "SELL",
+            risk.sell.normalizedVolume,
+          ),
+        ]);
+        if (decimal(buyMargin).lte(0) || decimal(sellMargin).lte(0))
+          throw new Error("RISK_MARGIN_INVALID");
+        const combinedMargin = decimal(buyMargin).plus(decimal(sellMargin));
+        marginReasons = [];
+        if (combinedMargin.gt(freeMarginAfterLossReserve))
+          marginReasons.push("OCO_MARGIN_INSUFFICIENT");
+        if (
+          currentMargin
+            .plus(combinedMargin)
+            .gt(
+              decimal(input.account.equity)
+                .mul(this.#options.maxMarginUsagePercent)
+                .div(100),
+            )
+        )
+          marginReasons.push("OCO_MARGIN_USAGE_EXCEEDED");
+        if (!marginReasons.length) {
+          risk = {
+            ...risk,
+            buy: { ...risk.buy, estimatedMargin: buyMargin },
+            sell: { ...risk.sell, estimatedMargin: sellMargin },
+          };
+          marginConfirmed = true;
+          break;
+        }
+        if (attempt === 2) break;
+        buyInput = {
+          ...buyInput,
+          estimatedMarginPerVolume: canonical(
+            Decimal.max(
+              decimal(buyInput.estimatedMarginPerVolume),
+              decimal(buyMargin)
+                .div(risk.buy.normalizedVolume)
+                .toDecimalPlaces(10, Decimal.ROUND_UP),
+            ),
+          ),
+        };
+        sellInput = {
+          ...sellInput,
+          estimatedMarginPerVolume: canonical(
+            Decimal.max(
+              decimal(sellInput.estimatedMarginPerVolume),
+              decimal(sellMargin)
+                .div(risk.sell.normalizedVolume)
+                .toDecimalPlaces(10, Decimal.ROUND_UP),
+            ),
+          ),
+        };
+        risk = sizeOcoPair({
+          setupRiskPercent: shared.baseRiskPercent,
+          buy: buyInput,
+          sell: sellInput,
+        });
+      }
       if (
+        !marginConfirmed ||
         !risk.approved ||
         risk.buy.normalizedVolume === null ||
         risk.sell.normalizedVolume === null
       ) {
         return {
           approved: false,
-          reasonCodes: risk.reasonCodes,
+          reasonCodes: risk.approved ? marginReasons : risk.reasonCodes,
           risk,
           commands: null,
           equity: input.account.equity,
-          perLegRiskPercent: canonical(decimal(this.#effectiveRisk()).div(2)),
+          perLegRiskPercent: canonical(decimal(shared.baseRiskPercent).div(2)),
         };
       }
-      const [buyMargin, sellMargin] = await Promise.all([
-        this.#options.marginEstimator.estimate(
-          input.metadata.symbolId,
-          "BUY",
-          risk.buy.normalizedVolume,
-        ),
-        this.#options.marginEstimator.estimate(
-          input.metadata.symbolId,
-          "SELL",
-          risk.sell.normalizedVolume,
-        ),
-      ]);
-      const combinedMargin = decimal(buyMargin).plus(decimal(sellMargin));
-      const reasons: string[] = [];
-      if (combinedMargin.gt(decimal(input.account.availableMargin)))
-        reasons.push("OCO_MARGIN_INSUFFICIENT");
-      if (
-        currentMargin
-          .plus(combinedMargin)
-          .div(decimal(input.account.equity))
-          .mul(100)
-          .gt(decimal(this.#options.maxMarginUsagePercent))
-      ) {
-        reasons.push("OCO_MARGIN_USAGE_EXCEEDED");
-      }
-      if (reasons.length > 0)
-        return {
-          approved: false,
-          reasonCodes: reasons,
-          risk,
-          commands: null,
-          equity: input.account.equity,
-          perLegRiskPercent: canonical(decimal(this.#effectiveRisk()).div(2)),
-        };
       const orderGroupId = randomUUID();
       const make = (
         side: "BUY" | "SELL",
@@ -302,7 +362,9 @@ export class OcoRiskEvaluator {
       };
     } catch (error) {
       return this.#reject(
-        error instanceof Error ? error.message : "RISK_EVALUATION_FAILED",
+        error instanceof Error && /^[A-Z][A-Z0-9_]{1,150}$/.test(error.message)
+          ? error.message
+          : "RISK_EVALUATION_FAILED",
       );
     }
   }

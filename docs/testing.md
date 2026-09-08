@@ -1174,3 +1174,32 @@ mechanical evidence, not profitability evidence. The next broker minute placed
 a second v15 OCO group automatically. The first local five-minute segment held
 656 samples, compressed to 22,383 bytes, and passed an independent SHA-256 check
 against its manifest.
+
+## ISSUE-079 regression scope
+
+`tests/risk/equity-sizing.test.ts` compares old fixed-dollar and equity-relative
+constraints on identical execution inputs, including commissions and broker margin
+changes. It tests affordable downward sizing, both OCO legs, unaffordable minimums,
+invalid margins and bounded tier retries; it is not a return backtest.
+`tests/ctrader/trading-schedule.test.ts` covers the observed Labor Day closure,
+nonrecurring/recurring dates, differing timezones, open-session gaps and brief open
+intervals. Chart tests cover exact-byte deduplication and unavailable/corrupt/link
+rejection. The PostgreSQL integration test exercises archive relocation, repeated
+execution, restore and failed verification without financial-row deletion.
+Operational-failure tests cover redaction, restart retention, backoff, HTTP readiness
+and authenticated cycle refusal. Python tests verify blocked rendering, current
+policy budgets and stable completed-candle images across analysis times.
+
+Revision `.3` adds explicit tests that current-equity sizing can exceed the old
+five-times-notional and 1% collateral ceilings while remaining below 1% modeled
+loss. Halving equity reduces size; expensive broker margin downsizes; a minimum
+that would exhaust the free-margin loss reserve rejects. Uncertain accounts and
+existing pending exposure still reject. The updated policy is displayed as v4.
+Real broker margin comparisons are read-only and retain the same historic entry/
+stop prices for all three alternatives; larger size is not profit evidence.
+
+Revision `.4` coordinator regressions simulate a four-second capital audit, then
+verify a fresh final market snapshot without extending the three-second limit.
+The old implementation fails these regressions. Additional cases preserve newer
+exposure/partial/cancellation/reconciliation blockers and reject late pause,
+emergency, unavailable controls and quotes aged during the final control read.

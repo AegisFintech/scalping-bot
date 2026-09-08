@@ -4,6 +4,7 @@ import io
 from datetime import UTC, datetime
 from decimal import Decimal
 from hashlib import sha256
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -1632,3 +1633,28 @@ def test_analysis_history_rejects_duplicate_identity_and_sanitizes_bad_model_dat
     view = analysis_history_view([unsafe], 1)
     assert view["rows"][0]["evidence_status"] == "UNAVAILABLE"
     assert all("must-not-render" not in str(value) for value in view["rows"][0].values())
+
+
+def test_chart_archive_read_preserves_bytes_and_rejects_missing_corrupt_or_redirected_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    directory = tmp_path / ".runtime/analysis-charts"
+    directory.mkdir(parents=True)
+    row = chart_row()
+    image = row["chart_image_bytes"]
+    assert isinstance(image, bytes)
+    file = directory / f"{row['chart_sha256']}.png"
+    file.write_bytes(image)
+    row.update(chart_image_bytes=None, chart_storage_kind="local_sha256")
+    view = analysis_chart_view(row)
+    assert view is not None and view["image_bytes"] == image
+    file.write_bytes(b"corrupt")
+    with pytest.raises(DecisionViewError, match="CHART_SIZE_INVALID"):
+        analysis_chart_view(row)
+    file.unlink()
+    with pytest.raises(DecisionViewError, match="CHART_ARCHIVE_UNAVAILABLE"):
+        analysis_chart_view(row)
+    file.symlink_to("/dev/null")
+    with pytest.raises(DecisionViewError, match="CHART_ARCHIVE_UNAVAILABLE"):
+        analysis_chart_view(row)

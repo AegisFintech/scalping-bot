@@ -2718,3 +2718,102 @@ runtime.
       resurrection on this VPS; all listeners remain on loopback. The current PM2
       daemon runs as root because the repository is under `/root`; migrate to the
       least-privilege release layout before any live-readiness review.
+
+### ISSUE-079 — Equity-sized execution and durable operational recovery
+
+- Status: initial paused checkpoint; superseded by the completed recovery continuation below on `issue-079-equity-sized-execution`, tracked by
+  [issue #188](https://github.com/AegisFintech/scalping-bot/issues/188).
+- Dependencies: ISSUE-076, ISSUE-077, ISSUE-078.
+- Acceptance: replace fixed-dollar exposure with bounded equity-relative sizing in
+  the existing risk engine; fit both OCO margins before admission; recognize broker
+  holiday closures; expose and back off persistence failures independently of exits;
+  preserve chart history with verified storage/restore and operator-reviewed data
+  transition; validate and restore already authorized demo operation without live
+  enablement. All 1% setup / 5% daily and drawdown limits remain enforced.
+- Baseline: reconciled demo equity/free margin USD 999,832.16, no positions/orders
+  at 09:10 SGT on 2026-09-08. Prior approved legs each budgeted USD 4,999.1608
+  but used native volume 100 (0.01 lot) because MAX_POSITION_NOTIONAL=5500.
+  Database storage errors began at 01:50 SGT; 3,914 chart blobs occupy about
+  253 MB. Broker supplied a Labor Day early-close override that was ignored.
+  Six `.4` closed demo trades total -1.14; software repair is not profit evidence.
+- Validation: 465 Node, 121 Python, 22 schema, 3 migration and 3 isolated TLS
+  database/analytics integration tests passed. Format/lint/type/build, Ruff/mypy,
+  configuration checks, replay/fail-closed fixtures, secret scan and both dependency
+  audits passed (zero known vulnerabilities). Exact commands and corrected initial
+  findings: `docs/evidence/equity-sizing-validation.json`.
+- Migration 0018 applied without changing old chart bytes. All five services are
+  online; final `.2` reports the storage block and HTTP 503 under the authenticated
+  maintenance pause. Both dashboard themes passed background-update checks.
+- Same-input read-only sizing: 0.01 → 11.25 lots per leg; modeled combined loss
+  3,205.8981 versus 9,998.3216 budget, constrained by the unchanged margin ceiling.
+  Arithmetic median 0.771 ms; one broker-confirmed sizing check 517.30 ms. No orders
+  were submitted by the comparison; no improved profitability is claimed.
+- At the initial checkpoint, remaining acceptance was operator review of the verified 3,914-image archive
+  transition, capacity recovery, then restoration of prior demo operation and
+  observation. Both exact archive copies and restore tests are prepared. No
+  database image bytes or financial rows have been removed. Delivery details:
+  `docs/equity-sizing-recovery-report.md`.
+
+- Delivery checkpoint: `19b9153` was committed and pushed. Review is open as
+  [draft PR #189](https://github.com/AegisFintech/scalping-bot/pull/189). The PR stays
+  draft while the archive transition and resumed demo observation await operator
+  review. GitHub rejected queued auto-merge because this repository disables that feature.
+  No repository setting or protection was bypassed.
+
+### ISSUE-079 continuation — remove artificial caps and recover analysis
+
+- Status: implementation, storage recovery and bounded demo observation complete; delivery on PR #189, explicitly
+  requested by the operator on 2026-09-08 after the prepared recovery review.
+- Acceptance: remove the artificial equity-notional and 1% collateral ceilings;
+  retain combined 1% modeled loss / 5% daily limits, broker margin/volume checks,
+  loss reserves and durable locks. Complete the verified chart relocation,
+  restore database writes and authorized demo operation, inspect fresh rejections,
+  validate failure paths, record observed sizing/provider identity and outcomes.
+- Revision `.3` / `fixed-risk-v4` adds no operator settings. The prior archive
+  review is complete through the operator's instruction to handle the rejected
+  analysis. The resumable exact-byte transition is underway; financial rows and
+  existing account risk state remain intact. Storage error 53100 requires batches
+  with ordinary vacuum between them; there is no unreviewed journal deletion.
+
+- Recovery: all 3,914 original chart references were independently verified and
+  both exact byte copies rechecked. Ordinary vacuum between storage-limited
+  relocation batches, then bounded compaction of only the empty-blob chart
+  relation, reduced the database from 513,089,536 to 249,610,240 bytes. No financial
+  rows were deleted. Existing demo automation resumed at 10:20:01 SGT; its first
+  durable cycle cleared the fault automatically. Readiness returned HTTP 200.
+- Sizing: same-input broker-confirmed comparison now admits 35.08 lots per leg,
+  combined modeled loss 9,996.7026976 versus 9,998.3216 budget. Broker margin is
+  31,061.93. This is read-only sizing evidence, not profit or fill-quality proof.
+- Checks: 467 Node, 121 Python, 22 schema, 3 migration and 3 isolated PostgreSQL/TLS
+  integration tests passed. Type/build, Ruff/mypy, config, replay, secret scan
+  and both dependency audits passed. Initial formatting/test-only lint findings
+  were corrected; their repeat checks passed. Final evidence and observation:
+  `docs/risk-budget-recovery-report.md`.
+
+- Resumed `.3` observation confirmed EPRToken returned `gpt-5.6-sol` for literal
+  `gpt-5.6-sol/u40` in 36.374 seconds (17,736 input / 823 output tokens). It also
+  exposed final snapshot ageing during full capital reconciliation. A second
+  authenticated maintenance pause was applied at 10:22:12 SGT. Revision `.4`
+  moves that audit before final market capture, re-reads authorization afterward,
+  and preserves newer exposure/uncertainty blockers. Regression tests cover the
+  old failure and late-control failures; spread and freshness limits are unchanged.
+
+- Final coordinator validation: all eleven added final-gate regressions fail
+  against the previous implementation and pass after the correction. Full Node
+  suite: 478 tests; coordinator subset: 43 tests. Existing reason-code names and
+  lint-safe mock assertions were corrected in tests. No production rejection code
+  or freshness threshold was relaxed.
+
+- Final revision `.4` resumed existing demo operation at 10:26:39 SGT after fresh
+  certain empty-account reconciliation. All five services use the reviewed build;
+  storage remains healthy and the fault latch clear. Awaiting the bounded final
+  observation capture before delivery; no live execution or risk-lock reset.
+
+- Bounded final observation at 10:30:46 SGT: both new Sol maps validated; final
+  `.4` local outcomes were 16 spread rejections and two deferrals, with no orders
+  submitted or fills. No additional storage or final-snapshot-age failures were
+  observed. This does not establish fill quality or net-return improvement. No
+  extra paid calls were made for those local retries. Required delivery evidence:
+  `docs/evidence/risk-budget-validation.json`, runtime/observation evidence and both
+  dashboard themes. All credentials and 24 populated environment values remain
+  preserved from the reviewed migration; no live authority or risk lock changed.

@@ -392,6 +392,7 @@ if diagnostic_section == "AI Analysis":
                           ac.width AS chart_width, ac.height AS chart_height,
                           ac.image_sha256 AS chart_sha256,
                           ac.image_bytes AS chart_image_bytes,
+                          ac.storage_kind AS chart_storage_kind,
                           ac.source_metadata AS chart_source_metadata,
                           ac.created_at AS chart_created_at
                    FROM analysis_runs ar

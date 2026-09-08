@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-09-08T02:18:22.560Z",
+  "originalImagesVerified": 3914,
+  "originalBytesPreservedInArchives": 252895795,
+  "originalDatabaseCopiesRemaining": 0,
+  "financialRowsDeleted": 0,
+  "databaseBytesBeforeIncidentRecovery": "513089536",
+  "databaseBytesBeforeFinalCompaction": "387588096",
+  "databaseBytesAfter": "249610240",
+  "logicalDataLoss": false,
+  "liveEnabled": false
+}

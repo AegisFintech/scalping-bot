@@ -10,16 +10,24 @@ import type { ManagedSetupOverview } from "./managed-setup-overview.js";
 import type { AutomaticAnalysisActivity } from "./automatic-analysis-watchdog.js";
 
 export interface ExecutionStatus {
+  readonly operationalReady?: boolean;
+  readonly operationalFault?: {
+    readonly reasonCode: string;
+    readonly failedAt: string;
+    readonly retryAt: string;
+  } | null;
   readonly strategyVersion?: string;
   readonly requestedModel?: string;
   readonly remainingCapitalRiskPercent?: string | null;
   readonly scenarioContext?: Readonly<Record<string, unknown>>;
-  readonly policyVersion?: "fixed-risk-v2";
+  readonly policyVersion?: "fixed-risk-v2" | "fixed-risk-v3" | "fixed-risk-v4";
   readonly riskPolicy?: {
-    readonly version: "fixed-risk-v2";
+    readonly version: "fixed-risk-v2" | "fixed-risk-v3" | "fixed-risk-v4";
     readonly setupRiskPercent: string;
     readonly dailyLossLimitPercent: string;
     readonly drawdownLimitPercent: string;
+    readonly maxPositionNotionalEquityMultiple?: string | null;
+    readonly maxMarginUsagePercent?: string;
   };
   readonly mode: string;
   readonly symbol: string;
@@ -122,7 +130,7 @@ export function createExecutionServer(
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", async (_request, reply) => {
     const status = await options.status();
-    return status.startupChecksPassed
+    return status.startupChecksPassed && status.operationalReady !== false
       ? reply.send({ status: "ready", trading_allowed: status.tradingEnabled })
       : reply
           .code(503)
@@ -149,6 +157,12 @@ export function createExecutionServer(
   app.post("/v1/cycle", async (request, reply) => {
     if (!authorized(request, options.controlToken))
       return reply.code(401).send({ error: "UNAUTHORIZED" });
+    const state = await options.status();
+    if (state.operationalReady === false)
+      return reply.code(503).send({
+        error: "EXECUTION_OPERATIONALLY_BLOCKED",
+        reasonCodes: state.reasonCodes,
+      });
     const result = await options.coordinator.runOnce();
     options.updateLastCycle(result);
     return reply.send(result);

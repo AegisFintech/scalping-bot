@@ -746,12 +746,25 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       (candidate) => stringField(candidate, "symbolId") === symbolId,
     );
     if (full === undefined) throw new Error("CTRADER_SYMBOL_METADATA_MISSING");
+    if (full.holiday !== undefined && !Array.isArray(full.holiday))
+      throw new Error("CTRADER_HOLIDAYS_INVALID");
     const schedule = weeklyTradingSchedule(
       stringField(full, "scheduleTimeZone"),
       recordsField(full, "schedule").map((interval) => ({
         startSecond: numberField(interval, "startSecond"),
         endSecond: numberField(interval, "endSecond"),
       })),
+      recordsField(full, "holiday").map((holiday) => {
+        if (typeof holiday.isRecurring !== "boolean")
+          throw new Error("CTRADER_HOLIDAY_INVALID");
+        return {
+          holidayDate: numberField(holiday, "holidayDate"),
+          isRecurring: holiday.isRecurring,
+          startSecond: optionalNumberField(holiday, "startSecond") ?? 0,
+          endSecond: optionalNumberField(holiday, "endSecond") ?? 86400,
+          timeZone: stringField(holiday, "scheduleTimeZone"),
+        };
+      }),
     );
     const { digits, pipPosition, pipSize } = normalizeSymbolPip(
       full.digits,

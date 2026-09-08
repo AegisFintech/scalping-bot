@@ -1,12 +1,12 @@
 # Configuration and migration
 
-Release `0.2.2-fixed-risk.5` uses policy `fixed-risk-v2` in
-`packages/config/src/policy.ts`. The normal template has 21 assignments, previously
-176: 155 fewer, an 88.1% reduction. These include secrets and deployment identity;
+Release `0.2.3-equity-risk.4` uses policy `fixed-risk-v4` in
+`packages/config/src/policy.ts`. The normal template has 20 assignments, previously
+176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
-reduced the populated environment from 176 to 25 entries: the 21 normal keys plus
+reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
 four retained deployment credentials/identifiers. No credentials were changed.
-See [the current policy report](fixed-risk-report.md) for migration and validation. There is no operator strategy tuning file.
+See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file.
 Reusable scenario maps add no environment variables or tuning file. Five-minute
 refresh/cooldown, one intent per map, five-second local decisions, 60-second
 pending expiry and 45-second provider timeout are engineering policy, not operator
@@ -21,7 +21,6 @@ systemd layouts and do not belong in a normal installation's template.
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Instance and account identity                 | `INSTANCE_ID`, `ACCOUNT_ID`, `ACCOUNT_KEY`, `TRADING_SYMBOL`                                                           |
 | Explicit operation                            | `TRADING_MODE`, `EMERGENCY_STOP`, `AUTOMATIC_ANALYSIS_ENABLED`, `DEMO_TRADING_ENABLED`, `DEMO_TRADING_ACKNOWLEDGEMENT` |
-| Capital bounds in account currency            | `MAX_POSITION_NOTIONAL`                                                                                                |
 | cTrader credentials                           | `CTRADER_CLIENT_ID`, `CTRADER_CLIENT_SECRET`, `CTRADER_ACCESS_TOKEN`, `CTRADER_REFRESH_TOKEN`                          |
 | EPRToken deployment                           | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`                                                                                |
 | Persistence, controls, optional observability | `DATABASE_URL`, `DASHBOARD_CONTROL_TOKEN`, `BETTERSTACK_SOURCE_TOKEN`, `BETTERSTACK_INGESTING_HOST`                    |
@@ -47,12 +46,22 @@ their effective code defaults. Keep unknown credentials or custom deployments
 until reviewed; unused monitoring credentials must not disappear accidentally.
 
 The operator-authorized fixed policy uses a 1% setup risk ceiling and 5% daily
-loss limit, with no absolute equity floor. The 1% margin-use ceiling and 10-point
-spread ceiling remain. The
-order-count ceiling is 100 per day, below the former configured 103. Sizing includes execution costs and bounded risk reductions; AI cannot raise risk.
-`MAX_POSITION_NOTIONAL` is per position; the two-leg OCO maximum gross notional
-can therefore be twice this amount, while both losses/margins must fit the shared
-setup budget. Notional conversion uses broker quote-to-account currency metadata.
+loss limit, with no absolute equity floor. The 10-point spread ceiling and
+100-order daily ceiling remain. Sizing includes execution costs and bounded risk
+reductions; AI cannot raise risk. Revision `.3` removes the artificial notional
+and 1% collateral ceilings at the operator's request. The risk engine calculates
+size from current equity and cost-inclusive stop risk, floors to broker increments,
+reserves one full setup loss in free margin and confirms broker margin at the final
+volume. The two race-exposed legs share the 1% loss budget. Broker leverage is
+unchanged; broker maximum volume, available margin and adverse-condition reductions
+can still produce less than 1% actual modeled risk.
+
+The obsolete `MAX_POSITION_NOTIONAL` override must be removed after review;
+leaving it populated produces a key-only migration error. A cached
+`MAX_MARGIN_USAGE_PERCENT=1` also conflicts with revision `.3`; remove the legacy
+internal override and recreate supervisor processes. The internal 100% bound means
+collateral cannot exceed equity, with the separate loss reserve and broker free
+margin checks still applied. No new `.env` choices or tuning file are needed.
 A broker minimum can be unaffordable; do not enlarge risk to force a fill.
 
 Symbol ID, account currency/type, volume increments, precision, commissions and
@@ -76,7 +85,7 @@ limits. Both are read-only; neither checks provider/broker connectivity, runtime
 state or permission to place an order. Service startup separately validates
 credentials, fresh metadata and account evidence. Errors name keys only.
 
-The migrated local file passes both compatibility and startup checks with 25
+The migrated local file passes both compatibility and startup checks with 24
 keys and the exact model pin. `ACCOUNT_EQUITY_FLOOR` is obsolete: any legacy value
 is ignored and removed from the resolved runtime environment; the read-only
 checker names it as removable without printing its value. Remove its assignment
@@ -102,7 +111,7 @@ but an existing ignored credential used for delivery must remain private.
    location. Preserve mode-0600 permissions. Do not copy credentials into commands,
    reports or Git; do not run `cp .env.sample .env` over an existing file.
 3. Review each conflicting key reported by `config:check`. Retain credentials,
-   endpoints, instance identity, control authorization and notional authorization.
+   endpoints, instance identity, control authorization and trading authorization.
    Remove `ACCOUNT_EQUITY_FLOOR`; do not add percentage overrides.
    Remove reviewed legacy internals. Choose paper/stopped for the first check.
 4. Apply additive migrations `0015` and `0016` with the existing migration CLI during the
@@ -120,7 +129,7 @@ but an existing ignored credential used for delivery must remain private.
    An absent late-start daily baseline needs the existing audited initialization
    procedure; do not synthesize it or reset a loss lockout.
 7. Review provider access/pricing and run a bounded compatibility call. The operator authorized a controlled demo rollout for ISSUE-075. Missing
-   notional authorization or reconciliation still block placement. This policy
+   exposure limits or reconciliation still block placement. This policy
    change neither clears a loss lock nor grants live authority.
 
 ## Rollback
@@ -131,3 +140,12 @@ and its environment through the normal supervisor. Keep migration `0015`/`0016` 
 and their audit data: the older release can ignore them. Do not drop tables, edit
 migration checksums, reset daily/capital rows, or resurrect expired proposals.
 Rollback does not transfer live authority or prove older risk behavior sufficient.
+
+ISSUE-079 migration: back up the populated environment with mode 0600; remove only
+`MAX_POSITION_NOTIONAL`, verify all remaining parsed values are unchanged, then run
+both checks above and recreate supervisor processes to discard the cached key.
+Apply additive migration 0018 before the new dashboard/execution build. It keeps
+all existing PNG bytes intact. Existing-blob relocation is a separate, reviewed
+operation described in `equity-sizing-recovery-report.md`. The local chart directory
+is an engineering storage path, not a strategy tuning setting. Keep it on durable
+storage and include it in backup/restore alongside PostgreSQL.
