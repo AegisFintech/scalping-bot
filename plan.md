@@ -2753,3 +2753,9 @@ runtime.
   observation. Both exact archive copies and restore tests are prepared. No
   database image bytes or financial rows have been removed. Delivery details:
   `docs/equity-sizing-recovery-report.md`.
+
+- Delivery checkpoint: `19b9153` was committed and pushed. Review is open as
+  [draft PR #189](https://github.com/AegisFintech/scalping-bot/pull/189). The PR stays
+  draft while the archive transition and resumed demo observation await operator
+  review. GitHub rejected queued auto-merge because this repository disables that feature.
+  No repository setting or protection was bypassed.

@@ -210,3 +210,21 @@ database images remain intact pending approval. [Exact validation](evidence/equi
 and [paused runtime evidence](evidence/equity-sizing-paused-rollout.json). The code
 checkpoint can be reviewed independently of the pending data transition; merging
 and restoring automated operation await the issue's remaining acceptance step.
+
+## Delivery and remaining acceptance
+
+Implementation checkpoint **`19b9153`** is pushed. [Draft PR #189](https://github.com/AegisFintech/scalping-bot/pull/189)
+contains the source, migration, tests, documentation and screenshots. It remains
+draft because restoring normal demo operation depends on the operator-reviewed
+archive transition. GitHub rejected the queued auto-merge request with **“Auto
+merge is not allowed for this repository.”** No setting or protection was bypassed.
+
+A final read-only broker check at **09:33:23 SGT** still showed certain reconciliation,
+USD 999,832.16 equity/free margin, **zero positions and zero pending orders**. The
+maintenance pause remains active; the archive-relocation approval question is
+pending. After approval: verify the unchanged manifest, perform the conditional
+transition, reclaim/check database capacity, restore only the prior demo pause
+state, observe a successful durable cycle and broker order lifecycle, update the
+report, then complete review/delivery under the repository rules. Do not reset
+capital history or clear the operational latch merely to obtain a healthy badge.
+The latch clears only after a successfully persisted cycle.
