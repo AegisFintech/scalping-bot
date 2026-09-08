@@ -1,0 +1,204 @@
+{
+  "release": "0.2.3-equity-risk.8",
+  "commands": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 16.77,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 23.58,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 9.85,
+      "log": "03.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.82,
+      "log": "04.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 26.63,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.65,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 2.89,
+      "log": "07.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 7.2,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "11.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.44,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "14.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.12,
+      "log": "15.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.92,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 12.36,
+      "log": "17.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.31,
+      "log": "18.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-082/backtest-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "19.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-082/base-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "20.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-082/stress-final-recovery.json --stress",
+      "exit_code": 0,
+      "seconds": 0.79,
+      "log": "21.log"
+    }
+  ],
+  "counts": {
+    "node_tests": 500,
+    "python_tests": 138,
+    "schema_tests": 22,
+    "migration_tests": 3,
+    "isolated_database_integration_tests": 3
+  },
+  "followup_checks": [
+    {
+      "command": "npx eslint scripts/export-evaluation.ts",
+      "exit_code": 0,
+      "reason": "final original-snapshot export refinement"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "reason": "final export refinement"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "reason": "final export refinement"
+    },
+    {
+      "command": ".venv/bin/pytest -q tests/python/test_expiry_evaluation.py",
+      "exit_code": 0,
+      "tests": 13
+    },
+    {
+      "command": ".venv/bin/python -m python.evaluation.expiry artifacts/issue-082/recordings artifacts/issue-082/plans-sol.json artifacts/issue-082/expiry-research.json",
+      "exit_code": 0,
+      "pairs": 28,
+      "quotes": 32458
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "reason": "final documentation/export update"
+    },
+    {
+      "command": "node artifacts/issue-082/screenshot.mjs",
+      "exit_code": 0,
+      "result": "Both actual pending orders and expiry visible; screenshot visually inspected.",
+      "note": "Initial locator expected a hidden canvas accessibility cell to be visible; corrected to wait for attached data before screenshot."
+    }
+  ],
+  "corrected_during_implementation": [
+    "Nine long Python assumption strings failed Ruff E501; wrapped and all final checks passed.",
+    "Prettier explicitly given .env.sample reported unsupported parser; template is outside required formatting glob. Required full format check passed."
+  ],
+  "graphify": {
+    "nodes": 2831,
+    "edges": 5968,
+    "supported_code_files": 230,
+    "mapped_code_files": 230,
+    "missing_code": [],
+    "migrations": 18,
+    "environment_unchanged": true
+  },
+  "dependency_audits": "zero known vulnerabilities in both Node and Python checks",
+  "profitability_established": false,
+  "supplemental_secret_scan": {
+    "scope": "all index blobs, including pre-existing deleted working-tree images",
+    "files": 377,
+    "activeCredentialMatchesOrPatterns": []
+  },
+  "secret_scan_limitations": "Repository script exits zero but prints missing-file warnings for seven pre-existing user-deleted images and benign risk-budget filename matches. Supplemental index-blob scan independently checked active credential values and token/private-key patterns without printing them."
+}

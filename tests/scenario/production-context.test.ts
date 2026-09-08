@@ -36,6 +36,8 @@ function payload() {
       minimum_stop_distance: "0.40",
       maximum_stop_distance: "5",
       preferred_expires_at: at(100),
+      order_expiry_min_seconds: 60,
+      order_expiry_max_seconds: 180,
     },
   };
 }
@@ -102,6 +104,66 @@ function stored(): StoredContext {
   };
 }
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
+  it.each([
+    [40, 220, 220],
+    [200, 380, 300],
+    [240, 420, 300],
+  ])(
+    "bounds a longer expiry by the original map at %s seconds",
+    (now, preferred, expected) => {
+      const p = payload();
+      p.server_time = at(now);
+      p.execution_constraints.preferred_expires_at = at(preferred);
+      const response = scenarioOco(fixture.plan, p);
+      expect(response.valid_until).toBe(at(expected));
+      expect(response.buy_stop.expires_at).toBe(at(expected));
+      expect(response.sell_stop.expires_at).toBe(at(expected));
+      expect(
+        validateSemantics(response, {
+          analysisId: response.analysis_id,
+          symbol: "XAUUSD",
+          now: new Date(at(now)),
+          expiryReferenceTime: new Date(at(now)),
+          quote: {
+            bid: "4404.95",
+            ask: "4405.05",
+            sourceTime: at(now),
+            receivedAt: at(now),
+          },
+          metadata: fixture.metadata,
+          atr: "5",
+          minRiskRewardRatio: "0.5",
+          minExpirySeconds: 60,
+          maxExpirySeconds: 180,
+          maxStopDistanceAtr: "3",
+          maxEntryDistanceAtr: "2.5",
+          maxQuoteAgeMs: 3000,
+        }).reasonCodes,
+      ).toEqual([]);
+    },
+  );
+  it("waits if map capping would leave less than the minimum lifetime", () => {
+    const p = payload();
+    p.server_time = at(241);
+    p.execution_constraints.preferred_expires_at = at(421);
+    expect(() => scenarioOco(fixture.plan, p)).toThrow("SCENARIO_WAIT_REFRESH");
+  });
+  it.each([
+    { order_expiry_min_seconds: 0 },
+    { order_expiry_max_seconds: 59 },
+    { order_expiry_max_seconds: Number.NaN },
+    { order_expiry_min_seconds: undefined },
+    { preferred_expires_at: at(201) },
+    { preferred_expires_at: at(380.001) },
+  ])("rejects invalid expiry before capping: %j", (patch) => {
+    const p = payload();
+    p.server_time = at(200);
+    p.execution_constraints.preferred_expires_at = at(380);
+    Object.assign(p.execution_constraints, patch);
+    expect(() => scenarioOco(fixture.plan, p)).toThrow(
+      "SCENARIO_EXECUTION_CONSTRAINT_INVALID",
+    );
+  });
   it("does not reuse an old-model map after restart or bypass its paid-request cooldown", async () => {
     const store = memory();
     store.row = { ...stored(), requestedModel: "gpt-5.6-sol/u40" };
@@ -184,7 +246,10 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     [{ current_bid: "4399" }, "SCENARIO_WAIT_PRICE_RETURN"],
     [{ buy_entry_maximum: "4409" }, "SCENARIO_WAIT_ENTRY_DISTANCE"],
     [{ maximum_stop_distance: "0.39" }, "SCENARIO_WAIT_NET_REWARD"],
-    [{ preferred_expires_at: at(301) }, "SCENARIO_WAIT_REFRESH"],
+    [
+      { preferred_expires_at: at(301) },
+      "SCENARIO_EXECUTION_CONSTRAINT_INVALID",
+    ],
     [{ tick_size: "bad" }, "INVALID_DECIMAL"],
   ])("never chases price or weakens geometry for %j", (patch, reason) => {
     const p = payload();

@@ -18,9 +18,23 @@ export function scenarioOco(
     return decimal(c[key]);
   };
   const now = time(String(payload.server_time));
-  const expires = String(c.preferred_expires_at);
-  if (time(expires) > time(plan.valid_until) || time(expires) - now < 60_000)
-    throw new Error("SCENARIO_WAIT_REFRESH");
+  const preferred = time(String(c.preferred_expires_at));
+  const minimum = c.order_expiry_min_seconds;
+  const maximum = c.order_expiry_max_seconds;
+  if (
+    typeof minimum !== "number" ||
+    !Number.isSafeInteger(minimum) ||
+    minimum < 60 ||
+    typeof maximum !== "number" ||
+    !Number.isSafeInteger(maximum) ||
+    maximum < minimum ||
+    preferred - now < minimum * 1000 ||
+    preferred - now > maximum * 1000
+  )
+    throw new Error("SCENARIO_EXECUTION_CONSTRAINT_INVALID");
+  const expiry = Math.min(preferred, time(plan.valid_until));
+  if (expiry - now < minimum * 1000) throw new Error("SCENARIO_WAIT_REFRESH");
+  const expires = new Date(expiry).toISOString();
   const tick = price("tick_size");
   // Thresholds are immutable; a crossed map waits for the next bounded refresh.
   if (

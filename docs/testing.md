@@ -1,5 +1,11 @@
 # Current acceptance and research
 
+ISSUE-082 tests longer expiry through construction, unchanged semantic validation
+and maintenance beyond the old deadline. Research tests cover side-correct prices,
+TP after SL, stop-limit retracement/misses, expiry versus position protection,
+OCO races, partial-fill assumptions, gap/end censoring and invalid/backdated plans.
+See [expiry research and reproduction](order-expiry-research-report.md).
+
 ISSUE-081 reverses the active pin to literal `gpt-6-astra/u64`. Configuration,
 scenario HTTP, provider identity and restart tests reject the previous Sol map
 without bypassing its cooldown. Both historical identities remain valid journal

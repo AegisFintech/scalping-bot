@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.7`, fixed risk policy v4. Previous release
+Current source: `0.2.3-equity-risk.8`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -191,3 +191,13 @@ extension trigger as a target or skips the first target to obtain more room.
 Provider work remains detached from protective order maintenance. The AI readiness
 endpoint checks the active scenario client, and dashboard entry availability is
 distinct from process health, broker exposure, and local execution checks.
+
+## ISSUE-082 pending validity
+
+New local OCO proposals prefer 180 seconds and expire at the earlier of that
+deadline and their immutable map deadline. The requested duration is validated
+before capping; fewer than 60 seconds remaining causes a refresh wait. Schema 2.1
+and the five-minute map schema/database constraint stay unchanged. An accepted
+pending order keeps its original expiry through maintenance/reconciliation;
+expiry never closes a filled position. Ten/fifteen-minute expiry comparisons
+are isolated research cohorts with no broker authority.

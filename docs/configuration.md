@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.7` uses policy `fixed-risk-v4` in
+Release `0.2.3-equity-risk.8` uses policy `fixed-risk-v4` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -8,8 +8,8 @@ reduced the populated environment from 176 to 24 entries: the 20 normal keys plu
 four retained deployment credentials/identifiers. No credentials were changed.
 See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file.
 Reusable scenario maps add no environment variables or tuning file. Five-minute
-refresh/cooldown, one intent per map, five-second local decisions, 60-second
-pending expiry and 90-second asynchronous provider timeout are engineering policy, not operator
+refresh/cooldown, one intent per map, five-second local decisions, three-minute preferred/maximum
+pending expiry capped by the original map and 90-second asynchronous provider timeout are engineering policy, not operator
 knobs. A proven local `AI_CIRCUIT_OPEN` result is rechecked after one minute;
 the database still enforces five minutes between potentially dispatched requests.
 Unknown/timeout outcomes retain the full cooldown. See [the incident report](provider-recovery-report.md).
