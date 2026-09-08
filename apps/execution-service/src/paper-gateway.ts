@@ -1,3 +1,7 @@
+import {
+  orderTimeInForce,
+  validateSubmissionDeadline,
+} from "../../../packages/contracts/src/order-lifetime.js";
 import { Decimal } from "decimal.js";
 
 import type {
@@ -99,8 +103,11 @@ function validatePair(
   }
   if (new Set(commands.map((command) => command.side)).size !== 2)
     throw new Error("PAPER_OCO_SIDES_INVALID");
+  if (orderTimeInForce(commands[0]) !== orderTimeInForce(commands[1]))
+    throw new Error("PAPER_OCO_LIFETIME_MISMATCH");
   for (const command of commands) {
     if (decimal(command.volume).lte(0)) throw new Error("PAPER_VOLUME_INVALID");
+    validateSubmissionDeadline(command);
     if (Date.parse(command.expiresAt) <= Date.now())
       throw new Error("PAPER_ORDER_EXPIRED");
   }
@@ -251,7 +258,10 @@ export class PaperGateway implements ExecutionGateway {
       if (group.orders[0].command.symbol !== symbol) continue;
       const active = group.orders.filter((order) => order.state === "PENDING");
       for (const order of active) {
-        if (Date.parse(order.command.expiresAt) <= at.getTime()) {
+        if (
+          orderTimeInForce(order.command) === "GTD" &&
+          Date.parse(order.command.expiresAt) <= at.getTime()
+        ) {
           order.state = "EXPIRED";
           order.updatedAt = at.toISOString();
           order.reasonCode = "PAPER_ORDER_EXPIRED";

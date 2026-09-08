@@ -3,6 +3,7 @@ import type pg from "pg";
 import { describe, expect, it, vi } from "vitest";
 import {
   MONEY_MANAGEMENT,
+  ORDER_LIFECYCLE,
   resolveRuntimeEnvironment,
 } from "../../packages/config/src/policy.js";
 import {
@@ -27,7 +28,8 @@ const metadata = (
 const config = loadExecutionConfig(resolveRuntimeEnvironment({}));
 
 describe("fixed percentage policy, synthetic risk evidence only", () => {
-  it("fixes three-minute pending expiry without adding operator controls", () => {
+  it("fixes GTC pending lifetime and a separate three-minute submission deadline", () => {
+    expect(ORDER_LIFECYCLE.timeInForce).toBe("GTC");
     expect(resolveRuntimeEnvironment({})).toMatchObject({
       ORDER_EXPIRY_MIN_SECONDS: "60",
       ORDER_EXPIRY_MAX_SECONDS: "180",

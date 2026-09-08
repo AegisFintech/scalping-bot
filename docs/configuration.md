@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.8` uses policy `fixed-risk-v4` in
+Release `0.2.3-equity-risk.9` uses policy `fixed-risk-v4` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -9,9 +9,9 @@ four retained deployment credentials/identifiers. No credentials were changed.
 See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file.
 Reusable scenario maps add no environment variables or tuning file. Five-minute
 refresh/cooldown, one intent per map, five-second local decisions, three-minute preferred/maximum
-pending expiry capped by the original map and 90-second asynchronous provider timeout are engineering policy, not operator
+fresh-submission deadline capped by the original map and 90-second asynchronous provider timeout are engineering policy, not operator
 knobs. A proven local `AI_CIRCUIT_OPEN` result is rechecked after one minute;
-the database still enforces five minutes between potentially dispatched requests.
+the database retains five-minute failed/unknown-request backoff. One verified post-close request may start earlier.
 Unknown/timeout outcomes retain the full cooldown. See [the incident report](provider-recovery-report.md).
 The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
@@ -152,3 +152,16 @@ all existing PNG bytes intact. Existing-blob relocation is a separate, reviewed
 operation described in `equity-sizing-recovery-report.md`. The local chart directory
 is an engineering storage path, not a strategy tuning setting. Keep it on durable
 storage and include it in backup/restore alongside PostgreSQL.
+
+## ISSUE-083 migration and rollback
+
+No environment keys change: the normal template remains 20 keys and populated
+credentials are preserved byte-for-byte. `ORDER_LIFECYCLE` is a typed release
+constant, not a tuning file or model setting. Apply migration 0019 under pause
+before deploying `.9`; old GTD orders retain their existing deadlines. New GTC
+orders have null pending expiry and separate submission validity.
+
+Rollback requires pausing and confirming all strategy GTC orders cancelled and all
+positions closed before restoring `.8`. Older maintenance/readers assume dated
+orders. Keep 0019 and historical rows; do not downgrade checksums, drop data or
+reset risk accounting. Keep the current dashboard reader for GTC history.

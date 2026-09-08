@@ -2930,3 +2930,43 @@ runtime.
   Independent broker reconciliation at 17:54:35 still showed both unfilled orders,
   past the old deadline, with that exact expiry. This verifies lifecycle behavior,
   not improved fills or returns. Evidence: `docs/evidence/order-expiry-rollout.json`.
+
+### ISSUE-083 — Persistent stop-limit lifecycle (implemented; validated; demo restored)
+
+- Issue: [#196](https://github.com/AegisFintech/scalping-bot/issues/196).
+- Branch: `issue-083-persistent-order-loop`; dependency: ISSUE-082 / PR #195.
+- Authorization: operator explicitly approved on September 8 the analyze → GTC
+  stop-limit pair → fill / cancel peer → SL or TP close → fresh analysis loop.
+- Acceptance: explicit broker GTC without a fabricated distant expiry; unchanged
+  fresh placement authorization; durable GTC recovery and accurate dashboard;
+  no paid refresh with pending orders / open positions; once-only fresh request
+  after fully reconciled closure without the old five-minute waiting interval.
+  Keep failure backoff, idempotency, risk policy, ownership and live disablement.
+- Delivery: additive migration preserving historical GTD data; mock/failure and
+  PostgreSQL integration coverage, full quality gates, demo observation, rollback
+  notes, updated graph, issue / PR and push. No profitability claim.
+
+- Implementation: `.9` / unchanged fixed-risk-v4, explicit GTC commands, additive
+  migration 0019, null pending expiry plus separate fresh-submission deadline,
+  local execution artifact v2, normal-shutdown preservation, and once-only
+  post-close refresh under scope lock. Failed/unknown requests retain backoff.
+  Dashboard identifies GTC and separates placement validity from pending lifetime.
+  The dated evaluation exporter explicitly rejects unsupported GTC cohorts.
+- Validation: 522 Node tests / 66 files, 140 Python, 27 schema, 3 migration and
+  3 configured TLS PostgreSQL/analytics integration tests passed. Formatting,
+  ESLint, TypeScript/build, Ruff/mypy, both startup configuration checks, replay
+  and fail-closed fixtures, npm/pip audits passed after recorded corrections.
+  Secret scan supplemented with every-index-blob exact-credential/token checking.
+  Exact commands/corrections: `docs/evidence/persistent-order-validation.json`.
+- Deployment: pause at 20:02:23 SGT; broker flat; migration applied 20:04:47;
+  existing demo resumed 20:05:13. All five services online, credentials unchanged,
+  risk reference/high water/daily baseline/locks preserved. No live execution.
+  At 20:06:16, read-only broker reconciliation confirmed both STOP_LIMIT orders
+  as GTC with no expiry and zero fills. Full natural closure observation remains
+  separate from synthetic lifecycle validation. Graph updated; screenshot and
+  evidence in `docs/persistent-order-loop-report.md`.
+
+- At 20:10:38 SGT both GTC orders remained pending past their submission and map
+  deadlines; the request count remained one with demo unpaused. This proves the
+  observed waiting behavior, not profitability or a completed natural trade cycle.
+  Timestamped evidence: `docs/evidence/persistent-order-rollout.json`.

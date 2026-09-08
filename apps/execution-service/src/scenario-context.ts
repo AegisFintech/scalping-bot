@@ -31,6 +31,8 @@ export interface StoredContext {
   tickSize: string;
   plan: ScenarioPlan | null;
   consumed: boolean;
+  /** Fully reconciled, durably closed setup; permits one fresh analysis. */
+  closedAt?: string | null;
   reason: string | null;
 }
 export interface ContextStore {
@@ -40,6 +42,7 @@ export interface ContextStore {
     sourceAnalysisId: string;
     capturedAt: string;
     tickSize: string;
+    afterContextId?: string;
   }): Promise<boolean>;
   finish(
     id: string,
@@ -71,7 +74,12 @@ export class PostgresContextStore implements ContextStore {
   async latest(): Promise<StoredContext | null> {
     const result = await this.pool.query(
       `SELECT c.id,c.state,c.reason,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,
-      EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed
+      EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed,
+      (SELECT max(t.closed_at) FROM order_groups g JOIN trades t ON t.order_group_id=g.id
+       WHERE g.context_plan_id=c.id AND g.state='CLOSED'
+         AND EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state='CLOSED')
+         AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state<>'CLOSED')
+         AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))) AS closed_at
       FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3 ORDER BY requested_at DESC LIMIT 1`,
       [this.scope.accountId, this.scope.symbolId, this.scope.mode],
     );
@@ -87,6 +95,7 @@ export class PostgresContextStore implements ContextStore {
           tick_size: string;
           plan: ScenarioPlan | null;
           consumed: boolean;
+          closed_at: Date | null;
           reason: string | null;
         }
       | undefined;
@@ -103,6 +112,7 @@ export class PostgresContextStore implements ContextStore {
           tickSize: r.tick_size,
           plan: r.plan,
           consumed: r.consumed,
+          closedAt: r.closed_at?.toISOString() ?? null,
           reason: r.reason,
         };
   }
@@ -111,11 +121,12 @@ export class PostgresContextStore implements ContextStore {
     sourceAnalysisId: string;
     capturedAt: string;
     tickSize: string;
+    afterContextId?: string;
   }): Promise<boolean> {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      // Cross-process single-flight and restart-persistent five-minute cost budget.
+      // Cross-process single-flight; failures retain cooldown, a proven close gets one new request.
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
         [
@@ -128,13 +139,27 @@ export class PostgresContextStore implements ContextStore {
       );
       const result = await client.query(
         `INSERT INTO scenario_contexts
-        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id)
-        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7
-        WHERE NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
+        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id,refresh_after_context_id)
+        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7,$9::uuid
+        WHERE NOT EXISTS(SELECT 1 FROM order_groups g JOIN analysis_runs a ON a.id=g.analysis_id
+          WHERE a.account_id=$2 AND a.symbol_id=$3 AND g.mode=$4
+          AND g.state NOT IN ('CLOSED','EXPIRED','FAILED'))
+        AND (($9::uuid IS NULL AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
           AND requested_at > clock_timestamp()-interval '5 minutes'
           AND NOT (state='FAILED' AND reason IS NOT DISTINCT FROM 'AI_CIRCUIT_OPEN'))
         AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
-          AND requested_at > clock_timestamp()-interval '1 minute') RETURNING id`,
+          AND requested_at > clock_timestamp()-interval '1 minute'))
+        OR ($9::uuid IS NOT NULL AND EXISTS(
+          SELECT 1 FROM scenario_contexts c JOIN order_groups g ON g.context_plan_id=c.id
+          WHERE c.id=$9 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
+            AND c.state='READY' AND g.state='CLOSED'
+            AND NOT EXISTS(SELECT 1 FROM scenario_contexts newer WHERE newer.account_id=$2 AND newer.symbol_id=$3 AND newer.mode=$4 AND newer.requested_at>c.requested_at)
+            AND NOT EXISTS(SELECT 1 FROM scenario_contexts used WHERE used.refresh_after_context_id=c.id)
+            AND EXISTS(SELECT 1 FROM trades t WHERE t.order_group_id=g.id AND t.closed_at<=clock_timestamp())
+            AND EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state='CLOSED')
+            AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND (p.state<>'CLOSED' OR NOT EXISTS(SELECT 1 FROM trades t WHERE t.position_id=p.id AND t.order_group_id=g.id)))
+            AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))
+        ))) RETURNING id`,
         [
           input.id,
           this.scope.accountId,
@@ -144,6 +169,7 @@ export class PostgresContextStore implements ContextStore {
           input.tickSize,
           input.sourceAnalysisId,
           FIXED_DEFAULTS.AI_MODEL,
+          input.afterContextId ?? null,
         ],
       );
       await client.query("COMMIT");
@@ -206,11 +232,11 @@ export class ReusableScenarioModel implements ModelProvider {
     private readonly report: (reason: string) => void = () => {},
   ) {
     const content = readFileSync(
-      "prompts/scenario-execution-v1.md",
+      "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
-      version: "scenario-execution-v1" as const,
+      version: "scenario-execution-v2" as const,
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
     };
@@ -266,8 +292,13 @@ export class ReusableScenarioModel implements ModelProvider {
         return error.message;
       }
     }
-    const due =
-      existing === null
+    const afterClose =
+      existing?.consumed === true &&
+      existing.closedAt != null &&
+      time(existing.closedAt) <= now;
+    const due = afterClose
+      ? 0
+      : existing === null
         ? 0
         : time(existing.requestedAt) +
           (isLocalCircuitRejection(existing.state, existing.reason)
@@ -286,6 +317,9 @@ export class ReusableScenarioModel implements ModelProvider {
         sourceAnalysisId: String(input.payload.analysis_id),
         capturedAt: input.snapshot.serverTime,
         tickSize: input.snapshot.metadata.tickSize,
+        ...(afterClose && existing !== null
+          ? { afterContextId: existing.id }
+          : {}),
       }))
     ) {
       this.nextEvaluationAt = now + 10_000;

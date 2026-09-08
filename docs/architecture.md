@@ -1,9 +1,9 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.8`, fixed risk policy v4. Previous release
+Current source: `0.2.3-equity-risk.9`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
-Production uses a five-minute immutable scenario context, a durable request journal,
+Production uses a fresh five-minute scenario placement context, a durable request journal,
 and deterministic protected OCO execution. Paid inference runs separately from
 execution and independent maintenance. The original directional replay remains
 research-only; its confirmation/structural-close rules are distinct from OCO price
@@ -54,7 +54,8 @@ loopback and deployments support Debian/systemd.
    before M1 rollover are reserved. `DEFERRED` is terminal waiting with a separate
    deferral reason; actual validation failures remain `REJECTED`.
 5. `scenario-context.ts` claims at most one potentially dispatched refresh per account/symbol/mode per
-   five minutes using a transaction/advisory lock. The source analysis links the
+   five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
+   A uniquely claimed post-close request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links the
    archived chart and market inputs. A separate task calls `/v1/scenario`, using
    exact `gpt-6-astra/u64`, prompt `scenario-v2`, strict `scenario-1.0`, chart and
    bounded candle tails. Completion/failure and usage are durable. An interrupted
@@ -201,3 +202,21 @@ and the five-minute map schema/database constraint stay unchanged. An accepted
 pending order keeps its original expiry through maintenance/reconciliation;
 expiry never closes a filled position. Ten/fifteen-minute expiry comparisons
 are isolated research cohorts with no broker authority.
+
+## ISSUE-083 persistent order loop
+
+The provider still returns immutable schema-1.0 levels and bounded placement validity.
+Local execution artifact v2 and trusted `ORDER_LIFECYCLE` select GTC independently of
+model output. Command `expiresAt` remains the submission deadline; optional
+`timeInForce` defaults to historical GTD only for legacy callers. Production sets
+GTC explicitly. `pending-order-lifetime-1.0.json` documents the durable projection:
+GTC has null pending expiry plus a required `submission_valid_until`; GTD retains
+its original dated expiry. Migration 0019 transitions history without changing it.
+
+Maintenance only expires GTD. Normal shutdown preserves GTC; emergency/risk
+cancellation and OCO fill cancellation retain authority. Account and journal
+exposure gates suppress new analysis while either orders or a position remain.
+After complete durable closure, `refresh_after_context_id` permits one immediate
+fresh request under the same scope/advisory lock, across concurrent processes and
+restarts. Failed/unknown requests retain bounded backoff. A close never reuses the
+old map. Unfilled broker cancellation uses normal recovery/backoff.

@@ -210,6 +210,7 @@ export interface ModelPromptArtifact {
     | "system-v15"
     | "system-v16"
     | "scenario-execution-v1"
+    | "scenario-execution-v2"
     | "scenario-v2"
     | "scenario-v1";
   readonly content: string;
@@ -301,7 +302,9 @@ export interface PendingOrderCommand {
   readonly entryPrice: DecimalString;
   readonly stopLoss: DecimalString;
   readonly takeProfit: DecimalString;
+  /** Fresh submission deadline; GTC pending lifetime is independent. */
   readonly expiresAt: IsoTimestamp;
+  readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabel: string;
 }
 

@@ -1,12 +1,9 @@
 # Current release operations
 
-Release `0.2.3-equity-risk.8` extends new pending orders to up to three minutes,
-capped by original map validity. It preserves Astra, credentials, risk locks and
-previous demo authorization. No populated environment or database migration is
-needed. Pause new analyses, wait for strategy-owned pending orders to become
-terminal, deploy matching services, verify risk/reconciliation and restore only
-previous authorization. Never extend an existing order or enable live execution.
-Research, exact validation and rollback: [ISSUE-082](order-expiry-research-report.md).
+Release `0.2.3-equity-risk.9` uses persistent GTC stop-limit orders. They have no
+automatic timer expiry. A fill cancels its peer; after confirmed SL/TP closure,
+one fresh analysis begins for the next setup. Fresh submission deadlines remain.
+See [ISSUE-083 migration, evidence and rollback](persistent-order-loop-report.md).
 
 For code navigation, use the isolated `graphify` CLI and ignored `graphify-out/`.
 Run `graphify query "<focused question>" --budget 1000` before targeted source
@@ -16,7 +13,7 @@ Do not enable remote semantic extraction or index runtime credentials.
 
 ## Order safety and provider recovery
 
-For `0.2.3-equity-risk.8` / `fixed-risk-v4`, follow the
+For `0.2.3-equity-risk.9` / `fixed-risk-v4`, follow the
 [risk-budget sizing and storage recovery procedure](risk-budget-recovery-report.md).
 For missing pending orders, check [the provider recovery report](provider-recovery-report.md).
 A healthy execution process does not imply an available model map. Provider failures,
@@ -698,3 +695,17 @@ against 1% modeled setup loss, with broker volume and free-margin constraints;
 the former dollar/equity notional and 1% collateral caps no longer apply. Retain
 one modeled setup loss in free margin. A successful durable cycle, not a manual
 fault-file reset, must clear the storage latch before readiness returns.
+
+## Persistent pending orders (.9)
+
+Overview shows `GTC`, null pending expiry and an explicit no-timer caption. Model
+validity may expire while an accepted GTC order continues waiting; that does not
+permit stale placement. No new paid analysis runs with active exposure. Healthy
+waiting is not a promise of a fill. Broker cancellation/rejection can leave no
+orders; failure backoff and safe qualification still apply.
+
+Normal process shutdown/restart preserves GTC at the broker. Use authenticated
+emergency stop to cancel owned pending orders; pause alone prevents new analysis.
+Protective SL/TP and reconciliation never wait on EPRToken. After a confirmed full
+close, a fresh request can start at the next eligible local check; partial,
+uncertain or failed cancellation states must first reconcile.

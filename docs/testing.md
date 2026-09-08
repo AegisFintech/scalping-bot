@@ -1225,3 +1225,17 @@ verify a fresh final market snapshot without extending the three-second limit.
 The old implementation fails these regressions. Additional cases preserve newer
 exposure/partial/cancellation/reconciliation blockers and reject late pause,
 emergency, unavailable controls and quotes aged during the final control read.
+
+## ISSUE-083 GTC lifecycle
+
+Test explicit broker GTC encoding without expirationTimestamp, finite and fresh
+submission authorization, contradictory lifetime schema/SQL rejection, GTC
+survival beyond the original map/deadline, unchanged GTD expiry, peer cancellation,
+SL closure, restart-safe once-only post-close refresh and active/uncertain group
+request rejection. Full isolated PostgreSQL lifecycle evidence is synthetic;
+demo broker acknowledgment/survival is separate and does not prove profitability.
+Exact gates and rollout: [persistent-order report](persistent-order-loop-report.md).
+
+The dated evaluation exporter rejects GTC explicitly (`EVALUATION_GTC_NOT_SUPPORTED`)
+instead of silently omitting non-expiring orders; null/invalid dated expiry also
+rejects. Unit and read-only deployment checks cover this compatibility boundary.

@@ -7,7 +7,8 @@ export interface ManagedOrderOverview {
   readonly stopLoss: string;
   readonly takeProfit: string;
   readonly volume: string;
-  readonly expiresAt: string;
+  readonly expiresAt: string | null;
+  readonly timeInForce?: "GTC" | "GTD";
   readonly updatedAt: string;
 }
 
@@ -47,7 +48,8 @@ export interface ManagedSetupOverview {
 interface GroupRow {
   readonly id: string;
   readonly state: string;
-  readonly expires_at: Date;
+  readonly expires_at: Date | null;
+  readonly time_in_force?: "GTC" | "GTD";
   readonly updated_at: Date;
   readonly cancellation_reason: string | null;
 }
@@ -59,7 +61,8 @@ interface OrderRow {
   readonly stop_loss: string;
   readonly take_profit: string;
   readonly normalized_volume: string;
-  readonly expires_at: Date;
+  readonly expires_at: Date | null;
+  readonly time_in_force?: "GTC" | "GTD";
   readonly updated_at: Date;
 }
 
@@ -94,6 +97,20 @@ function timestamp(value: Date | null, reason: string): string | null {
   return value.toISOString();
 }
 
+function pendingExpiry(
+  value: Date | null,
+  lifetime: string | undefined,
+): string | null {
+  const policy = lifetime ?? "GTD";
+  if (
+    (policy === "GTC" && value !== null) ||
+    (policy === "GTD" && value === null) ||
+    !["GTC", "GTD"].includes(policy)
+  )
+    throw new Error("MANAGED_SETUP_LIFETIME_INVALID");
+  return timestamp(value, "MANAGED_SETUP_ORDER_EXPIRY_INVALID");
+}
+
 export class PostgresManagedSetupOverview {
   readonly #pool: pg.Pool;
   readonly #accountId: string;
@@ -117,7 +134,7 @@ export class PostgresManagedSetupOverview {
     try {
       await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
       const groups = await client.query<GroupRow>(
-        `SELECT og.id, og.state, og.expires_at, og.updated_at,
+        `SELECT og.id, og.state, og.expires_at, og.time_in_force, og.updated_at,
                 og.cancellation_reason
          FROM order_groups og
          JOIN analysis_runs ar ON ar.id = og.analysis_id
@@ -153,7 +170,7 @@ export class PostgresManagedSetupOverview {
       const orders = await client.query<OrderRow>(
         `SELECT id, side, state, entry_price::text, stop_loss::text,
                 take_profit::text, normalized_volume::text,
-                expires_at, updated_at
+                expires_at, time_in_force, updated_at
          FROM orders
          WHERE account_id = $1 AND order_group_id = $2
            AND strategy_owned = true
@@ -257,10 +274,7 @@ export class PostgresManagedSetupOverview {
           ? "LATEST_TERMINAL"
           : "ACTIVE",
         groupState: group.state,
-        groupExpiresAt: timestamp(
-          group.expires_at,
-          "MANAGED_SETUP_GROUP_EXPIRY_INVALID",
-        ),
+        groupExpiresAt: pendingExpiry(group.expires_at, group.time_in_force),
         groupUpdatedAt: timestamp(
           group.updated_at,
           "MANAGED_SETUP_GROUP_UPDATE_INVALID",
@@ -273,10 +287,8 @@ export class PostgresManagedSetupOverview {
           stopLoss: order.stop_loss,
           takeProfit: order.take_profit,
           volume: order.normalized_volume,
-          expiresAt: timestamp(
-            order.expires_at,
-            "MANAGED_SETUP_ORDER_EXPIRY_INVALID",
-          )!,
+          timeInForce: order.time_in_force ?? "GTD",
+          expiresAt: pendingExpiry(order.expires_at, order.time_in_force),
           updatedAt: timestamp(
             order.updated_at,
             "MANAGED_SETUP_ORDER_UPDATE_INVALID",

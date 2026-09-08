@@ -165,6 +165,11 @@ def render_exposure(model: dict[str, Any]) -> None:
         table(model["positions"], "active_positions")
     if model["orders"]:
         table(model["orders"], "active_orders")
+        if any(order.get("time_in_force") == "GTC" for order in model["orders"]):
+            st.caption(
+                "GTC: no timer expiry. Orders remain until filled or cancelled; "
+                "fresh analysis follows a confirmed position close."
+            )
     if not model["positions"] and not model["orders"]:
         st.info("No active strategy positions or orders in the durable ledger.")
     st.caption(
@@ -181,7 +186,7 @@ def render_decision(model: dict[str, Any]) -> None:
         st.caption(
             f"Market map: {state} · Refresh attempts in 24h: "
             f"{context.get('calls_24h', 'Unavailable')} · "
-            f"Valid until: {format_gmt8_timestamp(context.get('valid_until'))}"
+            f"Fresh-placement deadline: {format_gmt8_timestamp(context.get('valid_until'))}"
         )
         with st.expander("Model identity & refresh"):
             st.write(f"Requested: {context.get('requested_model', 'Not requested')}")
@@ -190,7 +195,8 @@ def render_decision(model: dict[str, Any]) -> None:
             if context.get("reason"):
                 st.write(f"Refresh outcome: {context['reason']}")
             st.caption(
-                "Potential provider dispatches are limited to one per five minutes. "
+                "Analysis waits while orders or a position are active. A confirmed close permits "
+                "one fresh request; failed/unknown dispatches retain five-minute backoff. "
                 "A local circuit block sends no provider request and is rechecked "
                 "after one minute. "
                 "Refresh attempts include those local blocks. Local execution checks are not "

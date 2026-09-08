@@ -3,7 +3,10 @@ import { createHash } from "node:crypto";
 import { Decimal } from "decimal.js";
 
 import type { TradingMode } from "../../../packages/contracts/src/index.js";
-import { MONEY_MANAGEMENT } from "../../../packages/config/src/policy.js";
+import {
+  MONEY_MANAGEMENT,
+  ORDER_LIFECYCLE,
+} from "../../../packages/config/src/policy.js";
 import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 
 export interface ExecutionConfig {
@@ -331,6 +334,7 @@ function configurationHash(
   return createHash("sha256")
     .update(
       JSON.stringify({
+        orderLifecycle: ORDER_LIFECYCLE,
         appEnv: config.appEnv,
         instanceId: config.instanceId,
         tradingMode: config.tradingMode,

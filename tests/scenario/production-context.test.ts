@@ -498,3 +498,39 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(evaluateScenarioExecutionWindow("bad").allowed).toBe(false);
   });
 });
+
+describe("post-close request lifecycle", () => {
+  it("uses a durable post-close claim immediately, without reusing the consumed map", async () => {
+    const store = memory();
+    store.row = { ...stored(), consumed: true, closedAt: at(35) };
+    const claim = vi.spyOn(store, "claim").mockResolvedValue(false);
+    const generate = vi.fn();
+    const model = new ReusableScenarioModel(
+      store,
+      { generate },
+      () => base + 40000,
+    );
+    expect(await model.prepare(input())).toBe(
+      "SCENARIO_REFRESH_ALREADY_CLAIMED",
+    );
+    expect(claim).toHaveBeenCalledWith(
+      expect.objectContaining({ afterContextId: fixture.plan.analysis_id }),
+    );
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it.each([null, at(41)])(
+    "does not infer a completed trade from consumed or future state %s",
+    async (closedAt) => {
+      const store = memory();
+      store.row = { ...stored(), consumed: true, closedAt };
+      const claim = vi.spyOn(store, "claim");
+      const model = new ReusableScenarioModel(
+        store,
+        { generate: vi.fn() },
+        () => base + 40000,
+      );
+      expect(await model.prepare(input())).toBe("SCENARIO_MAP_CONSUMED");
+      expect(claim).not.toHaveBeenCalled();
+    },
+  );
+});

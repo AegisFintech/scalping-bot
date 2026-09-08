@@ -265,7 +265,11 @@ export interface CoordinatorOptions {
   readonly orderBookDepth: number;
   readonly analyticsConfig: AnalyticsConfig;
   readonly modelPayloadMode: ModelPayloadMode;
-  readonly promptVersion: "system-v15" | "system-v16" | "scenario-execution-v1";
+  readonly promptVersion:
+    | "system-v15"
+    | "system-v16"
+    | "scenario-execution-v1"
+    | "scenario-execution-v2";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;

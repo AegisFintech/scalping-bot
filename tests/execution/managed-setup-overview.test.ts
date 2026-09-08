@@ -391,3 +391,21 @@ describe("managed setup Overview projection", () => {
     expect(query).toHaveBeenCalledWith("ROLLBACK");
   });
 });
+
+it("reports a null expiry only for explicit GTC and rejects ambiguous lifetime data", async () => {
+  const group = {
+    id: "group",
+    state: "ACTIVE",
+    expires_at: null,
+    time_in_force: "GTC",
+    updated_at: new Date(),
+  };
+  expect(
+    (await overviewWithRows({ groups: [group] }).read.read()).groupExpiresAt,
+  ).toBeNull();
+  await expect(
+    overviewWithRows({
+      groups: [{ ...group, time_in_force: "GTD" }],
+    }).read.read(),
+  ).rejects.toThrow("MANAGED_SETUP_LIFETIME_INVALID");
+});

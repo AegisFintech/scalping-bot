@@ -137,12 +137,19 @@ reproduced `INVALID_DECIMAL` bottleneck while tightening the feasible interval.
 Strict boundary precision is unchanged.
 
 Preferred entries remain 0.25–0.75 completed-M1 ATR from the executable side,
-inside the hard 2.5-ATR cap. Preferred and maximum pending expiry are 180 seconds from the fresh local
-decision snapshot, capped at the original five-minute map deadline. At least
-60 seconds must remain at construction; final freshness/expiry checks still apply. Inference cannot extend validity; changed completed
-candles, moved-through entries or expired plans reject. Broker-held STOP_LIMIT
-slippage and relative SL/TP are documented in
-[cTrader order messages](https://help.ctrader.com/open-api/messages/).
+inside the hard 2.5-ATR cap. The 180-second local proposal deadline, capped by the
+five-minute map, authorizes fresh submission only. ISSUE-083 production orders use
+explicit GTC with no pending timer expiry. No model or stale proposal can create
+new orders after its authorization deadline. Sizing still occurs immediately before
+submission; volume is not automatically enlarged while an order waits. Broker
+margin checks, order cancellation and gap/slippage exposure remain relevant at a
+later trigger. A support/resistance level is not guaranteed to stay useful forever.
+
+Both pending legs keep their combined risk reservation until certain cancellation,
+fill or closure. Daily/drawdown emergency cancellation remains independent of AI.
+Normal process restarts preserve broker GTC orders; the broker-held SL/TP stays
+attached to eventual fills. No evidence yet establishes positive expectancy for
+this operator-selected lifecycle. See [lifecycle report](persistent-order-loop-report.md).
 
 ## Scenario target mapping (ISSUE-080)
 

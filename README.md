@@ -5,10 +5,16 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.3-equity-risk.8`, policy `fixed-risk-v4`.
+The current source release is `0.2.3-equity-risk.9`, policy `fixed-risk-v4`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
-`scenario-execution-v1` and the unchanged strict schema `2.1`.
+`scenario-execution-v2` and the unchanged strict schema `2.1`.
+Accepted stop-limit orders are **good till cancelled (GTC)**, without timer expiry.
+The loop is analyze → pending buy/sell pair → fill/cancel peer → SL/TP close →
+fresh analysis. No paid refresh runs while orders or a position are active.
+Fresh placement deadlines and all risk/reconciliation gates still apply.
+See [the persistent-order lifecycle and rollout](docs/persistent-order-loop-report.md).
+
 See the [provider recovery and no-orders incident](docs/provider-recovery-report.md),
 [current risk-policy and recovery report](docs/risk-budget-recovery-report.md) and
 [scenario implementation evidence](docs/reusable-scenario-report.md).
@@ -26,7 +32,7 @@ is a synthetic software check, not evidence of strategy performance.
 
 ## Overview
 
-![Dashboard overview](docs/images/provider-recovery-current.png)
+![Dashboard overview](docs/images/persistent-order-loop.png)
 
 The Streamlit dashboard has **Overview**, **Trade history**, and **Diagnostics**.
 Overview shows operating state and reasons, fresh equity and net P&L, drawdown,
@@ -95,16 +101,17 @@ workflow; no claim of superior net performance is made. Every response crosses
 strict schema, identity, tick-precision and fixed-validity checks. Requests have a
 90-second background deadline, no automatic retry, bounded bodies and a circuit breaker.
 
-A database claim limits potentially dispatched map requests to one per five minutes,
-including failures and restarts. A proven local circuit block is rechecked after
+A durable database claim prevents duplicate provider requests. Failure/unknown
+dispatch retries retain a five-minute backoff; a fully reconciled position close
+permits one fresh request immediately. Pending orders/open positions suppress requests. A proven local circuit block is rechecked after
 one minute without bypassing earlier requests or making a paid retry. Local
 execution can evaluate every five seconds (with a
 five-second candle-rollover reserve), without waiting for inference. A map can
 produce one OCO intent. Crossed levels, insufficient reward, short remaining
 validity or consumed maps wait without another paid call. Individual decisions
 still require fresh quotes, matching completed-candle context and full account,
-spread, fee, margin and risk approval. Pending orders use up to three minutes of validity,
-starting from the fresh local decision and bounded by the map's expiry.
+spread, fee, margin and risk approval. A proposal must be submitted within its fresh three-minute deadline and original
+map validity. Once accepted, production pending orders use GTC without timer expiry.
 The [1/3/5/10/15-minute research](docs/order-expiry-research-report.md) does not
 establish a profitable or optimal lifetime; filled positions retain their SL/TP.
 
