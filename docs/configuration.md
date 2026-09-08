@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.6` uses policy `fixed-risk-v4` in
+Release `0.2.3-equity-risk.7` uses policy `fixed-risk-v4` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -38,11 +38,11 @@ No setting can make this build submit live orders. Shadow uses a separately
 specified connection environment without submission authority. An API key or
 broker token is not an authorization to trade.
 
-The model pin is visible as `AI_MODEL=gpt-5.6-sol/u40`, and a different nonempty
-model is rejected. ISSUE-078 changes this one assignment in a populated file,
-preserving every other value; apply forward migration `0017_sol_context_model.sql`
-and deploy matching AI/execution builds together. See
-[model-switch evidence](model-switch-report.md). API style, request limits, indicator periods, scheduling,
+The model pin is visible as `AI_MODEL=gpt-6-astra/u64`, and a different nonempty
+model is rejected. ISSUE-081 changes this one assignment in a populated file,
+preserving every other value. Existing migration `0017_sol_context_model.sql`
+already permits both identities; no new migration is required. Deploy matching
+AI/execution builds together. See [model-switch evidence](astra-graphify-report.md). API style, request limits, indicator periods, scheduling,
 execution thresholds and risk percentages are managed in the versioned policy.
 Removing redundant default endpoints/paths is safe only after comparing them to
 their effective code defaults. Keep unknown credentials or custom deployments

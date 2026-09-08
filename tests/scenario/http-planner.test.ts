@@ -23,8 +23,8 @@ const input = {
   chart: analysisChart(),
 };
 const usage = {
-  requestedModel: "gpt-5.6-sol/u40",
-  returnedModel: "gpt-5.6-sol",
+  requestedModel: "gpt-6-astra/u64",
+  returnedModel: "gpt-6-astra",
   inputProfile: "chart",
   requestBytes: 100,
   responseBytes: 100,
@@ -33,7 +33,7 @@ const usage = {
 function envelope() {
   const content = readFileSync("prompts/scenario-v2.md", "utf8").trim();
   return {
-    model: "gpt-5.6-sol/u40",
+    model: "gpt-6-astra/u64",
     rawResponse: JSON.stringify(plan),
     latencyMs: 40000,
     retryCount: 0,
@@ -55,7 +55,7 @@ it("checks the exact requested model, contract and raw response independently", 
     fetcher,
   ).generate(input);
   expect(result.response).toEqual(plan);
-  expect(result.telemetry.returnedModel).toBe("gpt-5.6-sol");
+  expect(result.telemetry.returnedModel).toBe("gpt-6-astra");
   expect(String(fetcher.mock.calls[0]?.[0])).toBe(
     "http://127.0.0.1:8082/v1/scenario",
   );
@@ -79,11 +79,11 @@ it.each([
     e.telemetry = { ...usage, returnedModel: "wrong-model" };
   if (kind === "envelope_identity") e.model = "wrong-model";
   if (kind === "previous_model") {
-    e.model = "gpt-6-astra/u64";
+    e.model = "gpt-5.6-sol/u40";
     e.telemetry = {
       ...usage,
-      requestedModel: "gpt-6-astra/u64",
-      returnedModel: "gpt-6-astra",
+      requestedModel: "gpt-5.6-sol/u40",
+      returnedModel: "gpt-5.6-sol",
     };
   }
   if (kind === "prompt") e.promptArtifact.content = "different";

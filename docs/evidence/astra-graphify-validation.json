@@ -1,0 +1,187 @@
+{
+  "runtime": "Node 22.23.2; Python 3.13.5",
+  "gates": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 1,
+      "seconds": 12.59,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 28.0,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 11.44,
+      "log": "03.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.5,
+      "log": "04.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 25.9,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 2.75,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.12,
+      "log": "07.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 4.55,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.62,
+      "log": "11.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.6,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.57,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "14.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.12,
+      "log": "15.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.83,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 15.27,
+      "log": "17.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.32,
+      "log": "18.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-081/backtest-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.27,
+      "log": "19.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-081/base-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.82,
+      "log": "20.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-081/stress-final-recovery.json --stress",
+      "exit_code": 0,
+      "seconds": 0.72,
+      "log": "21.log"
+    }
+  ],
+  "nodeTests": 487,
+  "pythonTests": 125,
+  "schemaTests": 22,
+  "migrationTests": 3,
+  "integrationTests": 3,
+  "corrections": [
+    "Active scenario fixtures initially retained the Sol return alias; corrected to Astra and all 142 targeted tests passed.",
+    "Graphify generated an unformatted AGENTS.md block; formatted and complete format check passed."
+  ],
+  "additionalChecks": [
+    {
+      "command": "npx vitest run tests/ai tests/scenario tests/deployment/config-check.test.ts tests/execution/server-controls.test.ts",
+      "exit_code": 0,
+      "tests": 142
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "log": "artifacts/issue-081/format-recheck.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r artifacts/issue-081/graphify-requirements.txt",
+      "exit_code": 0,
+      "result": "No known vulnerabilities found"
+    },
+    {
+      "command": "npx vitest run tests/execution/server-controls.test.ts tests/scenario/observe.test.ts",
+      "exit_code": 0,
+      "tests": 9,
+      "purpose": "Preserve historical/generic fixtures while validating the active-pin change"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "log": "artifacts/issue-081/delivery-format.log"
+    },
+    {
+      "command": "Local graph source-path and exact-secret-value checks",
+      "exit_code": 0,
+      "secretMatches": 0,
+      "excludedSourcePaths": 0
+    },
+    {
+      "command": "Populated environment preservation check",
+      "exit_code": 0,
+      "changedKeys": ["AI_MODEL"],
+      "fileSettings": 24,
+      "mode": "0600"
+    }
+  ]
+}

@@ -2857,3 +2857,40 @@ runtime.
   entry-distance checks prevented new placement; no improved fill rate or net
   return is claimed. A 12.5-second local execution cycle still warrants measured
   snapshot/account latency work without weakening any final risk/freshness checks.
+
+### ISSUE-081 — Astra model, order diagnosis and Graphify navigation
+
+- Issue: [#192](https://github.com/AegisFintech/scalping-bot/issues/192).
+- Status: implemented, validated and deployed to the previously authorized demo
+  on `issue-081-astra-graphify`.
+  Depends on ISSUE-080 / PR #191.
+- Acceptance: pin EPRToken to literal `gpt-6-astra/u64` in policy/template and the
+  populated environment, preserving all other values; validate strict identity and
+  old-model rejection across restart without resetting request cooldowns or risk.
+  Install isolated Graphify and its Codex skill, build/query a local code graph
+  excluding secrets/runtime data, and persist the user's concise-reply preference.
+  Explain absent fills using current broker/order events, with unknowns explicit.
+- Required checks: full repository gates, real endpoint identity/structured-output
+  observation, matching supervised demo services and preserved live disablement.
+
+- Validation: 487 Node, 125 Python, 22 schema, three migration and all three
+  isolated TLS integration tests passed. Formatting, lint/types/build, replay,
+  startup configuration, secret scan and both dependency audits passed.
+  Astra identity probe: exact request accepted, returned `gpt-6-astra`, strict
+  JSON valid in 5,842 ms. This is compatibility evidence, not trading performance.
+- Existing demo resumed at 17:33:20 SGT with release `.7`, preserved risk locks
+  and live disablement. Graphify 0.9.56 plus SQL/Codex support installed separately
+  from trading dependencies; local graph/exclusion/query checks passed.
+- Missing-fill evidence: 56 `.6` orders, 43 expired / 13 cancelled / zero fills.
+  Sampled quotes observed 13 crossings, all on cancelled orders; five first
+  observations exceeded the existing USD 0.05 execution range. Broker cancellation
+  reasons remain unknown. Short expiry plus one-intent/five-minute map policy
+  explains empty-order gaps; lifecycle and economic changes remain a separate
+  evidence requirement. See `docs/astra-graphify-report.md`.
+- First Astra chart request validated in 20,437 ms. Broker confirmation at
+  17:34:40 SGT showed two pending 35.11-lot stop-limit orders, zero positions;
+  both retain expiry at 17:35:04. Screenshot and sanitized rollout evidence are
+  in the report. This verifies placement, not an improvement in fills or P&L.
+- Final observation: both Astra-derived orders expired unfilled at 17:35:04;
+  broker confirmation at 17:36:29 was flat and local status waited for the consumed
+  map. Placement is verified, consistent coverage and improved fills remain unresolved.
