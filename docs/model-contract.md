@@ -185,7 +185,7 @@ labelled tracked-artifact fallback in Streamlit. Full redacted user JSON and
 the parsed response are restricted to the authenticated dashboard/database
 boundary, while Better Stack continues to receive only bounded summaries.
 
-## Current provider boundary (ISSUE-078)
+## Current provider boundary (ISSUE-080)
 
 The production adapter requests `gpt-5.6-sol/u40` through the existing EPRToken
 Responses endpoint. A bounded endpoint probe accepted strict JSON Schema and
@@ -193,10 +193,14 @@ returned `gpt-5.6-sol`. This observed alias is allowed only for this exact reque
 other returned identities reject. See `model-switch-report.md` for runtime evidence.
 Historical Astra probes remain in `overhaul-report.md`. No model fallback,
 temperature or reasoning-effort override is enabled. One in-flight request,
-45-second deadline, no automatic retries, bounded payload/response bodies and
+90-second asynchronous deadline (95-second local HTTP envelope), no automatic
+retries, bounded payload/response bodies and
 a three-failure/five-minute circuit contain outages. Provider cost is null until
 independently verified. Previously generated maps cannot authorize execution
-under the new pin, and their durable request cooldown remains in force.
+under the new pin, and their durable request cooldown remains in force. Only the
+pre-dispatch local `AI_CIRCUIT_OPEN` failure permits a one-minute recheck; all
+possibly dispatched requests retain the five-minute admission budget. See
+[provider recovery evidence](provider-recovery-report.md).
 
 `provider-telemetry-1.0.json` and its runtime schema define requested/returned
 identifiers, input profile, byte/token counts and explicit nullable cost evidence.

@@ -14,7 +14,7 @@ Current policy: `fixed-risk-v4`. All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
-Release `.4` corrects account P/L matching for pending orders. The broker can report
+Release `0.2.2-fixed-risk.4` corrects account P/L matching for pending orders. The broker can report
 zero P/L for a position identity reserved by an accepted, unfilled order. Exactly
 one matching order, explicit zero executed volume, and zero gross/net P/L are required
 to accept that extra row. All open positions still require exactly one P/L row;
@@ -143,6 +143,18 @@ candles, moved-through entries or expired plans reject. Broker-held STOP_LIMIT
 slippage and relative SL/TP are documented in
 [cTrader order messages](https://help.ctrader.com/open-api/messages/).
 
+## Scenario target mapping (ISSUE-080)
+
+The fee-buffered fixed TP must fit before the first actual target on each side:
+`recovery_targets[0]` for buys and `extension_targets[0]` for sells. The former
+sell check incorrectly used `extension_below`, an intermediate continuation
+trigger, as the target. This could discard both legs when an otherwise valid TP
+lay slightly past that trigger but well before the supplied downside target.
+Release `.6` corrects that mapping; it does not widen TP, SL, risk, the entry
+distance bound or expiry, and never skips the first target to reach a later one.
+Freshness, full semantic validation and the existing money manager remain required.
+This contract correction does not establish positive net expectancy.
+
 ## Failure behavior
 
 Maintenance is independent of inference. Pause prevents new analyses; emergency
@@ -158,7 +170,8 @@ realized loss. See `overhaul-report.md` for stress assumptions and missing evide
 ISSUE-079 sizing comparison uses the same recorded prices, current broker metadata
 and cost assumptions, not a profitable backtest. At the observed million-dollar
 demo equity, the old USD 5,500 notional cap admitted only 0.01 lot. The current
-policy admits much larger affordable volumes, but the unchanged 1% margin ceiling
-can still bind before the 1% loss ceiling. Treat the latter as a maximum, never a
+policy admits much larger affordable volumes. The intermediate 1% collateral
+ceiling was removed in ISSUE-079; broker margin/volume constraints and the reserved
+setup-loss capacity still apply. Treat the 1% loss budget as a maximum, never a
 requirement to force leverage or spend every dollar of risk. See the current
 [equity-sizing report](equity-sizing-recovery-report.md).

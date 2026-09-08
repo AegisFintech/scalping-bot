@@ -15,6 +15,10 @@ import {
   type ScenarioPlan,
 } from "../../../packages/scenario-engine/src/plan.js";
 import type { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
+import {
+  isLocalCircuitRejection,
+  SCENARIO_REQUEST_POLICY,
+} from "../../../packages/scenario-engine/src/request-policy.js";
 
 export interface StoredContext {
   id: string;
@@ -27,6 +31,7 @@ export interface StoredContext {
   tickSize: string;
   plan: ScenarioPlan | null;
   consumed: boolean;
+  reason: string | null;
 }
 export interface ContextStore {
   latest(): Promise<StoredContext | null>;
@@ -65,7 +70,7 @@ export class PostgresContextStore implements ContextStore {
   }
   async latest(): Promise<StoredContext | null> {
     const result = await this.pool.query(
-      `SELECT c.id,c.state,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,
+      `SELECT c.id,c.state,c.reason,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,
       EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed
       FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3 ORDER BY requested_at DESC LIMIT 1`,
       [this.scope.accountId, this.scope.symbolId, this.scope.mode],
@@ -82,6 +87,7 @@ export class PostgresContextStore implements ContextStore {
           tick_size: string;
           plan: ScenarioPlan | null;
           consumed: boolean;
+          reason: string | null;
         }
       | undefined;
     return r === undefined
@@ -97,6 +103,7 @@ export class PostgresContextStore implements ContextStore {
           tickSize: r.tick_size,
           plan: r.plan,
           consumed: r.consumed,
+          reason: r.reason,
         };
   }
   async claim(input: {
@@ -123,7 +130,11 @@ export class PostgresContextStore implements ContextStore {
         `INSERT INTO scenario_contexts
         (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id)
         SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7
-        WHERE NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4 AND requested_at > clock_timestamp()-interval '5 minutes') RETURNING id`,
+        WHERE NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
+          AND requested_at > clock_timestamp()-interval '5 minutes'
+          AND NOT (state='FAILED' AND reason IS NOT DISTINCT FROM 'AI_CIRCUIT_OPEN'))
+        AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
+          AND requested_at > clock_timestamp()-interval '1 minute') RETURNING id`,
         [
           input.id,
           this.scope.accountId,
@@ -255,7 +266,13 @@ export class ReusableScenarioModel implements ModelProvider {
         return error.message;
       }
     }
-    const due = existing === null ? 0 : time(existing.requestedAt) + 300_000;
+    const due =
+      existing === null
+        ? 0
+        : time(existing.requestedAt) +
+          (isLocalCircuitRejection(existing.state, existing.reason)
+            ? SCENARIO_REQUEST_POLICY.localCircuitRecheckMs
+            : SCENARIO_REQUEST_POLICY.dispatchCooldownMs);
     if (now < due || this.task !== null) {
       this.nextEvaluationAt = this.task === null ? due : now + 5_000;
       return existing?.consumed
@@ -274,7 +291,7 @@ export class ReusableScenarioModel implements ModelProvider {
       this.nextEvaluationAt = now + 10_000;
       return "SCENARIO_REFRESH_ALREADY_CLAIMED";
     }
-    this.nextEvaluationAt = now + 300_000;
+    this.nextEvaluationAt = now + SCENARIO_REQUEST_POLICY.dispatchCooldownMs;
     this.task = this.planner
       .generate({
         analysisId: id,
@@ -309,6 +326,9 @@ export class ReusableScenarioModel implements ModelProvider {
           reason,
           error instanceof ProviderFailure ? error.telemetry : undefined,
         );
+        if (isLocalCircuitRejection("FAILED", reason))
+          this.nextEvaluationAt =
+            now + SCENARIO_REQUEST_POLICY.localCircuitRecheckMs;
       })
       .catch(() => this.report("SCENARIO_JOURNAL_UNAVAILABLE"))
       .finally(() => {

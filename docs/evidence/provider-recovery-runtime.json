@@ -1,0 +1,120 @@
+{
+  "label": "DEMO_OBSERVATION_NOT_STRATEGY_PERFORMANCE",
+  "at": "2026-09-08T04:37:18.991Z",
+  "status": {
+    "release": "0.2.3-equity-risk.6",
+    "mode": "demo",
+    "paused": false,
+    "emergencyStopped": false,
+    "startup": true,
+    "operationalReady": true,
+    "reasonCodes": [],
+    "requestedModel": "gpt-5.6-sol/u40",
+    "context": {
+      "state": "READY",
+      "requested_at": "2026-09-08T04:35:47.316Z",
+      "valid_until": "2026-09-08T04:40:46.058Z",
+      "duration_ms": 40772,
+      "reason": null,
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol",
+      "consumed": false,
+      "calls_24h": 123
+    },
+    "managedStatus": "LATEST_TERMINAL",
+    "cycle": {
+      "outcome": "DEFERRED",
+      "reasons": ["SCENARIO_WAIT_ENTRY_DISTANCE"]
+    }
+  },
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_at": "2026-09-08T04:29:45.930Z",
+      "available_at": "2026-09-08T04:30:33.520Z",
+      "valid_until": "2026-09-08T04:34:44.479Z",
+      "duration_ms": 47590,
+      "requested_model": "gpt-5.6-sol/u40",
+      "telemetry": {
+        "costAmount": null,
+        "costSource": "unavailable",
+        "inputTokens": 17737,
+        "totalTokens": 18454,
+        "costCurrency": null,
+        "inputProfile": "chart",
+        "outputTokens": 717,
+        "requestBytes": 129267,
+        "responseBytes": 8865,
+        "returnedModel": "gpt-5.6-sol",
+        "requestedModel": "gpt-5.6-sol/u40"
+      }
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_at": "2026-09-08T04:35:47.316Z",
+      "available_at": "2026-09-08T04:36:28.088Z",
+      "valid_until": "2026-09-08T04:40:46.058Z",
+      "duration_ms": 40772,
+      "requested_model": "gpt-5.6-sol/u40",
+      "telemetry": {
+        "costAmount": null,
+        "costSource": "unavailable",
+        "inputTokens": 17735,
+        "totalTokens": 18702,
+        "costCurrency": null,
+        "inputProfile": "chart",
+        "outputTokens": 967,
+        "requestBytes": 132335,
+        "responseBytes": 11957,
+        "returnedModel": "gpt-5.6-sol",
+        "requestedModel": "gpt-5.6-sol/u40"
+      }
+    }
+  ],
+  "analyses": [
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_REFRESH_STARTED",
+      "n": 1
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_WAIT_ENTRY_DISTANCE",
+      "n": 1
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["QUOTE_STALE"],
+      "deferral_reason": null,
+      "n": 1
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SELL_ENTRY_DISTANCE_ATR_EXCEEDED"],
+      "deferral_reason": null,
+      "n": 1
+    },
+    {
+      "state": "REJECTED",
+      "rejection_reasons": ["SPREAD_POINTS_EXCEEDED"],
+      "deferral_reason": null,
+      "n": 1
+    }
+  ],
+  "orders": [],
+  "broker": {
+    "at": "2026-09-08T04:37:18.584Z",
+    "certain": true,
+    "equity": "999832.16",
+    "balance": "999832.16",
+    "availableMargin": "999832.16",
+    "relevantPositionCount": 0,
+    "relevantPendingOrderCount": 0,
+    "reasonCodes": []
+  },
+  "environmentByteIdentical": true
+}

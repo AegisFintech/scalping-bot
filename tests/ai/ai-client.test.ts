@@ -16,6 +16,7 @@ import {
   aiOrchestratorRequestTimeoutMs,
 } from "../../packages/ai-client/src/http-client.js";
 import { ProviderFailure } from "../../packages/ai-client/src/telemetry.js";
+import type { ScenarioPlanner } from "../../packages/scenario-engine/src/planner.js";
 import { analysisChart } from "../helpers/analysis-chart.js";
 
 const analysisId = "22222222-2222-4222-8222-222222222222";
@@ -498,6 +499,27 @@ describe("AI orchestrator failure normalization", () => {
       reason: "AI_PROVIDER_TIMEOUT",
     });
     expect(response.body).not.toContain("private provider timeout detail");
+    await app.close();
+  });
+  it("reports scenario circuit failure even when the legacy analysis client is healthy", async () => {
+    let open = true;
+    const app = createAiServer({
+      client: { circuitOpen: false } as OpenAiCompatibleClient,
+      scenarioPlanner: {
+        client: {
+          get circuitOpen() {
+            return open;
+          },
+        },
+      } as ScenarioPlanner,
+    });
+    expect(
+      (await app.inject({ method: "GET", url: "/health/ready" })).statusCode,
+    ).toBe(503);
+    open = false;
+    expect(
+      (await app.inject({ method: "GET", url: "/health/ready" })).statusCode,
+    ).toBe(200);
     await app.close();
   });
 });

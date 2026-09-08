@@ -69,16 +69,18 @@ function memory(): ContextStore & { row: StoredContext | null } {
         tickSize: i.tickSize,
         plan: null,
         consumed: false,
+        reason: null,
       };
       return Promise.resolve(true);
     },
-    finish(_id, result) {
+    finish(_id, result, reason) {
       if (!this.row) throw new Error("missing");
       this.row = {
         ...this.row,
         state: result ? "READY" : "FAILED",
         availableAt: result ? at(40) : null,
         plan: result?.response ?? null,
+        reason,
       };
       return Promise.resolve();
     },
@@ -96,6 +98,7 @@ function stored(): StoredContext {
     tickSize: "0.01",
     plan: fixture.plan,
     consumed: false,
+    reason: null,
   };
 }
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
@@ -187,6 +190,63 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     const p = payload();
     Object.assign(p.execution_constraints, patch);
     expect(() => scenarioOco(fixture.plan, p)).toThrow(reason);
+  });
+  it("uses the actual first downside target rather than the intermediate extension trigger", () => {
+    // Observed level spacing, translated to the synthetic fixture's price range.
+    // Old code rejects 4399.99 - 0.54 < 4399.50 although 4397.60 is the target.
+    const plan = {
+      ...fixture.plan,
+      extension_below: "4399.50",
+      extension_targets: ["4397.60", "4394.00"] as const,
+    };
+    const p = payload();
+    Object.assign(p.execution_constraints, {
+      minimum_fee_buffered_take_profit_distance: "0.54",
+      minimum_stop_distance: "1.08",
+    });
+    const response = scenarioOco(plan, p);
+    expect(response.sell_stop).toMatchObject({
+      entry_price: "4399.99",
+      take_profit: "4399.45",
+      stop_loss: "4401.07",
+      risk_reward_ratio: "0.5",
+    });
+    expect(
+      validateSemantics(response, {
+        analysisId: response.analysis_id,
+        symbol: "XAUUSD",
+        now: new Date(at(40)),
+        expiryReferenceTime: new Date(at(40)),
+        quote: {
+          bid: "4404.95",
+          ask: "4405.05",
+          sourceTime: at(40),
+          receivedAt: at(40),
+        },
+        metadata: fixture.metadata,
+        atr: "5",
+        minRiskRewardRatio: "0.5",
+        minExpirySeconds: 60,
+        maxExpirySeconds: 120,
+        maxStopDistanceAtr: "3",
+        maxEntryDistanceAtr: "2.5",
+        maxQuoteAgeMs: 3000,
+      }).reasonCodes,
+    ).toEqual([]);
+    // Reject if paying costs would require pushing TP beyond the actual target.
+    expect(() =>
+      scenarioOco({ ...plan, extension_targets: ["4399.46", "4394.00"] }, p),
+    ).toThrow("SCENARIO_WAIT_NET_REWARD");
+  });
+  it("never substitutes the second downside target when the first cannot cover costs", () => {
+    const plan = {
+      ...fixture.plan,
+      extension_below: "4399.90",
+      extension_targets: ["4399.85", "4390.00"] as const,
+    };
+    expect(() => scenarioOco(plan, payload())).toThrow(
+      "SCENARIO_WAIT_NET_REWARD",
+    );
   });
   it("returns promptly during paid inference, deduplicates refresh and reuses after completion", async () => {
     const store = memory();
@@ -293,6 +353,52 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(reasons).toEqual(["SCENARIO_REFRESH_FAILED"]);
     expect(model.canEvaluate).toBe(false);
   });
+  it("rechecks a proven local circuit failure after one minute, including after restart", async () => {
+    const store = memory();
+    let now = base;
+    const generate = vi.fn().mockRejectedValue(new Error("AI_CIRCUIT_OPEN"));
+    const model = new ReusableScenarioModel(store, { generate }, () => now);
+    await model.prepare(input());
+    await model.settled();
+    expect(store.row?.reason).toBe("AI_CIRCUIT_OPEN");
+    now = base + 59_999;
+    expect(model.canEvaluate).toBe(false);
+    const claim = vi.spyOn(store, "claim");
+    const restarted = new ReusableScenarioModel(store, { generate }, () => now);
+    expect(await restarted.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
+    expect(claim).not.toHaveBeenCalled();
+    now = base + 60_000;
+    expect(model.canEvaluate).toBe(true);
+    // The durable store still owns admission; local eligibility cannot bypass it.
+    expect(await restarted.prepare(input())).toBe(
+      "SCENARIO_REFRESH_ALREADY_CLAIMED",
+    );
+    expect(claim).toHaveBeenCalledTimes(1);
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+  it.each(["AI_PROVIDER_TIMEOUT", "SCENARIO_ORCHESTRATOR_UNAVAILABLE", null])(
+    "preserves five-minute restart cooldown when provider acceptance is unknown: %s",
+    async (reason) => {
+      const store = memory();
+      store.row = {
+        ...stored(),
+        state: "FAILED",
+        plan: null,
+        availableAt: null,
+        reason,
+      };
+      const generate = vi.fn();
+      const claim = vi.spyOn(store, "claim");
+      const model = new ReusableScenarioModel(
+        store,
+        { generate },
+        () => base + 60_000,
+      );
+      expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
+      expect(generate).not.toHaveBeenCalled();
+      expect(claim).not.toHaveBeenCalled();
+    },
+  );
   it("fails closed for tampered durable maps, changed ticks or unavailable journal", async () => {
     const store = memory();
     store.row = stored();

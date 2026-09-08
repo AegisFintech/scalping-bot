@@ -1,0 +1,121 @@
+{
+  "label": "DEMO_OBSERVATION_NOT_STRATEGY_PERFORMANCE",
+  "at": "2026-09-08T04:31:18.350Z",
+  "status": {
+    "release": "0.2.3-equity-risk.5",
+    "mode": "demo",
+    "paused": false,
+    "emergencyStopped": false,
+    "startup": true,
+    "operationalReady": true,
+    "reasonCodes": ["PREVIOUS_ANALYSIS_ACTIVE"],
+    "requestedModel": "gpt-5.6-sol/u40",
+    "context": {
+      "state": "READY",
+      "requested_at": "2026-09-08T04:29:45.930Z",
+      "valid_until": "2026-09-08T04:34:44.479Z",
+      "duration_ms": 47590,
+      "reason": null,
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol",
+      "consumed": false,
+      "calls_24h": 122
+    },
+    "managedStatus": "LATEST_TERMINAL",
+    "cycle": {
+      "outcome": "DEFERRED",
+      "reasons": ["SCENARIO_WAIT_NET_REWARD"]
+    }
+  },
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_at": "2026-09-08T04:29:45.930Z",
+      "available_at": "2026-09-08T04:30:33.520Z",
+      "valid_until": "2026-09-08T04:34:44.479Z",
+      "duration_ms": 47590,
+      "requested_model": "gpt-5.6-sol/u40",
+      "telemetry": {
+        "costAmount": null,
+        "costSource": "unavailable",
+        "inputTokens": 17737,
+        "totalTokens": 18454,
+        "costCurrency": null,
+        "inputProfile": "chart",
+        "outputTokens": 717,
+        "requestBytes": 129267,
+        "responseBytes": 8865,
+        "returnedModel": "gpt-5.6-sol",
+        "requestedModel": "gpt-5.6-sol/u40"
+      }
+    }
+  ],
+  "analyses": [
+    {
+      "state": "COLLECTING",
+      "rejection_reasons": [],
+      "deferral_reason": null,
+      "n": 1
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_REFRESH_PENDING",
+      "n": 1
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_REFRESH_STARTED",
+      "n": 1
+    },
+    {
+      "state": "DEFERRED",
+      "rejection_reasons": [],
+      "deferral_reason": "SCENARIO_WAIT_NET_REWARD",
+      "n": 2
+    }
+  ],
+  "orders": [],
+  "broker": {
+    "at": "2026-09-08T04:31:17.926Z",
+    "certain": true,
+    "equity": "999832.16",
+    "balance": "999832.16",
+    "availableMargin": "999832.16",
+    "relevantPositionCount": 0,
+    "relevantPendingOrderCount": 0,
+    "reasonCodes": []
+  },
+  "environmentByteIdentical": true,
+  "observedMap": {
+    "symbol": "XAUUSD",
+    "captured_at": "2026-09-08T04:29:44.479Z",
+    "valid_until": "2026-09-08T04:34:44.479Z",
+    "bearish_below": "4431.00",
+    "decision_zone": {
+      "lower": "4431.00",
+      "upper": "4433.00"
+    },
+    "recovery_above": "4434.50",
+    "schema_version": "scenario-1.0",
+    "extension_below": "4430.50",
+    "recovery_targets": ["4437.50", "4440.00"],
+    "extension_targets": ["4428.60", "4425.00"],
+    "broader_resistance": [
+      {
+        "lower": "4439.30",
+        "upper": "4440.00"
+      },
+      {
+        "lower": "4442.00",
+        "upper": "4443.03"
+      }
+    ],
+    "rebound_resistance": {
+      "lower": "4433.80",
+      "upper": "4434.50"
+    }
+  }
+}

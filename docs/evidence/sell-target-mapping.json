@@ -1,0 +1,15 @@
+{
+  "label": "SYNTHETIC_CONTRACT_REGRESSION_WITH_OBSERVED_LEVEL_SPACING_NOT_PERFORMANCE",
+  "oldOutcome": "SCENARIO_WAIT_NET_REWARD",
+  "newOutcome": "CANDIDATE_PASSES_SCHEMA_AND_SEPARATELY_TESTED_SEMANTICS",
+  "sell": {
+    "trigger_price": "4399.99",
+    "entry_price": "4399.99",
+    "stop_loss": "4401.07",
+    "take_profit": "4399.45",
+    "invalidation_price": "4401.07",
+    "risk_reward_ratio": "0.5",
+    "expires_at": "2026-09-07T00:01:40Z"
+  },
+  "riskLimitsChanged": false
+}

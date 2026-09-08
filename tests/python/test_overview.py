@@ -16,6 +16,17 @@ def test_unavailable_is_never_healthy_or_zero() -> None:
     assert overview.money("NaN") == "Unavailable"
 
 
+def test_running_check_is_not_a_fault_but_mixed_safety_reasons_still_block() -> None:
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "reasonCodes": ["PREVIOUS_ANALYSIS_ACTIVE"],
+    }
+    assert overview.operating_state(status)[0] == "Checking setup"
+    status["reasonCodes"].append("DAILY_LOSS_LOCKOUT")
+    assert overview.operating_state(status)[0] == "Blocked"
+
+
 def test_control_and_position_precedence() -> None:
     status = {"mode": "demo", "startupChecksPassed": True, "pauseNewAnalyses": True}
     assert overview.operating_state(status)[0] == "Paused"
@@ -154,3 +165,95 @@ def test_maintenance_pause_keeps_the_underlying_storage_block_visible() -> None:
     )
     assert state == "Paused · storage blocked"
     assert "before resuming" in detail
+
+
+def test_provider_failure_is_not_healthy_monitoring_and_active_management_takes_precedence() -> (
+    None
+):
+    now = datetime(2026, 9, 8, tzinfo=UTC)
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "automaticAnalysisEnabled": True,
+        "scenarioContext": {"state": "FAILED", "reason": "AI_PROVIDER_TIMEOUT"},
+    }
+    state, detail = overview.operating_state(status, now)
+    assert state == "Entries blocked · model unavailable"
+    assert "timed out" in detail
+    status["scenarioContext"]["reason"] = "AI_CIRCUIT_OPEN"
+    assert "circuit" in overview.operating_state(status, now)[1]
+    status["managedSetup"] = {"status": "ACTIVE"}
+    assert overview.operating_state(status, now)[0] == "Managing a setup"
+
+
+def test_missing_expired_consumed_and_overdue_maps_do_not_show_monitoring() -> None:
+    now = datetime(2026, 9, 8, tzinfo=UTC)
+    status = {"mode": "demo", "startupChecksPassed": True, "automaticAnalysisEnabled": True}
+    for context in [
+        None,
+        {},
+        {"state": "READY", "valid_until": now.isoformat()},
+        {"state": "READY", "valid_until": (now + timedelta(seconds=64)).isoformat()},
+        {"state": "READY", "consumed": True},
+        {"state": "unknown"},
+    ]:
+        assert (
+            overview.operating_state({**status, "scenarioContext": context}, now)[0]
+            == "Waiting for map"
+        )
+    for stamp in [
+        (now - timedelta(seconds=96)).isoformat(),
+        "bad",
+        (now + timedelta(seconds=1)).isoformat(),
+    ]:
+        state = overview.operating_state(
+            {**status, "scenarioContext": {"state": "REQUESTING", "requested_at": stamp}}, now
+        )[0]
+        assert state == "Entries blocked · map overdue"
+    assert (
+        overview.operating_state(
+            {**status, "scenarioContext": {"state": "REQUESTING", "requested_at": now.isoformat()}},
+            now,
+        )[0]
+        == "Preparing market map"
+    )
+    assert (
+        overview.operating_state(
+            {
+                **status,
+                "scenarioContext": {
+                    "state": "READY",
+                    "valid_until": (now + timedelta(seconds=100)).isoformat(),
+                },
+            },
+            now,
+        )[0]
+        == "Monitoring"
+    )
+
+
+def test_rendered_provider_outage_is_a_warning_and_labels_local_checks(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from streamlit.testing.v1 import AppTest
+
+    monkeypatch.syspath_prepend(str(Path("apps/dashboard").resolve()))
+    import background
+
+    snapshot = {
+        "status": {
+            "mode": "demo",
+            "startupChecksPassed": True,
+            "automaticAnalysisEnabled": True,
+            "scenarioContext": {"state": "FAILED", "reason": "AI_PROVIDER_TIMEOUT"},
+            "lastCycle": {"outcome": "DEFERRED", "reasonCodes": ["SCENARIO_REFRESH_STARTED"]},
+        }
+    }
+    monkeypatch.setattr(
+        background.BackgroundReader,
+        "poll",
+        lambda self: background.PollResult(snapshot, "ready", 1),
+    )
+    app = AppTest.from_file(Path("apps/dashboard/app.py").resolve(), default_timeout=15).run()
+    assert not app.exception
+    assert any("Entries blocked · model unavailable" in warning.value for warning in app.warning)
+    assert any("Latest execution check" in text.value for text in app.markdown)
+    assert all("Last completed analysis" not in text.value for text in app.markdown)

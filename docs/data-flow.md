@@ -4,9 +4,12 @@
 flowchart LR
   Broker[cTrader spot/depth and completed bars] --> Market[Validated market snapshots]
   Market --> Analytics[Typed HTTP completed-candle analytics]
-  Analytics --> Claims[Durable M1 claim and deterministic preflight]
-  Claims --> Model[EPRToken bounded structured proposal]
-  Model --> Validate[Schema and semantic validation]
+  Analytics --> Claims[Durable five-second local claim and preflight]
+  Claims --> Context[Validated immutable five-minute map]
+  Claims --> RefreshClaim[Durable refresh admission]
+  RefreshClaim --> Model[EPRToken asynchronous bounded scenario request]
+  Model --> Context
+  Context --> Validate[Local OCO schema and semantic validation]
   Validate --> Refresh[Fresh quote / account / metadata checks]
   Refresh --> Risk[Cost-inclusive shared OCO risk budget]
   Risk --> Intent[Durable idempotent intent]
@@ -19,10 +22,11 @@ flowchart LR
   Recorder --> Research[Chronological research with censored gaps]
 ```
 
-Inference is awaited by the analysis cycle, but independent serialized maintenance
-and broker callbacks continue expiry, cancellation, paper quote processing and
-recovery. The model does not call order placement, choose size or change authority.
-Both the post-model and pre-placement refresh must preserve the completed-candle
+Inference runs in a separate bounded task and never blocks local order handling.
+Independent serialized maintenance and broker callbacks continue expiry,
+cancellation, paper quote processing and recovery. The model does not call order
+placement, choose size or change authority.
+Both the post-decision and pre-placement refresh must preserve the completed-candle
 context and current metadata; expired/invalidated plans are never extended.
 
 Market snapshots, feature inputs, immutable prompt artifacts, original proposals,
@@ -30,6 +34,10 @@ effective exits, risk decisions, commands, callbacks and terminal trades preserv
 their distinct durable identities. Migration `0015` adds provider usage/failure
 telemetry and account-scoped capital state. Read-only dashboard queries distinguish
 account, symbol and mode and withhold unavailable current financial state.
+
+Migration `0016` adds the immutable scenario journal and durable local claims.
+A known local circuit block is distinct from a dispatched/unknown provider request;
+both remain recorded, with separate recovery admission intervals.
 
 See `architecture.md`, `risk-model.md`, `model-contract.md` and `overhaul-report.md`
 for bounded contracts, measurements, failure behavior and known limitations.

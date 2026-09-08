@@ -52,7 +52,9 @@ export function scenarioOco(
   if (
     risk.gt(price("maximum_stop_distance")) ||
     buy.plus(reward).gt(plan.recovery_targets[0]) ||
-    sell.minus(reward).lt(plan.extension_below)
+    // extension_below is a continuation trigger, not a downside target.
+    // Match the buy leg: cost-buffered TP must stay before the first real target.
+    sell.minus(reward).lt(plan.extension_targets[0])
   )
     throw new Error("SCENARIO_WAIT_NET_REWARD");
   const leg = (entry: Decimal, direction: number) => ({

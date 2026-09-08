@@ -1,0 +1,232 @@
+{
+  "label": "SOFTWARE_VALIDATION_NOT_STRATEGY_PERFORMANCE",
+  "finalRelease": "0.2.3-equity-risk.6",
+  "nodeTests": 487,
+  "pythonTests": 125,
+  "schemaTests": 22,
+  "migrationTests": 3,
+  "integrationTests": 3,
+  "fullRun": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 12.23
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 23.91
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.36
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.87
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 26.64
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 2.56
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.08
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 4.3
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.82
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.29
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.52
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.52
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.82
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 10.76
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.32
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-080/backtest-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.27
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-080/base-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.77
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-080/stress-final-recovery.json --stress",
+      "exit_code": 0,
+      "seconds": 0.77
+    }
+  ],
+  "initialCorrection": "Ruff found a 101-character dashboard caption; split the string without changing rendered text. Ruff check/format and all 12 overview tests subsequently passed.",
+  "browser": [
+    {
+      "theme": "light",
+      "overview": {
+        "titleStable": true,
+        "navigationStable": true,
+        "inputStable": true,
+        "inputValue": "Not submitted",
+        "focused": true,
+        "caret": 4,
+        "minimumMetricCount": 4,
+        "metricValues": [
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          }
+        ],
+        "primary": [
+          {
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(180, 35, 24)"
+          }
+        ]
+      },
+      "history": {
+        "chartStable": true,
+        "navigationStable": true,
+        "selected": "",
+        "plotBackground": "#ffffff",
+        "plotFont": "#808495"
+      },
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "overview": {
+        "titleStable": true,
+        "navigationStable": true,
+        "inputStable": true,
+        "inputValue": "Not submitted",
+        "focused": true,
+        "caret": 4,
+        "minimumMetricCount": 4,
+        "metricValues": [
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          },
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          },
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          },
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          }
+        ],
+        "primary": [
+          {
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(180, 35, 24)"
+          }
+        ]
+      },
+      "history": {
+        "chartStable": true,
+        "navigationStable": true,
+        "selected": "",
+        "plotBackground": "#0e1117",
+        "plotFont": "#e6eaf1"
+      },
+      "errors": []
+    }
+  ],
+  "finalStatus": "PASS",
+  "finalUiCheck": {
+    "change": "Show a normal in-progress execution check separately from safety faults; mixed reasons still block.",
+    "commands": [
+      ".venv/bin/ruff format apps/dashboard/overview.py tests/python/test_overview.py",
+      ".venv/bin/ruff check python apps/dashboard tests/python",
+      ".venv/bin/mypy python apps/dashboard",
+      ".venv/bin/pytest -q"
+    ],
+    "exit_code": 0,
+    "pythonTests": 125
+  }
+}

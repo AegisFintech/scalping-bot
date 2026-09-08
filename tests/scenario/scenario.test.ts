@@ -440,6 +440,7 @@ describe("bounded scenario provider adapter", () => {
     };
   }
   it("uses exact requested model, chart, separate schema and records returned identity", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
     let request: Record<string, unknown> = {};
     const fetchImpl = vi.fn<typeof fetch>((_url, options) => {
       if (typeof options?.body !== "string") throw new Error("fixture-body");
@@ -467,6 +468,8 @@ describe("bounded scenario provider adapter", () => {
     });
     expect(result.telemetry.returnedModel).toBe("gpt-5.6-sol");
     expect(result.telemetry.costAmount).toBeNull();
+    expect(timeout).toHaveBeenCalledWith(90_000);
+    timeout.mockRestore();
   });
   it("does not send future/forming or mismatched chart data to the provider", async () => {
     const fetchImpl = vi.fn<typeof fetch>();

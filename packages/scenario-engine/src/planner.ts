@@ -3,6 +3,7 @@ import type {
   CandleSeries,
 } from "../../contracts/src/index.js";
 import { FIXED_DEFAULTS } from "../../config/src/policy.js";
+import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 import { ProviderFailure } from "../../ai-client/src/telemetry.js";
 import {
   OpenAiCompatibleClient,
@@ -37,7 +38,7 @@ export class ScenarioPlanner {
         : "prompts/scenario-v1.md",
       promptVersion: options.executionContext ? "scenario-v2" : "scenario-v1",
       inputProfile: "chart",
-      timeoutMs: 45_000,
+      timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
       maxRetries: 0,
       maxOutputTokens: 1500,
       circuitBreakerFailures: 3,

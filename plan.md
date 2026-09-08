@@ -2817,3 +2817,43 @@ runtime.
   `docs/evidence/risk-budget-validation.json`, runtime/observation evidence and both
   dashboard themes. All credentials and 24 populated environment values remain
   preserved from the reviewed migration; no live authority or risk lock changed.
+
+### ISSUE-080 — Provider recovery and truthful entry status
+
+- Issue: [#190](https://github.com/AegisFintech/scalping-bot/issues/190).
+- Branch: `issue-080-provider-recovery`; depends on ISSUE-079 / PR #189.
+- Status: complete for the documented recovery/target correction; implemented,
+  validated and deployed to existing demo. Remaining execution-latency and
+  profitability evidence requirements are explicit below.
+- Acceptance: document the broker-confirmed no-exposure incident and actual
+  accepted/expired orders; bound asynchronous scenario inference at 90 seconds
+  within the unchanged five-minute plan lifetime; avoid a fresh five-minute cost
+  cooldown for a proven local circuit rejection while preserving the durable
+  five-minute potentially-dispatched request ceiling and a one-minute local retry
+  floor, including restarts/concurrency. Show provider failure, stale/consumed maps
+  and local execution checks accurately in the dashboard. Preserve exact model,
+  credentials, money management, order expiry, strict validation and live disablement.
+- Required validation: failure-path/unit/integration tests, full repository gates,
+  bounded real provider observation, rendered UI evidence, migration/rollback docs.
+
+- Intermediate `.5` automatic request validated in 47,590 ms at 12:30:33 SGT.
+  It exposed a separate target mismatch: bearish trigger 4431.00, extension trigger
+  4430.50, first downside target 4428.60; a cost-buffered sell TP at 4430.45 was
+  rejected against the intermediate trigger. Acceptance now also requires matching
+  both legs to their first actual target, preserving price/risk checks and testing
+  insufficient first-target room without falling through to later targets. Final
+  release identity `.6` distinguishes this entry-contract correction.
+
+- Final checks: 487 Node, 125 Python, 22 schema, three migration and all three
+  isolated integration tests passed; formatting, lint, types, build, configuration,
+  replay/fail-closed, secret scanning and both dependency audits passed. The initial
+  Ruff caption-length correction and final UI check are recorded with exact commands
+  in `docs/evidence/provider-recovery-validation.json`. Both browser themes preserve
+  navigation/input/focus and four metrics across background updates.
+- Final `.6` resumed at 12:35:28 SGT, with unchanged environment and risk locks.
+  Automatic requests on `.5` and `.6` validated in 47,590 / 40,772 ms; a separate
+  bounded non-trading probe validated in 62,824 ms. Latest bounded broker check
+  at 12:37:18 SGT still had zero orders/positions. Remaining spread, quote-age and
+  entry-distance checks prevented new placement; no improved fill rate or net
+  return is claimed. A 12.5-second local execution cycle still warrants measured
+  snapshot/account latency work without weakening any final risk/freshness checks.

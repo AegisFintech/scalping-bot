@@ -1,0 +1,351 @@
+{
+  "label": "DEMO_INCIDENT_NOT_STRATEGY_PERFORMANCE",
+  "at": "2026-09-08T04:22:10.502Z",
+  "orders": [
+    {
+      "side": "BUY",
+      "state": "EXPIRED",
+      "normalized_volume": "345800.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4427.0100000000",
+      "submitted_at": "2026-09-08T02:35:11.284Z",
+      "expires_at": "2026-09-08T02:36:04.552Z",
+      "updated_at": "2026-09-08T02:36:04.702Z",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "broker_lifetime_seconds": "53.27",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "CANCELLED",
+      "normalized_volume": "345800.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4422.9900000000",
+      "submitted_at": "2026-09-08T02:35:11.751Z",
+      "expires_at": "2026-09-08T02:36:04.552Z",
+      "updated_at": "2026-09-08T02:35:23.550Z",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "broker_lifetime_seconds": "52.80",
+      "fill_count": 0
+    },
+    {
+      "side": "BUY",
+      "state": "EXPIRED",
+      "normalized_volume": "345800.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4426.1100000000",
+      "submitted_at": "2026-09-08T02:46:30.891Z",
+      "expires_at": "2026-09-08T02:47:24.527Z",
+      "updated_at": "2026-09-08T02:47:24.682Z",
+      "cancellation_reason": null,
+      "broker_lifetime_seconds": "53.64",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "EXPIRED",
+      "normalized_volume": "345800.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4423.0100000000",
+      "submitted_at": "2026-09-08T02:46:31.366Z",
+      "expires_at": "2026-09-08T02:47:24.527Z",
+      "updated_at": "2026-09-08T02:47:24.682Z",
+      "cancellation_reason": null,
+      "broker_lifetime_seconds": "53.16",
+      "fill_count": 0
+    },
+    {
+      "side": "BUY",
+      "state": "EXPIRED",
+      "normalized_volume": "345700.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4430.5200000000",
+      "submitted_at": "2026-09-08T03:12:30.758Z",
+      "expires_at": "2026-09-08T03:13:24.217Z",
+      "updated_at": "2026-09-08T03:13:24.378Z",
+      "cancellation_reason": null,
+      "broker_lifetime_seconds": "53.46",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "EXPIRED",
+      "normalized_volume": "345800.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4426.1600000000",
+      "submitted_at": "2026-09-08T03:12:31.232Z",
+      "expires_at": "2026-09-08T03:13:24.217Z",
+      "updated_at": "2026-09-08T03:13:24.378Z",
+      "cancellation_reason": null,
+      "broker_lifetime_seconds": "52.99",
+      "fill_count": 0
+    },
+    {
+      "side": "BUY",
+      "state": "EXPIRED",
+      "normalized_volume": "345600.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4435.2200000000",
+      "submitted_at": "2026-09-08T03:30:36.772Z",
+      "expires_at": "2026-09-08T03:31:29.825Z",
+      "updated_at": "2026-09-08T03:31:29.988Z",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "broker_lifetime_seconds": "53.05",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "EXPIRED",
+      "normalized_volume": "345700.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4428.7400000000",
+      "submitted_at": "2026-09-08T03:30:37.243Z",
+      "expires_at": "2026-09-08T03:31:29.825Z",
+      "updated_at": "2026-09-08T03:31:29.988Z",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "broker_lifetime_seconds": "52.58",
+      "fill_count": 0
+    },
+    {
+      "side": "BUY",
+      "state": "EXPIRED",
+      "normalized_volume": "345600.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4435.0800000000",
+      "submitted_at": "2026-09-08T03:35:32.296Z",
+      "expires_at": "2026-09-08T03:36:25.175Z",
+      "updated_at": "2026-09-08T03:36:25.337Z",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "broker_lifetime_seconds": "52.88",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "CANCELLED",
+      "normalized_volume": "345700.0000000000",
+      "filled_volume": "0.0000000000",
+      "entry_price": "4431.0900000000",
+      "submitted_at": "2026-09-08T03:35:32.771Z",
+      "expires_at": "2026-09-08T03:36:25.175Z",
+      "updated_at": "2026-09-08T03:35:47.033Z",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "broker_lifetime_seconds": "52.40",
+      "fill_count": 0
+    }
+  ],
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "duration_ms": 32471,
+      "requested_at": "2026-09-08T02:27:56.830Z",
+      "available_at": "2026-09-08T02:28:29.302Z",
+      "valid_until": "2026-09-08T02:32:55.252Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol"
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "duration_ms": 43406,
+      "requested_at": "2026-09-08T02:34:10.307Z",
+      "available_at": "2026-09-08T02:34:53.713Z",
+      "valid_until": "2026-09-08T02:39:09.412Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol"
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45032,
+      "requested_at": "2026-09-08T02:39:20.888Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T02:44:19.482Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "duration_ms": 31861,
+      "requested_at": "2026-09-08T02:44:30.519Z",
+      "available_at": "2026-09-08T02:45:02.380Z",
+      "valid_until": "2026-09-08T02:49:29.357Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol"
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45030,
+      "requested_at": "2026-09-08T02:49:55.544Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T02:54:54.661Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45036,
+      "requested_at": "2026-09-08T02:55:05.682Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:00:03.688Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45033,
+      "requested_at": "2026-09-08T03:00:15.899Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:05:14.743Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_CIRCUIT_OPEN",
+      "duration_ms": 30,
+      "requested_at": "2026-09-08T03:05:25.292Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:10:24.151Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "duration_ms": 41977,
+      "requested_at": "2026-09-08T03:10:36.103Z",
+      "available_at": "2026-09-08T03:11:18.080Z",
+      "valid_until": "2026-09-08T03:15:34.815Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol"
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45042,
+      "requested_at": "2026-09-08T03:15:45.812Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:20:44.345Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45030,
+      "requested_at": "2026-09-08T03:24:30.858Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:29:29.581Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "duration_ms": 43616,
+      "requested_at": "2026-09-08T03:29:41.241Z",
+      "available_at": "2026-09-08T03:30:24.857Z",
+      "valid_until": "2026-09-08T03:34:40.435Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol"
+    },
+    {
+      "state": "READY",
+      "reason": null,
+      "duration_ms": 28199,
+      "requested_at": "2026-09-08T03:34:51.516Z",
+      "available_at": "2026-09-08T03:35:19.715Z",
+      "valid_until": "2026-09-08T03:39:50.206Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": "gpt-5.6-sol"
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45026,
+      "requested_at": "2026-09-08T03:40:06.297Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:45:04.894Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45029,
+      "requested_at": "2026-09-08T03:45:15.924Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:50:14.516Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45030,
+      "requested_at": "2026-09-08T03:50:57.841Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T03:55:55.036Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_CIRCUIT_OPEN",
+      "duration_ms": 31,
+      "requested_at": "2026-09-08T03:56:10.758Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T04:01:09.801Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45029,
+      "requested_at": "2026-09-08T04:03:37.090Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T04:08:35.706Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_CIRCUIT_OPEN",
+      "duration_ms": 24,
+      "requested_at": "2026-09-08T04:08:47.382Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T04:13:46.156Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_PROVIDER_TIMEOUT",
+      "duration_ms": 45052,
+      "requested_at": "2026-09-08T04:13:59.236Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T04:18:57.057Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    },
+    {
+      "state": "FAILED",
+      "reason": "AI_CIRCUIT_OPEN",
+      "duration_ms": 26,
+      "requested_at": "2026-09-08T04:19:07.967Z",
+      "available_at": null,
+      "valid_until": "2026-09-08T04:24:06.364Z",
+      "requested_model": "gpt-5.6-sol/u40",
+      "returned_model": null
+    }
+  ],
+  "acceptedOrderCount": 10,
+  "recordedFillCount": 0,
+  "earlyCancelReason": "BROKER_REASON_UNAVAILABLE"
+}

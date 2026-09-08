@@ -117,7 +117,7 @@ def render_status(model: dict[str, Any]) -> None:
         st.error
         if state in {"Stopped", "Unavailable"}
         else st.warning
-        if state in {"Blocked", "Paused"}
+        if state.startswith(("Blocked", "Paused", "Entries blocked"))
         else st.info
     )
     show(f"**{state}** · {explanation}")
@@ -187,15 +187,20 @@ def render_decision(model: dict[str, Any]) -> None:
             st.write(f"Requested: {context.get('requested_model', 'Not requested')}")
             st.write(f"Returned: {context.get('returned_model') or 'Unavailable'}")
             st.write(f"Last request duration: {context.get('duration_ms', 'Unavailable')} ms")
+            if context.get("reason"):
+                st.write(f"Refresh outcome: {context['reason']}")
             st.caption(
-                "Maps refresh at most once per five minutes. "
-                "Local decisions are not paid API calls. Provider cost is unavailable."
+                "Potential provider dispatches are limited to one per five minutes. "
+                "A local circuit block sends no provider request and is rechecked "
+                "after one minute. "
+                "Refresh attempts include those local blocks. Local execution checks are not "
+                "paid API calls. Provider cost is unavailable."
             )
     if model["outcome"] is not None:
         outcome = (
             "Waiting — no order attempted" if model["outcome"] == "DEFERRED" else model["outcome"]
         )
-        st.write(f"Last completed analysis: **{outcome}**")
+        st.write(f"Latest execution check: **{outcome}**")
         st.caption(" · ".join(str(x) for x in model["reasons"]))
     if model["latest"]:
         table(model["latest"], "latest_decision")
