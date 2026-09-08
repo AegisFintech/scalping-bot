@@ -198,3 +198,27 @@ describe("order maintenance", () => {
     ]);
   });
 });
+
+it("preserves GTC on timer maintenance and normal shutdown, but includes it in emergency cancellation", async () => {
+  const query = vi.fn((sql: string) => {
+    if (sql.includes("og.expires_at <= now()"))
+      expect(sql).toContain("og.time_in_force = 'GTD'");
+    return Promise.resolve({ rows: [] });
+  });
+  const cancelStrategyOrder = vi.fn();
+  const gateway = { cancelStrategyOrder } as unknown as ExecutionGateway;
+  const maintenance = new OrderMaintenance(
+    { query } as never,
+    gateway,
+    "XAUUSD",
+    { accountId: "account", symbolId: "symbol" },
+  );
+  await maintenance.expireAndReconcile();
+  await maintenance.cancelAll("SERVICE_SHUTDOWN", true);
+  expect(query.mock.calls.at(-1)?.[0]).toContain("og.time_in_force = 'GTD'");
+  await maintenance.cancelAll("EMERGENCY");
+  expect(query.mock.calls.at(-1)?.[0]).not.toContain(
+    "og.time_in_force = 'GTD'",
+  );
+  expect(cancelStrategyOrder).not.toHaveBeenCalled();
+});

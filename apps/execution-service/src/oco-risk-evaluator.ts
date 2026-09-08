@@ -34,6 +34,7 @@ export interface OcoRiskEvaluatorOptions {
   readonly maxMarginUsagePercent: string;
   readonly maxPositionNotional: string | null;
   readonly strategyVersion: string;
+  readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabelPrefix?: string;
   readonly riskMultiplier?: () => string;
   readonly riskPercentCap?: () => string;
@@ -342,6 +343,7 @@ export class OcoRiskEvaluator {
           stopLoss: proposal.stop_loss,
           takeProfit: proposal.take_profit,
           expiresAt: proposal.expires_at,
+          timeInForce: this.#options.timeInForce ?? "GTD",
           strategyLabel:
             `${this.#options.strategyLabelPrefix ?? "ctrader-ai-scalper"}:${this.#options.strategyVersion}`.slice(
               0,

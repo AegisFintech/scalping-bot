@@ -1,3 +1,7 @@
+import {
+  orderTimeInForce,
+  validateSubmissionDeadline,
+} from "../../../packages/contracts/src/order-lifetime.js";
 import { Decimal } from "decimal.js";
 
 import type {
@@ -121,6 +125,8 @@ function validatePair(
   ) {
     throw new Error("DEMO_OCO_PAIR_MISMATCH");
   }
+  if (orderTimeInForce(commands[0]) !== orderTimeInForce(commands[1]))
+    throw new Error("DEMO_OCO_LIFETIME_MISMATCH");
   for (const command of commands) {
     if (
       decimal(command.volume).lte(0) ||
@@ -128,6 +134,7 @@ function validatePair(
     ) {
       throw new Error("DEMO_VOLUME_INVALID");
     }
+    validateSubmissionDeadline(command);
     if (Date.parse(command.expiresAt) <= Date.now())
       throw new Error("DEMO_ORDER_EXPIRED");
   }

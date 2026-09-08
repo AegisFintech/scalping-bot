@@ -91,3 +91,32 @@ describe("paper gateway", () => {
     expect((await gateway.reconcile("XAUUSD")).relevantPositionCount).toBe(0);
   });
 });
+
+describe("GTC lifecycle (synthetic, no broker or performance evidence)", () => {
+  it("keeps pending orders across days, then fills, cancels peer and closes at SL", async () => {
+    const gateway = new PaperGateway();
+    const pair = commands().map((c) => ({
+      ...c,
+      timeInForce: "GTC" as const,
+    })) as [PendingOrderCommand, PendingOrderCommand];
+    await gateway.placeOco(pair);
+    const later = new Date(Date.now() + 2 * 86400000);
+    expect(gateway.processQuote("XAUUSD", "99.90", "100", later)).toEqual([]);
+    expect(
+      (await gateway.reconcile("XAUUSD")).orders.map((o) => o.state),
+    ).toEqual(["PENDING", "PENDING"]);
+    const changes = gateway.processQuote("XAUUSD", "100.90", "101", later);
+    expect(changes.map((o) => o.state).sort()).toEqual(["CANCELLED", "FILLED"]);
+    expect((await gateway.reconcile("XAUUSD")).relevantPositionCount).toBe(1);
+    gateway.processQuote("XAUUSD", "98.90", "99", later);
+    expect((await gateway.reconcile("XAUUSD")).relevantPositionCount).toBe(0);
+    expect(gateway.positions()[0]?.reasonCode).toBe("PAPER_STOP_LOSS");
+  });
+  it("rejects a mixed-lifetime pair before placement", () => {
+    const pair = commands();
+    pair[0] = { ...pair[0], timeInForce: "GTC" };
+    expect(() => new PaperGateway().placeOco(pair)).toThrow(
+      "PAPER_OCO_LIFETIME_MISMATCH",
+    );
+  });
+});

@@ -1,3 +1,7 @@
+import {
+  orderTimeInForce,
+  pendingOrderExpiresAt,
+} from "../../../packages/contracts/src/order-lifetime.js";
 import { writeChart } from "../../../packages/database/src/chart-store.js";
 import {
   providerTelemetrySchema,
@@ -686,6 +690,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
       throw new Error("TRAIL_UNAPPROVED_INTENT_FORBIDDEN");
     }
     const [buyCommand, sellCommand] = evaluation.commands;
+    if (orderTimeInForce(buyCommand) !== orderTimeInForce(sellCommand))
+      throw new Error("TRAIL_LIFETIME_MISMATCH");
     const groupKey = createHash("sha256")
       .update(
         [buyCommand.idempotencyKey, sellCommand.idempotencyKey]
@@ -726,14 +732,16 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
       }
       await client.query(
-        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, context_plan_id)
-         VALUES ($1, $2, $3, $4, 'INTENT_RECORDED', $5,
+        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, time_in_force, submission_valid_until, context_plan_id)
+         VALUES ($1, $2, $3, $4, 'INTENT_RECORDED', $5, $6, $7,
            (SELECT context_plan_id FROM model_requests WHERE analysis_id=$2 ORDER BY completed_at DESC LIMIT 1))`,
         [
           buyCommand.orderGroupId,
           analysisId,
           groupKey,
           this.#options.mode,
+          pendingOrderExpiresAt(buyCommand),
+          orderTimeInForce(buyCommand),
           buyCommand.expiresAt,
         ],
       );
@@ -742,8 +750,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
           `INSERT INTO orders
             (id, account_id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
              strategy_label, idempotency_key, entry_price, stop_loss, take_profit,
-             requested_volume, normalized_volume, expires_at)
-           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12)`,
+             requested_volume, normalized_volume, expires_at, time_in_force, submission_valid_until)
+           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12, $13, $14)`,
           [
             randomUUID(),
             this.#options.accountId,
@@ -756,6 +764,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
             command.stopLoss,
             command.takeProfit,
             command.volume,
+            pendingOrderExpiresAt(command),
+            orderTimeInForce(command),
             command.expiresAt,
           ],
         );
@@ -776,7 +786,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
         stop_loss: command.stopLoss,
         take_profit: command.takeProfit,
         normalized_volume: command.volume,
-        expires_at: command.expiresAt,
+        expires_at: pendingOrderExpiresAt(command),
+        time_in_force: orderTimeInForce(command),
+        submission_valid_until: command.expiresAt,
       })),
     });
   }

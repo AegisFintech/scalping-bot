@@ -1,3 +1,7 @@
+import {
+  orderTimeInForce,
+  validateSubmissionDeadline,
+} from "../../contracts/src/order-lifetime.js";
 import { validateAccountPnlEvidence } from "./account-evidence.js";
 import { Decimal } from "decimal.js";
 
@@ -1011,15 +1015,16 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
         ...stopLimitProtectionFields(command, metadata, maxSlippagePoints),
         tradeSide: command.side === "BUY" ? 1 : 2,
         volume: protocolInteger(command.volume, "CTRADER_ORDER_VOLUME_INVALID"),
-        timeInForce: 1,
-        expirationTimestamp: Date.parse(command.expiresAt),
+        ...stopLimitLifetimeFields(command),
         label: command.strategyLabel.slice(0, 100),
         clientOrderId: command.clientOrderId.slice(0, 50),
         stopTriggerMethod: 1,
       },
       [CTraderPayload.EXECUTION_EVENT],
     );
-    return this.#parseExecution(response);
+    const execution = this.#parseExecution(response);
+    validateGtcAcknowledgement(command, execution.order);
+    return execution;
   }
 
   async cancelOrder(brokerOrderId: string): Promise<BrokerExecution> {
@@ -1261,5 +1266,32 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
     throw new Error(reason);
+  }
+}
+
+export function stopLimitLifetimeFields(
+  command: PendingOrderCommand,
+  now = Date.now(),
+): { timeInForce: 1 | 2; expirationTimestamp?: number } {
+  validateSubmissionDeadline(command, now);
+  return orderTimeInForce(command) === "GTC"
+    ? { timeInForce: 2 }
+    : { timeInForce: 1, expirationTimestamp: Date.parse(command.expiresAt) };
+}
+
+export function validateGtcAcknowledgement(
+  command: PendingOrderCommand,
+  order: Record<string, unknown> | null,
+): void {
+  if (orderTimeInForce(command) === "GTC" && order?.orderStatus === 1) {
+    const expiry = order.expirationTimestamp;
+    if (
+      order.timeInForce !== 2 ||
+      (expiry !== undefined &&
+        expiry !== null &&
+        expiry !== 0 &&
+        expiry !== "0")
+    )
+      throw new Error("CTRADER_GTC_ACKNOWLEDGEMENT_MISMATCH");
   }
 }

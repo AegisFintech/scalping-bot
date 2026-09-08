@@ -1,3 +1,4 @@
+import { datedEvaluationPlans } from "../packages/scenario-engine/src/export-lifetime.js";
 import "dotenv/config";
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
@@ -13,10 +14,11 @@ try {
   const rows = await pool.query<{
     created: Date;
     available: Date;
-    expires: Date;
+    expires: Date | null;
+    time_in_force: "GTC" | "GTD";
     legs: unknown;
   }>(
-    `SELECT ar.analysis_time AS created,min(o.submitted_at) AS available,og.expires_at AS expires,
+    `SELECT ar.analysis_time AS created,min(o.submitted_at) AS available,og.expires_at AS expires,og.time_in_force,
       c.captured_at AS map_captured,c.available_at AS map_available,
       c.valid_until AS map_expires,c.requested_model AS model,
       (SELECT m.payload_redacted->>'server_time' FROM model_requests m
@@ -40,7 +42,7 @@ try {
       process.env.TRADING_SYMBOL ?? "XAUUSD",
     ],
   );
-  const plans = rows.rows.filter((row) => row.available < row.expires);
+  const plans = datedEvaluationPlans(rows.rows);
   writeFileSync(output, JSON.stringify(plans, null, 2) + "\n", { mode: 0o600 });
   console.log(
     JSON.stringify({
@@ -48,8 +50,15 @@ try {
       plans: plans.length,
     }),
   );
-} catch {
-  console.error("EVALUATION_EXPORT_FAILED");
+} catch (error) {
+  console.error(
+    error instanceof Error &&
+      ["EVALUATION_GTC_NOT_SUPPORTED", "EVALUATION_LIFETIME_INVALID"].includes(
+        error.message,
+      )
+      ? error.message
+      : "EVALUATION_EXPORT_FAILED",
+  );
   process.exitCode = 1;
 } finally {
   await pool.end();

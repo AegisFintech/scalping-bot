@@ -55,7 +55,7 @@ in linked reports. Give longer explanations only when explicitly requested.
   endpoint. Record requested/returned identities; never add a silent fallback.
   Observed `gpt-6-astra` return normalization is documented in `docs/astra-graphify-report.md`.
   Unknown cost is null. Historical provider records remain immutable; a previous-model
-  map cannot authorize new execution after a switch. Its five-minute cooldown still applies.
+  map cannot authorize new execution after a switch. Failure/unknown-dispatch cooldowns remain; one proven post-close refresh is the documented exception.
   Migration 0017 admits both Astra and Sol journal identities;
   never rewrite prior migration checksums or model history.
 - Preserve model-independent protective maintenance and account/symbol ownership
@@ -68,10 +68,11 @@ in linked reports. Give longer explanations only when explicitly requested.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
 - Production context uses `scenario-v2` / `scenario-1.0`; local derived OCO
-  proposals use `scenario-execution-v1` / schema `2.1`. Historical contracts remain
+  proposals use `scenario-execution-v2` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
-- The operator authorized integrated demo evaluation in ISSUE-075. One potential
-  provider dispatch per five minutes is durably claimed before inference.
+- The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch
+  backoff remains; migration 0019 permits one fresh request after a fully reconciled
+  consumed setup closes. No request may start with an active group.
   Only FAILED / `AI_CIRCUIT_OPEN`, emitted before provider dispatch, may use the
   one-minute local recheck. All unknown/timeout outcomes retain the full durable
   cooldown; prior requests across the entire scope still constrain admission.
@@ -84,11 +85,13 @@ in linked reports. Give longer explanations only when explicitly requested.
 - Scenario provider requests have a 90-second deadline and five-second HTTP grace,
   within the unchanged five-minute map lifetime. Preserve original capture/expiry,
   output validation and independent maintenance. See `docs/provider-recovery-report.md`.
-- Pending preferred/maximum lifetime is 180 seconds from the fresh local decision,
-  capped at the original map deadline with a 60-second minimum. Validate the requested
-  duration before capping; never extend a map or an already-submitted order.
-  Ten/fifteen-minute results are research hypotheses, not validated execution policy.
-  Read `docs/order-expiry-research-report.md` for the censored quote evidence.
+- Operator-approved ISSUE-083 uses explicit GTC for accepted pending orders: no timer
+  expiry, including normal process restarts. The three-minute local deadline and
+  five-minute map remain fresh-submission authorization only. Do not extend old
+  proposals or model validity. Migration 0019 preserves historical GTD semantics;
+  GTC stores null pending expiry and a separate submission deadline. Risk/emergency
+  and OCO peer cancellations still apply. Read `docs/persistent-order-loop-report.md`.
+  A normal shutdown preserves GTC; emergency stop explicitly cancels owned pending orders.
 - Provider inference runs outside the execution promise. Reuse a validated map
   across ordinary candle advances, but never relax the fresh completed-candle
   context checks for each individual execution decision. Crossed thresholds wait;

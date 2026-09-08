@@ -80,6 +80,7 @@ describe("migrations", () => {
       "0016_reusable_scenario_context.sql",
       "0017_sol_context_model.sql",
       "0018_local_chart_storage.sql",
+      "0019_persistent_order_lifetime.sql",
     ]);
     const sql = (
       await Promise.all(

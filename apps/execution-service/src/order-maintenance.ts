@@ -76,14 +76,14 @@ export class OrderMaintenance {
        JOIN analysis_runs ar ON ar.id=og.analysis_id
        WHERE ar.account_id=$1 AND ar.symbol_id=$2 AND o.strategy_owned = true
          AND o.state IN ('INTENT', 'SUBMITTING', 'PENDING', 'PARTIALLY_FILLED', 'CANCEL_PENDING', 'UNKNOWN')
-         AND og.expires_at <= now()`,
+         AND og.time_in_force = 'GTD' AND og.expires_at <= now()`,
       [this.scope.accountId, this.scope.symbolId],
     );
     if (result.rows.length === 0) return;
     await this.#cancelRows(result.rows, "ANALYSIS_EXPIRED");
   }
 
-  async cancelAll(reasonCode: string): Promise<void> {
+  async cancelAll(reasonCode: string, datedOnly = false): Promise<void> {
     const result = await this.#pool.query<{
       client_order_id: string;
       order_group_id: string;
@@ -94,7 +94,8 @@ export class OrderMaintenance {
        JOIN order_groups og ON og.id = o.order_group_id
        JOIN analysis_runs ar ON ar.id=og.analysis_id
        WHERE ar.account_id=$1 AND ar.symbol_id=$2 AND o.strategy_owned = true
-         AND o.state IN ('INTENT', 'SUBMITTING', 'PENDING', 'PARTIALLY_FILLED', 'CANCEL_PENDING', 'UNKNOWN')`,
+         AND o.state IN ('INTENT', 'SUBMITTING', 'PENDING', 'PARTIALLY_FILLED', 'CANCEL_PENDING', 'UNKNOWN')
+         ${datedOnly ? "AND og.time_in_force = 'GTD'" : ""}`,
       [this.scope.accountId, this.scope.symbolId],
     );
     if (result.rows.length > 0) await this.#cancelRows(result.rows, reasonCode);

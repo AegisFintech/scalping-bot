@@ -114,8 +114,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.3-equity-risk.8",
-  CODE_VERSION: "0.2.3-equity-risk.8",
+  STRATEGY_VERSION: "0.2.3-equity-risk.9",
+  CODE_VERSION: "0.2.3-equity-risk.9",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
@@ -250,3 +250,9 @@ export function resolveRuntimeEnvironment(
   delete resolved.ACCOUNT_EQUITY_FLOOR;
   return resolved;
 }
+
+/** Operator-selected order lifecycle; not a model or environment control. */
+export const ORDER_LIFECYCLE = Object.freeze({
+  version: "persistent-gtc-v1",
+  timeInForce: "GTC" as const,
+});

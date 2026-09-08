@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:scalper:pending-order-lifetime:1.0",
+  "title": "Trusted pending order lifetime; independent of model placement validity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["time_in_force", "expires_at", "submission_valid_until"],
+  "properties": {
+    "time_in_force": {
+      "enum": ["GTD", "GTC"]
+    },
+    "expires_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "submission_valid_until": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "time_in_force": {
+            "const": "GTC"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "expires_at": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "expires_at": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

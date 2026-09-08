@@ -1,3 +1,4 @@
+import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
 import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
@@ -316,7 +317,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "scenario-execution-v1",
+    promptVersion: "scenario-execution-v2",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -427,6 +428,7 @@ async function main(): Promise<void> {
   let capitalRiskCap = "0";
   const capitalRiskStore = new CapitalRiskStore(pool);
   const risk = new OcoRiskEvaluator({
+    timeInForce: ORDER_LIFECYCLE.timeInForce,
     riskMultiplier: () => capitalMultiplier,
     riskPercentCap: () => capitalRiskCap,
     marginEstimator: margin,
@@ -447,7 +449,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "scenario-execution-v1",
+    promptVersion: "scenario-execution-v2",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1068,7 +1070,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "scenario-execution-v1",
+    promptVersion: "scenario-execution-v2",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: config.minRiskRewardRatio,
@@ -1760,7 +1762,9 @@ async function main(): Promise<void> {
     await demoRecoveryRunner.settled();
     await demoExecutionRecorder?.flush();
     if (environment.SHUTDOWN_CANCEL_PENDING !== "false") {
-      await maintenance.cancelAll("SERVICE_SHUTDOWN").catch(() => undefined);
+      await maintenance
+        .cancelAll("SERVICE_SHUTDOWN", true)
+        .catch(() => undefined);
     }
     await app.close();
     await brokerClient?.disconnect();

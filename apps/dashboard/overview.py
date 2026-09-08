@@ -55,6 +55,21 @@ def operating_state(status: dict[str, Any], now: datetime | None = None) -> tupl
         return "Blocked", "Startup or reconciliation checks have not passed."
     managed = status.get("managedSetup", {})
     if isinstance(managed, dict) and managed.get("status") == "ACTIVE":
+        if managed.get("groupState") == "RECONCILIATION_REQUIRED":
+            return "Checking exposure", "Broker state needs reconciliation before the next setup."
+        positions = managed.get("positions", [])
+        if any(isinstance(p, dict) and p.get("state") != "CLOSED" for p in positions):
+            return (
+                "Position active",
+                "SL/TP protection is active. Fresh analysis follows confirmed closure.",
+            )
+        if any(
+            isinstance(o, dict) and o.get("timeInForce") == "GTC" for o in managed.get("orders", [])
+        ):
+            return (
+                "Orders pending",
+                "Waiting for entry. GTC orders have no timer expiry; analysis waits.",
+            )
         return "Managing a setup", "An existing position or pending order blocks replacement."
     if status.get("reasonCodes") == ["PREVIOUS_ANALYSIS_ACTIVE"]:
         return "Checking setup", "An execution check is in progress; another check cannot overlap."

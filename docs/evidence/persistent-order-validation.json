@@ -1,0 +1,197 @@
+{
+  "label": "SOFTWARE_VALIDATION_NOT_PERFORMANCE",
+  "release": "0.2.3-equity-risk.9",
+  "node_tests": 522,
+  "python_tests": 140,
+  "schema_tests": 27,
+  "migration_tests": 3,
+  "integration_tests": 3,
+  "commands": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 22.09,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 1,
+      "seconds": 24.58,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.45,
+      "log": "03.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 15.28,
+      "log": "04.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 34.97,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 3.1,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.13,
+      "log": "07.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 4.45,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.97,
+      "log": "11.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.64,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "14.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.12,
+      "log": "15.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 1.28,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 10.87,
+      "log": "17.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.32,
+      "log": "18.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-083/backtest-final-recovery.json",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "19.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-083/base-final-recovery.json",
+      "exit_code": 1,
+      "seconds": 0.82,
+      "log": "20.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-083/stress-final-recovery.json --stress",
+      "exit_code": 1,
+      "seconds": 0.78,
+      "log": "21.log"
+    },
+    {
+      "command": "npm run lint (after explicit query row typing)",
+      "exit_code": 0,
+      "log": "lint-final.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-083/base-verified.json",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-083/stress-verified.json --stress",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python (final dashboard wording)",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard (final dashboard wording)",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/pytest -q (final dashboard wording)",
+      "exit_code": 0,
+      "tests": 140
+    },
+    {
+      "command": "npm run evaluation:export -- 0.2.3-equity-risk.9 artifacts/issue-083/gtc-must-not-export.json",
+      "exit_code": 1,
+      "expected_negative_result": "EVALUATION_GTC_NOT_SUPPORTED; no fabricated expiry or empty performance cohort emitted"
+    },
+    {
+      "command": "npm test (final GTC evaluation compatibility guard)",
+      "exit_code": 0,
+      "tests": 522
+    },
+    {
+      "command": "npx eslint packages/scenario-engine/src/export-lifetime.ts tests/scenario/export-lifetime.test.ts scripts/export-evaluation.ts",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run typecheck (final evaluation compatibility guard)",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run build (final evaluation compatibility guard)",
+      "exit_code": 0
+    }
+  ],
+  "corrections": "Initial lint found missing explicit query row typing; corrected and full lint passed. Replay runner refuses existing output files (wx); final base/stress passed with fresh output names. Earlier development formatting/type/test expectations were corrected before final tests.",
+  "secret_scan_limitation": "Existing repository scanner exits zero with missing user-deleted-image warnings; supplemented before commit by scanning every staged/index blob for token patterns and exact active secret values.",
+  "secret_scan_supplement": {
+    "index_blobs": 388,
+    "credential_or_pattern_matches": 0
+  }
+}

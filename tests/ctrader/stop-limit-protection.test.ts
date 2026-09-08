@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { PendingOrderCommand } from "../../packages/contracts/src/index.js";
-import { stopLimitProtectionFields } from "../../packages/ctrader-client/src/client.js";
+import {
+  stopLimitProtectionFields,
+  stopLimitLifetimeFields,
+  validateGtcAcknowledgement,
+} from "../../packages/ctrader-client/src/client.js";
 
 function command(side: "BUY" | "SELL"): PendingOrderCommand {
   return {
@@ -64,4 +68,53 @@ describe("cTrader stop-limit protection", () => {
       ),
     ).toThrow("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
   });
+});
+
+describe("broker lifetime encoding", () => {
+  const now = Date.parse("2026-09-01T07:59:30Z");
+  it("encodes GTC without expirationTimestamp while preserving fresh submission", () => {
+    expect(
+      stopLimitLifetimeFields({ ...command("BUY"), timeInForce: "GTC" }, now),
+    ).toEqual({ timeInForce: 2 });
+    expect(stopLimitLifetimeFields(command("BUY"), now)).toEqual({
+      timeInForce: 1,
+      expirationTimestamp: Date.parse(command("BUY").expiresAt),
+    });
+  });
+  it.each(["invalid", "2026-09-01T07:59:00Z", "2026-09-01T08:00:00"])(
+    "rejects stale or ambiguous GTC submission %s",
+    (expiresAt) => {
+      expect(() =>
+        stopLimitLifetimeFields(
+          { ...command("BUY"), timeInForce: "GTC", expiresAt },
+          now,
+        ),
+      ).toThrow("ORDER_SUBMISSION_EXPIRED_OR_INVALID");
+    },
+  );
+  it("rejects an unknown lifetime instead of treating it as non-expiring", () => {
+    expect(() =>
+      stopLimitLifetimeFields(
+        { ...command("BUY"), timeInForce: "UNKNOWN" as "GTC" },
+        now,
+      ),
+    ).toThrow("ORDER_TIME_IN_FORCE_INVALID");
+  });
+});
+
+it("requires the broker to acknowledge GTC without a dated expiry", () => {
+  const c = { ...command("BUY"), timeInForce: "GTC" as const };
+  expect(() =>
+    validateGtcAcknowledgement(c, { orderStatus: 1, timeInForce: 2 }),
+  ).not.toThrow();
+  expect(() =>
+    validateGtcAcknowledgement(c, { orderStatus: 1, timeInForce: 1 }),
+  ).toThrow("CTRADER_GTC_ACKNOWLEDGEMENT_MISMATCH");
+  expect(() =>
+    validateGtcAcknowledgement(c, {
+      orderStatus: 1,
+      timeInForce: 2,
+      expirationTimestamp: 123,
+    }),
+  ).toThrow("CTRADER_GTC_ACKNOWLEDGEMENT_MISMATCH");
 });

@@ -235,6 +235,7 @@ describe("PostgreSQL migrations integration", () => {
         "0016",
         "0017",
         "0018",
+        "0019",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -1948,6 +1949,141 @@ describe("PostgreSQL migrations integration", () => {
         ),
       ).rejects.toMatchObject({ code: "23505" });
       expect((await contextStore.latest())?.consumed).toBe(true);
+      // Explicit GTC survives its submission deadline and process reconstruction.
+      await isolated.query(
+        "UPDATE order_groups SET time_in_force='GTC',submission_valid_until=expires_at,expires_at=NULL WHERE id=$1",
+        [orderGroupId],
+      );
+      await isolated.query(
+        "UPDATE orders SET time_in_force='GTC',submission_valid_until=expires_at,expires_at=NULL WHERE order_group_id=$1",
+        [orderGroupId],
+      );
+      await expect(
+        isolated.query(
+          "UPDATE orders SET expires_at=now() WHERE order_group_id=$1",
+          [orderGroupId],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      await expect(
+        isolated.query(
+          "UPDATE order_groups SET time_in_force='GTD' WHERE id=$1",
+          [orderGroupId],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      // Real SQL: a reconstructed maintenance worker never timer-cancels GTC,
+      // including during normal shutdown; emergency still cancels owned GTC.
+      await isolated.query(
+        "UPDATE order_groups SET state='ACTIVE',time_in_force='GTC',submission_valid_until=expires_at,expires_at=NULL WHERE id=$1",
+        [cancelledGroupId],
+      );
+      await isolated.query(
+        "UPDATE orders SET state='PENDING',time_in_force='GTC',submission_valid_until=expires_at,expires_at=NULL WHERE order_group_id=$1",
+        [cancelledGroupId],
+      );
+      const cancellations: string[] = [];
+      const persistentMaintenance = new OrderMaintenance(
+        isolated,
+        {
+          kind: "ctrader-demo",
+          canSubmitToBroker: true,
+          placeOco: () =>
+            Promise.reject(new Error("FORBIDDEN_TEST_SUBMISSION")),
+          cancelStrategyOrder: (clientOrderId: string) => {
+            cancellations.push(clientOrderId);
+            return Promise.resolve({
+              clientOrderId,
+              brokerOrderId: null,
+              state: "CANCELLED" as const,
+              filledVolume: "0",
+              updatedAt: new Date().toISOString(),
+              reasonCode: "TEST_CANCELLATION",
+            });
+          },
+          reconcile: () =>
+            Promise.resolve({
+              asOf: new Date().toISOString(),
+              certain: true,
+              reasonCodes: [],
+              orders: [],
+              relevantPositionCount: 0,
+            }),
+        },
+        "XAUUSD",
+        { accountId: demoAccountId, symbolId },
+      );
+      const pendingIds = (
+        await isolated.query<{ client_order_id: string }>(
+          "SELECT client_order_id FROM orders WHERE order_group_id=$1",
+          [cancelledGroupId],
+        )
+      ).rows.map((r) => r.client_order_id);
+      await persistentMaintenance.expireAndReconcile();
+      await persistentMaintenance.cancelAll("SERVICE_SHUTDOWN", true);
+      expect(cancellations.filter((id) => pendingIds.includes(id))).toEqual([]);
+      expect(
+        (
+          await isolated.query<{ state: string }>(
+            "SELECT state FROM orders WHERE order_group_id=$1",
+            [cancelledGroupId],
+          )
+        ).rows.map((r) => r.state),
+      ).toEqual(["PENDING", "PENDING"]);
+      expect(
+        await contextStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+      await persistentMaintenance.cancelAll("EMERGENCY_TEST");
+      expect(
+        cancellations.filter((id) => pendingIds.includes(id)).sort(),
+      ).toEqual(pendingIds.sort());
+      // Isolate the already reconciled closed fixture from other test/demo contexts.
+      await isolated.query("UPDATE order_groups SET mode='paper' WHERE id=$1", [
+        orderGroupId,
+      ]);
+      const closeScope = { accountId: demoAccountId, symbolId, mode: "paper" };
+      const closeStore = new PostgresContextStore(isolated, closeScope);
+      const closedContextId = randomUUID();
+      expect(
+        await closeStore.claim({ ...contextClaim, id: closedContextId }),
+      ).toBe(true);
+      await isolated.query(
+        "UPDATE scenario_contexts SET state='READY',plan='{}',available_at=clock_timestamp() WHERE id=$1",
+        [closedContextId],
+      );
+      await isolated.query(
+        "UPDATE order_groups SET context_plan_id=$2 WHERE id=$1",
+        [orderGroupId, closedContextId],
+      );
+      expect((await closeStore.latest())?.closedAt).not.toBeNull();
+      const afterClose = { ...contextClaim, afterContextId: closedContextId };
+      // Active and uncertain state must still prohibit dispatch even with close evidence.
+      await isolated.query(
+        "UPDATE order_groups SET state='RECONCILIATION_REQUIRED' WHERE id=$1",
+        [orderGroupId],
+      );
+      expect(await closeStore.claim({ ...afterClose, id: randomUUID() })).toBe(
+        false,
+      );
+      await isolated.query(
+        "UPDATE order_groups SET state='CLOSED' WHERE id=$1",
+        [orderGroupId],
+      );
+      const closeClaims = await Promise.all([
+        closeStore.claim({ ...afterClose, id: randomUUID() }),
+        new PostgresContextStore(isolated, closeScope).claim({
+          ...afterClose,
+          id: randomUUID(),
+        }),
+      ]);
+      expect(closeClaims.filter(Boolean)).toHaveLength(1);
+      expect(
+        await new PostgresContextStore(isolated, closeScope).claim({
+          ...afterClose,
+          id: randomUUID(),
+        }),
+      ).toBe(false);
+      expect(
+        await closeStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);

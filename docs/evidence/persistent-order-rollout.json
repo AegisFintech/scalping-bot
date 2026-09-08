@@ -1,0 +1,147 @@
+{
+  "label": "DEMO_GTC_LIFECYCLE_NOT_PERFORMANCE",
+  "migration": {
+    "at": "2026-09-08T12:04:47.567Z",
+    "applied": ["0019"],
+    "paused": true,
+    "environmentUnchanged": true
+  },
+  "resumed": {
+    "at": "2026-09-08T12:05:13.903Z",
+    "mode": "demo",
+    "restoredPreviousPause": false,
+    "release": "0.2.3-equity-risk.9",
+    "financialLocksReset": false,
+    "liveEnabled": false
+  },
+  "riskPreservation": {
+    "at": "2026-09-08T12:05:44.871Z",
+    "capitalPreserved": true,
+    "dailyPreserved": true
+  },
+  "firstOrders": [
+    {
+      "side": "BUY",
+      "state": "PENDING",
+      "entry_price": "4404.3900000000",
+      "normalized_volume": "350900.0000000000",
+      "filled_volume": "0.0000000000",
+      "submitted_at": "2026-09-08T12:05:56.953Z",
+      "expires_at": null,
+      "time_in_force": "GTC",
+      "submission_valid_until": "2026-09-08T12:08:49.932Z",
+      "map_expires": "2026-09-08T12:10:19.957Z",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "PENDING",
+      "entry_price": "4402.3800000000",
+      "normalized_volume": "351000.0000000000",
+      "filled_volume": "0.0000000000",
+      "submitted_at": "2026-09-08T12:05:57.448Z",
+      "expires_at": null,
+      "time_in_force": "GTC",
+      "submission_valid_until": "2026-09-08T12:08:49.932Z",
+      "map_expires": "2026-09-08T12:10:19.957Z",
+      "fill_count": 0
+    }
+  ],
+  "firstContext": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_at": "2026-09-08T12:05:20.914Z",
+      "available_at": "2026-09-08T12:05:41.443Z",
+      "valid_until": "2026-09-08T12:10:19.957Z",
+      "duration_ms": 20529,
+      "requested_model": "gpt-6-astra/u64",
+      "returned_model": "gpt-6-astra",
+      "post_close": false
+    }
+  ],
+  "brokerAfterSubmissionDeadline": {
+    "at": "2026-09-08T12:09:05.794Z",
+    "positions": 0,
+    "orders": [
+      {
+        "side": "BUY",
+        "orderType": 6,
+        "timeInForce": 2,
+        "entry": 4404.39,
+        "expiresAt": null,
+        "executedVolume": 0,
+        "volume": 350900
+      },
+      {
+        "side": "SELL",
+        "orderType": 6,
+        "timeInForce": 2,
+        "entry": 4402.38,
+        "expiresAt": null,
+        "executedVolume": 0,
+        "volume": 351000
+      }
+    ]
+  },
+  "environmentUnchanged": true,
+  "liveEnabled": false,
+  "brokerAfterMapDeadline": {
+    "at": "2026-09-08T12:10:38.081Z",
+    "positions": 0,
+    "orders": [
+      {
+        "side": "BUY",
+        "orderType": 6,
+        "timeInForce": 2,
+        "entry": 4404.39,
+        "expiresAt": null,
+        "executedVolume": 0,
+        "volume": 350900
+      },
+      {
+        "side": "SELL",
+        "orderType": 6,
+        "timeInForce": 2,
+        "entry": 4402.38,
+        "expiresAt": null,
+        "executedVolume": 0,
+        "volume": 351000
+      }
+    ]
+  },
+  "afterMapDeadline": {
+    "at": "2026-09-08T12:10:37.056Z",
+    "contexts": 1,
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "PENDING",
+        "entry_price": "4404.3900000000",
+        "normalized_volume": "350900.0000000000",
+        "filled_volume": "0.0000000000",
+        "submitted_at": "2026-09-08T12:05:56.953Z",
+        "expires_at": null,
+        "time_in_force": "GTC",
+        "submission_valid_until": "2026-09-08T12:08:49.932Z",
+        "map_expires": "2026-09-08T12:10:19.957Z",
+        "fill_count": 0
+      },
+      {
+        "side": "SELL",
+        "state": "PENDING",
+        "entry_price": "4402.3800000000",
+        "normalized_volume": "351000.0000000000",
+        "filled_volume": "0.0000000000",
+        "submitted_at": "2026-09-08T12:05:57.448Z",
+        "expires_at": null,
+        "time_in_force": "GTC",
+        "submission_valid_until": "2026-09-08T12:08:49.932Z",
+        "map_expires": "2026-09-08T12:10:19.957Z",
+        "fill_count": 0
+      }
+    ],
+    "paused": false,
+    "ready": true
+  }
+}

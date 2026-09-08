@@ -257,3 +257,24 @@ def test_rendered_provider_outage_is_a_warning_and_labels_local_checks(monkeypat
     assert any("Entries blocked · model unavailable" in warning.value for warning in app.warning)
     assert any("Latest execution check" in text.value for text in app.markdown)
     assert all("Last completed analysis" not in text.value for text in app.markdown)
+
+
+def test_gtc_pending_and_position_lifecycle_labels() -> None:
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "automaticAnalysisEnabled": True,
+        "managedSetup": {"status": "ACTIVE", "orders": [{"timeInForce": "GTC"}], "positions": []},
+    }
+    assert overview.operating_state(status)[0] == "Orders pending"
+    status["managedSetup"]["positions"] = [{"state": "OPEN"}]
+    assert overview.operating_state(status)[0] == "Position active"
+
+
+def test_gtc_reconciliation_failure_is_not_reported_as_normal_waiting() -> None:
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "managedSetup": {"status": "ACTIVE", "groupState": "RECONCILIATION_REQUIRED"},
+    }
+    assert overview.operating_state(status)[0] == "Checking exposure"
