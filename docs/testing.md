@@ -1,5 +1,11 @@
 # Current acceptance and research
 
+ISSUE-081 reverses the active pin to literal `gpt-6-astra/u64`. Configuration,
+scenario HTTP, provider identity and restart tests reject the previous Sol map
+without bypassing its cooldown. Both historical identities remain valid journal
+records. Full gates and local Graphify exclusion/query checks are recorded in
+[the Astra and order diagnosis report](astra-graphify-report.md).
+
 ISSUE-080 tests local-circuit recovery without weakening the durable paid-request
 ceiling, including restart, concurrent claims and an earlier unknown request hidden
 by a later local failure. It covers the 90/95-second provider/HTTP bounds, expired

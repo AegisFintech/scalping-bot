@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.6`, fixed risk policy v4. Previous release
+Current source: `0.2.3-equity-risk.7`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a five-minute immutable scenario context, a durable request journal,
@@ -56,7 +56,7 @@ loopback and deployments support Debian/systemd.
 5. `scenario-context.ts` claims at most one potentially dispatched refresh per account/symbol/mode per
    five minutes using a transaction/advisory lock. The source analysis links the
    archived chart and market inputs. A separate task calls `/v1/scenario`, using
-   exact `gpt-5.6-sol/u40`, prompt `scenario-v2`, strict `scenario-1.0`, chart and
+   exact `gpt-6-astra/u64`, prompt `scenario-v2`, strict `scenario-1.0`, chart and
    bounded candle tails. Completion/failure and usage are durable. An interrupted
    request is not retried during its cooldown, because provider acceptance is unknown.
    Previous-model maps remain audited but cannot authorize new execution; the same

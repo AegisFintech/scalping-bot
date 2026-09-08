@@ -1,0 +1,120 @@
+{
+  "label": "DEMO_MODEL_ROLLOUT_NOT_PERFORMANCE_EVIDENCE",
+  "at": "2026-09-08T09:34:40.961Z",
+  "status": {
+    "release": "0.2.3-equity-risk.7",
+    "mode": "demo",
+    "paused": false,
+    "emergencyStopped": false,
+    "startup": true,
+    "operationalReady": true,
+    "reasonCodes": [
+      "PREVIOUS_ANALYSIS_ACTIVE",
+      "RELEVANT_PENDING_ORDER_EXISTS"
+    ],
+    "requestedModel": "gpt-6-astra/u64",
+    "managedStatus": "ACTIVE",
+    "cycle": {
+      "outcome": "PLACED",
+      "reasons": []
+    }
+  },
+  "broker": {
+    "at": "2026-09-08T09:34:40.464Z",
+    "certain": true,
+    "equity": "999832.16",
+    "balance": "999832.16",
+    "availableMargin": "999832.16",
+    "relevantPositionCount": 0,
+    "relevantPendingOrderCount": 2,
+    "reasonCodes": []
+  },
+  "orders": [
+    {
+      "side": "BUY",
+      "state": "PENDING",
+      "entry_price": "4396.4500000000",
+      "normalized_volume": "351100.0000000000",
+      "filled_volume": "0.0000000000",
+      "submitted_at": "2026-09-08T09:34:11.225Z",
+      "expires_at": "2026-09-08T09:35:04.189Z",
+      "fill_count": 0
+    },
+    {
+      "side": "SELL",
+      "state": "PENDING",
+      "entry_price": "4393.7200000000",
+      "normalized_volume": "351100.0000000000",
+      "filled_volume": "0.0000000000",
+      "submitted_at": "2026-09-08T09:34:11.725Z",
+      "expires_at": "2026-09-08T09:35:04.189Z",
+      "fill_count": 0
+    }
+  ],
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_at": "2026-09-08T09:33:31.032Z",
+      "available_at": "2026-09-08T09:33:51.470Z",
+      "valid_until": "2026-09-08T09:38:29.807Z",
+      "duration_ms": 20437,
+      "requested_model": "gpt-6-astra/u64",
+      "telemetry": {
+        "costAmount": null,
+        "costSource": "unavailable",
+        "inputTokens": 22125,
+        "totalTokens": 22627,
+        "costCurrency": null,
+        "inputProfile": "chart",
+        "outputTokens": 502,
+        "requestBytes": 132987,
+        "responseBytes": 30088,
+        "returnedModel": "gpt-6-astra",
+        "requestedModel": "gpt-6-astra/u64"
+      }
+    }
+  ],
+  "onlyModelEnvironmentChanged": true,
+  "financialLocksReset": false,
+  "liveEnabled": false,
+  "finalObservation": {
+    "at": "2026-09-08T09:36:29.912Z",
+    "broker": {
+      "at": "2026-09-08T09:36:29.351Z",
+      "certain": true,
+      "equity": "999832.16",
+      "balance": "999832.16",
+      "availableMargin": "999832.16",
+      "relevantPositionCount": 0,
+      "relevantPendingOrderCount": 0,
+      "reasonCodes": []
+    },
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "EXPIRED",
+        "entry_price": "4396.4500000000",
+        "normalized_volume": "351100.0000000000",
+        "filled_volume": "0.0000000000",
+        "submitted_at": "2026-09-08T09:34:11.225Z",
+        "expires_at": "2026-09-08T09:35:04.189Z",
+        "fill_count": 0
+      },
+      {
+        "side": "SELL",
+        "state": "EXPIRED",
+        "entry_price": "4393.7200000000",
+        "normalized_volume": "351100.0000000000",
+        "filled_volume": "0.0000000000",
+        "submitted_at": "2026-09-08T09:34:11.725Z",
+        "expires_at": "2026-09-08T09:35:04.189Z",
+        "fill_count": 0
+      }
+    ],
+    "cycle": {
+      "outcome": "DEFERRED",
+      "reasons": ["SCENARIO_MAP_CONSUMED"]
+    }
+  }
+}

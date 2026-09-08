@@ -1,6 +1,22 @@
 # Current release operations
 
-For `0.2.3-equity-risk.6` / `fixed-risk-v4`, follow the
+Release `0.2.3-equity-risk.7` requests `gpt-6-astra/u64`. Change only the populated
+`AI_MODEL` assignment, preserve credentials, pause new analyses with authenticated
+controls, deploy matching AI/execution services and verify supervisor state before
+restoring the existing demo authorization. Existing migration 0017 permits both
+model identities. Do not reset risk locks, alter prior contexts, bypass their
+cooldown or enable live execution. Full evidence and rollback:
+[ISSUE-081](astra-graphify-report.md).
+
+For code navigation, use the isolated `graphify` CLI and ignored `graphify-out/`.
+Run `graphify query "<focused question>" --budget 1000` before targeted source
+reads, and `graphify update .` after code changes. This local AST/SQL update makes
+no provider calls. `.graphifyignore` excludes secrets, runtime records and builds.
+Do not enable remote semantic extraction or index runtime credentials.
+
+## Order safety and provider recovery
+
+For `0.2.3-equity-risk.7` / `fixed-risk-v4`, follow the
 [risk-budget sizing and storage recovery procedure](risk-budget-recovery-report.md).
 For missing pending orders, check [the provider recovery report](provider-recovery-report.md).
 A healthy execution process does not imply an available model map. Provider failures,

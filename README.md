@@ -79,13 +79,13 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Model and decision path
 
-The operator-selected model is now `gpt-5.6-sol/u40`. The existing EPRToken
+The operator-selected model is now `gpt-6-astra/u64`. The existing EPRToken
 Responses endpoint accepted this literal identifier with strict JSON Schema,
-returning `gpt-5.6-sol`. Both identifiers, timing and available token usage are
-retained; pricing remains unknown. See [model-switch evidence](docs/model-switch-report.md).
+returning `gpt-6-astra`. Both identifiers, timing and available token usage are
+retained; pricing remains unknown. See [model-switch evidence](docs/astra-graphify-report.md).
 No fallback model is substituted. Temperature and reasoning-effort parameters
-remain omitted; `/u40` is sent literally, without inferred client-side semantics.
-Historical Astra observations are preserved and do not establish Sol performance.
+remain omitted; `/u64` is sent literally, without inferred client-side semantics.
+Historical model observations remain immutable; a switch does not establish improved fills.
 
 The active scenario input contains the exact M15/M5/M1 chart and bounded completed
 candle tails matching the chart (up to 80 per frame). The earlier matched
@@ -116,7 +116,7 @@ The normal [.env.sample](.env.sample) has **20 settings, down from 176 (88.6%)**
 It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=gpt-5.6-sol/u40` is explicit; other AI and strategy tuning is fixed in
+`AI_MODEL=gpt-6-astra/u64` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
 24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the

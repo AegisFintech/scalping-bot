@@ -1,0 +1,15 @@
+{
+  "label": "REAL_ENDPOINT_COMPATIBILITY_NOT_TRADING_OR_LATENCY_BENCHMARK",
+  "started": "2026-09-08T09:31:36.246Z",
+  "requestedModel": "gpt-6-astra/u64",
+  "httpStatus": 200,
+  "returnedModel": "gpt-6-astra",
+  "valid": true,
+  "inputTokens": 4414,
+  "outputTokens": 13,
+  "totalTokens": 4427,
+  "costAmount": null,
+  "costCurrency": null,
+  "costSource": "unavailable",
+  "latencyMs": 5842
+}

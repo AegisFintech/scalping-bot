@@ -62,3 +62,7 @@ systemd/overrides/
 *~
 .DS_Store
 Thumbs.db
+
+# Local code navigation index
+graphify-out/
+.codex/hooks.json

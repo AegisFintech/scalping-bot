@@ -1,0 +1,22 @@
+# Local code navigation: exclude secrets, runtime data, generated output and media.
+.env*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+.git/
+.runtime/
+artifacts/
+logs/
+node_modules/
+.venv/
+venv/
+dist/
+build/
+graphify-out/
+docs/evidence/
+docs/images/
+.codex/
+.agents/
+.claude/

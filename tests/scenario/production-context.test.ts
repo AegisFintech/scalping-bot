@@ -60,7 +60,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
       if (this.row) return Promise.resolve(false);
       this.row = {
         id: i.id,
-        requestedModel: "gpt-5.6-sol/u40",
+        requestedModel: "gpt-6-astra/u64",
         state: "REQUESTING",
         requestedAt: at(0),
         capturedAt: i.capturedAt,
@@ -89,7 +89,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
 function stored(): StoredContext {
   return {
     id: fixture.plan.analysis_id,
-    requestedModel: "gpt-5.6-sol/u40",
+    requestedModel: "gpt-6-astra/u64",
     state: "READY",
     requestedAt: at(0),
     capturedAt: at(0),
@@ -104,7 +104,7 @@ function stored(): StoredContext {
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
   it("does not reuse an old-model map after restart or bypass its paid-request cooldown", async () => {
     const store = memory();
-    store.row = { ...stored(), requestedModel: "gpt-6-astra/u64" };
+    store.row = { ...stored(), requestedModel: "gpt-5.6-sol/u40" };
     const generate = vi.fn();
     const model = new ReusableScenarioModel(
       store,
@@ -266,7 +266,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     now = base + 40_000;
     const plan = { ...fixture.plan, analysis_id: store.row!.id };
     release({
-      model: "gpt-5.6-sol/u40",
+      model: "gpt-6-astra/u64",
       response: plan,
       rawResponse: JSON.stringify(plan),
       promptArtifact: {
@@ -277,8 +277,8 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       latencyMs: 40_000,
       retryCount: 0,
       telemetry: {
-        requestedModel: "gpt-5.6-sol/u40",
-        returnedModel: "gpt-5.6-sol",
+        requestedModel: "gpt-6-astra/u64",
+        returnedModel: "gpt-6-astra",
         inputProfile: "chart",
         requestBytes: 100,
         responseBytes: 100,

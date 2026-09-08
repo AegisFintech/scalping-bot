@@ -185,12 +185,12 @@ labelled tracked-artifact fallback in Streamlit. Full redacted user JSON and
 the parsed response are restricted to the authenticated dashboard/database
 boundary, while Better Stack continues to receive only bounded summaries.
 
-## Current provider boundary (ISSUE-080)
+## Current provider boundary (ISSUE-081)
 
-The production adapter requests `gpt-5.6-sol/u40` through the existing EPRToken
+The production adapter requests `gpt-6-astra/u64` through the existing EPRToken
 Responses endpoint. A bounded endpoint probe accepted strict JSON Schema and
-returned `gpt-5.6-sol`. This observed alias is allowed only for this exact request;
-other returned identities reject. See `model-switch-report.md` for runtime evidence.
+returned `gpt-6-astra`. This observed alias is allowed only for this exact request;
+other returned identities reject. See `astra-graphify-report.md` for runtime evidence.
 Historical Astra probes remain in `overhaul-report.md`. No model fallback,
 temperature or reasoning-effort override is enabled. One in-flight request,
 90-second asynchronous deadline (95-second local HTTP envelope), no automatic

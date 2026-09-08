@@ -2,6 +2,11 @@
 
 Read `plan.md`, this file, and the relevant architecture/risk documents before changing code.
 
+## Communication preference
+
+Keep replies very short. Lead with the result or current blocker; put detailed evidence
+in linked reports. Give longer explanations only when explicitly requested.
+
 ## Non-negotiable safety rules
 
 - Preserve fail-closed behavior. Missing, stale, ambiguous, unavailable, partially reconciled, or invalid state must block analysis or placement as documented.
@@ -46,12 +51,12 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 - Preserve existing daily/drawdown locks when applying a policy update. Risk
   percentages are release constants, not environment tuning controls. Read
   `docs/fixed-risk-report.md` before changing the money-management policy.
-- Request `gpt-5.6-sol/u40` literally through the configured EPRToken Responses
+- Request `gpt-6-astra/u64` literally through the configured EPRToken Responses
   endpoint. Record requested/returned identities; never add a silent fallback.
-  Observed `gpt-5.6-sol` return normalization is documented in `docs/model-switch-report.md`.
-  Unknown cost is null. Historical Astra records remain immutable; a previous-model
+  Observed `gpt-6-astra` return normalization is documented in `docs/astra-graphify-report.md`.
+  Unknown cost is null. Historical provider records remain immutable; a previous-model
   map cannot authorize new execution after a switch. Its five-minute cooldown still applies.
-  Migration 0017 admits both historical Astra and current Sol journal identities;
+  Migration 0017 admits both Astra and Sol journal identities;
   never rewrite prior migration checksums or model history.
 - Preserve model-independent protective maintenance and account/symbol ownership
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.
@@ -157,3 +162,17 @@ Run formatting, linting, TypeScript type checks, Node tests, Python formatting/l
 - Before every commit, inspect the staged diff and run the secret scan. Before
   merge, run the full required completion checks and update `plan.md` plus the
   implementation report with exact results.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
