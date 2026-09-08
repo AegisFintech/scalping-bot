@@ -84,6 +84,11 @@ in linked reports. Give longer explanations only when explicitly requested.
 - Scenario provider requests have a 90-second deadline and five-second HTTP grace,
   within the unchanged five-minute map lifetime. Preserve original capture/expiry,
   output validation and independent maintenance. See `docs/provider-recovery-report.md`.
+- Pending preferred/maximum lifetime is 180 seconds from the fresh local decision,
+  capped at the original map deadline with a 60-second minimum. Validate the requested
+  duration before capping; never extend a map or an already-submitted order.
+  Ten/fifteen-minute results are research hypotheses, not validated execution policy.
+  Read `docs/order-expiry-research-report.md` for the censored quote evidence.
 - Provider inference runs outside the execution promise. Reuse a validated map
   across ordinary candle advances, but never relax the fresh completed-candle
   context checks for each individual execution decision. Crossed thresholds wait;

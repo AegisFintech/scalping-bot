@@ -137,8 +137,9 @@ reproduced `INVALID_DECIMAL` bottleneck while tightening the feasible interval.
 Strict boundary precision is unchanged.
 
 Preferred entries remain 0.25–0.75 completed-M1 ATR from the executable side,
-inside the hard 2.5-ATR cap. Preferred expiry is 60 seconds from pre-model capture,
-hard maximum 120 seconds. Inference cannot extend validity; changed completed
+inside the hard 2.5-ATR cap. Preferred and maximum pending expiry are 180 seconds from the fresh local
+decision snapshot, capped at the original five-minute map deadline. At least
+60 seconds must remain at construction; final freshness/expiry checks still apply. Inference cannot extend validity; changed completed
 candles, moved-through entries or expired plans reject. Broker-held STOP_LIMIT
 slippage and relative SL/TP are documented in
 [cTrader order messages](https://help.ctrader.com/open-api/messages/).

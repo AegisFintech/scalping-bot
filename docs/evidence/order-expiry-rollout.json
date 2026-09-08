@@ -1,0 +1,118 @@
+{
+  "label": "DEMO_ORDER_LIFETIME_OBSERVATION_NOT_PERFORMANCE",
+  "at": "2026-09-08T09:53:29.974Z",
+  "status": {
+    "release": "0.2.3-equity-risk.8",
+    "mode": "demo",
+    "paused": false,
+    "emergencyStopped": false,
+    "startup": true,
+    "ready": true,
+    "reasons": ["PREVIOUS_ANALYSIS_ACTIVE", "RELEVANT_PENDING_ORDER_EXISTS"],
+    "requestedModel": "gpt-6-astra/u64",
+    "managed": "ACTIVE",
+    "cycle": {
+      "outcome": "PLACED",
+      "reasons": []
+    }
+  },
+  "environmentUnchanged": true,
+  "orders": [
+    {
+      "side": "BUY",
+      "state": "PENDING",
+      "entry_price": "4405.4400000000",
+      "normalized_volume": "350900.0000000000",
+      "filled_volume": "0.0000000000",
+      "submitted_at": "2026-09-08T09:53:26.575Z",
+      "expires_at": "2026-09-08T09:56:19.358Z",
+      "map_expires": "2026-09-08T09:56:44.911Z",
+      "fill_count": 0,
+      "broker_expiration_ms": null
+    },
+    {
+      "side": "SELL",
+      "state": "PENDING",
+      "entry_price": "4401.3200000000",
+      "normalized_volume": "351000.0000000000",
+      "filled_volume": "0.0000000000",
+      "submitted_at": "2026-09-08T09:53:27.040Z",
+      "expires_at": "2026-09-08T09:56:19.358Z",
+      "map_expires": "2026-09-08T09:56:44.911Z",
+      "fill_count": 0,
+      "broker_expiration_ms": null
+    }
+  ],
+  "contexts": [
+    {
+      "state": "READY",
+      "reason": null,
+      "requested_at": "2026-09-08T09:51:46.204Z",
+      "available_at": "2026-09-08T09:52:04.501Z",
+      "valid_until": "2026-09-08T09:56:44.911Z",
+      "duration_ms": 18297,
+      "requested_model": "gpt-6-astra/u64"
+    }
+  ],
+  "supervisor": [
+    {
+      "name": "scalper-analytics",
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "name": "scalper-market-data",
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "name": "scalper-ai",
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "name": "scalper-execution",
+      "status": "online",
+      "restarts": 0
+    },
+    {
+      "name": "scalper-dashboard",
+      "status": "online",
+      "restarts": 0
+    }
+  ],
+  "resume": {
+    "at": "2026-09-08T09:51:18.671Z",
+    "mode": "demo",
+    "restoredPreviousPause": false,
+    "release": "0.2.3-equity-risk.8",
+    "financialLocksReset": false,
+    "liveEnabled": false
+  },
+  "brokerAfterOldExpiry": {
+    "at": "2026-09-08T09:54:35.615Z",
+    "positions": 0,
+    "orders": [
+      {
+        "side": "SELL",
+        "orderType": 6,
+        "timeInForce": 1,
+        "entry": 4401.32,
+        "expirationMs": 1788861379358,
+        "expiresAt": "2026-09-08T09:56:19.358Z",
+        "executedVolume": 0,
+        "volume": 351000
+      },
+      {
+        "side": "BUY",
+        "orderType": 6,
+        "timeInForce": 1,
+        "entry": 4405.44,
+        "expirationMs": 1788861379358,
+        "expiresAt": "2026-09-08T09:56:19.358Z",
+        "executedVolume": 0,
+        "volume": 350900
+      }
+    ]
+  }
+}

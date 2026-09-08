@@ -1,0 +1,1577 @@
+{
+  "label": "COUNTERFACTUAL_SAMPLED_QUOTE_EXPIRY_COHORTS_NOT_BROKER_FILLS",
+  "data": {
+    "segments": 60,
+    "dataset_sha256": "c14694b84e7b74c350633c29ed11c393658ed869b414b254d8ee1207165472d0",
+    "quotes": 32458,
+    "dropped": {
+      "duplicate_sample": 30713
+    },
+    "start": 1788842400074,
+    "end": 1788860399626,
+    "kind": "sampled broker quotes; incomplete tick path"
+  },
+  "plans_sha256": "7917127725d9b0350344c673d7d8e624a867d2af10c3b13b1df3807fb6a90908",
+  "assumptions": [
+    "Original submitted demo pairs only; same prices and actual submission times in every window.",
+    "One base unit per leg. Each pair isolated; overlapping cohorts cannot be summed as account returns.",
+    "No broker liquidity, queue, margin or rejection reconstruction; observed fills may be zero even when simulated fills occur.",
+    "Side-correct bid/ask, USD 0.05 limit, relative SL/TP, delayed trigger execution/OCO cancellation, fees once.",
+    "Gap >3s censors path. Open positions at ten-minute follow-up remain unknown; no invented time exit.",
+    "Sub-sample paths/partial residuals remain unknown. Half-fill scenario assumes confirmed remainder cancellation.",
+    "Model costs unavailable; net after AI, account P/L/drawdown/frequency and optimum expiry are unestablished.",
+    "5/10/15-minute unbounded maps violate current validity. These are research hypotheses, never execution permission.",
+    "Chronological split is descriptive, not independent multi-day holdout; no candidate fitted or promoted by this tool."
+  ],
+  "results": {
+    "base/1min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 0,
+        "closed_legs": 5,
+        "tp": 3,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.4779761800",
+        "closed_leg_profit_factor": "0.2131647003089651247010082628",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 20,
+          "triggered_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 113
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 4,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 3,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2158174000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 14,
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 4,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 5,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 0,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.51866655",
+        "closed_leg_profit_factor": "0E+7",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 3,
+          "outside_limit_observations": 57,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2
+        }
+      }
+    },
+    "base/3min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 9,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 0,
+        "closed_legs": 7,
+        "tp": 5,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.2797485285714285714285714286",
+        "closed_leg_profit_factor": "0.3552766076266050635012669503",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 10,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 9,
+          "outside_limit_observations": 289
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 0,
+        "closed_legs": 4,
+        "tp": 4,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2157040500",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 6,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.9403519666666666666666666667",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3,
+          "expired_legs": 0,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "base/5min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 9,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 0,
+        "closed_legs": 7,
+        "tp": 5,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.2797485285714285714285714286",
+        "closed_leg_profit_factor": "0.3552766076266050635012669503",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 10,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 9,
+          "outside_limit_observations": 289
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 0,
+        "closed_legs": 4,
+        "tp": 4,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2157040500",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 6,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.9403519666666666666666666667",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3,
+          "expired_legs": 0,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "base/5min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 10,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 8,
+        "tp": 5,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.4215668250",
+        "closed_leg_profit_factor": "0.2424042170639595222242289787",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 2,
+          "triggered_legs": 11,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 10,
+          "outside_limit_observations": 289
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 7,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 5,
+        "tp": 4,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.1102957400",
+        "closed_leg_profit_factor": "0.6100680982445740276656586968",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 2,
+          "triggered_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 7,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.9403519666666666666666666667",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "base/10min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 11,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 9,
+        "tp": 6,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.3497867222222222222222222222",
+        "closed_leg_profit_factor": "0.2928248946228211342007912611",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 12,
+          "outside_limit_observations": 320,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 11
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 6,
+        "tp": 5,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.0545041000",
+        "closed_leg_profit_factor": "0.7687719866627532914104406372",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 8,
+          "outside_limit_observations": 87,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 8
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.9403519666666666666666666667",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "base/15min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 11,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 9,
+        "tp": 6,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.3497867222222222222222222222",
+        "closed_leg_profit_factor": "0.2928248946228211342007912611",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 12,
+          "outside_limit_observations": 320,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 11
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 6,
+        "tp": 5,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.0545041000",
+        "closed_leg_profit_factor": "0.7687719866627532914104406372",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 8,
+          "outside_limit_observations": 87,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 8
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.9403519666666666666666666667",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "worse_costs_and_latency/1min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 0,
+        "closed_legs": 5,
+        "tp": 3,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.6614636175",
+        "closed_leg_profit_factor": "0.02968760350361891971643623909",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 22,
+          "triggered_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 4,
+          "outside_limit_observations": 109
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 4,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 3,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.0337301500",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 16,
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2,
+          "outside_limit_observations": 53
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 5,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 0,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.70425426875",
+        "closed_leg_profit_factor": "0E+10",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 3,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2,
+          "outside_limit_observations": 56
+        }
+      }
+    },
+    "worse_costs_and_latency/3min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 0,
+        "closed_legs": 6,
+        "tp": 4,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.5457117145833333333333333333",
+        "closed_leg_profit_factor": "0.03938328113986717570309151675",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 10,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 8,
+          "outside_limit_observations": 304
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 0,
+        "closed_legs": 4,
+        "tp": 4,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.0335595625",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 6,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 53
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 0,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.70425426875",
+        "closed_leg_profit_factor": "0E+10",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "outside_limit_observations": 251,
+          "expired_legs": 2,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2
+        }
+      }
+    },
+    "worse_costs_and_latency/5min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 0,
+        "closed_legs": 6,
+        "tp": 4,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.5457117145833333333333333333",
+        "closed_leg_profit_factor": "0.03938328113986717570309151675",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 10,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 8,
+          "outside_limit_observations": 304
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 0,
+        "closed_legs": 4,
+        "tp": 4,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.0335595625",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 6,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 53
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 0,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.70425426875",
+        "closed_leg_profit_factor": "0E+10",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "outside_limit_observations": 251,
+          "expired_legs": 2,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2
+        }
+      }
+    },
+    "worse_costs_and_latency/5min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 10,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 8,
+        "tp": 5,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.6020355015625",
+        "closed_leg_profit_factor": "0.03383307615579083628313279376",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 2,
+          "triggered_legs": 11,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 10,
+          "outside_limit_observations": 420
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 7,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 5,
+        "tp": 4,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.2884386150",
+        "closed_leg_profit_factor": "0.08515324953974763220338824465",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 2,
+          "triggered_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 7,
+          "outside_limit_observations": 53
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.124696979166666666666666667",
+        "closed_leg_profit_factor": "0.01009755428843487237414613634",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "outside_limit_observations": 367,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3
+        }
+      }
+    },
+    "worse_costs_and_latency/10min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 11,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 9,
+        "tp": 6,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.5305115041666666666666666667",
+        "closed_leg_profit_factor": "0.04219435555928935742502149393",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 12,
+          "outside_limit_observations": 450,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 11
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 6,
+        "tp": 5,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.2334187666666666666666666667",
+        "closed_leg_profit_factor": "0.1115930153189514931771607621",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 8,
+          "outside_limit_observations": 83,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 8
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.124696979166666666666666667",
+        "closed_leg_profit_factor": "0.01009755428843487237414613634",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "outside_limit_observations": 367,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3
+        }
+      }
+    },
+    "worse_costs_and_latency/15min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 11,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 9,
+        "tp": 6,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.5305115041666666666666666667",
+        "closed_leg_profit_factor": "0.04219435555928935742502149393",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 12,
+          "outside_limit_observations": 450,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 11
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 6,
+        "tp": 5,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.2334187666666666666666666667",
+        "closed_leg_profit_factor": "0.1115930153189514931771607621",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 8,
+          "outside_limit_observations": 83,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 8
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-1.124696979166666666666666667",
+        "closed_leg_profit_factor": "0.01009755428843487237414613634",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "outside_limit_observations": 367,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 3
+        }
+      }
+    },
+    "cancel_first_miss/1min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 0,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2152320000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 23,
+          "triggered_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2,
+          "outside_limit_observations": 5,
+          "cancel_on_miss_legs": 5
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 0,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2152320000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 16,
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 2,
+          "outside_limit_observations": 2,
+          "cancel_on_miss_legs": 2
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 0,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 5,
+        "outside_map_pairs": 0,
+        "closed_legs": 0,
+        "tp": 0,
+        "sl": 0,
+        "closed_leg_mean_before_model": null,
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 7,
+          "triggered_legs": 3,
+          "outside_limit_observations": 3,
+          "cancel_on_miss_legs": 3
+        }
+      }
+    },
+    "cancel_first_miss/3min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 5,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 21,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 3,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2156244000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 10,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 5,
+          "outside_limit_observations": 5,
+          "cancel_on_miss_legs": 5
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 4,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 2,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2152980000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 5,
+          "triggered_legs": 6,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 4,
+          "outside_limit_observations": 2,
+          "cancel_on_miss_legs": 2
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 1,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 0,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2162772000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 1,
+          "expired_legs": 1,
+          "outside_limit_observations": 3,
+          "cancel_on_miss_legs": 3
+        }
+      }
+    },
+    "cancel_first_miss/5min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 5,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 21,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 3,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2156244000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 10,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 5,
+          "outside_limit_observations": 5,
+          "cancel_on_miss_legs": 5
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 4,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 2,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2152980000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 5,
+          "triggered_legs": 6,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 4,
+          "outside_limit_observations": 2,
+          "cancel_on_miss_legs": 2
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 1,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 0,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2162772000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 1,
+          "expired_legs": 1,
+          "outside_limit_observations": 3,
+          "cancel_on_miss_legs": 3
+        }
+      }
+    },
+    "cancel_first_miss/5min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 21,
+        "outside_map_pairs": 28,
+        "closed_legs": 4,
+        "tp": 3,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.1918554250",
+        "closed_leg_profit_factor": "0.4573821202353200877695309514",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 11,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 5,
+          "cancel_on_miss_legs": 5
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 5,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 18,
+        "closed_legs": 3,
+        "tp": 2,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.3278996333333333333333333333",
+        "closed_leg_profit_factor": "0.3044598407305293966626055146",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 3,
+          "triggered_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 5,
+          "outside_limit_observations": 2,
+          "cancel_on_miss_legs": 2
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 1,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 10,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2162772000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 1,
+          "outside_limit_observations": 3,
+          "cancel_on_miss_legs": 3,
+          "expired_legs": 1
+        }
+      }
+    },
+    "cancel_first_miss/10min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 23,
+        "outside_map_pairs": 28,
+        "closed_legs": 4,
+        "tp": 3,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.1918554250",
+        "closed_leg_profit_factor": "0.4573821202353200877695309514",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 13,
+          "outside_limit_observations": 7,
+          "cancel_on_miss_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 5,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 14,
+        "outside_map_pairs": 18,
+        "closed_legs": 3,
+        "tp": 2,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.3278996333333333333333333333",
+        "closed_leg_profit_factor": "0.3044598407305293966626055146",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 9,
+          "outside_limit_observations": 4,
+          "cancel_on_miss_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 5
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 1,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 9,
+        "outside_map_pairs": 10,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2162772000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 1,
+          "outside_limit_observations": 3,
+          "cancel_on_miss_legs": 3
+        }
+      }
+    },
+    "cancel_first_miss/15min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 23,
+        "outside_map_pairs": 28,
+        "closed_legs": 4,
+        "tp": 3,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.1918554250",
+        "closed_leg_profit_factor": "0.4573821202353200877695309514",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 13,
+          "outside_limit_observations": 7,
+          "cancel_on_miss_legs": 7,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 6
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 5,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 14,
+        "outside_map_pairs": 18,
+        "closed_legs": 3,
+        "tp": 2,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.3278996333333333333333333333",
+        "closed_leg_profit_factor": "0.3044598407305293966626055146",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 9,
+          "outside_limit_observations": 4,
+          "cancel_on_miss_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 5
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 1,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 9,
+        "outside_map_pairs": 10,
+        "closed_legs": 1,
+        "tp": 1,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.2162772000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 0,
+          "oco_cancelled_legs": 1,
+          "outside_limit_observations": 3,
+          "cancel_on_miss_legs": 3
+        }
+      }
+    },
+    "half_fill_cancel_remainder/1min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 13,
+        "outside_map_pairs": 0,
+        "closed_legs": 5,
+        "tp": 3,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.23898809000",
+        "closed_leg_profit_factor": "0.2131647003089651247010082628",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 20,
+          "triggered_legs": 7,
+          "partial_fill_legs": 6,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 113
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 4,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 8,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 3,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.10790870000",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 14,
+          "triggered_legs": 4,
+          "partial_fill_legs": 4,
+          "oco_cancelled_legs": 4,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 2,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 5,
+        "outside_map_pairs": 0,
+        "closed_legs": 2,
+        "tp": 0,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.759333275",
+        "closed_leg_profit_factor": "0E+8",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 6,
+          "triggered_legs": 3,
+          "outside_limit_observations": 57,
+          "partial_fill_legs": 2,
+          "oco_cancelled_legs": 2
+        }
+      }
+    },
+    "half_fill_cancel_remainder/3min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 9,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 0,
+        "closed_legs": 7,
+        "tp": 5,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.1398742642857142857142857143",
+        "closed_leg_profit_factor": "0.3552766076266050635012669503",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 10,
+          "partial_fill_legs": 9,
+          "oco_cancelled_legs": 9,
+          "outside_limit_observations": 289
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 0,
+        "closed_legs": 4,
+        "tp": 4,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.10785202500",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 6,
+          "partial_fill_legs": 6,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.4701759833333333333333333333",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 3,
+          "oco_cancelled_legs": 3,
+          "expired_legs": 0,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "half_fill_cancel_remainder/5min/map_bounded": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 9,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 0,
+        "closed_legs": 7,
+        "tp": 5,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.1398742642857142857142857143",
+        "closed_leg_profit_factor": "0.3552766076266050635012669503",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 10,
+          "partial_fill_legs": 9,
+          "oco_cancelled_legs": 9,
+          "outside_limit_observations": 289
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 6,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 0,
+        "closed_legs": 4,
+        "tp": 4,
+        "sl": 0,
+        "closed_leg_mean_before_model": "0.10785202500",
+        "closed_leg_profit_factor": null,
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 4,
+          "triggered_legs": 6,
+          "partial_fill_legs": 6,
+          "oco_cancelled_legs": 6,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 0,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.4701759833333333333333333333",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 3,
+          "oco_cancelled_legs": 3,
+          "expired_legs": 0,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "half_fill_cancel_remainder/5min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 10,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 8,
+        "tp": 5,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.21078341250",
+        "closed_leg_profit_factor": "0.2424042170639595222242289787",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 2,
+          "triggered_legs": 11,
+          "partial_fill_legs": 10,
+          "oco_cancelled_legs": 10,
+          "outside_limit_observations": 289
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 7,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 5,
+        "tp": 4,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.05514787000",
+        "closed_leg_profit_factor": "0.6100680982445740276656586968",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "expired_legs": 2,
+          "triggered_legs": 7,
+          "partial_fill_legs": 7,
+          "oco_cancelled_legs": 7,
+          "outside_limit_observations": 56
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.4701759833333333333333333333",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 3,
+          "oco_cancelled_legs": 3,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "half_fill_cancel_remainder/10min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 11,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 9,
+        "tp": 6,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.1748933611111111111111111111",
+        "closed_leg_profit_factor": "0.2928248946228211342007912611",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 12,
+          "outside_limit_observations": 320,
+          "partial_fill_legs": 11,
+          "oco_cancelled_legs": 11
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 6,
+        "tp": 5,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.02725205000",
+        "closed_leg_profit_factor": "0.7687719866627532914104406372",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 8,
+          "outside_limit_observations": 87,
+          "partial_fill_legs": 8,
+          "oco_cancelled_legs": 8
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.4701759833333333333333333333",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 3,
+          "oco_cancelled_legs": 3,
+          "outside_limit_observations": 233
+        }
+      }
+    },
+    "half_fill_cancel_remainder/15min/stale_map_hypothesis": {
+      "all": {
+        "pairs": 28,
+        "pairs_with_assumed_fill": 11,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 19,
+        "outside_map_pairs": 28,
+        "closed_legs": 9,
+        "tp": 6,
+        "sl": 3,
+        "closed_leg_mean_before_model": "-0.1748933611111111111111111111",
+        "closed_leg_profit_factor": "0.2928248946228211342007912611",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 12,
+          "outside_limit_observations": 320,
+          "partial_fill_legs": 11,
+          "oco_cancelled_legs": 11
+        }
+      },
+      "earlier_two_thirds": {
+        "pairs": 18,
+        "pairs_with_assumed_fill": 8,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 12,
+        "outside_map_pairs": 18,
+        "closed_legs": 6,
+        "tp": 5,
+        "sl": 1,
+        "closed_leg_mean_before_model": "-0.02725205000",
+        "closed_leg_profit_factor": "0.7687719866627532914104406372",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 8,
+          "outside_limit_observations": 87,
+          "partial_fill_legs": 8,
+          "oco_cancelled_legs": 8
+        }
+      },
+      "later_third": {
+        "pairs": 10,
+        "pairs_with_assumed_fill": 3,
+        "pairs_with_oco_race": 0,
+        "censored_pairs": 7,
+        "outside_map_pairs": 10,
+        "closed_legs": 3,
+        "tp": 1,
+        "sl": 2,
+        "closed_leg_mean_before_model": "-0.4701759833333333333333333333",
+        "closed_leg_profit_factor": "0.07120628290654060958937957776",
+        "model_cost": null,
+        "portfolio_net_pnl": null,
+        "counts": {
+          "triggered_legs": 4,
+          "partial_fill_legs": 3,
+          "oco_cancelled_legs": 3,
+          "outside_limit_observations": 233
+        }
+      }
+    }
+  }
+}

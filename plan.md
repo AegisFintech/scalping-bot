@@ -2894,3 +2894,39 @@ runtime.
 - Final observation: both Astra-derived orders expired unfilled at 17:35:04;
   broker confirmation at 17:36:29 was flat and local status waited for the consumed
   map. Placement is verified, consistent coverage and improved fills remain unresolved.
+
+### ISSUE-082 — Research pending lifetime and bounded longer expiry
+
+- Issue: [#194](https://github.com/AegisFintech/scalping-bot/issues/194).
+- Status: complete; implemented, validated and deployed to existing demo on
+  `issue-082-bounded-order-expiry`. Depends on ISSUE-081 / PR #193.
+- Acceptance: research 1/3/5/10/15-minute expiry against frozen submitted demo pairs,
+  realistic quote-side costs, execution delays, misses and losing outcomes. Preserve
+  explicit missing-path/model-cost uncertainty and distinguish pending expiry from
+  position holding time. No profitability or optimal-lifetime claim.
+- Implementation: fixed 180-second preferred/maximum pending lifetime, capped by
+  original five-minute map validity. Preserve 60-second minimum, strict final
+  freshness/risk checks, immutable intent, one pair per map, emergency maintenance
+  and ownership. No existing-order, environment, model or risk changes.
+- Evidence: 28 Sol-derived submitted demo pairs, 60 recording segments, 32,458
+  distinct usable sampled quotes. Many censored paths; simulated baseline fills
+  disagree with zero actual fills. Three/five minutes share observed results;
+  ten/fifteen minutes do not establish an economically better default. Full
+  methodology and limitations: `docs/order-expiry-research-report.md`.
+- Required checks: full repository gates, failure paths, secret/dependency checks,
+  configuration validation, matching authorized demo rollout, documented rollback,
+  Graphify refresh and broker expiry observation if a qualified normal setup occurs.
+
+- Required gates passed: 500 Node tests, 138 Python tests, 22 schema tests,
+  three migration tests and three isolated TLS database integration tests.
+  Formatting/lint/types/build, startup configuration, replay/fail-closed,
+  secret scanning and both dependency audits passed. Exact commands and
+  follow-up export checks: `docs/evidence/order-expiry-validation.json`.
+- Graphify maps all 230 supported code files and 18 migrations (2,831 nodes /
+  5,968 edges); secrets/runtime/media excluded. No provider calls for graph/research.
+- Existing demo resumed at 17:51:18 SGT on `.8`, with unchanged environment,
+  Astra identity, risk locks and live disablement. A normal pair was submitted at
+  17:53:26–27 with expiry 17:56:19.358 (172.8/172.3 seconds at the broker).
+  Independent broker reconciliation at 17:54:35 still showed both unfilled orders,
+  past the old deadline, with that exact expiry. This verifies lifecycle behavior,
+  not improved fills or returns. Evidence: `docs/evidence/order-expiry-rollout.json`.

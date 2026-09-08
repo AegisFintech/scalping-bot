@@ -88,69 +88,72 @@ function maintenanceFixture(input: {
 describe("order maintenance", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("leaves a reconciled unfilled pair active until its actual expiry", async () => {
-    vi.useFakeTimers();
-    const start = Date.parse("2026-09-07T12:00:00Z");
-    const expires = start + 60_000;
-    const rows = ["buy", "sell"].map((side) => ({
-      client_order_id: `fixture-${side}`,
-      order_group_id: "group",
-      analysis_id: "analysis",
-    }));
-    const query = vi.fn((sql: string, values?: readonly unknown[]) => {
-      if (sql.includes("FROM orders o")) {
-        expect(sql).toContain("o.strategy_owned = true");
-        expect(values).toEqual(["account", "symbol"]);
-      }
-      return Promise.resolve({
-        rows:
-          sql.includes("og.expires_at <= now()") && Date.now() >= expires
-            ? rows
-            : [],
+  it.each([60, 100, 180])(
+    "leaves a reconciled unfilled pair active until its actual %s-second expiry",
+    async (lifetime) => {
+      vi.useFakeTimers();
+      const start = Date.parse("2026-09-07T12:00:00Z");
+      const expires = start + lifetime * 1000;
+      const rows = ["buy", "sell"].map((side) => ({
+        client_order_id: `fixture-${side}`,
+        order_group_id: "group",
+        analysis_id: "analysis",
+      }));
+      const query = vi.fn((sql: string, values?: readonly unknown[]) => {
+        if (sql.includes("FROM orders o")) {
+          expect(sql).toContain("o.strategy_owned = true");
+          expect(values).toEqual(["account", "symbol"]);
+        }
+        return Promise.resolve({
+          rows:
+            sql.includes("og.expires_at <= now()") && Date.now() >= expires
+              ? rows
+              : [],
+        });
       });
-    });
-    const cancelStrategyOrder = vi.fn((clientOrderId: string) =>
-      Promise.resolve({
-        clientOrderId,
-        brokerOrderId: null,
-        state: "CANCELLED" as const,
-        filledVolume: "0",
-        updatedAt: new Date().toISOString(),
-        reasonCode: "ANALYSIS_EXPIRED",
-      }),
-    );
-    const gateway = {
-      kind: "ctrader-demo",
-      canSubmitToBroker: true,
-      placeOco: vi.fn(),
-      cancelStrategyOrder,
-      reconcile: () =>
+      const cancelStrategyOrder = vi.fn((clientOrderId: string) =>
         Promise.resolve({
-          asOf: new Date().toISOString(),
-          certain: true,
-          reasonCodes: [],
-          orders: [],
-          relevantPositionCount: 0,
+          clientOrderId,
+          brokerOrderId: null,
+          state: "CANCELLED" as const,
+          filledVolume: "0",
+          updatedAt: new Date().toISOString(),
+          reasonCode: "ANALYSIS_EXPIRED",
         }),
-    } satisfies ExecutionGateway;
-    const maintenance = new OrderMaintenance(
-      { query } as never,
-      gateway,
-      "XAUUSD",
-      { accountId: "account", symbolId: "symbol" },
-    );
-    for (const seconds of [2, 7, 30, 59]) {
-      vi.setSystemTime(start + seconds * 1000);
+      );
+      const gateway = {
+        kind: "ctrader-demo",
+        canSubmitToBroker: true,
+        placeOco: vi.fn(),
+        cancelStrategyOrder,
+        reconcile: () =>
+          Promise.resolve({
+            asOf: new Date().toISOString(),
+            certain: true,
+            reasonCodes: [],
+            orders: [],
+            relevantPositionCount: 0,
+          }),
+      } satisfies ExecutionGateway;
+      const maintenance = new OrderMaintenance(
+        { query } as never,
+        gateway,
+        "XAUUSD",
+        { accountId: "account", symbolId: "symbol" },
+      );
+      for (const seconds of [2, 7, 30, 59, lifetime - 1]) {
+        vi.setSystemTime(start + seconds * 1000);
+        await maintenance.expireAndReconcile();
+        expect(cancelStrategyOrder).not.toHaveBeenCalled();
+      }
+      vi.setSystemTime(expires);
       await maintenance.expireAndReconcile();
-      expect(cancelStrategyOrder).not.toHaveBeenCalled();
-    }
-    vi.setSystemTime(expires);
-    await maintenance.expireAndReconcile();
-    expect(cancelStrategyOrder.mock.calls).toEqual([
-      ["fixture-buy", "ANALYSIS_EXPIRED"],
-      ["fixture-sell", "ANALYSIS_EXPIRED"],
-    ]);
-  });
+      expect(cancelStrategyOrder.mock.calls).toEqual([
+        ["fixture-buy", "ANALYSIS_EXPIRED"],
+        ["fixture-sell", "ANALYSIS_EXPIRED"],
+      ]);
+    },
+  );
 
   it("retries a pending OCO peer immediately after its sibling fills", async () => {
     const { maintenance, cancelStrategyOrder, updates } = maintenanceFixture(

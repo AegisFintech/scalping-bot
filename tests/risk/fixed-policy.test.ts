@@ -27,6 +27,18 @@ const metadata = (
 const config = loadExecutionConfig(resolveRuntimeEnvironment({}));
 
 describe("fixed percentage policy, synthetic risk evidence only", () => {
+  it("fixes three-minute pending expiry without adding operator controls", () => {
+    expect(resolveRuntimeEnvironment({})).toMatchObject({
+      ORDER_EXPIRY_MIN_SECONDS: "60",
+      ORDER_EXPIRY_MAX_SECONDS: "180",
+      PREFERRED_ORDER_EXPIRY_SECONDS: "180",
+      AI_MODEL: "gpt-6-astra/u64",
+      LIVE_TRADING_ENABLED: "false",
+    });
+    expect(() =>
+      resolveRuntimeEnvironment({ PREFERRED_ORDER_EXPIRY_SECONDS: "900" }),
+    ).toThrow("CONFIG_POLICY_CONFLICT:PREFERRED_ORDER_EXPIRY_SECONDS:");
+  });
   it("keeps scheduler authority in safety auditing without changing immutable strategy identity", () => {
     const stopped = loadExecutionConfig(
       resolveRuntimeEnvironment({ AUTOMATIC_ANALYSIS_ENABLED: "false" }),

@@ -5,7 +5,7 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.3-equity-risk.6`, policy `fixed-risk-v4`.
+The current source release is `0.2.3-equity-risk.8`, policy `fixed-risk-v4`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
@@ -103,8 +103,10 @@ five-second candle-rollover reserve), without waiting for inference. A map can
 produce one OCO intent. Crossed levels, insufficient reward, short remaining
 validity or consumed maps wait without another paid call. Individual decisions
 still require fresh quotes, matching completed-candle context and full account,
-spread, fee, margin and risk approval. Pending orders retain 60-second validity,
+spread, fee, margin and risk approval. Pending orders use up to three minutes of validity,
 starting from the fresh local decision and bounded by the map's expiry.
+The [1/3/5/10/15-minute research](docs/order-expiry-research-report.md) does not
+establish a profitable or optimal lifetime; filled positions retain their SL/TP.
 
 Broker STOP_LIMIT orders handle triggers. This is retail event-triggered execution
 with a polling decision loop, not institutional HFT. `DEFERRED` means waiting;

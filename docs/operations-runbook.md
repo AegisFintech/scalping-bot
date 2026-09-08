@@ -1,12 +1,12 @@
 # Current release operations
 
-Release `0.2.3-equity-risk.7` requests `gpt-6-astra/u64`. Change only the populated
-`AI_MODEL` assignment, preserve credentials, pause new analyses with authenticated
-controls, deploy matching AI/execution services and verify supervisor state before
-restoring the existing demo authorization. Existing migration 0017 permits both
-model identities. Do not reset risk locks, alter prior contexts, bypass their
-cooldown or enable live execution. Full evidence and rollback:
-[ISSUE-081](astra-graphify-report.md).
+Release `0.2.3-equity-risk.8` extends new pending orders to up to three minutes,
+capped by original map validity. It preserves Astra, credentials, risk locks and
+previous demo authorization. No populated environment or database migration is
+needed. Pause new analyses, wait for strategy-owned pending orders to become
+terminal, deploy matching services, verify risk/reconciliation and restore only
+previous authorization. Never extend an existing order or enable live execution.
+Research, exact validation and rollback: [ISSUE-082](order-expiry-research-report.md).
 
 For code navigation, use the isolated `graphify` CLI and ignored `graphify-out/`.
 Run `graphify query "<focused question>" --budget 1000` before targeted source
@@ -16,7 +16,7 @@ Do not enable remote semantic extraction or index runtime credentials.
 
 ## Order safety and provider recovery
 
-For `0.2.3-equity-risk.7` / `fixed-risk-v4`, follow the
+For `0.2.3-equity-risk.8` / `fixed-risk-v4`, follow the
 [risk-budget sizing and storage recovery procedure](risk-budget-recovery-report.md).
 For missing pending orders, check [the provider recovery report](provider-recovery-report.md).
 A healthy execution process does not imply an available model map. Provider failures,
