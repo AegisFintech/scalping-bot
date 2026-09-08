@@ -8,6 +8,7 @@ import type {
 } from "../../contracts/src/index.js";
 import { ModelResponseValidator } from "../../risk-engine/src/model-validator.js";
 import { record, recordsField } from "../../ctrader-client/src/protocol.js";
+import { returnedModelMatches } from "./model-identity.js";
 import {
   boundedResponseText,
   ProviderFailure,
@@ -283,14 +284,7 @@ export class OpenAiCompatibleClient<
           "AI_RESPONSE_ENVELOPE_INVALID",
         );
         const returnedModel = envelope.model ?? null;
-        if (
-          returnedModel !== null &&
-          returnedModel !== this.#options.model &&
-          !(
-            this.#options.model === "gpt-6-astra/u64" &&
-            returnedModel === "gpt-6-astra"
-          )
-        )
+        if (!returnedModelMatches(this.#options.model, returnedModel))
           throw new Error("AI_RETURNED_MODEL_MISMATCH");
         const telemetry = providerTelemetrySchema.parse({
           requestedModel: this.#options.model,

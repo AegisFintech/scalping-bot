@@ -231,6 +231,7 @@ describe("PostgreSQL migrations integration", () => {
         "0014",
         "0015",
         "0016",
+        "0017",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -740,6 +741,24 @@ describe("PostgreSQL migrations integration", () => {
       expect(claims.filter(Boolean)).toHaveLength(1);
       const currentContext = await contextStore.latest();
       expect(currentContext?.state).toBe("REQUESTING");
+      expect(currentContext?.requestedModel).toBe("gpt-5.6-sol/u40");
+      await expect(
+        isolated.query(
+          "UPDATE scenario_contexts SET requested_model='unapproved-model' WHERE id=$1",
+          [currentContext!.id],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      await isolated.query(
+        "UPDATE scenario_contexts SET requested_model='gpt-6-astra/u64' WHERE id=$1",
+        [currentContext!.id],
+      );
+      expect((await contextStore.latest())?.requestedModel).toBe(
+        "gpt-6-astra/u64",
+      );
+      await isolated.query(
+        "UPDATE scenario_contexts SET requested_model='gpt-5.6-sol/u40' WHERE id=$1",
+        [currentContext!.id],
+      );
       await contextStore.finish(
         currentContext!.id,
         null,

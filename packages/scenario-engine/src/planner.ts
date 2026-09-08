@@ -2,6 +2,7 @@ import type {
   AnalysisChartArtifact,
   CandleSeries,
 } from "../../contracts/src/index.js";
+import { FIXED_DEFAULTS } from "../../config/src/policy.js";
 import { ProviderFailure } from "../../ai-client/src/telemetry.js";
 import {
   OpenAiCompatibleClient,
@@ -27,7 +28,7 @@ export class ScenarioPlanner {
   }) {
     this.client = new OpenAiCompatibleClient<ScenarioPlan>({
       ...options,
-      model: "gpt-6-astra/u64",
+      model: FIXED_DEFAULTS.AI_MODEL,
       apiStyle: "responses",
       schemaPath: "schemas/scenario-plan-1.0.json",
       outputSchemaName: "chart_scenario_1_0",

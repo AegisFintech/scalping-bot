@@ -1,5 +1,11 @@
 # Current release operations
 
+For release `0.2.2-fixed-risk.5`, the active model pin is `gpt-5.6-sol/u40`.
+Update this assignment and the matching AI/execution builds together under an
+authenticated maintenance pause, applying additive compatibility migration 0017; verify the actual provider response before
+restoring prior authorization. Preserve all other environment values and durable
+controls. See [model-switch validation and rollback](model-switch-report.md).
+
 For release `0.2.2-fixed-risk.4`, follow [the reconciliation repair record](pending-order-reconciliation-report.md)
 and the unchanged [fixed-policy rollout record](fixed-risk-report.md).
 The operator removed the absolute equity-floor requirement and authorized a fixed

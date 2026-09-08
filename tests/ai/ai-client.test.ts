@@ -83,6 +83,52 @@ function orchestratorEnvelope(rawResponse: string) {
 }
 
 describe("OpenAI-compatible client", () => {
+  it.each([
+    ["gpt-5.6-sol/u40", true],
+    ["gpt-5.6-sol", true],
+    ["gpt-6-astra", false],
+    ["gpt-6-astra/u64", false],
+    ["gpt-5.6-sol/u41", false],
+  ])(
+    "sends the exact Sol route and validates returned identity %s",
+    async (returned, accepted) => {
+      const fetchImpl = vi.fn(
+        (_url: string | URL | Request, init?: RequestInit) => {
+          const body = JSON.parse(
+            typeof init?.body === "string" ? init.body : "{}",
+          ) as { model?: unknown };
+          expect(body.model).toBe("gpt-5.6-sol/u40");
+          return Promise.resolve(
+            Response.json({
+              model: returned,
+              output_text: JSON.stringify(validResponse()),
+            }),
+          );
+        },
+      );
+      const request = new OpenAiCompatibleClient({
+        baseUrl: "https://example.com/v1",
+        apiKey: "fixture",
+        model: "gpt-5.6-sol/u40",
+        apiStyle: "responses",
+        schemaPath: "schemas/model-response-2.0.json",
+        systemPromptPath,
+        promptVersion: "system-v2",
+        maxRetries: 0,
+        fetchImpl,
+      }).analyze(analysisRequest);
+      if (accepted)
+        await expect(request).resolves.toMatchObject({
+          model: "gpt-5.6-sol/u40",
+          telemetry: {
+            requestedModel: "gpt-5.6-sol/u40",
+            returnedModel: returned,
+          },
+        });
+      else await expect(request).rejects.toThrow("AI_RETURNED_MODEL_MISMATCH");
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    },
+  );
   it("retains sanitized usage for rejected output through the HTTP adapter", async () => {
     const client = new OpenAiCompatibleClient({
       baseUrl: "https://example.com/v1",

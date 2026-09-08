@@ -447,7 +447,7 @@ describe("bounded scenario provider adapter", () => {
       return Promise.resolve(
         new Response(
           JSON.stringify({
-            model: "gpt-6-astra",
+            model: "gpt-5.6-sol",
             output_text: JSON.stringify(fixture().plan),
           }),
         ),
@@ -460,12 +460,12 @@ describe("bounded scenario provider adapter", () => {
       now: () => base,
     });
     const result = await planner.generate(input());
-    expect(request.model).toBe("gpt-6-astra/u64");
+    expect(request.model).toBe("gpt-5.6-sol/u40");
     expect(JSON.stringify(request)).toContain("input_image");
     expect(request.text).toMatchObject({
       format: { name: "chart_scenario_1_0", strict: true },
     });
-    expect(result.telemetry.returnedModel).toBe("gpt-6-astra");
+    expect(result.telemetry.returnedModel).toBe("gpt-5.6-sol");
     expect(result.telemetry.costAmount).toBeNull();
   });
   it("does not send future/forming or mismatched chart data to the provider", async () => {
@@ -529,7 +529,7 @@ describe("bounded scenario provider adapter", () => {
     finish!(
       new Response(
         JSON.stringify({
-          model: "gpt-6-astra",
+          model: "gpt-5.6-sol",
           output_text: JSON.stringify(f.plan),
         }),
       ),
@@ -557,7 +557,7 @@ describe("bounded scenario provider adapter", () => {
       Promise.resolve(
         new Response(
           JSON.stringify({
-            model: "gpt-6-astra",
+            model: "gpt-5.6-sol",
             output_text: JSON.stringify(fixture().plan),
           }),
         ),

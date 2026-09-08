@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { FIXED_DEFAULTS } from "../packages/config/src/policy.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import { OpenAiCompatibleClient } from "../packages/ai-client/src/client.js";
 import type { AnalysisChartArtifact } from "../packages/contracts/src/index.js";
@@ -20,7 +21,7 @@ for (const [index, input] of inputs.entries()) {
     const client = new OpenAiCompatibleClient({
       baseUrl: process.env.AI_BASE_URL ?? "",
       apiKey: process.env.AI_API_KEY ?? "",
-      model: "gpt-6-astra/u64",
+      model: FIXED_DEFAULTS.AI_MODEL,
       apiStyle: "responses",
       schemaPath: "schemas/model-response-2.1.json",
       systemPromptPath: "prompts/system-v16.md",

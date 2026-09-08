@@ -2,6 +2,31 @@
 
 ## Scope
 
+### ISSUE-078 — Switch the active model to Sol (implemented; validated; demo restored)
+
+- Issue: [#186](https://github.com/AegisFintech/scalping-bot/issues/186).
+- Branch: `issue-078-sol-model-switch`; dependency: ISSUE-077 / PR #185.
+- Authorization: September 8 operator request for exact `gpt-5.6-sol/u40`.
+- Acceptance: change only the model assignment in the populated environment;
+  keep credentials, endpoint, risk and demo/live authority intact; update all active
+  provider/consumer pins; reject previous-model maps and returned substitutions;
+  run required checks and verify the running service and real endpoint.
+- Implementation: release `0.2.2-fixed-risk.5`, unchanged `fixed-risk-v2` policy;
+  single policy pin, explicit observed aliases, durable old-map cooldown preserved.
+  Forward migration 0017 preserves Astra history and admits the exact Sol route.
+- Rollout: new analyses paused; protected environment backup; only `AI_MODEL`
+  changed. Initial real endpoint probe accepted exact Sol route and returned
+  `gpt-5.6-sol`. Running scenario-v2 chart probe passed using labeled synthetic input
+  in 35,185 ms. Migration 0017 applied with history preserved; demo restored at
+  09:04:59 SGT, all services online and exact model confirmed. Only the model key changed.
+- Validation: 452 Node / 118 Python, 22 schema / three migration tests; all three
+  integration tests passed on isolated PostgreSQL with verified TLS. Required
+  format/lint/type/build/configuration/replay/secret checks and zero-vulnerability
+  dependency audits passed after correcting test lint/type issues and the SQL pin.
+  Hosted database tests hit the 512 MB quota; real-market probes found M1/M5/M15
+  gaps and stopped before inference. These separate operational blockers remain.
+  Exact evidence and rollback: `docs/model-switch-report.md` and `docs/evidence/sol-validation.json`.
+
 ### ISSUE-077 — Preserve correctly reconciled pending orders (implemented; validated; demo restored)
 
 - Branch: `issue-077-pending-order-reconciliation`.

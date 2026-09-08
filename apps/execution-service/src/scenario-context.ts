@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type pg from "pg";
+import { FIXED_DEFAULTS } from "../../../packages/config/src/policy.js";
 import type { AiAnalysisResult } from "../../../packages/ai-client/src/client.js";
 import {
   ProviderFailure,
@@ -17,6 +18,7 @@ import type { ScenarioPlanner } from "../../../packages/scenario-engine/src/plan
 
 export interface StoredContext {
   id: string;
+  requestedModel: string;
   state: "REQUESTING" | "READY" | "FAILED";
   requestedAt: string;
   capturedAt: string;
@@ -63,7 +65,7 @@ export class PostgresContextStore implements ContextStore {
   }
   async latest(): Promise<StoredContext | null> {
     const result = await this.pool.query(
-      `SELECT c.id,c.state,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,
+      `SELECT c.id,c.state,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,
       EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed
       FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3 ORDER BY requested_at DESC LIMIT 1`,
       [this.scope.accountId, this.scope.symbolId, this.scope.mode],
@@ -71,6 +73,7 @@ export class PostgresContextStore implements ContextStore {
     const r = result.rows[0] as
       | {
           id: string;
+          requested_model: string;
           state: StoredContext["state"];
           requested_at: Date;
           captured_at: Date;
@@ -85,6 +88,7 @@ export class PostgresContextStore implements ContextStore {
       ? null
       : {
           id: r.id,
+          requestedModel: r.requested_model,
           state: r.state,
           requestedAt: r.requested_at.toISOString(),
           capturedAt: r.captured_at.toISOString(),
@@ -118,7 +122,7 @@ export class PostgresContextStore implements ContextStore {
       const result = await client.query(
         `INSERT INTO scenario_contexts
         (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id)
-        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING','gpt-6-astra/u64',$6,$7
+        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7
         WHERE NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4 AND requested_at > clock_timestamp()-interval '5 minutes') RETURNING id`,
         [
           input.id,
@@ -128,6 +132,7 @@ export class PostgresContextStore implements ContextStore {
           input.capturedAt,
           input.tickSize,
           input.sourceAnalysisId,
+          FIXED_DEFAULTS.AI_MODEL,
         ],
       );
       await client.query("COMMIT");
@@ -148,7 +153,10 @@ export class PostgresContextStore implements ContextStore {
     const usage = result?.telemetry ?? telemetry;
     const parsed =
       usage === undefined ? null : providerTelemetrySchema.parse(usage);
-    if (parsed !== null && parsed.requestedModel !== "gpt-6-astra/u64")
+    if (
+      (parsed !== null && parsed.requestedModel !== FIXED_DEFAULTS.AI_MODEL) ||
+      (result !== null && result.model !== FIXED_DEFAULTS.AI_MODEL)
+    )
       throw new Error("SCENARIO_PROVIDER_IDENTITY_MISMATCH");
     const updated = await this.pool.query(
       `UPDATE scenario_contexts SET state=$2,completed_at=clock_timestamp(),duration_ms=GREATEST(0,floor(extract(epoch FROM (clock_timestamp()-requested_at))*1000))::integer,available_at=CASE WHEN $2='READY' THEN clock_timestamp() ELSE NULL END,
@@ -211,6 +219,7 @@ export class ReusableScenarioModel implements ModelProvider {
     if (
       existing !== null &&
       existing.state === "READY" &&
+      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
       !existing.consumed &&
       time(existing.validUntil) >= now + 65_000
     ) {

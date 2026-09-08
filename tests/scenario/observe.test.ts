@@ -59,15 +59,15 @@ function ports() {
     rawResponse: JSON.stringify(f.plan),
     latencyMs: 1,
     retryCount: 0,
-    model: "gpt-6-astra/u64",
+    model: "gpt-5.6-sol/u40",
     promptArtifact: {
       version: "scenario-v1",
       content: "fixture",
       sha256: "0".repeat(64),
     },
     telemetry: {
-      requestedModel: "gpt-6-astra/u64",
-      returnedModel: "gpt-6-astra",
+      requestedModel: "gpt-5.6-sol/u40",
+      returnedModel: "gpt-5.6-sol",
       inputProfile: "chart",
       requestBytes: 1,
       responseBytes: 1,

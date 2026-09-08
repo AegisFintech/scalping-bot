@@ -5,7 +5,7 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.2-fixed-risk.4`, policy `fixed-risk-v2`.
+The current source release is `0.2.2-fixed-risk.5`, policy `fixed-risk-v2`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v1` and the unchanged strict schema `2.1`.
@@ -69,13 +69,13 @@ Authenticated pause and emergency controls remain available in the sidebar.
 
 ## Model and decision path
 
-The existing EPRToken endpoint accepted the exact requested identifier
-`gpt-6-astra/u64` with Responses and strict JSON Schema, returning `gpt-6-astra`.
-Both identifiers, timing and available token usage are retained. Revised staging
-and production-service probes passed in 17.7 and 18.8 seconds. Earlier benchmark
-requests returned HTTP 403; continuous availability and pricing remain unresolved.
+The operator-selected model is now `gpt-5.6-sol/u40`. The existing EPRToken
+Responses endpoint accepted this literal identifier with strict JSON Schema,
+returning `gpt-5.6-sol`. Both identifiers, timing and available token usage are
+retained; pricing remains unknown. See [model-switch evidence](docs/model-switch-report.md).
 No fallback model is substituted. Temperature and reasoning-effort parameters
-are omitted; the `/u64` suffix is sent literally, not interpreted by this code.
+remain omitted; `/u40` is sent literally, without inferred client-side semantics.
+Historical Astra observations are preserved and do not establish Sol performance.
 
 The active scenario input contains the exact M15/M5/M1 chart and bounded completed
 candle tails (12/18/30). The earlier matched image/structured benchmark did not
@@ -104,7 +104,7 @@ It contains deployment identity, credentials/endpoints, explicit authorization,
 and notional authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=gpt-6-astra/u64` is explicit; other AI and strategy tuning is fixed in
+`AI_MODEL=gpt-5.6-sol/u40` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
 25** entries, preserving credentials and all values except the removed floor. Its
 four additional entries preserve deployment credentials. See the
