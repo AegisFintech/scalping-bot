@@ -1,6 +1,7 @@
 import { canonical, decimal } from "./decimal.js";
 
 export interface SpreadInput {
+  readonly skipStrategyLimits?: boolean;
   readonly bid: string;
   readonly ask: string;
   readonly tickSize: string;
@@ -37,6 +38,13 @@ export function checkSpread(input: SpreadInput): SpreadDecision {
     }
     const spread = decimal(input.ask).minus(decimal(input.bid));
     const points = spread.div(decimal(input.tickSize));
+    if (input.skipStrategyLimits)
+      return {
+        approved: spread.gte(0),
+        spreadPoints: canonical(points),
+        spreadAtrRatio: null,
+        reasonCodes: spread.lt(0) ? ["SPREAD_CROSSED"] : [],
+      };
     const atrRatio = spread.div(decimal(input.atr));
     const reasons: string[] = [];
     if (spread.lt(0)) reasons.push("SPREAD_CROSSED");

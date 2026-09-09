@@ -1,5 +1,6 @@
 import { ProviderFailure } from "../../../packages/ai-client/src/telemetry.js";
 import { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
+import { EntryPairPlanner } from "../../../packages/scenario-engine/src/entry-planner.js";
 import "dotenv/config";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
@@ -17,6 +18,7 @@ import type { AnalysisChartArtifact } from "../../../packages/contracts/src/inde
 export interface AiServerOptions {
   readonly client: OpenAiCompatibleClient;
   readonly scenarioPlanner?: ScenarioPlanner;
+  readonly entryPairPlanner?: EntryPairPlanner;
 }
 
 export function normalizeAiAnalysisError(error: unknown): string {
@@ -47,6 +49,29 @@ export function aiReasoningEffort(
 
 export function createAiServer(options: AiServerOptions): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 5_600_000 });
+  app.post<{ Body: Parameters<EntryPairPlanner["generate"]>[0] }>(
+    "/v1/entry-pair",
+    async (request, reply) => {
+      if (options.entryPairPlanner === undefined)
+        return reply.code(503).send({ reason: "SCENARIO_NOT_CONFIGURED" });
+      try {
+        return reply.send(
+          await options.entryPairPlanner.generate(request.body),
+        );
+      } catch (error) {
+        return reply.code(503).send({
+          reason:
+            error instanceof Error &&
+            /^(AI|SCENARIO)_[A-Z0-9_:]{1,120}$/.test(error.message)
+              ? error.message
+              : normalizeAiAnalysisError(error),
+          ...(error instanceof ProviderFailure
+            ? { telemetry: error.telemetry }
+            : {}),
+        });
+      }
+    },
+  );
   app.post<{ Body: Parameters<ScenarioPlanner["generate"]>[0] }>(
     "/v1/scenario",
     async (request, reply) => {
@@ -72,7 +97,8 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
   app.get("/health/ready", (_request, reply) => {
     if (
       options.client.circuitOpen ||
-      options.scenarioPlanner?.client.circuitOpen
+      options.scenarioPlanner?.client.circuitOpen ||
+      options.entryPairPlanner?.client.circuitOpen
     )
       return reply
         .code(503)
@@ -135,7 +161,11 @@ async function main(): Promise<void> {
     apiKey: environment.AI_API_KEY ?? "",
     executionContext: true,
   });
-  const app = createAiServer({ client, scenarioPlanner });
+  const entryPairPlanner = new EntryPairPlanner({
+    baseUrl: environment.AI_BASE_URL ?? "",
+    apiKey: environment.AI_API_KEY ?? "",
+  });
+  const app = createAiServer({ client, scenarioPlanner, entryPairPlanner });
   await app.listen({
     host: environment.HOST ?? "127.0.0.1",
     port: Number(environment.AI_ORCHESTRATOR_PORT ?? 8082),

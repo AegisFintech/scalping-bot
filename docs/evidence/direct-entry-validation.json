@@ -1,0 +1,148 @@
+{
+  "release": "0.2.4-direct-entry.1",
+  "policy": "direct-entry-v1",
+  "commands": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 13.53
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 29.29
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.72,
+      "initial_failure": "New test omitted required timeoutMs; corrected and typecheck passed."
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.68
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 29.26
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 3.74
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.27
+    },
+    {
+      "command": "npm run test:integration (isolated local role and verified TLS)",
+      "exit_code": 0,
+      "seconds": 6.52,
+      "initial_failure": "Isolated PostgreSQL had no postgres role; rerun used its existing nobody role with verified TLS."
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.67
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.76
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.46
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.5
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.51
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.51
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.25
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-086/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.2
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-086/scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.69
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "limitation": "Seven pre-existing deleted image paths cause rg missing-file messages. Supplemented before commit by a scan of all index blobs against credential values and key/token patterns."
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.86
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 14.35
+    }
+  ],
+  "counts": {
+    "nodeTests": 572,
+    "nodeFiles": 68,
+    "schemaTests": 28,
+    "migrationTests": 3,
+    "integrationTests": 3,
+    "pythonTests": 140
+  },
+  "dependencyFindings": {
+    "npm": 0,
+    "python": 0
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "mode": "AST-only; no API calls",
+    "nodes": 2975,
+    "edges": 6262,
+    "communities": 211,
+    "limitation": "Existing pyproject.toml parser emits zero nodes."
+  },
+  "integration": "Isolated temporary PostgreSQL over verified TLS; server stopped after tests. No production database migrations or test writes.",
+  "labels": "Unit, mocked integration and synthetic replay/backtest evidence do not establish trading performance.",
+  "supplementalSecretScan": {
+    "command": "node artifacts/issue-086/scan-index.mjs",
+    "exit_code": 0,
+    "scope": "all index blobs, including pre-existing deleted working-tree images",
+    "files": 412,
+    "activeCredentialMatchesOrPatterns": []
+  }
+}

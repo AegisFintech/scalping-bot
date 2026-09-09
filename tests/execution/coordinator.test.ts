@@ -399,6 +399,38 @@ function options(
 }
 
 describe("analysis coordinator", () => {
+  it("places under direct-entry policy despite spread, percentile and ATR strategy limits", async () => {
+    const spreadContext = vi.fn(() =>
+      Promise.reject(new Error("unused history")),
+    );
+    const o = options({
+      entryPairMode: true,
+      maxSpreadPoints: "1",
+      maxSpreadAtrRatio: "0.001",
+      maxSpreadPercentile: "1",
+      maxEntryDistanceAtr: "0.01",
+      maxStopDistanceAtr: "0.001",
+      spreadContext,
+      preModelStabilityCheck: true,
+    });
+    const place = vi.spyOn(o.gateway, "placeOco");
+    const result = await new AnalysisCoordinator(o).runOnce();
+    expect(result).toMatchObject({ outcome: "PLACED", reasonCodes: [] });
+    expect(spreadContext).not.toHaveBeenCalled();
+    expect(place).toHaveBeenCalledTimes(1);
+  });
+  it("direct entries still reject uncertain account state without broker submission", async () => {
+    const o = options({
+      entryPairMode: true,
+      safety: () =>
+        Promise.resolve({ ...safety(), reconciliationCertain: false }),
+    });
+    const place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+      "REJECTED",
+    );
+    expect(place).not.toHaveBeenCalled();
+  });
   it("defers for a background context without requesting a model decision or placing orders", async () => {
     const o = options();
     o.model.prepare = vi.fn().mockResolvedValue("SCENARIO_REFRESH_STARTED");

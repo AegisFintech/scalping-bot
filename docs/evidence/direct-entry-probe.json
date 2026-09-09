@@ -1,0 +1,29 @@
+{
+  "label": "REAL_MARKET_PROVIDER_PROBE_WITHOUT_BROKER_AUTHORITY",
+  "at": "2026-09-09T05:32:36.293Z",
+  "counts": {
+    "M15": 96,
+    "M5": 144,
+    "M1": 240
+  },
+  "dispatchedAt": "2026-09-09T05:32:39.792Z",
+  "success": true,
+  "durationMs": 5874,
+  "telemetry": {
+    "requestedModel": "deepseek-v4-pro/u5W",
+    "returnedModel": "deepseek-v4-pro",
+    "inputProfile": "structured",
+    "requestBytes": 61954,
+    "responseBytes": 1819,
+    "inputTokens": 28923,
+    "outputTokens": 19,
+    "totalTokens": 28942,
+    "costAmount": null,
+    "costCurrency": null,
+    "costSource": "unavailable"
+  },
+  "contract": "entry-pair-1.0",
+  "buyStop": "4388.9",
+  "sellStop": "4383.44",
+  "finishedAt": "2026-09-09T05:32:45.667Z"
+}

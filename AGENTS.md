@@ -7,11 +7,23 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
 
+## Current operator override — ISSUE-086
+
+- September 9 production policy `direct-entry-v1` uses readable buy/sell entry
+  prices only. This supersedes the older scenario-shape/level-order requirements
+  and spread, ATR entry/stop distance, preferred corridor, model target-room and
+  daily order-count filters below. Read `docs/direct-entry-report.md`.
+- Record the requested DeepSeek pin and returned identity; the returned identity
+  is observational on this path. Provider metadata/extra fields are not required.
+- Keep valid broker prices, local identity/time provenance, data integrity,
+  cost-inclusive sizing/loss locks, ownership, reconciliation and idempotency.
+  The historical/research contracts below remain unchanged.
+
 ## Non-negotiable safety rules
 
 - Preserve fail-closed behavior. Missing, stale, ambiguous, unavailable, partially reconciled, or invalid state must block analysis or placement as documented.
 - Never enable live execution by default or infer live authority from configured credentials.
-- Never weaken JSON Schema, semantic, precision, freshness, reconciliation, or deterministic risk validation.
+- Preserve the current explicitly authorized contract: minimal entry parsing in production and unchanged historical schemas; retain broker precision, freshness, reconciliation and deterministic risk integrity.
 - Never let model output bypass the risk engine or select position size, broker volume, precision, exposure, or mode.
 - Never commit or log secrets, tokens, account IDs, authorization headers, database credentials, private URLs, cookies, or private certificates.
 - Use completed candles unless a test explicitly targets forming candles and labels them as such.
@@ -68,8 +80,8 @@ in linked reports. Give longer explanations only when explicitly requested.
   Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Production context uses `scenario-v3` / `scenario-1.0`; local derived OCO
-  proposals use `scenario-execution-v2` / schema `2.1`. Historical contracts remain
+- Production uses `entry-pair-v1` / locally bound `entry-pair-1.0`; local derived OCO
+  proposals use `entry-pair-execution-v1` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
 - The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch
   backoff remains; migration 0019 permits one fresh request after a fully reconciled

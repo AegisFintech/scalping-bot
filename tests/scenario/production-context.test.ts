@@ -13,6 +13,7 @@ import type { ReplayInput } from "../../packages/scenario-engine/src/replay.js";
 import type { ScenarioPlanner } from "../../packages/scenario-engine/src/planner.js";
 import { analysisChart } from "../helpers/analysis-chart.js";
 import { usageTelemetry } from "../../packages/ai-client/src/telemetry.js";
+import { bindEntryPrices } from "../../packages/scenario-engine/src/entry-plan.js";
 
 const fixture = JSON.parse(
   readFileSync("tests/fixtures/scenario/manual-levels-synthetic.json", "utf8"),
@@ -104,6 +105,53 @@ function stored(): StoredContext {
   };
 }
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
+  it("uses the direct-entry contract once and does not reuse a consumed pair", async () => {
+    const store = memory();
+    store.row = {
+      ...stored(),
+      plan: bindEntryPrices('{"buy_stop":"4420","sell_stop":"4390"}', {
+        analysisId: fixture.plan.analysis_id,
+        symbol: "XAUUSD",
+        capturedAt: at(0),
+        tickSize: "0.01",
+      }),
+    };
+    const generate = vi.fn();
+    const model = new ReusableScenarioModel(
+      store,
+      { generate },
+      () => base + 40_000,
+      () => {},
+      true,
+    );
+    expect(await model.prepare(input())).toBeNull();
+    const result = await model.analyze({
+      analysisId: String(payload().analysis_id),
+      timeoutMs: 5000,
+      symbol: "XAUUSD",
+      payload: payload(),
+      chart: analysisChart(),
+    });
+    expect(result.response.buy_stop.entry_price).toBe("4420");
+    expect(result.promptArtifact.version).toBe("entry-pair-execution-v1");
+    store.row = { ...store.row, consumed: true };
+    expect(await model.prepare(input())).toBe("SCENARIO_MAP_CONSUMED");
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it("does not treat a historical scenario map as a direct entry pair", async () => {
+    const store = memory();
+    store.row = stored();
+    const generate = vi.fn();
+    const model = new ReusableScenarioModel(
+      store,
+      { generate },
+      () => base + 40_000,
+      () => {},
+      true,
+    );
+    expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
+    expect(generate).not.toHaveBeenCalled();
+  });
   it.each([
     [40, 220, 220],
     [200, 380, 300],

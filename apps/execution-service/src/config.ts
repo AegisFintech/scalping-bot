@@ -140,8 +140,6 @@ export function loadExecutionConfig(
   if (mode === "demo" && demoTradingEnabled) {
     if (demoAcknowledgement !== DEMO_ACKNOWLEDGEMENT)
       throw new Error("CONFIG_DEMO_ACKNOWLEDGEMENT_REQUIRED");
-    if (maxOrdersPerDay < 1)
-      throw new Error("CONFIG_DEMO_ORDER_LIMIT_REQUIRED");
   }
   const automaticAnalysisCompletedLimit = integerValue(
     environment.AUTOMATIC_ANALYSIS_COMPLETED_LIMIT,

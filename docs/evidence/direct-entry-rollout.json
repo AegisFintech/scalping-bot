@@ -1,0 +1,358 @@
+{
+  "label": "AUTHORIZED_DEMO_ROLLOUT",
+  "preflight": {
+    "at": "2026-09-09T05:35:41.053Z",
+    "release": "0.2.4-direct-entry.1",
+    "policy": "direct-entry-v1",
+    "mode": "demo",
+    "paused": true,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": ["ANALYSES_PAUSED"],
+    "managed": {
+      "status": "LATEST_TERMINAL",
+      "groupState": "FAILED",
+      "groupExpiresAt": null,
+      "groupUpdatedAt": "2026-09-09T05:21:37.358Z",
+      "cancellationReason": "OCO_PEER_UNFILLED_TERMINAL",
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "CANCELLED",
+          "entryPrice": "4390.3800000000",
+          "stopLoss": "4389.3200000000",
+          "takeProfit": "4390.9100000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T05:21:36.870Z"
+        },
+        {
+          "side": "SELL",
+          "state": "CANCELLED",
+          "entryPrice": "4384.8600000000",
+          "stopLoss": "4385.9200000000",
+          "takeProfit": "4384.3300000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T05:21:32.752Z"
+        }
+      ],
+      "positions": [],
+      "trades": [],
+      "position": null,
+      "trade": null
+    },
+    "lastCycle": null,
+    "riskStatePreserved": true,
+    "contexts": [
+      {
+        "state": "FAILED",
+        "requested_at": "2026-09-09T05:29:05.708Z",
+        "available_at": null,
+        "duration_ms": 10137,
+        "reason": "SCENARIO_LEVEL_ORDER_INVALID",
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 29570,
+          "totalTokens": 29808,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 238,
+          "requestBytes": 66067,
+          "responseBytes": 3636,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "contract": null
+      },
+      {
+        "state": "FAILED",
+        "requested_at": "2026-09-09T05:22:55.874Z",
+        "available_at": null,
+        "duration_ms": 9456,
+        "reason": "AI_ANALYSIS_FAILED",
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 29568,
+          "totalTokens": 29803,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 235,
+          "requestBytes": 66065,
+          "responseBytes": 3631,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "contract": null
+      },
+      {
+        "state": "READY",
+        "requested_at": "2026-09-09T05:16:45.740Z",
+        "available_at": "2026-09-09T05:16:55.093Z",
+        "duration_ms": 9352,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 29572,
+          "totalTokens": 29810,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 238,
+          "requestBytes": 66061,
+          "responseBytes": 3636,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "contract": "scenario-1.0"
+      }
+    ],
+    "environmentUnchanged": true
+  },
+  "resume": {
+    "at": "2026-09-09T05:35:43.990Z",
+    "release": "0.2.4-direct-entry.1",
+    "policy": "direct-entry-v1",
+    "mode": "demo",
+    "paused": false,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": [],
+    "managed": {
+      "status": "LATEST_TERMINAL",
+      "groupState": "FAILED",
+      "groupExpiresAt": null,
+      "groupUpdatedAt": "2026-09-09T05:21:37.358Z",
+      "cancellationReason": "OCO_PEER_UNFILLED_TERMINAL",
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "CANCELLED",
+          "entryPrice": "4390.3800000000",
+          "stopLoss": "4389.3200000000",
+          "takeProfit": "4390.9100000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T05:21:36.870Z"
+        },
+        {
+          "side": "SELL",
+          "state": "CANCELLED",
+          "entryPrice": "4384.8600000000",
+          "stopLoss": "4385.9200000000",
+          "takeProfit": "4384.3300000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T05:21:32.752Z"
+        }
+      ],
+      "positions": [],
+      "trades": [],
+      "position": null,
+      "trade": null
+    },
+    "lastCycle": null,
+    "environmentUnchanged": true
+  },
+  "observation": {
+    "at": "2026-09-09T05:36:46.659Z",
+    "release": "0.2.4-direct-entry.1",
+    "policy": "direct-entry-v1",
+    "mode": "demo",
+    "paused": false,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": ["PREVIOUS_ANALYSIS_ACTIVE"],
+    "managed": {
+      "status": "LATEST_TERMINAL",
+      "groupState": "FAILED",
+      "groupExpiresAt": null,
+      "groupUpdatedAt": "2026-09-09T05:21:37.358Z",
+      "cancellationReason": "OCO_PEER_UNFILLED_TERMINAL",
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "CANCELLED",
+          "entryPrice": "4390.3800000000",
+          "stopLoss": "4389.3200000000",
+          "takeProfit": "4390.9100000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T05:21:36.870Z"
+        },
+        {
+          "side": "SELL",
+          "state": "CANCELLED",
+          "entryPrice": "4384.8600000000",
+          "stopLoss": "4385.9200000000",
+          "takeProfit": "4384.3300000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T05:21:32.752Z"
+        }
+      ],
+      "positions": [],
+      "trades": [],
+      "position": null,
+      "trade": null
+    },
+    "lastCycle": {
+      "outcome": "REJECTED",
+      "reasons": ["BUY_ENTRY_TOO_CLOSE"]
+    },
+    "riskStatePreserved": true,
+    "contexts": [
+      {
+        "state": "READY",
+        "requested_at": "2026-09-09T05:35:50.498Z",
+        "available_at": "2026-09-09T05:35:56.440Z",
+        "duration_ms": 5942,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 28923,
+          "totalTokens": 28942,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 19,
+          "requestBytes": 61954,
+          "responseBytes": 1819,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "contract": "entry-pair-1.0",
+        "buy_stop": "4388.89",
+        "sell_stop": "4384.67"
+      },
+      {
+        "state": "FAILED",
+        "requested_at": "2026-09-09T05:29:05.708Z",
+        "available_at": null,
+        "duration_ms": 10137,
+        "reason": "SCENARIO_LEVEL_ORDER_INVALID",
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 29570,
+          "totalTokens": 29808,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 238,
+          "requestBytes": 66067,
+          "responseBytes": 3636,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "contract": null,
+        "buy_stop": null,
+        "sell_stop": null
+      },
+      {
+        "state": "FAILED",
+        "requested_at": "2026-09-09T05:22:55.874Z",
+        "available_at": null,
+        "duration_ms": 9456,
+        "reason": "AI_ANALYSIS_FAILED",
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 29568,
+          "totalTokens": 29803,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 235,
+          "requestBytes": 66065,
+          "responseBytes": 3631,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "contract": null,
+        "buy_stop": null,
+        "sell_stop": null
+      }
+    ],
+    "environmentUnchanged": true
+  },
+  "broker": {
+    "at": "2026-09-09T05:36:06.503Z",
+    "label": "READ_ONLY_DEMO_BROKER_CHECK",
+    "account": {
+      "certain": true,
+      "relevantPositionCount": 0,
+      "relevantPendingOrderCount": 0,
+      "reasonCodes": []
+    },
+    "allAccountOpenPositions": 0,
+    "allAccountPendingOrders": 0,
+    "historyHasMore": false,
+    "history": [],
+    "quote": {
+      "bid": "4388.81",
+      "ask": "4388.9",
+      "sourceTime": "2026-09-09T05:36:06.928Z",
+      "receivedAt": "2026-09-09T05:36:07.082Z",
+      "tickSize": "0.01",
+      "spread": "0.09",
+      "spreadPoints": "9"
+    }
+  },
+  "configuration": {
+    "at": "2026-09-09T05:36:33.138Z",
+    "environmentFile": {
+      "keyCount": 24,
+      "permissions": "600",
+      "model": "deepseek-v4-pro/u5W"
+    },
+    "templateKeyCount": 20,
+    "processes": [
+      {
+        "name": "scalper-analytics",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-market-data",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-ai",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-execution",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-dashboard",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      }
+    ]
+  }
+}

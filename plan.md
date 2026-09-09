@@ -2,6 +2,34 @@
 
 ## Scope
 
+### ISSUE-086 — Direct stop entries without strategy filters (implemented; validated; demo restored)
+
+- Issue: [#202](https://github.com/AegisFintech/scalping-bot/issues/202).
+- Pull request: [#203](https://github.com/AegisFintech/scalping-bot/pull/203);
+  implementation checkpoint `274969b` committed and pushed.
+- Branch: `issue-086-entry-pair-execution`; dependency: ISSUE-085 / PR #201.
+- Authorization: September 9 operator requests readable buy/sell stop prices from
+  EPRToken and removal of placement validations. This supersedes the earlier
+  scenario-shape and strategy-filter requirements for the production path.
+- Scope: remove spread, ATR distance/corridor, model target-room and daily
+  order-count filters. Keep locally calculated fee-buffered TP/double SL,
+  cost-inclusive sizing/loss locks, executable broker prices, reconciliation,
+  ownership, idempotency, GTC/OCO maintenance and existing demo authority.
+- Acceptance: minimal bounded tolerant parser, local identity/time binding,
+  preserved historical schemas/maps, integrated HTTP path, positive and failure
+  coverage, full quality gates, report and qualifying PR delivery.
+- No credentials, daily/drawdown locks or live authority are changed.
+- Validation: formatting/lint/TypeScript/build, 572 Node, 28 schema, three migration,
+  three isolated TLS database integration and 140 Python tests passed; Python
+  formatting/lint/types, sample/populated configuration and startup checks,
+  replay/backtest/scenario fixtures, secret scans and both dependency audits passed.
+  Initial missing test timeout and isolated database role errors were corrected.
+- Real endpoint probe passed in 5,874 ms; first production context was READY in
+  5,942 ms after demo resumed at 13:35:43 SGT. At 13:36 SGT its buy stop was below
+  the ask, so `BUY_ENTRY_TOO_CLOSE` blocked placement. No fill/SL/TP completion is
+  claimed. Environment, risk locks and demo controls were preserved.
+- Report and exact evidence: [direct entries](docs/direct-entry-report.md).
+
 ### ISSUE-085 — DeepSeek and richer completed-market context (implemented; validated; demo restored)
 
 - Issue: [#200](https://github.com/AegisFintech/scalping-bot/issues/200).

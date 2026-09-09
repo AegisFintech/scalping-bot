@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/entry-pair-provider-1.0.json",
+  "title": "Provider stop-entry prices; no account authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["buy_stop", "sell_stop"],
+  "properties": {
+    "buy_stop": { "type": "string" },
+    "sell_stop": { "type": "string" }
+  }
+}

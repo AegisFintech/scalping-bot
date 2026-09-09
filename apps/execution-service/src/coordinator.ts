@@ -259,6 +259,8 @@ export type PlacementControls = Pick<
 >;
 
 export interface CoordinatorOptions {
+  /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
+  readonly entryPairMode?: boolean;
   readonly symbol: string;
   readonly mode: "paper" | "demo" | "shadow" | "live";
   readonly candleCounts: Readonly<Record<Timeframe, number>>;
@@ -269,7 +271,8 @@ export interface CoordinatorOptions {
     | "system-v15"
     | "system-v16"
     | "scenario-execution-v1"
-    | "scenario-execution-v2";
+    | "scenario-execution-v2"
+    | "entry-pair-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -343,6 +346,7 @@ function ceilToTick(value: Decimal, tickSize: Decimal): Decimal {
 }
 
 export function deriveModelExecutionBounds(input: {
+  readonly entryPairMode?: boolean;
   readonly currentBid: string;
   readonly currentAsk: string;
   readonly tickSize: string;
@@ -360,6 +364,31 @@ export function deriveModelExecutionBounds(input: {
   const ask = decimal(input.currentAsk);
   const tickSize = decimal(input.tickSize);
   const minimumStopDistance = decimal(input.minimumStopDistance);
+  if (input.entryPairMode) {
+    const buy = canonical(ceilToTick(ask.plus(minimumStopDistance), tickSize));
+    const sell = canonical(
+      floorToTick(bid.minus(minimumStopDistance), tickSize),
+    );
+    return {
+      buyEntryMinimum: buy,
+      buyEntryMaximum: buy,
+      sellEntryMinimum: sell,
+      sellEntryMaximum: sell,
+      buyPreferredEntryMinimum: buy,
+      buyPreferredEntryMaximum: buy,
+      sellPreferredEntryMinimum: sell,
+      sellPreferredEntryMaximum: sell,
+      entryLatencyBufferAtr: "0",
+      preferredMaxEntryDistanceAtr: "0",
+      minimumStopDistance: canonical(minimumStopDistance),
+      maximumStopDistance: canonical(
+        floorToTick(decimal(input.maxAffordableStopDistance), tickSize),
+      ),
+      preferredExpiresAt: new Date(
+        Date.parse(input.serverTime) + input.preferredExpirySeconds * 1000,
+      ).toISOString(),
+    };
+  }
   const atr = decimal(input.atr);
   const maximumEntryDistance = atr.mul(decimal(input.maxEntryDistanceAtr));
   const entryLatencyBufferAtr = decimal(input.entryLatencyBufferAtr);
@@ -654,16 +683,25 @@ export class AnalysisCoordinator {
       if (analytics.chart === null)
         return await reject(["ANALYTICS_CHART_MISSING"]);
       const atr = m1Atr(analytics);
-      const spreadContext = await this.#options.spreadContext(snapshot);
+      const spreadContext = this.#options.entryPairMode
+        ? { observedPercentile: null, sessionAbnormal: false }
+        : await this.#options.spreadContext(snapshot);
       const spread: SpreadDecision = checkSpread({
+        skipStrategyLimits: this.#options.entryPairMode === true,
         bid: snapshot.quote.bid,
         ask: snapshot.quote.ask,
         tickSize: snapshot.metadata.tickSize,
         atr,
-        maxPoints: this.#options.maxSpreadPoints,
-        maxAtrRatio: this.#options.maxSpreadAtrRatio,
+        maxPoints: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadPoints,
+        maxAtrRatio: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadAtrRatio,
         observedPercentile: spreadContext.observedPercentile,
-        maxPercentile: this.#options.maxSpreadPercentile,
+        maxPercentile: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadPercentile,
         sessionAbnormal: spreadContext.sessionAbnormal,
         liveMode: this.#options.mode === "live",
       });
@@ -707,7 +745,9 @@ export class AnalysisCoordinator {
       if (
         minimumStopDistance.gt(
           Decimal.min(
-            decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
+            this.#options.entryPairMode
+              ? decimal(proposalRiskConstraints.maxStopDistance)
+              : decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
             decimal(proposalRiskConstraints.maxStopDistance),
           ),
         )
@@ -753,17 +793,25 @@ export class AnalysisCoordinator {
           preModelSnapshot,
           "PRE_MODEL",
         );
-        const preModelSpreadContext =
-          await this.#options.spreadContext(preModelSnapshot);
+        const preModelSpreadContext = this.#options.entryPairMode
+          ? { observedPercentile: null, sessionAbnormal: false }
+          : await this.#options.spreadContext(preModelSnapshot);
         const preModelSpread = checkSpread({
+          skipStrategyLimits: this.#options.entryPairMode === true,
           bid: preModelSnapshot.quote.bid,
           ask: preModelSnapshot.quote.ask,
           tickSize: preModelSnapshot.metadata.tickSize,
           atr,
-          maxPoints: this.#options.maxSpreadPoints,
-          maxAtrRatio: this.#options.maxSpreadAtrRatio,
+          maxPoints: this.#options.entryPairMode
+            ? null
+            : this.#options.maxSpreadPoints,
+          maxAtrRatio: this.#options.entryPairMode
+            ? null
+            : this.#options.maxSpreadAtrRatio,
           observedPercentile: preModelSpreadContext.observedPercentile,
-          maxPercentile: this.#options.maxSpreadPercentile,
+          maxPercentile: this.#options.entryPairMode
+            ? null
+            : this.#options.maxSpreadPercentile,
           sessionAbnormal: preModelSpreadContext.sessionAbnormal,
           liveMode: this.#options.mode === "live",
         });
@@ -797,6 +845,7 @@ export class AnalysisCoordinator {
       let modelExecutionBounds: ModelExecutionBounds;
       try {
         modelExecutionBounds = deriveModelExecutionBounds({
+          entryPairMode: this.#options.entryPairMode === true,
           currentBid: preModelSnapshot.quote.bid,
           currentAsk: preModelSnapshot.quote.ask,
           tickSize: preModelSnapshot.metadata.tickSize,
@@ -1000,17 +1049,25 @@ export class AnalysisCoordinator {
         "POST_MODEL",
       );
 
-      const decisionSpreadContext =
-        await this.#options.spreadContext(decisionSnapshot);
+      const decisionSpreadContext = this.#options.entryPairMode
+        ? { observedPercentile: null, sessionAbnormal: false }
+        : await this.#options.spreadContext(decisionSnapshot);
       const decisionSpread = checkSpread({
+        skipStrategyLimits: this.#options.entryPairMode === true,
         bid: decisionSnapshot.quote.bid,
         ask: decisionSnapshot.quote.ask,
         tickSize: decisionSnapshot.metadata.tickSize,
         atr,
-        maxPoints: this.#options.maxSpreadPoints,
-        maxAtrRatio: this.#options.maxSpreadAtrRatio,
+        maxPoints: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadPoints,
+        maxAtrRatio: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadAtrRatio,
         observedPercentile: decisionSpreadContext.observedPercentile,
-        maxPercentile: this.#options.maxSpreadPercentile,
+        maxPercentile: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadPercentile,
         sessionAbnormal: decisionSpreadContext.sessionAbnormal,
         liveMode: this.#options.mode === "live",
       });
@@ -1050,6 +1107,7 @@ export class AnalysisCoordinator {
 
       const now = new Date();
       const semanticContext = {
+        enforceStrategyLimits: !this.#options.entryPairMode,
         analysisId,
         symbol: this.#options.symbol,
         now,
@@ -1120,7 +1178,9 @@ export class AnalysisCoordinator {
 
       const maximumEffectiveStopDistance = canonical(
         Decimal.min(
-          decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
+          this.#options.entryPairMode
+            ? decimal(currentRiskConstraints.maxStopDistance)
+            : decimal(atr).mul(decimal(this.#options.maxStopDistanceAtr)),
           decimal(currentRiskConstraints.maxStopDistance),
         ),
       );
@@ -1281,17 +1341,25 @@ export class AnalysisCoordinator {
         "PRE_PLACEMENT",
       );
 
-      const placementSpreadContext =
-        await this.#options.spreadContext(placementSnapshot);
+      const placementSpreadContext = this.#options.entryPairMode
+        ? { observedPercentile: null, sessionAbnormal: false }
+        : await this.#options.spreadContext(placementSnapshot);
       const placementSpread = checkSpread({
+        skipStrategyLimits: this.#options.entryPairMode === true,
         bid: placementSnapshot.quote.bid,
         ask: placementSnapshot.quote.ask,
         tickSize: placementSnapshot.metadata.tickSize,
         atr,
-        maxPoints: this.#options.maxSpreadPoints,
-        maxAtrRatio: this.#options.maxSpreadAtrRatio,
+        maxPoints: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadPoints,
+        maxAtrRatio: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadAtrRatio,
         observedPercentile: placementSpreadContext.observedPercentile,
-        maxPercentile: this.#options.maxSpreadPercentile,
+        maxPercentile: this.#options.entryPairMode
+          ? null
+          : this.#options.maxSpreadPercentile,
         sessionAbnormal: placementSpreadContext.sessionAbnormal,
         liveMode: this.#options.mode === "live",
       });

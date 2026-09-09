@@ -211,6 +211,8 @@ export interface ModelPromptArtifact {
     | "system-v16"
     | "scenario-execution-v1"
     | "scenario-execution-v2"
+    | "entry-pair-v1"
+    | "entry-pair-execution-v1"
     | "scenario-v2"
     | "scenario-v3"
     | "scenario-research-v2"
