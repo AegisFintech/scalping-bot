@@ -126,6 +126,21 @@
       "command": "npx vitest run tests/ctrader/stop-limit-protection.test.ts tests/execution/demo-gateway.test.ts tests/risk/equity-sizing.test.ts tests/scenario/production-context.test.ts tests/schema/pending-order-execution.test.ts",
       "exit_code": 0,
       "tests": 90
+    },
+    {
+      "command": "node artifacts/issue-087/scan-index.mjs",
+      "exit_code": 0,
+      "files": 420,
+      "activeCredentialMatchesOrPatterns": []
+    },
+    {
+      "command": "graphify update .",
+      "exit_code": 0,
+      "note": "Final refresh found no topology change."
+    },
+    {
+      "command": "npx prettier --check docs/market-stop-report.md docs/evidence/market-stop-validation.json plan.md",
+      "exit_code": 0
     }
   ],
   "totals": {
