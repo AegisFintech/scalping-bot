@@ -37,7 +37,7 @@ function event(
     order: {
       orderId: command.side === "BUY" ? "101" : "102",
       orderStatus,
-      orderType: 6,
+      orderType: command.executionOrderType === "STOP" ? 3 : 6,
       clientOrderId: command.clientOrderId,
       executedVolume: "0",
       tradeData: {
@@ -68,6 +68,15 @@ class MockClient implements CTraderTradingClient {
     return () => {
       this.#handler = null;
     };
+  }
+
+  placeStop(order: PendingOrderCommand): Promise<BrokerExecution> {
+    if (this.failSecond && order.side === "SELL")
+      return Promise.reject(new Error("broker rejected"));
+    const result = event(order, 1);
+    this.orders.push(result.order as Record<string, unknown>);
+    this.#handler?.(result);
+    return Promise.resolve(result);
   }
 
   placeStopLimit(
@@ -441,5 +450,76 @@ describe("cTrader demo gateway", () => {
       certain: true,
       reasonCodes: [],
     });
+  });
+});
+
+describe("ordinary STOP demo OCO", () => {
+  const pair = (): [PendingOrderCommand, PendingOrderCommand] => [
+    { ...command("BUY"), executionOrderType: "STOP", timeInForce: "GTC" },
+    { ...command("SELL"), executionOrderType: "STOP", timeInForce: "GTC" },
+  ];
+  const gateway = (client: MockClient) =>
+    new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "30",
+      maxSlippageBps: "2",
+    });
+  it("places STOP, accepts a 17-point gap, cancels the peer exactly once", async () => {
+    const client = new MockClient();
+    const g = gateway(client);
+    const commands = pair();
+    await g.placeOco(commands);
+    expect(client.orders.map((o) => o.orderType)).toEqual([3, 3]);
+    expect(client.placementSlippagePoints).toEqual([]);
+    expect((await g.placeOco(commands)).idempotentReplay).toBe(true);
+    client.fill("client-BUY", 2001.17);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+    expect((await g.reconcile("XAUUSD")).certain).toBe(true);
+    client.fill("client-BUY", 2001.17);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(client.cancelled).toEqual(["102"]);
+  });
+  it("retains actual fills and cancels the peer even beyond the modeled reserve", async () => {
+    const client = new MockClient();
+    const g = gateway(client);
+    await g.placeOco(pair());
+    client.fill("client-BUY", 2001.35);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+    const state = await g.reconcile("XAUUSD");
+    expect(state.certain).toBe(false);
+    expect(state.reasonCodes).toContain("DEMO_FILL_SLIPPAGE_EXCEEDED");
+    expect(state.orders).toContainEqual(
+      expect.objectContaining({ state: "FILLED", filledVolume: "100" }),
+    );
+  });
+  it("cancels a surviving STOP if the second submission fails", async () => {
+    const client = new MockClient();
+    client.failSecond = true;
+    await expect(gateway(client).placeOco(pair())).rejects.toThrow(
+      "DEMO_SECOND_LEG_FAILED_FIRST_LEG_CANCELLED",
+    );
+    expect(client.cancelled).toEqual(["101"]);
+  });
+  it("rejects mixed types and conflicting idempotent replay before submission", async () => {
+    const client = new MockClient();
+    const g = gateway(client);
+    const commands = pair();
+    await expect(g.placeOco([commands[0], command("SELL")])).rejects.toThrow(
+      "DEMO_OCO_EXECUTION_TYPE_MISMATCH",
+    );
+    expect(client.orders).toHaveLength(0);
+    await g.placeOco(commands);
+    await expect(g.placeOco([command("BUY"), command("SELL")])).rejects.toThrow(
+      "DEMO_IDEMPOTENCY_TYPE_MISMATCH",
+    );
+    await expect(
+      gateway(client).placeOco([command("BUY"), command("SELL")]),
+    ).rejects.toThrow("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
+    expect(client.orders).toHaveLength(2);
   });
 });

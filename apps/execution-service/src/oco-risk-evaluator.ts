@@ -34,6 +34,8 @@ export interface OcoRiskEvaluatorOptions {
   readonly maxMarginUsagePercent: string;
   readonly maxPositionNotional: string | null;
   readonly strategyVersion: string;
+  readonly executionOrderType?: "STOP" | "STOP_LIMIT";
+  readonly adverseSlippagePoints?: string;
   readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabelPrefix?: string;
   readonly riskMultiplier?: () => string;
@@ -94,7 +96,7 @@ export class OcoRiskEvaluator {
           decimal(input.quote.ask).plus(decimal(result.maxStopDistance)),
         ),
         volume: input.metadata.minVolume,
-        adverseSlippagePoints: "10",
+        adverseSlippagePoints: this.#options.adverseSlippagePoints ?? "10",
       });
       const budget = decimal(input.account.equity)
         .mul(this.#effectiveRisk())
@@ -194,6 +196,7 @@ export class OcoRiskEvaluator {
         maxMarginUsagePercent: this.#options.maxMarginUsagePercent,
         maxPositionNotional: this.#options.maxPositionNotional,
         metadata: input.metadata,
+        adverseSlippagePoints: this.#options.adverseSlippagePoints ?? "10",
       };
       const leg = (
         entryPrice: string,
@@ -332,6 +335,7 @@ export class OcoRiskEvaluator {
         ].join(":");
         const digest = createHash("sha256").update(identity).digest("hex");
         return {
+          executionOrderType: this.#options.executionOrderType ?? "STOP_LIMIT",
           idempotencyKey: digest,
           analysisId: input.response.analysis_id,
           orderGroupId,

@@ -1,5 +1,9 @@
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
-export const POLICY_VERSION = "direct-entry-v1";
+export const POLICY_VERSION = "market-stop-v1";
+export const STOP_EXECUTION_POLICY = {
+  orderType: "STOP",
+  adverseSlippagePoints: "30",
+} as const;
 export const MONEY_MANAGEMENT = {
   setupRiskPercent: "1",
   dailyLossLimitPercent: "5",
@@ -86,7 +90,7 @@ export const FIXED_DEFAULTS = {
   INCLUDE_UNREALIZED_IN_DAILY_LOSS: "true",
   MIN_RISK_REWARD_RATIO: "0.5",
   MAX_SLIPPAGE_BPS: "2",
-  MAX_SLIPPAGE_POINTS: "5",
+  MAX_SLIPPAGE_POINTS: "30",
   MAX_SPREAD_POINTS: "10",
   MAX_SPREAD_ATR_RATIO: "0.10",
   MAX_SPREAD_PERCENTILE: "95",
@@ -114,8 +118,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.4-direct-entry.1",
-  CODE_VERSION: "0.2.4-direct-entry.1",
+  STRATEGY_VERSION: "0.2.5-market-stop.1",
+  CODE_VERSION: "0.2.5-market-stop.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

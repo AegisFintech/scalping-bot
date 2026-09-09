@@ -1,3 +1,4 @@
+import { pendingOrderType } from "../../../packages/contracts/src/order-type.js";
 import {
   orderTimeInForce,
   validateSubmissionDeadline,
@@ -28,6 +29,7 @@ import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 export interface CTraderTradingClient {
   readonly tokenExpiryKnown: boolean;
   readonly tradePermission: boolean;
+  placeStop(command: PendingOrderCommand): Promise<BrokerExecution>;
   placeStopLimit(
     command: PendingOrderCommand,
     maxSlippagePoints: string,
@@ -125,6 +127,8 @@ function validatePair(
   ) {
     throw new Error("DEMO_OCO_PAIR_MISMATCH");
   }
+  if (pendingOrderType(commands[0]) !== pendingOrderType(commands[1]))
+    throw new Error("DEMO_OCO_EXECUTION_TYPE_MISMATCH");
   if (orderTimeInForce(commands[0]) !== orderTimeInForce(commands[1]))
     throw new Error("DEMO_OCO_LIFETIME_MISMATCH");
   for (const command of commands) {
@@ -191,6 +195,16 @@ export class CTraderDemoGateway implements ExecutionGateway {
       .join(":");
     const known = this.#groups.get(key);
     if (known !== undefined) {
+      for (const command of commands) {
+        const previous = known.orders.find(
+          (o) => o.command.clientOrderId === command.clientOrderId,
+        );
+        if (
+          previous === undefined ||
+          pendingOrderType(previous.command) !== pendingOrderType(command)
+        )
+          throw new Error("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
+      }
       return {
         orderGroupId: known.orderGroupId,
         idempotentReplay: true,
@@ -221,10 +235,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     for (const item of tracked)
       this.#orders.set(item.command.clientOrderId, item);
 
-    const firstExecution = await this.#options.client.placeStopLimit(
-      commands[0],
-      this.#options.maxSlippagePoints,
-    );
+    const firstExecution = await this.#placePendingStop(commands[0]);
     this.#applyExecution(firstExecution);
     if (
       firstExecution.executionType === 3 ||
@@ -236,10 +247,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     await this.#options.client.reconcileRaw();
 
     try {
-      const secondExecution = await this.#options.client.placeStopLimit(
-        commands[1],
-        this.#options.maxSlippagePoints,
-      );
+      const secondExecution = await this.#placePendingStop(commands[1]);
       this.#applyExecution(secondExecution);
       await this.#options.client.reconcileRaw();
     } catch (error) {
@@ -267,6 +275,15 @@ export class CTraderDemoGateway implements ExecutionGateway {
       idempotentReplay: false,
       orders: group.orders.map(external),
     };
+  }
+
+  #placePendingStop(command: PendingOrderCommand): Promise<BrokerExecution> {
+    return pendingOrderType(command) === "STOP"
+      ? this.#options.client.placeStop(command)
+      : this.#options.client.placeStopLimit(
+          command,
+          this.#options.maxSlippagePoints,
+        );
   }
 
   async cancelStrategyOrder(
@@ -482,6 +499,11 @@ export class CTraderDemoGateway implements ExecutionGateway {
     const now = raw.receivedAt;
     const tracked = commands.map((command, index): TrackedOrder => {
       const match = matches[index] as Record<string, unknown>;
+      if (
+        numberField(match, "orderType") !==
+        (pendingOrderType(command) === "STOP" ? 3 : 6)
+      )
+        throw new Error("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
       return {
         command,
         brokerOrderId: stringField(match, "orderId"),

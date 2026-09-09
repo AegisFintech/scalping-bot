@@ -284,3 +284,47 @@ describe("risk-budget sizing without artificial exposure caps", () => {
     expect((await run({ relevantPendingOrderCount: 1 })).approved).toBe(false);
   });
 });
+
+it("ordinary STOP reserves more slippage and reduces both volumes without changing local SL/TP", async () => {
+  const run = (adverseSlippagePoints: string) =>
+    new OcoRiskEvaluator({
+      marginEstimator: {
+        estimate: (_symbol, _side, volume) =>
+          Promise.resolve(new Decimal(volume).mul("0.01").toFixed(10)),
+      },
+      baseRiskPercent: "1",
+      maxRiskPercent: "1",
+      maxMarginUsagePercent: "100",
+      maxPositionNotional: null,
+      strategyVersion: "stop-fixture",
+      executionOrderType: "STOP",
+      adverseSlippagePoints,
+      timeInForce: "GTC",
+    }).evaluate({
+      account,
+      response,
+      metadata: leg.metadata,
+      quote: {} as Quote,
+    });
+  const previous = await run("10");
+  const current = await run("30");
+  expect(previous.approved).toBe(true);
+  expect(current.approved).toBe(true);
+  for (const index of [0, 1]) {
+    const c = current.commands![index]!;
+    const old = previous.commands![index]!;
+    expect(new Decimal(c.volume).lt(old.volume)).toBe(true);
+    expect(c).toMatchObject({
+      executionOrderType: "STOP",
+      timeInForce: "GTC",
+      stopLoss: old.stopLoss,
+      takeProfit: old.takeProfit,
+    });
+  }
+  expect(
+    new Decimal(current.risk!.combinedMaximumLoss!).lte(
+      new Decimal(account.equity).div(100),
+    ),
+  ).toBe(true);
+  expect((await run("-1")).approved).toBe(false);
+});

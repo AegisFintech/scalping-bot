@@ -1,3 +1,4 @@
+import { pendingOrderType } from "../../../packages/contracts/src/order-type.js";
 import {
   orderTimeInForce,
   pendingOrderExpiresAt,
@@ -692,6 +693,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
     const [buyCommand, sellCommand] = evaluation.commands;
     if (orderTimeInForce(buyCommand) !== orderTimeInForce(sellCommand))
       throw new Error("TRAIL_LIFETIME_MISMATCH");
+    if (pendingOrderType(buyCommand) !== pendingOrderType(sellCommand))
+      throw new Error("TRAIL_EXECUTION_TYPE_MISMATCH");
     const groupKey = createHash("sha256")
       .update(
         [buyCommand.idempotencyKey, sellCommand.idempotencyKey]
@@ -750,8 +753,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
           `INSERT INTO orders
             (id, account_id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
              strategy_label, idempotency_key, entry_price, stop_loss, take_profit,
-             requested_volume, normalized_volume, expires_at, time_in_force, submission_valid_until)
-           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12, $13, $14)`,
+             requested_volume, normalized_volume, expires_at, time_in_force, submission_valid_until, execution_order_type)
+           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12, $13, $14, $15)`,
           [
             randomUUID(),
             this.#options.accountId,
@@ -767,6 +770,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
             pendingOrderExpiresAt(command),
             orderTimeInForce(command),
             command.expiresAt,
+            pendingOrderType(command),
           ],
         );
       }
@@ -781,6 +785,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
       order_group_id: buyCommand.orderGroupId,
       per_leg_risk_percent: evaluation.perLegRiskPercent,
       commands: evaluation.commands.map((command) => ({
+        execution_order_type: pendingOrderType(command),
         side: command.side,
         entry_price: command.entryPrice,
         stop_loss: command.stopLoss,

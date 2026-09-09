@@ -1,3 +1,4 @@
+import { pendingOrderType } from "../../contracts/src/order-type.js";
 import {
   orderTimeInForce,
   validateSubmissionDeadline,
@@ -123,11 +124,12 @@ function relativeProtectionDistance(
   return protocolInteger(canonical(encoded), reason);
 }
 
-export function stopLimitProtectionFields(
+export function stopProtectionFields(
   command: PendingOrderCommand,
   metadata: Pick<SymbolMetadata, "digits">,
-  maxSlippagePoints: string,
-): StopLimitProtectionFields {
+): Omit<StopLimitProtectionFields, "orderType" | "slippageInPoints"> & {
+  readonly orderType: 3;
+} {
   const entry = new Decimal(command.entryPrice);
   const stopLoss = new Decimal(command.stopLoss);
   const takeProfit = new Decimal(command.takeProfit);
@@ -144,16 +146,9 @@ export function stopLimitProtectionFields(
   ) {
     throw new Error("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
   }
-  const slippageInPoints = protocolInteger(
-    maxSlippagePoints,
-    "CTRADER_STOP_LIMIT_SLIPPAGE_INVALID",
-  );
-  if (slippageInPoints < 1 || slippageInPoints > 2_147_483_647)
-    throw new Error("CTRADER_STOP_LIMIT_SLIPPAGE_INVALID");
   return {
-    orderType: 6,
+    orderType: 3,
     stopPrice: exactProtocolDouble(command.entryPrice, metadata.digits),
-    slippageInPoints,
     relativeStopLoss: relativeProtectionDistance(
       entry,
       stopLoss,
@@ -164,6 +159,24 @@ export function stopLimitProtectionFields(
       takeProfit,
       "CTRADER_RELATIVE_TAKE_PROFIT_INVALID",
     ),
+  };
+}
+
+export function stopLimitProtectionFields(
+  command: PendingOrderCommand,
+  metadata: Pick<SymbolMetadata, "digits">,
+  maxSlippagePoints: string,
+): StopLimitProtectionFields {
+  const slippageInPoints = protocolInteger(
+    maxSlippagePoints,
+    "CTRADER_STOP_LIMIT_SLIPPAGE_INVALID",
+  );
+  if (slippageInPoints < 1 || slippageInPoints > 2_147_483_647)
+    throw new Error("CTRADER_STOP_LIMIT_SLIPPAGE_INVALID");
+  return {
+    ...stopProtectionFields(command, metadata),
+    orderType: 6,
+    slippageInPoints,
   };
 }
 
@@ -995,6 +1008,21 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     command: PendingOrderCommand,
     maxSlippagePoints: string,
   ): Promise<BrokerExecution> {
+    if (pendingOrderType(command) !== "STOP_LIMIT")
+      throw new Error("CTRADER_ORDER_EXECUTION_TYPE_MISMATCH");
+    return this.#placePendingStop(command, maxSlippagePoints);
+  }
+
+  async placeStop(command: PendingOrderCommand): Promise<BrokerExecution> {
+    if (pendingOrderType(command) !== "STOP")
+      throw new Error("CTRADER_ORDER_EXECUTION_TYPE_MISMATCH");
+    return this.#placePendingStop(command);
+  }
+
+  async #placePendingStop(
+    command: PendingOrderCommand,
+    maxSlippagePoints?: string,
+  ): Promise<BrokerExecution> {
     this.#requireTradingReady();
     const metadata = [...this.#metadata.values()].find(
       (item) => item.symbolName === command.symbol,
@@ -1012,7 +1040,9 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
           metadata.symbolId,
           "CTRADER_SYMBOL_ID_INVALID",
         ),
-        ...stopLimitProtectionFields(command, metadata, maxSlippagePoints),
+        ...(pendingOrderType(command) === "STOP"
+          ? stopProtectionFields(command, metadata)
+          : stopLimitProtectionFields(command, metadata, maxSlippagePoints!)),
         tradeSide: command.side === "BUY" ? 1 : 2,
         volume: protocolInteger(command.volume, "CTRADER_ORDER_VOLUME_INVALID"),
         ...stopLimitLifetimeFields(command),
@@ -1023,6 +1053,12 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       [CTraderPayload.EXECUTION_EVENT],
     );
     const execution = this.#parseExecution(response);
+    if (
+      execution.order !== null &&
+      numberField(execution.order, "orderType") !==
+        (pendingOrderType(command) === "STOP" ? 3 : 6)
+    )
+      throw new Error("CTRADER_ORDER_TYPE_ACKNOWLEDGEMENT_MISMATCH");
     validateGtcAcknowledgement(command, execution.order);
     return execution;
   }

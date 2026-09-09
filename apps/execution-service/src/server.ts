@@ -21,10 +21,18 @@ export interface ExecutionStatus {
   readonly remainingCapitalRiskPercent?: string | null;
   readonly scenarioContext?: Readonly<Record<string, unknown>>;
   readonly policyVersion?:
-    "fixed-risk-v2" | "fixed-risk-v3" | "fixed-risk-v4" | "direct-entry-v1";
+    | "fixed-risk-v2"
+    | "fixed-risk-v3"
+    | "fixed-risk-v4"
+    | "direct-entry-v1"
+    | "market-stop-v1";
   readonly riskPolicy?: {
     readonly version:
-      "fixed-risk-v2" | "fixed-risk-v3" | "fixed-risk-v4" | "direct-entry-v1";
+      | "fixed-risk-v2"
+      | "fixed-risk-v3"
+      | "fixed-risk-v4"
+      | "direct-entry-v1"
+      | "market-stop-v1";
     readonly setupRiskPercent: string;
     readonly dailyLossLimitPercent: string;
     readonly drawdownLimitPercent: string;

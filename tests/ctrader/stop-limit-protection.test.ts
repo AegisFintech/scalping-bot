@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { PendingOrderCommand } from "../../packages/contracts/src/index.js";
 import {
   stopLimitProtectionFields,
+  stopProtectionFields,
   stopLimitLifetimeFields,
   validateGtcAcknowledgement,
 } from "../../packages/ctrader-client/src/client.js";
@@ -117,4 +118,37 @@ it("requires the broker to acknowledge GTC without a dated expiry", () => {
       expirationTimestamp: 123,
     }),
   ).toThrow("CTRADER_GTC_ACKNOWLEDGEMENT_MISMATCH");
+});
+
+describe("ordinary stop protection", () => {
+  it.each(["BUY", "SELL"] as const)(
+    "encodes %s without a fill-price ceiling",
+    (side) => {
+      expect(
+        stopProtectionFields(
+          { ...command(side), executionOrderType: "STOP" },
+          { digits: 2 },
+        ),
+      ).toEqual({
+        orderType: 3,
+        stopPrice: side === "BUY" ? 4437.35 : 4419.27,
+        relativeStopLoss: 108000,
+        relativeTakeProfit: 54000,
+      });
+    },
+  );
+  it("rejects invalid protection and inexact entry precision", () => {
+    expect(() =>
+      stopProtectionFields(
+        { ...command("SELL"), stopLoss: "4418" },
+        { digits: 2 },
+      ),
+    ).toThrow("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
+    expect(() =>
+      stopProtectionFields(
+        { ...command("BUY"), entryPrice: "4437.351" },
+        { digits: 2 },
+      ),
+    ).toThrow();
+  });
 });

@@ -1,3 +1,4 @@
+import type { OcoEvaluation } from "../../apps/execution-service/src/oco-risk-evaluator.js";
 import { transitionCharts } from "../../packages/database/src/chart-archive.js";
 import { readChart } from "../../packages/database/src/chart-store.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -238,6 +239,7 @@ describe("PostgreSQL migrations integration", () => {
         "0018",
         "0019",
         "0020",
+        "0021",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -2099,6 +2101,170 @@ describe("PostgreSQL migrations integration", () => {
         cancellation_reason: "OCO_PEER_UNFILLED_TERMINAL",
       });
       expect((await contextStore.latest())?.closedAt).toBeNull();
+
+      const stopAnalysisId = randomUUID();
+      const stopGroupId = randomUUID();
+      await isolated.query(
+        `INSERT INTO analysis_runs (id,account_id,symbol_id,strategy_version_id,mode,state,analysis_time)
+        VALUES ($1,$2,$3,$4,'demo','ACCEPTED',now())`,
+        [stopAnalysisId, demoAccountId, symbolId, strategyVersionId],
+      );
+      const stopDecision = {
+        approved: true,
+        reasonCodes: [],
+        riskBudget: "5000",
+        rawVolume: "100",
+        normalizedVolume: "100",
+        maximumLoss: "100",
+        estimatedMargin: "100",
+      };
+      const stopCommands = (["BUY", "SELL"] as const).map((side) => ({
+        executionOrderType: "STOP" as const,
+        idempotencyKey: `stop-${stopGroupId}-${side}`,
+        analysisId: stopAnalysisId,
+        orderGroupId: stopGroupId,
+        clientOrderId: `stop-${stopGroupId}-${side}`,
+        symbol: "XAUUSD",
+        side,
+        volume: "100",
+        entryPrice: "2000",
+        stopLoss: side === "BUY" ? "1999" : "2001",
+        takeProfit: side === "BUY" ? "2000.5" : "1999.5",
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+        timeInForce: "GTC" as const,
+        strategyLabel: "ctrader-ai-scalper:fixture",
+      }));
+      const stopEvaluation: OcoEvaluation = {
+        approved: true,
+        reasonCodes: [],
+        equity: "1000000",
+        perLegRiskPercent: "0.5",
+        commands: [stopCommands[0]!, stopCommands[1]!],
+        risk: {
+          approved: true,
+          reasonCodes: [],
+          buy: stopDecision,
+          sell: stopDecision,
+          combinedMaximumLoss: "200",
+        },
+      };
+      await expect(
+        trail.intent(stopAnalysisId, {
+          ...stopEvaluation,
+          commands: [
+            stopCommands[0]!,
+            { ...stopCommands[1]!, executionOrderType: "STOP_LIMIT" },
+          ],
+        }),
+      ).rejects.toThrow("TRAIL_EXECUTION_TYPE_MISMATCH");
+      await trail.intent(stopAnalysisId, stopEvaluation);
+      expect(
+        (
+          await isolated.query(
+            "SELECT execution_order_type,time_in_force,expires_at FROM orders WHERE order_group_id=$1",
+            [stopGroupId],
+          )
+        ).rows,
+      ).toEqual([
+        {
+          execution_order_type: "STOP",
+          time_in_force: "GTC",
+          expires_at: null,
+        },
+        {
+          execution_order_type: "STOP",
+          time_in_force: "GTC",
+          expires_at: null,
+        },
+      ]);
+      await isolated.query(
+        "UPDATE orders SET state='REJECTED' WHERE order_group_id=$1",
+        [stopGroupId],
+      );
+      await isolated.query(
+        "UPDATE order_groups SET state='FAILED' WHERE id=$1",
+        [stopGroupId],
+      );
+      // Explicit execution intent is additive; historical generic STOP remains unknown.
+      expect(
+        (
+          await isolated.query<{ execution_order_type: string | null }>(
+            "SELECT execution_order_type FROM orders WHERE order_group_id=$1",
+            [cancelledGroupId],
+          )
+        ).rows.every((r) => r.execution_order_type === null),
+      ).toBe(true);
+      await expect(
+        isolated.query(
+          "UPDATE orders SET execution_order_type='MARKET' WHERE order_group_id=$1",
+          [cancelledGroupId],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      await isolated.query(
+        "UPDATE orders SET execution_order_type='STOP' WHERE order_group_id=$1",
+        [cancelledGroupId],
+      );
+      await isolated.query(
+        "UPDATE scenario_contexts SET state='READY',plan='{}',available_at=clock_timestamp(),requested_model='deepseek-v4-pro/u5W' WHERE id=$1",
+        [currentContext!.id],
+      );
+      expect((await contextStore.latest())?.zeroFillTerminalAt).not.toBeNull();
+      const afterZero = { ...contextClaim, afterContextId: currentContext!.id };
+      for (const [block, restore] of [
+        [
+          "UPDATE orders SET strategy_owned=false WHERE order_group_id=$1",
+          "UPDATE orders SET strategy_owned=true WHERE order_group_id=$1",
+        ],
+        [
+          "UPDATE orders SET filled_volume=1 WHERE order_group_id=$1",
+          "UPDATE orders SET filled_volume=0 WHERE order_group_id=$1",
+        ],
+        [
+          "UPDATE orders SET state='UNKNOWN' WHERE order_group_id=$1",
+          "UPDATE orders SET state='CANCELLED' WHERE order_group_id=$1",
+        ],
+        [
+          "UPDATE broker_execution_events SET mapping_state='CONFLICT' WHERE order_group_id=$1",
+          "UPDATE broker_execution_events SET mapping_state='MAPPED' WHERE order_group_id=$1",
+        ],
+        [
+          "UPDATE order_groups SET state='RECONCILIATION_REQUIRED' WHERE id=$1",
+          "UPDATE order_groups SET state='FAILED' WHERE id=$1",
+        ],
+      ]) {
+        await isolated.query(block!, [cancelledGroupId]);
+        expect((await contextStore.latest())?.zeroFillTerminalAt).toBeNull();
+        expect(
+          await contextStore.claim({ ...afterZero, id: randomUUID() }),
+        ).toBe(false);
+        await isolated.query(restore!, [cancelledGroupId]);
+      }
+      const zeroRaceFill = randomUUID();
+      await isolated.query(
+        `INSERT INTO fills (id,order_id,broker_event_key,price,volume,occurred_at,received_at)
+        SELECT $1::uuid,id,$1::text,entry_price,1,now(),now() FROM orders WHERE order_group_id=$2 LIMIT 1`,
+        [zeroRaceFill, cancelledGroupId],
+      );
+      expect(await contextStore.claim({ ...afterZero, id: randomUUID() })).toBe(
+        false,
+      );
+      await isolated.query("DELETE FROM fills WHERE id=$1", [zeroRaceFill]);
+      const zeroClaims = await Promise.all([
+        contextStore.claim({ ...afterZero, id: randomUUID() }),
+        new PostgresContextStore(isolated, {
+          accountId: demoAccountId,
+          symbolId,
+          mode: "demo",
+        }).claim({ ...afterZero, id: randomUUID() }),
+      ]);
+      expect(zeroClaims.filter(Boolean)).toHaveLength(1);
+      expect(await contextStore.claim({ ...afterZero, id: randomUUID() })).toBe(
+        false,
+      );
+      expect(
+        await contextStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+
       await persistentMaintenance.expireAndReconcile();
       expect(cancellations).toEqual([pendingIds[1]]);
 

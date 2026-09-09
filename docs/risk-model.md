@@ -10,7 +10,7 @@ submission, or model-selected risk increases are introduced. Stops/targets remai
 broker-held. The new candidate does not automate discretionary structural/time
 closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
 
-Current policy: `direct-entry-v1`. ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
+Current policy: `market-stop-v1`. ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
@@ -66,7 +66,7 @@ setup budget = min(equity * 1% * risk multiplier, remaining daily loss budget)
 leg budget = setup budget / 2
 modeled leg loss = stop ticks * tick value * native volume
                 + conservative opening/closing commissions
-                + ten ticks * tick value * native volume
+                + thirty ticks * tick value * native volume
                 + conservative P/L conversion-fee reserve
 ```
 
@@ -188,3 +188,15 @@ ceiling was removed in ISSUE-079; broker margin/volume constraints and the reser
 setup-loss capacity still apply. Treat the 1% loss budget as a maximum, never a
 requirement to force leverage or spend every dollar of risk. See the current
 [equity-sizing report](equity-sizing-recovery-report.md).
+
+ISSUE-087 reserves 30 ticks of adverse slippage per leg for production STOP
+execution (previously 10), using the same reserve in minimum-volume affordability
+and final OCO sizing. This is a conservative demo assumption following an observed
+17-point trigger gap, not an empirically established tail bound. TP remains the
+local fee-buffered distance and SL remains twice TP. Both are relative to actual
+fill. Sizes decrease on identical inputs; the 1% shared setup budget, 5% daily
+budget and drawdown locks are unchanged. A STOP becomes a market order and can
+slip beyond this reserve; neither the reserve nor the broker stop guarantees a
+maximum realized loss. Existing fill monitoring latches uncertainty beyond
+30 points or 2 bps while preserving fills and peer cancellation; matching terminal
+recovery clears the latch. [Demo evidence](market-stop-report.md).

@@ -82,6 +82,7 @@ describe("migrations", () => {
       "0018_local_chart_storage.sql",
       "0019_persistent_order_lifetime.sql",
       "0020_deepseek_context_model.sql",
+      "0021_market_stop_execution.sql",
     ]);
     const sql = (
       await Promise.all(

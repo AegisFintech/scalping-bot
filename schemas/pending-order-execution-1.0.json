@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:scalper:pending-order-execution:1.0",
+  "title": "Trusted pending execution intent; model cannot select order type",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["execution_order_type"],
+  "properties": { "execution_order_type": { "enum": ["STOP", "STOP_LIMIT"] } }
+}
