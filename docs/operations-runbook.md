@@ -1,9 +1,12 @@
 # Current release operations
 
-Release `0.2.3-equity-risk.9` uses persistent GTC stop-limit orders. They have no
+Release `0.2.3-equity-risk.10` uses persistent GTC stop-limit orders. They have no
 automatic timer expiry. A fill cancels its peer; after confirmed SL/TP closure,
 one fresh analysis begins for the next setup. Fresh submission deadlines remain.
 See [ISSUE-083 migration, evidence and rollback](persistent-order-loop-report.md).
+An unfilled broker-terminal peer also cancels its owned survivor, with fresh
+analysis blocked until cleanup is reconciled. Partial fills retain durable peer
+cancellation retries. See [ISSUE-084 recovery](oco-pair-recovery-report.md).
 
 For code navigation, use the isolated `graphify` CLI and ignored `graphify-out/`.
 Run `graphify query "<focused question>" --budget 1000` before targeted source
@@ -13,7 +16,7 @@ Do not enable remote semantic extraction or index runtime credentials.
 
 ## Order safety and provider recovery
 
-For `0.2.3-equity-risk.9` / `fixed-risk-v4`, follow the
+For `0.2.3-equity-risk.10` / `fixed-risk-v4`, follow the
 [risk-budget sizing and storage recovery procedure](risk-budget-recovery-report.md).
 For missing pending orders, check [the provider recovery report](provider-recovery-report.md).
 A healthy execution process does not imply an available model map. Provider failures,

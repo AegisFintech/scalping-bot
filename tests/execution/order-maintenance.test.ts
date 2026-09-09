@@ -5,6 +5,9 @@ import type { ExecutionGateway } from "../../packages/contracts/src/index.js";
 
 function maintenanceFixture(input: {
   readonly cancelFails?: boolean;
+  readonly unfilledPeer?: boolean;
+  readonly terminalEvidence?: boolean;
+  readonly brokerFlat?: boolean;
   readonly reconciliationOrders?: readonly {
     readonly clientOrderId: string;
     readonly brokerOrderId: string | null;
@@ -26,17 +29,24 @@ function maintenanceFixture(input: {
     }
     if (sql.includes("UPDATE analysis_runs"))
       return Promise.resolve({ rows: [] });
-    if (sql.includes("filled.id <> o.id")) {
+    if (sql.includes("filled.id <> o.id") || sql.includes("peer.id<>o.id")) {
       return Promise.resolve({
-        rows: [
-          {
-            client_order_id: "cas-sell-peer",
-            order_group_id: "group",
-            analysis_id: "analysis",
-          },
-        ],
+        rows:
+          sql.includes("peer.id<>o.id") === (input.unfilledPeer === true)
+            ? [
+                {
+                  client_order_id: "cas-sell-peer",
+                  order_group_id: "group",
+                  analysis_id: "analysis",
+                },
+              ]
+            : [],
       });
     }
+    if (sql.includes("AS certain"))
+      return Promise.resolve({
+        rows: [{ certain: input.terminalEvidence ?? true }],
+      });
     if (sql.includes("og.expires_at <= now()"))
       return Promise.resolve({ rows: [] });
     if (
@@ -71,7 +81,7 @@ function maintenanceFixture(input: {
         certain: true,
         reasonCodes: [],
         orders: input.reconciliationOrders ?? [],
-        relevantPositionCount: 1,
+        relevantPositionCount: input.unfilledPeer || input.brokerFlat ? 0 : 1,
       }),
     ),
   } satisfies ExecutionGateway;
@@ -197,6 +207,53 @@ describe("order maintenance", () => {
       "OCO_PEER_FILLED",
     ]);
   });
+
+  it("finishes an unfilled incomplete pair only after confirmed cleanup", async () => {
+    const { maintenance, cancelStrategyOrder, updates } = maintenanceFixture({
+      unfilledPeer: true,
+    });
+    await maintenance.expireAndReconcile();
+    expect(cancelStrategyOrder).toHaveBeenCalledWith(
+      "cas-sell-peer",
+      "OCO_PEER_UNFILLED_TERMINAL",
+    );
+    expect(updates).toContainEqual([
+      "group",
+      "FAILED",
+      "OCO_PEER_UNFILLED_TERMINAL",
+    ]);
+  });
+
+  it("waits for durable trade closure when the broker is flat after fill-peer cancellation", async () => {
+    const { maintenance, updates } = maintenanceFixture({ brokerFlat: true });
+    await maintenance.expireAndReconcile();
+    expect(updates).toContainEqual([
+      "group",
+      "RECONCILIATION_REQUIRED",
+      "OCO_PEER_FILLED",
+    ]);
+  });
+
+  it.each([{ cancelFails: true }, { terminalEvidence: false }])(
+    "does not release an incomplete pair after a failed cancel or racing fill: %j",
+    async (failure) => {
+      const { maintenance, updates } = maintenanceFixture({
+        unfilledPeer: true,
+        ...failure,
+      });
+      await maintenance.expireAndReconcile();
+      expect(updates).toContainEqual([
+        "group",
+        "RECONCILIATION_REQUIRED",
+        "OCO_PEER_UNFILLED_TERMINAL",
+      ]);
+      expect(updates).not.toContainEqual([
+        "group",
+        "FAILED",
+        "OCO_PEER_UNFILLED_TERMINAL",
+      ]);
+    },
+  );
 });
 
 it("preserves GTC on timer maintenance and normal shutdown, but includes it in emergency cancellation", async () => {

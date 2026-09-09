@@ -151,6 +151,13 @@ Normal process restarts preserve broker GTC orders; the broker-held SL/TP stays
 attached to eventual fills. No evidence yet establishes positive expectancy for
 this operator-selected lifecycle. See [lifecycle report](persistent-order-loop-report.md).
 
+ISSUE-084 treats a confirmed zero-fill terminal peer as an incomplete pair and
+cancels its remaining owned pending order. No timer is added. Failed cancellation,
+racing fills and unresolved events retain reconciliation blocks; unfilled cleanup
+is not a trade close and cannot grant the post-close refresh exception. Durable
+peer cancellation also retries after partial fills. Local SL/TP and sizing remain
+unchanged. See [recovery report](oco-pair-recovery-report.md).
+
 ## Scenario target mapping (ISSUE-080)
 
 The fee-buffered fixed TP must fit before the first actual target on each side:

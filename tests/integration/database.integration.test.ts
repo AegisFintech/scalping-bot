@@ -1775,46 +1775,6 @@ describe("PostgreSQL migrations integration", () => {
         reasonCodes: [],
       });
 
-      const conflictingRaw = structuredClone(closedRaw);
-      const conflictingDeal = conflictingRaw.deal as Record<string, unknown>;
-      conflictingDeal.dealId = "904";
-      const conflictingDetail = conflictingDeal.closePositionDetail as Record<
-        string,
-        unknown
-      >;
-      conflictingDetail.grossProfit = "1100";
-      const conflictingClose = normalizeDemoExecution(conflictingRaw, {
-        symbolId: "7",
-      });
-      await expect(restartedStore.persist(conflictingClose!)).resolves.toEqual({
-        certain: false,
-        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
-      });
-      const conflictingOutcome = await isolated.query<{
-        mapping_state: string;
-        reason_codes: string[];
-      }>(
-        `SELECT mapping_state, reason_codes
-         FROM broker_execution_events
-         WHERE account_id = $1 AND broker_event_key = $2`,
-        [demoAccountId, conflictingClose!.eventKey],
-      );
-      expect(conflictingOutcome.rows[0]).toEqual({
-        mapping_state: "CONFLICT",
-        reason_codes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
-      });
-      await expect(restartedStore.readiness()).resolves.toEqual({
-        certain: false,
-        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
-      });
-      await expect(
-        restartedStore.reconcileTerminalEvidence(),
-      ).resolves.toMatchObject({
-        certain: false,
-        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
-        resolvedEventCount: 0,
-      });
-
       await isolated.query(
         `UPDATE analysis_runs
          SET valid_until = now() + interval '1 hour'
@@ -2035,6 +1995,215 @@ describe("PostgreSQL migrations integration", () => {
       expect(
         cancellations.filter((id) => pendingIds.includes(id)).sort(),
       ).toEqual(pendingIds.sort());
+
+      // A GTC survivor of a broker-confirmed, unfilled terminal peer must not
+      // leave the loop managing an unintended single-leg setup indefinitely.
+      const resetIncompletePair = async () => {
+        await isolated.query(
+          "UPDATE order_groups SET state='ACTIVE' WHERE id=$1",
+          [cancelledGroupId],
+        );
+        await isolated.query(
+          "UPDATE orders SET state=CASE WHEN client_order_id=$2 THEN 'CANCELLED' ELSE 'PENDING' END,filled_volume=0,strategy_owned=true WHERE order_group_id=$1",
+          [cancelledGroupId, pendingIds[0]],
+        );
+      };
+      await resetIncompletePair();
+      cancellations.length = 0;
+      // Missing terminal evidence, unknown states, manual ownership, partial
+      // execution and unresolved callbacks must not authorize unfilled cleanup.
+      for (const state of ["UNKNOWN", "INTENT", "PENDING"]) {
+        await isolated.query(
+          "UPDATE orders SET state=$2 WHERE client_order_id=$1",
+          [pendingIds[0], state],
+        );
+        await persistentMaintenance.expireAndReconcile();
+        expect(cancellations).toEqual([]);
+      }
+      await resetIncompletePair();
+      await isolated.query(
+        "UPDATE broker_execution_events SET order_id=NULL WHERE order_group_id=$1",
+        [cancelledGroupId],
+      );
+      await persistentMaintenance.expireAndReconcile();
+      expect(cancellations).toEqual([]);
+      await isolated.query(
+        "UPDATE broker_execution_events e SET order_id=o.id FROM orders o WHERE e.order_group_id=$1 AND e.account_id=o.account_id AND e.client_order_id=o.client_order_id",
+        [cancelledGroupId],
+      );
+      await isolated.query(
+        "UPDATE orders SET strategy_owned=false WHERE client_order_id=$1",
+        [pendingIds[0]],
+      );
+      await persistentMaintenance.expireAndReconcile();
+      expect(cancellations).toEqual([]);
+      await resetIncompletePair();
+      await isolated.query(
+        "UPDATE broker_execution_events SET mapping_state='CONFLICT' WHERE order_group_id=$1",
+        [cancelledGroupId],
+      );
+      await persistentMaintenance.expireAndReconcile();
+      expect(cancellations).toEqual([]);
+      await isolated.query(
+        "UPDATE broker_execution_events SET mapping_state='MAPPED' WHERE order_group_id=$1",
+        [cancelledGroupId],
+      );
+
+      // A broker timeout preserves durable cancellation uncertainty. A new
+      // worker retries the exact same owned order after restart.
+      const retryMaintenance = new OrderMaintenance(
+        isolated,
+        {
+          ...unusedGateway,
+          cancelStrategyOrder: () =>
+            Promise.reject(new Error("TEST_CANCEL_TIMEOUT")),
+          reconcile: () =>
+            Promise.resolve({
+              asOf: new Date().toISOString(),
+              certain: false,
+              reasonCodes: ["TEST_CANCEL_UNCERTAIN"],
+              orders: [],
+              relevantPositionCount: 0,
+            }),
+        },
+        "XAUUSD",
+        { accountId: demoAccountId, symbolId },
+      );
+      await expect(retryMaintenance.expireAndReconcile()).rejects.toThrow(
+        "ORDER_MAINTENANCE_RECONCILIATION_REQUIRED",
+      );
+      expect(
+        (
+          await isolated.query<{ state: string }>(
+            "SELECT state FROM order_groups WHERE id=$1",
+            [cancelledGroupId],
+          )
+        ).rows[0]?.state,
+      ).toBe("RECONCILIATION_REQUIRED");
+      expect(
+        await contextStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+      await persistentMaintenance.expireAndReconcile();
+      expect(cancellations).toEqual([pendingIds[1]]);
+      expect(
+        (
+          await isolated.query<{ state: string; cancellation_reason: string }>(
+            "SELECT state,cancellation_reason FROM order_groups WHERE id=$1",
+            [cancelledGroupId],
+          )
+        ).rows[0],
+      ).toEqual({
+        state: "FAILED",
+        cancellation_reason: "OCO_PEER_UNFILLED_TERMINAL",
+      });
+      expect((await contextStore.latest())?.closedAt).toBeNull();
+      await persistentMaintenance.expireAndReconcile();
+      expect(cancellations).toEqual([pendingIds[1]]);
+
+      // Durable fill evidence wins even if the cancellation response and a
+      // later broker snapshot both appear flat (a rapid fill/close race).
+      await resetIncompletePair();
+      const racingFillId = randomUUID();
+      const racingMaintenance = new OrderMaintenance(
+        isolated,
+        {
+          ...unusedGateway,
+          cancelStrategyOrder: async (clientOrderId) => {
+            await isolated.query(
+              `INSERT INTO fills (id,order_id,broker_event_key,price,volume,occurred_at,received_at)
+             SELECT $1::uuid,id,$1::text,entry_price,50,now(),now() FROM orders WHERE client_order_id=$2`,
+              [racingFillId, clientOrderId],
+            );
+            return {
+              clientOrderId,
+              brokerOrderId: null,
+              state: "CANCELLED" as const,
+              filledVolume: "0",
+              updatedAt: new Date().toISOString(),
+              reasonCode: "TEST_CANCEL_RACE",
+            };
+          },
+          reconcile: () =>
+            Promise.resolve({
+              asOf: new Date().toISOString(),
+              certain: true,
+              reasonCodes: [],
+              orders: [],
+              relevantPositionCount: 0,
+            }),
+        },
+        "XAUUSD",
+        { accountId: demoAccountId, symbolId },
+      );
+      await racingMaintenance.expireAndReconcile();
+      expect(
+        (
+          await isolated.query<{ state: string }>(
+            "SELECT state FROM order_groups WHERE id=$1",
+            [cancelledGroupId],
+          )
+        ).rows[0]?.state,
+      ).toBe("RECONCILIATION_REQUIRED");
+      expect(
+        await contextStore.claim({ ...contextClaim, id: randomUUID() }),
+      ).toBe(false);
+      await isolated.query("DELETE FROM fills WHERE id=$1", [racingFillId]);
+
+      // A partial fill requires peer cancellation even when the immediate
+      // callback failed. It can never be classified as an unfilled setup.
+      await resetIncompletePair();
+      await isolated.query(
+        "UPDATE orders SET state='PARTIALLY_FILLED',filled_volume=50 WHERE client_order_id=$1",
+        [pendingIds[0]],
+      );
+      cancellations.length = 0;
+      const partialMaintenance = new OrderMaintenance(
+        isolated,
+        {
+          ...unusedGateway,
+          cancelStrategyOrder: (clientOrderId) => {
+            cancellations.push(clientOrderId);
+            return Promise.resolve({
+              clientOrderId,
+              brokerOrderId: null,
+              state: "CANCELLED" as const,
+              filledVolume: "0",
+              updatedAt: new Date().toISOString(),
+              reasonCode: "OCO_PEER_FILLED",
+            });
+          },
+          reconcile: () =>
+            Promise.resolve({
+              asOf: new Date().toISOString(),
+              certain: false,
+              reasonCodes: ["PARTIAL_FILL"],
+              orders: [],
+              relevantPositionCount: 1,
+            }),
+        },
+        "XAUUSD",
+        { accountId: demoAccountId, symbolId },
+      );
+      await expect(partialMaintenance.expireAndReconcile()).rejects.toThrow(
+        "ORDER_MAINTENANCE_RECONCILIATION_REQUIRED",
+      );
+      expect(cancellations).toEqual([pendingIds[1]]);
+      expect(
+        (
+          await isolated.query<{ state: string }>(
+            "SELECT state FROM order_groups WHERE id=$1",
+            [cancelledGroupId],
+          )
+        ).rows[0]?.state,
+      ).toBe("RECONCILIATION_REQUIRED");
+      await isolated.query(
+        "UPDATE orders SET state='CANCELLED',filled_volume=0 WHERE order_group_id=$1",
+        [cancelledGroupId],
+      );
+      await isolated.query(
+        "UPDATE order_groups SET state='FAILED' WHERE id=$1",
+        [cancelledGroupId],
+      );
       // Isolate the already reconciled closed fixture from other test/demo contexts.
       await isolated.query("UPDATE order_groups SET mode='paper' WHERE id=$1", [
         orderGroupId,
@@ -2084,6 +2253,50 @@ describe("PostgreSQL migrations integration", () => {
       expect(
         await closeStore.claim({ ...contextClaim, id: randomUUID() }),
       ).toBe(false);
+      // Restore the original demo scope so this rejection still tests conflicting
+      // close evidence, rather than a mode mismatch introduced by the claim test.
+      await isolated.query("UPDATE order_groups SET mode='demo' WHERE id=$1", [
+        orderGroupId,
+      ]);
+      const conflictingRaw = structuredClone(closedRaw);
+      const conflictingDeal = conflictingRaw.deal as Record<string, unknown>;
+      conflictingDeal.dealId = "904";
+      const conflictingDetail = conflictingDeal.closePositionDetail as Record<
+        string,
+        unknown
+      >;
+      conflictingDetail.grossProfit = "1100";
+      const conflictingClose = normalizeDemoExecution(conflictingRaw, {
+        symbolId: "7",
+      });
+      await expect(restartedStore.persist(conflictingClose!)).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+      const conflictingOutcome = await isolated.query<{
+        mapping_state: string;
+        reason_codes: string[];
+      }>(
+        `SELECT mapping_state, reason_codes
+         FROM broker_execution_events
+         WHERE account_id = $1 AND broker_event_key = $2`,
+        [demoAccountId, conflictingClose!.eventKey],
+      );
+      expect(conflictingOutcome.rows[0]).toEqual({
+        mapping_state: "CONFLICT",
+        reason_codes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+      await expect(restartedStore.readiness()).resolves.toEqual({
+        certain: false,
+        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+      });
+      await expect(
+        restartedStore.reconcileTerminalEvidence(),
+      ).resolves.toMatchObject({
+        certain: false,
+        reasonCodes: ["DEMO_TRADE_OUTCOME_CONFLICT"],
+        resolvedEventCount: 0,
+      });
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);

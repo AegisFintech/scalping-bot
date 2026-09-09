@@ -1,0 +1,261 @@
+{
+  "label": "SOFTWARE_VALIDATION_NOT_PERFORMANCE",
+  "release": "0.2.3-equity-risk.10",
+  "node_tests": 535,
+  "python_tests": 140,
+  "schema_tests": 27,
+  "migration_tests": 3,
+  "integration_tests": 3,
+  "initial_full_gates": [
+    {
+      "command": "node --version",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 13.23,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 23.83,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.46,
+      "log": "03.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.31,
+      "log": "04.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 26.98,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 3.05,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.07,
+      "log": "07.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 4.72,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.57,
+      "log": "11.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.33,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "15.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "16.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.11,
+      "log": "17.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.82,
+      "log": "18.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 19.72,
+      "log": "19.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.27,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-084/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "21.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-084/base.json",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "22.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-084/stress.json --stress",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "23.log"
+    }
+  ],
+  "final_gateway_recovery_gates": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 16.53,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 23.3,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.69,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.51,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 27.26,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 4.64,
+      "log": "05.log"
+    }
+  ],
+  "corrections": [
+    "Updated an existing SQL-spacing assertion.",
+    "Created a fresh isolated PostgreSQL 18 TLS test server because the prior temporary server had been removed.",
+    "Matched unresolved-event filtering to existing durable recovery semantics.",
+    "Moved the deliberate unrecoverable conflicting-close fixture after the new maintenance tests; retained its failure assertions.",
+    "Restored the original demo scope before the relocated conflicting-close fixture, then reran its integration assertions."
+  ],
+  "graphify": {
+    "nodes": 2888,
+    "edges": 6075,
+    "communities": 199,
+    "mode": "local AST-only",
+    "warning": "pyproject.toml produced no nodes; code graph was regenerated successfully."
+  },
+  "configuration": {
+    "fileKeyCount": 24,
+    "file": {
+      "AI_MODEL": "gpt-6-astra/u64",
+      "TRADING_MODE": "demo",
+      "AUTOMATIC_ANALYSIS_ENABLED": "true",
+      "DEMO_TRADING_ENABLED": "true",
+      "EMERGENCY_STOP": "false"
+    },
+    "cached": [
+      {
+        "service": "scalper-ai",
+        "cached": {
+          "AI_MODEL": null,
+          "TRADING_MODE": null,
+          "AUTOMATIC_ANALYSIS_ENABLED": null,
+          "DEMO_TRADING_ENABLED": null,
+          "EMERGENCY_STOP": null
+        }
+      },
+      {
+        "service": "scalper-execution",
+        "cached": {
+          "AI_MODEL": null,
+          "TRADING_MODE": null,
+          "AUTOMATIC_ANALYSIS_ENABLED": null,
+          "DEMO_TRADING_ENABLED": null,
+          "EMERGENCY_STOP": null
+        }
+      }
+    ]
+  },
+  "secret_scanning": "Repository scanner passes with pre-existing missing-image warnings; an all-index-blob exact-value/pattern scan is also required before each commit.",
+  "final_review_checks": [
+    {
+      "command": "npx prettier --check tests/integration/database.integration.test.ts",
+      "exit_code": 0,
+      "seconds": 1.48
+    },
+    {
+      "command": "npx eslint tests/integration/database.integration.test.ts",
+      "exit_code": 0,
+      "seconds": 7.32
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 4.73
+    }
+  ],
+  "secret_scan_supplement": {
+    "index_blobs": 390,
+    "matches": 0
+  }
+}

@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.9` uses policy `fixed-risk-v4` in
+Release `0.2.3-equity-risk.10` uses policy `fixed-risk-v4` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
