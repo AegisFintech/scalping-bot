@@ -1079,6 +1079,73 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     return this.#parseExecution(response);
   }
 
+  async amendPositionProtection(
+    positionId: string,
+    symbol: string,
+    stopLoss: string,
+    takeProfit: string,
+  ): Promise<BrokerExecution> {
+    this.#requireTradingReady();
+    const metadata = [...this.#metadata.values()].find(
+      (item) => item.symbolName === symbol,
+    );
+    if (metadata === undefined)
+      throw new Error("CTRADER_ORDER_SYMBOL_METADATA_MISSING");
+    if (protocolInteger(positionId, "CTRADER_POSITION_ID_INVALID") <= 0)
+      throw new Error("CTRADER_POSITION_ID_INVALID");
+    for (const price of [stopLoss, takeProfit]) {
+      const value = new Decimal(price);
+      if (
+        !value.isFinite() ||
+        !value.gt(0) ||
+        !value.mod(metadata.tickSize).eq(0)
+      )
+        throw new Error("CTRADER_POSITION_PROTECTION_INVALID");
+    }
+    const response = await this.#transport.request(
+      CTraderPayload.AMEND_POSITION_SLTP_REQ,
+      {
+        ctidTraderAccountId: protocolInteger(
+          this.accountId,
+          "CTRADER_ACCOUNT_ID_INVALID",
+        ),
+        positionId: protocolInteger(positionId, "CTRADER_POSITION_ID_INVALID"),
+        stopLoss: exactProtocolDouble(stopLoss, metadata.digits),
+        takeProfit: exactProtocolDouble(takeProfit, metadata.digits),
+        stopLossTriggerMethod: 1,
+      },
+      [CTraderPayload.EXECUTION_EVENT],
+    );
+    return this.#parseExecution(response);
+  }
+
+  async closePosition(
+    positionId: string,
+    volume: string,
+  ): Promise<BrokerExecution> {
+    this.#requireTradingReady();
+    const nativeVolume = protocolInteger(
+      volume,
+      "CTRADER_POSITION_VOLUME_INVALID",
+    );
+    if (protocolInteger(positionId, "CTRADER_POSITION_ID_INVALID") <= 0)
+      throw new Error("CTRADER_POSITION_ID_INVALID");
+    if (nativeVolume <= 0) throw new Error("CTRADER_POSITION_VOLUME_INVALID");
+    const response = await this.#transport.request(
+      CTraderPayload.CLOSE_POSITION_REQ,
+      {
+        ctidTraderAccountId: protocolInteger(
+          this.accountId,
+          "CTRADER_ACCOUNT_ID_INVALID",
+        ),
+        positionId: protocolInteger(positionId, "CTRADER_POSITION_ID_INVALID"),
+        volume: nativeVolume,
+      },
+      [CTraderPayload.EXECUTION_EVENT],
+    );
+    return this.#parseExecution(response);
+  }
+
   async reconcileRaw(): Promise<RawReconciliation> {
     this.#requireAuthenticated();
     const response = await this.#transport.request(

@@ -1,4 +1,5 @@
 import { Decimal } from "decimal.js";
+import { protectiveCloseAuthorized } from "./protective-close-evidence.js";
 import type pg from "pg";
 
 import type {
@@ -360,8 +361,25 @@ export async function recoverDemoExecutions(
       continue;
     }
     const closingOrder = closingOrders[0]!;
+    const authorizedMarketClose =
+      optionalNumberField(closingOrder, "orderType") === 1 &&
+      (await protectiveCloseAuthorized(options.pool, {
+        accountId: options.accountId,
+        symbolId: options.symbolId,
+        brokerPositionId: localPosition.broker_position_id,
+        brokerOrderId,
+        occurredAt: new Date(
+          numberField(deal, "executionTimestamp"),
+        ).toISOString(),
+        closedVolume:
+          optionalStringField(
+            record(deal.closePositionDetail),
+            "closedVolume",
+          ) ?? null,
+      }));
     if (
-      optionalNumberField(closingOrder, "orderType") !== 4 ||
+      (optionalNumberField(closingOrder, "orderType") !== 4 &&
+        !authorizedMarketClose) ||
       closingOrder.closingOrder !== true
     ) {
       reasons.add("DEMO_RECOVERY_CLOSING_ORDER_INVALID");

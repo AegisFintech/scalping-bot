@@ -3089,3 +3089,13 @@ runtime.
   deadlines; the request count remained one with demo unpaused. This proves the
   observed waiting behavior, not profitability or a completed natural trade cycle.
   Timestamped evidence: `docs/evidence/persistent-order-rollout.json`.
+
+## ISSUE-088 — Verify and repair filled-position protection
+
+- Status: complete — implemented, validated, deployed to demo and automatic trading resumed. [GitHub issue #207](https://github.com/AegisFintech/scalping-bot/issues/207).
+- Dependencies: ISSUE-087 STOP/GTC execution and the durable demo execution journal.
+- User authorized immediate implementation and demo rollout after approving the protection-repair proposal.
+- Acceptance: refresh actual broker SL/TP after fills independently of inference; preserve approved distances from actual fill and never widen protection; bounded durable repair attempts; pause new entries and submit one owned-position close if protection cannot be established; reconcile that close without treating it as a new entry; show missing/stale protection honestly; cover failure, restart and ownership paths; pass required quality gates and deliver through a dedicated PR.
+- Baseline: the reported short filled at 4397.89, TP 4397.36 executed at 4397.21 at 2026-09-09 06:28:01 UTC. Local initial-fill SL/TP were null. Actual historical SL absence is unproven. Demo was flat and new analyses were paused for the update. Green P/L is not an exit rule.
+
+- ISSUE-088 completion evidence: [implementation report](docs/position-protection-report.md), [all required quality gates](docs/evidence/position-protection-validation.json), and [demo/browser rollout](docs/evidence/position-protection-rollout.json). Commands and exact results are recorded; 603 Node / 141 Python / 35 schema / 3 migration / 4 TLS integration tests pass. Environment and daily/drawdown state preserved; automatic demo resumed.

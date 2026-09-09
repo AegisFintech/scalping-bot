@@ -177,3 +177,12 @@ not new environment keys. The old five-point broker STOP_LIMIT ceiling no longer
 applies to production STOP orders. Relative SL/TP and all risk percentages remain.
 Migration 0021 adds explicit execution intent without rewriting historical rows.
 See [rollout, validation and rollback](market-stop-report.md).
+
+ISSUE-088 release `0.2.5-market-stop.2` adds fixed post-fill protection maintenance:
+two amendment attempts, at least five seconds between attempts, one durable close
+claim, and a persistent pause when fallback closure is needed. Quote/reconciliation
+observations must be at most two seconds old at the decision; the dashboard
+withholds protection values older than ten seconds. There are no new environment
+keys. Model pin, authorization, sizing policy and existing daily/drawdown locks
+are unchanged. Review [position protection](position-protection-report.md) before
+resuming a pause caused by failed or unknown protection commands.

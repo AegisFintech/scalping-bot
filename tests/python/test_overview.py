@@ -34,6 +34,40 @@ def test_control_and_position_precedence() -> None:
     assert overview.operating_state(status)[0] == "Stopped"
 
 
+def test_protection_requires_fresh_broker_values() -> None:
+    now = datetime(2026, 9, 9, tzinfo=UTC)
+    position = {"state": "OPEN"}
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "managedSetup": {"status": "ACTIVE", "positions": [position]},
+    }
+    assert "awaiting broker confirmation" in overview.operating_state(status, now)[1]
+    position["protection"] = {
+        "status": "VERIFIED",
+        "stopLoss": "4398.95",
+        "takeProfit": "4397.36",
+        "observedAt": now.isoformat(),
+    }
+    assert "Broker SL/TP confirmed" in overview.operating_state(status, now)[1]
+    assert "stale" in overview.operating_state(status, now + timedelta(seconds=11))[1]
+    rows = [
+        {
+            "stop_loss": "4398.95",
+            "take_profit": "4397.36",
+            "protection_status": "VERIFIED",
+            "protection_observed_at": now,
+        }
+    ]
+    assert overview.position_rows(rows, now)[0]["stop_loss"] == "4398.95"
+    assert overview.position_rows(rows, now + timedelta(seconds=11))[0]["stop_loss"] is None
+    assert rows[0]["stop_loss"] == "4398.95"
+    rows[0]["protection_status"] = "SIMULATED"
+    assert overview.position_rows(rows, now + timedelta(seconds=11))[0]["stop_loss"] == "4398.95"
+    status["mode"] = "paper"
+    assert "simulated SL/TP" in overview.operating_state(status, now)[1]
+
+
 def test_context_validity_and_consumption_are_distinct_from_provider_success() -> None:
     now = datetime(2026, 9, 7, tzinfo=UTC)
     assert overview.context_state(

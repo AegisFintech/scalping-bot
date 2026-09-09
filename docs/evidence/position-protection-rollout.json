@@ -1,0 +1,112 @@
+{
+  "release": "0.2.5-market-stop.2",
+  "mode": "demo",
+  "migration": {
+    "at": "2026-09-09T06:40:51.373Z",
+    "applied": ["0022"]
+  },
+  "backup": {
+    "at": "2026-09-09T06:37:49.751Z",
+    "databaseBytes": 48712565,
+    "chartArchiveBytes": 254740147,
+    "archiveReadable": true
+  },
+  "paused_verification": {
+    "at": "2026-09-09T06:41:38.511Z",
+    "release": "0.2.5-market-stop.2",
+    "ready": true,
+    "startup": true,
+    "riskStatePreserved": true,
+    "environmentUnchanged": true
+  },
+  "resumed": {
+    "at": "2026-09-09T06:43:18.638Z",
+    "paused": false,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": [],
+    "environmentUnchanged": true
+  },
+  "broker_pre_resume": {
+    "at": "2026-09-09T06:42:08.963Z",
+    "certain": true,
+    "openPositions": 0,
+    "pendingOrders": 0
+  },
+  "browser": [
+    {
+      "theme": "light",
+      "overview": {
+        "titleStable": true,
+        "navigationStable": true,
+        "inputStable": true,
+        "focused": true,
+        "caret": 4,
+        "minimumMetricCount": 4
+      },
+      "history": {
+        "chartStable": true,
+        "navigationStable": true,
+        "selected": "",
+        "plotBackground": "#ffffff",
+        "plotFont": "#808495"
+      },
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "overview": {
+        "titleStable": true,
+        "navigationStable": true,
+        "inputStable": true,
+        "focused": true,
+        "caret": 4,
+        "minimumMetricCount": 4
+      },
+      "history": {
+        "chartStable": true,
+        "navigationStable": true,
+        "selected": "",
+        "plotBackground": "#0e1117",
+        "plotFont": "#e6eaf1"
+      },
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "No missing-protection failure was deliberately introduced at the broker. Amendment/rejection/fallback cases were tested with mocks and isolated PostgreSQL.",
+    "The original position had already closed before deployment. Historical actual SL absence remains unproven."
+  ],
+  "broker_post_resume": {
+    "at": "2026-09-09T06:44:37.535Z",
+    "certain": true,
+    "openPositions": 0,
+    "pendingOrders": 2,
+    "pending": [
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4406.09,
+        "volume": 308100,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      },
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4395.29,
+        "volume": 308200,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      }
+    ],
+    "positions": []
+  }
+}

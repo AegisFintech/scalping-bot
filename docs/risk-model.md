@@ -200,3 +200,16 @@ slip beyond this reserve; neither the reserve nor the broker stop guarantees a
 maximum realized loss. Existing fill monitoring latches uncertainty beyond
 30 points or 2 bps while preserving fills and peer cancellation; matching terminal
 recovery clears the latch. [Demo evidence](market-stop-report.md).
+
+### Post-fill protection verification
+
+ISSUE-088 retains the approved fee-buffered TP, twice-TP SL, shared 1% OCO risk
+budget and 30-point modeled slippage reserve. It adds independent verification
+and restoration of missing/wider protection from actual fill VWAP. Broker-held
+tighter levels are retained; volume is never increased. Fresh executable-side
+quotes determine crossed SL/TP boundaries, not positive displayed P/L. After two
+failed amendment attempts, pause new entries and claim one owned-position close.
+A missing position, stale quote, mismatched ownership/volume, storage failure or
+unknown close result cannot authorize another close or new risk. Closure requires
+the existing exact-volume deal/P&L reconciliation. Stop and market-close execution
+can slip; these controls do not guarantee a realized loss ceiling.

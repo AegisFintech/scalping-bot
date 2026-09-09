@@ -4,6 +4,8 @@ import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
 import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
 import { IndependentMaintenance } from "./independent-maintenance.js";
+import { PositionProtectionMaintenance } from "./position-protection.js";
+import { PostgresPositionProtection } from "./postgres-position-protection.js";
 import "dotenv/config";
 import {
   resolveRuntimeEnvironment,
@@ -543,6 +545,7 @@ async function main(): Promise<void> {
         })
       : null;
   let latestDemoExecutionReasonCodes: readonly string[] = [];
+  let positionProtectionCertain = true;
   let latestSafetyDetailReasonCodes: readonly string[] = [];
   const demoExecutionRecorder =
     demoExecutionStore === null
@@ -952,6 +955,9 @@ async function main(): Promise<void> {
     }
     latestSafetyDetailReasonCodes = [
       ...new Set([
+        ...(positionProtectionCertain
+          ? []
+          : ["POSITION_PROTECTION_UNAVAILABLE"]),
         ...(state.certain ? [] : state.reasonCodes),
         ...(external.certain ? [] : external.reasonCodes),
         ...(demoRecoveryState.certain ? [] : demoRecoveryState.reasonCodes),
@@ -1011,6 +1017,7 @@ async function main(): Promise<void> {
       marketDataFresh: true,
       dailyLossLockout: dailyLocked,
       operationalRiskLockout:
+        !positionProtectionCertain ||
         !demoRecoveryState.certain ||
         !demoExecutionState.certain ||
         (config.maxOrdersPerDay > 0 && ordersToday >= config.maxOrdersPerDay),
@@ -1481,7 +1488,50 @@ async function main(): Promise<void> {
       limit: config.automaticDemoClosedTradeLimit,
     });
   };
+  const positionProtection =
+    brokerClient !== null &&
+    config.tradingMode === "demo" &&
+    config.demoTradingEnabled
+      ? new PositionProtectionMaintenance({
+          store: new PostgresPositionProtection({
+            pool,
+            accountId: identity.accountId,
+            symbolId: identity.symbolId,
+          }),
+          client: brokerClient,
+          symbolId: executionSymbolId,
+          symbol: config.symbol,
+          tickSize: latestSnapshot.metadata.tickSize,
+          quote: async () => {
+            const result = await marketClient.quote(config.symbol);
+            if (result.metadata.symbolId !== executionSymbolId)
+              throw new Error("POSITION_PROTECTION_SYMBOL_MISMATCH");
+            return result.quote;
+          },
+          pause: async () => {
+            await controls.setControl({
+              key: "PAUSE_NEW_ANALYSES",
+              scope: config.instanceId,
+              enabled: true,
+              actor: "position-protection",
+              reason:
+                "Position protection requires a confirmed close; new entries paused for review",
+            });
+          },
+        })
+      : null;
   const protectiveMaintenance = new IndependentMaintenance(async () => {
+    // Attempt protection even when recovery, emergency cancellation or expiry fails.
+    // Inference and normal placement authorization never gate risk-reducing maintenance.
+    if (positionProtection !== null) {
+      try {
+        await demoExecutionRecorder?.flush();
+        await positionProtection.run();
+        positionProtectionCertain = true;
+      } catch {
+        positionProtectionCertain = false;
+      }
+    }
     if (paperGateway !== null && paperAccount !== null) {
       const quote = await marketClient.quote(config.symbol);
       const changes = paperGateway.processQuote(
@@ -1516,8 +1566,11 @@ async function main(): Promise<void> {
       runtime.emergencyStop
     )
       await maintenance.cancelAll("INDEPENDENT_EMERGENCY_CANCELLATION");
-    await maintenance.expireAndReconcile();
-    await refreshDemoRecovery();
+    try {
+      await maintenance.expireAndReconcile();
+    } finally {
+      await refreshDemoRecovery();
+    }
   });
   const protectiveTimer = setInterval(() => {
     void protectiveMaintenance.run().catch(() =>

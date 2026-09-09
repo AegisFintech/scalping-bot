@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { protectiveCloseAuthorized } from "./protective-close-evidence.js";
 
 import { Decimal } from "decimal.js";
 import type pg from "pg";
@@ -136,7 +137,14 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
              AND terminal.mapping_state = 'MAPPED'
              AND jsonb_array_length(terminal.reason_codes) = 0
              AND terminal.execution_type IN (3, 11)
-             AND terminal.broker_order_type = 4
+             AND (terminal.broker_order_type = 4 OR
+               (terminal.broker_order_type = 1 AND EXISTS (
+                 SELECT 1 FROM position_protection pp WHERE pp.position_id=p.id
+                   AND pp.close_requested_at <= terminal.occurred_at
+                   AND terminal.occurred_at <= pp.close_requested_at + interval '120 seconds'
+                   AND (pp.broker_close_order_id IS NULL OR pp.broker_close_order_id=terminal.broker_order_id)
+                   AND pp.close_volume=(terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric
+               )))
              AND terminal.closing_order = true
              AND terminal.broker_fill_id IS NOT NULL
              AND terminal.normalized_payload -> 'fill' <> 'null'::jsonb
@@ -399,8 +407,46 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         };
       }
       let position = positions.rows[0] ?? null;
+      const authorizedMarketClose =
+        event.brokerOrderType === 1 &&
+        event.closingOrder &&
+        event.brokerPositionId !== null &&
+        event.brokerOrderId !== null &&
+        (await protectiveCloseAuthorized(client, {
+          accountId: this.#options.accountId,
+          symbolId: this.#options.symbolId,
+          brokerPositionId: event.brokerPositionId,
+          brokerOrderId: event.brokerOrderId,
+          occurredAt: event.occurredAt,
+          closedVolume: event.closeDetail?.closedVolume ?? null,
+        }));
+      if (
+        event.closingOrder &&
+        event.brokerOrderType !== 4 &&
+        !authorizedMarketClose
+      ) {
+        await this.#insertEvent(client, event, order, position, "UNMATCHED", [
+          "DEMO_POSITION_CLOSE_NOT_AUTHORIZED",
+        ]);
+        await client.query("COMMIT");
+        return {
+          certain: false,
+          reasonCodes: ["DEMO_POSITION_CLOSE_NOT_AUTHORIZED"],
+        };
+      }
+      if (authorizedMarketClose) {
+        const bound = await client.query(
+          `UPDATE position_protection SET broker_close_order_id=$2,updated_at=now()
+           WHERE position_id=$1 AND close_requested_at IS NOT NULL
+             AND (broker_close_order_id IS NULL OR broker_close_order_id=$2)
+           RETURNING position_id`,
+          [position?.position_id, event.brokerOrderId],
+        );
+        if (bound.rows.length !== 1)
+          throw new Error("POSITION_PROTECTION_CLOSE_ACK_CONFLICT");
+      }
       const brokerGeneratedClosingOrder =
-        event.brokerOrderType === 4 &&
+        (event.brokerOrderType === 4 || authorizedMarketClose) &&
         event.closingOrder &&
         event.brokerPositionId !== null &&
         position !== null;
@@ -699,7 +745,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       if (
         event.position?.state === "CLOSED" &&
         event.closeDetail !== null &&
-        event.brokerOrderType === 4 &&
+        (event.brokerOrderType === 4 || authorizedMarketClose) &&
         event.closingOrder &&
         event.brokerOrderId !== null
       ) {
