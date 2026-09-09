@@ -5,6 +5,9 @@
 ### ISSUE-087 — Demo market-stop OCO and prompt zero-fill restart (implemented; validated; demo restored)
 
 - Issue: [#204](https://github.com/AegisFintech/scalping-bot/issues/204).
+- Pull request: [#205](https://github.com/AegisFintech/scalping-bot/pull/205);
+  implementation checkpoint `930aacb` committed and pushed; merged `aa2afea`
+  at 14:15:20 SGT. Final evidence follows on `issue-087-market-stop-evidence`.
 - Branch: `issue-087-market-stop-cycle`; dependency: ISSUE-086 / PR #203.
 - Authorization: September 9 operator approved testing ordinary STOP orders after
   confirmed broker rejection of STOP_LIMIT fills above the five-point ceiling.

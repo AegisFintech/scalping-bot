@@ -143,5 +143,180 @@
       "spreadPoints": "8"
     }
   },
-  "observedCycle": "Pending acceptance verified; natural fill/close not yet observed."
+  "observedCycle": "Pending acceptance verified; natural fill/close not yet observed.",
+  "followupBroker": {
+    "at": "2026-09-09T06:16:02.823Z",
+    "label": "READ_ONLY_DEMO_BROKER_CHECK",
+    "account": {
+      "certain": true,
+      "relevantPositionCount": 0,
+      "relevantPendingOrderCount": 2,
+      "reasonCodes": []
+    },
+    "allAccountOpenPositions": 0,
+    "allAccountPendingOrders": 2,
+    "historyHasMore": false,
+    "history": [
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4398.92,
+        "executedVolume": 0,
+        "lastUpdate": "2026-09-09T06:13:41.007Z",
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000,
+        "errorCode": null
+      },
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4405.22,
+        "executedVolume": 0,
+        "lastUpdate": "2026-09-09T06:13:40.531Z",
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000,
+        "errorCode": null
+      }
+    ],
+    "pending": [
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4405.22,
+        "volume": 307700,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      },
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4398.92,
+        "volume": 307800,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      }
+    ],
+    "positions": [],
+    "quote": {
+      "bid": "4402.93",
+      "ask": "4403.02",
+      "sourceTime": "2026-09-09T06:16:02.838Z",
+      "receivedAt": "2026-09-09T06:16:02.990Z",
+      "tickSize": "0.01",
+      "spread": "0.09",
+      "spreadPoints": "9"
+    }
+  },
+  "journal": {
+    "at": "2026-09-09T06:15:06.835Z",
+    "label": "DEMO_DURABLE_JOURNAL",
+    "groups": [
+      {
+        "state": "ACTIVE",
+        "cancellationReason": null,
+        "updatedAt": "2026-09-09T06:15:05.761Z",
+        "analysisTime": "2026-09-09T06:13:32.434Z",
+        "orders": [
+          {
+            "side": "BUY",
+            "state": "PENDING",
+            "execution_order_type": "STOP",
+            "time_in_force": "GTC",
+            "entry_price": "4405.2200000000",
+            "stop_loss": "4404.1600000000",
+            "take_profit": "4405.7500000000",
+            "normalized_volume": "307700.0000000000",
+            "filled_volume": "0.0000000000",
+            "submitted_at": "2026-09-09T06:13:40.686Z",
+            "updated_at": "2026-09-09T06:13:40.531Z"
+          },
+          {
+            "side": "SELL",
+            "state": "PENDING",
+            "execution_order_type": "STOP",
+            "time_in_force": "GTC",
+            "entry_price": "4398.9200000000",
+            "stop_loss": "4399.9800000000",
+            "take_profit": "4398.3900000000",
+            "normalized_volume": "307800.0000000000",
+            "filled_volume": "0.0000000000",
+            "submitted_at": "2026-09-09T06:13:41.163Z",
+            "updated_at": "2026-09-09T06:13:41.007Z"
+          }
+        ],
+        "positions": [],
+        "trades": [],
+        "nextRequest": [],
+        "events": [
+          {
+            "execution_type": 2,
+            "mapping_state": "MAPPED",
+            "reason_codes": [],
+            "occurred_at": "2026-09-09T06:13:40.531Z",
+            "broker_order_type": "3",
+            "order_state": "PENDING",
+            "fill_price": null
+          },
+          {
+            "execution_type": 2,
+            "mapping_state": "MAPPED",
+            "reason_codes": [],
+            "occurred_at": "2026-09-09T06:13:40.531Z",
+            "broker_order_type": "3",
+            "order_state": "PENDING",
+            "fill_price": null
+          },
+          {
+            "execution_type": 2,
+            "mapping_state": "MAPPED",
+            "reason_codes": [],
+            "occurred_at": "2026-09-09T06:13:41.007Z",
+            "broker_order_type": "3",
+            "order_state": "PENDING",
+            "fill_price": null
+          },
+          {
+            "execution_type": 2,
+            "mapping_state": "MAPPED",
+            "reason_codes": [],
+            "occurred_at": "2026-09-09T06:13:41.007Z",
+            "broker_order_type": "3",
+            "order_state": "PENDING",
+            "fill_price": null
+          }
+        ]
+      }
+    ],
+    "contexts": [
+      {
+        "state": "READY",
+        "requested_at": "2026-09-09T06:13:20.894Z",
+        "available_at": "2026-09-09T06:13:26.609Z",
+        "duration_ms": 5714,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "buy_stop": "4405.22",
+        "sell_stop": "4398.92"
+      }
+    ]
+  },
+  "delivery": {
+    "implementationCommit": "930aacb52c5dd1b9bb87952118afa512ba0f5092",
+    "pullRequest": 205,
+    "mergeCommit": "aa2afea4ef80b29af59374d48d0714855d36d9e3",
+    "mergedAt": "2026-09-09T06:15:20Z",
+    "requiredRemoteChecks": [],
+    "requiredReviews": false,
+    "adminOverride": false
+  }
 }

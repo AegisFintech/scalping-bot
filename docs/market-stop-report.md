@@ -1,6 +1,7 @@
 # ISSUE-087 — Ordinary stop execution and prompt zero-fill restart
 
 Date: 2026-09-09. Issue: [#204](https://github.com/AegisFintech/scalping-bot/issues/204).
+Pull request: [#205](https://github.com/AegisFintech/scalping-bot/pull/205).
 Branch: `issue-087-market-stop-cycle`; baseline `24d1a9b` / ISSUE-086.
 Release `0.2.5-market-stop.1`, policy `market-stop-v1`. Demo only.
 
@@ -88,3 +89,16 @@ in native broker units. No positions or fills at that observation.
 
 [Rollout evidence](evidence/market-stop-rollout.json). This verifies the deployed
 transport and pending protection, not a completed natural cycle or profitability.
+
+Implementation checkpoint `930aacb` was committed and pushed. PR #205 merged
+at 14:15:20 SGT as `aa2afea`. The auto-merge request completed immediately as a
+squash merge because the PR was mergeable; GitHub reported no queued auto-merge
+request, required checks or reviews. All local required gates passed before it.
+No admin override or branch-protection change was used.
+
+At 14:16:02 SGT the independent broker check still showed the same two unfilled
+STOP/GTC orders and no positions, with certain account reconciliation. The journal
+had exactly one provider request since resumption. No repeated limit-price
+rejection was observed, but neither threshold had filled, so actual fill quality
+and the full natural fill → SL/TP → fresh-request cycle remain unverified in this
+short observation. Mock and PostgreSQL tests cover the restart and race paths.
