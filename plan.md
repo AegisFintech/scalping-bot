@@ -2,10 +2,11 @@
 
 ## Scope
 
-### ISSUE-085 — DeepSeek and richer completed-market context (implemented; validating rollout)
+### ISSUE-085 — DeepSeek and richer completed-market context (implemented; validated; demo restored)
 
 - Issue: [#200](https://github.com/AegisFintech/scalping-bot/issues/200).
-
+- Pull request: [#201](https://github.com/AegisFintech/scalping-bot/pull/201);
+  implementation checkpoint `d5a5acc` committed and pushed.
 - Branch: `issue-085-deepseek-model-context`; dependency: ISSUE-084 / PR #199.
 - Authorization: September 9 operator request for exact `deepseek-v4-pro/u5W`
   and more market data, retaining local SL/TP and deterministic risk sizing.
@@ -28,6 +29,13 @@
 - Required checks passed: 553 Node / 140 Python / 27 schema / 3 migration /
   3 isolated TLS integration tests and all format/lint/type/build/configuration,
   replay, secret and dependency gates. Exact results: `docs/evidence/deepseek-validation.json`.
+- Migration 0020 applied at 11:02:52 SGT, preserving all 212 historical context
+  rows and capital/daily risk state. Matching AI/execution services passed paused
+  preflight; prior demo automation resumed at 11:03:11 SGT. Only AI_MODEL changed
+  in the mode-0600, 24-key populated environment; PM2 has no cached model override.
+- First ordinary demo request validated in 9,331 ms (29,597 input / 239 output
+  tokens). At 11:04:03 the READY map was waiting on entry distance, with no new
+  order/trade. See `docs/deepseek-context-report.md` and its rollout evidence.
 
 ### ISSUE-084 — Recover incomplete OCO pairs (implemented; validated; demo restored)
 

@@ -241,7 +241,7 @@
   },
   "stagedSecretScan": {
     "scope": "all index blobs, including pre-existing deleted working-tree images",
-    "files": 397,
+    "files": 398,
     "activeCredentialMatchesOrPatterns": []
   }
 }

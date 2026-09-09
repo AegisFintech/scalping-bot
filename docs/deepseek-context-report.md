@@ -2,6 +2,8 @@
 
 Date: September 9, 2026. [Issue #200](https://github.com/AegisFintech/scalping-bot/issues/200).
 Release: `0.2.3-equity-risk.11`; branch: `issue-085-deepseek-model-context`.
+[Pull request #201](https://github.com/AegisFintech/scalping-bot/pull/201);
+implementation checkpoint `d5a5acc` committed and pushed.
 
 ## Change
 
@@ -83,7 +85,21 @@ migration-list fixture were corrected and retested. Both populated and sample
 policy/startup checks passed. Graphify was updated using local AST extraction;
 its known `pyproject.toml` parser limitation remains.
 [Exact commands and results](evidence/deepseek-validation.json).
-The matching AI/execution demo rollout follows this implementation checkpoint.
+Migration 0020 applied at **11:02:52 SGT**. A digest comparison confirmed all
+212 prior context rows unchanged; capital and UTC daily risk state were preserved.
+Matching AI/execution services restarted at 11:02:56 using stable Node 22, passed
+paused preflight and resumed prior demo analysis authorization at **11:03:11 SGT**.
+The populated environment still has 24 keys and mode 0600, with only AI_MODEL
+changed. PM2 has no cached model override; all five services are online.
+The first immediate observation during process startup was unavailable; the next
+preflight and all four HTTP service readiness checks passed before resuming.
+The first durable demo request started at 11:03:20 SGT and validated in
+**9,331 ms**: 29,597 input / 239 output tokens, requested `deepseek-v4-pro/u5W`,
+returned `deepseek-v4-pro`. At 11:04:03, the map was READY and the local decision
+was `SCENARIO_WAIT_ENTRY_DISTANCE`: price was too far from the supplied entry
+levels, so no new order or trade was created. No threshold was moved to force
+an entry. The running demo remains enabled for subsequent safe decisions.
+[Rollout evidence](evidence/deepseek-rollout.json).
 
 Source candle retrieval remains 600 M1 / 500 M5 / 300 M15. The existing normalized
 decision journal retains compact raw tails and full derived features plus the
