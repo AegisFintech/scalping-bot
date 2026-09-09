@@ -278,5 +278,140 @@
         "cachedModel": null
       }
     ]
+  },
+  "placed": {
+    "label": "DEMO_LIFECYCLE_NOT_PERFORMANCE",
+    "at": "2026-09-09T03:05:42.264Z",
+    "release": "0.2.3-equity-risk.11",
+    "mode": "demo",
+    "paused": false,
+    "automatic": true,
+    "emergencyStopped": false,
+    "ready": true,
+    "startup": true,
+    "reasons": ["PREVIOUS_ANALYSIS_ACTIVE", "RELEVANT_PENDING_ORDER_EXISTS"],
+    "requestedModel": "deepseek-v4-pro/u5W",
+    "managed": {
+      "status": "ACTIVE",
+      "groupState": "ACTIVE",
+      "groupExpiresAt": null,
+      "groupUpdatedAt": "2026-09-09T03:05:41.916Z",
+      "cancellationReason": null,
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "PENDING",
+          "entryPrice": "4384.4100000000",
+          "stopLoss": "4383.3500000000",
+          "takeProfit": "4384.9400000000",
+          "volume": "351200.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T03:04:35.990Z"
+        },
+        {
+          "side": "SELL",
+          "state": "PENDING",
+          "entryPrice": "4377.7100000000",
+          "stopLoss": "4378.7700000000",
+          "takeProfit": "4377.1800000000",
+          "volume": "351300.0000000000",
+          "timeInForce": "GTC",
+          "expiresAt": null,
+          "updatedAt": "2026-09-09T03:04:36.481Z"
+        }
+      ],
+      "positions": [],
+      "trades": [],
+      "position": null,
+      "trade": null
+    },
+    "lastCycle": {
+      "outcome": "PLACED",
+      "reasons": []
+    },
+    "contexts": [
+      {
+        "state": "READY",
+        "requested_at": "2026-09-09T03:03:20.569Z",
+        "available_at": "2026-09-09T03:03:29.901Z",
+        "duration_ms": 9331,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "telemetry": {
+          "costAmount": null,
+          "costSource": "unavailable",
+          "inputTokens": 29597,
+          "totalTokens": 29836,
+          "costCurrency": null,
+          "inputProfile": "structured",
+          "outputTokens": 239,
+          "requestBytes": 66107,
+          "responseBytes": 3636,
+          "returnedModel": "deepseek-v4-pro",
+          "requestedModel": "deepseek-v4-pro/u5W"
+        },
+        "post_close": false
+      },
+      {
+        "state": "FAILED",
+        "requested_at": "2026-09-09T02:40:45.228Z",
+        "available_at": null,
+        "duration_ms": 1485,
+        "reason": "AI_HTTP_ERROR:500",
+        "requested_model": "gpt-6-astra/u64",
+        "telemetry": null,
+        "post_close": false
+      },
+      {
+        "state": "FAILED",
+        "requested_at": "2026-09-09T02:34:15.415Z",
+        "available_at": null,
+        "duration_ms": 1578,
+        "reason": "AI_HTTP_ERROR:500",
+        "requested_model": "gpt-6-astra/u64",
+        "telemetry": null,
+        "post_close": false
+      }
+    ],
+    "historicalContexts": {
+      "count": 212,
+      "digest": "b802939f9b514b16efac3e259ee4bc1a"
+    },
+    "riskStatePreserved": true,
+    "historicalContextsPreserved": true,
+    "environment": {
+      "changedKeys": ["AI_MODEL"],
+      "beforeKeys": 24,
+      "afterKeys": 24,
+      "mode": "600"
+    },
+    "services": [
+      {
+        "name": "scalper-analytics",
+        "status": "online",
+        "cachedModel": null
+      },
+      {
+        "name": "scalper-market-data",
+        "status": "online",
+        "cachedModel": null
+      },
+      {
+        "name": "scalper-ai",
+        "status": "online",
+        "cachedModel": null
+      },
+      {
+        "name": "scalper-execution",
+        "status": "online",
+        "cachedModel": null
+      },
+      {
+        "name": "scalper-dashboard",
+        "status": "online",
+        "cachedModel": null
+      }
+    ]
   }
 }

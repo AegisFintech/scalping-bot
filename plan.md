@@ -35,7 +35,8 @@
   in the mode-0600, 24-key populated environment; PM2 has no cached model override.
 - First ordinary demo request validated in 9,331 ms (29,597 input / 239 output
   tokens). At 11:04:03 the READY map was waiting on entry distance, with no new
-  order/trade. See `docs/deepseek-context-report.md` and its rollout evidence.
+  order/trade. By 11:05:30 both GTC stop-limit orders were pending, with no open
+  positions. See `docs/deepseek-context-report.md` and its rollout evidence.
 
 ### ISSUE-084 — Recover incomplete OCO pairs (implemented; validated; demo restored)
 

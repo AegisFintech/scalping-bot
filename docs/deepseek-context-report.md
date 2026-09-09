@@ -99,6 +99,10 @@ returned `deepseek-v4-pro`. At 11:04:03, the map was READY and the local decisio
 was `SCENARIO_WAIT_ENTRY_DISTANCE`: price was too far from the supplied entry
 levels, so no new order or trade was created. No threshold was moved to force
 an entry. The running demo remains enabled for subsequent safe decisions.
+A subsequent observation at 11:05:30 SGT confirmed the same map had produced
+**two pending GTC stop-limit orders**, BUY and SELL, with zero open positions.
+This verifies the active model-to-order path; no filled trade or profitability
+is claimed. The local fee-buffered TP / double-SL transform remains in use.
 [Rollout evidence](evidence/deepseek-rollout.json).
 
 Source candle retrieval remains 600 M1 / 500 M5 / 300 M15. The existing normalized
