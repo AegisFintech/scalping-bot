@@ -5,6 +5,8 @@
 ### ISSUE-086 — Direct stop entries without strategy filters (implemented; validated; demo restored)
 
 - Issue: [#202](https://github.com/AegisFintech/scalping-bot/issues/202).
+- Pull request: [#203](https://github.com/AegisFintech/scalping-bot/pull/203);
+  implementation checkpoint `274969b` committed and pushed.
 - Branch: `issue-086-entry-pair-execution`; dependency: ISSUE-085 / PR #201.
 - Authorization: September 9 operator requests readable buy/sell stop prices from
   EPRToken and removal of placement validations. This supersedes the earlier

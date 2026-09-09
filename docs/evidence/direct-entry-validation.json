@@ -137,5 +137,12 @@
     "limitation": "Existing pyproject.toml parser emits zero nodes."
   },
   "integration": "Isolated temporary PostgreSQL over verified TLS; server stopped after tests. No production database migrations or test writes.",
-  "labels": "Unit, mocked integration and synthetic replay/backtest evidence do not establish trading performance."
+  "labels": "Unit, mocked integration and synthetic replay/backtest evidence do not establish trading performance.",
+  "supplementalSecretScan": {
+    "command": "node artifacts/issue-086/scan-index.mjs",
+    "exit_code": 0,
+    "scope": "all index blobs, including pre-existing deleted working-tree images",
+    "files": 412,
+    "activeCredentialMatchesOrPatterns": []
+  }
 }

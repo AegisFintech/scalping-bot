@@ -2,6 +2,8 @@
 
 Release `0.2.4-direct-entry.1`, policy `direct-entry-v1`.
 [Issue #202](https://github.com/AegisFintech/scalping-bot/issues/202).
+[Pull request #203](https://github.com/AegisFintech/scalping-bot/pull/203),
+implementation checkpoint `274969b` committed and pushed.
 
 The operator requested readable buy/sell stops from EPRToken and removal of order
 placement validations on September 9. Production now requests only `buy_stop`
