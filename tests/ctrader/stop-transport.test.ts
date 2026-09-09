@@ -140,5 +140,40 @@ describe("ordinary STOP wire transport", () => {
     await expect(
       client.placeStop({ ...command, executionOrderType: "STOP_LIMIT" }),
     ).rejects.toThrow("CTRADER_ORDER_EXECUTION_TYPE_MISMATCH");
+    request.mockResolvedValue(response(4));
+    await client.amendPositionProtection("801", "XAUUSD", "4398.95", "4397.36");
+    expect(request).toHaveBeenLastCalledWith(
+      CTraderPayload.AMEND_POSITION_SLTP_REQ,
+      {
+        ctidTraderAccountId: 123,
+        positionId: 801,
+        stopLoss: 4398.95,
+        takeProfit: 4397.36,
+        stopLossTriggerMethod: 1,
+      },
+      [CTraderPayload.EXECUTION_EVENT],
+    );
+    await expect(
+      client.amendPositionProtection("801", "XAUUSD", "4398.951", "4397.36"),
+    ).rejects.toThrow("CTRADER_POSITION_PROTECTION_INVALID");
+    await client.closePosition("801", "100");
+    expect(request).toHaveBeenLastCalledWith(
+      CTraderPayload.CLOSE_POSITION_REQ,
+      { ctidTraderAccountId: 123, positionId: 801, volume: 100 },
+      [CTraderPayload.EXECUTION_EVENT],
+    );
+    await expect(client.closePosition("801", "0")).rejects.toThrow(
+      "CTRADER_POSITION_VOLUME_INVALID",
+    );
+    const readOnly = new CTraderClient({
+      clientId: "fixture",
+      clientSecret: "fixture",
+      accountId: "123",
+      connectionMode: "demo",
+      tokenManager,
+      transport,
+      allowOrderCommands: false,
+    });
+    await expect(readOnly.closePosition("801", "100")).rejects.toThrow();
   });
 });

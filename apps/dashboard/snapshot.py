@@ -103,8 +103,15 @@ def load_snapshot(view: str) -> dict[str, Any]:
                         data["capital"]["risk_cap_percent"] = status["remainingCapitalRiskPercent"]
                 data["positions"] = rows(
                     """SELECT p.side, p.state, p.volume, p.entry_price,
-                        p.stop_loss, p.take_profit, p.updated_at
+                        CASE WHEN og.mode='paper' THEN p.stop_loss
+                          ELSE pp.stop_loss END AS stop_loss,
+                        CASE WHEN og.mode='paper' THEN p.take_profit
+                          ELSE pp.take_profit END AS take_profit,
+                        CASE WHEN og.mode='paper' THEN 'SIMULATED'
+                          ELSE pp.status END AS protection_status,
+                        pp.observed_at AS protection_observed_at, p.updated_at
                     FROM positions p JOIN order_groups og ON og.id=p.order_group_id
+                    LEFT JOIN position_protection pp ON pp.position_id=p.id
                     WHERE p.account_id=%s AND p.symbol_id=%s AND og.mode=%s AND p.state <> 'CLOSED'
                     ORDER BY p.updated_at DESC LIMIT 20""",
                     scope,

@@ -59,9 +59,25 @@ def operating_state(status: dict[str, Any], now: datetime | None = None) -> tupl
             return "Checking exposure", "Broker state needs reconciliation before the next setup."
         positions = managed.get("positions", [])
         if any(isinstance(p, dict) and p.get("state") != "CLOSED" for p in positions):
+            active = [p for p in positions if isinstance(p, dict) and p.get("state") != "CLOSED"]
+            if status.get("mode") == "paper":
+                return "Paper position active", "Paper execution manages simulated SL/TP."
+            confirmed = all(
+                isinstance(p.get("protection"), dict)
+                and p["protection"].get("status") == "VERIFIED"
+                and p["protection"].get("stopLoss") is not None
+                and p["protection"].get("takeProfit") is not None
+                and fresh(p["protection"].get("observedAt"), now or datetime.now(UTC), 10)
+                for p in active
+            )
             return (
                 "Position active",
-                "SL/TP protection is active. Fresh analysis follows confirmed closure.",
+                "Broker SL/TP confirmed. Fresh analysis follows confirmed closure."
+                if confirmed
+                else (
+                    "SL/TP is missing, stale or awaiting broker confirmation. "
+                    "Protection checks continue."
+                ),
             )
         if any(
             isinstance(o, dict) and o.get("timeInForce") == "GTC" for o in managed.get("orders", [])
@@ -103,6 +119,18 @@ def operating_state(status: dict[str, Any], now: datetime | None = None) -> tupl
     if map_state != "Ready":
         return "Waiting for map", f"{map_state}. No replacement order has been submitted."
     return "Monitoring", "Waiting for a qualified opportunity; no trade is guaranteed."
+
+
+def position_rows(positions: list[dict[str, Any]], now: datetime) -> list[dict[str, Any]]:
+    result = []
+    for position in positions:
+        row = dict(position)
+        if row.get("protection_status") != "SIMULATED" and not fresh(
+            row.get("protection_observed_at"), now, 10
+        ):
+            row.update(stop_loss=None, take_profit=None, protection_status="UNAVAILABLE_OR_STALE")
+        result.append(row)
+    return result
 
 
 def context_state(context: dict[str, Any], now: datetime) -> str:

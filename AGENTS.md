@@ -213,3 +213,13 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## ISSUE-088 protection maintenance
+
+- Read `docs/position-protection-report.md` before changing filled-position protection.
+- Keep broker-observed SL/TP separate from entry intent and require observation freshness.
+- Preserve approved distances from actual fill, inward tick rounding, and existing tighter protection.
+- Two durable amendment attempts and one durable close claim bound automatic commands across restarts.
+  Unknown close dispatch must never be blindly retried. Fallback closure pauses new analyses.
+- Protective maintenance must not await inference or ordinary placement gates. Only exact owned
+  demo positions can be amended/closed; closing fills still require existing deal/P&L evidence.

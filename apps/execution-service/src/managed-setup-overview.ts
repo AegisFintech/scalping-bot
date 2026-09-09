@@ -1,4 +1,5 @@
 import type pg from "pg";
+import type { PositionProtection } from "../../../packages/contracts/src/position-protection.js";
 
 export interface ManagedOrderOverview {
   readonly side: "BUY" | "SELL";
@@ -13,6 +14,7 @@ export interface ManagedOrderOverview {
 }
 
 export interface ManagedPositionOverview {
+  readonly protection: PositionProtection | null;
   readonly side: "BUY" | "SELL";
   readonly state: string;
   readonly entryPrice: string | null;
@@ -67,6 +69,7 @@ interface OrderRow {
 }
 
 interface PositionRow {
+  readonly protection?: PositionProtection | null;
   readonly id: string;
   readonly side: "BUY" | "SELL";
   readonly state: string;
@@ -180,8 +183,14 @@ export class PostgresManagedSetupOverview {
       const positions = await client.query<PositionRow>(
         `SELECT p.id, p.side, p.state, p.entry_price::text, p.stop_loss::text,
                 p.take_profit::text, p.volume::text, p.opened_at, p.closed_at,
-                p.updated_at
+                p.updated_at,
+                CASE WHEN pp.position_id IS NULL THEN NULL ELSE jsonb_build_object(
+                  'schemaVersion','1.0','status',pp.status,'stopLoss',pp.stop_loss::text,
+                  'takeProfit',pp.take_profit::text,'expectedStopLoss',pp.expected_stop_loss::text,
+                  'expectedTakeProfit',pp.expected_take_profit::text,'observedAt',pp.observed_at,
+                  'reasonCode',pp.reason_code) END AS protection
          FROM positions p
+         LEFT JOIN position_protection pp ON pp.position_id=p.id
          WHERE p.account_id = $1 AND p.symbol_id = $2 AND p.order_group_id = $3
            AND p.strategy_owned = true
          ORDER BY p.updated_at DESC`,
@@ -237,11 +246,18 @@ export class PostgresManagedSetupOverview {
         throw new Error("MANAGED_SETUP_CANCELLATION_REASON_INVALID");
       }
       const positionViews = positions.rows.map((position) => ({
+        protection: position.protection ?? null,
         side: position.side,
         state: position.state,
         entryPrice: position.entry_price,
-        stopLoss: position.stop_loss,
-        takeProfit: position.take_profit,
+        stopLoss:
+          position.state === "CLOSED" || this.#mode !== "demo"
+            ? position.stop_loss
+            : (position.protection?.stopLoss ?? null),
+        takeProfit:
+          position.state === "CLOSED" || this.#mode !== "demo"
+            ? position.take_profit
+            : (position.protection?.takeProfit ?? null),
         volume: position.volume,
         openedAt: timestamp(
           position.opened_at,

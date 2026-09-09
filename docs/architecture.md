@@ -252,3 +252,17 @@ no unresolved event uncertainty. A five-second local poll discovers new terminal
 state even while the paid-request cooldown was previously cached. All provider
 failure/unknown backoff and active-group prohibitions remain. See
 [implementation and evidence](market-stop-report.md).
+
+### Filled-position protection (ISSUE-088)
+
+Release `0.2.5-market-stop.2` independently reconciles owned demo positions every
+maintenance cycle. A durable `position_protection` projection records broker-held
+SL/TP and observation time; immutable `position_protection_events` record
+observations and command claims. Original risk-approved order distances are
+anchored to actual fill VWAP, rounded inward, and never widen existing tighter
+protection. Two durable amendment attempts are followed by a paused, position-specific
+close when protection cannot be restored. A crossed approved exit boundary also
+requests closure after a fresh quote and position re-read. Unknown close dispatch
+is not retried. Provider inference, placement gates and failures in ordinary order
+maintenance do not suppress this worker. Trade outcomes still require closing deals.
+See [the implementation report](position-protection-report.md).

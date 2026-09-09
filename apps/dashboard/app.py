@@ -11,7 +11,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from background import BackgroundReader
-from overview import context_state, operating_state, risk_summary
+from overview import context_state, operating_state, position_rows, risk_summary
 from snapshot import api_url, load_snapshot
 from time_display import dataframe_for_display, format_gmt8_timestamp
 
@@ -295,7 +295,7 @@ else:
                 "exposure",
                 {
                     "available": "positions" in snapshot,
-                    "positions": snapshot.get("positions", []),
+                    "positions": position_rows(snapshot.get("positions", []), datetime.now(UTC)),
                     "orders": snapshot.get("orders", []),
                 },
                 render_exposure,

@@ -29,6 +29,8 @@ import { PostgresAutomaticTradeCampaign } from "../../apps/execution-service/src
 import { PostgresAutomaticAnalysisWatchdog } from "../../apps/execution-service/src/automatic-analysis-watchdog.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
+import { PostgresPositionProtection } from "../../apps/execution-service/src/postgres-position-protection.js";
+import { protectiveCloseAuthorized } from "../../apps/execution-service/src/protective-close-evidence.js";
 import { PostgresObservabilityOutbox } from "../../apps/execution-service/src/observability-outbox.js";
 import { OrderMaintenance } from "../../apps/execution-service/src/order-maintenance.js";
 import { PostgresDecisionTrail } from "../../apps/execution-service/src/postgres-trail.js";
@@ -204,7 +206,7 @@ function decisionSnapshot(
 }
 
 describe("PostgreSQL migrations integration", () => {
-  databaseTest("applies all migrations in an isolated schema", async () => {
+  databaseTest.each([false, true])("migrations close=%s", async (closeMode) => {
     const schema = `test_${randomUUID().replaceAll("-", "")}`;
     const admin = new pg.Pool({
       connectionString: databaseConnectionString(connectionString as string),
@@ -240,6 +242,7 @@ describe("PostgreSQL migrations integration", () => {
         "0019",
         "0020",
         "0021",
+        "0022",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -672,8 +675,14 @@ describe("PostgreSQL migrations integration", () => {
          ORDER BY ae.occurred_at`,
       );
       expect(watchdogAudit.rows).toEqual([
-        { event_name: "automatic_analysis_stalled", outbox_status: "PENDING" },
-        { event_name: "automatic_analysis_resumed", outbox_status: "PENDING" },
+        {
+          event_name: "automatic_analysis_stalled",
+          outbox_status: "PENDING",
+        },
+        {
+          event_name: "automatic_analysis_resumed",
+          outbox_status: "PENDING",
+        },
       ]);
       const preflightInterval = "2026-08-24T00:01:00.000Z";
       await expect(
@@ -1653,6 +1662,89 @@ describe("PostgreSQL migrations integration", () => {
       );
       expect(unchangedEntryOrder.rows[0]?.broker_order_id).toBe("501");
       const closedRaw = await eventFixture("demo-position-closed-v1.json");
+      if (closeMode) {
+        const protection = new PostgresPositionProtection({
+          pool: isolated,
+          accountId: demoAccountId,
+          symbolId,
+        });
+        const closeTime = new Date(Number(closedRaw.deal!.executionTimestamp));
+        const requestedAt = new Date(closeTime.getTime() - 1000).toISOString();
+        await protection.exclusive(async (session) => {
+          const positions = await session.positions();
+          expect(positions).toHaveLength(1);
+          const position = positions[0]!;
+          await session.observe(position, {
+            schemaVersion: "1.0",
+            status: "VERIFIED",
+            stopLoss: "1999.28",
+            takeProfit: "2005.25",
+            expectedStopLoss: "1999.28",
+            expectedTakeProfit: "2005.25",
+            observedAt: requestedAt,
+            reasonCode: "POSITION_PROTECTION_CONFIRMED",
+          });
+          expect(
+            await session.claimRepair(
+              position,
+              new Date(closeTime.getTime() - 13000).toISOString(),
+            ),
+          ).toBe(true);
+          expect(
+            await session.claimRepair(
+              position,
+              new Date(closeTime.getTime() - 7000).toISOString(),
+            ),
+          ).toBe(true);
+          expect(await session.claimRepair(position, requestedAt)).toBe(false);
+          expect(await session.claimClose(position, requestedAt, "100")).toBe(
+            true,
+          );
+        });
+        await new PostgresPositionProtection({
+          pool: isolated,
+          accountId: demoAccountId,
+          symbolId,
+        }).exclusive(async (session) => {
+          const position = (await session.positions())[0]!;
+          expect(position.repairAttempts).toBe(2);
+          expect(await session.claimClose(position, requestedAt, "100")).toBe(
+            false,
+          );
+        });
+        const proof = {
+          accountId: demoAccountId,
+          symbolId,
+          brokerPositionId: "801",
+          brokerOrderId: "601",
+          occurredAt: closeTime.toISOString(),
+          closedVolume: "100",
+        };
+        expect(await protectiveCloseAuthorized(isolated, proof)).toBe(true);
+        expect(
+          await protectiveCloseAuthorized(isolated, {
+            ...proof,
+            accountId: randomUUID(),
+          }),
+        ).toBe(false);
+        expect(
+          await protectiveCloseAuthorized(isolated, {
+            ...proof,
+            closedVolume: "99",
+          }),
+        ).toBe(false);
+        expect(
+          await protectiveCloseAuthorized(isolated, {
+            ...proof,
+            occurredAt: new Date(closeTime.getTime() + 121000).toISOString(),
+          }),
+        ).toBe(false);
+        await expect(store.readiness()).resolves.toEqual({
+          certain: true,
+          reasonCodes: [],
+        });
+        closedRaw.order!.orderType = 1;
+      }
       const closed = normalizeDemoExecution(closedRaw, { symbolId: "7" });
       expect(closed).not.toBeNull();
       await expect(store.persist(closed!)).resolves.toEqual({
@@ -2091,10 +2183,12 @@ describe("PostgreSQL migrations integration", () => {
       expect(cancellations).toEqual([pendingIds[1]]);
       expect(
         (
-          await isolated.query<{ state: string; cancellation_reason: string }>(
-            "SELECT state,cancellation_reason FROM order_groups WHERE id=$1",
-            [cancelledGroupId],
-          )
+          await isolated.query<{
+            state: string;
+            cancellation_reason: string;
+          }>("SELECT state,cancellation_reason FROM order_groups WHERE id=$1", [
+            cancelledGroupId,
+          ])
         ).rows[0],
       ).toEqual({
         state: "FAILED",
@@ -2209,7 +2303,10 @@ describe("PostgreSQL migrations integration", () => {
         [currentContext!.id],
       );
       expect((await contextStore.latest())?.zeroFillTerminalAt).not.toBeNull();
-      const afterZero = { ...contextClaim, afterContextId: currentContext!.id };
+      const afterZero = {
+        ...contextClaim,
+        afterContextId: currentContext!.id,
+      };
       for (const [block, restore] of [
         [
           "UPDATE orders SET strategy_owned=false WHERE order_group_id=$1",
@@ -2376,7 +2473,11 @@ describe("PostgreSQL migrations integration", () => {
       await isolated.query("UPDATE order_groups SET mode='paper' WHERE id=$1", [
         orderGroupId,
       ]);
-      const closeScope = { accountId: demoAccountId, symbolId, mode: "paper" };
+      const closeScope = {
+        accountId: demoAccountId,
+        symbolId,
+        mode: "paper",
+      };
       const closeStore = new PostgresContextStore(isolated, closeScope);
       const closedContextId = randomUUID();
       expect(

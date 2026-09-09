@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:scalper:position-protection:1.0",
+  "title": "Actual broker protection observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "stopLoss",
+    "takeProfit",
+    "expectedStopLoss",
+    "expectedTakeProfit",
+    "observedAt",
+    "reasonCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "status": {
+      "enum": [
+        "VERIFIED",
+        "REPAIR_REQUIRED",
+        "REPAIR_SENT",
+        "CLOSE_REQUIRED",
+        "CLOSE_SENT",
+        "UNCERTAIN"
+      ]
+    },
+    "stopLoss": { "$ref": "#/$defs/price" },
+    "takeProfit": { "$ref": "#/$defs/price" },
+    "expectedStopLoss": { "$ref": "#/$defs/price" },
+    "expectedTakeProfit": { "$ref": "#/$defs/price" },
+    "observedAt": { "type": ["string", "null"], "format": "date-time" },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^POSITION_PROTECTION_[A-Z_]+$"
+    }
+  },
+  "$defs": {
+    "price": {
+      "type": ["string", "null"],
+      "pattern": "^(?:[1-9][0-9]*(?:\\.[0-9]+)?|0\\.[0-9]*[1-9][0-9]*)$"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "VERIFIED" } } },
+      "then": {
+        "properties": {
+          "stopLoss": { "type": "string" },
+          "takeProfit": { "type": "string" },
+          "expectedStopLoss": { "type": "string" },
+          "expectedTakeProfit": { "type": "string" },
+          "observedAt": { "type": "string" }
+        }
+      }
+    }
+  ]
+}
