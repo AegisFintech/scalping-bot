@@ -7,6 +7,7 @@ import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 import { ProviderFailure } from "../../ai-client/src/telemetry.js";
 import {
   OpenAiCompatibleClient,
+  validateChartArtifact,
   type AiAnalysisResult,
 } from "../../ai-client/src/client.js";
 import {
@@ -34,13 +35,16 @@ export class ScenarioPlanner {
       schemaPath: "schemas/scenario-plan-1.0.json",
       outputSchemaName: "chart_scenario_1_0",
       systemPromptPath: options.executionContext
-        ? "prompts/scenario-v2.md"
-        : "prompts/scenario-v1.md",
-      promptVersion: options.executionContext ? "scenario-v2" : "scenario-v1",
-      inputProfile: "chart",
+        ? "prompts/scenario-v3.md"
+        : "prompts/scenario-research-v2.md",
+      promptVersion: options.executionContext
+        ? "scenario-v3"
+        : "scenario-research-v2",
+      inputProfile: "structured",
       timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
       maxRetries: 0,
-      maxOutputTokens: 1500,
+      maxOutputTokens: SCENARIO_REQUEST_POLICY.maxOutputTokens,
+      reasoningEffort: SCENARIO_REQUEST_POLICY.reasoningEffort,
       circuitBreakerFailures: 3,
       circuitBreakerResetMs: 300_000,
     });
@@ -60,6 +64,9 @@ export class ScenarioPlanner {
       throw new Error("SCENARIO_INPUT_STALE");
     if (input.candles.length !== 3)
       throw new Error("SCENARIO_TIMEFRAMES_INVALID");
+    // The chart remains a required, verified local audit artifact even though
+    // this model receives numeric candles instead of an unsupported image.
+    validateChartArtifact(input.chart);
     for (const [frame, period] of [
       ["M1", 60_000],
       ["M5", 300_000],
@@ -109,8 +116,31 @@ export class ScenarioPlanner {
           ).toISOString(),
           tick_size: input.tickSize,
           candles: input.candles.map((s) => ({
-            ...s,
-            candles: s.candles.slice(-input.chart.candleCounts[s.timeframe]),
+            timeframe: s.timeframe,
+            columns: [
+              "startTime",
+              "endTime",
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "complete",
+              "qualityFlags",
+            ],
+            rows: s.candles
+              .slice(-SCENARIO_REQUEST_POLICY.candleLimits[s.timeframe])
+              .map((bar) => [
+                bar.startTime,
+                bar.endTime,
+                bar.open,
+                bar.high,
+                bar.low,
+                bar.close,
+                bar.volume,
+                bar.complete,
+                bar.qualityFlags,
+              ]),
           })),
         },
       })

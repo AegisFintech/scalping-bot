@@ -60,9 +60,9 @@ export class ScenarioHttpPlanner {
       envelope.retryCount !== 0
     )
       throw new Error("SCENARIO_ORCHESTRATOR_ENVELOPE_INVALID");
-    const content = readFileSync("prompts/scenario-v2.md", "utf8").trim();
+    const content = readFileSync("prompts/scenario-v3.md", "utf8").trim();
     const expected = {
-      version: "scenario-v2" as const,
+      version: "scenario-v3" as const,
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
     };
@@ -76,6 +76,7 @@ export class ScenarioHttpPlanner {
     const telemetry = providerTelemetrySchema.parse(envelope.telemetry);
     if (
       envelope.model !== FIXED_DEFAULTS.AI_MODEL ||
+      telemetry.inputProfile !== "structured" ||
       telemetry.requestedModel !== FIXED_DEFAULTS.AI_MODEL ||
       !returnedModelMatches(FIXED_DEFAULTS.AI_MODEL, telemetry.returnedModel)
     )

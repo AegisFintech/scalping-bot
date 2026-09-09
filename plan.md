@@ -2,6 +2,33 @@
 
 ## Scope
 
+### ISSUE-085 — DeepSeek and richer completed-market context (implemented; validating rollout)
+
+- Issue: [#200](https://github.com/AegisFintech/scalping-bot/issues/200).
+
+- Branch: `issue-085-deepseek-model-context`; dependency: ISSUE-084 / PR #199.
+- Authorization: September 9 operator request for exact `deepseek-v4-pro/u5W`
+  and more market data, retaining local SL/TP and deterministic risk sizing.
+- Acceptance: bounded structured completed-candle history; new immutable prompt
+  artifacts; strict identity/output/freshness validation; forward model migration
+  preserving historical contexts, cooldowns, orders, risk locks and live prohibition.
+- Delivery: positive/failure tests and complete quality gates; protected model-only
+  environment edit, matching services, real endpoint and authorized demo verification;
+  report with evidence, rollback notes, commit/push and qualifying PR merge.
+- Baseline: demo analyses paused at 10:47:58 SGT with no active setup. Exact
+  DeepSeek route returned HTTP 200 / `deepseek-v4-pro` / strict boolean JSON in
+  3,449 ms on one non-trading compatibility probe; unknown cost remains null.
+- Expanded context is 240 M1 / 144 M5 / 96 M15 bars, sent as lossless numeric
+  tables. Default/low thinking exhausted the 4,096-token budget; non-thinking
+  object inputs showed schema/JSON failures, all rejected. The final table request
+  passed strict validation in 9,838 ms (29,584 input / 236 output tokens).
+- New prompts explicitly specify schema version, exact field shape and complete
+  JSON. Release requests thinking disabled; analysis-quality improvement is unproven.
+  Local SL/TP, sizing, all deadlines, cooldowns and execution safeguards are unchanged.
+- Required checks passed: 553 Node / 140 Python / 27 schema / 3 migration /
+  3 isolated TLS integration tests and all format/lint/type/build/configuration,
+  replay, secret and dependency gates. Exact results: `docs/evidence/deepseek-validation.json`.
+
 ### ISSUE-084 — Recover incomplete OCO pairs (implemented; validated; demo restored)
 
 - Issue: [#198](https://github.com/AegisFintech/scalping-bot/issues/198).

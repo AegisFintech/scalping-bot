@@ -51,12 +51,13 @@ in linked reports. Give longer explanations only when explicitly requested.
 - Preserve existing daily/drawdown locks when applying a policy update. Risk
   percentages are release constants, not environment tuning controls. Read
   `docs/fixed-risk-report.md` before changing the money-management policy.
-- Request `gpt-6-astra/u64` literally through the configured EPRToken Responses
+- Request `deepseek-v4-pro/u5W` literally through the configured EPRToken Responses
   endpoint. Record requested/returned identities; never add a silent fallback.
-  Observed `gpt-6-astra` return normalization is documented in `docs/astra-graphify-report.md`.
+  Observed `deepseek-v4-pro` return normalization and structured input are documented
+  in `docs/deepseek-context-report.md`. Historical Astra normalization remains documented.
   Unknown cost is null. Historical provider records remain immutable; a previous-model
   map cannot authorize new execution after a switch. Failure/unknown-dispatch cooldowns remain; one proven post-close refresh is the documented exception.
-  Migration 0017 admits both Astra and Sol journal identities;
+  Migration 0020 admits DeepSeek alongside historical Astra and Sol journal identities;
   never rewrite prior migration checksums or model history.
 - Preserve model-independent protective maintenance and account/symbol ownership
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.
@@ -67,7 +68,7 @@ in linked reports. Give longer explanations only when explicitly requested.
   Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Production context uses `scenario-v2` / `scenario-1.0`; local derived OCO
+- Production context uses `scenario-v3` / `scenario-1.0`; local derived OCO
   proposals use `scenario-execution-v2` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
 - The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch
@@ -102,7 +103,8 @@ in linked reports. Give longer explanations only when explicitly requested.
   context checks for each individual execution decision. Crossed thresholds wait;
   do not move them to manufacture entries. `DEFERRED` is terminal waiting, not
   acceptance, rejection, an order or a fill.
-- `scenario-v1` and the completed-candle directional replay remain research-only.
+- Historical `scenario-v1`, structured `scenario-research-v2` and the completed-candle
+  directional replay remain research-only.
   Observe/replay commands have no broker authority. They are distinct from the
   protected OCO integration, whose profitability remains unproven.
 - Scenario confirmation consumes completed candles after plan availability;

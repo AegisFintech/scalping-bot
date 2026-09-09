@@ -22,6 +22,14 @@ it("keeps the JSON and runtime telemetry contracts strict and preserves unknown 
   };
   for (const [candidate, expected] of [
     [value, true],
+    [
+      {
+        ...value,
+        requestedModel: "deepseek-v4-pro/u5W",
+        returnedModel: "deepseek-v4-pro",
+      },
+      true,
+    ],
     [{ ...value, apiKey: "private" }, false],
     [{ ...value, inputTokens: -1 }, false],
     [{ ...value, costAmount: "0" }, false],

@@ -1,0 +1,261 @@
+{
+  "label": "BOUNDED_NON_TRADING_COMPATIBILITY_PROBES_NOT_PERFORMANCE",
+  "probes": [
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:52:21.227Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "23fe4c1d3c6cf44cf2447cc32112f8942ba6cc2acebb09e57694d4fd74aa2ad4",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:52:25.436Z",
+      "completed": false,
+      "reason": "AI_RESPONSE_INCOMPLETE",
+      "finishedAt": "2026-09-09T02:53:37.446Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:54:34.009Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "73da3e61c1ac3a3ed407c07b15d219cfab1830442d7543d122bd96c4979e5f41",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:54:37.729Z",
+      "reasoning": {
+        "effort": "low"
+      },
+      "responseStatus": "incomplete",
+      "incompleteReason": "max_output_tokens",
+      "reasoningTokens": 4096,
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 113815,
+        "responseBytes": 17309,
+        "inputTokens": 38805,
+        "outputTokens": 4096,
+        "totalTokens": 42901,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "completed": false,
+      "reason": "AI_RESPONSE_INCOMPLETE",
+      "finishedAt": "2026-09-09T02:55:51.420Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:56:29.694Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "96b6ea80c02912a812a167064176b97e1f253146a95a8d2095a1a358aaaee5f7",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:56:33.216Z",
+      "reasoning": {
+        "effort": "none"
+      },
+      "responseStatus": "completed",
+      "incompleteReason": null,
+      "reasoningTokens": 0,
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 113813,
+        "responseBytes": 3970,
+        "inputTokens": 38810,
+        "outputTokens": 360,
+        "totalTokens": 39170,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "completed": false,
+      "reason": "PROBE_FAILED_REDACTED",
+      "finishedAt": "2026-09-09T02:56:43.749Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:57:09.726Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "f2802218c69a27961716e6c5f6195b8efc6f79aecd9055c0d4e237d03cfb48bb",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:57:13.020Z",
+      "reasoning": {
+        "effort": "none"
+      },
+      "responseStatus": "completed",
+      "incompleteReason": null,
+      "reasoningTokens": 0,
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 113813,
+        "responseBytes": 3672,
+        "inputTokens": 38809,
+        "outputTokens": 267,
+        "totalTokens": 39076,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "completed": false,
+      "reason": "MODEL_SCHEMA_INVALID",
+      "finishedAt": "2026-09-09T02:57:21.061Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:57:38.667Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "990eed9cfb885b62f22e344f03146ea1a644ffd068ae559f9bfe517b240ef2fc",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:57:42.355Z",
+      "reasoning": {
+        "effort": "none"
+      },
+      "responseStatus": "completed",
+      "incompleteReason": null,
+      "reasoningTokens": 0,
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 113884,
+        "responseBytes": 4021,
+        "inputTokens": 38823,
+        "outputTokens": 370,
+        "totalTokens": 39193,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "completed": false,
+      "reason": "MODEL_SCHEMA_INVALID",
+      "finishedAt": "2026-09-09T02:57:51.679Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:58:16.855Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "76ea8d261ac887f42a7384a8882d9d05a537517e91e8e4b24cf6f66ae0f49252",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:58:20.474Z",
+      "reasoning": {
+        "effort": "none"
+      },
+      "responseStatus": "completed",
+      "incompleteReason": null,
+      "reasoningTokens": 0,
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 114830,
+        "responseBytes": 3707,
+        "inputTokens": 39049,
+        "outputTokens": 276,
+        "totalTokens": 39325,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "completed": false,
+      "reason": "MODEL_JSON_INVALID",
+      "finishedAt": "2026-09-09T02:58:28.577Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T02:59:11.342Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "a075ddecc2edfd2d61338b6483c5e10f6d9ffe1791a4cf97701aa2b00946cb37",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T02:59:14.977Z",
+      "reasoning": {
+        "effort": "none"
+      },
+      "responseStatus": "completed",
+      "incompleteReason": null,
+      "reasoningTokens": 0,
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 114994,
+        "responseBytes": 3631,
+        "inputTokens": 39089,
+        "outputTokens": 239,
+        "totalTokens": 39328,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "completed": false,
+      "reason": "MODEL_JSON_INVALID",
+      "finishedAt": "2026-09-09T02:59:25.773Z"
+    },
+    {
+      "label": "REAL_MARKET_COMPATIBILITY_WITHOUT_EXECUTION",
+      "at": "2026-09-09T03:00:03.370Z",
+      "candleCounts": {
+        "M15": 96,
+        "M5": 144,
+        "M1": 240
+      },
+      "requestSha256": "3ffac7cabd09a8e5672539c7717e3b5a53ef3e4e6a9cb10670ec600ca1f1d9e8",
+      "imageSent": false,
+      "dispatchedAt": "2026-09-09T03:00:06.560Z",
+      "reasoning": {
+        "effort": "none"
+      },
+      "responseStatus": "completed",
+      "incompleteReason": null,
+      "reasoningTokens": 0,
+      "completed": true,
+      "latencyMs": 9838,
+      "prompt": "scenario-v3",
+      "telemetry": {
+        "requestedModel": "deepseek-v4-pro/u5W",
+        "returnedModel": "deepseek-v4-pro",
+        "inputProfile": "structured",
+        "requestBytes": 66065,
+        "responseBytes": 3636,
+        "inputTokens": 29584,
+        "outputTokens": 236,
+        "totalTokens": 29820,
+        "costAmount": null,
+        "costCurrency": null,
+        "costSource": "unavailable"
+      },
+      "capturedAt": "2026-09-09T03:00:05.386Z",
+      "validUntil": "2026-09-09T03:05:05.386Z",
+      "finishedAt": "2026-09-09T03:00:16.400Z"
+    }
+  ]
+}

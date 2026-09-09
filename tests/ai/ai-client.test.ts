@@ -130,6 +130,55 @@ describe("OpenAI-compatible client", () => {
       expect(fetchImpl).toHaveBeenCalledTimes(1);
     },
   );
+  it.each([
+    ["deepseek-v4-pro/u5W", true],
+    ["deepseek-v4-pro", true],
+    ["gpt-6-astra", false],
+    ["gpt-6-astra/u64", false],
+    ["gpt-5.6-sol", false],
+    [null, false],
+    [undefined, false],
+    ["deepseek-v4-pro/u5X", false],
+  ])(
+    "sends the exact DeepSeek route and validates returned identity %s",
+    async (returned, accepted) => {
+      const fetchImpl = vi.fn(
+        (_url: string | URL | Request, init?: RequestInit) => {
+          const body = JSON.parse(
+            typeof init?.body === "string" ? init.body : "{}",
+          ) as { model?: unknown };
+          expect(body.model).toBe("deepseek-v4-pro/u5W");
+          return Promise.resolve(
+            Response.json({
+              model: returned,
+              output_text: JSON.stringify(validResponse()),
+            }),
+          );
+        },
+      );
+      const request = new OpenAiCompatibleClient({
+        baseUrl: "https://example.com/v1",
+        apiKey: "fixture",
+        model: "deepseek-v4-pro/u5W",
+        apiStyle: "responses",
+        schemaPath: "schemas/model-response-2.0.json",
+        systemPromptPath,
+        promptVersion: "system-v2",
+        maxRetries: 0,
+        fetchImpl,
+      }).analyze(analysisRequest);
+      if (accepted)
+        await expect(request).resolves.toMatchObject({
+          model: "deepseek-v4-pro/u5W",
+          telemetry: {
+            requestedModel: "deepseek-v4-pro/u5W",
+            returnedModel: returned,
+          },
+        });
+      else await expect(request).rejects.toThrow("AI_RETURNED_MODEL_MISMATCH");
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    },
+  );
   it("retains sanitized usage for rejected output through the HTTP adapter", async () => {
     const client = new OpenAiCompatibleClient({
       baseUrl: "https://example.com/v1",

@@ -23,23 +23,23 @@ const input = {
   chart: analysisChart(),
 };
 const usage = {
-  requestedModel: "gpt-6-astra/u64",
-  returnedModel: "gpt-6-astra",
-  inputProfile: "chart",
+  requestedModel: "deepseek-v4-pro/u5W",
+  returnedModel: "deepseek-v4-pro" as string | null,
+  inputProfile: "structured",
   requestBytes: 100,
   responseBytes: 100,
   ...usageTelemetry({}),
 };
 function envelope() {
-  const content = readFileSync("prompts/scenario-v2.md", "utf8").trim();
+  const content = readFileSync("prompts/scenario-v3.md", "utf8").trim();
   return {
-    model: "gpt-6-astra/u64",
+    model: "deepseek-v4-pro/u5W",
     rawResponse: JSON.stringify(plan),
     latencyMs: 40000,
     retryCount: 0,
-    telemetry: usage,
+    telemetry: { ...usage },
     promptArtifact: {
-      version: "scenario-v2",
+      version: "scenario-v3",
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
     },
@@ -55,7 +55,7 @@ it("checks the exact requested model, contract and raw response independently", 
     fetcher,
   ).generate(input);
   expect(result.response).toEqual(plan);
-  expect(result.telemetry.returnedModel).toBe("gpt-6-astra");
+  expect(result.telemetry.returnedModel).toBe("deepseek-v4-pro");
   expect(String(fetcher.mock.calls[0]?.[0])).toBe(
     "http://127.0.0.1:8082/v1/scenario",
   );
@@ -65,6 +65,9 @@ it.each([
   "returned_identity",
   "envelope_identity",
   "previous_model",
+  "previous_astra",
+  "profile",
+  "missing_returned_identity",
   "prompt",
   "latency",
   "schema",
@@ -78,6 +81,17 @@ it.each([
   if (kind === "returned_identity")
     e.telemetry = { ...usage, returnedModel: "wrong-model" };
   if (kind === "envelope_identity") e.model = "wrong-model";
+  if (kind === "profile") e.telemetry = { ...usage, inputProfile: "chart" };
+  if (kind === "missing_returned_identity")
+    Object.assign(e.telemetry, { returnedModel: null });
+  if (kind === "previous_astra") {
+    e.model = "gpt-6-astra/u64";
+    e.telemetry = {
+      ...usage,
+      requestedModel: "gpt-6-astra/u64",
+      returnedModel: "gpt-6-astra",
+    };
+  }
   if (kind === "previous_model") {
     e.model = "gpt-5.6-sol/u40";
     e.telemetry = {
