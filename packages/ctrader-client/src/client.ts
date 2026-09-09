@@ -1119,33 +1119,6 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     return this.#parseExecution(response);
   }
 
-  async closePosition(
-    positionId: string,
-    volume: string,
-  ): Promise<BrokerExecution> {
-    this.#requireTradingReady();
-    const nativeVolume = protocolInteger(
-      volume,
-      "CTRADER_POSITION_VOLUME_INVALID",
-    );
-    if (protocolInteger(positionId, "CTRADER_POSITION_ID_INVALID") <= 0)
-      throw new Error("CTRADER_POSITION_ID_INVALID");
-    if (nativeVolume <= 0) throw new Error("CTRADER_POSITION_VOLUME_INVALID");
-    const response = await this.#transport.request(
-      CTraderPayload.CLOSE_POSITION_REQ,
-      {
-        ctidTraderAccountId: protocolInteger(
-          this.accountId,
-          "CTRADER_ACCOUNT_ID_INVALID",
-        ),
-        positionId: protocolInteger(positionId, "CTRADER_POSITION_ID_INVALID"),
-        volume: nativeVolume,
-      },
-      [CTraderPayload.EXECUTION_EVENT],
-    );
-    return this.#parseExecution(response);
-  }
-
   async reconcileRaw(): Promise<RawReconciliation> {
     this.#requireAuthenticated();
     const response = await this.#transport.request(

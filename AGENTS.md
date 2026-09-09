@@ -7,7 +7,13 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
 
-## Current operator override — ISSUE-087 / ISSUE-086
+## Current operator override — ISSUE-089 / ISSUE-087 / ISSUE-086
+
+- ISSUE-089 removes local market-close fallbacks and their persistent analysis
+  pause. Broker SL/TP handles exits; verified protection never depends on sampled
+  quotes. Keep bounded SL/TP repair and historical close reconciliation. Do not
+  add automatic pauses, exit fallbacks or entry filters without operator approval.
+  Read `docs/broker-exit-loop-report.md`.
 
 - September 9 policy `market-stop-v1` explicitly uses ordinary GTC STOP orders
   in the authorized demo. Keep local relative TP/SL, reserve 30 points of modeled
@@ -214,12 +220,13 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
-## ISSUE-088 protection maintenance
+## ISSUE-089 protection maintenance (supersedes ISSUE-088 exits)
 
 - Read `docs/position-protection-report.md` before changing filled-position protection.
 - Keep broker-observed SL/TP separate from entry intent and require observation freshness.
 - Preserve approved distances from actual fill, inward tick rounding, and existing tighter protection.
-- Two durable amendment attempts and one durable close claim bound automatic commands across restarts.
-  Unknown close dispatch must never be blindly retried. Fallback closure pauses new analyses.
+- Two durable amendment attempts bound repairs across restarts. Failed/exhausted repairs
+  remain visible without market closing or setting a global analysis pause.
+- Historical close claims still require broker deal evidence; never retry their dispatch.
 - Protective maintenance must not await inference or ordinary placement gates. Only exact owned
-  demo positions can be amended/closed; closing fills still require existing deal/P&L evidence.
+  demo positions can be amended; closing fills still require existing deal/P&L evidence.

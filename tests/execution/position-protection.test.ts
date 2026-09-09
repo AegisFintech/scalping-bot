@@ -54,12 +54,6 @@ function fixture() {
       };
       return Promise.resolve(true);
     },
-    claimClose: (_p, at) => {
-      if (position.closeRequestedAt !== null) return Promise.resolve(false);
-      position = { ...position, closeRequestedAt: at };
-      return Promise.resolve(true);
-    },
-    closeAcknowledged: vi.fn(),
   };
   const result = {
     executionType: 4,
@@ -78,7 +72,6 @@ function fixture() {
       }),
     ),
     amendPositionProtection: vi.fn(() => Promise.resolve(result)),
-    closePosition: vi.fn(() => Promise.resolve(result)),
   };
   const quote = vi.fn(() =>
     Promise.resolve({
@@ -88,7 +81,6 @@ function fixture() {
       receivedAt: clock.toISOString(),
     }),
   );
-  const pause = vi.fn(() => Promise.resolve());
   const options: ProtectionOptions = {
     store: { exclusive: (work) => work(session) },
     client,
@@ -96,14 +88,12 @@ function fixture() {
     symbolId: "7",
     tickSize: "0.01",
     quote,
-    pause,
     now: () => clock,
   };
   return {
     options,
     client,
     quote,
-    pause,
     observations,
     session,
     run: () => new PositionProtectionMaintenance(options).run(),
@@ -187,45 +177,95 @@ describe("independent broker position protection", () => {
     await f.run();
     expect(f.observations.at(-1)?.status).toBe("VERIFIED");
     expect(f.client.amendPositionProtection).toHaveBeenCalledTimes(1);
-    expect(f.client.closePosition).not.toHaveBeenCalled(); // Green short P/L isn't TP.
   });
-  it("bounds failed repairs across restarts, pauses, and never duplicates an unknown close", async () => {
+  it("bounds failed repairs across restarts without closing or latching a pause", async () => {
     const f = fixture();
     f.client.amendPositionProtection.mockRejectedValue(
       new Error("broker fixture rejection"),
     );
     await expect(f.run()).rejects.toThrow("POSITION_PROTECTION_UNAVAILABLE");
     f.advance();
-    await expect(f.run()).rejects.toThrow();
+    await expect(f.run()).rejects.toThrow("POSITION_PROTECTION_UNAVAILABLE");
     f.advance();
-    f.client.closePosition.mockRejectedValue(new Error("timeout"));
-    await expect(f.run()).rejects.toThrow();
-    expect(f.pause).toHaveBeenCalled();
-    expect(f.client.closePosition).toHaveBeenCalledTimes(1);
+    await expect(f.run()).resolves.toBeUndefined();
+    expect(f.observations.at(-1)).toMatchObject({
+      status: "REPAIR_REQUIRED",
+      reasonCode: "POSITION_PROTECTION_REPAIR_EXHAUSTED",
+    });
     f.advance();
     await f.run();
-    expect(f.client.closePosition).toHaveBeenCalledTimes(1);
     expect(f.client.amendPositionProtection).toHaveBeenCalledTimes(2);
+    // Confirmed closure removes the position; failure must not survive into the next cycle.
+    f.session.positions = () => Promise.resolve([]);
+    await expect(f.run()).resolves.toBeUndefined();
   });
-  it("closes only when the short ask reaches TP, even if bid has already crossed", async () => {
+  it.each([
+    ["SELL", "4397.20", "4397.36"], // TP reached
+    ["SELL", "4398.90", "4398.95"], // SL reached
+    ["BUY", "4407.58", "4407.68"], // Incident's verified TP
+    ["BUY", "4405.99", "4406.09"], // Incident's verified SL
+  ])(
+    "leaves verified %s exits to the broker at bid=%s ask=%s",
+    async (side, bid, ask) => {
+      const f = fixture();
+      f.protect();
+      if (side === "BUY") {
+        f.session.positions = () =>
+          Promise.resolve([
+            {
+              ...local,
+              side: "BUY",
+              entryPrice: "4407.05",
+              orderEntry: "4406.09",
+              orderStopLoss: "4405.03",
+              orderTakeProfit: "4406.62",
+            },
+          ]);
+        f.replace({
+          ...broker(),
+          price: 4407.05,
+          stopLoss: 4405.99,
+          takeProfit: 4407.58,
+          tradeData: { ...(broker().tradeData as object), tradeSide: 1 },
+        });
+      }
+      f.quote.mockResolvedValue({
+        bid,
+        ask,
+        sourceTime: timestamp,
+        receivedAt: timestamp,
+      });
+      await expect(f.run()).resolves.toBeUndefined();
+      expect(f.observations.at(-1)?.status).toBe("VERIFIED");
+      expect(f.quote).not.toHaveBeenCalled();
+      expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    },
+  );
+  it("keeps fresh broker protection verified when sampled quotes are unavailable", async () => {
     const f = fixture();
     f.protect();
-    f.quote.mockResolvedValue({
-      bid: "4397.30",
-      ask: "4397.40",
-      sourceTime: timestamp,
-      receivedAt: timestamp,
-    });
-    await f.run();
-    expect(f.client.closePosition).not.toHaveBeenCalled();
-    f.quote.mockResolvedValue({
+    f.quote.mockRejectedValue(new Error("quote unavailable"));
+    await expect(f.run()).resolves.toBeUndefined();
+    expect(f.observations.at(-1)?.status).toBe("VERIFIED");
+    expect(f.quote).not.toHaveBeenCalled();
+  });
+  it("waits when a repair price is crossed and repairs when the price permits", async () => {
+    const f = fixture();
+    f.quote.mockResolvedValueOnce({
       bid: "4397.20",
       ask: "4397.36",
       sourceTime: timestamp,
       receivedAt: timestamp,
     });
+    await expect(f.run()).resolves.toBeUndefined();
+    expect(f.observations.at(-1)).toMatchObject({
+      status: "REPAIR_REQUIRED",
+      reasonCode: "POSITION_PROTECTION_REPAIR_PRICE_CROSSED",
+    });
+    expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    expect((await f.session.positions())[0]?.repairAttempts).toBe(0);
     await f.run();
-    expect(f.client.closePosition).toHaveBeenCalledWith("801", "100");
+    expect(f.client.amendPositionProtection).toHaveBeenCalledTimes(1);
   });
   it("rejects stale quotes without dispatching protection commands", async () => {
     const f = fixture();
@@ -237,7 +277,6 @@ describe("independent broker position protection", () => {
     });
     await expect(f.run()).rejects.toThrow();
     expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
-    expect(f.client.closePosition).not.toHaveBeenCalled();
   });
   it("requires the position to remain present on the late read", async () => {
     const f = fixture();
@@ -251,17 +290,14 @@ describe("independent broker position protection", () => {
     await expect(f.run()).rejects.toThrow();
     expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
   });
-  it("does not dispatch a close when durable pause fails", async () => {
+  it("observes a historical close claim without sending another command or pausing", async () => {
     const f = fixture();
     f.protect();
-    f.quote.mockResolvedValue({
-      bid: "4397.2",
-      ask: "4397.3",
-      sourceTime: timestamp,
-      receivedAt: timestamp,
-    });
-    f.pause.mockRejectedValue(new Error("storage"));
-    await expect(f.run()).rejects.toThrow();
-    expect(f.client.closePosition).not.toHaveBeenCalled();
+    f.session.positions = () =>
+      Promise.resolve([{ ...local, closeRequestedAt: timestamp }]);
+    await expect(f.run()).resolves.toBeUndefined();
+    expect(f.observations.at(-1)?.status).toBe("CLOSE_SENT");
+    expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    expect(f.quote).not.toHaveBeenCalled();
   });
 });

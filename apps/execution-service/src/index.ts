@@ -545,7 +545,6 @@ async function main(): Promise<void> {
         })
       : null;
   let latestDemoExecutionReasonCodes: readonly string[] = [];
-  let positionProtectionCertain = true;
   let latestSafetyDetailReasonCodes: readonly string[] = [];
   const demoExecutionRecorder =
     demoExecutionStore === null
@@ -955,9 +954,6 @@ async function main(): Promise<void> {
     }
     latestSafetyDetailReasonCodes = [
       ...new Set([
-        ...(positionProtectionCertain
-          ? []
-          : ["POSITION_PROTECTION_UNAVAILABLE"]),
         ...(state.certain ? [] : state.reasonCodes),
         ...(external.certain ? [] : external.reasonCodes),
         ...(demoRecoveryState.certain ? [] : demoRecoveryState.reasonCodes),
@@ -1017,7 +1013,6 @@ async function main(): Promise<void> {
       marketDataFresh: true,
       dailyLossLockout: dailyLocked,
       operationalRiskLockout:
-        !positionProtectionCertain ||
         !demoRecoveryState.certain ||
         !demoExecutionState.certain ||
         (config.maxOrdersPerDay > 0 && ordersToday >= config.maxOrdersPerDay),
@@ -1508,16 +1503,6 @@ async function main(): Promise<void> {
               throw new Error("POSITION_PROTECTION_SYMBOL_MISMATCH");
             return result.quote;
           },
-          pause: async () => {
-            await controls.setControl({
-              key: "PAUSE_NEW_ANALYSES",
-              scope: config.instanceId,
-              enabled: true,
-              actor: "position-protection",
-              reason:
-                "Position protection requires a confirmed close; new entries paused for review",
-            });
-          },
         })
       : null;
   const protectiveMaintenance = new IndependentMaintenance(async () => {
@@ -1527,9 +1512,12 @@ async function main(): Promise<void> {
       try {
         await demoExecutionRecorder?.flush();
         await positionProtection.run();
-        positionProtectionCertain = true;
       } catch {
-        positionProtectionCertain = false;
+        logger.log("error", {
+          event_name: "position_protection_observation_failed",
+          outcome: "failed",
+          reason_code: "POSITION_PROTECTION_UNAVAILABLE",
+        });
       }
     }
     if (paperGateway !== null && paperAccount !== null) {
