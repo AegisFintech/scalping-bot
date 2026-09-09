@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.10` uses policy `fixed-risk-v4` in
+Release `0.2.3-equity-risk.11` uses policy `fixed-risk-v4` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -38,12 +38,18 @@ No setting can make this build submit live orders. Shadow uses a separately
 specified connection environment without submission authority. An API key or
 broker token is not an authorization to trade.
 
-The model pin is visible as `AI_MODEL=gpt-6-astra/u64`, and a different nonempty
-model is rejected. ISSUE-081 changes this one assignment in a populated file,
-preserving every other value. Existing migration `0017_sol_context_model.sql`
-already permits both identities; no new migration is required. Deploy matching
-AI/execution builds together. See [model-switch evidence](astra-graphify-report.md). API style, request limits, indicator periods, scheduling,
-execution thresholds and risk percentages are managed in the versioned policy.
+The model pin is visible as `AI_MODEL=deepseek-v4-pro/u5W`, and a different nonempty
+model is rejected. ISSUE-085 changes only this assignment in a populated file,
+preserving all credentials and operator controls. Forward migration
+`0020_deepseek_context_model.sql` admits DeepSeek while preserving historical
+Astra/Sol rows and request cooldowns. Deploy matching AI/execution builds together.
+See [model-switch evidence](deepseek-context-report.md). The production scenario
+uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
+new prompt `scenario-v3`, explicitly disabled thinking and at most 4,096 output
+tokens within the existing
+90-second deadline. Charts remain validated local audit artifacts. Request bounds,
+indicator periods, scheduling, execution thresholds and risk percentages are
+managed in versioned code; no extra environment tuning keys are introduced.
 Removing redundant default endpoints/paths is safe only after comparing them to
 their effective code defaults. Keep unknown credentials or custom deployments
 until reviewed; unused monitoring credentials must not disappear accidentally.

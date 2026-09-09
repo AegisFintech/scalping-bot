@@ -1,0 +1,16 @@
+{
+  "label": "NON_TRADING_SYNTHETIC_COMPATIBILITY",
+  "at": "2026-09-09T02:48:08.197Z",
+  "requestedModel": "deepseek-v4-pro/u5W",
+  "httpStatus": 200,
+  "returnedModel": "deepseek-v4-pro",
+  "status": "completed",
+  "strictJsonValid": true,
+  "tokens": {
+    "input": 50,
+    "output": 30,
+    "total": 80
+  },
+  "cost": null,
+  "durationMs": 3449
+}

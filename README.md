@@ -5,8 +5,8 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.3-equity-risk.10`, policy `fixed-risk-v4`.
-The model creates a reusable five-minute chart map with `scenario-v2` / schema
+The current source release is `0.2.3-equity-risk.11`, policy `fixed-risk-v4`.
+The model creates a reusable five-minute chart map with `scenario-v3` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v2` and the unchanged strict schema `2.1`.
 Accepted stop-limit orders are **good till cancelled (GTC)**, without timer expiry.
@@ -85,19 +85,21 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Model and decision path
 
-The operator-selected model is now `gpt-6-astra/u64`. The existing EPRToken
-Responses endpoint accepted this literal identifier with strict JSON Schema,
-returning `gpt-6-astra`. Both identifiers, timing and available token usage are
-retained; pricing remains unknown. See [model-switch evidence](docs/astra-graphify-report.md).
-No fallback model is substituted. Temperature and reasoning-effort parameters
-remain omitted; `/u64` is sent literally, without inferred client-side semantics.
+The operator-selected model is now `deepseek-v4-pro/u5W`. The existing EPRToken
+Responses endpoint accepted this literal identifier, returning `deepseek-v4-pro`.
+Every reply undergoes independent local schema and semantic validation. Both identifiers, timing and available token usage are
+retained; pricing remains unknown. See [model-switch evidence](docs/deepseek-context-report.md).
+No fallback model is substituted. Temperature remains omitted; the scenario
+planner explicitly requests disabled thinking within the existing deadline.
+`/u5W` is sent literally, without inferred client-side semantics.
 Historical model observations remain immutable; a switch does not establish improved fills.
 
-The active scenario input contains the exact M15/M5/M1 chart and bounded completed
-candle tails matching the chart (up to 80 per frame). The earlier matched
-image/structured benchmark did not
-establish a decision-quality winner. Chart input is retained for the requested
-workflow; no claim of superior net performance is made. Every response crosses
+The active scenario input contains up to 240 M1, 144 M5 and 96 M15 completed
+OHLCV bars as numeric data. The text-only Pro model receives no image; charts
+remain verified and archived locally. New prompt `scenario-v3` uses the larger
+history to distinguish nearby structure from distant levels without selecting
+SL, TP or size. More history does not establish better analysis or profitability.
+Every response crosses
 strict schema, identity, tick-precision and fixed-validity checks. Requests have a
 90-second background deadline, no automatic retry, bounded bodies and a circuit breaker.
 
@@ -125,7 +127,7 @@ The normal [.env.sample](.env.sample) has **20 settings, down from 176 (88.6%)**
 It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=gpt-6-astra/u64` is explicit; other AI and strategy tuning is fixed in
+`AI_MODEL=deepseek-v4-pro/u5W` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
 24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the

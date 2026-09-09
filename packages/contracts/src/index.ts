@@ -212,6 +212,8 @@ export interface ModelPromptArtifact {
     | "scenario-execution-v1"
     | "scenario-execution-v2"
     | "scenario-v2"
+    | "scenario-v3"
+    | "scenario-research-v2"
     | "scenario-v1";
   readonly content: string;
   readonly sha256: string;

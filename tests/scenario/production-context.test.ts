@@ -62,7 +62,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
       if (this.row) return Promise.resolve(false);
       this.row = {
         id: i.id,
-        requestedModel: "gpt-6-astra/u64",
+        requestedModel: "deepseek-v4-pro/u5W",
         state: "REQUESTING",
         requestedAt: at(0),
         capturedAt: i.capturedAt,
@@ -91,7 +91,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
 function stored(): StoredContext {
   return {
     id: fixture.plan.analysis_id,
-    requestedModel: "gpt-6-astra/u64",
+    requestedModel: "deepseek-v4-pro/u5W",
     state: "READY",
     requestedAt: at(0),
     capturedAt: at(0),
@@ -164,27 +164,30 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       "SCENARIO_EXECUTION_CONSTRAINT_INVALID",
     );
   });
-  it("does not reuse an old-model map after restart or bypass its paid-request cooldown", async () => {
-    const store = memory();
-    store.row = { ...stored(), requestedModel: "gpt-5.6-sol/u40" };
-    const generate = vi.fn();
-    const model = new ReusableScenarioModel(
-      store,
-      { generate },
-      () => base + 40_000,
-    );
-    expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
-    expect(generate).not.toHaveBeenCalled();
-    await expect(
-      model.analyze({
-        analysisId: String(payload().analysis_id),
-        symbol: "XAUUSD",
-        payload: payload(),
-        chart: analysisChart(),
-        timeoutMs: 5000,
-      }),
-    ).rejects.toThrow("SCENARIO_PREPARED_DECISION_MISSING");
-  });
+  it.each(["gpt-6-astra/u64", "gpt-5.6-sol/u40"])(
+    "does not reuse %s after restart or bypass its paid-request cooldown",
+    async (requestedModel) => {
+      const store = memory();
+      store.row = { ...stored(), requestedModel };
+      const generate = vi.fn();
+      const model = new ReusableScenarioModel(
+        store,
+        { generate },
+        () => base + 40_000,
+      );
+      expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
+      expect(generate).not.toHaveBeenCalled();
+      await expect(
+        model.analyze({
+          analysisId: String(payload().analysis_id),
+          symbol: "XAUUSD",
+          payload: payload(),
+          chart: analysisChart(),
+          timeoutMs: 5000,
+        }),
+      ).rejects.toThrow("SCENARIO_PREPARED_DECISION_MISSING");
+    },
+  );
   it("projects real performance-context diagnostics into the strict execution contract", () => {
     const p = payload();
     Object.assign(p.performance, {
@@ -331,19 +334,19 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     now = base + 40_000;
     const plan = { ...fixture.plan, analysis_id: store.row!.id };
     release({
-      model: "gpt-6-astra/u64",
+      model: "deepseek-v4-pro/u5W",
       response: plan,
       rawResponse: JSON.stringify(plan),
       promptArtifact: {
-        version: "scenario-v2",
+        version: "scenario-v3",
         content: "test",
         sha256: "a".repeat(64),
       },
       latencyMs: 40_000,
       retryCount: 0,
       telemetry: {
-        requestedModel: "gpt-6-astra/u64",
-        returnedModel: "gpt-6-astra",
+        requestedModel: "deepseek-v4-pro/u5W",
+        returnedModel: "deepseek-v4-pro",
         inputProfile: "chart",
         requestBytes: 100,
         responseBytes: 100,

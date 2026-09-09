@@ -2,6 +2,42 @@
 
 ## Scope
 
+### ISSUE-085 — DeepSeek and richer completed-market context (implemented; validated; demo restored)
+
+- Issue: [#200](https://github.com/AegisFintech/scalping-bot/issues/200).
+- Pull request: [#201](https://github.com/AegisFintech/scalping-bot/pull/201);
+  implementation checkpoint `d5a5acc` committed and pushed.
+- Branch: `issue-085-deepseek-model-context`; dependency: ISSUE-084 / PR #199.
+- Authorization: September 9 operator request for exact `deepseek-v4-pro/u5W`
+  and more market data, retaining local SL/TP and deterministic risk sizing.
+- Acceptance: bounded structured completed-candle history; new immutable prompt
+  artifacts; strict identity/output/freshness validation; forward model migration
+  preserving historical contexts, cooldowns, orders, risk locks and live prohibition.
+- Delivery: positive/failure tests and complete quality gates; protected model-only
+  environment edit, matching services, real endpoint and authorized demo verification;
+  report with evidence, rollback notes, commit/push and qualifying PR merge.
+- Baseline: demo analyses paused at 10:47:58 SGT with no active setup. Exact
+  DeepSeek route returned HTTP 200 / `deepseek-v4-pro` / strict boolean JSON in
+  3,449 ms on one non-trading compatibility probe; unknown cost remains null.
+- Expanded context is 240 M1 / 144 M5 / 96 M15 bars, sent as lossless numeric
+  tables. Default/low thinking exhausted the 4,096-token budget; non-thinking
+  object inputs showed schema/JSON failures, all rejected. The final table request
+  passed strict validation in 9,838 ms (29,584 input / 236 output tokens).
+- New prompts explicitly specify schema version, exact field shape and complete
+  JSON. Release requests thinking disabled; analysis-quality improvement is unproven.
+  Local SL/TP, sizing, all deadlines, cooldowns and execution safeguards are unchanged.
+- Required checks passed: 553 Node / 140 Python / 27 schema / 3 migration /
+  3 isolated TLS integration tests and all format/lint/type/build/configuration,
+  replay, secret and dependency gates. Exact results: `docs/evidence/deepseek-validation.json`.
+- Migration 0020 applied at 11:02:52 SGT, preserving all 212 historical context
+  rows and capital/daily risk state. Matching AI/execution services passed paused
+  preflight; prior demo automation resumed at 11:03:11 SGT. Only AI_MODEL changed
+  in the mode-0600, 24-key populated environment; PM2 has no cached model override.
+- First ordinary demo request validated in 9,331 ms (29,597 input / 239 output
+  tokens). At 11:04:03 the READY map was waiting on entry distance, with no new
+  order/trade. By 11:05:30 both GTC stop-limit orders were pending, with no open
+  positions. See `docs/deepseek-context-report.md` and its rollout evidence.
+
 ### ISSUE-084 — Recover incomplete OCO pairs (implemented; validated; demo restored)
 
 - Issue: [#198](https://github.com/AegisFintech/scalping-bot/issues/198).

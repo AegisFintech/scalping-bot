@@ -1239,3 +1239,14 @@ Exact gates and rollout: [persistent-order report](persistent-order-loop-report.
 The dated evaluation exporter rejects GTC explicitly (`EVALUATION_GTC_NOT_SUPPORTED`)
 instead of silently omitting non-expiring orders; null/invalid dated expiry also
 rejects. Unit and read-only deployment checks cover this compatibility boundary.
+
+## ISSUE-085 — DeepSeek structured context
+
+The active pin is `deepseek-v4-pro/u5W`. Test both exact and explicitly observed
+returned identities, rejected/missing substitutes, and historical-model cooldowns.
+Validate expanded 240/144/96 candle tails without decimal conversion; malformed
+older bars outside those tails, corrupt chart bytes, stale capture, mismatched
+chart endpoints and excess input remain pre-dispatch failures. HTTP consumers
+require the new prompt hash and structured input profile. Forward migration 0020
+retains Astra/Sol rows while admitting DeepSeek. Complete command results and
+real demo evidence are in [the implementation report](deepseek-context-report.md).

@@ -18,7 +18,7 @@ import {
 } from "./telemetry.js";
 
 export type AiApiStyle = "responses" | "chat_completions";
-export type AiReasoningEffort = "low" | "medium" | "high";
+export type AiReasoningEffort = "none" | "low" | "medium" | "high";
 
 export interface AiClientOptions {
   readonly baseUrl: string;
@@ -120,7 +120,7 @@ function retryableStatus(status: number): boolean {
   return status === 408 || status === 429 || status >= 500;
 }
 
-function chartDataUrl(chart: AnalysisChartArtifact): string {
+export function validateChartArtifact(chart: AnalysisChartArtifact): void {
   const bytes = Buffer.from(chart.dataBase64, "base64");
   if (
     chart.mimeType !== "image/png" ||
@@ -139,6 +139,10 @@ function chartDataUrl(chart: AnalysisChartArtifact): string {
   ) {
     throw new Error("AI_CHART_INVALID");
   }
+}
+
+function chartDataUrl(chart: AnalysisChartArtifact): string {
+  validateChartArtifact(chart);
   return `data:image/png;base64,${chart.dataBase64}`;
 }
 

@@ -12,6 +12,7 @@ import {
   createPool,
   databaseConnectionString,
   migrate,
+  migrationFiles,
 } from "../../packages/database/src/index.js";
 import { DailyRiskStore } from "../../apps/execution-service/src/daily-risk-store.js";
 import { ensureRuntimeIdentity } from "../../packages/database/src/registry.js";
@@ -236,6 +237,7 @@ describe("PostgreSQL migrations integration", () => {
         "0017",
         "0018",
         "0019",
+        "0020",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -745,7 +747,7 @@ describe("PostgreSQL migrations integration", () => {
       expect(claims.filter(Boolean)).toHaveLength(1);
       const currentContext = await contextStore.latest();
       expect(currentContext?.state).toBe("REQUESTING");
-      expect(currentContext?.requestedModel).toBe("gpt-6-astra/u64");
+      expect(currentContext?.requestedModel).toBe("deepseek-v4-pro/u5W");
       await expect(
         isolated.query(
           "UPDATE scenario_contexts SET requested_model='unapproved-model' WHERE id=$1",
@@ -2573,6 +2575,46 @@ describe("PostgreSQL migrations integration", () => {
       expect(clientOrderConstraints.rows.map((row) => row.definition)).toEqual([
         "UNIQUE (account_id, client_order_id)",
       ]);
+      for (const file of (
+        await migrationFiles(path.resolve("migrations"))
+      ).filter((file) => file >= "0012" && file < "0020")) {
+        await copyFile(
+          path.resolve("migrations", file),
+          path.join(migrationDirectory, file),
+        );
+      }
+      await migrate(isolated, migrationDirectory);
+      const insertContext = (model: string) =>
+        isolated.query(
+          `INSERT INTO scenario_contexts
+          (id,account_id,symbol_id,source_analysis_id,mode,requested_at,captured_at,
+           valid_until,state,requested_model,tick_size,reason)
+         VALUES ($1,$2,$3,$4,'demo',now(),now(),now()+interval '5 minutes',
+                 'FAILED',$5,'0.01','AI_PROVIDER_TIMEOUT')`,
+          [randomUUID(), accountId, symbolId, analysisId, model],
+        );
+      await insertContext("gpt-6-astra/u64");
+      await insertContext("gpt-5.6-sol/u40");
+      const historyBefore = (
+        await isolated.query("SELECT * FROM scenario_contexts ORDER BY id")
+      ).rows;
+      await expect(insertContext("deepseek-v4-pro/u5W")).rejects.toMatchObject({
+        code: "23514",
+      });
+      await copyFile(
+        path.resolve("migrations", "0020_deepseek_context_model.sql"),
+        path.join(migrationDirectory, "0020_deepseek_context_model.sql"),
+      );
+      expect(await migrate(isolated, migrationDirectory)).toEqual(["0020"]);
+      expect(
+        (await isolated.query("SELECT * FROM scenario_contexts ORDER BY id"))
+          .rows,
+      ).toEqual(historyBefore);
+      await insertContext("deepseek-v4-pro/u5W");
+      await expect(insertContext("deepseek-v4-pro/u5X")).rejects.toMatchObject({
+        code: "23514",
+      });
+      expect(await migrate(isolated, migrationDirectory)).toEqual([]);
     } finally {
       await isolated.end();
       await admin.query(`DROP SCHEMA "${schema}" CASCADE`);

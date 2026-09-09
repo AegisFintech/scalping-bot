@@ -439,7 +439,7 @@ describe("bounded scenario provider adapter", () => {
       })),
     };
   }
-  it("uses exact requested model, chart, separate schema and records returned identity", async () => {
+  it("uses the exact model, structured candles, separate schema and returned identity", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout");
     let request: Record<string, unknown> = {};
     const fetchImpl = vi.fn<typeof fetch>((_url, options) => {
@@ -448,7 +448,7 @@ describe("bounded scenario provider adapter", () => {
       return Promise.resolve(
         new Response(
           JSON.stringify({
-            model: "gpt-6-astra",
+            model: "deepseek-v4-pro",
             output_text: JSON.stringify(fixture().plan),
           }),
         ),
@@ -461,16 +461,98 @@ describe("bounded scenario provider adapter", () => {
       now: () => base,
     });
     const result = await planner.generate(input());
-    expect(request.model).toBe("gpt-6-astra/u64");
-    expect(JSON.stringify(request)).toContain("input_image");
+    expect(request.model).toBe("deepseek-v4-pro/u5W");
+    expect(JSON.stringify(request)).not.toContain("input_image");
+    expect(JSON.stringify(request)).not.toContain("data:image");
+    expect(request.max_output_tokens).toBe(4096);
+    expect(request.reasoning).toEqual({ effort: "none" });
     expect(request.text).toMatchObject({
       format: { name: "chart_scenario_1_0", strict: true },
     });
-    expect(result.telemetry.returnedModel).toBe("gpt-6-astra");
+    expect(result.telemetry.returnedModel).toBe("deepseek-v4-pro");
+    expect(result.telemetry.inputProfile).toBe("structured");
+    expect(result.promptArtifact.version).toBe("scenario-research-v2");
     expect(result.telemetry.costAmount).toBeNull();
     expect(timeout).toHaveBeenCalledWith(90_000);
     timeout.mockRestore();
   });
+  it("sends bounded longer history with exact decimals and original capture/expiry", async () => {
+    let body: { input: { content: { text: string }[] }[] } | undefined;
+    const fetchImpl = vi.fn<typeof fetch>((_url, options) => {
+      if (typeof options?.body !== "string") throw new Error("fixture-body");
+      body = JSON.parse(options.body) as typeof body;
+      return Promise.resolve(
+        Response.json({
+          model: "deepseek-v4-pro",
+          output_text: JSON.stringify(fixture().plan),
+        }),
+      );
+    });
+    const x = input();
+    for (const series of x.candles) {
+      const period = { M1: 60, M5: 300, M15: 900 }[series.timeframe];
+      series.candles = Array.from({ length: 600 }, (_, i) => ({
+        ...candle(0),
+        startTime: at((i - 600) * period),
+        endTime: at((i - 599) * period),
+      }));
+    }
+    const planner = new ScenarioPlanner({
+      baseUrl: "https://example.com/v1",
+      apiKey: "fixture",
+      fetchImpl,
+      now: () => base,
+      executionContext: true,
+    });
+    const result = await planner.generate(x);
+    const payload = JSON.parse(body!.input[1]!.content[0]!.text) as {
+      captured_at: string;
+      valid_until: string;
+      candles: { timeframe: string; columns: string[]; rows: unknown[][] }[];
+    };
+    expect(payload.candles.map((s) => s.rows.length)).toEqual([240, 144, 96]);
+    for (const [index, count] of [240, 144, 96].entries()) {
+      const table = payload.candles[index]!;
+      expect(
+        table.rows.map((row) =>
+          Object.fromEntries(
+            table.columns.map((column, i) => [column, row[i]]),
+          ),
+        ),
+      ).toEqual(x.candles[index]!.candles.slice(-count));
+    }
+    expect(payload.captured_at).toBe(x.capturedAt);
+    expect(payload.valid_until).toBe(fixture().plan.valid_until);
+    expect(result.promptArtifact.version).toBe("scenario-v3");
+    // Bad evidence outside the transmitted tail still blocks the entire snapshot.
+    x.candles[0]!.candles[0]!.complete = false;
+    await expect(planner.generate(x)).rejects.toThrow(
+      "SCENARIO_CANDLE_INVALID",
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+  it.each(["checksum", "oversized", "stale", "chart_end"])(
+    "blocks invalid %s before dispatch",
+    async (kind) => {
+      const fetchImpl = vi.fn<typeof fetch>();
+      const planner = new ScenarioPlanner({
+        baseUrl: "https://example.com/v1",
+        apiKey: "fixture",
+        fetchImpl,
+        now: () => base,
+      });
+      const x = input();
+      if (kind === "checksum") x.chart.sha256 = "0".repeat(64);
+      if (kind === "oversized")
+        x.candles[0]!.candles = Array.from({ length: 601 }, () => ({
+          ...candle(0),
+        }));
+      if (kind === "stale") x.capturedAt = at(-4);
+      if (kind === "chart_end") x.chart.latestEndTimes.M1 = at(-60);
+      await expect(planner.generate(x)).rejects.toThrow();
+      expect(fetchImpl).not.toHaveBeenCalled();
+    },
+  );
   it("does not send future/forming or mismatched chart data to the provider", async () => {
     const fetchImpl = vi.fn<typeof fetch>();
     const planner = new ScenarioPlanner({
@@ -507,6 +589,35 @@ describe("bounded scenario provider adapter", () => {
     f.events.forEach((e) => r.accept(e));
     expect(r.trades).toHaveLength(1);
   });
+  it("rejects an incomplete response even when it contains otherwise valid plan JSON", async () => {
+    const planner = new ScenarioPlanner({
+      baseUrl: "https://example.com/v1",
+      apiKey: "fixture",
+      now: () => base,
+      fetchImpl: vi.fn<typeof fetch>(() =>
+        Promise.resolve(
+          Response.json({
+            model: "deepseek-v4-pro",
+            status: "incomplete",
+            output_text: JSON.stringify(fixture().plan),
+            usage: {
+              input_tokens: 12000,
+              output_tokens: 4096,
+              total_tokens: 16096,
+            },
+          }),
+        ),
+      ),
+    });
+    await expect(planner.generate(input())).rejects.toMatchObject({
+      message: "AI_RESPONSE_INCOMPLETE",
+      telemetry: {
+        requestedModel: "deepseek-v4-pro/u5W",
+        outputTokens: 4096,
+        costAmount: null,
+      },
+    });
+  });
   it("keeps exits running while inference is unresolved and bounds concurrent requests", async () => {
     let finish: ((response: Response) => void) | undefined;
     const fetchImpl = vi.fn<typeof fetch>(
@@ -532,7 +643,7 @@ describe("bounded scenario provider adapter", () => {
     finish!(
       new Response(
         JSON.stringify({
-          model: "gpt-6-astra",
+          model: "deepseek-v4-pro",
           output_text: JSON.stringify(f.plan),
         }),
       ),
@@ -560,7 +671,7 @@ describe("bounded scenario provider adapter", () => {
       Promise.resolve(
         new Response(
           JSON.stringify({
-            model: "gpt-6-astra",
+            model: "deepseek-v4-pro",
             output_text: JSON.stringify(fixture().plan),
           }),
         ),
