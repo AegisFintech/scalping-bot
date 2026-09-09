@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.4-direct-entry.1` uses policy `direct-entry-v1` in
+Release `0.2.5-market-stop.1` uses policy `market-stop-v1` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -11,7 +11,7 @@ Reusable scenario maps add no environment variables or tuning file. Five-minute
 refresh/cooldown, one intent per map, five-second local decisions, three-minute preferred/maximum
 fresh-submission deadline capped by the original map and 90-second asynchronous provider timeout are engineering policy, not operator
 knobs. A proven local `AI_CIRCUIT_OPEN` result is rechecked after one minute;
-the database retains five-minute failed/unknown-request backoff. One verified post-close request may start earlier.
+the database retains five-minute failed/unknown-request backoff. One verified post-close or fully proven zero-fill cancellation request may start earlier.
 Unknown/timeout outcomes retain the full cooldown. See [the incident report](provider-recovery-report.md).
 The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
@@ -170,3 +170,10 @@ Rollback requires pausing and confirming all strategy GTC orders cancelled and a
 positions closed before restoring `.8`. Older maintenance/readers assume dated
 orders. Keep 0019 and historical rows; do not downgrade checksums, drop data or
 reset risk accounting. Keep the current dashboard reader for GTC history.
+
+ISSUE-087 changes the release policy to ordinary GTC STOP execution and a 30-point
+modeled slippage reserve/fill-monitor threshold. These are versioned constants,
+not new environment keys. The old five-point broker STOP_LIMIT ceiling no longer
+applies to production STOP orders. Relative SL/TP and all risk percentages remain.
+Migration 0021 adds explicit execution intent without rewriting historical rows.
+See [rollout, validation and rollback](market-stop-report.md).

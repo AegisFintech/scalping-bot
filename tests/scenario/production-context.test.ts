@@ -585,3 +585,41 @@ describe("post-close request lifecycle", () => {
     },
   );
 });
+
+describe("zero-fill terminal request lifecycle", () => {
+  it("rechecks consumed state after five seconds and requests once using terminal proof", async () => {
+    const store = memory();
+    store.row = { ...stored(), consumed: true };
+    let now = base + 40000;
+    const claim = vi.spyOn(store, "claim").mockResolvedValue(false);
+    const generate = vi.fn();
+    const model = new ReusableScenarioModel(store, { generate }, () => now);
+    expect(await model.prepare(input())).toBe("SCENARIO_MAP_CONSUMED");
+    expect(model.canEvaluate).toBe(false);
+    now += 5000;
+    store.row.zeroFillTerminalAt = at(44);
+    expect(model.canEvaluate).toBe(true);
+    expect(await model.prepare(input())).toBe(
+      "SCENARIO_REFRESH_ALREADY_CLAIMED",
+    );
+    expect(claim).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ afterContextId: fixture.plan.analysis_id }),
+    );
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it.each([null, at(41)])(
+    "retains backoff without current terminal evidence: %s",
+    async (zeroFillTerminalAt) => {
+      const store = memory();
+      store.row = { ...stored(), consumed: true, zeroFillTerminalAt };
+      const claim = vi.spyOn(store, "claim");
+      const model = new ReusableScenarioModel(
+        store,
+        { generate: vi.fn() },
+        () => base + 40000,
+      );
+      expect(await model.prepare(input())).toBe("SCENARIO_MAP_CONSUMED");
+      expect(claim).not.toHaveBeenCalled();
+    },
+  );
+});

@@ -9,6 +9,7 @@ import {
   resolveRuntimeEnvironment,
   POLICY_VERSION,
   MONEY_MANAGEMENT,
+  STOP_EXECUTION_POLICY,
 } from "../../../packages/config/src/policy.js";
 
 import { createHash } from "node:crypto";
@@ -429,6 +430,8 @@ async function main(): Promise<void> {
   let capitalRiskCap = "0";
   const capitalRiskStore = new CapitalRiskStore(pool);
   const risk = new OcoRiskEvaluator({
+    executionOrderType: STOP_EXECUTION_POLICY.orderType,
+    adverseSlippagePoints: STOP_EXECUTION_POLICY.adverseSlippagePoints,
     timeInForce: ORDER_LIFECYCLE.timeInForce,
     riskMultiplier: () => capitalMultiplier,
     riskPercentCap: () => capitalRiskCap,

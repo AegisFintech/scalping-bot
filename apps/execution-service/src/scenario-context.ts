@@ -28,6 +28,27 @@ import {
   SCENARIO_REQUEST_POLICY,
 } from "../../../packages/scenario-engine/src/request-policy.js";
 
+/** Same proof is used for discovery and the locked dispatch claim. Aliases: c, g. */
+const zeroFillTerminalProof = `
+  g.state='FAILED' AND g.cancellation_reason IN ('OCO_PEER_UNFILLED_TERMINAL','DEMO_BROKER_ZERO_FILL_CANCELLED')
+  AND g.updated_at<=clock_timestamp() AND g.mode=c.mode
+  AND EXISTS(SELECT 1 FROM analysis_runs a WHERE a.id=g.analysis_id AND a.account_id=c.account_id AND a.symbol_id=c.symbol_id)
+  AND (SELECT count(*) FROM orders o WHERE o.order_group_id=g.id)=2
+  AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND (
+    o.account_id<>c.account_id OR NOT o.strategy_owned OR o.broker_order_id IS NULL
+    OR o.state NOT IN ('CANCELLED','EXPIRED','REJECTED') OR o.filled_volume<>0
+    OR NOT EXISTS(SELECT 1 FROM broker_execution_events e
+      WHERE e.order_id=o.id AND e.account_id=c.account_id AND e.symbol_id=c.symbol_id
+        AND e.broker_order_id=o.broker_order_id AND e.mapping_state='MAPPED'
+        AND e.execution_type IN (5,6,7) AND jsonb_array_length(e.reason_codes)=0
+        AND e.normalized_payload->'order'->>'state'=o.state
+        AND e.normalized_payload->'order'->>'filledVolume'='0')))
+  AND NOT EXISTS(SELECT 1 FROM fills f JOIN orders o ON o.id=f.order_id WHERE o.order_group_id=g.id)
+  AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id)
+  AND NOT EXISTS(SELECT 1 FROM trades t WHERE t.order_group_id=g.id)
+  AND NOT EXISTS(SELECT 1 FROM broker_execution_events e WHERE e.account_id=c.account_id AND e.symbol_id=c.symbol_id
+    AND e.resolved_at IS NULL AND (e.mapping_state<>'MAPPED' OR jsonb_array_length(e.reason_codes)>0))`;
+
 export interface StoredContext {
   id: string;
   requestedModel: string;
@@ -41,6 +62,8 @@ export interface StoredContext {
   consumed: boolean;
   /** Fully reconciled, durably closed setup; permits one fresh analysis. */
   closedAt?: string | null;
+  /** Both owned orders broker-confirmed terminal with explicit zero-fill evidence. */
+  zeroFillTerminalAt?: string | null;
   reason: string | null;
 }
 export interface ContextStore {
@@ -87,7 +110,8 @@ export class PostgresContextStore implements ContextStore {
        WHERE g.context_plan_id=c.id AND g.state='CLOSED'
          AND EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state='CLOSED')
          AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state<>'CLOSED')
-         AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))) AS closed_at
+         AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))) AS closed_at,
+      (SELECT max(g.updated_at) FROM order_groups g WHERE g.context_plan_id=c.id AND ${zeroFillTerminalProof}) AS zero_fill_terminal_at
       FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3 ORDER BY requested_at DESC LIMIT 1`,
       [this.scope.accountId, this.scope.symbolId, this.scope.mode],
     );
@@ -104,6 +128,7 @@ export class PostgresContextStore implements ContextStore {
           plan: ContextPlan | null;
           consumed: boolean;
           closed_at: Date | null;
+          zero_fill_terminal_at: Date | null;
           reason: string | null;
         }
       | undefined;
@@ -121,6 +146,7 @@ export class PostgresContextStore implements ContextStore {
           plan: r.plan,
           consumed: r.consumed,
           closedAt: r.closed_at?.toISOString() ?? null,
+          zeroFillTerminalAt: r.zero_fill_terminal_at?.toISOString() ?? null,
           reason: r.reason,
         };
   }
@@ -134,7 +160,7 @@ export class PostgresContextStore implements ContextStore {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      // Cross-process single-flight; failures retain cooldown, a proven close gets one new request.
+      // Cross-process single-flight; only proven terminal setups get one early request.
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
         [
@@ -160,13 +186,15 @@ export class PostgresContextStore implements ContextStore {
         OR ($9::uuid IS NOT NULL AND EXISTS(
           SELECT 1 FROM scenario_contexts c JOIN order_groups g ON g.context_plan_id=c.id
           WHERE c.id=$9 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
-            AND c.state='READY' AND g.state='CLOSED'
+            AND c.state='READY'
             AND NOT EXISTS(SELECT 1 FROM scenario_contexts newer WHERE newer.account_id=$2 AND newer.symbol_id=$3 AND newer.mode=$4 AND newer.requested_at>c.requested_at)
             AND NOT EXISTS(SELECT 1 FROM scenario_contexts used WHERE used.refresh_after_context_id=c.id)
+            AND ((g.state='CLOSED'
             AND EXISTS(SELECT 1 FROM trades t WHERE t.order_group_id=g.id AND t.closed_at<=clock_timestamp())
             AND EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state='CLOSED')
             AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND (p.state<>'CLOSED' OR NOT EXISTS(SELECT 1 FROM trades t WHERE t.position_id=p.id AND t.order_group_id=g.id)))
-            AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))
+            AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED')))
+            OR (${zeroFillTerminalProof}))
         ))) RETURNING id`,
         [
           input.id,
@@ -313,11 +341,13 @@ export class ReusableScenarioModel implements ModelProvider {
         return error.message;
       }
     }
-    const afterClose =
-      existing?.consumed === true &&
-      existing.closedAt != null &&
-      time(existing.closedAt) <= now;
-    const due = afterClose
+    const afterTerminal =
+      existing?.state === "READY" &&
+      existing.consumed &&
+      [existing.closedAt, existing.zeroFillTerminalAt].some(
+        (at) => at != null && time(at) <= now,
+      );
+    const due = afterTerminal
       ? 0
       : existing === null
         ? 0
@@ -326,7 +356,14 @@ export class ReusableScenarioModel implements ModelProvider {
             ? SCENARIO_REQUEST_POLICY.localCircuitRecheckMs
             : SCENARIO_REQUEST_POLICY.dispatchCooldownMs);
     if (now < due || this.task !== null) {
-      this.nextEvaluationAt = this.task === null ? due : now + 5_000;
+      // Poll consumed setup evidence locally so a newly completed setup does
+      // not remain hidden behind a cached five-minute provider cooldown.
+      this.nextEvaluationAt =
+        this.task === null
+          ? existing?.consumed
+            ? Math.min(due, now + 5_000)
+            : due
+          : now + 5_000;
       return existing?.consumed
         ? "SCENARIO_MAP_CONSUMED"
         : "SCENARIO_REFRESH_PENDING";
@@ -338,7 +375,7 @@ export class ReusableScenarioModel implements ModelProvider {
         sourceAnalysisId: String(input.payload.analysis_id),
         capturedAt: input.snapshot.serverTime,
         tickSize: input.snapshot.metadata.tickSize,
-        ...(afterClose && existing !== null
+        ...(afterTerminal && existing !== null
           ? { afterContextId: existing.id }
           : {}),
       }))

@@ -1,0 +1,147 @@
+{
+  "label": "AUTHORIZED_DEMO_ROLLOUT",
+  "migration": {
+    "at": "2026-09-09T06:12:36.568Z",
+    "applied": ["0021"]
+  },
+  "preflight": {
+    "at": "2026-09-09T06:13:07.992Z",
+    "release": "0.2.5-market-stop.1",
+    "policy": "market-stop-v1",
+    "mode": "demo",
+    "paused": true,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": ["ANALYSES_PAUSED"],
+    "riskStatePreserved": true,
+    "environmentUnchanged": true
+  },
+  "resume": {
+    "at": "2026-09-09T06:13:12.856Z",
+    "release": "0.2.5-market-stop.1",
+    "policy": "market-stop-v1",
+    "mode": "demo",
+    "paused": false,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": [],
+    "environmentUnchanged": true
+  },
+  "processConfiguration": {
+    "at": "2026-09-09T06:12:59.826Z",
+    "environmentFile": {
+      "keyCount": 24,
+      "permissions": "600",
+      "model": "deepseek-v4-pro/u5W"
+    },
+    "templateKeyCount": 20,
+    "processes": [
+      {
+        "name": "scalper-analytics",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-market-data",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-ai",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-execution",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-dashboard",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      }
+    ]
+  },
+  "broker": {
+    "at": "2026-09-09T06:14:11.924Z",
+    "label": "READ_ONLY_DEMO_BROKER_CHECK",
+    "account": {
+      "certain": true,
+      "relevantPositionCount": 0,
+      "relevantPendingOrderCount": 2,
+      "reasonCodes": []
+    },
+    "allAccountOpenPositions": 0,
+    "allAccountPendingOrders": 2,
+    "historyHasMore": false,
+    "history": [
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4398.92,
+        "executedVolume": 0,
+        "lastUpdate": "2026-09-09T06:13:41.007Z",
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000,
+        "errorCode": null
+      },
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4405.22,
+        "executedVolume": 0,
+        "lastUpdate": "2026-09-09T06:13:40.531Z",
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000,
+        "errorCode": null
+      }
+    ],
+    "pending": [
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4405.22,
+        "volume": 307700,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      },
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4398.92,
+        "volume": 307800,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      }
+    ],
+    "positions": [],
+    "quote": {
+      "bid": "4401.22",
+      "ask": "4401.3",
+      "sourceTime": "2026-09-09T06:14:12.263Z",
+      "receivedAt": "2026-09-09T06:14:12.665Z",
+      "tickSize": "0.01",
+      "spread": "0.08",
+      "spreadPoints": "8"
+    }
+  },
+  "observedCycle": "Pending acceptance verified; natural fill/close not yet observed."
+}

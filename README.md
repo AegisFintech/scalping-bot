@@ -5,7 +5,7 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.4-direct-entry.1`, policy `direct-entry-v1`.
+The current source release is `0.2.5-market-stop.1`, policy `market-stop-v1`.
 EPRToken returns only buy/sell stop-entry prices using `entry-pair-v1`. The script
 binds identity/time locally and calculates fee-buffered TP, double SL and position
 size. Spread, ATR distance, model target-room and daily order-count filters are

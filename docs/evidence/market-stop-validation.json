@@ -1,0 +1,148 @@
+{
+  "release": "0.2.5-market-stop.1",
+  "policy": "market-stop-v1",
+  "commands": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 19.43,
+      "initial_failure": "Formatted four edited Markdown files."
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 33.99,
+      "initial_failure": "Added explicit query result type in the new integration fixture."
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 12.13
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.31
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 39.58
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.59
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.44
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 5.04,
+      "initial_failure": "Added migration 0021 to the expected migration list."
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.61
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.45
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.52
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.54
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.48
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.49
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.27
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-087/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-087/scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.7
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.88
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 31.21
+    }
+  ],
+  "additional_checks": [
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "note": "Repeated after final application edit."
+    },
+    {
+      "command": "npx vitest run tests/ctrader/stop-limit-protection.test.ts tests/execution/demo-gateway.test.ts tests/risk/equity-sizing.test.ts tests/scenario/production-context.test.ts tests/schema/pending-order-execution.test.ts",
+      "exit_code": 0,
+      "tests": 90
+    }
+  ],
+  "totals": {
+    "node": 590,
+    "python": 140,
+    "schema": 34,
+    "migration": 3,
+    "integration": 3
+  },
+  "integration_database": "Isolated local PostgreSQL 18 with verified TLS; no production database test writes.",
+  "secret_scan_note": "Repository scanner returned 0 but reports seven pre-existing removed image files; supplemented by all staged/index blob credential scan before commit.",
+  "graph": {
+    "command": "graphify update .",
+    "nodes": 3006,
+    "edges": 6342,
+    "communities": 216,
+    "provider_calls": 0,
+    "note": "pyproject.toml produces no AST node; code/SQL mappings updated."
+  }
+}

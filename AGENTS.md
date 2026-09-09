@@ -7,9 +7,19 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
 
-## Current operator override — ISSUE-086
+## Current operator override — ISSUE-087 / ISSUE-086
 
-- September 9 production policy `direct-entry-v1` uses readable buy/sell entry
+- September 9 policy `market-stop-v1` explicitly uses ordinary GTC STOP orders
+  in the authorized demo. Keep local relative TP/SL, reserve 30 points of modeled
+  adverse slippage when sizing, and monitor fills against 30 points / 2 bps.
+  STOP has no broker fill-price ceiling; excess slippage still records fills and
+  cancels peers, and blocks new risk until terminal recovery. Read
+  `docs/market-stop-report.md`.
+- One fresh context may follow fully proven zero-fill cancellation as well as a
+  reconciled trade close. Exact ownership, two terminal broker events, no fills,
+  positions, trades or unresolved events, and a unique durable claim are required.
+  Provider failures/unknown dispatch retain cooldown. Never rearm the old map.
+- Production uses readable buy/sell entry
   prices only. This supersedes the older scenario-shape/level-order requirements
   and spread, ATR entry/stop distance, preferred corridor, model target-room and
   daily order-count filters below. Read `docs/direct-entry-report.md`.

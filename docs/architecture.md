@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.4-direct-entry.1`, policy `direct-entry-v1`.
+Current source: `0.2.5-market-stop.1`, policy `market-stop-v1`.
 
 ISSUE-086 production uses `/v1/entry-pair`, a two-price provider reply and locally
 bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
@@ -62,7 +62,7 @@ loopback and deployments support Debian/systemd.
    deferral reason; actual validation failures remain `REJECTED`.
 5. `scenario-context.ts` claims at most one potentially dispatched refresh per account/symbol/mode per
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
-   A uniquely claimed post-close request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links the
+   A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links the
    archived chart and market inputs. A separate task calls `/v1/entry-pair`, using
    exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v1`, two readable prices, and
    structured completed-candle tails (M1 240 / M5 144 / M15 96). The text-only
@@ -95,7 +95,7 @@ loopback and deployments support Debian/systemd.
    Final risk-cap reductions also reject previously sized commands. A unique
    `order_groups.context_plan_id` consumes each map at intent, even when broker
    submission later fails or becomes uncertain. Transactional
-   idempotent intent precedes gateway calls. cTrader STOP_LIMIT entries and
+   idempotent intent precedes gateway calls. cTrader STOP entries and
    fill-relative protections handle the immediate broker event path.
 10. Broker events are durably deduplicated/mapped. Unknown, partial, conflicting
     or incomplete outcomes remain reconciliation blockers. Existing recovery
@@ -236,3 +236,19 @@ ISSUE-084 cancels an owned survivor after one broker-confirmed zero-fill termina
 leg and waits for reconciled cleanup before ordinary fresh analysis. Intact GTC
 pairs have no timer expiry. Durable peer-cancel retries include partial fills.
 See [recovery evidence](oco-pair-recovery-report.md).
+
+## ISSUE-087 ordinary STOP execution
+
+Production sends explicit `STOP` (broker enum 3), GTC, trade-side trigger and local
+relative SL/TP; no limit/slippage ceiling is attached. An additive execution intent
+column distinguishes new STOP/STOP_LIMIT commands. Historical generic STOP rows
+retain null explicit type and immutable broker event history; no classification is
+invented. Legacy stop-limit placement/recovery remains available internally.
+
+The shared terminal-proof SQL is used both when finding a consumed context and
+inside its locked dispatch claim. Zero-fill restarts require both owned orders to
+have matching mapped terminal broker events, zero fills, no positions/trades and
+no unresolved event uncertainty. A five-second local poll discovers new terminal
+state even while the paid-request cooldown was previously cached. All provider
+failure/unknown backoff and active-group prohibitions remain. See
+[implementation and evidence](market-stop-report.md).

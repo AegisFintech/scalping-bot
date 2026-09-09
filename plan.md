@@ -2,6 +2,27 @@
 
 ## Scope
 
+### ISSUE-087 — Demo market-stop OCO and prompt zero-fill restart (implemented; validated; demo restored)
+
+- Issue: [#204](https://github.com/AegisFintech/scalping-bot/issues/204).
+- Branch: `issue-087-market-stop-cycle`; dependency: ISSUE-086 / PR #203.
+- Authorization: September 9 operator approved testing ordinary STOP orders after
+  confirmed broker rejection of STOP_LIMIT fills above the five-point ceiling.
+- Acceptance: explicit GTC STOP with local relative SL/TP, smaller cost-inclusive
+  sizing using a 30-point slippage reserve, unchanged shared 1% setup budget and
+  loss locks, durable intent type and legacy recovery, one prompt fresh context
+  after proven zero-fill cancellation, unchanged unknown/provider backoff.
+- Verify mock/failure paths, schemas, migrations, full quality gates and demo;
+  document rollout/rollback, refresh graph, commit/push and qualifying PR delivery.
+- New analysis paused with no open position; environment and controls backed up.
+  Evidence and exact results: `docs/market-stop-report.md`.
+- Required gates passed: 590 Node / 140 Python / 34 schema / three migration /
+  three isolated TLS integration tests, all format/lint/type/build/config checks,
+  replay/failure fixtures and dependency/secret scans. Migration 0021 applied.
+- Demo resumed at 14:13:12 SGT with preserved environment/risk state. Independent
+  broker check at 14:14:11 verified two ordinary STOP/GTC orders, local SL 1.06 /
+  TP 0.53 and smaller volumes. Natural fill/close was not yet observed.
+
 ### ISSUE-086 — Direct stop entries without strategy filters (implemented; validated; demo restored)
 
 - Issue: [#202](https://github.com/AegisFintech/scalping-bot/issues/202).

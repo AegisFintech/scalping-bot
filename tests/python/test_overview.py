@@ -67,7 +67,7 @@ def test_budget_is_unavailable_without_current_policy_and_reduced_inside_it() ->
         "drawdown_percent": "1",
         "risk_cap_percent": "4",
         "risk_policy": {
-            "version": "direct-entry-v1",
+            "version": "market-stop-v1",
             "setupRiskPercent": "1",
             "dailyLossLimitPercent": "5",
         },
