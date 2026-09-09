@@ -274,7 +274,8 @@ export class CTraderDemoGateway implements ExecutionGateway {
     reasonCode: string,
   ): Promise<GatewayOrder> {
     const tracked = this.#orders.get(clientOrderId);
-    if (tracked === undefined) throw new Error("DEMO_STRATEGY_ORDER_NOT_FOUND");
+    if (tracked === undefined)
+      return this.#cancelRecoveredOrder(clientOrderId, reasonCode);
     if (
       !tracked.command.strategyLabel.startsWith(
         this.#options.strategyLabelPrefix,
@@ -292,6 +293,57 @@ export class CTraderDemoGateway implements ExecutionGateway {
     this.#applyExecution(execution, reasonCode);
     await this.#options.client.reconcileRaw();
     return external(tracked);
+  }
+
+  async #cancelRecoveredOrder(
+    clientOrderId: string,
+    reasonCode: string,
+  ): Promise<GatewayOrder> {
+    // GTC can outlive this process. Recover cancellation authority from exact
+    // broker identity/ownership, never by replaying an expired placement command.
+    const raw = await this.#options.client.reconcileRaw();
+    const matches = raw.orders.filter(
+      (order) => optionalStringField(order, "clientOrderId") === clientOrderId,
+    );
+    if (matches.length !== 1)
+      throw new Error("DEMO_RECOVERED_ORDER_IDENTITY_UNCERTAIN");
+    const source = matches[0]!;
+    const brokerOrderId = stringField(source, "orderId");
+    const verified = (
+      order: Record<string, unknown>,
+      updatedAt: string,
+    ): GatewayOrder => {
+      const data = orderTradeData(order);
+      if (
+        stringField(order, "orderId") !== brokerOrderId ||
+        optionalStringField(order, "clientOrderId") !== clientOrderId ||
+        stringField(data, "symbolId") !== this.#options.symbolId ||
+        !optionalStringField(data, "label")?.startsWith(
+          this.#options.strategyLabelPrefix,
+        ) ||
+        isBrokerGeneratedClosingOrder(order) ||
+        ![3, 6].includes(numberField(order, "orderType"))
+      )
+        throw new Error("DEMO_RECOVERED_ORDER_OWNERSHIP_UNCERTAIN");
+      const state = stateFromOrder(order);
+      if (state === "UNKNOWN")
+        throw new Error("DEMO_RECOVERED_ORDER_STATE_UNCERTAIN");
+      return {
+        clientOrderId,
+        brokerOrderId,
+        state,
+        filledVolume: stringField(order, "executedVolume"),
+        updatedAt,
+        reasonCode,
+      };
+    };
+    const current = verified(source, raw.receivedAt);
+    if (!["PENDING", "PARTIALLY_FILLED"].includes(current.state))
+      return current;
+    const result = await this.#options.client.cancelOrder(brokerOrderId);
+    if (result.order === null)
+      throw new Error("DEMO_RECOVERED_CANCELLATION_UNCERTAIN");
+    return verified(result.order, result.receivedAt);
   }
 
   async reconcile(symbol: string): Promise<ReconciliationSnapshot> {

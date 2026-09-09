@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.9`, fixed risk policy v4. Previous release
+Current source: `0.2.3-equity-risk.10`, fixed risk policy v4. Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
 Production uses a fresh five-minute scenario placement context, a durable request journal,
@@ -220,3 +220,8 @@ After complete durable closure, `refresh_after_context_id` permits one immediate
 fresh request under the same scope/advisory lock, across concurrent processes and
 restarts. Failed/unknown requests retain bounded backoff. A close never reuses the
 old map. Unfilled broker cancellation uses normal recovery/backoff.
+
+ISSUE-084 cancels an owned survivor after one broker-confirmed zero-fill terminal
+leg and waits for reconciled cleanup before ordinary fresh analysis. Intact GTC
+pairs have no timer expiry. Durable peer-cancel retries include partial fills.
+See [recovery evidence](oco-pair-recovery-report.md).

@@ -5,7 +5,7 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.3-equity-risk.9`, policy `fixed-risk-v4`.
+The current source release is `0.2.3-equity-risk.10`, policy `fixed-risk-v4`.
 The model creates a reusable five-minute chart map with `scenario-v2` / schema
 `scenario-1.0`; local code derives protected OCO proposals using
 `scenario-execution-v2` and the unchanged strict schema `2.1`.

@@ -92,6 +92,11 @@ in linked reports. Give longer explanations only when explicitly requested.
   GTC stores null pending expiry and a separate submission deadline. Risk/emergency
   and OCO peer cancellations still apply. Read `docs/persistent-order-loop-report.md`.
   A normal shutdown preserves GTC; emergency stop explicitly cancels owned pending orders.
+- ISSUE-084 also cancels a surviving owned order after its peer has a confirmed
+  zero-fill terminal broker outcome. Preserve exact pair ownership, event evidence,
+  no-fill/no-position checks and reconciliation before release. Unfilled cleanup
+  never counts as a trade close or grants the post-close request exception. Durable
+  peer-cancel retries include partial fills. Local TP/SL geometry is unchanged.
 - Provider inference runs outside the execution promise. Reuse a validated map
   across ordinary candle advances, but never relax the fresh completed-candle
   context checks for each individual execution decision. Crossed thresholds wait;

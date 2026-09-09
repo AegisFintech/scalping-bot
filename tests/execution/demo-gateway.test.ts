@@ -37,6 +37,7 @@ function event(
     order: {
       orderId: command.side === "BUY" ? "101" : "102",
       orderStatus,
+      orderType: 6,
       clientOrderId: command.clientOrderId,
       executedVolume: "0",
       tradeData: {
@@ -188,6 +189,89 @@ class MockClient implements CTraderTradingClient {
 }
 
 describe("cTrader demo gateway", () => {
+  function restartedGateway(client: MockClient) {
+    return new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+  }
+
+  it("cancels an existing owned GTC order after restart without replaying placement", async () => {
+    const client = new MockClient();
+    const old = {
+      ...command("BUY"),
+      timeInForce: "GTC" as const,
+      expiresAt: "2026-01-01T00:00:00Z",
+    };
+    client.orders.push(event(old, 1).order!);
+    const gateway = restartedGateway(client);
+    await expect(
+      gateway.cancelStrategyOrder(
+        old.clientOrderId,
+        "OCO_PEER_UNFILLED_TERMINAL",
+      ),
+    ).resolves.toMatchObject({
+      state: "CANCELLED",
+      filledVolume: "0",
+      brokerOrderId: "101",
+    });
+    await gateway.cancelStrategyOrder(
+      old.clientOrderId,
+      "OCO_PEER_UNFILLED_TERMINAL",
+    );
+    expect(client.cancelled).toEqual(["101"]);
+    expect(client.placementSlippagePoints).toEqual([]);
+  });
+
+  it.each([
+    "missing",
+    "duplicate",
+    "manual",
+    "symbol",
+    "closing",
+    "type",
+    "state",
+  ])(
+    "rejects %s broker evidence before cancelling a recovered order",
+    async (failure) => {
+      const client = new MockClient();
+      const order = event(command("BUY"), 1).order!;
+      const data = order.tradeData as Record<string, unknown>;
+      if (failure !== "missing") client.orders.push(order);
+      if (failure === "duplicate") client.orders.push(structuredClone(order));
+      if (failure === "manual") data.label = "manual";
+      if (failure === "symbol") data.symbolId = "8";
+      if (failure === "closing") order.closingOrder = true;
+      if (failure === "type") order.orderType = 1;
+      if (failure === "state") order.orderStatus = 99;
+      await expect(
+        restartedGateway(client).cancelStrategyOrder(
+          "client-BUY",
+          "OCO_PEER_UNFILLED_TERMINAL",
+        ),
+      ).rejects.toThrow(/^DEMO_RECOVERED_ORDER_/);
+      expect(client.cancelled).toEqual([]);
+    },
+  );
+
+  it("rejects a mismatched broker cancellation response after restart", async () => {
+    const client = new MockClient();
+    client.orders.push(event(command("BUY"), 1).order!);
+    vi.spyOn(client, "cancelOrder").mockResolvedValue(
+      event(command("SELL"), 5),
+    );
+    await expect(
+      restartedGateway(client).cancelStrategyOrder(
+        "client-BUY",
+        "OCO_PEER_UNFILLED_TERMINAL",
+      ),
+    ).rejects.toThrow("DEMO_RECOVERED_ORDER_OWNERSHIP_UNCERTAIN");
+  });
+
   it("is disabled unless separately enabled and acknowledged", async () => {
     const gateway = new CTraderDemoGateway({
       client: new MockClient(),
