@@ -1,9 +1,15 @@
 # Architecture
 
-Current source: `0.2.3-equity-risk.11`, fixed risk policy v4. Previous release
+Current source: `0.2.4-direct-entry.1`, policy `direct-entry-v1`.
+
+ISSUE-086 production uses `/v1/entry-pair`, a two-price provider reply and locally
+bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
+filters are removed. The older scenario-map contracts remain available for
+history/research. Production details and retained broker/risk/data requirements
+are specified in [the direct-entry report](direct-entry-report.md). Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
 
-Production uses a fresh five-minute scenario placement context, a durable request journal,
+Production uses a fresh five-minute entry-pair context, a durable request journal,
 and deterministic protected OCO execution. Paid inference runs separately from
 execution and independent maintenance. The original directional replay remains
 research-only; its confirmation/structural-close rules are distinct from OCO price
@@ -18,7 +24,7 @@ flowchart LR
   Analytics --> Coordinator[Execution coordinator]
   Coordinator --> Claim[Durable context request claim]
   Claim --> AI[Asynchronous AI orchestrator / EPRToken]
-  AI --> Context[Immutable five-minute map]
+  AI --> Context[Immutable five-minute entry pair]
   Context --> Coordinator
   Coordinator --> Risk[Deterministic risk engine]
   Risk --> Gateway[Paper / demo / shadow / disabled live]
@@ -48,25 +54,29 @@ loopback and deployments support Debian/systemd.
 3. `python.analytics` validates completed M1/M5/M15 candles, alignment, depth
    and canonical decimal strings. Full 600/500/300 histories feed indicators;
    bounded numerical features/raw tails and a deterministic chart are produced.
-4. `coordinator.ts` records completed-candle provenance and checks safety,
-   spread, account, affordable stops and fee coverage before a refresh can start.
+4. `coordinator.ts` records completed-candle provenance and checks account state,
+   executable quotes, affordable stops and fee coverage before a refresh can start.
+   Production does not apply spread or ATR strategy limits.
    Five-second broker-time claims admit local decisions; the final five seconds
    before M1 rollover are reserved. `DEFERRED` is terminal waiting with a separate
    deferral reason; actual validation failures remain `REJECTED`.
 5. `scenario-context.ts` claims at most one potentially dispatched refresh per account/symbol/mode per
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
    A uniquely claimed post-close request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links the
-   archived chart and market inputs. A separate task calls `/v1/scenario`, using
-   exact `deepseek-v4-pro/u5W`, prompt `scenario-v3`, strict `scenario-1.0`, and
+   archived chart and market inputs. A separate task calls `/v1/entry-pair`, using
+   exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v1`, two readable prices, and
    structured completed-candle tails (M1 240 / M5 144 / M15 96). The text-only
    model receives no image; charts still undergo validation and protected archival. Completion/failure and usage are durable. An interrupted
    request is not retried during its cooldown, because provider acceptance is unknown.
    Previous-model maps remain audited but cannot authorize new execution; the same
    account/symbol/mode cooldown survives a model change.
-6. `ScenarioHttpPlanner` independently validates raw JSON, identity, prompt hash,
-   timing, model request pin and telemetry. `scenarioOco` derives a schema-2.1 pair
-   from an unconsumed map. Thresholds are not chased; distant entries, insufficient
-   reward or short remaining validity defer. Each local decision still uses fresh
+6. `EntryPairHttpPlanner` independently reads the raw prices, binds local identity
+   and time, and checks the internal prompt hash, requested pin and telemetry.
+   Returned model identity is recorded without gating entry acceptance.
+   `scenarioOco` uses the unconsumed entry prices directly in a schema-2.1 pair;
+   its technical-map fields describe mechanical order geometry. No ATR corridor
+   or model target-room check applies. Wrong-side prices, unaffordable local exits
+   and short remaining validity can still block placement. Each local decision uses fresh
    quotes and unchanged completed-candle context checks across its own short path.
    `model_requests.decision_source` distinguishes local artifacts from paid calls;
    real refresh attempts live in `scenario_contexts`.

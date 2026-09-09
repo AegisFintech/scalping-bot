@@ -271,9 +271,10 @@ describe("execution safety gates", () => {
       DEMO_TRADING_ACKNOWLEDGEMENT:
         "I_UNDERSTAND_DEMO_ORDERS_USE_A_BROKER_DEMO_ACCOUNT",
     };
-    expect(() => loadExecutionConfig(enabled)).toThrow(
-      "CONFIG_DEMO_ORDER_LIMIT_REQUIRED",
-    );
+    expect(loadExecutionConfig(enabled)).toMatchObject({
+      maxOrdersPerDay: 0,
+      demoTradingEnabled: true,
+    });
     expect(
       loadExecutionConfig({ ...enabled, MAX_ORDERS_PER_DAY: "1" }),
     ).toMatchObject({ maxPositionNotional: null, demoTradingEnabled: true });

@@ -86,7 +86,7 @@ export class ModelResponseValidator<T = ModelResponse> {
   }
 }
 
-function hasDuplicateObjectKeys(raw: string): boolean {
+export function hasDuplicateObjectKeys(raw: string): boolean {
   let position = 0;
   let duplicate = false;
   const whitespace = (): void => {
@@ -160,6 +160,7 @@ function formatError(error: ErrorObject): string {
 }
 
 export interface SemanticContext {
+  readonly enforceStrategyLimits?: boolean;
   readonly analysisId: string;
   readonly symbol: string;
   readonly now: Date;
@@ -215,6 +216,7 @@ function checkLeg(
   const bid = decimal(context.quote.bid);
   const ask = decimal(context.quote.ask);
   const maximumEntryDistance =
+    context.enforceStrategyLimits === false ||
     context.maxEntryDistanceAtr === undefined
       ? null
       : decimal(context.atr).mul(decimal(context.maxEntryDistanceAtr));
@@ -255,7 +257,10 @@ function checkLeg(
     reasons.push(`${side}_REWARD_RISK_TOO_LOW`);
   if (computedRatio.minus(decimal(proposal.risk_reward_ratio)).abs().gt("0.01"))
     reasons.push(`${side}_REWARD_RISK_MISMATCH`);
-  if (risk.gt(decimal(context.atr).mul(decimal(context.maxStopDistanceAtr))))
+  if (
+    context.enforceStrategyLimits !== false &&
+    risk.gt(decimal(context.atr).mul(decimal(context.maxStopDistanceAtr)))
+  )
     reasons.push(`${side}_STOP_DISTANCE_EXCESSIVE`);
   if (
     context.maxAffordableStopDistance !== undefined &&

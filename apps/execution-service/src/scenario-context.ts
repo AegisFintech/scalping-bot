@@ -14,7 +14,15 @@ import {
   validatePlan,
   type ScenarioPlan,
 } from "../../../packages/scenario-engine/src/plan.js";
-import type { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
+import type { EntryPlannerInput } from "../../../packages/scenario-engine/src/entry-planner.js";
+import {
+  validateEntryPlan,
+  type EntryPairPlan,
+} from "../../../packages/scenario-engine/src/entry-plan.js";
+type ContextPlan = ScenarioPlan | EntryPairPlan;
+type Planner = {
+  generate(input: EntryPlannerInput): Promise<AiAnalysisResult<ContextPlan>>;
+};
 import {
   isLocalCircuitRejection,
   SCENARIO_REQUEST_POLICY,
@@ -29,7 +37,7 @@ export interface StoredContext {
   validUntil: string;
   availableAt: string | null;
   tickSize: string;
-  plan: ScenarioPlan | null;
+  plan: ContextPlan | null;
   consumed: boolean;
   /** Fully reconciled, durably closed setup; permits one fresh analysis. */
   closedAt?: string | null;
@@ -46,7 +54,7 @@ export interface ContextStore {
   }): Promise<boolean>;
   finish(
     id: string,
-    result: AiAnalysisResult<ScenarioPlan> | null,
+    result: AiAnalysisResult<ContextPlan> | null,
     reason: string | null,
     telemetry?: unknown,
   ): Promise<void>;
@@ -93,7 +101,7 @@ export class PostgresContextStore implements ContextStore {
           valid_until: Date;
           available_at: Date | null;
           tick_size: string;
-          plan: ScenarioPlan | null;
+          plan: ContextPlan | null;
           consumed: boolean;
           closed_at: Date | null;
           reason: string | null;
@@ -183,7 +191,7 @@ export class PostgresContextStore implements ContextStore {
   }
   async finish(
     id: string,
-    result: AiAnalysisResult<ScenarioPlan> | null,
+    result: AiAnalysisResult<ContextPlan> | null,
     reason: string | null,
     telemetry?: unknown,
   ): Promise<void> {
@@ -227,16 +235,21 @@ export class ReusableScenarioModel implements ModelProvider {
   private readonly artifact;
   constructor(
     private readonly store: ContextStore,
-    private readonly planner: Pick<ScenarioPlanner, "generate">,
+    private readonly planner: Planner,
     private readonly now = Date.now,
     private readonly report: (reason: string) => void = () => {},
+    private readonly entryOnly = false,
   ) {
     const content = readFileSync(
-      "prompts/scenario-execution-v2.md",
+      entryOnly
+        ? "prompts/entry-pair-execution-v1.md"
+        : "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
-      version: "scenario-execution-v2" as const,
+      version: entryOnly
+        ? ("entry-pair-execution-v1" as const)
+        : ("scenario-execution-v2" as const),
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
     };
@@ -258,6 +271,7 @@ export class ReusableScenarioModel implements ModelProvider {
       existing.state === "READY" &&
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
       !existing.consumed &&
+      (!this.entryOnly || existing.plan?.schema_version === "entry-pair-1.0") &&
       time(existing.validUntil) >= now + 65_000
     ) {
       if (
@@ -265,17 +279,24 @@ export class ReusableScenarioModel implements ModelProvider {
         existing.tickSize !== input.snapshot.metadata.tickSize
       )
         throw new Error("SCENARIO_CONTEXT_METADATA_CHANGED");
-      const plan = validatePlan(JSON.stringify(existing.plan), {
-        analysisId: existing.id,
-        symbol: input.snapshot.metadata.symbolName,
-        capturedAt: existing.capturedAt,
-        availableAt: existing.availableAt,
-        tickSize: existing.tickSize,
-      });
+      const plan = (this.entryOnly ? validateEntryPlan : validatePlan)(
+        JSON.stringify(existing.plan),
+        {
+          analysisId: existing.id,
+          symbol: input.snapshot.metadata.symbolName,
+          capturedAt: existing.capturedAt,
+          availableAt: existing.availableAt,
+          tickSize: existing.tickSize,
+        },
+      );
       if (time(existing.availableAt) > now)
         throw new Error("SCENARIO_CONTEXT_TIME_REGRESSION");
       try {
-        const response = scenarioOco(plan, input.payload);
+        const response = scenarioOco(
+          plan,
+          input.payload,
+          input.snapshot.metadata,
+        );
         this.prepared = {
           id: existing.id,
           analysisId: response.analysis_id,
@@ -334,16 +355,21 @@ export class ReusableScenarioModel implements ModelProvider {
         tickSize: input.snapshot.metadata.tickSize,
         candles: input.snapshot.candles,
         chart: input.chart,
+        quote: input.snapshot.quote,
+        minimumStopDistance: input.snapshot.metadata.minStopDistance,
       })
       .then(async (result) => {
         // Validate again at the trust boundary before granting local execution access.
-        const plan = validatePlan(result.rawResponse, {
-          analysisId: id,
-          symbol: input.snapshot.metadata.symbolName,
-          capturedAt: input.snapshot.serverTime,
-          availableAt: new Date(this.now()).toISOString(),
-          tickSize: input.snapshot.metadata.tickSize,
-        });
+        const plan = (this.entryOnly ? validateEntryPlan : validatePlan)(
+          this.entryOnly ? JSON.stringify(result.response) : result.rawResponse,
+          {
+            analysisId: id,
+            symbol: input.snapshot.metadata.symbolName,
+            capturedAt: input.snapshot.serverTime,
+            availableAt: new Date(this.now()).toISOString(),
+            tickSize: input.snapshot.metadata.tickSize,
+          },
+        );
         await this.store.finish(id, { ...result, response: plan }, null);
         this.nextEvaluationAt = 0;
       })

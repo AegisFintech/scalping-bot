@@ -20,7 +20,7 @@ import {
 export type AiApiStyle = "responses" | "chat_completions";
 export type AiReasoningEffort = "none" | "low" | "medium" | "high";
 
-export interface AiClientOptions {
+export interface AiClientOptions<T = ModelResponse> {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly model: string;
@@ -40,6 +40,9 @@ export interface AiClientOptions {
   readonly now?: () => number;
   readonly inputProfile?: "chart" | "structured";
   readonly outputSchemaName?: string;
+  /** Trusted application adapter for the explicitly selected provider contract. */
+  readonly parseResponse?: (raw: string, request: AiAnalysisRequest) => T;
+  readonly requireReturnedModelMatch?: boolean;
 }
 
 export interface AiAnalysisRequest {
@@ -150,7 +153,7 @@ export class OpenAiCompatibleClient<
   T extends { readonly analysis_id: string; readonly symbol: string } =
     ModelResponse,
 > {
-  readonly #options: AiClientOptions;
+  readonly #options: AiClientOptions<T>;
   readonly #schema: Record<string, unknown>;
   readonly #systemPrompt: string;
   readonly #promptArtifact: ModelPromptArtifact;
@@ -159,7 +162,7 @@ export class OpenAiCompatibleClient<
   #openUntil = 0;
   #inFlight = false;
 
-  constructor(options: AiClientOptions) {
+  constructor(options: AiClientOptions<T>) {
     this.#options = options;
     if (!options.apiKey) throw new Error("AI_API_KEY_REQUIRED");
     if (!options.model) throw new Error("AI_MODEL_REQUIRED");
@@ -288,7 +291,10 @@ export class OpenAiCompatibleClient<
           "AI_RESPONSE_ENVELOPE_INVALID",
         );
         const returnedModel = envelope.model ?? null;
-        if (!returnedModelMatches(this.#options.model, returnedModel))
+        if (
+          this.#options.requireReturnedModelMatch !== false &&
+          !returnedModelMatches(this.#options.model, returnedModel)
+        )
           throw new Error("AI_RETURNED_MODEL_MISMATCH");
         const telemetry = providerTelemetrySchema.parse({
           requestedModel: this.#options.model,
@@ -303,7 +309,14 @@ export class OpenAiCompatibleClient<
           this.#options.apiStyle === "responses"
             ? extractResponses(envelope)
             : extractChat(envelope);
-        const validated = this.#validator.parse(raw);
+        const validated =
+          this.#options.parseResponse === undefined
+            ? this.#validator.parse(raw)
+            : {
+                accepted: true,
+                response: this.#options.parseResponse(raw, request),
+                reasonCodes: [],
+              };
         if (!validated.accepted || validated.response === null) {
           throw new Error(validated.reasonCodes[0] ?? "AI_RESPONSE_INVALID");
         }

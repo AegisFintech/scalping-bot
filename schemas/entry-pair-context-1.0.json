@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/entry-pair-context-1.0.json",
+  "title": "Locally bound stop-entry context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "symbol",
+    "captured_at",
+    "valid_until",
+    "buy_stop",
+    "sell_stop"
+  ],
+  "properties": {
+    "schema_version": { "const": "entry-pair-1.0" },
+    "analysis_id": { "type": "string", "format": "uuid" },
+    "symbol": { "type": "string", "pattern": "^[A-Z0-9._-]{1,32}$" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "valid_until": { "type": "string", "format": "date-time" },
+    "buy_stop": { "$ref": "#/$defs/price" },
+    "sell_stop": { "$ref": "#/$defs/price" }
+  },
+  "$defs": {
+    "price": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$"
+    }
+  }
+}

@@ -14,7 +14,7 @@ describe("bounded provider and configuration", () => {
     expect(env.BASE_RISK_PERCENT).toBe("1");
     expect(env.MAX_RISK_PERCENT).toBe("1");
     expect(env.MAX_DAILY_LOSS_PERCENT).toBe("5");
-    expect(env.MAX_ORDERS_PER_DAY).toBe("100");
+    expect(env.MAX_ORDERS_PER_DAY).toBe("0");
     expect(env.AI_API_KEY).toBe("fixture-secret");
     expect(
       resolveRuntimeEnvironment({ CTRADER_API_HOST: "", CTRADER_API_PORT: "" }),

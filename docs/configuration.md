@@ -1,12 +1,12 @@
 # Configuration and migration
 
-Release `0.2.3-equity-risk.11` uses policy `fixed-risk-v4` in
+Release `0.2.4-direct-entry.1` uses policy `direct-entry-v1` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
 reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
 four retained deployment credentials/identifiers. No credentials were changed.
-See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file.
+See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file. See [direct-entry policy](direct-entry-report.md) for the two-price provider contract, removed strategy filters and retained execution requirements.
 Reusable scenario maps add no environment variables or tuning file. Five-minute
 refresh/cooldown, one intent per map, five-second local decisions, three-minute preferred/maximum
 fresh-submission deadline capped by the original map and 90-second asynchronous provider timeout are engineering policy, not operator
@@ -45,7 +45,7 @@ preserving all credentials and operator controls. Forward migration
 Astra/Sol rows and request cooldowns. Deploy matching AI/execution builds together.
 See [model-switch evidence](deepseek-context-report.md). The production scenario
 uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
-new prompt `scenario-v3`, explicitly disabled thinking and at most 4,096 output
+new production prompt `entry-pair-v1`, explicitly disabled thinking and at most 4,096 output
 tokens within the existing
 90-second deadline. Charts remain validated local audit artifacts. Request bounds,
 indicator periods, scheduling, execution thresholds and risk percentages are
@@ -55,8 +55,7 @@ their effective code defaults. Keep unknown credentials or custom deployments
 until reviewed; unused monitoring credentials must not disappear accidentally.
 
 The operator-authorized fixed policy uses a 1% setup risk ceiling and 5% daily
-loss limit, with no absolute equity floor. The 10-point spread ceiling and
-100-order daily ceiling remain. Sizing includes execution costs and bounded risk
+loss limit, with no absolute equity floor. The production spread and daily order-count ceilings are removed in ISSUE-086. Sizing includes execution costs and bounded risk
 reductions; AI cannot raise risk. Revision `.3` removes the artificial notional
 and 1% collateral ceilings at the operator's request. The risk engine calculates
 size from current equity and cost-inclusive stop risk, floors to broker increments,

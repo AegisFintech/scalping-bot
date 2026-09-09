@@ -16,7 +16,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { AnalyticsHttpClient } from "../../../packages/analytics-client/src/client.js";
-import { ScenarioHttpPlanner } from "../../../packages/scenario-engine/src/http-planner.js";
+import { EntryPairHttpPlanner } from "../../../packages/scenario-engine/src/entry-http-planner.js";
 import {
   PostgresContextStore,
   ReusableScenarioModel,
@@ -317,7 +317,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "scenario-execution-v2",
+    promptVersion: "entry-pair-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -412,7 +412,7 @@ async function main(): Promise<void> {
   });
   const model = new ReusableScenarioModel(
     contextStore,
-    new ScenarioHttpPlanner(
+    new EntryPairHttpPlanner(
       environment.AI_ORCHESTRATOR_BASE_URL ??
         `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
     ),
@@ -423,6 +423,7 @@ async function main(): Promise<void> {
         outcome: "failed",
         reason_code: reason,
       }),
+    true,
   );
   let capitalMultiplier = "0";
   let capitalRiskCap = "0";
@@ -449,7 +450,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "scenario-execution-v2",
+    promptVersion: "entry-pair-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1048,6 +1049,7 @@ async function main(): Promise<void> {
     throw new Error("CONFIG_ORDER_EXPIRY_RANGE_INVALID");
   }
   const coordinator = new AnalysisCoordinator({
+    entryPairMode: true,
     symbol: config.symbol,
     mode: config.tradingMode as "paper" | "demo" | "shadow" | "live",
     candleCounts,
@@ -1070,7 +1072,7 @@ async function main(): Promise<void> {
     },
     modelPayloadMode:
       environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "scenario-execution-v2",
+    promptVersion: "entry-pair-execution-v1",
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: config.minRiskRewardRatio,

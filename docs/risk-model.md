@@ -10,7 +10,7 @@ submission, or model-selected risk increases are introduced. Stops/targets remai
 broker-held. The new candidate does not automate discretionary structural/time
 closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
 
-Current policy: `fixed-risk-v4`. All money authority lives in the existing
+Current policy: `direct-entry-v1`. ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
@@ -43,8 +43,7 @@ intermediate five-times-equity notional caps, and the unrelated 1% margin-use ca
 One percent refers to modeled loss at the stop, including costs, not collateral.
 Broker leverage is unchanged. Sizing retains broker maximum/step volume and exact
 margin requirements. Free margin must cover both legs plus a reserve equal to one
-modeled setup loss. The 10-point absolute spread cap, 0.10 ATR spread cap,
-historical percentile cap and 100-order daily ceiling remain.
+modeled setup loss. ISSUE-086 removes the absolute/ATR/percentile spread filters and daily order-count ceiling.
 
 This explicitly raises the prior 0.001% setup / 1% daily policy at the operator's
 request. It does not establish improved expectancy. One percent is a modeled
@@ -136,8 +135,7 @@ bounds onto the mandatory pip grid before the fee search. This eliminates a
 reproduced `INVALID_DECIMAL` bottleneck while tightening the feasible interval.
 Strict boundary precision is unchanged.
 
-Preferred entries remain 0.25–0.75 completed-M1 ATR from the executable side,
-inside the hard 2.5-ATR cap. The 180-second local proposal deadline, capped by the
+Production uses model entry prices directly without the former 0.25–0.75 ATR preferred corridor or 2.5-ATR entry cap. The 3-ATR stop ceiling and model first-target-room check are removed; broker minimum distances, affordability and local fee-buffered exits remain. The 180-second local proposal deadline, capped by the
 five-minute map, authorizes fresh submission only. ISSUE-083 production orders use
 explicit GTC with no pending timer expiry. No model or stale proposal can create
 new orders after its authorization deadline. Sizing still occurs immediately before

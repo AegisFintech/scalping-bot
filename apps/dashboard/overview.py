@@ -161,6 +161,7 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "fixed-risk-v2",
                 "fixed-risk-v3",
                 "fixed-risk-v4",
+                "direct-entry-v1",
             ):
                 return result
             setup_percent = Decimal(str(policy["setupRiskPercent"]))

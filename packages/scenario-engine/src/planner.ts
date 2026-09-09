@@ -59,49 +59,8 @@ export class ScenarioPlanner {
     candles: readonly CandleSeries[];
     chart: AnalysisChartArtifact;
   }): Promise<AiAnalysisResult<ScenarioPlan>> {
+    validateScenarioInput(input, this.now);
     const capture = time(input.capturedAt);
-    if (this.now() < capture || this.now() - capture > 3000)
-      throw new Error("SCENARIO_INPUT_STALE");
-    if (input.candles.length !== 3)
-      throw new Error("SCENARIO_TIMEFRAMES_INVALID");
-    // The chart remains a required, verified local audit artifact even though
-    // this model receives numeric candles instead of an unsupported image.
-    validateChartArtifact(input.chart);
-    for (const [frame, period] of [
-      ["M1", 60_000],
-      ["M5", 300_000],
-      ["M15", 900_000],
-    ] as const) {
-      const series = input.candles.filter((s) => s.timeframe === frame);
-      if (
-        series.length !== 1 ||
-        !series[0]?.candles.length ||
-        series[0].candles.length > 600
-      )
-        throw new Error("SCENARIO_TIMEFRAMES_INVALID");
-      let previous: number | null = null;
-      for (const bar of series[0].candles) {
-        validateCandle(bar, capture, period, true);
-        const gap = previous === null ? 0 : time(bar.startTime) - previous;
-        const marked = bar.qualityFlags.includes("BROKER_SESSION_GAP_BEFORE");
-        if (
-          (gap === 0 && marked) ||
-          gap < 0 ||
-          (gap > 0 && (!marked || gap % period !== 0 || gap > 14 * 86_400_000))
-        )
-          throw new Error("SCENARIO_CANDLE_GAP");
-        previous = time(bar.endTime);
-      }
-      if (
-        previous !== Math.floor(capture / period) * period ||
-        !Number.isSafeInteger(input.chart.candleCounts[frame]) ||
-        input.chart.candleCounts[frame] < 1 ||
-        input.chart.candleCounts[frame] >
-          Math.min(80, series[0].candles.length) ||
-        time(input.chart.latestEndTimes[frame]) !== previous
-      )
-        throw new Error("SCENARIO_CHART_CONTEXT_MISMATCH");
-    }
     const result = await this.client
       .analyze({
         analysisId: input.analysisId,
@@ -170,5 +129,56 @@ export class ScenarioPlanner {
       throw error;
     }
     return result;
+  }
+}
+
+export type ScenarioInput = Parameters<ScenarioPlanner["generate"]>[0];
+
+export function validateScenarioInput(
+  input: ScenarioInput,
+  now: () => number,
+): void {
+  const capture = time(input.capturedAt);
+  if (now() < capture || now() - capture > 3000)
+    throw new Error("SCENARIO_INPUT_STALE");
+  if (input.candles.length !== 3)
+    throw new Error("SCENARIO_TIMEFRAMES_INVALID");
+  // The chart remains a required, verified local audit artifact even though
+  // this model receives numeric candles instead of an unsupported image.
+  validateChartArtifact(input.chart);
+  for (const [frame, period] of [
+    ["M1", 60_000],
+    ["M5", 300_000],
+    ["M15", 900_000],
+  ] as const) {
+    const series = input.candles.filter((s) => s.timeframe === frame);
+    if (
+      series.length !== 1 ||
+      !series[0]?.candles.length ||
+      series[0].candles.length > 600
+    )
+      throw new Error("SCENARIO_TIMEFRAMES_INVALID");
+    let previous: number | null = null;
+    for (const bar of series[0].candles) {
+      validateCandle(bar, capture, period, true);
+      const gap = previous === null ? 0 : time(bar.startTime) - previous;
+      const marked = bar.qualityFlags.includes("BROKER_SESSION_GAP_BEFORE");
+      if (
+        (gap === 0 && marked) ||
+        gap < 0 ||
+        (gap > 0 && (!marked || gap % period !== 0 || gap > 14 * 86_400_000))
+      )
+        throw new Error("SCENARIO_CANDLE_GAP");
+      previous = time(bar.endTime);
+    }
+    if (
+      previous !== Math.floor(capture / period) * period ||
+      !Number.isSafeInteger(input.chart.candleCounts[frame]) ||
+      input.chart.candleCounts[frame] < 1 ||
+      input.chart.candleCounts[frame] >
+        Math.min(80, series[0].candles.length) ||
+      time(input.chart.latestEndTimes[frame]) !== previous
+    )
+      throw new Error("SCENARIO_CHART_CONTEXT_MISMATCH");
   }
 }
