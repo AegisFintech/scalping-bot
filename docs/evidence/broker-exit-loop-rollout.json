@@ -1,0 +1,268 @@
+{
+  "mode": "DEMO",
+  "preflight": {
+    "at": "2026-09-09T08:34:36.900Z",
+    "account": {
+      "certain": true,
+      "relevantPositionCount": 0,
+      "relevantPendingOrderCount": 0,
+      "reasonCodes": []
+    },
+    "allAccountOpenPositions": 0,
+    "allAccountPendingOrders": 0,
+    "positions": []
+  },
+  "backup": {
+    "at": "2026-09-09T08:32:59.624Z",
+    "databaseBytes": 48779843,
+    "chartArchiveBytes": 254794403,
+    "archiveReadable": true
+  },
+  "deployed_paused": {
+    "at": "2026-09-09T08:35:53.183Z",
+    "release": "0.2.5-market-stop.3",
+    "policy": "market-stop-v1",
+    "mode": "demo",
+    "paused": true,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": ["ANALYSES_PAUSED"],
+    "environmentUnchanged": true,
+    "riskStatePreserved": true
+  },
+  "resumed": {
+    "at": "2026-09-09T08:35:58.436Z",
+    "release": "0.2.5-market-stop.3",
+    "policy": "market-stop-v1",
+    "mode": "demo",
+    "paused": false,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": [],
+    "environmentUnchanged": true
+  },
+  "cleared_legacy_pause": {
+    "actor": "position-protection",
+    "reason": "Position protection requires a confirmed close; new entries paused for review",
+    "enabled": true,
+    "created_at": "2026-09-09T07:14:15.025Z",
+    "expires_at": null
+  },
+  "observed": {
+    "at": "2026-09-09T08:37:06.941Z",
+    "release": "0.2.5-market-stop.3",
+    "policy": "market-stop-v1",
+    "mode": "demo",
+    "paused": false,
+    "automatic": true,
+    "ready": true,
+    "startup": true,
+    "reasons": ["PREVIOUS_ANALYSIS_ACTIVE", "RELEVANT_PENDING_ORDER_EXISTS"],
+    "environmentUnchanged": true,
+    "riskStatePreserved": true
+  },
+  "new_context": {
+    "state": "READY",
+    "requested_at": "2026-09-09T08:36:12.108Z",
+    "available_at": "2026-09-09T08:36:17.668Z",
+    "duration_ms": 5560,
+    "reason": null,
+    "requested_model": "deepseek-v4-pro/u5W",
+    "telemetry": {
+      "costAmount": null,
+      "costSource": "unavailable",
+      "inputTokens": 28920,
+      "totalTokens": 28939,
+      "costCurrency": null,
+      "inputProfile": "structured",
+      "outputTokens": 19,
+      "requestBytes": 61939,
+      "responseBytes": 1819,
+      "returnedModel": "deepseek-v4-pro",
+      "requestedModel": "deepseek-v4-pro/u5W"
+    },
+    "contract": "entry-pair-1.0",
+    "buy_stop": "4404.85",
+    "sell_stop": "4399.65"
+  },
+  "broker": {
+    "at": "2026-09-09T08:36:55.793Z",
+    "account": {
+      "certain": true,
+      "relevantPositionCount": 0,
+      "relevantPendingOrderCount": 2,
+      "reasonCodes": []
+    },
+    "allAccountOpenPositions": 0,
+    "allAccountPendingOrders": 2,
+    "positions": [],
+    "pending": [
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4399.65,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      },
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4404.85,
+        "executedVolume": 0,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      }
+    ]
+  },
+  "configuration": {
+    "at": "2026-09-09T08:36:22.078Z",
+    "environmentFile": {
+      "keyCount": 24,
+      "permissions": "600",
+      "model": "deepseek-v4-pro/u5W"
+    },
+    "templateKeyCount": 20,
+    "processes": [
+      {
+        "name": "scalper-analytics",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-market-data",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-ai",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-execution",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      },
+      {
+        "name": "scalper-dashboard",
+        "status": "online",
+        "cachedModel": null,
+        "cachedPolicyOverrides": []
+      }
+    ]
+  },
+  "limitations": [
+    "A transient recovery snapshot before placement reported order-not-found; routine recovery cleared it by 08:37:06 UTC. No order was cancelled and no operator action was required.",
+    "Natural fill-to-SL/TP-to-next-cycle for this release has not yet been observed. Unit and database tests cover terminal close admission and idempotency.",
+    "No live execution or profit claim."
+  ],
+  "browser": [
+    {
+      "theme": "light",
+      "overview": {
+        "titleStable": true,
+        "navigationStable": true,
+        "inputStable": true,
+        "inputValue": "Not submitted",
+        "focused": true,
+        "caret": 4,
+        "minimumMetricCount": 4,
+        "metricValues": [
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "color": "rgb(49, 51, 63)",
+            "cardBackground": "color(srgb 0.192157 0.2 0.247059 / 0.05)",
+            "pageBackground": "rgb(255, 255, 255)"
+          }
+        ],
+        "primary": [
+          {
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(180, 35, 24)"
+          }
+        ]
+      },
+      "history": {
+        "chartStable": true,
+        "navigationStable": true,
+        "selected": "",
+        "plotBackground": "#ffffff",
+        "plotFont": "#808495"
+      },
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "overview": {
+        "titleStable": true,
+        "navigationStable": true,
+        "inputStable": true,
+        "inputValue": "Not submitted",
+        "focused": true,
+        "caret": 4,
+        "minimumMetricCount": 4,
+        "metricValues": [
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          },
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          },
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          },
+          {
+            "color": "rgb(250, 250, 250)",
+            "cardBackground": "color(srgb 0.980392 0.980392 0.980392 / 0.05)",
+            "pageBackground": "rgb(14, 17, 23)"
+          }
+        ],
+        "primary": [
+          {
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(180, 35, 24)"
+          }
+        ]
+      },
+      "history": {
+        "chartStable": true,
+        "navigationStable": true,
+        "selected": "",
+        "plotBackground": "#0e1117",
+        "plotFont": "#e6eaf1"
+      },
+      "errors": []
+    }
+  ]
+}

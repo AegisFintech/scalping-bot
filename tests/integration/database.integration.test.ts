@@ -1697,8 +1697,12 @@ describe("PostgreSQL migrations integration", () => {
             ),
           ).toBe(true);
           expect(await session.claimRepair(position, requestedAt)).toBe(false);
-          expect(await session.claimClose(position, requestedAt, "100")).toBe(
-            true,
+          // Historical ISSUE-088 claim: current maintenance has no close authority.
+          await isolated.query(
+            `UPDATE position_protection SET close_requested_at=$2,close_volume='100',
+               command_at=$2,status='CLOSE_SENT',reason_code='POSITION_PROTECTION_CLOSE_AWAITING_DEAL'
+             WHERE position_id=$1`,
+            [position.id, requestedAt],
           );
         });
         await new PostgresPositionProtection({
@@ -1708,9 +1712,8 @@ describe("PostgreSQL migrations integration", () => {
         }).exclusive(async (session) => {
           const position = (await session.positions())[0]!;
           expect(position.repairAttempts).toBe(2);
-          expect(await session.claimClose(position, requestedAt, "100")).toBe(
-            false,
-          );
+          expect(position.closeRequestedAt).toBe(requestedAt);
+          expect(await session.claimRepair(position, requestedAt)).toBe(false);
         });
         const proof = {
           accountId: demoAccountId,

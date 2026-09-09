@@ -253,16 +253,16 @@ state even while the paid-request cooldown was previously cached. All provider
 failure/unknown backoff and active-group prohibitions remain. See
 [implementation and evidence](market-stop-report.md).
 
-### Filled-position protection (ISSUE-088)
+### Filled-position protection (ISSUE-089)
 
-Release `0.2.5-market-stop.2` independently reconciles owned demo positions every
-maintenance cycle. A durable `position_protection` projection records broker-held
-SL/TP and observation time; immutable `position_protection_events` record
-observations and command claims. Original risk-approved order distances are
-anchored to actual fill VWAP, rounded inward, and never widen existing tighter
-protection. Two durable amendment attempts are followed by a paused, position-specific
-close when protection cannot be restored. A crossed approved exit boundary also
-requests closure after a fresh quote and position re-read. Unknown close dispatch
-is not retried. Provider inference, placement gates and failures in ordinary order
-maintenance do not suppress this worker. Trade outcomes still require closing deals.
-See [the implementation report](position-protection-report.md).
+Release `0.2.5-market-stop.3` independently reconciles owned demo positions every
+maintenance cycle. Durable broker observations retain actual SL/TP and timestamps.
+Approved distances are anchored to actual fill VWAP, rounded inward, preserving
+tighter protection. At most two durable amendment attempts repair missing/wider
+levels. Verified protection returns without fetching a quote; broker SL/TP handles
+exits. Failed/exhausted repairs remain visible without a local market close or
+persistent analysis pause. Historical close claims still require deal evidence.
+The worker has no close or pause authority, and does not add a global entry lock.
+Existing ownership, open-position, reconciliation and risk gates remain. A fully
+reconciled close admits the existing fresh-context cycle. See
+[implementation and evidence](broker-exit-loop-report.md).

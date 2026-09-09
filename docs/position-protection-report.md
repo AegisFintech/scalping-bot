@@ -2,6 +2,8 @@
 
 Status: implemented, validated and deployed to demo as `0.2.5-market-stop.2`. [Issue #207](https://github.com/AegisFintech/scalping-bot/issues/207).
 
+The local market-close fallbacks and persistent pause described below are superseded by [ISSUE-089](broker-exit-loop-report.md). This report records the historical ISSUE-088 behavior and rollout.
+
 ## Observed incident
 
 The demo sell filled at 4397.89. Its first fill event supplied no absolute SL/TP, and the local position retained null values. The broker later executed its TP child order with limit 4397.36 at 4397.21 on 2026-09-09 at 06:28:01 UTC (14:28:01 SGT). The peer entry was cancelled approximately 257 ms after the entry fill. Broker and database are now flat. The available evidence establishes a protection-display gap; it does not establish that the broker lacked an SL. The entry suffered 103 points of adverse slippage, exceeding the 30-point sizing reserve, and the existing slippage latch operated.

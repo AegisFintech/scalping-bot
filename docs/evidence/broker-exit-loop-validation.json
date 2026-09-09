@@ -1,0 +1,162 @@
+{
+  "release": "0.2.5-market-stop.3",
+  "mode": "mock/replay/isolated integration; no economic validation",
+  "final_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 18.07,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 26.67,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.47,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.35,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 30.93,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.09,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.05,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 6.56,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.72,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 4.55,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.54,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.45,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-089/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-089/scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.73,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.9,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 13.75,
+      "log": "21.log"
+    }
+  ],
+  "tests": {
+    "node": 608,
+    "python": 141,
+    "schema": 35,
+    "migrations": 3,
+    "integration_tls": 4,
+    "focused": 18
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "exit_code": 0,
+    "nodes": 3103,
+    "edges": 6533,
+    "communities": 215,
+    "notes": [
+      "AST-only, no provider calls.",
+      "Known pyproject.toml zero-node warning; community labels use hub names."
+    ]
+  },
+  "notes": [
+    "Node 22 runtime; PostgreSQL 18 integration isolated from production.",
+    "Pre-existing user screenshot deletions preserved. Secret scanning also covers every staged/index blob before commit.",
+    "No initial check failures."
+  ]
+}

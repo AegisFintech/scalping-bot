@@ -3099,3 +3099,14 @@ runtime.
 - Baseline: the reported short filled at 4397.89, TP 4397.36 executed at 4397.21 at 2026-09-09 06:28:01 UTC. Local initial-fill SL/TP were null. Actual historical SL absence is unproven. Demo was flat and new analyses were paused for the update. Green P/L is not an exit rule.
 
 - ISSUE-088 completion evidence: [implementation report](docs/position-protection-report.md), [all required quality gates](docs/evidence/position-protection-validation.json), and [demo/browser rollout](docs/evidence/position-protection-rollout.json). Commands and exact results are recorded; 603 Node / 141 Python / 35 schema / 3 migration / 4 TLS integration tests pass. Environment and daily/drawdown state preserved; automatic demo resumed.
+
+## ISSUE-089 — Remove local exit and pause fallbacks
+
+- Status: complete — implemented, all required checks passed, deployed to demo and new GTC STOP pair broker-confirmed. [GitHub issue #209](https://github.com/AegisFintech/scalping-bot/issues/209).
+- Dependencies: ISSUE-088 broker protection observations and ISSUE-087 GTC STOP lifecycle.
+- Authorization: operator explicitly requested removal of the fallback and other artificial interruptions to trading, including clearing its existing pause.
+- Acceptance: remove local sampled-price and exhausted-repair market exits, persistent protection pause and redundant monitor entry lock; retain broker SL/TP verification/repair, historical deal reconciliation and existing risk limits; audit remaining pauses; cover failure/restart/closure paths; run required checks; deploy and resume authorized demo; verify ordinary cycle admission; deliver via dedicated PR.
+- Incident: verified broker protection was present before the 2026-09-09 07:14:15 UTC fallback closed the trade and paused analyses indefinitely. No amendment had failed.
+- Implementation and validation evidence: [report](docs/broker-exit-loop-report.md).
+
+- ISSUE-089 evidence: [all 22 required checks](docs/evidence/broker-exit-loop-validation.json) passed (608 Node, 141 Python, 35 schema, 3 migration, 4 TLS integration tests). [Rollout](docs/evidence/broker-exit-loop-rollout.json): release restarted 08:35:40 UTC, legacy pause cleared 08:35:58, DeepSeek completed in 5,560 ms, two GTC STOPs confirmed 08:36:55. Environment, high water/daily state and locks preserved.
