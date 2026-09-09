@@ -7,6 +7,7 @@ missed partial-fill cancellation retries.
 
 Issue: [#198](https://github.com/AegisFintech/scalping-bot/issues/198).
 Branch: `issue-084-oco-pair-recovery`. Release: `0.2.3-equity-risk.10`.
+Pull request: [#199](https://github.com/AegisFintech/scalping-bot/pull/199).
 
 ## Observed gap
 
@@ -75,8 +76,24 @@ warning for `pyproject.toml` remains. User-deleted historical screenshots are
 excluded from this change; their scanner limitation is covered by index scanning.
 
 New analyses were paused at **10:27:31 SGT**; the existing GTC order and broker
-protection were preserved. A rollback build was archived. Protected demo rollout
-is pending delivery. No schema or populated environment migration is required.
+protection were preserved. A rollback build was archived. After restarting only
+execution, the new gateway recovered the existing broker order and its cancellation
+was confirmed at **10:33:41 SGT**. The group became `FAILED` with
+`OCO_PEER_UNFILLED_TERMINAL`, zero fills, no positions and no invented trade.
+The order's former submission deadline was not extended or replayed.
+
+Automatic demo analysis resumed at **10:34:08 SGT**. A fresh request was durably
+claimed at **10:34:15 SGT**, using normal admission (`post_close=false`). It reached
+the unchanged EPRToken route but returned **HTTP 500** after **1,578 ms**. No new
+orders were placed. The five-minute failed-request backoff remains, with no forced
+retry or fallback model. All four service readiness checks pass; provider request
+failure is distinct from process health. [Timestamped evidence](evidence/oco-pair-recovery-rollout.json).
+
+The populated environment is byte-for-byte unchanged. Capital reference/high
+water/risk multiplier and daily baseline/locks match the pre-rollout snapshot.
+Only execution was restarted; PM2 was saved with protected permissions. No schema
+or populated environment migration was required. This verifies incomplete-pair
+cleanup and subsequent inference admission, not a natural SL/TP close or a new fill.
 
 ## Rollback
 

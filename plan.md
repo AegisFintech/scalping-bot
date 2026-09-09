@@ -2,9 +2,11 @@
 
 ## Scope
 
-### ISSUE-084 — Recover incomplete OCO pairs (implemented; validated; delivery pending)
+### ISSUE-084 — Recover incomplete OCO pairs (implemented; validated; demo restored)
 
 - Issue: [#198](https://github.com/AegisFintech/scalping-bot/issues/198).
+- Pull request: [#199](https://github.com/AegisFintech/scalping-bot/pull/199);
+  implementation checkpoint `45cedca` committed and pushed.
 - Branch: `issue-084-oco-pair-recovery`; dependency: ISSUE-083 / PR #197.
 - Authorization: September 9 request to verify and repair the repeating OCO loop,
   retaining local entry/SL/TP derivation and deterministic risk sizing.
@@ -25,6 +27,11 @@
   3 isolated TLS integration tests; format/lint/types/build/configuration/replay
   and zero-vulnerability npm/pip audits. Exact commands and corrections:
   `docs/evidence/oco-pair-recovery-validation.json`.
+- Demo: existing order recovered after execution restart and cancelled at
+  10:33:41 SGT, with no fills or positions. Analysis resumed at 10:34:08; a fresh
+  request at 10:34:15 returned upstream HTTP 500 in 1,578 ms. No new orders;
+  ordinary five-minute failure backoff remains. Environment and capital/daily
+  locks preserved. Details: `docs/oco-pair-recovery-report.md`.
 
 ### ISSUE-078 — Switch the active model to Sol (implemented; validated; demo restored)
 

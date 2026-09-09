@@ -1,0 +1,51 @@
+{
+  "label": "DEMO_LIFECYCLE_NOT_PERFORMANCE",
+  "release": "0.2.3-equity-risk.10",
+  "mode": "demo",
+  "cleanup_observed_at": "2026-09-09T02:33:56.815Z",
+  "cleanup": {
+    "group_state": "FAILED",
+    "reason": "OCO_PEER_UNFILLED_TERMINAL",
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "CANCELLED",
+        "updated_at": "2026-09-09T02:33:41.165Z",
+        "time_in_force": "GTC",
+        "pending_expiry": null
+      },
+      {
+        "side": "SELL",
+        "state": "CANCELLED",
+        "updated_at": "2026-09-08T15:19:27.292Z",
+        "time_in_force": "GTC",
+        "pending_expiry": null
+      }
+    ],
+    "positions": 0,
+    "trades": 0
+  },
+  "resumed_at": "2026-09-09T02:34:08.108Z",
+  "automatic_analysis_paused": false,
+  "fresh_requests": [
+    {
+      "state": "FAILED",
+      "requested_at": "2026-09-09T02:34:15.415Z",
+      "available_at": null,
+      "duration_ms": 1578,
+      "reason": "AI_HTTP_ERROR:500",
+      "requested_model": "gpt-6-astra/u64",
+      "returned_model": null,
+      "post_close": false
+    }
+  ],
+  "risk_state_preserved": true,
+  "environment_unchanged": true,
+  "readiness": {
+    "analytics": true,
+    "market_data": true,
+    "ai": true,
+    "execution": true
+  },
+  "provider_blocker": "First fresh request returned AI_HTTP_ERROR:500; no orders were placed. Five-minute durable cooldown remains. No forced retry or model fallback."
+}
