@@ -89,12 +89,25 @@ export async function boundedResponseText(
 /** Safe usage evidence from a completed HTTP response whose proposal was rejected. */
 export class ProviderFailure extends Error {
   readonly telemetry: ProviderTelemetry;
-  constructor(reason: string, telemetry: ProviderTelemetry) {
+  declare readonly rawResponse?: string;
+  constructor(
+    reason: string,
+    telemetry: ProviderTelemetry,
+    rawResponse?: string,
+  ) {
     super(
       /^[A-Z0-9_:]{1,160}$/.test(reason)
         ? reason
         : "AI_PROVIDER_INVALID_RESPONSE",
     );
     this.telemetry = providerTelemetrySchema.parse(telemetry);
+    if (
+      rawResponse !== undefined &&
+      Buffer.byteLength(rawResponse) <= 4_000_000
+    )
+      Object.defineProperty(this, "rawResponse", {
+        value: rawResponse,
+        enumerable: false,
+      });
   }
 }

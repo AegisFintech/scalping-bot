@@ -3,10 +3,12 @@ from fastapi import FastAPI
 from python.analytics.models import (
     AnalyticsRequest,
     AnalyticsResponse,
+    NumericAnalyticsRequest,
+    NumericAnalyticsResponse,
     PerformanceRequest,
     PerformanceResponse,
 )
-from python.analytics.service import analyze
+from python.analytics.service import analyze, analyze_numeric
 from python.analytics.statistics import summarize
 
 app = FastAPI(
@@ -30,6 +32,13 @@ def ready() -> dict[str, str]:
 @app.post("/v1/analyze", response_model=AnalyticsResponse, response_model_by_alias=True)
 def analyze_request(request: AnalyticsRequest) -> AnalyticsResponse:
     return analyze(request)
+
+
+@app.post(
+    "/v2/analyze-numeric", response_model=NumericAnalyticsResponse, response_model_by_alias=True
+)
+def analyze_numeric_request(request: NumericAnalyticsRequest) -> NumericAnalyticsResponse:
+    return analyze_numeric(request.request)
 
 
 @app.post("/v1/performance", response_model=PerformanceResponse, response_model_by_alias=True)

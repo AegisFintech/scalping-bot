@@ -49,7 +49,7 @@ export interface AiAnalysisRequest {
   readonly analysisId: string;
   readonly symbol: string;
   readonly payload: Readonly<Record<string, unknown>>;
-  readonly chart: AnalysisChartArtifact;
+  readonly chart: AnalysisChartArtifact | null;
   readonly timeoutMs?: number;
 }
 
@@ -144,7 +144,8 @@ export function validateChartArtifact(chart: AnalysisChartArtifact): void {
   }
 }
 
-function chartDataUrl(chart: AnalysisChartArtifact): string {
+function chartDataUrl(chart: AnalysisChartArtifact | null): string {
+  if (chart === null) throw new Error("AI_CHART_MISSING");
   validateChartArtifact(chart);
   return `data:image/png;base64,${chart.dataBase64}`;
 }
@@ -259,6 +260,7 @@ export class OpenAiCompatibleClient<
     let lastError: Error = new Error("AI_REQUEST_FAILED");
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       let attemptTelemetry: ProviderTelemetry | undefined;
+      let attemptRawResponse: string | undefined;
       try {
         const remainingTimeoutMs = requestTimeoutMs - (now() - started);
         if (remainingTimeoutMs < 1_000) {
@@ -309,6 +311,7 @@ export class OpenAiCompatibleClient<
           this.#options.apiStyle === "responses"
             ? extractResponses(envelope)
             : extractChat(envelope);
+        attemptRawResponse = raw;
         const validated =
           this.#options.parseResponse === undefined
             ? this.#validator.parse(raw)
@@ -343,7 +346,11 @@ export class OpenAiCompatibleClient<
         lastError =
           attemptTelemetry === undefined
             ? failure
-            : new ProviderFailure(failure.message, attemptTelemetry);
+            : new ProviderFailure(
+                failure.message,
+                attemptTelemetry,
+                attemptRawResponse,
+              );
         if (
           attempt < maxRetries &&
           (lastError.name === "TimeoutError" || lastError.name === "TypeError")

@@ -58,6 +58,25 @@ def test_completed_candles_reject_forming_or_invalid_candles() -> None:
         completed_candles_figure(forming, "M1")
 
 
+def test_regenerated_chart_preserves_unavailable_volume() -> None:
+    data = pd.DataFrame(
+        [
+            {
+                "start_time": "2026-09-10T00:00:00Z",
+                "open": "4400",
+                "high": "4402",
+                "low": "4399",
+                "close": "4401",
+                "volume": None,
+                "complete": True,
+            }
+        ]
+    )
+    figure = completed_candles_figure(data, "M1")
+    assert figure is not None
+    assert pd.isna(figure.data[1].y[0])
+
+
 def test_indicator_and_market_quality_figures_handle_decimal_rows() -> None:
     timestamp = "2026-08-24T04:00:00Z"
     indicators = indicators_figure(

@@ -2,6 +2,74 @@
 
 ## Scope
 
+### ISSUE-091 — Deferred history recovery and local trading activation (deferred)
+
+- Issue: [#213](https://github.com/AegisFintech/scalping-bot/issues/213).
+- Dependency: verified storage implementation in ISSUE-090 / PR #212.
+- September 10 operator direction: leave the blocked hosted recovery and move
+  forward with independent delivery. Preserve the hosted source and historical
+  local archive; repeated source probes are not part of current work.
+- Acceptance: recover newer source records or implement a separately authorized,
+  documented accounting transition; verify the intended operational database and
+  applicable journal/risk/control continuity; restore-test a paired current backup;
+  validate connection/runtime configuration; activate matching jobs; reconcile
+  broker state and resume only the authorized demo after those checks pass.
+- Current state: hosted-history gap after September 9 at 16:32 SGT. Execution
+  remains held; no local historical database is promoted and no baseline reset
+  is authorized by deferral alone. A fresh-demo baseline decision is pending.
+- Off-server backup delivery also needs a selected destination and public key.
+- Evidence: [storage report](docs/local-storage-report.md). This follow-up no
+  longer blocks delivery of ISSUE-090's independent implementation.
+
+### ISSUE-090 — Local PostgreSQL and necessary evidence storage (implementation complete; validated)
+
+- Issue: [#211](https://github.com/AegisFintech/scalping-bot/issues/211).
+- Pull request: [#212](https://github.com/AegisFintech/scalping-bot/pull/212).
+  Implementation checkpoint `1508a2f` committed and pushed. The operator's
+  September 10 instruction to leave the blocked task and move forward separates
+  verified implementation delivery from deferred operational activation.
+- Branch: `issue-090-local-storage-overhaul`; dependency: ISSUE-089 / PR #210.
+- Authorization: September 10 operator approved the local PostgreSQL migration,
+  scoped server cleanup, compact evidence, bounded disposable retention and backups.
+- Acceptance: restore and verify the available historical archive without claiming
+  current state; local-only PostgreSQL with protected credentials; compatible Node/Python access;
+  no duplicate dispatch on restart; exact legacy charts and financial evidence
+  retained; repeated context deduplicated; future display charts generated on
+  demand; bounded disposable logs/market data; paired backups and restore proof.
+- Cleanup: only approved package caches and unused Docker images/build cache;
+  preserve volumes, installed dependencies, trading evidence and rollback sets.
+- Preserve current demo strategy, TP/SL, risk locks and fail-closed reconciliation.
+  A restored historical backup cannot authorize new execution without complete
+  recovery of subsequent authoritative state. No paid provider upgrade authorized.
+- Deferred dependency: hosted PostgreSQL rejects reads with compute-quota code
+  `53000`; newest local dump is September 9 at 16:32 SGT. Current-history recovery
+  and operational activation move to ISSUE-091 / #213. They do not block review
+  and delivery of the verified implementation. No historical restore gains
+  execution authority by merging this release.
+- Required delivery: forward migrations/contracts/docs, meaningful success/failure
+  tests and all completion gates; graph update, secret scan, commit/push and PR.
+- Prepared: native PostgreSQL 18.6/TLS; additive migration 0023; numeric analytics
+  and chart-on-demand contracts; atomic provider evidence; normalized candles;
+  bounded routine storage and paired backups; systemd jobs prepared but disabled.
+- Verified: 282 historical trades, 5,358 chart references, 22 original migration
+  checksums; new paired backup restored all 45 tables; 302,580 candles reconstruct
+  from 10,418 values with a measured 6.22% physical saving; nine protected table
+  fingerprints preserved across compaction and PostgreSQL restart. Cleanup
+  reclaimed 9.44 GB while preserving all four Docker volumes and rollback sets.
+- Deferred to ISSUE-091: full newer source history, authoritative cutover/current
+  backup proof, job activation and demo resumption. No off-server destination/key
+  has been selected. No risk/accounting reset is inferred from deferring recovery.
+- Completion checks: all 22 required commands passed; 619 Node / 155 Python /
+  36 schema / three migration / five TLS integration tests. Real local database
+  restart and populated-target refusal proved; light/dark browser state checks
+  passed with zero mutation requests. Exact commands and results:
+  [validation record](docs/evidence/local-storage-validation.json).
+- Independent delivery recheck: all 22 gates passed again on September 10.
+  Scenario replay correctly refused an existing output; a fresh output passed.
+  No runtime database change, baseline reset or trading restart was performed.
+  Exact recheck commands and results are in `independent_delivery` in the record.
+- Implementation evidence: [local storage report](docs/local-storage-report.md).
+
 ### ISSUE-087 — Demo market-stop OCO and prompt zero-fill restart (implemented; validated; demo restored)
 
 - Issue: [#204](https://github.com/AegisFintech/scalping-bot/issues/204).

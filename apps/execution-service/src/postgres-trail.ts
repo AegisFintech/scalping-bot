@@ -4,6 +4,7 @@ import {
   pendingOrderExpiresAt,
 } from "../../../packages/contracts/src/order-lifetime.js";
 import { writeChart } from "../../../packages/database/src/chart-store.js";
+import { storeCandles } from "../../../packages/database/src/candle-storage.js";
 import {
   providerTelemetrySchema,
   type ProviderTelemetry,
@@ -191,29 +192,12 @@ export class PostgresDecisionTrail implements DecisionTrail {
           JSON.stringify(["DECISION_COMPACT_V1"]),
         ],
       );
-      for (const series of persistedCandles) {
-        for (const candle of series.candles) {
-          await client.query(
-            `INSERT INTO candles
-              (id, snapshot_id, timeframe, start_time, end_time, open, high, low, close, volume, complete, quality_flags)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb)`,
-            [
-              randomUUID(),
-              candleSnapshotId,
-              series.timeframe,
-              candle.startTime,
-              candle.endTime,
-              candle.open,
-              candle.high,
-              candle.low,
-              candle.close,
-              candle.volume,
-              candle.complete,
-              JSON.stringify(candle.qualityFlags),
-            ],
-          );
-        }
-      }
+      await storeCandles(
+        client,
+        candleSnapshotId,
+        this.#options.symbolId,
+        persistedCandles,
+      );
       const orderBookId = await this.#persistOrderBook(
         client,
         candleSnapshotId,
@@ -335,6 +319,13 @@ export class PostgresDecisionTrail implements DecisionTrail {
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query(
+        "UPDATE analysis_runs SET artifact_policy=$2 WHERE id=$1",
+        [
+          analysisId,
+          response.schemaVersion === "2.0" ? "numeric-v1" : "chart-v1",
+        ],
+      );
       await client.query(
         `INSERT INTO indicator_snapshots
           (id, candle_snapshot_id, feature_version, generated_at, atr, ema_fast, ema_slow,

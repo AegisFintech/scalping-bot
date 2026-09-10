@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from python.analytics.chart import ChartRenderError, render_analysis_chart
-from python.analytics.models import AnalyticsRequest, AnalyticsResponse
+from python.analytics.models import AnalyticsRequest, AnalyticsResponse, NumericAnalyticsResponse
 from python.features import build_features
 
 TIMEFRAME_SECONDS = {"M1": 60, "M5": 300, "M15": 900}
@@ -90,4 +90,22 @@ def analyze(request: AnalyticsRequest, now: datetime | None = None) -> Analytics
         rejection_reasons=reasons,
         features=features,
         chart=chart,
+    )
+
+
+def analyze_numeric(
+    request: AnalyticsRequest, now: datetime | None = None
+) -> NumericAnalyticsResponse:
+    """Identical candle/market validation and features, without a display-only PNG."""
+    reasons = quality_reasons(request)
+    return NumericAnalyticsResponse(
+        schema_version="2.0",
+        artifact_policy="numeric-v1",
+        chart=None,
+        request_id=request.request_id,
+        analysis_id=request.analysis_id,
+        generated_at=now or datetime.now(UTC),
+        acceptable=not reasons,
+        rejection_reasons=reasons,
+        features={} if reasons else build_features(request),
     )

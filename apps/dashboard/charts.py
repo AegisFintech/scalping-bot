@@ -44,7 +44,7 @@ def completed_candles_figure(data: pd.DataFrame, timeframe: str) -> go.Figure | 
         raise ChartDataError("CHART_FORMING_CANDLE_REJECTED")
     values["start_time"] = _timestamp(values, "start_time")
     for column in ("open", "high", "low", "close", "volume"):
-        values[column] = _numeric(values, column)
+        values[column] = _numeric(values, column, nullable=column == "volume")
     if (values[["open", "high", "low", "close"]] <= 0).any().any():
         raise ChartDataError("CHART_PRICE_NON_POSITIVE")
     if (values["volume"] < 0).any():

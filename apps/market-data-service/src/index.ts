@@ -247,6 +247,7 @@ async function main(): Promise<void> {
   );
   const recorder = localRecordingEnabled
     ? new LocalMarketRecorder({
+        managedRetention: true,
         directory:
           environment.LOCAL_MARKET_RECORD_DIRECTORY ?? ".runtime/market-data",
         sampleIntervalMs: configuredNumber(

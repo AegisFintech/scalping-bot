@@ -17,6 +17,8 @@
     "start:execution": "node dist/apps/execution-service/src/index.js",
     "db:migrate": "tsx packages/database/src/cli.ts migrate",
     "db:status": "tsx packages/database/src/cli.ts status",
+    "db:backup": "node scripts/storage-maintenance.mjs backup",
+    "storage:maintain": "node scripts/storage-maintenance.mjs maintenance",
     "format": "prettier --write \"**/*.{ts,mjs,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,mjs,json,md,yml,yaml}\"",
     "lint": "eslint .",

@@ -25,15 +25,24 @@ export class EntryPairHttpPlanner {
   ): Promise<AiAnalysisResult<EntryPairPlan>> {
     let response: Response;
     try {
-      response = await this.fetchImpl(new URL("/v1/entry-pair", this.baseUrl), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(input),
-        signal: AbortSignal.timeout(
-          SCENARIO_REQUEST_POLICY.providerTimeoutMs +
-            SCENARIO_REQUEST_POLICY.transportGraceMs,
+      response = await this.fetchImpl(
+        new URL(
+          input.chart === null ? "/v2/entry-pair" : "/v1/entry-pair",
+          this.baseUrl,
         ),
-      });
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            ...input,
+            ...(input.chart === null ? { schemaVersion: "2.0" } : {}),
+          }),
+          signal: AbortSignal.timeout(
+            SCENARIO_REQUEST_POLICY.providerTimeoutMs +
+              SCENARIO_REQUEST_POLICY.transportGraceMs,
+          ),
+        },
+      );
     } catch {
       throw new Error("SCENARIO_ORCHESTRATOR_UNAVAILABLE");
     }
@@ -51,6 +60,9 @@ export class EntryPairHttpPlanner {
         throw new ProviderFailure(
           reason,
           providerTelemetrySchema.parse(envelope.telemetry),
+          typeof envelope.rawResponse === "string"
+            ? envelope.rawResponse
+            : undefined,
         );
       throw new Error(reason);
     }

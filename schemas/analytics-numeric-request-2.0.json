@@ -1,0 +1,405 @@
+{
+  "$defs": {
+    "AnalyticsConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "atrPeriod": {
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Atrperiod",
+          "type": "integer"
+        },
+        "emaFastPeriod": {
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Emafastperiod",
+          "type": "integer"
+        },
+        "emaSlowPeriod": {
+          "maximum": 500,
+          "minimum": 2,
+          "title": "Emaslowperiod",
+          "type": "integer"
+        },
+        "adxEnabled": {
+          "title": "Adxenabled",
+          "type": "boolean"
+        },
+        "adxPeriod": {
+          "maximum": 100,
+          "minimum": 2,
+          "title": "Adxperiod",
+          "type": "integer"
+        },
+        "rsiEnabled": {
+          "title": "Rsienabled",
+          "type": "boolean"
+        },
+        "rsiPeriod": {
+          "maximum": 100,
+          "minimum": 2,
+          "title": "Rsiperiod",
+          "type": "integer"
+        },
+        "bollingerEnabled": {
+          "title": "Bollingerenabled",
+          "type": "boolean"
+        },
+        "bollingerPeriod": {
+          "maximum": 200,
+          "minimum": 2,
+          "title": "Bollingerperiod",
+          "type": "integer"
+        },
+        "bollingerStddev": {
+          "title": "Bollingerstddev",
+          "type": "string"
+        },
+        "swingPivotLeft": {
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Swingpivotleft",
+          "type": "integer"
+        },
+        "swingPivotRight": {
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Swingpivotright",
+          "type": "integer"
+        },
+        "compactTail": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "enum": ["M1", "M5", "M15"]
+          },
+          "title": "Compacttail",
+          "type": "object"
+        },
+        "expectedCounts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "enum": ["M1", "M5", "M15"]
+          },
+          "title": "Expectedcounts",
+          "type": "object"
+        }
+      },
+      "required": [
+        "atrPeriod",
+        "emaFastPeriod",
+        "emaSlowPeriod",
+        "adxEnabled",
+        "adxPeriod",
+        "rsiEnabled",
+        "rsiPeriod",
+        "bollingerEnabled",
+        "bollingerPeriod",
+        "bollingerStddev",
+        "swingPivotLeft",
+        "swingPivotRight",
+        "compactTail",
+        "expectedCounts"
+      ],
+      "title": "AnalyticsConfig",
+      "type": "object"
+    },
+    "AnalyticsRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0",
+          "title": "Schemaversion",
+          "type": "string"
+        },
+        "requestId": {
+          "format": "uuid",
+          "title": "Requestid",
+          "type": "string"
+        },
+        "analysisId": {
+          "format": "uuid",
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "symbol": {
+          "pattern": "^[A-Z0-9._-]{1,32}$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "analysisTime": {
+          "format": "date-time",
+          "title": "Analysistime",
+          "type": "string"
+        },
+        "serverTime": {
+          "format": "date-time",
+          "title": "Servertime",
+          "type": "string"
+        },
+        "candles": {
+          "items": {
+            "$ref": "#/$defs/CandleSeries"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Candles",
+          "type": "array"
+        },
+        "orderBook": {
+          "$ref": "#/$defs/OrderBookSnapshot"
+        },
+        "config": {
+          "$ref": "#/$defs/AnalyticsConfig"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "analysisId",
+        "symbol",
+        "analysisTime",
+        "serverTime",
+        "candles",
+        "orderBook",
+        "config"
+      ],
+      "title": "AnalyticsRequest",
+      "type": "object"
+    },
+    "Candle": {
+      "additionalProperties": false,
+      "properties": {
+        "startTime": {
+          "format": "date-time",
+          "title": "Starttime",
+          "type": "string"
+        },
+        "endTime": {
+          "format": "date-time",
+          "title": "Endtime",
+          "type": "string"
+        },
+        "open": {
+          "title": "Open",
+          "type": "string"
+        },
+        "high": {
+          "title": "High",
+          "type": "string"
+        },
+        "low": {
+          "title": "Low",
+          "type": "string"
+        },
+        "close": {
+          "title": "Close",
+          "type": "string"
+        },
+        "volume": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volume"
+        },
+        "complete": {
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "qualityFlags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Qualityflags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "startTime",
+        "endTime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "complete",
+        "qualityFlags"
+      ],
+      "title": "Candle",
+      "type": "object"
+    },
+    "CandleSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "candles": {
+          "items": {
+            "$ref": "#/$defs/Candle"
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "title": "Candles",
+          "type": "array"
+        }
+      },
+      "required": ["timeframe", "candles"],
+      "title": "CandleSeries",
+      "type": "object"
+    },
+    "OrderBookAggregate": {
+      "additionalProperties": false,
+      "properties": {
+        "windowMs": {
+          "enum": [60000, 300000, 900000],
+          "title": "Windowms",
+          "type": "integer"
+        },
+        "sampleCount": {
+          "minimum": 0,
+          "title": "Samplecount",
+          "type": "integer"
+        },
+        "bidLiquidityChange": {
+          "title": "Bidliquiditychange",
+          "type": "string"
+        },
+        "askLiquidityChange": {
+          "title": "Askliquiditychange",
+          "type": "string"
+        },
+        "additions": {
+          "minimum": 0,
+          "title": "Additions",
+          "type": "integer"
+        },
+        "removals": {
+          "minimum": 0,
+          "title": "Removals",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "windowMs",
+        "sampleCount",
+        "bidLiquidityChange",
+        "askLiquidityChange",
+        "additions",
+        "removals"
+      ],
+      "title": "OrderBookAggregate",
+      "type": "object"
+    },
+    "OrderBookLevel": {
+      "additionalProperties": false,
+      "properties": {
+        "price": {
+          "title": "Price",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "string"
+        }
+      },
+      "required": ["price", "size"],
+      "title": "OrderBookLevel",
+      "type": "object"
+    },
+    "OrderBookSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "sourceTime": {
+          "format": "date-time",
+          "title": "Sourcetime",
+          "type": "string"
+        },
+        "receivedAt": {
+          "format": "date-time",
+          "title": "Receivedat",
+          "type": "string"
+        },
+        "bids": {
+          "items": {
+            "$ref": "#/$defs/OrderBookLevel"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Bids",
+          "type": "array"
+        },
+        "asks": {
+          "items": {
+            "$ref": "#/$defs/OrderBookLevel"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Asks",
+          "type": "array"
+        },
+        "complete": {
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "discontinuity": {
+          "title": "Discontinuity",
+          "type": "boolean"
+        },
+        "reconnectSequence": {
+          "minimum": 0,
+          "title": "Reconnectsequence",
+          "type": "integer"
+        },
+        "aggregates": {
+          "items": {
+            "$ref": "#/$defs/OrderBookAggregate"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Aggregates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "sourceTime",
+        "receivedAt",
+        "bids",
+        "asks",
+        "complete",
+        "discontinuity",
+        "reconnectSequence",
+        "aggregates"
+      ],
+      "title": "OrderBookSnapshot",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "2.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "request": {
+      "$ref": "#/$defs/AnalyticsRequest"
+    }
+  },
+  "required": ["schemaVersion", "request"],
+  "title": "NumericAnalyticsRequest",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.scalper.local/analytics-numeric-request-2.0.json"
+}

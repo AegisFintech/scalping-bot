@@ -20,7 +20,7 @@ export interface ModelPayloadInput {
     readonly completedCandlesOnly: true;
     readonly candleCounts: Readonly<Record<"M1" | "M5" | "M15", number>>;
     readonly latestEndTimes: Readonly<Record<"M1" | "M5" | "M15", string>>;
-  };
+  } | null;
   readonly executionConstraints: {
     readonly currentBid: string;
     readonly currentAsk: string;
@@ -118,16 +118,20 @@ export function buildModelPayload(
       order_book: input.analyticsFeatures.order_book,
       spread_atr_ratio_m1: input.analyticsFeatures.spread_atr_ratio_m1,
     },
-    chart: {
-      renderer_version: input.chart.rendererVersion,
-      mime_type: input.chart.mimeType,
-      width: input.chart.width,
-      height: input.chart.height,
-      sha256: input.chart.sha256,
-      completed_candles_only: input.chart.completedCandlesOnly,
-      candle_counts: input.chart.candleCounts,
-      latest_end_times: input.chart.latestEndTimes,
-    },
+    ...(input.chart === null ? { artifact_policy: "numeric-v1" } : {}),
+    chart:
+      input.chart === null
+        ? null
+        : {
+            renderer_version: input.chart.rendererVersion,
+            mime_type: input.chart.mimeType,
+            width: input.chart.width,
+            height: input.chart.height,
+            sha256: input.chart.sha256,
+            completed_candles_only: input.chart.completedCandlesOnly,
+            candle_counts: input.chart.candleCounts,
+            latest_end_times: input.chart.latestEndTimes,
+          },
     execution_constraints: {
       current_bid: input.executionConstraints.currentBid,
       current_ask: input.executionConstraints.currentAsk,

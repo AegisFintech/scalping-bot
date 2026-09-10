@@ -230,6 +230,29 @@ class AnalyticsResponse(ApiModel):
         return self
 
 
+class NumericAnalyticsRequest(ApiModel):
+    schema_version: Literal["2.0"] = Field(alias="schemaVersion")
+    request: AnalyticsRequest
+
+
+class NumericAnalyticsResponse(ApiModel):
+    schema_version: Literal["2.0"] = Field(alias="schemaVersion")
+    artifact_policy: Literal["numeric-v1"] = Field(alias="artifactPolicy")
+    request_id: UUID = Field(alias="requestId")
+    analysis_id: UUID = Field(alias="analysisId")
+    generated_at: datetime = Field(alias="generatedAt")
+    acceptable: bool
+    rejection_reasons: list[str] = Field(alias="rejectionReasons", max_length=64)
+    features: dict[str, object]
+    chart: None
+
+    @model_validator(mode="after")
+    def acceptance_matches_evidence(self) -> NumericAnalyticsResponse:
+        if self.acceptable != (len(self.rejection_reasons) == 0):
+            raise ValueError("numeric acceptance must agree with rejection evidence")
+        return self
+
+
 class PerformanceOutcome(ApiModel):
     net_pnl: str = Field(alias="netPnl")
     closed_at: datetime = Field(alias="closedAt")

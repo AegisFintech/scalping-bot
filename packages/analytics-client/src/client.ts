@@ -5,6 +5,7 @@ import { z } from "zod";
 import type {
   AnalyticsRequest,
   AnalyticsResponse,
+  NumericAnalyticsResponse,
   PerformanceOutcome,
   PerformanceSummary,
 } from "../../contracts/src/index.js";
@@ -60,6 +61,23 @@ const analyticsResponseSchema = z
       });
     }
   });
+const numericResponseSchema = z
+  .object({
+    schemaVersion: z.literal("2.0"),
+    artifactPolicy: z.literal("numeric-v1"),
+    requestId: z.string().uuid(),
+    analysisId: z.string().uuid(),
+    generatedAt: z.string().datetime({ offset: true }),
+    acceptable: z.boolean(),
+    rejectionReasons: z.array(z.string().max(128)).max(64),
+    features: z.record(z.string(), z.unknown()),
+    chart: z.null(),
+  })
+  .strict()
+  .refine(
+    (value) => value.acceptable === (value.rejectionReasons.length === 0),
+    "numeric acceptance must agree with rejection evidence",
+  );
 const signedDecimal = z
   .string()
   .regex(/^-?(0|[1-9][0-9]{0,15})(\.[0-9]{1,10})?$/);
@@ -96,6 +114,32 @@ export class AnalyticsHttpClient {
     if (parsed.username || parsed.password)
       throw new Error("ANALYTICS_URL_CREDENTIALS_FORBIDDEN");
     this.#options = options;
+  }
+
+  async analyzeNumeric(
+    request: AnalyticsRequest,
+  ): Promise<NumericAnalyticsResponse> {
+    const response = await (this.#options.fetchImpl ?? fetch)(
+      new URL("/v2/analyze-numeric", this.#options.baseUrl),
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-request-id": request.requestId,
+        },
+        body: JSON.stringify({ schemaVersion: "2.0", request }),
+        signal: AbortSignal.timeout(this.#options.timeoutMs ?? 10_000),
+      },
+    );
+    if (!response.ok)
+      throw new Error(`ANALYTICS_HTTP_ERROR:${response.status}`);
+    const parsed = numericResponseSchema.parse(await response.json());
+    if (
+      parsed.requestId !== request.requestId ||
+      parsed.analysisId !== request.analysisId
+    )
+      throw new Error("ANALYTICS_RESPONSE_IDENTITY_MISMATCH");
+    return parsed;
   }
 
   async analyze(request: AnalyticsRequest): Promise<AnalyticsResponse> {

@@ -75,7 +75,7 @@ export interface AnalyticsConfig {
   readonly expectedCounts: Readonly<Record<Timeframe, number>>;
 }
 
-export interface AnalyticsResponse {
+export interface LegacyAnalyticsResponse {
   readonly schemaVersion: "1.1";
   readonly requestId: string;
   readonly analysisId: string;
@@ -85,6 +85,19 @@ export interface AnalyticsResponse {
   readonly features: Readonly<Record<string, unknown>>;
   readonly chart: AnalysisChartArtifact | null;
 }
+
+/** Explicit text-only contract; the original chart contract remains immutable. */
+export interface NumericAnalyticsResponse extends Omit<
+  LegacyAnalyticsResponse,
+  "schemaVersion" | "chart"
+> {
+  readonly schemaVersion: "2.0";
+  readonly artifactPolicy: "numeric-v1";
+  readonly chart: null;
+}
+
+export type AnalyticsResponse =
+  LegacyAnalyticsResponse | NumericAnalyticsResponse;
 
 export interface AnalysisChartArtifact {
   readonly rendererVersion: "completed-candles-ema-atr-v1";

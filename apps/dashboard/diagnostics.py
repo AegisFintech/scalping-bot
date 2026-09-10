@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -43,6 +44,7 @@ from decision_inspector import (
     trade_outcome_view,
 )
 from psycopg.rows import dict_row
+from storage_status import local_storage_status
 from time_display import dataframe_for_display, format_gmt8_timestamp
 
 
@@ -282,7 +284,7 @@ if diagnostic_section == "Market":
                )
                SELECT c.timeframe, c.start_time, c.end_time, c.open, c.high, c.low,
                       c.close, c.volume, c.complete, c.quality_flags
-               FROM candles c
+               FROM decision_candles c
                WHERE c.snapshot_id = (SELECT id FROM target_snapshot)
                  AND c.timeframe = %s AND c.complete = true
                ORDER BY c.start_time DESC LIMIT %s""",
@@ -370,7 +372,7 @@ if diagnostic_section == "AI Analysis":
                 """SELECT ar.id::text AS analysis_id, ar.analysis_time, ar.mode,
                           ar.state, ar.valid_until, ar.eligibility_reasons,
                           ar.rejection_reasons, ar.created_at, ar.updated_at,
-                          sv.version AS strategy_version,
+                          sv.version AS strategy_version, ar.artifact_policy,
                           cs.server_time AS snapshot_server_time,
                           cs.received_at AS snapshot_received_at,
                           cs.max_skew_ms, cs.complete AS snapshot_complete,
@@ -475,7 +477,7 @@ if diagnostic_section == "AI Analysis":
                    FROM analysis_runs ar
                    JOIN accounts a ON a.id = ar.account_id
                    JOIN symbols s ON s.id = ar.symbol_id
-                   JOIN candles c ON c.snapshot_id = ar.candle_snapshot_id
+                   JOIN decision_candles c ON c.snapshot_id = ar.candle_snapshot_id
                    WHERE ar.id = %s AND a.provider_account_key_hash = %s
                    AND a.environment = %s AND s.name = %s
                    GROUP BY c.timeframe
@@ -689,8 +691,41 @@ if diagnostic_section == "AI Analysis":
                         "PostgreSQL JSONB may normalize object-key order; values and arrays are "
                         "the persisted redacted user message."
                     )
-            st.subheader("Exact completed-candle chart supplied to the AI")
-            if chart_view is None:
+            st.subheader("Recorded market context")
+            if chart_view is None and detail.get("artifact_policy") == "numeric-v1":
+                st.caption(
+                    "This analysis used numerical market data. "
+                    "Charts below are regenerated for display."
+                )
+                chart_key = f"recorded_chart_{selected_analysis_id}"
+                if st.button("Show recorded candles", key=chart_key):
+                    recorded = frame(
+                        """SELECT c.timeframe,c.start_time,c.open,c.high,c.low,c.close,
+                        c.volume,c.complete FROM decision_candles c
+                        JOIN analysis_runs ar ON ar.candle_snapshot_id=c.snapshot_id
+                        JOIN accounts a ON a.id=ar.account_id JOIN symbols s ON s.id=ar.symbol_id
+                        WHERE ar.id=%s AND a.provider_account_key_hash=%s
+                        AND a.environment=%s AND s.name=%s
+                        ORDER BY c.timeframe,c.start_time LIMIT 1800""",
+                        (
+                            selected_analysis_id,
+                            account_key_hash,
+                            account_environment,
+                            selected_symbol,
+                        ),
+                    )
+                    for timeframe in ("M1", "M5", "M15"):
+                        series = (
+                            recorded[recorded["timeframe"] == timeframe]
+                            if not recorded.empty
+                            else recorded
+                        )
+                        figure = completed_candles_figure(series, timeframe)
+                        if figure is not None:
+                            st.plotly_chart(figure, width="stretch")
+                        else:
+                            st.info(f"{timeframe} recorded candles are unavailable.")
+            elif chart_view is None:
                 st.info("No durable chart artifact exists for this analysis run.")
             else:
                 st.image(
@@ -1519,6 +1554,13 @@ if diagnostic_section == "Operations":
         st.error(f"Operations unavailable: {type(error).__name__}")
 
 if diagnostic_section == "Server":
+    st.subheader("Local storage and database recovery")
+    local_health = local_storage_status(Path(__file__).resolve().parents[2] / ".runtime")
+    st.json(local_health)
+    st.caption(
+        "Local observations remain readable during a database outage. "
+        "Stale or unavailable values do not confirm current health."
+    )
     try:
         metrics = frame(
             """SELECT captured_at, cpu_percent, load_1, load_5, load_15,

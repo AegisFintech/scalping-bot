@@ -41,6 +41,50 @@ const request: AnalyticsRequest = {
 };
 
 describe("analytics image contract", () => {
+  it("accepts only the explicitly requested numeric contract and preserves rejection evidence", async () => {
+    const response = {
+      schemaVersion: "2.0",
+      artifactPolicy: "numeric-v1",
+      requestId: request.requestId,
+      analysisId: request.analysisId,
+      generatedAt: request.analysisTime,
+      acceptable: true,
+      rejectionReasons: [],
+      features: {},
+      chart: null,
+    };
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(response)));
+    const client = new AnalyticsHttpClient({
+      baseUrl: "http://127.0.0.1:8090",
+      fetchImpl,
+    });
+    await expect(client.analyzeNumeric(request)).resolves.toMatchObject({
+      chart: null,
+      acceptable: true,
+    });
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toContain(
+      "/v2/analyze-numeric",
+    );
+    fetchImpl.mockResolvedValue(
+      new Response(JSON.stringify({ ...response, acceptable: false })),
+    );
+    await expect(client.analyzeNumeric(request)).rejects.toThrow();
+    fetchImpl.mockResolvedValue(new Response(JSON.stringify(response)));
+    await expect(client.analyze(request)).rejects.toThrow();
+    fetchImpl.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...response,
+          analysisId: "33333333-3333-4333-8333-333333333333",
+        }),
+      ),
+    );
+    await expect(client.analyzeNumeric(request)).rejects.toThrow(
+      "ANALYTICS_RESPONSE_IDENTITY_MISMATCH",
+    );
+  });
   it("rejects a chart whose bytes do not match its declared hash", async () => {
     const chart = analysisChart();
     const client = new AnalyticsHttpClient({

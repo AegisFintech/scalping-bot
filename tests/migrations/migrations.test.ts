@@ -84,6 +84,7 @@ describe("migrations", () => {
       "0020_deepseek_context_model.sql",
       "0021_market_stop_execution.sql",
       "0022_position_protection.sql",
+      "0023_local_evidence_storage.sql",
     ]);
     const sql = (
       await Promise.all(

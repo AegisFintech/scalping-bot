@@ -1,5 +1,8 @@
 # ISSUE-069 implementation and evidence
 
+Later storage work is tracked in [ISSUE-090](local-storage-report.md); its local
+recovery rehearsal does not establish current authoritative trading state.
+
 Date: 2026-09-07. Issue: [#172](https://github.com/AegisFintech/scalping-bot/issues/172).
 Baseline: `2ee59bb`; branch: `issue-069-evidence-led-overhaul`.
 Source release: `0.2.0-overhaul.1`. This is a source/UI implementation and offline
