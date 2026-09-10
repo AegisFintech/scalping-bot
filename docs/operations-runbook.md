@@ -1,6 +1,12 @@
 # Current release operations
 
-Release `0.2.3-equity-risk.10` uses persistent GTC stop-limit orders. They have no
+ISSUE-094 applies the operator-authorized demo development policy: shared 1%
+current-equity setup risk, recorded daily/high-water losses without enforcement.
+Do not reset the accounting rows. Other modes retain loss enforcement; all modes
+retain accounting/freshness/reconciliation failure handling. See
+[deployment and rollback](demo-development-risk-report.md).
+
+The current release uses persistent GTC STOP orders. They have no
 automatic timer expiry. A fill cancels its peer; after confirmed SL/TP closure,
 one fresh analysis begins for the next setup. Fresh submission deadlines remain.
 See [ISSUE-083 migration, evidence and rollback](persistent-order-loop-report.md).

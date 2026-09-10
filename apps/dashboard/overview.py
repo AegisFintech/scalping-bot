@@ -191,8 +191,20 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "fixed-risk-v4",
                 "direct-entry-v1",
                 "market-stop-v1",
+                "market-stop-v2",
             ):
                 return result
+            demo_development = False
+            if policy["version"] == "market-stop-v2":
+                enforced = policy.get("lossLimitsEnforced")
+                mode = policy.get("mode")
+                if (
+                    not isinstance(enforced, bool)
+                    or mode not in ("replay", "backtest", "paper", "demo", "shadow", "live")
+                    or enforced != (mode != "demo")
+                ):
+                    return result
+                demo_development = not enforced
             setup_percent = Decimal(str(policy["setupRiskPercent"]))
             daily_percent = Decimal(str(policy["dailyLossLimitPercent"]))
             cap = Decimal(str(capital["risk_cap_percent"]))
@@ -208,6 +220,13 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 return result
             multiplier = Decimal(str(capital["risk_multiplier"]))
             if multiplier not in [Decimal(0), Decimal("0.25"), Decimal("0.5"), Decimal(1)]:
+                return result
+            if demo_development:
+                # The stored multiplier/locks remain historical accounting evidence.
+                # Admission uses the explicitly reported demo policy and current cap.
+                result["daily_remaining"] = "Not applied (demo)"
+                result["setup_budget"] = money(equity * min(setup_percent, cap) / 100)
+                result["policy"] = f"Demo: {setup_percent}% setup / loss locks off"
                 return result
             remaining = (
                 Decimal(0)

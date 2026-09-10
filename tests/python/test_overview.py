@@ -145,6 +145,59 @@ def test_budget_never_guesses_a_missing_or_invalid_execution_policy() -> None:
         assert result["daily_remaining"] == "Unavailable"
 
 
+def test_demo_budget_uses_current_equity_without_erasing_recorded_locks() -> None:
+    now = datetime(2026, 9, 10, tzinfo=UTC)
+    daily = {
+        "reconciled_at": now,
+        "current_equity": "892135.77",
+        "baseline_equity": "952890.8",
+        "loss_percent": "6.37586490",
+        "locked_out": True,
+    }
+    policy = {
+        "version": "market-stop-v2",
+        "mode": "demo",
+        "lossLimitsEnforced": False,
+        "setupRiskPercent": "1",
+        "dailyLossLimitPercent": "5",
+    }
+    capital = {
+        "updated_at": now,
+        "risk_multiplier": "0",
+        "drawdown_percent": "6.37586490",
+        "risk_cap_percent": "1",
+        "risk_policy": policy,
+    }
+    result = overview.risk_summary(daily, capital, now)
+    assert result["setup_budget"] == "8,921.36"
+    assert result["daily_remaining"] == "Not applied (demo)"
+    assert result["policy"] == "Demo: 1% setup / loss locks off"
+    assert daily["locked_out"] is True
+    assert capital["risk_multiplier"] == "0"
+    for cap, expected in [("0.5", "4,460.68"), ("0", "0.00")]:
+        assert (
+            overview.risk_summary(daily, {**capital, "risk_cap_percent": cap}, now)["setup_budget"]
+            == expected
+        )
+    for patch in [
+        {"mode": "live"},
+        {"mode": None},
+        {"lossLimitsEnforced": None},
+        {"lossLimitsEnforced": True},
+        {"lossLimitsEnforced": "false"},
+    ]:
+        invalid = {**capital, "risk_policy": {**policy, **patch}}
+        assert overview.risk_summary(daily, invalid, now)["setup_budget"] == "Unavailable"
+    enforced = {**capital, "risk_policy": {**policy, "mode": "live", "lossLimitsEnforced": True}}
+    assert overview.risk_summary(daily, enforced, now)["setup_budget"] == "0.00"
+    assert (
+        overview.risk_summary(daily, {**capital, "updated_at": now - timedelta(seconds=31)}, now)[
+            "setup_budget"
+        ]
+        == "Unavailable"
+    )
+
+
 def test_rendered_dashboard_withholds_unavailable_data_and_rejects_unauthorized_control(
     monkeypatch,
 ) -> None:  # type: ignore[no-untyped-def]

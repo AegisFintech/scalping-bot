@@ -1,9 +1,25 @@
+import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
+
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
-export const POLICY_VERSION = "market-stop-v1";
+export const POLICY_VERSION = "market-stop-v2";
 export const STOP_EXECUTION_POLICY = {
   orderType: "STOP",
   adverseSlippagePoints: "30",
 } as const;
+
+/** ISSUE-094: loss thresholds remain measured, but do not stop demo development. */
+export function enforcesLossLimits(mode: TradingMode): boolean {
+  return mode !== "demo";
+}
+
+export function executionRiskPolicy(mode: TradingMode): RiskPolicy {
+  return {
+    version: POLICY_VERSION,
+    mode,
+    lossLimitsEnforced: enforcesLossLimits(mode),
+    ...MONEY_MANAGEMENT,
+  };
+}
 export const MONEY_MANAGEMENT = {
   setupRiskPercent: "1",
   dailyLossLimitPercent: "5",
@@ -118,8 +134,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.5-market-stop.6",
-  CODE_VERSION: "0.2.5-market-stop.6",
+  STRATEGY_VERSION: "0.2.5-market-stop.7",
+  CODE_VERSION: "0.2.5-market-stop.7",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

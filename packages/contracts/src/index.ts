@@ -4,6 +4,24 @@ export type TradingMode =
   "replay" | "backtest" | "paper" | "demo" | "shadow" | "live";
 export type Timeframe = "M1" | "M5" | "M15";
 
+/** Loss percentages remain accounting thresholds when demo enforcement is off. */
+export interface RiskPolicy {
+  readonly version:
+    | "fixed-risk-v2"
+    | "fixed-risk-v3"
+    | "fixed-risk-v4"
+    | "direct-entry-v1"
+    | "market-stop-v1"
+    | "market-stop-v2";
+  readonly mode?: TradingMode;
+  readonly lossLimitsEnforced?: boolean;
+  readonly setupRiskPercent: DecimalString;
+  readonly dailyLossLimitPercent: DecimalString;
+  readonly drawdownLimitPercent: DecimalString;
+  readonly maxPositionNotionalEquityMultiple?: DecimalString | null;
+  readonly maxMarginUsagePercent?: DecimalString;
+}
+
 export interface Candle {
   readonly startTime: IsoTimestamp;
   readonly endTime: IsoTimestamp;

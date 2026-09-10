@@ -5,7 +5,10 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.5-market-stop.6`, policy `market-stop-v1`.
+The current source release is `0.2.5-market-stop.7`, policy `market-stop-v2`.
+Demo development retains the shared 1% current-equity setup ceiling, while daily
+and high-water losses remain recorded without blocking demo admission. Other
+modes retain their loss limits. [Current policy](docs/demo-development-risk-report.md).
 EPRToken returns only buy/sell stop-entry prices using `entry-pair-v2`, prioritizing
 nearby M1 support/resistance and candle-based order blocks. See the
 [entry guidance report](docs/nearby-order-block-report.md). The script
@@ -68,12 +71,12 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 - One strategy setup at a time. Other-symbol account exposure, partial fills,
   unknown orders and incomplete reconciliation block new risk. Manual orders
   are never cancelled. Maintenance selects only the configured account/symbol.
-- The fixed policy permits **up to 1% total setup risk** and **5% daily loss**.
-  It retains the **10-point absolute spread ceiling**, alongside ATR/percentile
-  spread checks. Both OCO
-  legs share the setup budget, including simultaneous-fill race exposure.
-- Sizing reserves round-trip commission and ten ticks of adverse execution,
-  floors broker-native volume, and respects remaining daily limits.
+- The fixed policy permits **up to 1% total setup risk**. The **5% daily loss**
+  threshold is enforced outside demo and remains measured in demo.
+  Both OCO legs share the setup budget, including simultaneous-fill race exposure.
+  Production strategy spread/ATR filters were removed in ISSUE-086.
+- Sizing reserves round-trip commission and 30 points of modeled adverse execution,
+  floors broker-native volume, and respects remaining daily limits outside demo.
   No absolute starting-equity floor or artificial notional cap is required.
   Broker margin and volume limits still apply; one full modeled setup loss is
   reserved in free margin. Risk is recalculated from current equity immediately
@@ -81,7 +84,8 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
   trigger bounded downward sizing with exact-volume confirmation.
   Minimum volume is rejected when unaffordable. Stops cannot cap gap losses.
 - Cash-flow-adjusted high-water accounting survives restarts. Drawdown/daily
-  losses can reduce risk to half or quarter; a 5% drawdown lockout is durable.
+  losses can reduce risk to half or quarter outside demo; a 5% drawdown lockout
+  remains recorded but is not enforced during demo development.
   Recovery is bounded and documented in the [risk model](docs/risk-model.md).
 - Protective maintenance has its own serialized two-second loop. Slow inference
   cannot block expiry, peer cancellation or recovery. Broker-held protections

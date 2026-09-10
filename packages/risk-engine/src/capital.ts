@@ -1,5 +1,9 @@
 import { Decimal } from "decimal.js";
-import { MONEY_MANAGEMENT } from "../../config/src/policy.js";
+import {
+  enforcesLossLimits,
+  MONEY_MANAGEMENT,
+} from "../../config/src/policy.js";
+import type { TradingMode } from "../../contracts/src/index.js";
 import { canonical, decimal, signedDecimal } from "./decimal.js";
 
 /** Account-wide remaining loss capacity, before allocating the OCO race budget. */
@@ -25,6 +29,46 @@ export interface CapitalState {
   readonly drawdownPercent: string;
   readonly riskMultiplier: "0" | "0.25" | "0.5" | "1";
   readonly lockedOut: boolean;
+}
+
+/** Called only after daily and capital accounting have reconciled and persisted. */
+export function capitalAdmission(input: {
+  readonly mode: TradingMode;
+  readonly equity: string;
+  readonly daily: {
+    readonly lockedOut: boolean;
+    readonly lossPercent: string;
+    readonly remainingLossBudget: string;
+  };
+  readonly capital: CapitalState;
+}): {
+  readonly lockedOut: boolean;
+  readonly riskMultiplier: CapitalState["riskMultiplier"];
+  readonly riskPercentCap: string;
+} {
+  const dailyCap = availableCapitalRiskPercent(
+    input.equity,
+    input.daily.remainingLossBudget,
+  );
+  decimal(input.daily.lossPercent);
+  if (
+    typeof input.daily.lockedOut !== "boolean" ||
+    typeof input.capital.lockedOut !== "boolean" ||
+    !["0", "0.25", "0.5", "1"].includes(input.capital.riskMultiplier)
+  )
+    throw new Error("CAPITAL_ADMISSION_INVALID");
+  if (!enforcesLossLimits(input.mode)) {
+    return {
+      lockedOut: false,
+      riskMultiplier: "1",
+      riskPercentCap: MONEY_MANAGEMENT.setupRiskPercent,
+    };
+  }
+  return {
+    lockedOut: input.daily.lockedOut || input.capital.lockedOut,
+    riskMultiplier: input.capital.riskMultiplier,
+    riskPercentCap: dailyCap,
+  };
 }
 
 export function capitalRisk(input: {
