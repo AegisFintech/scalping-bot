@@ -1,6 +1,6 @@
 # ISSUE-093: Resolve missing broker stop losses
 
-Status: implemented, validated and deployed to demo. [Issue #217](https://github.com/AegisFintech/scalping-bot/issues/217).
+Status: implemented, validated and deployed to demo. [Issue #217](https://github.com/AegisFintech/scalping-bot/issues/217), [PR #218](https://github.com/AegisFintech/scalping-bot/pull/218).
 Release `0.2.5-market-stop.6`; policy `market-stop-v1`; demo only.
 
 ## Incident and cause

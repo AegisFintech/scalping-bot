@@ -228,5 +228,30 @@
     "passing_focused_log": ".runtime/issue-093/reconciliation-integration-final.log",
     "final_suite_log": ".runtime/issue-093/recovery-checks/05.log"
   },
-  "secret_scan_note": "The repository scanner exits 0 but reports pre-existing deleted screenshot paths and benign risk-budget filename matches. A supplemental scan checks every index blob against current deployment/database secrets and credential patterns before commit."
+  "secret_scan_note": "The repository scanner exits 0 but reports pre-existing deleted screenshot paths and benign risk-budget filename matches. A supplemental scan checks every index blob against current deployment/database secrets and credential patterns before commit.",
+  "delivery": {
+    "issue": "https://github.com/AegisFintech/scalping-bot/issues/217",
+    "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/218",
+    "implementation_checkpoint": "c40cb8dfb663c68f791e8d0a10a44985d0d9e077"
+  },
+  "graphify": {
+    "nodes": 3564,
+    "edges": 7287,
+    "communities": 248,
+    "dangling_edges": 0,
+    "external_api_calls": 0,
+    "recovery_path": "Missing SL repair or close <- report -> claimClose <- PostgresProtectionSession",
+    "commands": [
+      "graphify update .",
+      "/root/.local/share/graphify/venv/bin/python3 artifacts/issue-093/graph-links.py",
+      "graphify cluster-only .",
+      "graphify explain \"Missing SL repair or close\"",
+      "graphify path \"Missing SL repair or close\" \"PostgresProtectionSession\" --undirected --budget 900"
+    ]
+  },
+  "supplemental_secret_scan": {
+    "files": 461,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
+  }
 }

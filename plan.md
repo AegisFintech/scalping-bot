@@ -5,6 +5,8 @@
 ### ISSUE-093 — Resolve confirmed missing broker stop losses (implemented; validated)
 
 - Issue: [#217](https://github.com/AegisFintech/scalping-bot/issues/217).
+- Pull request: [#218](https://github.com/AegisFintech/scalping-bot/pull/218);
+  implementation checkpoint `c40cb8d` committed and pushed.
 - Branch: `issue-093-missing-stop-recovery`; dependency: ISSUE-092 / PR #216.
 - Operator authorized fixing the protection/recovery failure after the September
   10 demo fill retained TP but no broker SL. Original SL omission remains unexplained.
