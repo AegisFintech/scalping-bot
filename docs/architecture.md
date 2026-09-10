@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.4`, policy `market-stop-v1`.
+Current source: `0.2.5-market-stop.5`, policy `market-stop-v1`.
 
 Production uses `/v2/entry-pair`, a two-price provider reply and locally
 bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
@@ -65,7 +65,7 @@ loopback and deployments support Debian/systemd.
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
    A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links
    the recorded numeric market inputs. A separate task calls `/v2/entry-pair`, using
-   exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v1`, two readable prices, and
+   exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v2`, two readable prices, and
    structured completed-candle tails (M1 240 / M5 144 / M15 96). The text-only
    model receives no image; exact provider input, prompt and available output are
    durably journaled. Historical chart bytes remain protected. Completion/failure
@@ -112,6 +112,17 @@ as pending exposure; other-symbol exposure still blocks. Unknown, duplicate,
 nonzero unmatched, partial and missing open-position evidence reject. Known account
 failure codes are retained in status/logs without raw exceptions. See
 [the reconciliation report](pending-order-reconciliation-report.md).
+
+## Nearby entry guidance (ISSUE-092)
+
+`ENTRY_PAIR_PROMPT` is the single path/version used by provider dispatch, the HTTP
+consumer and pre-dispatch evidence. Prompt v2 prioritizes the latest 5 of 10
+completed M1 candles for tight support/resistance and uses candle-based order
+blocks as confluence. Older timeframes remain background context. Stops remain
+breakout entries outside nearby structure, not pullback limits inside blocks.
+This adds no runtime structure detector, distance rejection, price clamping or
+timed refresh. Historical v1 prompt bytes, JSON contracts, GTC/OCO and dynamic
+sizing are unchanged. See [definitions and evidence](nearby-order-block-report.md).
 
 ## Independent protective path
 

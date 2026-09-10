@@ -2,6 +2,27 @@
 
 ## Scope
 
+### ISSUE-092 — Nearby support/resistance and order-block entry guidance (implemented; validated)
+
+- Issue: [#215](https://github.com/AegisFintech/scalping-bot/issues/215).
+- Branch: `issue-092-nearby-order-block-entries`; dependency: ISSUE-091 / PR #214.
+- Operator direction: tight nearby support/resistance with candle-based smart-money
+  order blocks, simple readable code, no five-minute order review or repricing.
+- Acceptance: version the provider prompt around recent completed M1 structure;
+  define order-block evidence and breakout-stop direction; retain broader history
+  as context, two-price parsing, GTC/OCO, local exits and dynamic risk sizing.
+  Share one prompt identity across dispatch, HTTP verification and journal;
+  preserve historical prompt bytes; test prompt transport and mismatch rejection;
+  run required gates, update Graphify, deliver through a dedicated issue/PR and
+  verify the authorized demo rollout without resetting risk or audit history.
+- Status: all 22 required gates passed (620 Node / 161 Python / 36 schema /
+  3 migration / 5 PostgreSQL-TLS integration tests). Graphify updated and prompt
+  relationship verified. Demo resumed at 12:39:06 SGT after one-time confirmed
+  cancellation of the old distant pair; daily/drawdown state and environment
+  preserved. First v2 output: 4409.00 / 4407.74, gap 1.26; no timed review added.
+- [Implementation, assumptions and rollout](docs/nearby-order-block-report.md);
+  [exact commands and evidence](docs/evidence/nearby-order-block-validation.json).
+
 ### ISSUE-091 — Fresh local demo activation and dynamic money management (demo running; validated)
 
 - Issue: [#213](https://github.com/AegisFintech/scalping-bot/issues/213).

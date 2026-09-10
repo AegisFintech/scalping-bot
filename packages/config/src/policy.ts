@@ -118,8 +118,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.2.5-market-stop.4",
-  CODE_VERSION: "0.2.5-market-stop.4",
+  STRATEGY_VERSION: "0.2.5-market-stop.5",
+  CODE_VERSION: "0.2.5-market-stop.5",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

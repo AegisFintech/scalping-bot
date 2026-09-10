@@ -14,6 +14,7 @@ import type { ScenarioPlanner } from "../../packages/scenario-engine/src/planner
 import { analysisChart } from "../helpers/analysis-chart.js";
 import { usageTelemetry } from "../../packages/ai-client/src/telemetry.js";
 import { bindEntryPrices } from "../../packages/scenario-engine/src/entry-plan.js";
+import { ENTRY_PAIR_PROMPT } from "../../packages/scenario-engine/src/entry-planner.js";
 
 const fixture = JSON.parse(
   readFileSync("tests/fixtures/scenario/manual-levels-synthetic.json", "utf8"),
@@ -105,6 +106,55 @@ function stored(): StoredContext {
   };
 }
 describe("reusable production context (synthetic contract tests, not strategy evidence)", () => {
+  it("durably claims the current entry prompt before dispatch, including provider failure", async () => {
+    const store = memory();
+    const claim = vi.spyOn(store, "claim");
+    const generate = vi
+      .fn()
+      .mockRejectedValue(new Error("AI_PROVIDER_TIMEOUT"));
+    const model = new ReusableScenarioModel(
+      store,
+      { generate },
+      () => base,
+      () => {},
+      true,
+    );
+    const request = input();
+    const snapshot = {
+      ...request.snapshot,
+      quote: {
+        bid: "4404.95",
+        ask: "4405.05",
+        sourceTime: at(0),
+        receivedAt: at(0),
+      },
+    };
+    await model.prepare({ ...request, snapshot, chart: null });
+    await model.settled();
+    expect(claim).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerEvidence: {
+          promptVersion: "entry-pair-v2",
+          promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
+          requestText: JSON.stringify({
+            captured_at: at(0),
+            tick_size: snapshot.metadata.tickSize,
+            quote: snapshot.quote,
+            minimum_entry_distance: snapshot.metadata.minStopDistance,
+            candles: [],
+          }),
+        },
+      }),
+    );
+    expect(claim.mock.invocationCallOrder[0]).toBeLessThan(
+      generate.mock.invocationCallOrder[0]!,
+    );
+    expect(store.row).toMatchObject({
+      state: "FAILED",
+      reason: "AI_PROVIDER_TIMEOUT",
+      plan: null,
+    });
+  });
   it("uses the direct-entry contract once and does not reuse a consumed pair", async () => {
     const store = memory();
     store.row = {

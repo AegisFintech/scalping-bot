@@ -5,13 +5,15 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.5-market-stop.1`, policy `market-stop-v1`.
-EPRToken returns only buy/sell stop-entry prices using `entry-pair-v1`. The script
+The current source release is `0.2.5-market-stop.5`, policy `market-stop-v1`.
+EPRToken returns only buy/sell stop-entry prices using `entry-pair-v2`, prioritizing
+nearby M1 support/resistance and candle-based order blocks. See the
+[entry guidance report](docs/nearby-order-block-report.md). The script
 binds identity/time locally and calculates fee-buffered TP, double SL and position
 size. Spread, ATR distance, model target-room and daily order-count filters are
 removed; broker, risk, data-integrity and lifecycle requirements remain.
 See [the change and retained constraints](docs/direct-entry-report.md).
-Accepted stop-limit orders are **good till cancelled (GTC)**, without timer expiry.
+Accepted STOP orders are **good till cancelled (GTC)**, without timer expiry.
 The loop is analyze → pending buy/sell pair → fill/cancel peer → SL/TP close →
 fresh analysis. No paid refresh runs while orders or a position are active.
 Fresh placement deadlines and all risk/reconciliation gates still apply.
