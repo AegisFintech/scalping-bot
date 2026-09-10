@@ -12,7 +12,7 @@ import {
   validateEntryPlan,
   type EntryPairPlan,
 } from "./entry-plan.js";
-import type { EntryPlannerInput } from "./entry-planner.js";
+import { ENTRY_PAIR_PROMPT, type EntryPlannerInput } from "./entry-planner.js";
 import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 
 export class EntryPairHttpPlanner {
@@ -75,9 +75,9 @@ export class EntryPairHttpPlanner {
       envelope.retryCount !== 0
     )
       throw new Error("SCENARIO_ORCHESTRATOR_ENVELOPE_INVALID");
-    const content = readFileSync("prompts/entry-pair-v1.md", "utf8").trim();
+    const content = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
     const expected = {
-      version: "entry-pair-v1" as const,
+      version: ENTRY_PAIR_PROMPT.version,
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
     };

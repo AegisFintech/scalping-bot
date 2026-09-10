@@ -128,6 +128,15 @@ water and persisted reduction state.
 - There is no automatic drawdown-reset endpoint. An operator-reviewed capital
   transition and evidence are required to change a locked reference.
 
+## Entry guidance (ISSUE-092)
+
+Prompt `entry-pair-v2` asks for nearby M1 support/resistance and candle-based
+order-block confluence. Its preference for about one recent M1 range of entry
+distance is guidance, not a reinstated ATR/corridor rejection or a deterministic
+fill-time guarantee. No price clamping, new order gate or timer cancellation is
+added. Shared cost-inclusive setup sizing, daily/drawdown state and local
+fee-buffered TP/double-SL remain unchanged.
+
 ## Price validation and exits
 
 Schema 2.1 still requires two conditional legs. The production exit hypothesis

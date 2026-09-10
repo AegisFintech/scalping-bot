@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -5,7 +6,10 @@ import {
   bindEntryPrices,
   validateEntryPlan,
 } from "../../packages/scenario-engine/src/entry-plan.js";
-import { EntryPairPlanner } from "../../packages/scenario-engine/src/entry-planner.js";
+import {
+  ENTRY_PAIR_PROMPT,
+  EntryPairPlanner,
+} from "../../packages/scenario-engine/src/entry-planner.js";
 import { EntryPairHttpPlanner } from "../../packages/scenario-engine/src/entry-http-planner.js";
 import { scenarioOco } from "../../packages/scenario-engine/src/oco.js";
 import { createAiServer } from "../../apps/ai-orchestrator/src/index.js";
@@ -228,6 +232,38 @@ describe("direct entries (synthetic, no broker authority)", () => {
         buy_stop: "4410",
         sell_stop: "4400",
       });
+      const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
+      expect(numeric.promptArtifact).toEqual({
+        version: "entry-pair-v2",
+        content: prompt,
+        sha256: createHash("sha256").update(prompt).digest("hex"),
+      });
+      const requestBody = fetchImpl.mock.calls.at(-1)?.[1]?.body;
+      if (typeof requestBody !== "string") throw new Error("fixture-body");
+      const request = JSON.parse(requestBody) as { input: unknown[] };
+      expect(request.input[0]).toEqual({
+        role: "system",
+        content: [{ type: "input_text", text: prompt }],
+      });
+      for (const mismatch of [
+        { version: "entry-pair-v1" },
+        { content: "unreviewed prompt" },
+        { sha256: "0".repeat(64) },
+      ]) {
+        const mismatched = new EntryPairHttpPlanner(
+          "http://127.0.0.1:8082",
+          () =>
+            Promise.resolve(
+              Response.json({
+                ...numeric,
+                promptArtifact: { ...numeric.promptArtifact, ...mismatch },
+              }),
+            ),
+        );
+        await expect(
+          mismatched.generate({ ...input, chart: null, schemaVersion: "2.0" }),
+        ).rejects.toThrow("SCENARIO_PROMPT_MISMATCH");
+      }
       const missingVersion = await server.inject({
         method: "POST",
         url: "/v2/entry-pair",

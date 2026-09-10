@@ -1,0 +1,459 @@
+{
+  "issue": "ISSUE-092",
+  "release": "0.2.5-market-stop.5",
+  "mode": "demo",
+  "checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 22.87,
+      "log": ".runtime/issue-092/final-checks/00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 25.66,
+      "log": ".runtime/issue-092/final-checks/01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.91,
+      "log": ".runtime/issue-092/final-checks/02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.29,
+      "log": ".runtime/issue-092/checks/03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 33.86,
+      "log": ".runtime/issue-092/checks/04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.39,
+      "log": ".runtime/issue-092/checks/05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.05,
+      "log": ".runtime/issue-092/checks/06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 8.25,
+      "log": ".runtime/issue-092/checks/07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": ".runtime/issue-092/checks/08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": ".runtime/issue-092/checks/09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.54,
+      "log": ".runtime/issue-092/checks/10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.84,
+      "log": ".runtime/issue-092/checks/11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": ".runtime/issue-092/checks/12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.5,
+      "log": ".runtime/issue-092/checks/13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.45,
+      "log": ".runtime/issue-092/checks/14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": ".runtime/issue-092/checks/15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.25,
+      "log": ".runtime/issue-092/checks/16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-092/archive-backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": ".runtime/issue-092/checks/17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-092/archive-scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.71,
+      "log": ".runtime/issue-092/checks/18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": ".runtime/issue-092/checks/19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.81,
+      "log": ".runtime/issue-092/checks/20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 30.95,
+      "log": ".runtime/issue-092/checks/21.log"
+    }
+  ],
+  "followup_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 22.87,
+      "log": ".runtime/issue-092/final-checks/00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 25.66,
+      "log": ".runtime/issue-092/final-checks/01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.91,
+      "log": ".runtime/issue-092/final-checks/02.log"
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/vitest/vitest.mjs run tests/scenario/entry-pair.test.ts tests/scenario/production-context.test.ts tests/risk/fixed-policy.test.ts",
+      "exit_code": 0,
+      "seconds": 2.93,
+      "log": ".runtime/issue-092/final-checks/03.log"
+    }
+  ],
+  "initial_lint_failure": "Test-only request body stringification; corrected with a string type guard. Full lint/type checks and 68 targeted tests passed afterward.",
+  "test_counts": {
+    "node": 620,
+    "python": 161,
+    "schema": 36,
+    "migration": 3,
+    "postgres_tls_integration": 5
+  },
+  "scope": "Prompt guidance and identity wiring; unchanged GTC/OCO and dynamic risk",
+  "runtime": {
+    "before": {
+      "observedAt": "2026-09-10T04:37:24.038Z",
+      "mode": "demo",
+      "orderCommandsAllowed": false,
+      "certain": true,
+      "positions": 0,
+      "pendingOrders": 2,
+      "dayDealCount": 1,
+      "dayDealsHasMore": true,
+      "flowOperations": 0,
+      "reasonCodes": [],
+      "pending": [
+        {
+          "side": 1,
+          "orderType": 3,
+          "timeInForce": 2,
+          "orderStatus": 1,
+          "stopPrice": 4420.92,
+          "relativeStopLoss": 108000,
+          "relativeTakeProfit": 54000
+        },
+        {
+          "side": 2,
+          "orderType": 3,
+          "timeInForce": 2,
+          "orderStatus": 1,
+          "stopPrice": 4393.29,
+          "relativeStopLoss": 106000,
+          "relativeTakeProfit": 53000
+        }
+      ],
+      "protection": []
+    },
+    "cancelled": {
+      "observedAt": "2026-09-10T04:38:47.292Z",
+      "mode": "demo",
+      "orderCommandsAllowed": false,
+      "certain": true,
+      "positions": 0,
+      "pendingOrders": 0,
+      "dayDealCount": 1,
+      "dayDealsHasMore": true,
+      "flowOperations": 0,
+      "reasonCodes": [],
+      "pending": [],
+      "protection": []
+    },
+    "pause": {
+      "at": "2026-09-10T04:38:16.422Z",
+      "action": "pause",
+      "http": 200,
+      "accepted": true
+    },
+    "resume": {
+      "at": "2026-09-10T04:39:06.098Z",
+      "action": "resume",
+      "http": 200,
+      "accepted": true
+    },
+    "risk_state_preserved_across_cancellation_and_restart": true,
+    "environment_byte_identical": true,
+    "provider": {
+      "at": "2026-09-10T04:39:40.872Z",
+      "state": "READY",
+      "requestedAt": "2026-09-10T04:39:16.575Z",
+      "validUntil": "2026-09-10T04:44:15.254Z",
+      "durationMs": 6666,
+      "reason": null,
+      "promptVersion": "entry-pair-v2",
+      "promptHashMatches": true,
+      "requestedModel": "deepseek-v4-pro/u5W",
+      "returnedModel": "deepseek-v4-pro",
+      "responseRecorded": true,
+      "quote": {
+        "bid": "4408.4",
+        "ask": "4408.5",
+        "sourceTime": "2026-09-10T04:39:15.254Z",
+        "receivedAt": "2026-09-10T04:39:15.406Z"
+      },
+      "entries": {
+        "buy": "4409",
+        "sell": "4407.74",
+        "gap": "1.26",
+        "buyAboveAsk": "0.50",
+        "sellBelowBid": "0.66"
+      },
+      "candles": [
+        {
+          "timeframe": "M15",
+          "count": 96
+        },
+        {
+          "timeframe": "M5",
+          "count": 144
+        },
+        {
+          "timeframe": "M1",
+          "count": 240
+        }
+      ]
+    },
+    "new_broker_observation": {
+      "observedAt": "2026-09-10T04:40:16.010Z",
+      "mode": "demo",
+      "orderCommandsAllowed": false,
+      "certain": true,
+      "positions": 0,
+      "pendingOrders": 2,
+      "dayDealCount": 1,
+      "dayDealsHasMore": true,
+      "flowOperations": 0,
+      "reasonCodes": [],
+      "pending": [
+        {
+          "side": 1,
+          "orderType": 3,
+          "timeInForce": 2,
+          "orderStatus": 1,
+          "stopPrice": 4409,
+          "relativeStopLoss": 106000,
+          "relativeTakeProfit": 53000
+        },
+        {
+          "side": 2,
+          "orderType": 3,
+          "timeInForce": 2,
+          "orderStatus": 1,
+          "stopPrice": 4407.74,
+          "relativeStopLoss": 106000,
+          "relativeTakeProfit": 53000
+        }
+      ],
+      "protection": []
+    },
+    "placement": {
+      "at": "2026-09-10T04:39:58.522Z",
+      "mode": "demo",
+      "version": "0.2.5-market-stop.5",
+      "paused": false,
+      "emergencyStopped": false,
+      "automatic": true,
+      "startupChecksPassed": true,
+      "operationalReady": true,
+      "reasons": ["PREVIOUS_ANALYSIS_ACTIVE", "RELEVANT_PENDING_ORDER_EXISTS"],
+      "riskPolicy": {
+        "version": "market-stop-v1",
+        "setupRiskPercent": "1",
+        "dailyLossLimitPercent": "5",
+        "drawdownLimitPercent": "5",
+        "maxPositionNotionalEquityMultiple": null,
+        "maxMarginUsagePercent": "100"
+      },
+      "remainingCapitalRiskPercent": "2.9364845013",
+      "scenario": {
+        "state": "READY",
+        "requested_at": "2026-09-10T04:39:16.575Z",
+        "valid_until": "2026-09-10T04:44:15.254Z",
+        "duration_ms": 6666,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "returned_model": "deepseek-v4-pro",
+        "consumed": true,
+        "calls_24h": 8
+      },
+      "setup": {
+        "status": "ACTIVE",
+        "groupState": "ACTIVE",
+        "orders": [
+          {
+            "side": "BUY",
+            "state": "PENDING",
+            "entryPrice": "4409.0000000000",
+            "stopLoss": "4407.9400000000",
+            "takeProfit": "4409.5300000000",
+            "volume": "143500.0000000000",
+            "timeInForce": "GTC",
+            "expiresAt": null
+          },
+          {
+            "side": "SELL",
+            "state": "PENDING",
+            "entryPrice": "4407.7400000000",
+            "stopLoss": "4408.8000000000",
+            "takeProfit": "4407.2100000000",
+            "volume": "143500.0000000000",
+            "timeInForce": "GTC",
+            "expiresAt": null
+          }
+        ]
+      }
+    },
+    "first_cycle_closed": {
+      "at": "2026-09-10T04:41:43.729Z",
+      "mode": "demo",
+      "version": "0.2.5-market-stop.5",
+      "paused": false,
+      "emergencyStopped": false,
+      "automatic": true,
+      "startupChecksPassed": true,
+      "operationalReady": true,
+      "reasons": [],
+      "riskPolicy": {
+        "version": "market-stop-v1",
+        "setupRiskPercent": "1",
+        "dailyLossLimitPercent": "5",
+        "drawdownLimitPercent": "5",
+        "maxPositionNotionalEquityMultiple": null,
+        "maxMarginUsagePercent": "100"
+      },
+      "remainingCapitalRiskPercent": "2.9761311807",
+      "scenario": {
+        "state": "READY",
+        "requested_at": "2026-09-10T04:39:16.575Z",
+        "valid_until": "2026-09-10T04:44:15.254Z",
+        "duration_ms": 6666,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "returned_model": "deepseek-v4-pro",
+        "consumed": true,
+        "calls_24h": 8
+      },
+      "setup": {
+        "status": "LATEST_TERMINAL",
+        "groupState": "CLOSED",
+        "orders": [
+          {
+            "side": "BUY",
+            "state": "CANCELLED",
+            "entryPrice": "4409.0000000000",
+            "stopLoss": "4407.9400000000",
+            "takeProfit": "4409.5300000000",
+            "volume": "143500.0000000000",
+            "timeInForce": "GTC",
+            "expiresAt": null
+          },
+          {
+            "side": "SELL",
+            "state": "FILLED",
+            "entryPrice": "4407.7400000000",
+            "stopLoss": "4408.8000000000",
+            "takeProfit": "4407.2100000000",
+            "volume": "143500.0000000000",
+            "timeInForce": "GTC",
+            "expiresAt": null
+          }
+        ]
+      }
+    }
+  },
+  "graphify": {
+    "nodes": 3547,
+    "edges": 7245,
+    "communities": 260,
+    "inline_concepts": 3,
+    "explicit_relationships": 9,
+    "cached_files": 1,
+    "external_api_calls": 0,
+    "note": "AST refresh plus inline source-grounded concept links; no external inference or measured API token cost.",
+    "known_warnings": [
+      "pyproject.toml zero-node AST parser limitation",
+      "Community labels regenerated from structural hubs"
+    ],
+    "observation_scope": "Counts at the verified semantic refresh; final AST refresh and path verification are repeated after delivery."
+  },
+  "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/216",
+  "precommit_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 20.56,
+      "log": ".runtime/issue-092/precommit-0.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": ".runtime/issue-092/precommit-1.log"
+    }
+  ],
+  "supplementary_index_secret_scan": {
+    "files": 459,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
+  }
+}

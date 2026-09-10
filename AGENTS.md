@@ -13,6 +13,14 @@ volume increments. Do not replace this with fixed lots or automatic risk increas
 
 ## Current operator override — ISSUE-089 / ISSUE-087 / ISSUE-086
 
+- ISSUE-092 uses provider prompt `entry-pair-v2`: tight support/resistance from
+  the latest 10 completed M1 candles (prioritize 5), with explicitly candle-based
+  order blocks as confluence. Older history provides context. Keep this guidance
+  in the prompt, shared by dispatch/verification/journal; do not add order-block
+  gates, price clamping, timed reviews or pending-order repricing. GTC/OCO,
+  local exits and dynamic money management remain unchanged. Read
+  `docs/nearby-order-block-report.md`.
+
 - ISSUE-091: on September 10 the operator explicitly approved a fresh local demo
   start and resetting unrecovered loss/risk tracking. Use a separate database and
   a documented one-time accounting transition with fresh broker reconciliation.
@@ -121,7 +129,7 @@ volume increments. Do not replace this with fixed lots or automatic risk increas
   Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Production uses `entry-pair-v1` / locally bound `entry-pair-1.0`; local derived OCO
+- Production uses `entry-pair-v2` / locally bound `entry-pair-1.0`; local derived OCO
   proposals use `entry-pair-execution-v1` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
 - The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch

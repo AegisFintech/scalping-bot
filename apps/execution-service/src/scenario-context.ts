@@ -16,6 +16,7 @@ import {
   type ScenarioPlan,
 } from "../../../packages/scenario-engine/src/plan.js";
 import {
+  ENTRY_PAIR_PROMPT,
   entryProviderPayload,
   type EntryPlannerInput,
 } from "../../../packages/scenario-engine/src/entry-planner.js";
@@ -321,7 +322,7 @@ export class ReusableScenarioModel implements ModelProvider {
     private readonly entryOnly = false,
   ) {
     this.providerPrompt = entryOnly
-      ? readFileSync("prompts/entry-pair-v1.md", "utf8").trim()
+      ? readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim()
       : null;
     const content = readFileSync(
       entryOnly
@@ -450,7 +451,7 @@ export class ReusableScenarioModel implements ModelProvider {
               providerEvidence: {
                 requestText: JSON.stringify(entryProviderPayload(plannerInput)),
                 promptContent: this.providerPrompt!,
-                promptVersion: "entry-pair-v1",
+                promptVersion: ENTRY_PAIR_PROMPT.version,
               },
             }
           : {}),

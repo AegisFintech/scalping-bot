@@ -12,6 +12,12 @@ import {
 import { validateScenarioMarket, type ScenarioInput } from "./planner.js";
 import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 
+/** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
+export const ENTRY_PAIR_PROMPT = Object.freeze({
+  version: "entry-pair-v2" as const,
+  path: "prompts/entry-pair-v2.md",
+});
+
 export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
   readonly chart: ScenarioInput["chart"] | null;
   readonly schemaVersion?: "2.0";
@@ -76,8 +82,8 @@ export class EntryPairPlanner {
       apiStyle: "responses",
       schemaPath: "schemas/entry-pair-provider-1.0.json",
       outputSchemaName: "stop_entries_1_0",
-      systemPromptPath: "prompts/entry-pair-v1.md",
-      promptVersion: "entry-pair-v1",
+      systemPromptPath: ENTRY_PAIR_PROMPT.path,
+      promptVersion: ENTRY_PAIR_PROMPT.version,
       inputProfile: "structured",
       timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
       maxRetries: 0,
