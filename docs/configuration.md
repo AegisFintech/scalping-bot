@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.5` uses policy `market-stop-v1` in
+Release `0.2.5-market-stop.6` uses policy `market-stop-v1` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -183,15 +183,15 @@ applies to production STOP orders. Relative SL/TP and all risk percentages remai
 Migration 0021 adds explicit execution intent without rewriting historical rows.
 See [rollout, validation and rollback](market-stop-report.md).
 
-ISSUE-089 release `0.2.5-market-stop.3` removes the local market-close fallbacks
-and persistent protection pause. Broker exits remain authoritative. Independent
-protection verification and two durable amendment attempts remain, at least five
-seconds apart. Fresh broker observations are required; sampled quotes are needed
-only for amendments. The dashboard withholds protection values older than ten
-seconds. There are no new environment keys. Model pin, authorization, sizing
-policy and daily/drawdown locks are unchanged. The operator-authorized rollout
-clears only the previous protection pause after confirmed flat/terminal state.
-See [broker exit loop](broker-exit-loop-report.md).
+ISSUE-093 release `0.2.5-market-stop.6` adds narrowly scoped close authority for
+freshly confirmed owned demo positions missing SL when repair is impossible or
+exhausted. Existing SL prevents this close path. The durable claim and independent
+broker verification require no new environment keys, contract or SQL migration;
+existing 0022 tables retain all historical claims. No global pause or capital
+reset is added. Model pin, GTC/OCO, sizing, daily/drawdown locks and protected
+position exits remain unchanged. Deploy the matching build under normal demo
+authorization; it also maintains an existing unprotected position. See
+[rollout and rollback](missing-stop-recovery-report.md).
 
 ## Local PostgreSQL storage release (ISSUE-090)
 

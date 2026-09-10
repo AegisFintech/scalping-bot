@@ -1669,9 +1669,19 @@ describe("PostgreSQL migrations integration", () => {
          WHERE account_id = $1 AND client_order_id = $2`,
         [demoAccountId, "cas-sell-22222222222222222222222"],
       );
-      const closingAcceptedRaw = await eventFixture(
-        "demo-order-accepted-v1.json",
-      );
+      const closingAcceptedRaw = {
+        ...(await eventFixture("demo-order-accepted-v1.json")),
+        position: {
+          positionId: "801",
+          positionStatus: 1,
+          tradeData: {
+            symbolId: "7",
+            volume: "100",
+            tradeSide: 1,
+            label: "ctrader-ai-scalper:integration",
+          },
+        },
+      };
       const closingAcceptedOrder = closingAcceptedRaw.order as Record<
         string,
         unknown
@@ -1680,22 +1690,9 @@ describe("PostgreSQL migrations integration", () => {
       closingAcceptedOrder.orderType = 4;
       closingAcceptedOrder.closingOrder = true;
       (closingAcceptedOrder.tradeData as Record<string, unknown>).tradeSide = 2;
-      const closingAccepted = normalizeDemoExecution(
-        {
-          ...closingAcceptedRaw,
-          position: {
-            positionId: "801",
-            positionStatus: 1,
-            tradeData: {
-              symbolId: "7",
-              volume: "100",
-              tradeSide: 1,
-              label: "ctrader-ai-scalper:integration",
-            },
-          },
-        },
-        { symbolId: "7" },
-      );
+      const closingAccepted = normalizeDemoExecution(closingAcceptedRaw, {
+        symbolId: "7",
+      });
       expect(closingAccepted).not.toBeNull();
       await expect(store.persist(closingAccepted!)).resolves.toEqual({
         certain: false,
@@ -1749,13 +1746,49 @@ describe("PostgreSQL migrations integration", () => {
             ),
           ).toBe(true);
           expect(await session.claimRepair(position, requestedAt)).toBe(false);
-          // Historical ISSUE-088 claim: current maintenance has no close authority.
-          await isolated.query(
-            `UPDATE position_protection SET close_requested_at=$2,close_volume='100',
-               command_at=$2,status='CLOSE_SENT',reason_code='POSITION_PROTECTION_CLOSE_AWAITING_DEAL'
-             WHERE position_id=$1`,
-            [position.id, requestedAt],
+          // Present SL cannot authorize the new missing-SL close path.
+          expect(await session.claimClose(position, requestedAt, "100")).toBe(
+            false,
           );
+          await session.observe(position, {
+            schemaVersion: "1.0",
+            status: "CLOSE_REQUIRED",
+            stopLoss: null,
+            takeProfit: "2005.25",
+            expectedStopLoss: "1999.28",
+            expectedTakeProfit: "2005.25",
+            observedAt: requestedAt,
+            reasonCode: "POSITION_PROTECTION_MISSING_SL_REPAIR_EXHAUSTED",
+          });
+          expect(await session.claimClose(position, requestedAt, "99")).toBe(
+            false,
+          );
+          expect(
+            await session.claimClose(
+              position,
+              new Date(closeTime.getTime() + 2000).toISOString(),
+              "100",
+            ),
+          ).toBe(false);
+          await new PostgresPositionProtection({
+            pool: isolated,
+            accountId: randomUUID(),
+            symbolId,
+          }).exclusive(async (other) => {
+            expect(await other.claimClose(position, requestedAt, "100")).toBe(
+              false,
+            );
+          });
+          expect(await session.claimClose(position, requestedAt, "100")).toBe(
+            true,
+          );
+          expect(await session.claimClose(position, requestedAt, "100")).toBe(
+            false,
+          );
+          await session.closeAcknowledged(position, "601");
+          await expect(
+            session.closeAcknowledged(position, "602"),
+          ).rejects.toThrow("POSITION_PROTECTION_CLOSE_ACK_CONFLICT");
         });
         await new PostgresPositionProtection({
           pool: isolated,
@@ -1766,6 +1799,9 @@ describe("PostgreSQL migrations integration", () => {
           expect(position.repairAttempts).toBe(2);
           expect(position.closeRequestedAt).toBe(requestedAt);
           expect(await session.claimRepair(position, requestedAt)).toBe(false);
+          expect(await session.claimClose(position, requestedAt, "100")).toBe(
+            false,
+          );
         });
         const proof = {
           accountId: demoAccountId,
@@ -1799,6 +1835,17 @@ describe("PostgreSQL migrations integration", () => {
           reasonCodes: [],
         });
         closedRaw.order!.orderType = 1;
+        // A distinct, unfilled TP child remains pending when a market close starts.
+        const pendingChild = structuredClone(closingAcceptedRaw);
+        pendingChild.order!.orderId = "605";
+        pendingChild.order!.utcLastUpdateTimestamp = closeTime.getTime() - 500;
+        const childEvent = normalizeDemoExecution(pendingChild, {
+          symbolId: "7",
+        })!;
+        await expect(store.persist(childEvent)).resolves.toEqual({
+          certain: false,
+          reasonCodes: ["DEMO_CLOSING_ORDER_AWAITING_DEAL"],
+        });
       }
       const closed = normalizeDemoExecution(closedRaw, { symbolId: "7" });
       expect(closed).not.toBeNull();
@@ -1806,6 +1853,38 @@ describe("PostgreSQL migrations integration", () => {
         certain: true,
         reasonCodes: [],
       });
+      if (closeMode) {
+        // Even a complete position close cannot discard an unproven child outcome.
+        expect((await store.reconcileTerminalEvidence()).certain).toBe(false);
+        const cancelledChild = structuredClone(closingAcceptedRaw);
+        cancelledChild.executionType = 5;
+        cancelledChild.order!.orderId = "605";
+        cancelledChild.order!.orderStatus = 5;
+        cancelledChild.order!.utcLastUpdateTimestamp =
+          Number(closedRaw.deal!.executionTimestamp) + 1;
+        const cancellation = normalizeDemoExecution(cancelledChild, {
+          symbolId: "7",
+        })!;
+        await store.persist(cancellation);
+        // Incomplete group reconciliation still prevents resolving the child.
+        await isolated.query(
+          "UPDATE order_groups SET state='RECONCILIATION_REQUIRED' WHERE id=$1",
+          [orderGroupId],
+        );
+        expect((await store.reconcileTerminalEvidence()).certain).toBe(false);
+        await isolated.query(
+          "UPDATE order_groups SET state='CLOSED' WHERE id=$1",
+          [orderGroupId],
+        );
+        await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
+          certain: true,
+          resolvedEventCount: 1,
+        });
+        await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
+          certain: true,
+          resolvedEventCount: 0,
+        });
+      }
       const closedLifecycle = await isolated.query<{
         group_state: string;
         position_state: string;

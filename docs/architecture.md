@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.5`, policy `market-stop-v1`.
+Current source: `0.2.5-market-stop.6`, policy `market-stop-v1`.
 
 Production uses `/v2/entry-pair`, a two-price provider reply and locally
 bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
@@ -267,19 +267,24 @@ state even while the paid-request cooldown was previously cached. All provider
 failure/unknown backoff and active-group prohibitions remain. See
 [implementation and evidence](market-stop-report.md).
 
-### Filled-position protection (ISSUE-089)
+### Filled-position protection (ISSUE-093)
 
-Release `0.2.5-market-stop.3` independently reconciles owned demo positions every
-maintenance cycle. Durable broker observations retain actual SL/TP and timestamps.
-Approved distances are anchored to actual fill VWAP, rounded inward, preserving
-tighter protection. At most two durable amendment attempts repair missing/wider
-levels. Verified protection returns without fetching a quote; broker SL/TP handles
-exits. Failed/exhausted repairs remain visible without a local market close or
-persistent analysis pause. Historical close claims still require deal evidence.
-The worker has no close or pause authority, and does not add a global entry lock.
-Existing ownership, open-position, reconciliation and risk gates remain. A fully
-reconciled close admits the existing fresh-context cycle. See
-[implementation and evidence](broker-exit-loop-report.md).
+Independent maintenance records fresh broker SL/TP, preserving approved distances
+from actual fill, inward rounding and existing tighter levels. Missing/wider
+protection receives two durable amendments, at least five seconds apart. An
+existing SL never authorizes a local close merely because a sampled price crosses
+SL/TP, TP is missing or a repair fails.
+
+If SL is confirmed absent and repair prices are crossed, quotes are unavailable,
+or two amendments did not establish SL, a second fresh exact broker read is
+required. Only a position still missing SL can receive one durable close claim
+before dispatch. A late-arriving SL prevents the close. The claim survives
+restarts and unknown dispatch; broker order, deal and P/L evidence must reconcile
+before another setup. A cancelled unfilled SL/TP child can resolve its earlier
+acknowledgement only after matching cancellation and full terminal group proof.
+No global analysis pause or risk reset is added. Broker or
+storage outages still prevent an unproven command. See
+[implementation and limits](missing-stop-recovery-report.md).
 
 ## ISSUE-090 local evidence storage
 

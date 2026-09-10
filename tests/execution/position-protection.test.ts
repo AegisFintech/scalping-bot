@@ -39,6 +39,14 @@ function fixture() {
     position = { ...local };
   let raw = broker();
   const observations: PositionProtection[] = [];
+  const claimClose = vi.fn<ProtectionSession["claimClose"]>((_p, at) => {
+    if (position.closeRequestedAt !== null) return Promise.resolve(false);
+    position = { ...position, closeRequestedAt: at };
+    return Promise.resolve(true);
+  });
+  const closeAcknowledged = vi.fn<ProtectionSession["closeAcknowledged"]>(() =>
+    Promise.resolve(),
+  );
   const session: ProtectionSession = {
     positions: () => Promise.resolve([position]),
     observe: (_p, o) => {
@@ -54,6 +62,8 @@ function fixture() {
       };
       return Promise.resolve(true);
     },
+    claimClose,
+    closeAcknowledged,
   };
   const result = {
     executionType: 4,
@@ -72,6 +82,14 @@ function fixture() {
       }),
     ),
     amendPositionProtection: vi.fn(() => Promise.resolve(result)),
+    closePosition: vi.fn(() =>
+      Promise.resolve({
+        ...result,
+        executionType: 2,
+        order: { orderId: "901", orderType: 1, closingOrder: true },
+        position: { positionId: "801" },
+      }),
+    ),
   };
   const quote = vi.fn(() =>
     Promise.resolve({
@@ -96,6 +114,8 @@ function fixture() {
     quote,
     observations,
     session,
+    claimClose,
+    closeAcknowledged,
     run: () => new PositionProtectionMaintenance(options).run(),
     advance: () => {
       clock = new Date(clock.getTime() + 6_000);
@@ -105,6 +125,9 @@ function fixture() {
     },
     replace: (value: Record<string, unknown>) => {
       raw = value;
+    },
+    setPosition: (value: ProtectionPosition) => {
+      position = value;
     },
   };
 }
@@ -178,7 +201,7 @@ describe("independent broker position protection", () => {
     expect(f.observations.at(-1)?.status).toBe("VERIFIED");
     expect(f.client.amendPositionProtection).toHaveBeenCalledTimes(1);
   });
-  it("bounds failed repairs across restarts without closing or latching a pause", async () => {
+  it("closes once after two failed SL repairs across restarts, with no global pause", async () => {
     const f = fixture();
     f.client.amendPositionProtection.mockRejectedValue(
       new Error("broker fixture rejection"),
@@ -189,12 +212,13 @@ describe("independent broker position protection", () => {
     f.advance();
     await expect(f.run()).resolves.toBeUndefined();
     expect(f.observations.at(-1)).toMatchObject({
-      status: "REPAIR_REQUIRED",
-      reasonCode: "POSITION_PROTECTION_REPAIR_EXHAUSTED",
+      status: "CLOSE_REQUIRED",
+      reasonCode: "POSITION_PROTECTION_MISSING_SL_REPAIR_EXHAUSTED",
     });
     f.advance();
     await f.run();
     expect(f.client.amendPositionProtection).toHaveBeenCalledTimes(2);
+    expect(f.client.closePosition).toHaveBeenCalledTimes(1);
     // Confirmed closure removes the position; failure must not survive into the next cycle.
     f.session.positions = () => Promise.resolve([]);
     await expect(f.run()).resolves.toBeUndefined();
@@ -239,6 +263,7 @@ describe("independent broker position protection", () => {
       expect(f.observations.at(-1)?.status).toBe("VERIFIED");
       expect(f.quote).not.toHaveBeenCalled();
       expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+      expect(f.client.closePosition).not.toHaveBeenCalled();
     },
   );
   it("keeps fresh broker protection verified when sampled quotes are unavailable", async () => {
@@ -249,7 +274,7 @@ describe("independent broker position protection", () => {
     expect(f.observations.at(-1)?.status).toBe("VERIFIED");
     expect(f.quote).not.toHaveBeenCalled();
   });
-  it("waits when a repair price is crossed and repairs when the price permits", async () => {
+  it("closes an unprotected short when its repair price is crossed", async () => {
     const f = fixture();
     f.quote.mockResolvedValueOnce({
       bid: "4397.20",
@@ -259,15 +284,19 @@ describe("independent broker position protection", () => {
     });
     await expect(f.run()).resolves.toBeUndefined();
     expect(f.observations.at(-1)).toMatchObject({
-      status: "REPAIR_REQUIRED",
-      reasonCode: "POSITION_PROTECTION_REPAIR_PRICE_CROSSED",
+      status: "CLOSE_REQUIRED",
+      reasonCode: "POSITION_PROTECTION_MISSING_SL_REPAIR_PRICE_CROSSED",
     });
     expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
     expect((await f.session.positions())[0]?.repairAttempts).toBe(0);
     await f.run();
-    expect(f.client.amendPositionProtection).toHaveBeenCalledTimes(1);
+    expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    expect(f.client.closePosition).toHaveBeenCalledExactlyOnceWith(
+      "801",
+      "100",
+    );
   });
-  it("rejects stale quotes without dispatching protection commands", async () => {
+  it("closes only a freshly confirmed missing-SL position when sampled quotes are stale", async () => {
     const f = fixture();
     f.quote.mockResolvedValue({
       bid: "4397.6",
@@ -275,8 +304,9 @@ describe("independent broker position protection", () => {
       sourceTime: "2026-09-09T06:21:00Z",
       receivedAt: timestamp,
     });
-    await expect(f.run()).rejects.toThrow();
+    await expect(f.run()).resolves.toBeUndefined();
     expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    expect(f.client.closePosition).toHaveBeenCalledTimes(1);
   });
   it("requires the position to remain present on the late read", async () => {
     const f = fixture();
@@ -289,6 +319,7 @@ describe("independent broker position protection", () => {
       .mockResolvedValue({ receivedAt: timestamp, positions: [], orders: [] });
     await expect(f.run()).rejects.toThrow();
     expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    expect(f.client.closePosition).not.toHaveBeenCalled();
   });
   it("observes a historical close claim without sending another command or pausing", async () => {
     const f = fixture();
@@ -299,5 +330,177 @@ describe("independent broker position protection", () => {
     expect(f.observations.at(-1)?.status).toBe("CLOSE_SENT");
     expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
     expect(f.quote).not.toHaveBeenCalled();
+  });
+  it("resolves the slipped BUY incident with one durable close, awaiting a deal", async () => {
+    const f = fixture();
+    f.setPosition({
+      ...local,
+      side: "BUY",
+      entryPrice: "4432.49",
+      orderEntry: "4431.40",
+      orderStopLoss: "4430.32",
+      orderTakeProfit: "4431.94",
+    });
+    f.replace({
+      ...broker(),
+      price: 4432.49,
+      takeProfit: 4433.03,
+      tradeData: { ...(broker().tradeData as object), tradeSide: 1 },
+    });
+    f.quote.mockResolvedValue({
+      bid: "4431.20",
+      ask: "4431.30",
+      sourceTime: timestamp,
+      receivedAt: timestamp,
+    });
+    await f.run();
+    expect(f.observations.at(-1)).toMatchObject({
+      expectedStopLoss: "4431.41",
+      stopLoss: null,
+      status: "CLOSE_REQUIRED",
+    });
+    expect(f.claimClose).toHaveBeenCalledWith(
+      expect.objectContaining({ side: "BUY" }),
+      timestamp,
+      "100",
+    );
+    expect(f.closeAcknowledged).toHaveBeenCalledWith(expect.anything(), "901");
+    await f.run();
+    expect(f.observations.at(-1)?.status).toBe("CLOSE_SENT");
+    expect(f.client.closePosition).toHaveBeenCalledTimes(1);
+  });
+  it("never closes an SL-protected trade for a missing TP or wider SL", async () => {
+    const f = fixture();
+    f.replace({ ...broker(), stopLoss: 4399 });
+    f.quote.mockResolvedValue({
+      bid: "4397.20",
+      ask: "4397.36",
+      sourceTime: timestamp,
+      receivedAt: timestamp,
+    });
+    await f.run();
+    expect(f.observations.at(-1)?.reasonCode).toBe(
+      "POSITION_PROTECTION_REPAIR_PRICE_CROSSED",
+    );
+    expect(f.client.closePosition).not.toHaveBeenCalled();
+    f.quote.mockReset().mockImplementation(() =>
+      Promise.resolve({
+        bid: "4397.6",
+        ask: "4397.7",
+        sourceTime: timestamp,
+        receivedAt: timestamp,
+      }),
+    );
+    f.client.amendPositionProtection.mockRejectedValue(new Error("rejected"));
+    await expect(f.run()).rejects.toThrow();
+    f.advance();
+    f.quote.mockResolvedValue({
+      bid: "4397.6",
+      ask: "4397.7",
+      sourceTime: "2026-09-09T06:21:20Z",
+      receivedAt: "2026-09-09T06:21:20Z",
+    });
+    await expect(f.run()).rejects.toThrow();
+    f.advance();
+    await f.run();
+    expect(f.observations.at(-1)?.reasonCode).toBe(
+      "POSITION_PROTECTION_REPAIR_EXHAUSTED",
+    );
+    expect(f.client.closePosition).not.toHaveBeenCalled();
+  });
+  it("allows an amendment five seconds to become visible before closing", async () => {
+    const f = fixture();
+    f.setPosition({ ...local, repairAttempts: 2, commandAt: timestamp });
+    await f.run();
+    expect(f.client.closePosition).not.toHaveBeenCalled();
+    f.protect();
+    f.advance();
+    await f.run();
+    expect(f.client.closePosition).not.toHaveBeenCalled();
+  });
+  it.each(["timeout", "rejected", "ack mismatch"])(
+    "never repeats an uncertain close after %s",
+    async (failure) => {
+      const f = fixture();
+      f.setPosition({ ...local, repairAttempts: 2 });
+      if (failure === "ack mismatch")
+        f.client.closePosition.mockResolvedValue({
+          executionType: 2,
+          order: { orderId: "901", orderType: 1, closingOrder: true },
+          position: { positionId: "999" },
+          deal: null,
+          errorCode: null,
+          receivedAt: timestamp,
+        });
+      else f.client.closePosition.mockRejectedValue(new Error(failure));
+      await expect(f.run()).rejects.toThrow();
+      f.advance();
+      await f.run();
+      expect(f.client.closePosition).toHaveBeenCalledTimes(1);
+      expect(f.observations.at(-1)?.reasonCode).toBe(
+        "POSITION_PROTECTION_CLOSE_AWAITING_DEAL",
+      );
+      expect(f.closeAcknowledged).not.toHaveBeenCalled();
+    },
+  );
+  it.each([
+    "protected",
+    "gone",
+    "duplicate",
+    "stale",
+    "manual",
+    "changed volume",
+  ])(
+    "rechecks fresh ownership and absence of SL before closing: %s",
+    async (change) => {
+      const f = fixture();
+      f.setPosition({ ...local, repairAttempts: 2 });
+      const raw = broker();
+      const positions =
+        change === "gone"
+          ? []
+          : change === "duplicate"
+            ? [raw, raw]
+            : [
+                {
+                  ...raw,
+                  ...(change === "protected" ? { stopLoss: 4398.95 } : {}),
+                  ...(change === "manual" || change === "changed volume"
+                    ? {
+                        tradeData: {
+                          ...(raw.tradeData as object),
+                          ...(change === "manual"
+                            ? { label: "manual" }
+                            : { volume: "50" }),
+                        },
+                      }
+                    : {}),
+                },
+              ];
+      f.client.reconcileRaw
+        .mockResolvedValueOnce({
+          receivedAt: timestamp,
+          positions: [raw],
+          orders: [],
+        })
+        .mockResolvedValue({
+          receivedAt: change === "stale" ? "2026-09-09T06:21:00Z" : timestamp,
+          positions,
+          orders: [],
+        });
+      if (change === "protected") await f.run();
+      else await expect(f.run()).rejects.toThrow();
+      expect(f.client.closePosition).not.toHaveBeenCalled();
+      expect(f.claimClose).not.toHaveBeenCalled();
+    },
+  );
+  it("never dispatches when durable close claim fails", async () => {
+    const f = fixture();
+    f.setPosition({ ...local, repairAttempts: 2 });
+    f.session.claimClose = vi.fn(() =>
+      Promise.reject(new Error("storage unavailable")),
+    );
+    await expect(f.run()).rejects.toThrow();
+    expect(f.client.closePosition).not.toHaveBeenCalled();
   });
 });

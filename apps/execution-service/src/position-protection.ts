@@ -33,6 +33,15 @@ export interface ProtectionSession {
     observation: PositionProtection,
   ): Promise<void>;
   claimRepair(position: ProtectionPosition, at: string): Promise<boolean>;
+  claimClose(
+    position: ProtectionPosition,
+    at: string,
+    volume: string,
+  ): Promise<boolean>;
+  closeAcknowledged(
+    position: ProtectionPosition,
+    brokerOrderId: string,
+  ): Promise<void>;
 }
 export interface ProtectionStore {
   exclusive(work: (session: ProtectionSession) => Promise<void>): Promise<void>;
@@ -45,6 +54,7 @@ export interface ProtectionClient {
     stopLoss: string,
     takeProfit: string,
   ): Promise<BrokerExecution>;
+  closePosition(positionId: string, volume: string): Promise<BrokerExecution>;
 }
 export interface ProtectionOptions {
   readonly store: ProtectionStore;
@@ -219,41 +229,71 @@ export class PositionProtectionMaintenance {
         status: "CLOSE_SENT",
         reasonCode: "POSITION_PROTECTION_CLOSE_AWAITING_DEAL",
       });
-      return; // Historical close claims still await broker deal reconciliation.
+      return; // No repeated close dispatch after a timeout, partial fill or restart.
     }
     await session.observe(position, observation);
     // Broker-held exits remain authoritative, including when sampled quotes cross them.
     if (!plan.repair) return;
+    // Allow an in-flight amendment to become visible before any further command.
+    if (position.commandAt !== null) {
+      const age = now().getTime() - Date.parse(position.commandAt);
+      if (!Number.isFinite(age) || age < 0)
+        throw new Error("POSITION_PROTECTION_COMMAND_TIME_INVALID");
+      if (age < 5_000) return;
+    }
     if (position.repairAttempts >= 2) {
+      if (plan.stopLoss === null) {
+        await this.closeUnprotected(
+          session,
+          position,
+          "POSITION_PROTECTION_MISSING_SL_REPAIR_EXHAUSTED",
+        );
+        return;
+      }
       await session.observe(position, {
         ...observation,
         reasonCode: "POSITION_PROTECTION_REPAIR_EXHAUSTED",
       });
       return;
     }
-    const quote = await this.options.quote();
-    fresh(quote.sourceTime, now());
-    fresh(quote.receivedAt, now());
-    const bid = positive(quote.bid),
-      ask = positive(quote.ask);
-    if (ask.lt(bid)) throw new Error("POSITION_PROTECTION_QUOTE_INVALID");
+    let quote: Quote;
+    try {
+      quote = await this.options.quote();
+      fresh(quote.sourceTime, now());
+      fresh(quote.receivedAt, now());
+      if (positive(quote.ask).lt(positive(quote.bid)))
+        throw new Error("POSITION_PROTECTION_QUOTE_INVALID");
+    } catch (error) {
+      if (plan.stopLoss !== null) throw error;
+      // A fresh, exact broker position without SL is sufficient to reduce risk;
+      // an unavailable quote must never prolong an unprotected position.
+      await this.closeUnprotected(
+        session,
+        position,
+        "POSITION_PROTECTION_MISSING_SL_QUOTE_UNAVAILABLE",
+      );
+      return;
+    }
     const buy = position.side === "BUY";
-    const mark = buy ? bid : ask;
+    const mark = positive(buy ? quote.bid : quote.ask);
     const crossed = buy
       ? mark.lte(plan.expectedStopLoss) || mark.gte(plan.expectedTakeProfit)
       : mark.gte(plan.expectedStopLoss) || mark.lte(plan.expectedTakeProfit);
     if (crossed) {
+      if (plan.stopLoss === null) {
+        await this.closeUnprotected(
+          session,
+          position,
+          "POSITION_PROTECTION_MISSING_SL_REPAIR_PRICE_CROSSED",
+        );
+        return;
+      }
       await session.observe(position, {
         ...observation,
         reasonCode: "POSITION_PROTECTION_REPAIR_PRICE_CROSSED",
       });
       return;
     }
-    if (
-      position.commandAt !== null &&
-      now().getTime() - Date.parse(position.commandAt) < 5_000
-    )
-      return;
     // Re-read immediately before amending protection.
     const latest = await this.options.client.reconcileRaw();
     fresh(latest.receivedAt, now());
@@ -279,5 +319,66 @@ export class PositionProtectionMaintenance {
       confirmed.expectedTakeProfit,
     );
     // The acknowledgement is not proof. Next independent tick verifies fresh broker state.
+  }
+
+  private async closeUnprotected(
+    session: ProtectionSession,
+    position: ProtectionPosition,
+    reasonCode: string,
+  ): Promise<void> {
+    const now = () => this.options.now?.() ?? new Date();
+    const snapshot = await this.options.client.reconcileRaw();
+    fresh(snapshot.receivedAt, now());
+    const matches = snapshot.positions.filter(
+      (p) => stringField(p, "positionId") === position.brokerPositionId,
+    );
+    if (matches.length !== 1)
+      throw new Error("POSITION_PROTECTION_RECONCILIATION_REQUIRED");
+    const confirmed = protectionPlan(
+      position,
+      matches[0]!,
+      this.options.symbolId,
+      this.options.tickSize,
+    );
+    // Never override an SL that arrived after the first observation.
+    if (confirmed.stopLoss !== null) return;
+    await session.observe(position, {
+      schemaVersion: "1.0",
+      status: "CLOSE_REQUIRED",
+      stopLoss: null,
+      takeProfit: confirmed.takeProfit,
+      expectedStopLoss: confirmed.expectedStopLoss,
+      expectedTakeProfit: confirmed.expectedTakeProfit,
+      observedAt: snapshot.receivedAt,
+      reasonCode,
+    });
+    fresh(snapshot.receivedAt, now());
+    if (
+      !(await session.claimClose(
+        position,
+        now().toISOString(),
+        confirmed.volume,
+      ))
+    )
+      return;
+    const result = await this.options.client.closePosition(
+      position.brokerPositionId,
+      confirmed.volume,
+    );
+    if (
+      result.errorCode !== null ||
+      ![2, 3, 11].includes(result.executionType) ||
+      result.order === null ||
+      result.order.closingOrder !== true ||
+      numberField(result.order, "orderType") !== 1 ||
+      result.position === null ||
+      stringField(result.position, "positionId") !== position.brokerPositionId
+    )
+      throw new Error("POSITION_PROTECTION_CLOSE_ACK_MISMATCH");
+    await session.closeAcknowledged(
+      position,
+      stringField(result.order, "orderId"),
+    );
+    // Acceptance is not closure: the existing execution journal must prove the deal.
   }
 }

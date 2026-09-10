@@ -156,6 +156,23 @@ describe("ordinary STOP wire transport", () => {
     await expect(
       client.amendPositionProtection("801", "XAUUSD", "4398.951", "4397.36"),
     ).rejects.toThrow("CTRADER_POSITION_PROTECTION_INVALID");
+    request.mockResolvedValue(response(1));
+    await client.closePosition("801", "100");
+    expect(request).toHaveBeenLastCalledWith(
+      CTraderPayload.CLOSE_POSITION_REQ,
+      { ctidTraderAccountId: 123, positionId: 801, volume: 100 },
+      [CTraderPayload.EXECUTION_EVENT],
+    );
+    for (const volume of ["0", "-1", "1.5", "NaN"]) {
+      await expect(client.closePosition("801", volume)).rejects.toThrow();
+    }
+    await expect(client.closePosition("0", "100")).rejects.toThrow(
+      "CTRADER_POSITION_ID_INVALID",
+    );
+    request.mockRejectedValueOnce(new Error("CTRADER_REQUEST_REJECTED"));
+    await expect(client.closePosition("801", "100")).rejects.toThrow(
+      "CTRADER_REQUEST_REJECTED",
+    );
     const readOnly = new CTraderClient({
       clientId: "fixture",
       clientSecret: "fixture",
@@ -168,5 +185,6 @@ describe("ordinary STOP wire transport", () => {
     await expect(
       readOnly.amendPositionProtection("801", "XAUUSD", "4398.95", "4397.36"),
     ).rejects.toThrow();
+    await expect(readOnly.closePosition("801", "100")).rejects.toThrow();
   });
 });

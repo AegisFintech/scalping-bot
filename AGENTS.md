@@ -253,13 +253,22 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
-## ISSUE-089 protection maintenance (supersedes ISSUE-088 exits)
+## ISSUE-093 missing-SL recovery (supersedes ISSUE-089 missing protection)
 
-- Read `docs/position-protection-report.md` before changing filled-position protection.
-- Keep broker-observed SL/TP separate from entry intent and require observation freshness.
-- Preserve approved distances from actual fill, inward tick rounding, and existing tighter protection.
-- Two durable amendment attempts bound repairs across restarts. Failed/exhausted repairs
-  remain visible without market closing or setting a global analysis pause.
-- Historical close claims still require broker deal evidence; never retry their dispatch.
-- Protective maintenance must not await inference or ordinary placement gates. Only exact owned
-  demo positions can be amended; closing fills still require existing deal/P&L evidence.
+- Read `docs/missing-stop-recovery-report.md` before changing filled-position protection.
+- Keep fresh broker SL/TP separate from intent, approved fill-relative distances,
+  inward rounding and tighter existing protection.
+- Two durable amendment attempts are separated by five seconds. Only a freshly
+  confirmed exact owned demo position with no SL may enter the close path when
+  repair is impossible or exhausted. An existing SL always prevents this path.
+- Re-read ownership, exact volume and missing SL before claiming one close
+  durably. Unknown/timeout dispatch, partial fills and restarts never resend it.
+  Closing order/deal/P&L evidence remains necessary; no global pause or risk reset.
+- Maintenance must not await inference or normal placement gates. Quote failures
+  cannot prolong a confirmed missing SL, but stale/ambiguous broker or storage
+  state cannot authorize a command. Never close protected/manual positions based
+  only on sampled SL/TP crossings. Historical close claims remain immutable.
+- A mapped unfilled SL/TP child acknowledgement may resolve after that exact child
+  is explicitly cancelled and the owned position/trade and whole group have full
+  terminal proof. Missing/partial/unknown cancellation or trade evidence still
+  blocks; never clear price/recorder failures without existing certain recovery.

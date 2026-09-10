@@ -5,7 +5,7 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.5-market-stop.5`, policy `market-stop-v1`.
+The current source release is `0.2.5-market-stop.6`, policy `market-stop-v1`.
 EPRToken returns only buy/sell stop-entry prices using `entry-pair-v2`, prioritizing
 nearby M1 support/resistance and candle-based order blocks. See the
 [entry guidance report](docs/nearby-order-block-report.md). The script
