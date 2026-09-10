@@ -5,6 +5,8 @@
 ### ISSUE-092 — Nearby support/resistance and order-block entry guidance (implemented; validated)
 
 - Issue: [#215](https://github.com/AegisFintech/scalping-bot/issues/215).
+- Pull request: [#216](https://github.com/AegisFintech/scalping-bot/pull/216);
+  implementation checkpoint `f7d98e4` committed and pushed.
 - Branch: `issue-092-nearby-order-block-entries`; dependency: ISSUE-091 / PR #214.
 - Operator direction: tight nearby support/resistance with candle-based smart-money
   order blocks, simple readable code, no five-minute order review or repricing.
@@ -19,7 +21,9 @@
   3 migration / 5 PostgreSQL-TLS integration tests). Graphify updated and prompt
   relationship verified. Demo resumed at 12:39:06 SGT after one-time confirmed
   cancellation of the old distant pair; daily/drawdown state and environment
-  preserved. First v2 output: 4409.00 / 4407.74, gap 1.26; no timed review added.
+  preserved. First v2 output: 4409.00 / 4407.74, gap 1.26; both STOP/GTC orders
+  broker-confirmed. By 12:41:43 the SELL had filled, BUY was cancelled and group
+  was CLOSED. No timed review added; no profitability claim.
 - [Implementation, assumptions and rollout](docs/nearby-order-block-report.md);
   [exact commands and evidence](docs/evidence/nearby-order-block-validation.json).
 

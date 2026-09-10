@@ -362,6 +362,63 @@
           }
         ]
       }
+    },
+    "first_cycle_closed": {
+      "at": "2026-09-10T04:41:43.729Z",
+      "mode": "demo",
+      "version": "0.2.5-market-stop.5",
+      "paused": false,
+      "emergencyStopped": false,
+      "automatic": true,
+      "startupChecksPassed": true,
+      "operationalReady": true,
+      "reasons": [],
+      "riskPolicy": {
+        "version": "market-stop-v1",
+        "setupRiskPercent": "1",
+        "dailyLossLimitPercent": "5",
+        "drawdownLimitPercent": "5",
+        "maxPositionNotionalEquityMultiple": null,
+        "maxMarginUsagePercent": "100"
+      },
+      "remainingCapitalRiskPercent": "2.9761311807",
+      "scenario": {
+        "state": "READY",
+        "requested_at": "2026-09-10T04:39:16.575Z",
+        "valid_until": "2026-09-10T04:44:15.254Z",
+        "duration_ms": 6666,
+        "reason": null,
+        "requested_model": "deepseek-v4-pro/u5W",
+        "returned_model": "deepseek-v4-pro",
+        "consumed": true,
+        "calls_24h": 8
+      },
+      "setup": {
+        "status": "LATEST_TERMINAL",
+        "groupState": "CLOSED",
+        "orders": [
+          {
+            "side": "BUY",
+            "state": "CANCELLED",
+            "entryPrice": "4409.0000000000",
+            "stopLoss": "4407.9400000000",
+            "takeProfit": "4409.5300000000",
+            "volume": "143500.0000000000",
+            "timeInForce": "GTC",
+            "expiresAt": null
+          },
+          {
+            "side": "SELL",
+            "state": "FILLED",
+            "entryPrice": "4407.7400000000",
+            "stopLoss": "4408.8000000000",
+            "takeProfit": "4407.2100000000",
+            "volume": "143500.0000000000",
+            "timeInForce": "GTC",
+            "expiresAt": null
+          }
+        ]
+      }
     }
   },
   "graphify": {
@@ -376,6 +433,27 @@
     "known_warnings": [
       "pyproject.toml zero-node AST parser limitation",
       "Community labels regenerated from structural hubs"
-    ]
+    ],
+    "observation_scope": "Counts at the verified semantic refresh; final AST refresh and path verification are repeated after delivery."
+  },
+  "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/216",
+  "precommit_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 20.56,
+      "log": ".runtime/issue-092/precommit-0.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": ".runtime/issue-092/precommit-1.log"
+    }
+  ],
+  "supplementary_index_secret_scan": {
+    "files": 459,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
   }
 }

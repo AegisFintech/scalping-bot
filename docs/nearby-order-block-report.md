@@ -1,7 +1,9 @@
 # ISSUE-092 — Nearby support/resistance and order-block entries
 
 Release `0.2.5-market-stop.5`, policy `market-stop-v1`.
-[Issue #215](https://github.com/AegisFintech/scalping-bot/issues/215).
+[Issue #215](https://github.com/AegisFintech/scalping-bot/issues/215),
+[pull request #216](https://github.com/AegisFintech/scalping-bot/pull/216).
+Implementation checkpoint `f7d98e4` committed and pushed.
 Status: implemented; all required checks passed; authorized demo resumed.
 [Exact validation and runtime evidence](evidence/nearby-order-block-validation.json).
 
@@ -82,7 +84,7 @@ concepts and nine explicit links connected the prompt, identity and report.
 `graphify cluster-only .` regenerated the report/HTML. A path query verifies
 `ENTRY_PAIR_PROMPT → entry-pair-v2.md`. No external API inference was used. The
 existing zero-node `pyproject.toml` parser warning remains; community names are
-structural hub labels. Final graph counts are in the evidence.
+structural hub labels. Counts from the inspected refresh are in the evidence.
 
 At 12:38:16 SGT new analyses were paused for the reviewed rollout. A one-time
 owned-pair cancellation was acknowledged at 12:38:19; independent broker
@@ -104,7 +106,9 @@ block identity, time-to-fill or profitable performance.
 Execution status at 12:39:58 confirmed both new orders PENDING with GTC and null
 pending expiry: buy 4409.00 (SL 4407.94 / TP 4409.53) and sell 4407.74
 (SL 4408.80 / TP 4407.21). The independent broker observation is recorded in the
-linked evidence.
+linked evidence. By 12:41:43 the journal showed SELL filled, BUY cancelled and
+the group CLOSED, with no admission blockers. This is one observed demo lifecycle,
+not performance evidence.
 
 The original distant GTC pair remains immutable in cancellation/history evidence.
 No timer review or recurring repricing was introduced. No manual cycle was run.
