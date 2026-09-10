@@ -2,6 +2,9 @@
 
 Status: implementation and isolated recovery validation; authoritative cutover
 blocked. [Issue #211](https://github.com/AegisFintech/scalping-bot/issues/211).
+[Draft PR #212](https://github.com/AegisFintech/scalping-bot/pull/212), implementation
+checkpoint `1508a2f`, is pushed for review. Merge/activation remain pending the
+current-history recovery acceptance criteria.
 
 The hosted PostgreSQL compute quota prevents the execution service from starting.
 The operator approved native local PostgreSQL, bounded disposable storage, cache

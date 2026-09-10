@@ -2,9 +2,12 @@
 
 ## Scope
 
-### ISSUE-090 — Local PostgreSQL and necessary evidence storage (in progress)
+### ISSUE-090 — Local PostgreSQL and necessary evidence storage (prepared; cutover blocked)
 
 - Issue: [#211](https://github.com/AegisFintech/scalping-bot/issues/211).
+- Draft pull request: [#212](https://github.com/AegisFintech/scalping-bot/pull/212).
+  Implementation checkpoint `1508a2f` committed and pushed. Final acceptance and
+  automatic merge remain pending authoritative source recovery.
 - Branch: `issue-090-local-storage-overhaul`; dependency: ISSUE-089 / PR #210.
 - Authorization: September 10 operator approved the local PostgreSQL migration,
   scoped server cleanup, compact evidence, bounded disposable retention and backups.
