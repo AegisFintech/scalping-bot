@@ -93,6 +93,13 @@ is discovered from broker metadata. See the official
 
 ## Daily and lifetime capital accounting
 
+ISSUE-091 is a separately authorized one-time fresh demo accounting transition
+after inaccessible hosted history. Its new local database uses freshly reconciled
+baseline evidence, preserves the historical archive separately, and retains all
+subsequent lock/reduction persistence. Money management remains dynamic against
+current equity, drawdown, remaining daily capacity, costs and broker margin;
+the percentage limits below are unchanged. See [activation evidence](fresh-local-demo-report.md).
+
 The existing reconciled UTC daily baseline and broker capital-flow history remain
 authoritative. Missing history or a missing late-start baseline fails closed.
 Signed flows are strictly parsed; NaN cannot turn a daily lockout into false.

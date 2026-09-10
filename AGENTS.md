@@ -7,7 +7,19 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
 
+Money management must remain dynamic: size from current reconciled equity and
+remaining daily capacity, with drawdown reductions, costs, broker margin and
+volume increments. Do not replace this with fixed lots or automatic risk increases.
+
 ## Current operator override — ISSUE-089 / ISSUE-087 / ISSUE-086
+
+- ISSUE-091: on September 10 the operator explicitly approved a fresh local demo
+  start and resetting unrecovered loss/risk tracking. Use a separate database and
+  a documented one-time accounting transition with fresh broker reconciliation.
+  Preserve the hosted source, historical local archive and original evidence.
+  This authorization does not permit recurring resets, replay of old dispatches,
+  increased risk percentages or live execution. The existing dynamic sizing,
+  shared 1% setup limit, 5% daily limit and drawdown reductions remain in force.
 
 - ISSUE-090 authorizes local PostgreSQL, numeric-only production analytics 2.0,
   deduplicated candle values and on-demand display charts. Historical chart bytes
