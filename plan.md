@@ -5,6 +5,8 @@
 ### ISSUE-094 — Demo development with current-equity setup risk (implemented; validated)
 
 - Issue: [#219](https://github.com/AegisFintech/scalping-bot/issues/219).
+- Pull request: [#220](https://github.com/AegisFintech/scalping-bot/pull/220);
+  implementation checkpoint `34e45c0` committed and pushed.
 - Branch: `issue-094-demo-development-risk`; dependency: ISSUE-093 / PR #218.
 - Operator explicitly requested unlocking loss limits for extensive demo trading
   development while retaining 1% of current equity per setup.

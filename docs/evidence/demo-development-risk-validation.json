@@ -528,15 +528,16 @@
   ],
   "graph": {
     "nodes": 3611,
-    "edges": 7364,
-    "communities": 255,
+    "edges": 7365,
+    "communities": 251,
     "dangling_edges": 0,
     "external_api_calls": 0,
     "relationship": "Demo development risk admission -> report -> capitalAdmission",
     "warnings": [
       "Existing pyproject.toml zero AST nodes",
       "Community labels changed; hub labels used"
-    ]
+    ],
+    "phase": "validation snapshot before final delivery documentation"
   },
   "notes": [
     "Daily/capital baselines and recorded locks remain unchanged; enforcement is mode-specific.",
@@ -545,5 +546,198 @@
     "Node test counts include schema and migration cases also run as dedicated gates.",
     "Trade realized_pnl already contains recorded fees; do not subtract fees again.",
     "Repository secret scan reports pre-existing missing screenshots; a separate all-index scan is required before commits."
-  ]
+  ],
+  "delivery": {
+    "issue": "https://github.com/AegisFintech/scalping-bot/issues/219",
+    "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/220",
+    "implementation_commit": "34e45c06723a71cb7b041d31f1ce1dd7ed9b8769",
+    "implementation_pushed": true
+  },
+  "final_runtime": {
+    "at": "2026-09-10T09:34:15.435Z",
+    "mode": "demo",
+    "release": "0.2.5-market-stop.7",
+    "policy": {
+      "version": "market-stop-v2",
+      "mode": "demo",
+      "lossLimitsEnforced": false,
+      "setupRiskPercent": "1",
+      "dailyLossLimitPercent": "5",
+      "drawdownLimitPercent": "5",
+      "maxPositionNotionalEquityMultiple": null,
+      "maxMarginUsagePercent": "100"
+    },
+    "tradingEnabled": false,
+    "riskCap": "1",
+    "managedSetupStatus": "ACTIVE",
+    "paused": false,
+    "emergency": false,
+    "automatic": true,
+    "startup": true,
+    "ready": true,
+    "reasons": ["PREVIOUS_ANALYSIS_ACTIVE", "RELEVANT_PENDING_ORDER_EXISTS"],
+    "daily": [
+      {
+        "trading_day": "2026-09-10",
+        "baseline_equity": "952890.8000000000",
+        "current_equity": "881571.8400000000",
+        "loss_percent": "7.48448406",
+        "locked_out": true,
+        "locked_at": "2026-09-10T06:16:01.252Z"
+      }
+    ],
+    "capital": [
+      {
+        "reference_equity": "952890.8000000000",
+        "high_water_equity": "952890.8000000000",
+        "risk_multiplier": "0.00000000",
+        "locked_out": true
+      }
+    ],
+    "positions": [
+      {
+        "state": "CLOSED",
+        "side": "SELL",
+        "entry_price": "4390.6400000000",
+        "opened_at": "2026-09-10T09:32:37.223Z",
+        "closed_at": "2026-09-10T09:33:24.548Z",
+        "protection_status": "VERIFIED",
+        "stop_loss": "4391.7000000000",
+        "take_profit": "4390.1100000000",
+        "expected_stop_loss": "4391.7000000000",
+        "repair_attempts": 0,
+        "reason_code": "POSITION_PROTECTION_CONFIRMED",
+        "close_requested_at": null,
+        "close_acknowledged": false,
+        "group_state": "CLOSED"
+      }
+    ],
+    "closeEvents": [],
+    "environmentUnchanged": true
+  },
+  "final_trading": {
+    "at": "2026-09-10T09:34:15.632Z",
+    "groups": [
+      {
+        "created_at": "2026-09-10T09:34:08.232Z",
+        "state": "ACTIVE",
+        "legs": 2,
+        "equity": "881571.8400000000",
+        "setup_risk_percent": "1.00000",
+        "combined_budget": "8815.7184000000",
+        "approved": true,
+        "within_one_percent": true
+      },
+      {
+        "created_at": "2026-09-10T09:32:23.371Z",
+        "state": "CLOSED",
+        "legs": 2,
+        "equity": "886906.8100000000",
+        "setup_risk_percent": "1.00000",
+        "combined_budget": "8869.0681000000",
+        "approved": true,
+        "within_one_percent": true
+      },
+      {
+        "created_at": "2026-09-10T09:30:43.515Z",
+        "state": "CLOSED",
+        "legs": 2,
+        "equity": "892135.7700000000",
+        "setup_risk_percent": "1.00000",
+        "combined_budget": "8921.3577000000",
+        "approved": true,
+        "within_one_percent": true
+      }
+    ],
+    "analyses": [
+      {
+        "state": "ACCEPTED",
+        "deferral_reason": null,
+        "created_at": "2026-09-10T09:34:01.603Z"
+      },
+      {
+        "state": "REJECTED",
+        "deferral_reason": null,
+        "created_at": "2026-09-10T09:33:51.104Z"
+      },
+      {
+        "state": "REJECTED",
+        "deferral_reason": null,
+        "created_at": "2026-09-10T09:33:41.303Z"
+      },
+      {
+        "state": "DEFERRED",
+        "deferral_reason": "SCENARIO_REFRESH_STARTED",
+        "created_at": "2026-09-10T09:33:31.987Z"
+      },
+      {
+        "state": "EXPIRED",
+        "deferral_reason": null,
+        "created_at": "2026-09-10T09:32:16.318Z"
+      }
+    ],
+    "contexts": [
+      {
+        "state": "READY",
+        "reason": null,
+        "requested_at": "2026-09-10T09:33:34.571Z",
+        "available_at": "2026-09-10T09:33:39.759Z",
+        "duration_ms": 5187,
+        "requested_model": "deepseek-v4-pro/u5W"
+      },
+      {
+        "state": "READY",
+        "reason": null,
+        "requested_at": "2026-09-10T09:31:34.754Z",
+        "available_at": "2026-09-10T09:31:40.137Z",
+        "duration_ms": 5383,
+        "requested_model": "deepseek-v4-pro/u5W"
+      },
+      {
+        "state": "READY",
+        "reason": null,
+        "requested_at": "2026-09-10T09:30:16.049Z",
+        "available_at": "2026-09-10T09:30:21.910Z",
+        "duration_ms": 5861,
+        "requested_model": "deepseek-v4-pro/u5W"
+      }
+    ],
+    "trades": [
+      {
+        "side": "SELL",
+        "entry_price": "4390.6400000000",
+        "opened_at": "2026-09-10T09:32:37.223Z",
+        "closed_at": "2026-09-10T09:33:24.548Z",
+        "realized_pnl": "-5334.9700000000",
+        "fees": "-719.5800000000"
+      },
+      {
+        "side": "SELL",
+        "entry_price": "4391.1100000000",
+        "opened_at": "2026-09-10T09:31:10.946Z",
+        "closed_at": "2026-09-10T09:31:16.720Z",
+        "realized_pnl": "-5228.9600000000",
+        "fees": "-723.8800000000"
+      }
+    ]
+  },
+  "final_broker": {
+    "observedAt": "2026-09-10T09:34:25.868Z",
+    "mode": "demo",
+    "orderCommandsAllowed": false,
+    "certain": true,
+    "positions": 0,
+    "pendingOrders": 0,
+    "pending": [],
+    "protection": []
+  },
+  "pre_commit_secret_scan": {
+    "files": 465,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
+  },
+  "final_format_check": {
+    "command": "npm run format:check",
+    "exit_code": 0
+  }
 }

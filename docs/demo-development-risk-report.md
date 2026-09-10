@@ -1,7 +1,9 @@
 # ISSUE-094: Demo development with current-equity risk
 
 Status: implemented, validated and deployed to demo.
-[Issue #219](https://github.com/AegisFintech/scalping-bot/issues/219).
+[Issue #219](https://github.com/AegisFintech/scalping-bot/issues/219),
+[PR #220](https://github.com/AegisFintech/scalping-bot/pull/220).
+Implementation checkpoint `34e45c0` committed and pushed.
 Release `0.2.5-market-stop.7`; policy `market-stop-v2`.
 
 ## Authorization and resulting behavior
@@ -81,12 +83,18 @@ following context's SELL entry was temporarily too close to market; the existing
 executable-price check remains. This release removes loss-threshold restrictions,
 not broker validity, fresh-data or reconciliation requirements.
 
+By 17:34:15, two new trades were CLOSED and a third OCO pair was ACTIVE.
+Their equities/budgets were 892,135.77 / 8,921.3577, 886,906.81 / 8,869.0681,
+and 881,571.84 / 8,815.7184 respectively. Each recorded pair retained the shared
+1% ceiling; the first two losses reduced later budgets. Original daily/high-water
+references and lock timestamp remained intact. This verifies repeated operation
+through recorded loss thresholds, not profitability.
+
 Both dashboard themes display the demo policy, preserved loss measurements and
 current-equity budget. Navigation, control text/focus/caret and history/diagnostics
 survived timed refreshes with no browser errors and no submitted controls. Screenshots
 were inspected after full rendering. Graphify was refreshed with the new admission
-relationship plus preserved prompt/protection concepts: 3,611 nodes, 7,364 edges,
-255 communities and zero dangling edges. No provider API call was used for Graphify;
+relationship plus preserved prompt/protection concepts, with zero dangling edges. No provider API call was used for Graphify;
 its existing pyproject zero-node and community-label warnings remain informational.
 
 Exact commands and sanitized observations are in the
@@ -94,7 +102,9 @@ Exact commands and sanitized observations are in the
 checks and this short demo observation do not establish profitability, model
 training or improved expectancy. Repository secret scanning emits warnings for
 seven pre-existing screenshot deletions; an additional all-index scan checks
-actual deployment/database secrets before each commit.
+actual deployment/database secrets before each commit. The first scan inspected
+all 465 index blobs, including the retained screenshot blobs, with zero matches.
+Final repository formatting and staged-diff checks also passed.
 
 ## Rollback
 
