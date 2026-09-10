@@ -2,9 +2,11 @@
 
 ## Scope
 
-### ISSUE-091 — Fresh local demo activation and dynamic money management (demo running; delivery in progress)
+### ISSUE-091 — Fresh local demo activation and dynamic money management (demo running; validated)
 
 - Issue: [#213](https://github.com/AegisFintech/scalping-bot/issues/213).
+- Pull request: [#214](https://github.com/AegisFintech/scalping-bot/pull/214);
+  activation evidence checkpoint `53d0b17` committed and pushed.
 - Branch: `issue-091-fresh-local-demo`; dependency: merged storage implementation
   ISSUE-090 / PR #212 (`b4fd196`).
 - September 10 operator direction: leave the blocked hosted recovery and move
@@ -28,9 +30,17 @@
   and capital references survived execution restart. Both storage timers are
   enabled; a paired current backup restored all 45 tables. Final environment
   changes only `DATABASE_URL`; original archives and financial records remain.
-- All 22 gates passed: 619 Node / 155 Python / 36 schema / three migration /
+- Initial 22 gates passed: 619 Node / 155 Python / 36 schema / three migration /
   five TLS integration tests plus formatting, lint, types, build, configuration,
   replay, secrets and dependency checks. First pair shared budget: 1% total.
+- Activation found a sampled-segment boundary mismatch: the recorder's bucket
+  start precedes its first actual capture. The archive reader now respects that
+  contract while retaining strict ordering/bounds/count/hash checks. Six regression
+  cases and the SQL archive/failure path cover it; both real segments archive
+  successfully and storage is healthy. All 22 gates passed again, with 161 Python
+  tests and unchanged other counts. Three completed demo trades and a fourth
+  provider context were observed by 11:28:35 SGT; three distinct equities and
+  per-leg budgets confirm dynamic recalculation. No profitability claim is made.
 - Off-server backup delivery also needs a selected destination and public key.
 - Evidence: [fresh local demo report](docs/fresh-local-demo-report.md) and
   [validation record](docs/evidence/fresh-local-demo-validation.json).

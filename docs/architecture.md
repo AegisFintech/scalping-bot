@@ -292,6 +292,11 @@ original hashes and bytes. Native PostgreSQL and local artifacts form a paired
 backup; routine storage maintenance has no provider/broker authority. See
 [transition, retention, recovery and current blocker](local-storage-report.md).
 
+Sampled-segment `startedAt` is the recorder's bucket boundary, not a promise that
+the first sample occurs exactly there. Archival verification preserves that bound,
+strict capture ordering, exact completion/count and byte hashes; late first
+captures do not imply a complete tick tape.
+
 ISSUE-091 activates this storage release in a separate local demo accounting
 epoch, following explicit operator reset authorization. Historical recovery stays
 separate from current execution. The existing per-setup dynamic risk engine and

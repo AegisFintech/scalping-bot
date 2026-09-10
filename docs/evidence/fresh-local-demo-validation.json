@@ -7,49 +7,49 @@
     {
       "command": "npm run format:check",
       "exit_code": 0,
-      "seconds": 14.66,
+      "seconds": 20.3,
       "log": "00.log"
     },
     {
       "command": "npm run lint",
       "exit_code": 0,
-      "seconds": 26.88,
+      "seconds": 26.64,
       "log": "01.log"
     },
     {
       "command": "npm run typecheck",
       "exit_code": 0,
-      "seconds": 11.99,
+      "seconds": 11.6,
       "log": "02.log"
     },
     {
       "command": "npm run build",
       "exit_code": 0,
-      "seconds": 9.73,
+      "seconds": 10.99,
       "log": "03.log"
     },
     {
       "command": "npm test",
       "exit_code": 0,
-      "seconds": 31.43,
+      "seconds": 31.95,
       "log": "04.log"
     },
     {
       "command": "npm run test:schemas",
       "exit_code": 0,
-      "seconds": 4.36,
+      "seconds": 4.77,
       "log": "05.log"
     },
     {
       "command": "npm run test:migrations",
       "exit_code": 0,
-      "seconds": 1.04,
+      "seconds": 1.0,
       "log": "06.log"
     },
     {
       "command": "npm run test:integration",
       "exit_code": 0,
-      "seconds": 8.18,
+      "seconds": 8.59,
       "log": "07.log"
     },
     {
@@ -61,43 +61,43 @@
     {
       "command": ".venv/bin/ruff check python apps/dashboard tests/python",
       "exit_code": 0,
-      "seconds": 0.01,
+      "seconds": 0.02,
       "log": "09.log"
     },
     {
       "command": ".venv/bin/mypy python apps/dashboard",
       "exit_code": 0,
-      "seconds": 0.61,
+      "seconds": 0.93,
       "log": "10.log"
     },
     {
       "command": ".venv/bin/pytest -q",
       "exit_code": 0,
-      "seconds": 6.74,
+      "seconds": 6.48,
       "log": "11.log"
     },
     {
       "command": "npm run config:check -- .env.sample",
       "exit_code": 0,
-      "seconds": 0.48,
+      "seconds": 0.53,
       "log": "12.log"
     },
     {
       "command": "npm run config:check -- .env.sample --startup",
       "exit_code": 0,
-      "seconds": 0.49,
+      "seconds": 0.48,
       "log": "13.log"
     },
     {
       "command": "npm run config:check -- .env",
       "exit_code": 0,
-      "seconds": 0.51,
+      "seconds": 0.52,
       "log": "14.log"
     },
     {
       "command": "npm run config:check -- .env --startup",
       "exit_code": 0,
-      "seconds": 0.46,
+      "seconds": 0.48,
       "log": "15.log"
     },
     {
@@ -107,15 +107,15 @@
       "log": "16.log"
     },
     {
-      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-091/backtest.json",
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-091/archive-backtest.json",
       "exit_code": 0,
-      "seconds": 0.21,
+      "seconds": 0.23,
       "log": "17.log"
     },
     {
-      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-091/scenario-replay.json",
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-091/archive-scenario-replay.json",
       "exit_code": 0,
-      "seconds": 0.72,
+      "seconds": 0.77,
       "log": "18.log"
     },
     {
@@ -127,13 +127,13 @@
     {
       "command": "npm audit --audit-level=high",
       "exit_code": 0,
-      "seconds": 0.77,
+      "seconds": 0.78,
       "log": "20.log"
     },
     {
       "command": ".venv/bin/pip-audit -r requirements.lock",
       "exit_code": 0,
-      "seconds": 11.4,
+      "seconds": 18.73,
       "log": "21.log"
     }
   ],
@@ -321,7 +321,8 @@
     "Local broker observation is demo evidence, not an economic validation or guaranteed loss limit.",
     "Off-server destination and public encryption recipient are still unselected.",
     "The legacy secret scanner reports missing notices for seven pre-existing screenshot deletions; the supplementary index scan checks all index blobs and active credentials.",
-    "The first browser pass used an outdated heading selector. The existing Closed trades heading passed on rerun without application changes; no controls were submitted."
+    "The first browser pass used an outdated heading selector. The existing Closed trades heading passed on rerun without application changes; no controls were submitted.",
+    "Activation exposed the archive reader incorrectly requiring the first sample at the bucket boundary. The correction preserves strict sample ordering, bounds, exact completion/count and hashes; no broker restart or trading pause was needed."
   ],
   "post_start_paired_restore": {
     "at": "2026-09-10T03:22:43.918169+00:00",
@@ -369,12 +370,12 @@
   ],
   "storage_status": {
     "version": 1,
-    "observedAt": "2026-09-10T03:19:16.701156+00:00",
+    "observedAt": "2026-09-10T03:26:17.678942+00:00",
     "healthy": true,
     "reasons": [],
-    "diskFreeBytes": 28120698880,
+    "diskFreeBytes": 28137193472,
     "diskTotalBytes": 52591984640,
-    "archived": 0,
+    "archived": 2,
     "removedCacheSegments": 0
   },
   "storage_timers": {
@@ -382,5 +383,205 @@
     "backup": "enabled and active",
     "last_maintenance_result": "success",
     "last_backup_result": "success"
+  },
+  "cycle_observation": {
+    "at": "2026-09-10T03:28:35.171Z",
+    "mode": "demo",
+    "operationalReady": true,
+    "automaticAnalysisEnabled": true,
+    "emergencyStopped": false,
+    "pauseNewAnalyses": false,
+    "setupState": "CLOSED",
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "CANCELLED",
+        "timeInForce": "GTC"
+      },
+      {
+        "side": "SELL",
+        "state": "FILLED",
+        "timeInForce": "GTC"
+      }
+    ],
+    "positions": [
+      {
+        "state": "CLOSED",
+        "protectionStatus": "VERIFIED"
+      }
+    ],
+    "reasonCodes": [],
+    "journal": {
+      "closed_trades": 3,
+      "order_groups": 3,
+      "contexts": 4,
+      "provider_evidence": 4,
+      "distinct_sizing_equities": 3,
+      "distinct_leg_budgets": 3
+    }
+  },
+  "archive_fix_proof": {
+    "allArchiveHashesAndCaptureBoundsVerified": true,
+    "archivedSegments": 2,
+    "cacheSourcesRetained": true,
+    "contextLinks": 6
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "exit_code": 0,
+    "nodes": 3533,
+    "edges": 7219,
+    "communities": 242,
+    "notes": [
+      "AST only, no model calls; existing pyproject.toml zero-node warning and hub-based labels."
+    ]
+  },
+  "initial_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 14.66,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 26.88,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 11.99,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.73,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 31.43,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.36,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.04,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 8.18,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.61,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.74,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.51,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.46,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-091/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-091/scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.72,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 11.4,
+      "log": "21.log"
+    }
+  ],
+  "final_checks_log_directory": ".runtime/issue-091/archive-checks",
+  "tests": {
+    "node": 619,
+    "python": 161,
+    "schema": 36,
+    "migrations": 3,
+    "integration_tls": 5,
+    "python_storage_sql": 3
+  },
+  "supplementary_index_secret_scan": {
+    "files": 456,
+    "matches": 0,
+    "scope": "all index blobs, current and original deployment credentials, and local database credentials"
   }
 }

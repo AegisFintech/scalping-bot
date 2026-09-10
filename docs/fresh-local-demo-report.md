@@ -8,10 +8,12 @@ relative SL/TP supplied for both legs, no open position, and certain account
 reconciliation. This is demo operational evidence, not a profitability result.
 
 Issue: [#213](https://github.com/AegisFintech/scalping-bot/issues/213).
+Pull request: [#214](https://github.com/AegisFintech/scalping-bot/pull/214).
 Branch: `issue-091-fresh-local-demo`. Dependency: merged storage PR
 [#212](https://github.com/AegisFintech/scalping-bot/pull/212), `b4fd196`.
-The deployed trading code remains `0.2.5-market-stop.4`; this change records the
-authorized operational transition and persistent money-management preference.
+The deployed trading policy remains `0.2.5-market-stop.4`; this change records the
+authorized operational transition, persistent money-management preference and
+the archival timestamp correction found during activation.
 
 ## Authorized accounting transition
 
@@ -58,6 +60,13 @@ and restart-persistent locks. These are modeled limits, not guaranteed realized
 loss ceilings; STOP and protective exits can slip. TP/SL geometry, model pin and
 the OCO lifecycle were not changed in this activation.
 
+At 11:28:35 SGT, the local journal contained three completed demo trades and a
+fourth provider context. The latest completed group recorded the filled leg,
+cancelled peer and verified protection. Three distinct reconciled equity values
+and three distinct per-leg budgets confirm sizing was recalculated across those
+setups. These observations demonstrate cycling and dynamic accounting, not
+positive expectancy.
+
 ## Storage and service activation
 
 Node and Python use verified loopback TLS with separate application/migration
@@ -74,6 +83,18 @@ the fresh accounting transition and explicitly records absent history continuity
 Both native systemd timers are enabled and active. The first maintenance run
 completed successfully with healthy storage status; the overlapping manual probe
 correctly returned `maintenance_already_running` without a second writer.
+
+The next maintenance run exposed a reader/recorder contract mismatch: `startedAt`
+is the segment's time-bucket boundary, while the first actual sample can arrive
+later. The reader wrongly required them to be equal. It now accepts captures
+inside the recorded interval while preserving strict increasing order, lower and
+upper bounds, exact last-capture/count checks, checksums and immutable bytes.
+No historical files or timestamps were rewritten. Regression tests cover a delayed
+first capture, pre-bucket samples, duplicates, regression and mismatched completion.
+The SQL archival test also proves delayed captures are pinned before eviction and
+failed commits preserve the original cache. Manual maintenance then archived both
+actual segments and returned healthy. This observational storage fault never
+paused trading or changed order admission.
 
 A second paired backup after automatic order placement also restored all 45
 tables into another empty verification database. This covers actual new provider,
@@ -98,7 +119,7 @@ the authorized local demo from running.
 ## Validation and rollback
 
 All 22 required gates passed: formatting, lint, TypeScript, build, 619 Node tests,
-155 Python tests, 36 schema tests, three migration tests, five TLS integration
+161 Python tests, 36 schema tests, three migration tests, five TLS integration
 tests, Python format/lint/types, configuration policy/startup, replay/fail-closed
 fixtures, secret scanning and dependency audits. Repeated baseline rejection,
 baseline persistence across execution restart, paired restore verification and
@@ -112,6 +133,8 @@ heading selector; correcting it to the existing `Closed trades` heading passed
 without an application change.
 
 The original environment and PM2 snapshot remain protected for reference.
+The initial baseline's verified recovery set is also preserved outside routine
+backup retirement, retaining the one-time accounting-transition evidence.
 After new local trading starts, neither the old hosted database nor the historical
 restore is a valid rollback target for execution. An operational rollback must
 first hold new analysis, reconcile current owned exposure, preserve broker

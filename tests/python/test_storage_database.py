@@ -89,7 +89,7 @@ def test_archive_precedes_cache_eviction_and_failed_commit_preserves_source(
         (context, account, symbol, analysis, at, at, at + timedelta(minutes=5)),
     )
     database.commit()
-    segment = segment_fixture(tmp_path / "market-data", at)
+    segment = segment_fixture(tmp_path / "market-data", at, (at + timedelta(milliseconds=250),))
 
     class FailedCommit:
         execute = database.execute
