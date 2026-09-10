@@ -231,8 +231,47 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                 ))
              )
            RETURNING blocked.id
+         ), resolved_children AS (
+           UPDATE broker_execution_events blocked
+           SET resolved_at = GREATEST(proof.occurred_at, blocked.occurred_at, now()),
+               resolution_event_key = proof.broker_event_key
+           FROM terminal_proofs proof
+           WHERE blocked.account_id=$1 AND blocked.symbol_id=$2
+             AND blocked.order_group_id=proof.order_group_id
+             AND blocked.mapping_state='MAPPED' AND blocked.resolved_at IS NULL
+             AND blocked.broker_order_type=4 AND blocked.closing_order=true
+             AND blocked.execution_type IN (2,4)
+             AND blocked.normalized_payload->'fill'='null'::jsonb
+             AND blocked.normalized_payload->'closeDetail'='null'::jsonb
+             AND (blocked.reason_codes='["DEMO_CLOSING_ORDER_AWAITING_DEAL"]'::jsonb
+               OR blocked.reason_codes='["DEMO_ORDER_REPLACED_RECONCILIATION_REQUIRED"]'::jsonb)
+             AND EXISTS (
+               SELECT 1 FROM positions closed_position JOIN trades closed_trade
+                 ON closed_trade.position_id=closed_position.id
+                   AND closed_trade.order_group_id=blocked.order_group_id
+               WHERE closed_position.id=blocked.position_id
+                 AND closed_position.order_group_id=blocked.order_group_id
+                 AND closed_position.account_id=$1 AND closed_position.symbol_id=$2
+                 AND closed_position.state='CLOSED' AND closed_position.strategy_owned=true
+                 AND closed_position.closed_at=closed_trade.closed_at
+             )
+             AND EXISTS (
+               SELECT 1 FROM broker_execution_events cancelled
+               WHERE cancelled.account_id=$1 AND cancelled.symbol_id=$2
+                 AND cancelled.order_group_id=blocked.order_group_id
+                 AND cancelled.position_id=blocked.position_id
+                 AND cancelled.broker_order_id=blocked.broker_order_id
+                 AND cancelled.mapping_state='MAPPED' AND cancelled.reason_codes='[]'::jsonb
+                 AND cancelled.execution_type=5 AND cancelled.broker_order_type=4
+                 AND cancelled.closing_order=true AND cancelled.occurred_at>=blocked.occurred_at
+                 AND cancelled.normalized_payload->'fill'='null'::jsonb
+                 AND cancelled.normalized_payload->'closeDetail'='null'::jsonb
+                 AND cancelled.normalized_payload->'order'->>'state'='CANCELLED'
+                 AND cancelled.normalized_payload->'order'->>'filledVolume'='0'
+             )
+           RETURNING blocked.id
          )
-         SELECT (SELECT count(*)::text FROM resolved) AS resolved_event_count,
+         SELECT ((SELECT count(*) FROM resolved) + (SELECT count(*) FROM resolved_children))::text AS resolved_event_count,
                 (SELECT payload_hash FROM terminal_proofs
                  ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
                    AS terminal_proof_hash,

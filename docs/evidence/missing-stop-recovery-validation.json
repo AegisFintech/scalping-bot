@@ -1,0 +1,257 @@
+{
+  "issue": "ISSUE-093",
+  "release": "0.2.5-market-stop.6",
+  "mode": "demo",
+  "checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 14.01,
+      "log": ".runtime/issue-093/recovery-checks/00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 25.86,
+      "log": ".runtime/issue-093/recovery-checks/01.log"
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
+      "exit_code": 0,
+      "log": ".runtime/issue-093/recovery-typecheck-final.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.47,
+      "log": ".runtime/issue-093/recovery-checks/03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 43.22,
+      "log": ".runtime/issue-093/recovery-checks/04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.57,
+      "log": ".runtime/issue-093/checks/05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.04,
+      "log": ".runtime/issue-093/checks/06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 8.69,
+      "log": ".runtime/issue-093/recovery-checks/05.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": ".runtime/issue-093/checks/08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": ".runtime/issue-093/checks/09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.56,
+      "log": ".runtime/issue-093/checks/10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.57,
+      "log": ".runtime/issue-093/checks/11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": ".runtime/issue-093/checks/12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.51,
+      "log": ".runtime/issue-093/checks/13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": ".runtime/issue-093/checks/14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": ".runtime/issue-093/checks/15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": ".runtime/issue-093/checks/16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-093/archive-backtest.json",
+      "exit_code": 0,
+      "seconds": 0.22,
+      "log": ".runtime/issue-093/checks/17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-093/archive-scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.74,
+      "log": ".runtime/issue-093/checks/18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "log": ".runtime/issue-093/checks/19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.84,
+      "log": ".runtime/issue-093/checks/20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 13.54,
+      "log": ".runtime/issue-093/checks/21.log"
+    }
+  ],
+  "initial_failures": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 1,
+      "seconds": 14.32,
+      "log": ".runtime/issue-093/checks/00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 1,
+      "seconds": 36.87,
+      "log": ".runtime/issue-093/checks/01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 2,
+      "seconds": 11.17,
+      "log": ".runtime/issue-093/recovery-checks/02.log"
+    }
+  ],
+  "corrections": "Formatted the updated test and gave Vitest mocks explicit signatures; used mock references instead of unbound interface methods. The final pass also rebuilt and retested close acknowledgement validation. The added cancelled-child fixture initially lacked its contextual position; it was corrected to match the observed broker event. Its readonly fixture updates were replaced with explicit object construction; typecheck and integration passed.",
+  "test_counts": {
+    "node": 633,
+    "python": 161,
+    "schema": 36,
+    "migration": 3,
+    "postgres_tls_integration": 5
+  },
+  "backup": {
+    "name": "backup-20260910T084020Z-249b8fc6",
+    "paired": true,
+    "verified": true
+  },
+  "rollout": {
+    "status": "demo verified",
+    "closed_at": "2026-09-10T08:44:59.544Z",
+    "close_claims": 1,
+    "close_acknowledgements": 1,
+    "broker_verified_at": "2026-09-10T08:49:38.006Z",
+    "broker_positions": 0,
+    "broker_pending_orders": 0,
+    "position_and_group": "CLOSED",
+    "reconciliation_certain": true,
+    "current_admission_reasons": ["DAILY_LOSS_LOCKOUT"],
+    "daily_and_capital_locks_preserved": true,
+    "environment_unchanged": true,
+    "global_pause": false,
+    "automatic_analysis_enabled": true,
+    "cached_pm2_overrides": [
+      {
+        "name": "scalper-analytics",
+        "status": "online",
+        "cachedConfigurationKeys": []
+      },
+      {
+        "name": "scalper-market-data",
+        "status": "online",
+        "cachedConfigurationKeys": []
+      },
+      {
+        "name": "scalper-ai",
+        "status": "online",
+        "cachedConfigurationKeys": []
+      },
+      {
+        "name": "scalper-execution",
+        "status": "online",
+        "cachedConfigurationKeys": []
+      },
+      {
+        "name": "scalper-dashboard",
+        "status": "online",
+        "cachedConfigurationKeys": []
+      }
+    ]
+  },
+  "additional_checks": [
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/eslint/bin/eslint.js tests/integration/database.integration.test.ts",
+      "exit_code": 0,
+      "log": ".runtime/issue-093/recovery-lint-final.log"
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/prettier/bin/prettier.cjs --check tests/integration/database.integration.test.ts AGENTS.md apps/execution-service/src/demo-execution-store.ts",
+      "exit_code": 0,
+      "log": ".runtime/issue-093/recovery-format-final.log"
+    }
+  ],
+  "reconciliation_regression": {
+    "initial_fixture_failure_log": ".runtime/issue-093/reconciliation-integration.log",
+    "passing_focused_log": ".runtime/issue-093/reconciliation-integration-final.log",
+    "final_suite_log": ".runtime/issue-093/recovery-checks/05.log"
+  },
+  "secret_scan_note": "The repository scanner exits 0 but reports pre-existing deleted screenshot paths and benign risk-budget filename matches. A supplemental scan checks every index blob against current deployment/database secrets and credential patterns before commit.",
+  "delivery": {
+    "issue": "https://github.com/AegisFintech/scalping-bot/issues/217",
+    "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/218",
+    "implementation_checkpoint": "c40cb8dfb663c68f791e8d0a10a44985d0d9e077"
+  },
+  "graphify": {
+    "nodes": 3564,
+    "edges": 7287,
+    "communities": 248,
+    "dangling_edges": 0,
+    "external_api_calls": 0,
+    "recovery_path": "Missing SL repair or close <- report -> claimClose <- PostgresProtectionSession",
+    "commands": [
+      "graphify update .",
+      "/root/.local/share/graphify/venv/bin/python3 artifacts/issue-093/graph-links.py",
+      "graphify cluster-only .",
+      "graphify explain \"Missing SL repair or close\"",
+      "graphify path \"Missing SL repair or close\" \"PostgresProtectionSession\" --undirected --budget 900"
+    ]
+  },
+  "supplemental_secret_scan": {
+    "files": 461,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
+  }
+}

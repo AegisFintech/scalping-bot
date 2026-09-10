@@ -219,13 +219,15 @@ recovery clears the latch. [Demo evidence](market-stop-report.md).
 
 ### Post-fill protection verification
 
-ISSUE-089 retains the approved fee-buffered TP, twice-TP SL, shared 1% OCO risk
-budget and 30-point modeled slippage reserve. Independent verification and
-restoration of missing/wider protection use actual fill VWAP, preserve tighter
-broker-held levels and never increase volume. The broker executes SL/TP exits.
-Sampled price crossings and exhausted repairs cannot initiate a market close or
-persistent analysis pause. Missing protection remains explicitly visible after
-unsuccessful repairs; the existing open-position and reconciliation checks still
-prevent new exposure. Historical close claims retain their exact-volume deal/P&L
-requirements. Stop execution can slip; these controls do not guarantee a realized
-loss ceiling. See [the operator-authorized change](broker-exit-loop-report.md).
+ISSUE-093 retains fee-buffered TP, twice-TP SL, shared 1% OCO risk and the
+30-point modeled slippage reserve. Independent repairs use actual fill VWAP,
+inward rounding and tighter existing protection. New close authority applies
+only to a freshly confirmed owned demo position with no broker SL, after repair
+is impossible or two attempts fail. Quotes alone never authorize closing a
+position that has an SL. The exact position/volume is re-read before a durable
+close claim; unknown dispatch is never retried. Historical and current closes
+require matching deal/P&L evidence. No global pause, daily/drawdown reset, size
+increase or widening is introduced. Existing SL/TP exits remain broker managed.
+Stop and emergency-close execution can slip or fail; neither modeled risk nor
+this recovery path guarantees a realized loss ceiling. See
+[implementation and limits](missing-stop-recovery-report.md).

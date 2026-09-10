@@ -2,6 +2,34 @@
 
 ## Scope
 
+### ISSUE-093 — Resolve confirmed missing broker stop losses (implemented; validated)
+
+- Issue: [#217](https://github.com/AegisFintech/scalping-bot/issues/217).
+- Pull request: [#218](https://github.com/AegisFintech/scalping-bot/pull/218);
+  implementation checkpoint `c40cb8d` committed and pushed.
+- Branch: `issue-093-missing-stop-recovery`; dependency: ISSUE-092 / PR #216.
+- Operator authorized fixing the protection/recovery failure after the September
+  10 demo fill retained TP but no broker SL. Original SL omission remains unexplained.
+- Acceptance: retain fill-relative SL/TP; repair missing SL when executable; use
+  one durable, position-specific close when missing SL cannot be repaired; never
+  close an SL-protected position merely because a sampled price crosses a level.
+  Preserve ownership, fresh broker proof, unknown-dispatch reconciliation, OCO,
+  daily/drawdown locks and ordinary broker exits. No global pause or loss reset.
+- Demo close exposed a distinct cancelled TP child whose earlier acknowledgement
+  remained unresolved. Add exact cancellation plus full terminal-proof recovery;
+  retain all unknown/partial/conflicting evidence and strict price validation.
+- Cover amendment, late protection, close failure/restart/closure, stale/ambiguous
+  evidence and both trade sides; run all required gates, update Graphify, deliver
+  a dedicated issue/PR and verify the authorized demo rollout.
+- All 22 gate categories passed: 633 Node / 161 Python / 36 schema / three
+  migration / five PostgreSQL-TLS integration tests. Initial test typing/fixture
+  failures were corrected and rerun. Graphify refreshed without provider calls.
+- Demo: one protective close filled at 16:44:59 SGT; broker confirmed flat at
+  16:49:38. Cancelled TP child and terminal trade fully reconcile. Existing
+  daily/capital locks and environment preserved; no global pause or risk reset.
+- [Implementation and rollout](docs/missing-stop-recovery-report.md);
+  [exact checks and evidence](docs/evidence/missing-stop-recovery-validation.json).
+
 ### ISSUE-092 — Nearby support/resistance and order-block entry guidance (implemented; validated)
 
 - Issue: [#215](https://github.com/AegisFintech/scalping-bot/issues/215).

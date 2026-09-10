@@ -146,6 +146,46 @@ class PostgresProtectionSession implements ProtectionSession {
       return true;
     });
   }
+  async claimClose(
+    position: ProtectionPosition,
+    at: string,
+    volume: string,
+  ): Promise<boolean> {
+    return this.transaction(async () => {
+      const result = await this.client.query(
+        `UPDATE position_protection SET close_requested_at=$2,close_volume=$3,command_at=$2,
+           status='CLOSE_SENT',reason_code='POSITION_PROTECTION_CLOSE_AWAITING_DEAL',updated_at=now()
+         WHERE position_id=$1 AND close_requested_at IS NULL
+           AND status='CLOSE_REQUIRED' AND stop_loss IS NULL
+           AND observed_at <= $2::timestamptz
+           AND observed_at >= $2::timestamptz - interval '2 seconds'
+           AND EXISTS (SELECT 1 FROM positions p JOIN order_groups og ON og.id=p.order_group_id
+             WHERE p.id=$1 AND p.state='OPEN' AND p.volume=$3
+               AND p.account_id=$4 AND p.symbol_id=$5 AND p.strategy_owned=true AND og.mode='demo')
+         RETURNING position_id`,
+        [position.id, at, volume, this.accountId, this.symbolId],
+      );
+      if (result.rows.length !== 1) return false;
+      await this.event(position, "CLOSE_CLAIM", { at, volume });
+      return true;
+    });
+  }
+  async closeAcknowledged(
+    position: ProtectionPosition,
+    brokerOrderId: string,
+  ): Promise<void> {
+    await this.transaction(async () => {
+      const result = await this.client.query(
+        `UPDATE position_protection SET broker_close_order_id=$2,updated_at=now()
+         WHERE position_id=$1 AND close_requested_at IS NOT NULL
+           AND (broker_close_order_id IS NULL OR broker_close_order_id=$2) RETURNING position_id`,
+        [position.id, brokerOrderId],
+      );
+      if (result.rows.length !== 1)
+        throw new Error("POSITION_PROTECTION_CLOSE_ACK_CONFLICT");
+      await this.event(position, "CLOSE_ACK", { brokerOrderId });
+    });
+  }
   private async transaction<T>(work: () => Promise<T>): Promise<T> {
     await this.client.query("BEGIN");
     try {

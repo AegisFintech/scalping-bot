@@ -2,6 +2,10 @@
 
 Status: implemented, validated and deployed to demo; new broker-held GTC STOP pair confirmed. [Issue #209](https://github.com/AegisFintech/scalping-bot/issues/209). Release `0.2.5-market-stop.3`, policy `market-stop-v1`.
 
+ISSUE-093 supersedes the missing-SL waiting behavior below with a narrowly scoped,
+durably claimed close when protection cannot be restored. Protected-position
+exits remain broker managed. See [the current recovery contract](missing-stop-recovery-report.md).
+
 ## Problem and change
 
 At 2026-09-09 07:13:58 UTC, the demo buy filled at 4407.05 and the opposite order was cancelled. Repeated broker snapshots verified SL 4405.99 and TP 4407.58. At 07:14:15, ISSUE-088's sampled-price fallback claimed a market close and set an indefinite `PAUSE_NEW_ANALYSES`. The market close executed at 4406.96. There were zero repair attempts. The closed group reconciled successfully, but the pause prevented the next model request.
