@@ -500,12 +500,14 @@ def verify_segment(path: Path) -> dict[str, Any]:
             observed = timestamp(row["capturedAt"])
             if (
                 row.get("schemaVersion") != "1.0"
-                or (count == 0 and observed != started)
                 or observed <= previous
                 or observed < started
                 or observed > completed
             ):
                 raise ValueError("STORAGE_SEGMENT_ORDER_INVALID")
+            # The recorder stores the time-bucket boundary as startedAt, not the
+            # first capture. A delayed first sample is valid inside that bound;
+            # every actual capture still has to advance strictly through completedAt.
             current_symbol = row.get("symbol")
             if not isinstance(current_symbol, str) or not re.fullmatch(
                 r"[A-Z0-9._-]{1,32}", current_symbol

@@ -2,24 +2,48 @@
 
 ## Scope
 
-### ISSUE-091 — Deferred history recovery and local trading activation (deferred)
+### ISSUE-091 — Fresh local demo activation and dynamic money management (demo running; validated)
 
 - Issue: [#213](https://github.com/AegisFintech/scalping-bot/issues/213).
-- Dependency: verified storage implementation in ISSUE-090 / PR #212.
+- Pull request: [#214](https://github.com/AegisFintech/scalping-bot/pull/214);
+  activation evidence checkpoint `53d0b17` committed and pushed.
+- Branch: `issue-091-fresh-local-demo`; dependency: merged storage implementation
+  ISSUE-090 / PR #212 (`b4fd196`).
 - September 10 operator direction: leave the blocked hosted recovery and move
   forward with independent delivery. Preserve the hosted source and historical
   local archive; repeated source probes are not part of current work.
-- Acceptance: recover newer source records or implement a separately authorized,
-  documented accounting transition; verify the intended operational database and
-  applicable journal/risk/control continuity; restore-test a paired current backup;
+- The operator subsequently explicitly approved a fresh local demo start and
+  resetting unrecovered loss/risk tracking, emphasizing dynamic money management.
+- Acceptance: create a separate local operational database and document this
+  one-time fresh accounting transition; preserve the historical archive and source;
+  verify flat current broker state and initialize a reconciled baseline;
+  restore-test a paired current backup;
   validate connection/runtime configuration; activate matching jobs; reconcile
   broker state and resume only the authorized demo after those checks pass.
-- Current state: hosted-history gap after September 9 at 16:32 SGT. Execution
-  remains held; no local historical database is promoted and no baseline reset
-  is authorized by deferral alone. A fresh-demo baseline decision is pending.
+- Keep current-equity/cost/margin/remaining-daily-capacity sizing and durable
+  drawdown reductions; shared setup risk remains at most 1%, UTC daily budget 5%.
+  Initialization must not repeat on restart or manufacture historical recovery.
+- Current state: source-history gap after September 9 at 16:32 SGT remains
+  deferred; the separate local demo resumed at 11:20:10 SGT September 10.
+  A read-only broker check at 11:21:04 confirmed two pending STOP/GTC orders.
+  The new baseline was audited, duplicate initialization rejected, and its daily
+  and capital references survived execution restart. Both storage timers are
+  enabled; a paired current backup restored all 45 tables. Final environment
+  changes only `DATABASE_URL`; original archives and financial records remain.
+- Initial 22 gates passed: 619 Node / 155 Python / 36 schema / three migration /
+  five TLS integration tests plus formatting, lint, types, build, configuration,
+  replay, secrets and dependency checks. First pair shared budget: 1% total.
+- Activation found a sampled-segment boundary mismatch: the recorder's bucket
+  start precedes its first actual capture. The archive reader now respects that
+  contract while retaining strict ordering/bounds/count/hash checks. Six regression
+  cases and the SQL archive/failure path cover it; both real segments archive
+  successfully and storage is healthy. All 22 gates passed again, with 161 Python
+  tests and unchanged other counts. Three completed demo trades and a fourth
+  provider context were observed by 11:28:35 SGT; three distinct equities and
+  per-leg budgets confirm dynamic recalculation. No profitability claim is made.
 - Off-server backup delivery also needs a selected destination and public key.
-- Evidence: [storage report](docs/local-storage-report.md). This follow-up no
-  longer blocks delivery of ISSUE-090's independent implementation.
+- Evidence: [fresh local demo report](docs/fresh-local-demo-report.md) and
+  [validation record](docs/evidence/fresh-local-demo-validation.json).
 
 ### ISSUE-090 — Local PostgreSQL and necessary evidence storage (implementation complete; validated)
 

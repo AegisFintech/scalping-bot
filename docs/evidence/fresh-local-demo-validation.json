@@ -1,0 +1,587 @@
+{
+  "issue": "ISSUE-091",
+  "release": "0.2.5-market-stop.4",
+  "mode": "operator-authorized fresh local demo; historical continuity not claimed",
+  "checked_at_utc": "2026-09-10T03:22:43.355655+00:00",
+  "final_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 20.3,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 26.64,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 11.6,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 10.99,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 31.95,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.77,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.0,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 8.59,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.93,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.48,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.53,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-091/archive-backtest.json",
+      "exit_code": 0,
+      "seconds": 0.23,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-091/archive-scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.78,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 18.73,
+      "log": "21.log"
+    }
+  ],
+  "baseline_initialization": {
+    "at": "2026-09-10T03:18:14.448Z",
+    "paused": {
+      "accepted": true
+    },
+    "baseline": {
+      "accepted": true,
+      "reconciliation": "certain",
+      "trading_day": "2026-09-10",
+      "timezone": "UTC"
+    }
+  },
+  "duplicate_initialization": {
+    "status": 409,
+    "error": "DAILY_RISK_BASELINE_ALREADY_EXISTS",
+    "rejected": true
+  },
+  "baseline_restart": {
+    "capitalBaselineCount": 1,
+    "dailyAndCapitalBaselinePreservedAcrossExecutionRestart": true,
+    "dailyBaselineCount": 1
+  },
+  "before_broker": {
+    "observedAt": "2026-09-10T03:16:01.058Z",
+    "certain": true,
+    "positions": 0,
+    "pendingOrders": 0,
+    "dayDealCount": 0,
+    "dayDealsHasMore": false,
+    "flowOperations": 0
+  },
+  "first_broker_orders": {
+    "observedAt": "2026-09-10T03:21:04.051Z",
+    "certain": true,
+    "positions": 0,
+    "pendingOrders": 2,
+    "pending": [
+      {
+        "side": 2,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4411.71,
+        "relativeStopLoss": 106000,
+        "relativeTakeProfit": 53000
+      },
+      {
+        "side": 1,
+        "orderType": 3,
+        "timeInForce": 2,
+        "orderStatus": 1,
+        "stopPrice": 4420.92,
+        "relativeStopLoss": 108000,
+        "relativeTakeProfit": 54000
+      }
+    ],
+    "protection": []
+  },
+  "first_pair_risk": {
+    "at": "2026-09-10T03:21:22.928Z",
+    "legs": 2,
+    "sameEquity": true,
+    "riskPercentByLeg": [
+      {
+        "side": "BUY",
+        "percent": "0.50000"
+      },
+      {
+        "side": "SELL",
+        "percent": "0.50000"
+      }
+    ],
+    "sharedBudgetPercent": "1",
+    "withinSharedOnePercent": true,
+    "bothVolumesPositive": true,
+    "marginObserved": true
+  },
+  "first_execution_observation": {
+    "at": "2026-09-10T03:20:43.788Z",
+    "mode": "demo",
+    "tradingEnabled": false,
+    "reasonCodes": [
+      "PREVIOUS_ANALYSIS_ACTIVE",
+      "RELEVANT_PENDING_ORDER_EXISTS"
+    ],
+    "scenario": {
+      "state": "READY",
+      "reason": null,
+      "requestedAt": "2026-09-10T03:20:21.595Z",
+      "requestedModel": "deepseek-v4-pro/u5W",
+      "returnedModel": "deepseek-v4-pro",
+      "calls": 1
+    },
+    "setup": {
+      "status": "ACTIVE",
+      "groupState": "ACTIVE",
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "PENDING",
+          "timeInForce": "GTC"
+        },
+        {
+          "side": "SELL",
+          "state": "PENDING",
+          "timeInForce": "GTC"
+        }
+      ],
+      "positions": 0
+    },
+    "lastCycle": {
+      "outcome": "PLACED",
+      "reasonCodes": []
+    },
+    "journal": {
+      "contexts": 1,
+      "exact_provider_inputs": 1,
+      "candle_references": 120,
+      "candle_values": 60,
+      "chart_artifacts": 0,
+      "order_groups": 1,
+      "trades": 0
+    }
+  },
+  "resume": {
+    "at": "2026-09-10T03:20:10.633Z",
+    "resumed": true,
+    "mode": "demo",
+    "riskPolicy": {
+      "version": "market-stop-v1",
+      "setupRiskPercent": "1",
+      "dailyLossLimitPercent": "5",
+      "drawdownLimitPercent": "5",
+      "maxPositionNotionalEquityMultiple": null,
+      "maxMarginUsagePercent": "100"
+    },
+    "remainingCapitalRiskPercent": "5"
+  },
+  "paired_restore": {
+    "restored": true,
+    "scope": "current",
+    "verifiedTables": 45
+  },
+  "preserved_market_files": 2176,
+  "preserved_market_bytes": 48770846,
+  "supervisor": [
+    {
+      "service": "scalper-analytics",
+      "status": "online",
+      "databaseUrlCached": false,
+      "cachedDatabaseMatchesFile": null
+    },
+    {
+      "service": "scalper-market-data",
+      "status": "online",
+      "databaseUrlCached": false,
+      "cachedDatabaseMatchesFile": null
+    },
+    {
+      "service": "scalper-ai",
+      "status": "online",
+      "databaseUrlCached": false,
+      "cachedDatabaseMatchesFile": null
+    },
+    {
+      "service": "scalper-execution",
+      "status": "online",
+      "databaseUrlCached": false,
+      "cachedDatabaseMatchesFile": null
+    },
+    {
+      "service": "scalper-dashboard",
+      "status": "online",
+      "databaseUrlCached": false,
+      "cachedDatabaseMatchesFile": null
+    }
+  ],
+  "final_environment_changed_keys": ["DATABASE_URL"],
+  "notes": [
+    "Hosted history newer than September 9 16:32 SGT remains deferred and was not substituted as current state.",
+    "No strategy, TP/SL, percentage-risk or broker-leverage code was changed. Dynamic sizing and durable reductions remain in the existing engine.",
+    "Local broker observation is demo evidence, not an economic validation or guaranteed loss limit.",
+    "Off-server destination and public encryption recipient are still unselected.",
+    "The legacy secret scanner reports missing notices for seven pre-existing screenshot deletions; the supplementary index scan checks all index blobs and active credentials.",
+    "The first browser pass used an outdated heading selector. The existing Closed trades heading passed on rerun without application changes; no controls were submitted.",
+    "Activation exposed the archive reader incorrectly requiring the first sample at the bucket boundary. The correction preserves strict sample ordering, bounds, exact completion/count and hashes; no broker restart or trading pause was needed."
+  ],
+  "post_start_paired_restore": {
+    "at": "2026-09-10T03:22:43.918169+00:00",
+    "restored": true,
+    "verifiedTables": 45,
+    "scope": "current"
+  },
+  "browser": [
+    {
+      "theme": "light",
+      "stable": {
+        "navigation": true,
+        "input": true,
+        "value": "Never submitted",
+        "focused": true,
+        "caret": 3
+      },
+      "color": {
+        "text": "rgb(49, 51, 63)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "historyVisible": true,
+      "storageStatusVisible": true,
+      "controlsSubmitted": false,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "stable": {
+        "navigation": true,
+        "input": true,
+        "value": "Never submitted",
+        "focused": true,
+        "caret": 3
+      },
+      "color": {
+        "text": "rgb(250, 250, 250)",
+        "background": "rgb(14, 17, 23)"
+      },
+      "historyVisible": true,
+      "storageStatusVisible": true,
+      "controlsSubmitted": false,
+      "errors": []
+    }
+  ],
+  "storage_status": {
+    "version": 1,
+    "observedAt": "2026-09-10T03:26:17.678942+00:00",
+    "healthy": true,
+    "reasons": [],
+    "diskFreeBytes": 28137193472,
+    "diskTotalBytes": 52591984640,
+    "archived": 2,
+    "removedCacheSegments": 0
+  },
+  "storage_timers": {
+    "maintenance": "enabled and active",
+    "backup": "enabled and active",
+    "last_maintenance_result": "success",
+    "last_backup_result": "success"
+  },
+  "cycle_observation": {
+    "at": "2026-09-10T03:28:35.171Z",
+    "mode": "demo",
+    "operationalReady": true,
+    "automaticAnalysisEnabled": true,
+    "emergencyStopped": false,
+    "pauseNewAnalyses": false,
+    "setupState": "CLOSED",
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "CANCELLED",
+        "timeInForce": "GTC"
+      },
+      {
+        "side": "SELL",
+        "state": "FILLED",
+        "timeInForce": "GTC"
+      }
+    ],
+    "positions": [
+      {
+        "state": "CLOSED",
+        "protectionStatus": "VERIFIED"
+      }
+    ],
+    "reasonCodes": [],
+    "journal": {
+      "closed_trades": 3,
+      "order_groups": 3,
+      "contexts": 4,
+      "provider_evidence": 4,
+      "distinct_sizing_equities": 3,
+      "distinct_leg_budgets": 3
+    }
+  },
+  "archive_fix_proof": {
+    "allArchiveHashesAndCaptureBoundsVerified": true,
+    "archivedSegments": 2,
+    "cacheSourcesRetained": true,
+    "contextLinks": 6
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "exit_code": 0,
+    "nodes": 3533,
+    "edges": 7219,
+    "communities": 242,
+    "notes": [
+      "AST only, no model calls; existing pyproject.toml zero-node warning and hub-based labels."
+    ]
+  },
+  "initial_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 14.66,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 26.88,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 11.99,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.73,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 31.43,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.36,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.04,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 8.18,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.61,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.74,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.51,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.46,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-091/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-091/scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.72,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 11.4,
+      "log": "21.log"
+    }
+  ],
+  "final_checks_log_directory": ".runtime/issue-091/archive-checks",
+  "tests": {
+    "node": 619,
+    "python": 161,
+    "schema": 36,
+    "migrations": 3,
+    "integration_tls": 5,
+    "python_storage_sql": 3
+  },
+  "supplementary_index_secret_scan": {
+    "files": 456,
+    "matches": 0,
+    "scope": "all index blobs, current and original deployment credentials, and local database credentials"
+  }
+}

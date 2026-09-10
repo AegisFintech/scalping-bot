@@ -47,12 +47,16 @@ def backup_fixture(root: Path, at: datetime, scope: str = "current") -> Path:
     return directory
 
 
-def segment_fixture(directory: Path, at: datetime) -> Path:
+def segment_fixture(
+    directory: Path, at: datetime, captures: tuple[datetime, ...] | None = None
+) -> Path:
     directory.mkdir(exist_ok=True, parents=True)
     path = directory / ("market-fixture-" + at.strftime("%Y%m%dT%H%M%SZ-") + "abcd.jsonl.gz")
-    content = (
-        json.dumps({"schemaVersion": "1.0", "capturedAt": at.isoformat(), "symbol": "XAUUSD"})
+    captures = (at,) if captures is None else captures
+    content = "".join(
+        json.dumps({"schemaVersion": "1.0", "capturedAt": captured.isoformat(), "symbol": "XAUUSD"})
         + "\n"
+        for captured in captures
     ).encode()
     path.write_bytes(gzip.compress(content))
     durable_json(
@@ -62,12 +66,51 @@ def segment_fixture(directory: Path, at: datetime) -> Path:
             "file": path.name,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "compressedBytes": path.stat().st_size,
-            "sampleCount": 1,
+            "sampleCount": len(captures),
             "startedAt": at.isoformat(),
-            "completedAt": at.isoformat(),
+            "completedAt": captures[-1].isoformat(),
         },
     )
     return path
+
+
+def test_market_segment_accepts_delayed_first_capture_inside_bucket(tmp_path: Path) -> None:
+    bucket = datetime(2026, 9, 10, 3, 15, tzinfo=UTC)
+    captures = (bucket + timedelta(seconds=146), bucket + timedelta(seconds=299))
+    path = segment_fixture(tmp_path, bucket, captures)
+    original = path.read_bytes()
+    verified = verify_segment(path)
+    assert verified["startedAt"] == bucket.isoformat()
+    assert verified["completedAt"] == captures[-1].isoformat()
+    assert verified["sampleCount"] == 2
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize("offsets", [(-1,), (0, 0), (2, 1)])
+def test_market_segment_rejects_pre_bucket_duplicate_and_regressed_captures(
+    tmp_path: Path, offsets: tuple[int, ...]
+) -> None:
+    bucket = datetime(2026, 9, 10, 3, 15, tzinfo=UTC)
+    path = segment_fixture(tmp_path, bucket, tuple(bucket + timedelta(seconds=s) for s in offsets))
+    with pytest.raises(ValueError, match="STORAGE_SEGMENT_ORDER_INVALID"):
+        verify_segment(path)
+
+
+@pytest.mark.parametrize(
+    ("end_seconds", "reason"),
+    [(1, "STORAGE_SEGMENT_ORDER_INVALID"), (3, "STORAGE_SEGMENT_COUNT_INVALID")],
+)
+def test_market_segment_requires_exact_last_capture_and_completion_bound(
+    tmp_path: Path, end_seconds: int, reason: str
+) -> None:
+    bucket = datetime(2026, 9, 10, 3, 15, tzinfo=UTC)
+    path = segment_fixture(tmp_path, bucket, (bucket + timedelta(seconds=2),))
+    sidecar = path.with_name(path.name + ".manifest.json")
+    manifest = json.loads(sidecar.read_text())
+    manifest["completedAt"] = (bucket + timedelta(seconds=end_seconds)).isoformat()
+    durable_json(sidecar, manifest)
+    with pytest.raises(ValueError, match=reason):
+        verify_segment(path)
 
 
 def test_backup_integrity_paths_and_symlinks(tmp_path: Path) -> None:

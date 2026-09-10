@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.1` uses policy `market-stop-v1` in
+Release `0.2.5-market-stop.4` uses policy `market-stop-v1` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -47,7 +47,8 @@ See [model-switch evidence](deepseek-context-report.md). The production scenario
 uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
 new production prompt `entry-pair-v1`, explicitly disabled thinking and at most 4,096 output
 tokens within the existing
-90-second deadline. Charts remain validated local audit artifacts. Request bounds,
+90-second deadline. Historical charts remain validated local audit artifacts;
+new numeric analyses generate display charts only on demand. Request bounds,
 indicator periods, scheduling, execution thresholds and risk percentages are
 managed in versioned code; no extra environment tuning keys are introduced.
 Removing redundant default endpoints/paths is safe only after comparing them to
@@ -208,3 +209,9 @@ operational activation; merging the release does not switch the runtime database
 Activation still requires verified current recovery or a separately authorized,
 documented accounting transition. See
 [operator commands and deferred cutover](local-storage-report.md).
+
+ISSUE-091 activated the local connection through an explicitly authorized fresh
+demo accounting transition. The final populated environment changes only
+`DATABASE_URL`; all other values and dynamic money-management policy are retained.
+Current state, baseline audit, restore proof and rollback requirements are in the
+[fresh local demo report](fresh-local-demo-report.md).

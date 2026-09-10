@@ -1,8 +1,8 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.1`, policy `market-stop-v1`.
+Current source: `0.2.5-market-stop.4`, policy `market-stop-v1`.
 
-ISSUE-086 production uses `/v1/entry-pair`, a two-price provider reply and locally
+Production uses `/v2/entry-pair`, a two-price provider reply and locally
 bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
 filters are removed. The older scenario-map contracts remain available for
 history/research. Production details and retained broker/risk/data requirements
@@ -53,7 +53,8 @@ loopback and deployments support Debian/systemd.
    gzip segments carry checksum/count manifests and bounded retention.
 3. `python.analytics` validates completed M1/M5/M15 candles, alignment, depth
    and canonical decimal strings. Full 600/500/300 histories feed indicators;
-   bounded numerical features/raw tails and a deterministic chart are produced.
+   numeric analytics 2.0 returns bounded numerical features/raw tails without
+   rendering a PNG. Historical image contracts remain available.
 4. `coordinator.ts` records completed-candle provenance and checks account state,
    executable quotes, affordable stops and fee coverage before a refresh can start.
    Production does not apply spread or ATR strategy limits.
@@ -62,11 +63,13 @@ loopback and deployments support Debian/systemd.
    deferral reason; actual validation failures remain `REJECTED`.
 5. `scenario-context.ts` claims at most one potentially dispatched refresh per account/symbol/mode per
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
-   A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links the
-   archived chart and market inputs. A separate task calls `/v1/entry-pair`, using
+   A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links
+   the recorded numeric market inputs. A separate task calls `/v2/entry-pair`, using
    exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v1`, two readable prices, and
    structured completed-candle tails (M1 240 / M5 144 / M15 96). The text-only
-   model receives no image; charts still undergo validation and protected archival. Completion/failure and usage are durable. An interrupted
+   model receives no image; exact provider input, prompt and available output are
+   durably journaled. Historical chart bytes remain protected. Completion/failure
+   and usage are durable. An interrupted
    request is not retried during its cooldown, because provider acceptance is unknown.
    Previous-model maps remain audited but cannot authorize new execution; the same
    account/symbol/mode cooldown survives a model change.
@@ -288,3 +291,14 @@ candles on demand and label them regenerated. Historical PNGs still use their
 original hashes and bytes. Native PostgreSQL and local artifacts form a paired
 backup; routine storage maintenance has no provider/broker authority. See
 [transition, retention, recovery and current blocker](local-storage-report.md).
+
+Sampled-segment `startedAt` is the recorder's bucket boundary, not a promise that
+the first sample occurs exactly there. Archival verification preserves that bound,
+strict capture ordering, exact completion/count and byte hashes; late first
+captures do not imply a complete tick tape.
+
+ISSUE-091 activates this storage release in a separate local demo accounting
+epoch, following explicit operator reset authorization. Historical recovery stays
+separate from current execution. The existing per-setup dynamic risk engine and
+durable reduction/lock behavior are unchanged. See
+[the activation evidence](fresh-local-demo-report.md).

@@ -1,5 +1,11 @@
 # ISSUE-090: Local PostgreSQL and compact trading evidence
 
+**Current deployment:** the operator subsequently authorized a fresh local demo
+accounting transition. ISSUE-091 activated local storage and resumed the demo;
+see [the current activation report](fresh-local-demo-report.md). The deferred
+hosted-history gap remains unrecovered. The preparation observations below record
+ISSUE-090 before that separate authorization and activation.
+
 Status: implementation and isolated recovery validation complete; operational
 activation deferred. [Issue #211](https://github.com/AegisFintech/scalping-bot/issues/211).
 [PR #212](https://github.com/AegisFintech/scalping-bot/pull/212), implementation
