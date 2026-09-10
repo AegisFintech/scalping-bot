@@ -54,6 +54,8 @@ export interface LocalMarketRecorderOptions {
   readonly sampleIntervalMs: number;
   readonly segmentDurationSeconds: number;
   readonly maxCompletedSegments: number;
+  /** External maintenance pins decision evidence before applying age/size retention. */
+  readonly managedRetention?: boolean;
 }
 
 function safeSymbol(symbol: string): string {
@@ -300,6 +302,7 @@ export class LocalMarketRecorder {
   }
 
   async #enforceRetention(): Promise<void> {
+    if (this.#options.managedRetention === true) return;
     const entries = (await readdir(this.#directory))
       .filter((name) => COMPLETED_SEGMENT.test(name))
       .sort();

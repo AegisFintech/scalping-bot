@@ -6,12 +6,10 @@ import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import pg from "pg";
 import { describe, expect, it } from "vitest";
 
 import {
   createPool,
-  databaseConnectionString,
   migrate,
   migrationFiles,
 } from "../../packages/database/src/index.js";
@@ -208,10 +206,7 @@ function decisionSnapshot(
 describe("PostgreSQL migrations integration", () => {
   databaseTest.each([false, true])("migrations close=%s", async (closeMode) => {
     const schema = `test_${randomUUID().replaceAll("-", "")}`;
-    const admin = new pg.Pool({
-      connectionString: databaseConnectionString(connectionString as string),
-      ssl: { rejectUnauthorized: true },
-    });
+    const admin = createPool({ connectionString: connectionString as string });
     await admin.query(`CREATE SCHEMA "${schema}"`);
     const url = new URL(connectionString as string);
     url.searchParams.set("options", `-csearch_path=${schema}`);
@@ -243,6 +238,7 @@ describe("PostgreSQL migrations integration", () => {
         "0020",
         "0021",
         "0022",
+        "0023",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -746,7 +742,23 @@ describe("PostgreSQL migrations integration", () => {
         sourceAnalysisId: analysisId,
         capturedAt: new Date().toISOString(),
         tickSize: "0.01",
+        providerEvidence: {
+          requestText: '{"candles":[]}',
+          promptContent: "fixture exact provider prompt",
+          promptVersion: "entry-pair-v1",
+        },
       };
+      await expect(
+        contextStore.claim({
+          ...contextClaim,
+          id: randomUUID(),
+          providerEvidence: {
+            ...contextClaim.providerEvidence,
+            promptContent: "",
+          },
+        }),
+      ).rejects.toThrow();
+      expect(await contextStore.latest()).toBeNull();
       const claims = await Promise.all([
         contextStore.claim(contextClaim),
         new PostgresContextStore(isolated, {
@@ -759,6 +771,19 @@ describe("PostgreSQL migrations integration", () => {
       const currentContext = await contextStore.latest();
       expect(currentContext?.state).toBe("REQUESTING");
       expect(currentContext?.requestedModel).toBe("deepseek-v4-pro/u5W");
+      const evidence = await isolated.query(
+        `SELECT e.request_text,e.response_text,p.content
+        FROM context_provider_evidence e JOIN provider_prompt_artifacts p ON p.content_sha256=e.prompt_sha256
+        WHERE e.context_id=$1`,
+        [currentContext!.id],
+      );
+      expect(evidence.rows).toEqual([
+        {
+          request_text: '{"candles":[]}',
+          response_text: null,
+          content: "fixture exact provider prompt",
+        },
+      ]);
       await expect(
         isolated.query(
           "UPDATE scenario_contexts SET requested_model='unapproved-model' WHERE id=$1",
@@ -780,8 +805,35 @@ describe("PostgreSQL migrations integration", () => {
         currentContext!.id,
         null,
         "AI_PROVIDER_TIMEOUT",
+        undefined,
+        '{"buy_stop":"invalid"}',
       );
       expect((await contextStore.latest())?.state).toBe("FAILED");
+      expect(
+        (
+          await isolated.query<{ response_text: string | null }>(
+            "SELECT response_text FROM context_provider_evidence WHERE context_id=$1",
+            [currentContext!.id],
+          )
+        ).rows[0]!.response_text,
+      ).toBe('{"buy_stop":"invalid"}');
+      await expect(
+        contextStore.finish(
+          currentContext!.id,
+          null,
+          "AI_OTHER",
+          undefined,
+          "overwrite",
+        ),
+      ).rejects.toThrow("SCENARIO_COMPLETION_MISSING");
+      expect(
+        (
+          await isolated.query<{ response_text: string | null }>(
+            "SELECT response_text FROM context_provider_evidence WHERE context_id=$1",
+            [currentContext!.id],
+          )
+        ).rows[0]!.response_text,
+      ).toBe('{"buy_stop":"invalid"}');
       expect(
         await new PostgresContextStore(isolated, {
           accountId: demoAccountId,
@@ -2581,10 +2633,7 @@ describe("PostgreSQL migrations integration", () => {
     const migrationDirectory = await mkdtemp(
       path.join(os.tmpdir(), "ctrader-migrations-"),
     );
-    const admin = new pg.Pool({
-      connectionString: databaseConnectionString(connectionString as string),
-      ssl: { rejectUnauthorized: true },
-    });
+    const admin = createPool({ connectionString: connectionString as string });
     await admin.query(`CREATE SCHEMA "${schema}"`);
     const url = new URL(connectionString as string);
     url.searchParams.set("options", `-csearch_path=${schema}`);

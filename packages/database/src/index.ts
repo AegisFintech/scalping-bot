@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -31,11 +32,17 @@ export function databaseConnectionString(connectionString: string): string {
     // TLS is configured explicitly on pg.Pool below. Removing sslmode avoids
     // inheriting pg/libpq compatibility semantics that change between majors.
     url.searchParams.delete("sslmode");
+    url.searchParams.delete("sslrootcert");
+    // pg lets TLS URL parameters override the explicit Pool TLS object.
+    // Client certificates are not part of this application's connection contract.
+    if (url.searchParams.has("sslcert") || url.searchParams.has("sslkey"))
+      throw new Error("DATABASE_CLIENT_CERT_UNSUPPORTED");
     return url.toString();
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message === "DATABASE_URL_PROTOCOL_INVALID"
+      (error.message === "DATABASE_URL_PROTOCOL_INVALID" ||
+        error.message === "DATABASE_CLIENT_CERT_UNSUPPORTED")
     )
       throw error;
     throw new Error("DATABASE_URL_INVALID", { cause: error });
@@ -46,11 +53,34 @@ export function createPool(options: DatabaseOptions): pg.Pool {
   if (!options.connectionString) {
     throw new Error("DATABASE_URL_REQUIRED");
   }
+  const connectionString = databaseConnectionString(options.connectionString);
+  const rootCertificate = new URL(options.connectionString).searchParams.get(
+    "sslrootcert",
+  );
+  let ca: string | undefined;
+  if (rootCertificate !== null) {
+    if (!path.isAbsolute(rootCertificate) || options.sslMode === "disable")
+      throw new Error("DATABASE_CA_CONFIGURATION_INVALID");
+    try {
+      ca = readFileSync(rootCertificate, "utf8");
+      if (
+        !ca.includes("-----BEGIN CERTIFICATE-----") ||
+        ca.includes("PRIVATE KEY")
+      )
+        throw new Error("INVALID_CA");
+    } catch {
+      throw new Error("DATABASE_CA_UNAVAILABLE");
+    }
+  }
   return new Pool({
-    connectionString: databaseConnectionString(options.connectionString),
+    connectionString,
     min: options.poolMin ?? 1,
     max: options.poolMax ?? 10,
-    ssl: options.sslMode === "disable" ? false : { rejectUnauthorized: true },
+    ssl:
+      options.sslMode === "disable"
+        ? false
+        : { rejectUnauthorized: true, ...(ca === undefined ? {} : { ca }) },
+    connectionTimeoutMillis: 10_000,
     application_name: "ctrader-ai-scalper",
   });
 }

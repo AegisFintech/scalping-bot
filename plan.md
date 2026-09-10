@@ -2,6 +2,46 @@
 
 ## Scope
 
+### ISSUE-090 — Local PostgreSQL and necessary evidence storage (in progress)
+
+- Issue: [#211](https://github.com/AegisFintech/scalping-bot/issues/211).
+- Branch: `issue-090-local-storage-overhaul`; dependency: ISSUE-089 / PR #210.
+- Authorization: September 10 operator approved the local PostgreSQL migration,
+  scoped server cleanup, compact evidence, bounded disposable retention and backups.
+- Acceptance: restore and verify authoritative trading/model/risk/control history;
+  local-only PostgreSQL with protected credentials; compatible Node/Python access;
+  no duplicate dispatch on restart; exact legacy charts and financial evidence
+  retained; repeated context deduplicated; future display charts generated on
+  demand; bounded disposable logs/market data; paired backups and restore proof.
+- Cleanup: only approved package caches and unused Docker images/build cache;
+  preserve volumes, installed dependencies, trading evidence and rollback sets.
+- Preserve current demo strategy, TP/SL, risk locks and fail-closed reconciliation.
+  A restored historical backup cannot authorize new execution without complete
+  recovery of subsequent authoritative state. No paid provider upgrade authorized.
+- Current blocker: hosted PostgreSQL still rejects reads with compute-quota code
+  `53000`; newest local dump is September 9 at 16:32 SGT. Execution was held only
+  after a fresh direct broker check proved the account flat. Independent local
+  preparation and restore testing continue while source access is recovered.
+- Required delivery: forward migrations/contracts/docs, meaningful success/failure
+  tests and all completion gates; graph update, secret scan, commit/push and PR.
+- Prepared: native PostgreSQL 18.6/TLS; additive migration 0023; numeric analytics
+  and chart-on-demand contracts; atomic provider evidence; normalized candles;
+  bounded routine storage and paired backups; systemd jobs prepared but disabled.
+- Verified: 282 historical trades, 5,358 chart references, 22 original migration
+  checksums; new paired backup restored all 45 tables; 302,580 candles reconstruct
+  from 10,418 values with a measured 6.22% physical saving; nine protected table
+  fingerprints preserved across compaction and PostgreSQL restart. Cleanup
+  reclaimed 9.44 GB while preserving all four Docker volumes and rollback sets.
+- Outstanding: full newer source history, authoritative cutover/current backup
+  proof, job activation and demo resumption. No off-server destination/key has
+  been selected. Draft delivery must remain unmerged until acceptance is met.
+- Completion checks: all 22 required commands passed; 619 Node / 155 Python /
+  36 schema / three migration / five TLS integration tests. Real local database
+  restart and populated-target refusal proved; light/dark browser state checks
+  passed with zero mutation requests. Exact commands and results:
+  [validation record](docs/evidence/local-storage-validation.json).
+- Implementation evidence: [local storage report](docs/local-storage-report.md).
+
 ### ISSUE-087 — Demo market-stop OCO and prompt zero-fill restart (implemented; validated; demo restored)
 
 - Issue: [#204](https://github.com/AegisFintech/scalping-bot/issues/204).

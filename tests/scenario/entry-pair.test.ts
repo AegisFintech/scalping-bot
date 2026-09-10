@@ -196,11 +196,11 @@ describe("direct entries (synthetic, no broker authority)", () => {
     try {
       const http = new EntryPairHttpPlanner(
         "http://127.0.0.1:8082",
-        async (_url, init) => {
+        async (url, init) => {
           if (typeof init?.body !== "string") throw new Error("fixture-body");
           const result = await server.inject({
             method: "POST",
-            url: "/v1/entry-pair",
+            url: new URL(url instanceof Request ? url.url : url).pathname,
             payload: JSON.parse(init.body) as object,
           });
           return new Response(result.body, {
@@ -219,15 +219,39 @@ describe("direct entries (synthetic, no broker authority)", () => {
         "provider-normalized-identity",
       );
       expect(result.rawResponse).toContain('"other"');
+      const numeric = await http.generate({
+        ...input,
+        chart: null,
+        schemaVersion: "2.0",
+      });
+      expect(numeric.response).toMatchObject({
+        buy_stop: "4410",
+        sell_stop: "4400",
+      });
+      const missingVersion = await server.inject({
+        method: "POST",
+        url: "/v2/entry-pair",
+        payload: { ...input, chart: null },
+      });
+      expect(missingVersion.statusCode).toBe(400);
+      const legacyWithoutImage = await server.inject({
+        method: "POST",
+        url: "/v1/entry-pair",
+        payload: { ...input, chart: null, schemaVersion: "2.0" },
+      });
+      expect(legacyWithoutImage.statusCode).toBe(400);
       fetchImpl.mockResolvedValueOnce(
         Response.json({
           model: "deepseek-v4-pro",
           output_text: '{"buy_stop":"4410"}',
         }),
       );
-      await expect(http.generate(input)).rejects.toThrow(
-        "AI_ENTRY_PRICE_MISSING",
-      );
+      await expect(
+        http.generate({ ...input, chart: null, schemaVersion: "2.0" }),
+      ).rejects.toMatchObject({
+        message: "AI_ENTRY_PRICE_MISSING",
+        rawResponse: '{"buy_stop":"4410"}',
+      });
     } finally {
       await server.close();
       vi.useRealTimers();

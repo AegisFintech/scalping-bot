@@ -49,29 +49,49 @@ export function aiReasoningEffort(
 
 export function createAiServer(options: AiServerOptions): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 5_600_000 });
-  app.post<{ Body: Parameters<EntryPairPlanner["generate"]>[0] }>(
-    "/v1/entry-pair",
-    async (request, reply) => {
-      if (options.entryPairPlanner === undefined)
-        return reply.code(503).send({ reason: "SCENARIO_NOT_CONFIGURED" });
-      try {
-        return reply.send(
-          await options.entryPairPlanner.generate(request.body),
-        );
-      } catch (error) {
-        return reply.code(503).send({
-          reason:
-            error instanceof Error &&
-            /^(AI|SCENARIO)_[A-Z0-9_:]{1,120}$/.test(error.message)
-              ? error.message
-              : normalizeAiAnalysisError(error),
-          ...(error instanceof ProviderFailure
-            ? { telemetry: error.telemetry }
-            : {}),
-        });
-      }
-    },
-  );
+  for (const version of ["v1", "v2"] as const)
+    app.post<{ Body: Parameters<EntryPairPlanner["generate"]>[0] }>(
+      `/${version}/entry-pair`,
+      async (request, reply) => {
+        if (options.entryPairPlanner === undefined)
+          return reply.code(503).send({ reason: "SCENARIO_NOT_CONFIGURED" });
+        try {
+          if (
+            version === "v1" &&
+            (request.body.chart == null ||
+              request.body.schemaVersion !== undefined)
+          )
+            return reply.code(400).send({ reason: "SCENARIO_CHART_MISSING" });
+          if (
+            version === "v2" &&
+            (request.body.chart !== null ||
+              request.body.schemaVersion !== "2.0")
+          )
+            return reply
+              .code(400)
+              .send({ reason: "SCENARIO_NUMERIC_CONTRACT_REQUIRED" });
+          return reply.send(
+            await options.entryPairPlanner.generate(request.body),
+          );
+        } catch (error) {
+          return reply.code(503).send({
+            reason:
+              error instanceof Error &&
+              /^(AI|SCENARIO)_[A-Z0-9_:]{1,120}$/.test(error.message)
+                ? error.message
+                : normalizeAiAnalysisError(error),
+            ...(error instanceof ProviderFailure
+              ? {
+                  telemetry: error.telemetry,
+                  ...(version === "v2" && error.rawResponse !== undefined
+                    ? { rawResponse: error.rawResponse }
+                    : {}),
+                }
+              : {}),
+          });
+        }
+      },
+    );
   app.post<{ Body: Parameters<ScenarioPlanner["generate"]>[0] }>(
     "/v1/scenario",
     async (request, reply) => {
@@ -115,6 +135,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
     };
   }>("/v1/analyze", async (request, reply) => {
     try {
+      if (request.body.chart == null) throw new Error("AI_CHART_MISSING");
       const result = await options.client.analyze(request.body);
       return reply.send(result);
     } catch (error) {

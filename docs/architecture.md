@@ -266,3 +266,25 @@ The worker has no close or pause authority, and does not add a global entry lock
 Existing ownership, open-position, reconciliation and risk gates remain. A fully
 reconciled close admits the existing fresh-context cycle. See
 [implementation and evidence](broker-exit-loop-report.md).
+
+## ISSUE-090 local evidence storage
+
+Release `0.2.5-market-stop.4` adds a versioned numeric analytics route:
+`POST /v2/analyze-numeric` accepts `{schemaVersion: "2.0", request: <1.0 request>}`
+and returns strict analytics 2.0 with `artifactPolicy: "numeric-v1"`, the same
+quality/feature computations and `chart: null`. Production entry inference uses
+`POST /v2/entry-pair`. Legacy image routes and schemas remain unchanged. Candles,
+quote/depth freshness and completed-bar validation remain mandatory.
+
+Migration 0023 stores typed immutable candle values once, with separate snapshot
+references retaining IDs and capture/source provenance. `decision_candles` reads
+both legacy and normalized storage. Exact provider user JSON and the actual
+provider prompt are committed with the dispatch claim; completion atomically
+journals the plan/telemetry and available response text, including rejected
+output. Redaction still protects secrets. Historical missing text is not invented.
+
+Future numeric analyses create no automatic PNG. Diagnostics can render recorded
+candles on demand and label them regenerated. Historical PNGs still use their
+original hashes and bytes. Native PostgreSQL and local artifacts form a paired
+backup; routine storage maintenance has no provider/broker authority. See
+[transition, retention, recovery and current blocker](local-storage-report.md).

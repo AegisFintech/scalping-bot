@@ -53,6 +53,22 @@ afterEach(async () => {
 });
 
 describe("local market recorder", () => {
+  it("leaves managed segments for evidence-aware retention instead of deleting them by count", async () => {
+    const directory = await temporaryDirectory();
+    const recorder = new LocalMarketRecorder({
+      directory,
+      sampleIntervalMs: 250,
+      segmentDurationSeconds: 1,
+      maxCompletedSegments: 1,
+      managedRetention: true,
+    });
+    recorder.record(sample("2026-09-04T00:00:00.100Z"));
+    recorder.record(sample("2026-09-04T00:00:01.100Z"));
+    await recorder.stop();
+    expect(
+      (await readdir(directory)).filter((file) => file.endsWith(".jsonl.gz")),
+    ).toHaveLength(2);
+  });
   it("rejects duplicate timestamps and stale observations without corrupting the tape", async () => {
     const recorder = new LocalMarketRecorder({
       directory: await temporaryDirectory(),

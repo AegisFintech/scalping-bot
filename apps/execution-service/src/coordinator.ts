@@ -65,20 +65,21 @@ export interface MarketSnapshotProvider {
 
 export interface AnalyticsProvider {
   analyze(request: AnalyticsRequest): Promise<AnalyticsResponse>;
+  analyzeNumeric?(request: AnalyticsRequest): Promise<AnalyticsResponse>;
 }
 
 export interface ModelProvider {
   readonly circuitOpen: boolean;
   prepare?(input: {
     snapshot: MarketSnapshot;
-    chart: AnalysisChartArtifact;
+    chart: AnalysisChartArtifact | null;
     payload: Readonly<Record<string, unknown>>;
   }): Promise<string | null>;
   analyze(request: {
     readonly analysisId: string;
     readonly symbol: string;
     readonly payload: Readonly<Record<string, unknown>>;
-    readonly chart: AnalysisChartArtifact;
+    readonly chart: AnalysisChartArtifact | null;
     readonly timeoutMs: number;
   }): Promise<{
     readonly response: ModelResponse;
@@ -261,6 +262,7 @@ export type PlacementControls = Pick<
 export interface CoordinatorOptions {
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
+  readonly numericAnalytics?: boolean;
   readonly symbol: string;
   readonly mode: "paper" | "demo" | "shadow" | "live";
   readonly candleCounts: Readonly<Record<Timeframe, number>>;
@@ -676,11 +678,26 @@ export class AnalysisCoordinator {
         orderBook: snapshot.orderBook,
         config: this.#options.analyticsConfig,
       };
-      const analytics = await this.#options.analytics.analyze(analyticsRequest);
+      const numeric = this.#options.numericAnalytics === true;
+      if (
+        numeric &&
+        (!this.#options.entryPairMode ||
+          this.#options.analytics.analyzeNumeric === undefined)
+      )
+        throw new Error("NUMERIC_ANALYTICS_CONFIGURATION_INVALID");
+      const analytics = numeric
+        ? await this.#options.analytics.analyzeNumeric!(analyticsRequest)
+        : await this.#options.analytics.analyze(analyticsRequest);
+      if (
+        numeric &&
+        (analytics.schemaVersion !== "2.0" ||
+          analytics.artifactPolicy !== "numeric-v1")
+      )
+        throw new Error("NUMERIC_ANALYTICS_CONTRACT_INVALID");
       await this.#options.trail.analytics(analysisId, analytics);
       if (!analytics.acceptable)
         return await reject(analytics.rejectionReasons);
-      if (analytics.chart === null)
+      if (!numeric && analytics.chart === null)
         return await reject(["ANALYTICS_CHART_MISSING"]);
       const atr = m1Atr(analytics);
       const spreadContext = this.#options.entryPairMode

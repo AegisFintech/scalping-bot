@@ -138,14 +138,24 @@ export function validateScenarioInput(
   input: ScenarioInput,
   now: () => number,
 ): void {
+  validateScenarioMarket(input, now, true);
+}
+
+/** Numeric v2 explicitly omits display artifacts; market checks stay identical. */
+export function validateScenarioMarket(
+  input: Omit<ScenarioInput, "chart"> & { chart: AnalysisChartArtifact | null },
+  now: () => number,
+  requireChart: boolean,
+): void {
   const capture = time(input.capturedAt);
   if (now() < capture || now() - capture > 3000)
     throw new Error("SCENARIO_INPUT_STALE");
   if (input.candles.length !== 3)
     throw new Error("SCENARIO_TIMEFRAMES_INVALID");
-  // The chart remains a required, verified local audit artifact even though
-  // this model receives numeric candles instead of an unsupported image.
-  validateChartArtifact(input.chart);
+  // Historical image contracts require exact bytes; numeric v2 has no display artifact.
+  if (requireChart && input.chart === null)
+    throw new Error("SCENARIO_CHART_MISSING");
+  if (input.chart !== null) validateChartArtifact(input.chart);
   for (const [frame, period] of [
     ["M1", 60_000],
     ["M5", 300_000],
@@ -173,11 +183,12 @@ export function validateScenarioInput(
     }
     if (
       previous !== Math.floor(capture / period) * period ||
-      !Number.isSafeInteger(input.chart.candleCounts[frame]) ||
-      input.chart.candleCounts[frame] < 1 ||
-      input.chart.candleCounts[frame] >
-        Math.min(80, series[0].candles.length) ||
-      time(input.chart.latestEndTimes[frame]) !== previous
+      (input.chart !== null &&
+        (!Number.isSafeInteger(input.chart.candleCounts[frame]) ||
+          input.chart.candleCounts[frame] < 1 ||
+          input.chart.candleCounts[frame] >
+            Math.min(80, series[0].candles.length) ||
+          time(input.chart.latestEndTimes[frame]) !== previous))
     )
       throw new Error("SCENARIO_CHART_CONTEXT_MISMATCH");
   }

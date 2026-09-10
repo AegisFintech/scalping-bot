@@ -142,7 +142,7 @@ export class AiOrchestratorHttpClient {
     readonly analysisId: string;
     readonly symbol: string;
     readonly payload: Readonly<Record<string, unknown>>;
-    readonly chart: AnalysisChartArtifact;
+    readonly chart: AnalysisChartArtifact | null;
     readonly timeoutMs?: number;
   }): Promise<{
     readonly response: ModelResponse;

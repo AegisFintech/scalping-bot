@@ -9,6 +9,15 @@ in linked reports. Give longer explanations only when explicitly requested.
 
 ## Current operator override — ISSUE-089 / ISSUE-087 / ISSUE-086
 
+- ISSUE-090 authorizes local PostgreSQL, numeric-only production analytics 2.0,
+  deduplicated candle values and on-demand display charts. Historical chart bytes
+  and contracts remain immutable. Exact provider inputs/prompts and available
+  response text are journaled; archived sampled evidence is pinned before cache
+  eviction. Read `docs/local-storage-report.md` before storage changes. Managed
+  recording requires the matching maintenance/backup timers. Never activate a
+  historical recovery database or discard newer risk/dispatch state. Final
+  authoritative cutover remains blocked until the hosted quota is recovered.
+
 - ISSUE-089 removes local market-close fallbacks and their persistent analysis
   pause. Broker SL/TP handles exits; verified protection never depends on sampled
   quotes. Keep bounded SL/TP repair and historical close reconciliation. Do not

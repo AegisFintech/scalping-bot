@@ -1,5 +1,6 @@
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
+import { databaseStartup } from "./database-startup.js";
 import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
 import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
@@ -248,7 +249,10 @@ async function main(): Promise<void> {
     sslMode:
       environment.DATABASE_SSL_MODE === "disable" ? "disable" : "require",
   });
-  await pool.query("SELECT 1");
+  if (!(await databaseStartup(pool))) {
+    await pool.end();
+    return;
+  }
   const observabilityOutbox = betterStack.configured
     ? new PostgresObservabilityOutbox({
         pool,
@@ -1055,6 +1059,7 @@ async function main(): Promise<void> {
   }
   const coordinator = new AnalysisCoordinator({
     entryPairMode: true,
+    numericAnalytics: true,
     symbol: config.symbol,
     mode: config.tradingMode as "paper" | "demo" | "shadow" | "live",
     candleCounts,

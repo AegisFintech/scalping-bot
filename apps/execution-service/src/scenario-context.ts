@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { redactString } from "../../../packages/logging/src/index.js";
 import type pg from "pg";
 import { FIXED_DEFAULTS } from "../../../packages/config/src/policy.js";
 import type { AiAnalysisResult } from "../../../packages/ai-client/src/client.js";
@@ -14,7 +15,10 @@ import {
   validatePlan,
   type ScenarioPlan,
 } from "../../../packages/scenario-engine/src/plan.js";
-import type { EntryPlannerInput } from "../../../packages/scenario-engine/src/entry-planner.js";
+import {
+  entryProviderPayload,
+  type EntryPlannerInput,
+} from "../../../packages/scenario-engine/src/entry-planner.js";
 import {
   validateEntryPlan,
   type EntryPairPlan,
@@ -74,12 +78,18 @@ export interface ContextStore {
     capturedAt: string;
     tickSize: string;
     afterContextId?: string;
+    providerEvidence?: {
+      requestText: string;
+      promptContent: string;
+      promptVersion: string;
+    };
   }): Promise<boolean>;
   finish(
     id: string,
     result: AiAnalysisResult<ContextPlan> | null,
     reason: string | null,
     telemetry?: unknown,
+    rejectedResponse?: string,
   ): Promise<void>;
 }
 export class PostgresContextStore implements ContextStore {
@@ -156,6 +166,11 @@ export class PostgresContextStore implements ContextStore {
     capturedAt: string;
     tickSize: string;
     afterContextId?: string;
+    providerEvidence?: {
+      requestText: string;
+      promptContent: string;
+      promptVersion: string;
+    };
   }): Promise<boolean> {
     const client = await this.pool.connect();
     try {
@@ -208,6 +223,19 @@ export class PostgresContextStore implements ContextStore {
           input.afterContextId ?? null,
         ],
       );
+      if (result.rowCount === 1 && input.providerEvidence !== undefined) {
+        const evidence = input.providerEvidence;
+        await client.query(
+          `INSERT INTO provider_prompt_artifacts(content,version) VALUES ($1,$2)
+          ON CONFLICT(content_sha256) DO NOTHING`,
+          [evidence.promptContent, evidence.promptVersion],
+        );
+        await client.query(
+          `INSERT INTO context_provider_evidence(context_id,prompt_sha256,request_text)
+          VALUES ($1,encode(sha256(convert_to($2,'UTF8')),'hex'),$3)`,
+          [input.id, evidence.promptContent, evidence.requestText],
+        );
+      }
       await client.query("COMMIT");
       return result.rowCount === 1;
     } catch (error) {
@@ -222,6 +250,7 @@ export class PostgresContextStore implements ContextStore {
     result: AiAnalysisResult<ContextPlan> | null,
     reason: string | null,
     telemetry?: unknown,
+    rejectedResponse?: string,
   ): Promise<void> {
     const usage = result?.telemetry ?? telemetry;
     const parsed =
@@ -231,21 +260,43 @@ export class PostgresContextStore implements ContextStore {
       (result !== null && result.model !== FIXED_DEFAULTS.AI_MODEL)
     )
       throw new Error("SCENARIO_PROVIDER_IDENTITY_MISMATCH");
-    const updated = await this.pool.query(
-      `UPDATE scenario_contexts SET state=$2,completed_at=clock_timestamp(),duration_ms=GREATEST(0,floor(extract(epoch FROM (clock_timestamp()-requested_at))*1000))::integer,available_at=CASE WHEN $2='READY' THEN clock_timestamp() ELSE NULL END,
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const updated = await client.query(
+        `UPDATE scenario_contexts SET state=$2,completed_at=clock_timestamp(),duration_ms=GREATEST(0,floor(extract(epoch FROM (clock_timestamp()-requested_at))*1000))::integer,available_at=CASE WHEN $2='READY' THEN clock_timestamp() ELSE NULL END,
       plan=$3::jsonb,telemetry=$4::jsonb,reason=$5 WHERE id=$1 AND state='REQUESTING' AND account_id=$6 AND symbol_id=$7 AND mode=$8`,
-      [
-        id,
-        result === null ? "FAILED" : "READY",
-        result === null ? null : JSON.stringify(result.response),
-        parsed === null ? null : JSON.stringify(parsed),
-        reason,
-        this.scope.accountId,
-        this.scope.symbolId,
-        this.scope.mode,
-      ],
-    );
-    if (updated.rowCount !== 1) throw new Error("SCENARIO_COMPLETION_MISSING");
+        [
+          id,
+          result === null ? "FAILED" : "READY",
+          result === null ? null : JSON.stringify(result.response),
+          parsed === null ? null : JSON.stringify(parsed),
+          reason,
+          this.scope.accountId,
+          this.scope.symbolId,
+          this.scope.mode,
+        ],
+      );
+      if (updated.rowCount !== 1)
+        throw new Error("SCENARIO_COMPLETION_MISSING");
+      await client.query(
+        `UPDATE context_provider_evidence SET response_text=$2 WHERE context_id=$1`,
+        [
+          id,
+          result === null
+            ? rejectedResponse === undefined
+              ? null
+              : redactString(rejectedResponse)
+            : redactString(result.rawResponse),
+        ],
+      );
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 
@@ -261,6 +312,7 @@ export class ReusableScenarioModel implements ModelProvider {
     response: ReturnType<typeof scenarioOco>;
   } | null = null;
   private readonly artifact;
+  private readonly providerPrompt: string | null;
   constructor(
     private readonly store: ContextStore,
     private readonly planner: Planner,
@@ -268,6 +320,9 @@ export class ReusableScenarioModel implements ModelProvider {
     private readonly report: (reason: string) => void = () => {},
     private readonly entryOnly = false,
   ) {
+    this.providerPrompt = entryOnly
+      ? readFileSync("prompts/entry-pair-v1.md", "utf8").trim()
+      : null;
     const content = readFileSync(
       entryOnly
         ? "prompts/entry-pair-execution-v1.md"
@@ -368,13 +423,37 @@ export class ReusableScenarioModel implements ModelProvider {
         ? "SCENARIO_MAP_CONSUMED"
         : "SCENARIO_REFRESH_PENDING";
     }
+    if (!this.entryOnly && input.chart === null)
+      throw new Error("SCENARIO_CHART_MISSING");
     const id = randomUUID();
+    const plannerInput: EntryPlannerInput = {
+      analysisId: id,
+      symbol: input.snapshot.metadata.symbolName,
+      capturedAt: input.snapshot.serverTime,
+      tickSize: input.snapshot.metadata.tickSize,
+      candles: input.snapshot.candles,
+      chart: input.chart,
+      quote: input.snapshot.quote,
+      minimumStopDistance: input.snapshot.metadata.minStopDistance,
+      ...(this.entryOnly && input.chart === null
+        ? { schemaVersion: "2.0" as const }
+        : {}),
+    };
     if (
       !(await this.store.claim({
         id,
         sourceAnalysisId: String(input.payload.analysis_id),
         capturedAt: input.snapshot.serverTime,
         tickSize: input.snapshot.metadata.tickSize,
+        ...(this.entryOnly
+          ? {
+              providerEvidence: {
+                requestText: JSON.stringify(entryProviderPayload(plannerInput)),
+                promptContent: this.providerPrompt!,
+                promptVersion: "entry-pair-v1",
+              },
+            }
+          : {}),
         ...(afterTerminal && existing !== null
           ? { afterContextId: existing.id }
           : {}),
@@ -385,16 +464,7 @@ export class ReusableScenarioModel implements ModelProvider {
     }
     this.nextEvaluationAt = now + SCENARIO_REQUEST_POLICY.dispatchCooldownMs;
     this.task = this.planner
-      .generate({
-        analysisId: id,
-        symbol: input.snapshot.metadata.symbolName,
-        capturedAt: input.snapshot.serverTime,
-        tickSize: input.snapshot.metadata.tickSize,
-        candles: input.snapshot.candles,
-        chart: input.chart,
-        quote: input.snapshot.quote,
-        minimumStopDistance: input.snapshot.metadata.minStopDistance,
-      })
+      .generate(plannerInput)
       .then(async (result) => {
         // Validate again at the trust boundary before granting local execution access.
         const plan = (this.entryOnly ? validateEntryPlan : validatePlan)(
@@ -422,6 +492,7 @@ export class ReusableScenarioModel implements ModelProvider {
           null,
           reason,
           error instanceof ProviderFailure ? error.telemetry : undefined,
+          error instanceof ProviderFailure ? error.rawResponse : undefined,
         );
         if (isLocalCircuitRejection("FAILED", reason))
           this.nextEvaluationAt =

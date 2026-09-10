@@ -399,6 +399,26 @@ function options(
 }
 
 describe("analysis coordinator", () => {
+  it("uses the explicit numeric path for entry pairs and rejects a mismatched response contract", async () => {
+    const o = options({ entryPairMode: true, numericAnalytics: true });
+    const original = o.analytics.analyze.bind(o.analytics);
+    o.analytics.analyzeNumeric = async (request) => ({
+      ...(await original(request)),
+      schemaVersion: "2.0",
+      artifactPolicy: "numeric-v1",
+      chart: null,
+    });
+    const place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe("PLACED");
+    expect(place).toHaveBeenCalledTimes(1);
+    const invalid = options({ entryPairMode: true, numericAnalytics: true });
+    invalid.analytics.analyzeNumeric = invalid.analytics.analyze.bind(
+      invalid.analytics,
+    );
+    expect(
+      (await new AnalysisCoordinator(invalid).runOnce()).reasonCodes,
+    ).toContain("NUMERIC_ANALYTICS_CONTRACT_INVALID");
+  });
   it("places under direct-entry policy despite spread, percentile and ATR strategy limits", async () => {
     const spreadContext = vi.fn(() =>
       Promise.reject(new Error("unused history")),

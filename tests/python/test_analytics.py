@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from python.analytics.models import AnalyticsRequest
-from python.analytics.service import analyze
+from python.analytics.service import analyze, analyze_numeric
 
 
 def candle(start: datetime, minutes: int, price: int) -> dict[str, object]:
@@ -114,6 +114,21 @@ def test_analytics_builds_required_features() -> None:
     assert order_book["microprice_bias"] == "-0.0909090909"
     assert order_book["rolling_aggregates"][0]["net_liquidity_change"] == "0"
     assert order_book["rolling_aggregates"][0]["liquidity_change_imbalance"] is None
+
+
+def test_numeric_analysis_preserves_features_and_rejects_forming_candles() -> None:
+    request = AnalyticsRequest.model_validate(request_payload())
+    original = analyze(request, now=request.analysis_time)
+    numeric = analyze_numeric(request, now=request.analysis_time)
+    assert numeric.features == original.features
+    assert numeric.acceptable and numeric.chart is None
+    assert numeric.schema_version == "2.0" and numeric.artifact_policy == "numeric-v1"
+    payload = request_payload()
+    payload["candles"][0]["candles"][-1]["complete"] = False  # type: ignore[index]
+    rejected = analyze_numeric(AnalyticsRequest.model_validate(payload))
+    assert not rejected.acceptable
+    assert "M1_FORMING_CANDLE" in rejected.rejection_reasons
+    assert rejected.features == {} and rejected.chart is None
 
 
 def test_analytics_normalizes_multi_window_liquidity_change_pressure() -> None:

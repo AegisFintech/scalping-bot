@@ -1,0 +1,222 @@
+{
+  "release": "0.2.5-market-stop.4",
+  "mode": "isolated historical recovery, mock/replay tests; no trading resumed",
+  "final_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 19.1,
+      "log": "00-final.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 25.21,
+      "log": "01-final.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 10.94,
+      "log": "02-final.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 9.4,
+      "log": "03-final.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 30.75,
+      "log": "04-final.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 4.39,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.06,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 8.0,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.71,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.37,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.27,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-090/backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-090/scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.7,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.93,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 19.93,
+      "log": "21.log"
+    }
+  ],
+  "cleanup": {
+    "freeBytesBefore": 20431085568,
+    "freeBytesAfter": 29866926080,
+    "netReclaimedBytes": 9435840512,
+    "inventoriedCacheFiles": 7163,
+    "retainedDockerVolumes": 4,
+    "allCommandsPassed": true
+  },
+  "paired_restore": {
+    "restored": true,
+    "scope": "historical-recovery",
+    "verifiedTables": 45
+  },
+  "compaction": {
+    "afterBytes": 59162624,
+    "backupScope": "historical-recovery",
+    "beforeBytes": 63086592,
+    "compactedReferences": 302580,
+    "indexRebuildRequired": true,
+    "protectedTablesVerified": 9,
+    "reconstructedCandlesVerified": true,
+    "savedBytes": 3923968,
+    "savingPercent": 6.22,
+    "uniqueCandleValues": 10418
+  },
+  "database_restart": {
+    "ready": true,
+    "retried": 2,
+    "safeReasons": ["DATABASE_UNAVAILABLE", null],
+    "tls": true,
+    "brokerCalls": 0
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "exit_code": 0,
+    "nodes": 3522,
+    "edges": 7190,
+    "communities": 255,
+    "notes": [
+      "AST only; no provider calls.",
+      "Known pyproject.toml zero-node warning; community labels use hub names."
+    ]
+  },
+  "notes": [
+    "Final authoritative cutover is blocked by source SQLSTATE 53000 compute quota.",
+    "All original backups, charts, Docker volumes and seven pre-existing user screenshot deletions were preserved.",
+    "Timers are prepared and verified, not enabled. Runtime environment unchanged; execution held after flat broker reconciliation.",
+    "No off-server backup destination has been selected; encrypt/decrypt export test passed.",
+    "Initial development checks found a generated-column volatility error, empty-snapshot journaling regression and routine lint/type issues. All were corrected before delivery.",
+    "Initial compaction retained empty index pages. Index rebuild was added; final physical saving is 6.22%, including all indexes.",
+    "The legacy working-tree secret scan emits missing-file notices for the seven pre-existing screenshot deletions and harmless risk-budget filename matches. The additional index scan covers every committed blob with credential-value checks and boundary-aware patterns; zero matches."
+  ],
+  "tests": {
+    "node": 619,
+    "python": 155,
+    "schema": 36,
+    "migrations": 3,
+    "integration_tls": 5,
+    "python_storage_sql": 3
+  },
+  "browser": {
+    "command": "node artifacts/issue-090/browser-check.mjs",
+    "exit_code": 0,
+    "scope": "isolated historical preview, GET-only API, no broker clients",
+    "themes": ["light", "dark"],
+    "navigationAndFormStatePreserved": true,
+    "historyAndStorageVisible": true,
+    "mutationRequests": 0
+  },
+  "operations": {
+    "systemdUnitVerification": 0,
+    "logrotateDebugValidation": 0,
+    "populatedRestoreTargetRejected": true,
+    "databaseRestartPreservedProtectedTables": 9,
+    "finalDiskFreeBytes": 28121165824,
+    "timersEnabled": false,
+    "offServerCopyVerified": false
+  },
+  "staged_secret_scan": {
+    "command": "node artifacts/issue-090/scan-index.mjs",
+    "exit_code": 0,
+    "indexBlobs": 454,
+    "activeDeploymentAndLocalDatabaseCredentialMatches": 0
+  }
+}

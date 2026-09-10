@@ -187,3 +187,21 @@ seconds. There are no new environment keys. Model pin, authorization, sizing
 policy and daily/drawdown locks are unchanged. The operator-authorized rollout
 clears only the previous protection pause after confirmed flat/terminal state.
 See [broker exit loop](broker-exit-loop-report.md).
+
+## Local PostgreSQL storage release (ISSUE-090)
+
+The operator template remains 20 keys. The existing `DATABASE_URL` supports a
+loopback PostgreSQL endpoint with `sslmode=verify-full` and an absolute
+`sslrootcert` query parameter. Node and Python verify the server identity using
+the protected local CA; no insecure TLS fallback is added. Keep application and
+migration credentials separate. Never replace a populated environment file with
+the sample, put credentials in command arguments, or assume PM2 has reread it.
+
+Storage policy is code, not trading configuration: seven days of unreferenced
+sample cache (1 GiB cap), seven days/200 MiB of routine logs, seven days of detailed
+metrics, 30 days of hourly metrics, seven daily/four weekly paired recovery sets
+plus the latest restore-proven set. Retained trade/model evidence and original
+charts are outside these eviction budgets. Five-minute maintenance and daily UTC
+backups use native systemd timers. Disk/backup alerts are observational and add no
+trading pause. Activation requires verified current recovery. See
+[operator commands and pending cutover](local-storage-report.md).

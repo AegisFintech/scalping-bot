@@ -9,13 +9,56 @@ import {
   validateEntryPlan,
   type EntryPairPlan,
 } from "./entry-plan.js";
-import { validateScenarioInput, type ScenarioInput } from "./planner.js";
+import { validateScenarioMarket, type ScenarioInput } from "./planner.js";
 import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 
-export type EntryPlannerInput = ScenarioInput & {
+export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
+  readonly chart: ScenarioInput["chart"] | null;
+  readonly schemaVersion?: "2.0";
   readonly quote?: Quote;
   readonly minimumStopDistance?: string;
 };
+
+/** Shared byte-for-byte input construction for pre-dispatch journal and provider. */
+export function entryProviderPayload(
+  input: EntryPlannerInput,
+): Readonly<Record<string, unknown>> {
+  if (input.quote === undefined || input.minimumStopDistance === undefined)
+    throw new Error("SCENARIO_ENTRY_QUOTE_MISSING");
+  return {
+    captured_at: input.capturedAt,
+    tick_size: input.tickSize,
+    quote: input.quote,
+    minimum_entry_distance: input.minimumStopDistance,
+    candles: input.candles.map((s) => ({
+      timeframe: s.timeframe,
+      columns: [
+        "startTime",
+        "endTime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "complete",
+        "qualityFlags",
+      ],
+      rows: s.candles
+        .slice(-SCENARIO_REQUEST_POLICY.candleLimits[s.timeframe])
+        .map((b) => [
+          b.startTime,
+          b.endTime,
+          b.open,
+          b.high,
+          b.low,
+          b.close,
+          b.volume,
+          b.complete,
+          b.qualityFlags,
+        ]),
+    })),
+  };
+}
 
 export class EntryPairPlanner {
   readonly client: OpenAiCompatibleClient<EntryPairPlan>;
@@ -54,46 +97,16 @@ export class EntryPairPlanner {
   async generate(
     input: EntryPlannerInput,
   ): Promise<AiAnalysisResult<EntryPairPlan>> {
-    validateScenarioInput(input, this.now);
+    if (input.chart === null && input.schemaVersion !== "2.0")
+      throw new Error("SCENARIO_NUMERIC_CONTRACT_REQUIRED");
+    validateScenarioMarket(input, this.now, input.schemaVersion !== "2.0");
     if (input.quote === undefined || input.minimumStopDistance === undefined)
       throw new Error("SCENARIO_ENTRY_QUOTE_MISSING");
     const result = await this.client.analyze({
       analysisId: input.analysisId,
       symbol: input.symbol,
       chart: input.chart,
-      payload: {
-        captured_at: input.capturedAt,
-        tick_size: input.tickSize,
-        quote: input.quote,
-        minimum_entry_distance: input.minimumStopDistance,
-        candles: input.candles.map((s) => ({
-          timeframe: s.timeframe,
-          columns: [
-            "startTime",
-            "endTime",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "complete",
-            "qualityFlags",
-          ],
-          rows: s.candles
-            .slice(-SCENARIO_REQUEST_POLICY.candleLimits[s.timeframe])
-            .map((b) => [
-              b.startTime,
-              b.endTime,
-              b.open,
-              b.high,
-              b.low,
-              b.close,
-              b.volume,
-              b.complete,
-              b.qualityFlags,
-            ]),
-        })),
-      },
+      payload: entryProviderPayload(input),
     });
     validateEntryPlan(JSON.stringify(result.response), {
       ...input,
