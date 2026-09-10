@@ -203,5 +203,8 @@ metrics, 30 days of hourly metrics, seven daily/four weekly paired recovery sets
 plus the latest restore-proven set. Retained trade/model evidence and original
 charts are outside these eviction budgets. Five-minute maintenance and daily UTC
 backups use native systemd timers. Disk/backup alerts are observational and add no
-trading pause. Activation requires verified current recovery. See
-[operator commands and pending cutover](local-storage-report.md).
+trading pause. Implementation delivery is independent of the deferred ISSUE-091
+operational activation; merging the release does not switch the runtime database.
+Activation still requires verified current recovery or a separately authorized,
+documented accounting transition. See
+[operator commands and deferred cutover](local-storage-report.md).

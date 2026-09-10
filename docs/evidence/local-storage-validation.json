@@ -218,5 +218,166 @@
     "exit_code": 0,
     "indexBlobs": 454,
     "activeDeploymentAndLocalDatabaseCredentialMatches": 0
+  },
+  "independent_delivery": {
+    "checked_at_utc": "2026-09-10T03:12:35.127184+00:00",
+    "scope": "Completed storage implementation; operational activation deferred to ISSUE-091 / #213 by operator direction",
+    "checks": [
+      {
+        "command": "npm run format:check",
+        "exit_code": 0,
+        "seconds": 14.85,
+        "log": "00.log"
+      },
+      {
+        "command": "npm run lint",
+        "exit_code": 0,
+        "seconds": 25.41,
+        "log": "01.log"
+      },
+      {
+        "command": "npm run typecheck",
+        "exit_code": 0,
+        "seconds": 13.3,
+        "log": "02.log"
+      },
+      {
+        "command": "npm run build",
+        "exit_code": 0,
+        "seconds": 11.82,
+        "log": "03.log"
+      },
+      {
+        "command": "npm test",
+        "exit_code": 0,
+        "seconds": 30.85,
+        "log": "04.log"
+      },
+      {
+        "command": "npm run test:schemas",
+        "exit_code": 0,
+        "seconds": 4.46,
+        "log": "05.log"
+      },
+      {
+        "command": "npm run test:migrations",
+        "exit_code": 0,
+        "seconds": 1.09,
+        "log": "06.log"
+      },
+      {
+        "command": "npm run test:integration",
+        "exit_code": 0,
+        "seconds": 8.13,
+        "log": "07.log"
+      },
+      {
+        "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+        "exit_code": 0,
+        "seconds": 0.01,
+        "log": "08.log"
+      },
+      {
+        "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+        "exit_code": 0,
+        "seconds": 0.01,
+        "log": "09.log"
+      },
+      {
+        "command": ".venv/bin/mypy python apps/dashboard",
+        "exit_code": 0,
+        "seconds": 0.59,
+        "log": "10.log"
+      },
+      {
+        "command": ".venv/bin/pytest -q",
+        "exit_code": 0,
+        "seconds": 6.41,
+        "log": "11.log"
+      },
+      {
+        "command": "npm run config:check -- .env.sample",
+        "exit_code": 0,
+        "seconds": 0.47,
+        "log": "12.log"
+      },
+      {
+        "command": "npm run config:check -- .env.sample --startup",
+        "exit_code": 0,
+        "seconds": 0.46,
+        "log": "13.log"
+      },
+      {
+        "command": "npm run config:check -- .env",
+        "exit_code": 0,
+        "seconds": 0.51,
+        "log": "14.log"
+      },
+      {
+        "command": "npm run config:check -- .env --startup",
+        "exit_code": 0,
+        "seconds": 0.46,
+        "log": "15.log"
+      },
+      {
+        "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+        "exit_code": 0,
+        "seconds": 0.26,
+        "log": "16.log"
+      },
+      {
+        "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-090/backtest.json",
+        "exit_code": 0,
+        "seconds": 0.22,
+        "log": "17.log"
+      },
+      {
+        "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-090/release-scenario-replay.json",
+        "exit_code": 0,
+        "seconds": 0.72,
+        "log": "18-fresh-output.log"
+      },
+      {
+        "command": "bash scripts/secret-scan.sh",
+        "exit_code": 0,
+        "seconds": 0.07,
+        "log": "19.log"
+      },
+      {
+        "command": "npm audit --audit-level=high",
+        "exit_code": 0,
+        "seconds": 0.77,
+        "log": "20.log"
+      },
+      {
+        "command": ".venv/bin/pip-audit -r requirements.lock",
+        "exit_code": 0,
+        "seconds": 23.83,
+        "log": "21.log"
+      }
+    ],
+    "initial_failed_attempts": [
+      {
+        "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-090/scenario-replay.json",
+        "exit_code": 1,
+        "seconds": 0.68,
+        "log": "18.log"
+      }
+    ],
+    "notes": [
+      "Scenario replay initially refused to overwrite its existing output (flag wx). Rerun with a fresh output passed; original artifacts and rejection log retained. No code change was required.",
+      "All 22 gates passed for independent implementation delivery. No hosted-source reads, database switch, accounting reset or trading restart was performed during this follow-up.",
+      "Existing screenshot deletions remain outside this update."
+    ],
+    "graphify": {
+      "command": "graphify update .",
+      "exit_code": 0,
+      "nodes": 3523,
+      "edges": 7191,
+      "communities": 249,
+      "notes": [
+        "AST only; no provider calls. Known pyproject.toml zero-node warning; hub-based community labels refreshed automatically."
+      ]
+    }
   }
 }

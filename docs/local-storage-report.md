@@ -1,10 +1,13 @@
 # ISSUE-090: Local PostgreSQL and compact trading evidence
 
-Status: implementation and isolated recovery validation; authoritative cutover
-blocked. [Issue #211](https://github.com/AegisFintech/scalping-bot/issues/211).
-[Draft PR #212](https://github.com/AegisFintech/scalping-bot/pull/212), implementation
-checkpoint `1508a2f`, is pushed for review. Merge/activation remain pending the
-current-history recovery acceptance criteria.
+Status: implementation and isolated recovery validation complete; operational
+activation deferred. [Issue #211](https://github.com/AegisFintech/scalping-bot/issues/211).
+[PR #212](https://github.com/AegisFintech/scalping-bot/pull/212), implementation
+checkpoint `1508a2f`, is pushed for review. On September 10 the operator instructed
+us to leave the blocked task and move forward. The remaining recovery/cutover work
+is now [ISSUE-091 / #213](https://github.com/AegisFintech/scalping-bot/issues/213),
+separate from delivery of the verified storage implementation. Merging this
+release neither switches the runtime database nor resumes trading.
 
 The hosted PostgreSQL compute quota prevents the execution service from starting.
 The operator approved native local PostgreSQL, bounded disposable storage, cache
@@ -16,7 +19,7 @@ Its archive directory is readable but later authoritative records are missing
 until source recovery is proven. No historical restore is treated as current
 state, and no risk lock, capital baseline or dispatch claim is reset.
 
-## What is ready, and what remains blocked
+## Delivered preparation and deferred activation
 
 Native PostgreSQL 18.6 is installed under systemd, listening only on loopback with
 verified TLS/SCRAM and separate application/migration/test roles. Node and Python
@@ -31,8 +34,10 @@ state is saved in PM2 so a reboot cannot resume the maintenance window by
 accident. The other four services remain online. No order submission,
 cancellation, protection change or trading-strategy change was performed.
 
-The hosted service still rejects reads with SQLSTATE `53000` (compute quota).
-Temporary source access is needed to export records newer than September 9,
+The last hosted-source check rejected reads with SQLSTATE `53000` (compute quota).
+Further source recovery is deferred; no repeated access attempts are needed to
+finish the independent implementation delivery. Temporary source access is
+needed to export records newer than September 9,
 16:32 SGT. A broker deal history alone cannot reconstruct exact model dispatch
 claims, consumed contexts and every capital high-water observation. No balance,
 daily/drawdown lock, model history or journal was reset to make startup pass.
@@ -41,7 +46,10 @@ The restored database is explicitly **historical recovery**, without broker
 authority. Its backup date is not presented as the date of current trading state.
 Local installation, cleanup and restore rehearsal are complete; current-state
 cutover, enabled maintenance timers and demo resumption remain pending. Live
-execution stays disabled. No paid hosted upgrade was purchased.
+execution stays disabled. No paid hosted upgrade was purchased. Deferring old
+history is not treated as permission to initialize a new risk/accounting baseline;
+that separate operator choice is pending. The original hosted source and local
+archive remain preserved whichever operational transition is later authorized.
 
 ## Cleanup evidence
 
@@ -150,7 +158,7 @@ the probe had no broker client or authority. Failure to write an observational
 dashboard status file does not block an otherwise available database; required
 trading-journal integrity checks remain independent.
 
-## Operator sequence after source access is restored
+## Deferred ISSUE-091 sequence after source access is restored
 
 1. Keep execution held, preserve the hosted source and all local recovery sets,
    and obtain a fresh consistent database-plus-artifact recovery set. Reconcile
@@ -221,3 +229,11 @@ calls. Commands and exact results are in the
 [validation record](evidence/local-storage-validation.json).
 The source change is not considered a completed live cutover while the source
 quota and newer-history gap remain unresolved.
+
+The independent implementation delivery was rechecked on September 10: all 22
+gates passed again. Scenario replay initially exercised its existing-output
+refusal; rerunning with a fresh artifact succeeded without code changes or
+overwriting earlier evidence. Exact commands, results and the initial rejection
+are retained under `independent_delivery` in the validation record. The graph was
+updated with AST extraction only. This delivery follow-up made no hosted-source
+read, runtime database change, risk/accounting reset or trading restart.

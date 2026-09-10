@@ -15,8 +15,12 @@ in linked reports. Give longer explanations only when explicitly requested.
   response text are journaled; archived sampled evidence is pinned before cache
   eviction. Read `docs/local-storage-report.md` before storage changes. Managed
   recording requires the matching maintenance/backup timers. Never activate a
-  historical recovery database or discard newer risk/dispatch state. Final
-  authoritative cutover remains blocked until the hosted quota is recovered.
+  historical recovery database or discard newer risk/dispatch state. On September
+  10 the operator deferred the blocked history recovery to ISSUE-091 / #213 so
+  verified ISSUE-090 implementation can be delivered independently. Merging it
+  does not activate historical data or authorize a risk/accounting reset. Final
+  operational activation requires current recovery or a separately authorized,
+  documented accounting transition; keep the hosted source untouched meanwhile.
 
 - ISSUE-089 removes local market-close fallbacks and their persistent analysis
   pause. Broker SL/TP handles exits; verified protection never depends on sampled
