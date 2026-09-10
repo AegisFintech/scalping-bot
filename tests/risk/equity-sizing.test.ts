@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { Decimal } from "decimal.js";
 import { describe, expect, it, vi } from "vitest";
 import { MONEY_MANAGEMENT } from "../../packages/config/src/policy.js";
+import {
+  capitalAdmission,
+  capitalRisk,
+} from "../../packages/risk-engine/src/capital.js";
 import { OcoRiskEvaluator } from "../../apps/execution-service/src/oco-risk-evaluator.js";
 import type {
   AccountState,
@@ -94,6 +98,92 @@ const evaluate = (
   });
 
 describe("equity sizing on identical synthetic execution inputs", () => {
+  it("recalculates the demo budget after losses, retaining two-leg costs, margins and exposure rejection", async () => {
+    let priorVolume: Decimal | null = null;
+    for (const equity of ["892135.77", "800000", "400000"]) {
+      const admission = capitalAdmission({
+        mode: "demo",
+        equity,
+        daily: { lockedOut: true, lossPercent: "10", remainingLossBudget: "0" },
+        capital: capitalRisk({
+          equity,
+          cumulativeNetFlows: "0",
+          dailyLossPercent: "10",
+          previous: null,
+          referenceEquity: "1000000",
+          observedHighWater: "1000000",
+        }),
+      });
+      const sizing = new OcoRiskEvaluator({
+        marginEstimator: {
+          estimate: (_symbol, _side, volume) =>
+            Promise.resolve(new Decimal(volume).mul("0.0442").toFixed()),
+        },
+        baseRiskPercent: "1",
+        maxRiskPercent: "1",
+        maxMarginUsagePercent: "100",
+        maxPositionNotional: null,
+        strategyVersion: "demo-development-fixture",
+        executionOrderType: "STOP",
+        adverseSlippagePoints: "30",
+        timeInForce: "GTC",
+        riskMultiplier: () => admission.riskMultiplier,
+        riskPercentCap: () => admission.riskPercentCap,
+      });
+      const currentAccount = {
+        ...account,
+        equity,
+        balance: equity,
+        availableMargin: equity,
+      };
+      const args = {
+        account: currentAccount,
+        response,
+        metadata: leg.metadata,
+        quote: {} as Quote,
+      };
+      const result = await sizing.evaluate(args);
+      expect(result.approved).toBe(true);
+      expect(result.perLegRiskPercent).toBe("0.5");
+      const budget = new Decimal(equity).div(100);
+      expect(new Decimal(result.risk!.combinedMaximumLoss!).lte(budget)).toBe(
+        true,
+      );
+      expect(
+        new Decimal(result.risk!.buy.maximumLoss!).lte(budget.div(2)),
+      ).toBe(true);
+      expect(
+        new Decimal(result.risk!.sell.maximumLoss!).lte(budget.div(2)),
+      ).toBe(true);
+      const volume = new Decimal(result.commands![0].volume);
+      if (priorVolume !== null) expect(volume.lt(priorVolume)).toBe(true);
+      priorVolume = volume;
+      expect(
+        (
+          await sizing.evaluate({
+            ...args,
+            account: { ...currentAccount, certain: false },
+          })
+        ).approved,
+      ).toBe(false);
+      expect(
+        (
+          await sizing.evaluate({
+            ...args,
+            account: { ...currentAccount, relevantPositionCount: 1 },
+          })
+        ).approved,
+      ).toBe(false);
+      expect(
+        (
+          await sizing.evaluate({
+            ...args,
+            account: { ...currentAccount, availableMargin: "0" },
+          })
+        ).approved,
+      ).toBe(false);
+    }
+  });
   it("applies the fixed maximum to the combined setup even when each half would fit", () => {
     expect(
       sizeOcoPair({ setupRiskPercent: "1.5", buy: leg, sell: leg }),

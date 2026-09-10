@@ -2,7 +2,8 @@
 
 ISSUE-076 applies the operator-authorized fixed percentage policy to the reusable
 scenario implementation. Local `scenarioOco` constructs prices only; `OcoRiskEvaluator` remains
-the sole sizing/margin authority. The account risk cap reserves remaining daily capacity before allocating risk;
+the sole sizing/margin authority. Outside demo, the account risk cap reserves
+remaining daily capacity before allocating risk;
 there is no absolute account-equity floor.
 Both race-exposed legs share the same cost-inclusive
 budget. One durable intent consumes a map; no averaging, retries after uncertain
@@ -10,7 +11,7 @@ submission, or model-selected risk increases are introduced. Stops/targets remai
 broker-held. The new candidate does not automate discretionary structural/time
 closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
 
-Current policy: `market-stop-v1`. ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
+Current policy: `market-stop-v2`. ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
@@ -31,6 +32,24 @@ margin and minimum-volume checks. These inputs must come from trusted reconciled
 state for future broker integration; a research fixture is not such evidence.
 Structural stops, first-target exits, confirmation invalidation and a ten-minute
 maximum hold are explicit candidate assumptions, not production policy changes.
+
+## Demo development admission (ISSUE-094)
+
+The operator authorized continuous demo development at the existing shared 1%
+current-equity setup ceiling. `capitalAdmission` runs only after successful daily
+and capital reconciliation/persistence. Demo uses multiplier 1 and a 1% cap even
+when stored daily/high-water thresholds are exceeded. It does not reset baselines,
+locks, loss percentages, flow history or trades. The accounting algorithm below
+continues recording those measurements; its locks/reductions and remaining daily
+capacity still govern other modes. Reverting the release re-enforces retained
+locks, rather than beginning a fresh risk epoch.
+
+Current account/data/storage failures, affordability, costs, broker margin,
+volume increments, ownership, OCO races and protection still constrain demo.
+One percent is shared across both legs and is a modeled ceiling; slippage and
+broker failures can exceed it. Repeated demo losses reduce subsequent monetary
+budgets with current equity. This is data collection for development, not model
+training or evidence of profitability. See [implementation](demo-development-risk-report.md).
 
 ## Fixed policy and capital limits
 

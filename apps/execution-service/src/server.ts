@@ -2,7 +2,10 @@ import { timingSafeEqual } from "node:crypto";
 
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 
-import type { OpenPositionMonitor } from "../../../packages/contracts/src/index.js";
+import type {
+  OpenPositionMonitor,
+  RiskPolicy,
+} from "../../../packages/contracts/src/index.js";
 import type { RuntimeControlStore } from "../../../packages/database/src/runtime-controls.js";
 import type { AnalysisCoordinator, CycleResult } from "./coordinator.js";
 import type { OrderMaintenance } from "./order-maintenance.js";
@@ -20,25 +23,8 @@ export interface ExecutionStatus {
   readonly requestedModel?: string;
   readonly remainingCapitalRiskPercent?: string | null;
   readonly scenarioContext?: Readonly<Record<string, unknown>>;
-  readonly policyVersion?:
-    | "fixed-risk-v2"
-    | "fixed-risk-v3"
-    | "fixed-risk-v4"
-    | "direct-entry-v1"
-    | "market-stop-v1";
-  readonly riskPolicy?: {
-    readonly version:
-      | "fixed-risk-v2"
-      | "fixed-risk-v3"
-      | "fixed-risk-v4"
-      | "direct-entry-v1"
-      | "market-stop-v1";
-    readonly setupRiskPercent: string;
-    readonly dailyLossLimitPercent: string;
-    readonly drawdownLimitPercent: string;
-    readonly maxPositionNotionalEquityMultiple?: string | null;
-    readonly maxMarginUsagePercent?: string;
-  };
+  readonly policyVersion?: RiskPolicy["version"];
+  readonly riskPolicy?: RiskPolicy;
   readonly mode: string;
   readonly symbol: string;
   readonly accountType: string;

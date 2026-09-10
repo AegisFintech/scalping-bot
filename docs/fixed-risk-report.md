@@ -7,6 +7,11 @@ Branch: `issue-076-fixed-percentage-risk`. Source: `0.2.2-fixed-risk.3`.
 Policy: `fixed-risk-v2`. This policy change is explicitly authorized by the operator;
 it does not establish a trading edge or increase measured strategy accuracy.
 
+ISSUE-094 later changes demo admission only: daily/high-water accounting remains
+intact, while its locks/reductions no longer stop demo development. The shared 1%
+current-equity ceiling remains. This report describes the historical fixed-policy
+release; see [current demo policy](demo-development-risk-report.md).
+
 ## Implemented policy
 
 - Remove the absolute `ACCOUNT_EQUITY_FLOOR` admission requirement. Any positive,

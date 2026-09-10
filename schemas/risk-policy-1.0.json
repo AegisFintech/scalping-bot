@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "risk-policy-1.0",
+  "title": "Reported execution risk policy, including historical releases",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "setupRiskPercent",
+    "dailyLossLimitPercent",
+    "drawdownLimitPercent"
+  ],
+  "properties": {
+    "version": {
+      "enum": [
+        "fixed-risk-v2",
+        "fixed-risk-v3",
+        "fixed-risk-v4",
+        "direct-entry-v1",
+        "market-stop-v1",
+        "market-stop-v2"
+      ]
+    },
+    "mode": {
+      "enum": ["replay", "backtest", "paper", "demo", "shadow", "live"]
+    },
+    "lossLimitsEnforced": {
+      "type": "boolean"
+    },
+    "setupRiskPercent": {
+      "const": "1"
+    },
+    "dailyLossLimitPercent": {
+      "const": "5"
+    },
+    "drawdownLimitPercent": {
+      "const": "5"
+    },
+    "maxPositionNotionalEquityMultiple": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/decimal"
+        }
+      ]
+    },
+    "maxMarginUsagePercent": {
+      "$ref": "#/$defs/decimal"
+    }
+  },
+  "$defs": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,10})?$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "version": {
+            "const": "market-stop-v2"
+          }
+        }
+      },
+      "then": {
+        "required": ["mode", "lossLimitsEnforced"],
+        "if": {
+          "properties": {
+            "mode": {
+              "const": "demo"
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "lossLimitsEnforced": {
+              "const": false
+            }
+          }
+        },
+        "else": {
+          "properties": {
+            "lossLimitsEnforced": {
+              "const": true
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "lossLimitsEnforced": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

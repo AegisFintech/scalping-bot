@@ -1,6 +1,12 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.6`, policy `market-stop-v1`.
+Current source: `0.2.5-market-stop.7`, policy `market-stop-v2`.
+
+ISSUE-094 separates loss accounting from demo admission. Successful daily and
+capital reconciliation still persist measured losses/locks; `capitalAdmission`
+then applies an effective multiplier of 1 and the shared 1% current-equity cap
+in demo. Other modes retain loss limits/reductions. Accounting failures still
+block all modes. See [authorization and evidence](demo-development-risk-report.md).
 
 Production uses `/v2/entry-pair`, a two-price provider reply and locally
 bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
@@ -87,8 +93,9 @@ loopback and deployments support Debian/systemd.
    immutable model output. Bound arithmetic projects inward onto the pip grid;
    no broker price or untrusted model value is rounded into acceptance.
 8. `risk-engine` sizes both race-exposed legs with cost reserves, current equity,
-   the fixed 1% setup ceiling, remaining 5% daily budget, durable capital risk, broker volume steps, currency
-   conversion and exact margin estimates. Free margin reserves one modeled setup loss;
+   the fixed 1% setup ceiling, broker volume steps, currency
+   conversion and exact margin estimates. Outside demo, remaining daily budget and
+   durable capital reductions also apply. Free margin reserves one modeled setup loss;
    there is no artificial notional or 1% collateral ceiling. It never rounds up to
    minimum volume. Existing/unpriced account exposure blocks replacement.
 9. Account/capital safety and account state are refreshed before the final market
@@ -172,7 +179,8 @@ send controls. Diagnostics retain the user's selected snapshot during recovery.
 ## Modes and remaining limits
 
 Paper uses its own account identity/ledger; demo requires explicit acknowledgement
-and fixed equity-relative loss limits. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
+and the fixed current-equity setup ceiling. Its development policy measures losses
+without daily/drawdown admission limits. No absolute equity floor is required. Shadow has a non-submitting gateway. Live uses
 `DisabledLiveGateway` and cannot place orders in this composition. Credentials
 cannot select mode or authorize execution.
 

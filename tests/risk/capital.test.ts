@@ -2,6 +2,7 @@ import { OcoRiskEvaluator } from "../../apps/execution-service/src/oco-risk-eval
 import { describe, expect, it } from "vitest";
 import {
   capitalRisk,
+  capitalAdmission,
   availableCapitalRiskPercent,
   type CapitalState,
 } from "../../packages/risk-engine/src/capital.js";
@@ -91,5 +92,83 @@ describe("capital-aware risk reductions", () => {
     );
     expect(() => evaluate("NaN")).toThrow();
     expect(() => evaluate("9000", "10000")).toThrow("CAPITAL_STATE_INVALID");
+  });
+});
+
+describe("operator-authorized demo development admission", () => {
+  const daily = {
+    lockedOut: true,
+    lossPercent: "6.38",
+    remainingLossBudget: "0",
+  };
+  const capital = evaluate("9362", "0", null, daily.lossPercent);
+  const input = { mode: "demo" as const, equity: "9362", daily, capital };
+
+  it("admits a locked demo at the shared 1% ceiling without changing its accounting", () => {
+    const before = JSON.stringify(input);
+    expect(capitalAdmission(input)).toEqual({
+      lockedOut: false,
+      riskMultiplier: "1",
+      riskPercentCap: "1",
+    });
+    expect(JSON.stringify(input)).toBe(before);
+    expect(capital.lockedOut).toBe(true);
+    expect(capitalAdmission(JSON.parse(before) as typeof input)).toEqual(
+      capitalAdmission(input),
+    );
+  });
+
+  it.each(["replay", "backtest", "paper", "shadow", "live"] as const)(
+    "retains loss enforcement for %s",
+    (mode) =>
+      expect(capitalAdmission({ ...input, mode })).toEqual({
+        lockedOut: true,
+        riskMultiplier: "0",
+        riskPercentCap: "0",
+      }),
+  );
+
+  it("keeps demo at 1% while other modes retain reductions and remaining daily capacity", () => {
+    const reduced = {
+      ...input,
+      equity: "9600",
+      daily: { lockedOut: false, lossPercent: "4", remainingLossBudget: "100" },
+      capital: evaluate("9600", "0", null, "4"),
+    };
+    expect(capitalAdmission(reduced).riskMultiplier).toBe("1");
+    expect(capitalAdmission({ ...reduced, mode: "paper" }).riskMultiplier).toBe(
+      "0.25",
+    );
+    const nearlyExhausted = {
+      ...reduced,
+      daily: { ...reduced.daily, remainingLossBudget: "1" },
+    };
+    expect(capitalAdmission(nearlyExhausted).riskPercentCap).toBe("1");
+    expect(
+      capitalAdmission({ ...nearlyExhausted, mode: "paper" }).riskPercentCap,
+    ).toBe("0.0104166666");
+  });
+
+  it("does not treat invalid or missing accounting as permission to trade demo", () => {
+    for (const equity of ["0", "NaN", "-1", "Infinity"]) {
+      expect(() => capitalAdmission({ ...input, equity })).toThrow();
+    }
+    for (const dailyPatch of [
+      { remainingLossBudget: "NaN" },
+      { lossPercent: "NaN" },
+      { lockedOut: undefined },
+    ])
+      expect(() =>
+        capitalAdmission({
+          ...input,
+          daily: { ...daily, ...dailyPatch },
+        } as typeof input),
+      ).toThrow();
+    expect(() =>
+      capitalAdmission({
+        ...input,
+        capital: { ...capital, riskMultiplier: "2" },
+      } as unknown as typeof input),
+    ).toThrow("CAPITAL_ADMISSION_INVALID");
   });
 });

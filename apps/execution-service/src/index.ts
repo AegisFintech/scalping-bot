@@ -3,7 +3,7 @@ import { OperationalFault } from "./operational-fault.js";
 import { databaseStartup } from "./database-startup.js";
 import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
-import { availableCapitalRiskPercent } from "../../../packages/risk-engine/src/capital.js";
+import { capitalAdmission } from "../../../packages/risk-engine/src/capital.js";
 import { IndependentMaintenance } from "./independent-maintenance.js";
 import { PositionProtectionMaintenance } from "./position-protection.js";
 import { PostgresPositionProtection } from "./postgres-position-protection.js";
@@ -11,7 +11,7 @@ import "dotenv/config";
 import {
   resolveRuntimeEnvironment,
   POLICY_VERSION,
-  MONEY_MANAGEMENT,
+  executionRiskPolicy,
   STOP_EXECUTION_POLICY,
 } from "../../../packages/config/src/policy.js";
 
@@ -868,12 +868,15 @@ async function main(): Promise<void> {
         dailyLossPercent: dailyResult.lossPercent,
         now: new Date(),
       });
-      capitalMultiplier = capital.riskMultiplier;
-      capitalRiskCap = availableCapitalRiskPercent(
-        state.equity,
-        dailyResult.remainingLossBudget,
-      );
-      dailyLocked = dailyResult.lockedOut || capital.lockedOut;
+      const admission = capitalAdmission({
+        mode: config.tradingMode,
+        equity: state.equity,
+        daily: dailyResult,
+        capital,
+      });
+      capitalMultiplier = admission.riskMultiplier;
+      capitalRiskCap = admission.riskPercentCap;
+      dailyLocked = admission.lockedOut;
     } catch (error) {
       dailyLocked = true;
       capitalMultiplier = "0";
@@ -1258,15 +1261,7 @@ async function main(): Promise<void> {
       mode: config.tradingMode,
       symbol: config.symbol,
       policyVersion: POLICY_VERSION,
-      riskPolicy: {
-        version: POLICY_VERSION,
-        setupRiskPercent: config.baseRiskPercent,
-        dailyLossLimitPercent: config.maxDailyLossPercent,
-        drawdownLimitPercent: MONEY_MANAGEMENT.drawdownLimitPercent,
-        maxPositionNotionalEquityMultiple:
-          MONEY_MANAGEMENT.maxPositionNotionalEquityMultiple,
-        maxMarginUsagePercent: MONEY_MANAGEMENT.maxMarginUsagePercent,
-      },
+      riskPolicy: executionRiskPolicy(config.tradingMode),
       accountType: connectionMode,
       emergencyStopped:
         current.environmentEmergencyStop ||

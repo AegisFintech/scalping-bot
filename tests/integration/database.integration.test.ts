@@ -20,6 +20,7 @@ import {
   strategyConfigHash,
 } from "../../apps/execution-service/src/config.js";
 import { CapitalRiskStore } from "../../apps/execution-service/src/capital-risk-store.js";
+import { capitalAdmission } from "../../packages/risk-engine/src/capital.js";
 import { PostgresContextStore } from "../../apps/execution-service/src/scenario-context.js";
 import { PostgresAutomaticAnalysisSchedule } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { PostgresAutomaticAnalysisCampaign } from "../../apps/execution-service/src/automatic-analysis-campaign.js";
@@ -471,6 +472,43 @@ describe("PostgreSQL migrations integration", () => {
       await expect(
         risk.initializeReconciledBaseline(baselineInput),
       ).rejects.toThrow("DAILY_RISK_BASELINE_ALREADY_EXISTS");
+
+      // A restarted demo applies its new admission policy to real, still-locked
+      // accounting. No row reset, baseline replacement or synthetic risk state.
+      const demoDaily = await new DailyRiskStore(isolated).reconcile(
+        dailyInput,
+      );
+      const demoCapital = await new CapitalRiskStore(isolated).reconcile(
+        capitalInput,
+      );
+      expect(demoDaily.lockedOut).toBe(true);
+      expect(demoCapital.lockedOut).toBe(true);
+      const admissionInput = {
+        equity: baselineInput.account.equity,
+        daily: demoDaily,
+        capital: demoCapital,
+      };
+      expect(capitalAdmission({ ...admissionInput, mode: "demo" })).toEqual({
+        lockedOut: false,
+        riskMultiplier: "1",
+        riskPercentCap: "1",
+      });
+      expect(
+        capitalAdmission({ ...admissionInput, mode: "live" }).lockedOut,
+      ).toBe(true);
+      const retained = await isolated.query<{
+        daily: boolean;
+        capital: boolean;
+        baseline: string;
+      }>(
+        `SELECT d.locked_out AS daily, c.locked_out AS capital, d.baseline_equity::text AS baseline
+         FROM daily_risk_state d JOIN capital_risk_state c USING (account_id)
+         WHERE d.account_id=$1 AND d.trading_day='2026-08-24'`,
+        [demoAccountId],
+      );
+      expect(retained.rows).toEqual([
+        { daily: true, capital: true, baseline: "10000.0000000000" },
+      ]);
 
       const symbolId = randomUUID();
       const strategyVersionId = randomUUID();

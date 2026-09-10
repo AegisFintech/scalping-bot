@@ -2,6 +2,33 @@
 
 ## Scope
 
+### ISSUE-094 — Demo development with current-equity setup risk (implemented; validated)
+
+- Issue: [#219](https://github.com/AegisFintech/scalping-bot/issues/219).
+- Pull request: [#220](https://github.com/AegisFintech/scalping-bot/pull/220);
+  implementation checkpoint `34e45c0` committed and pushed.
+- Branch: `issue-094-demo-development-risk`; dependency: ISSUE-093 / PR #218.
+- Operator explicitly requested unlocking loss limits for extensive demo trading
+  development while retaining 1% of current equity per setup.
+- Acceptance: a versioned demo-only admission policy ignores recorded daily and
+  high-water loss locks/reductions after successful accounting reconciliation;
+  preserve the records and all failures, fresh-account checks, shared two-leg
+  cost-inclusive 1% sizing, broker constraints and protection. Other modes retain
+  the previous loss policy and live remains disabled.
+- Report the effective policy/budget in status and dashboard without overwriting
+  historical accounting. Test locked/reduced/restart/failure paths and declining
+  equity sizing; run all required gates, update Graphify, deliver issue/PR and
+  verify the authorized demo rollout. No database or environment reset.
+- All 22 required commands passed: 644 Node / 162 Python / 38 schema / three
+  migration / five PostgreSQL-TLS integration tests, with both dependency audits
+  clean. Browser light/dark policy and timed-state checks passed; Graphify updated.
+- Demo enabled at 17:30:25 SGT, broker-confirmed pair at 17:30:59, first protected
+  SELL filled and closed, then another provider cycle started automatically.
+  Shared risk was exactly 1% of current equity; all original loss rows/environment
+  remain intact. Existing executable-price and reconciliation checks remain.
+- [Implementation and rollout](docs/demo-development-risk-report.md);
+  [exact checks and evidence](docs/evidence/demo-development-risk-validation.json).
+
 ### ISSUE-093 — Resolve confirmed missing broker stop losses (implemented; validated)
 
 - Issue: [#217](https://github.com/AegisFintech/scalping-bot/issues/217).

@@ -6,6 +6,7 @@ import type { TradingMode } from "../../../packages/contracts/src/index.js";
 import {
   MONEY_MANAGEMENT,
   ORDER_LIFECYCLE,
+  executionRiskPolicy,
 } from "../../../packages/config/src/policy.js";
 import { DEMO_ACKNOWLEDGEMENT } from "./demo-authorization.js";
 
@@ -333,6 +334,7 @@ function configurationHash(
     .update(
       JSON.stringify({
         orderLifecycle: ORDER_LIFECYCLE,
+        riskPolicy: executionRiskPolicy(config.tradingMode),
         appEnv: config.appEnv,
         instanceId: config.instanceId,
         tradingMode: config.tradingMode,

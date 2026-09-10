@@ -7,9 +7,28 @@ Read `plan.md`, this file, and the relevant architecture/risk documents before c
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
 
-Money management must remain dynamic: size from current reconciled equity and
-remaining daily capacity, with drawdown reductions, costs, broker margin and
-volume increments. Do not replace this with fixed lots or automatic risk increases.
+Money management must remain dynamic: size from current reconciled equity,
+costs, broker margin and volume increments. Keep the shared 1% setup ceiling.
+ISSUE-094 disables daily/high-water enforcement and reductions only in demo;
+other modes retain remaining daily capacity and drawdown reductions.
+
+## ISSUE-094 demo development policy (current operator authorization)
+
+- The operator explicitly requested unlocking demo trading for development while
+  keeping 1% current-equity setup risk. Read `docs/demo-development-risk-report.md`.
+- Release `0.2.5-market-stop.7` / `market-stop-v2` records the existing daily and
+  high-water thresholds, locks and reductions but does not enforce them for demo
+  admission. Both successful accounting reconciliations still precede admission;
+  missing/stale/invalid/unavailable evidence remains blocked.
+- Use effective multiplier 1 and at most 1% shared between both OCO legs. Costs,
+  broker margin, volume steps and minimum affordability still bound actual size.
+  Never change this to 1% independently per leg, fixed lots or loss chasing.
+- Do not reset, delete or rewrite daily/capital baselines, locks or trade history.
+  This mode-specific enforcement change supersedes older demo loss-lock rules
+  below; paper, replay, backtest, shadow and live retain those rules. Live remains
+  disabled. Report effective demo policy separately from stored loss measurements.
+- Preserve SL/TP maintenance, emergency/ownership controls, fresh completed data,
+  full reconciliation and idempotency. No new model fallback or timer cancellation.
 
 ## Current operator override — ISSUE-089 / ISSUE-087 / ISSUE-086
 

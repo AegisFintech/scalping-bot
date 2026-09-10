@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.6` uses policy `market-stop-v1` in
+Release `0.2.5-market-stop.7` uses policy `market-stop-v2` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -17,6 +17,17 @@ The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
+
+## Demo development policy (ISSUE-094)
+
+The operator explicitly authorized removing daily/high-water loss enforcement and
+risk reductions from demo admission. No environment knob or row reset is added.
+The current version reports `mode` and `lossLimitsEnforced` in its typed risk
+policy; false is valid only for demo. Accounting still records the 5% thresholds
+and original locks. The effective demo cap is 1% of current reconciled equity per
+combined OCO setup, subject to costs, margin and broker volume constraints.
+Other modes retain the previous loss policy. All failures and execution controls
+remain enforced. See [rollout and rollback](demo-development-risk-report.md).
 
 ## Normal choices
 
@@ -59,8 +70,9 @@ Removing redundant default endpoints/paths is safe only after comparing them to
 their effective code defaults. Keep unknown credentials or custom deployments
 until reviewed; unused monitoring credentials must not disappear accidentally.
 
-The operator-authorized fixed policy uses a 1% setup risk ceiling and 5% daily
-loss limit, with no absolute equity floor. The production spread and daily order-count ceilings are removed in ISSUE-086. Sizing includes execution costs and bounded risk
+The fixed policy uses a 1% setup risk ceiling, with no absolute equity floor.
+The 5% daily limit and drawdown reductions remain enforced outside demo; demo
+records these thresholds without applying them to admission. The production spread and daily order-count ceilings are removed in ISSUE-086. Sizing includes execution costs and bounded risk
 reductions; AI cannot raise risk. Revision `.3` removes the artificial notional
 and 1% collateral ceilings at the operator's request. The risk engine calculates
 size from current equity and cost-inclusive stop risk, floors to broker increments,
@@ -80,8 +92,9 @@ A broker minimum can be unaffordable; do not enlarge risk to force a fill.
 Symbol ID, account currency/type, volume increments, precision, commissions and
 conversion are discovered. Nonempty legacy broker-discovery overrides require
 removal after review. Strategy thresholds are code-reviewed defaults, not inferred
-from profitable-looking data. Adaptive behavior is only the fixed drawdown/daily
-loss reduction and documented hysteresis; no return-optimizing tuner runs.
+from profitable-looking data. Outside demo, adaptive behavior includes the fixed drawdown/daily
+loss reduction and documented hysteresis. Demo recalculates from current equity
+without those reductions; no return-optimizing tuner runs.
 
 ## Read-only validation
 
