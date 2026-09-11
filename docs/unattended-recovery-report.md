@@ -1,6 +1,7 @@
 # ISSUE-095: Unattended lifecycle recovery
 
 Status: implemented, tested and deployed to demo. Sustained operational qualification remains in progress. [Issue #221](https://github.com/AegisFintech/scalping-bot/issues/221).
+[Pull request #223](https://github.com/AegisFintech/scalping-bot/pull/223), implementation checkpoint `0d824e6`.
 Release `0.2.5-market-stop.8`; unchanged `market-stop-v2` policy; demo authority only.
 
 ## Incident and recovery contract

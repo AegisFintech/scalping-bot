@@ -245,6 +245,30 @@
     "observer_http_timeout_seconds": 10,
     "broker_authority": false,
     "initial_launcher_corrected": "Run the Node binary directly under PM2 so the CLI entry point executes.",
-    "issue_url": "https://github.com/AegisFintech/scalping-bot/issues/222"
+    "issue_url": "https://github.com/AegisFintech/scalping-bot/issues/222",
+    "snapshot": {
+      "lastSampleAt": "2026-09-11T05:41:53.054Z",
+      "samples": 15,
+      "unavailableSamples": 0,
+      "notReadySamples": 0,
+      "samplingGaps": 0,
+      "latest": {
+        "available": true,
+        "startupReady": true,
+        "operationalReady": true,
+        "tradingEnabled": false,
+        "setup": "ACTIVE",
+        "releaseClosedTrades": 0,
+        "reasons": ["RELEVANT_PENDING_ORDER_EXISTS"]
+      }
+    }
+  },
+  "pull_request_url": "https://github.com/AegisFintech/scalping-bot/pull/223",
+  "implementation_commit": "0d824e6",
+  "secret_scan": {
+    "script_exit_code": 0,
+    "index_blob_files": 472,
+    "actual_secret_matches": 0,
+    "note": "All index blobs scanned, including the seven preexisting deleted screenshot files left out of this change. Repository scanner emits preexisting missing-file/name-match warnings."
   }
 }

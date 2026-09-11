@@ -5,6 +5,8 @@
 ### ISSUE-095 — Unattended lifecycle recovery (implemented; validated on demo)
 
 - Issue: [#221](https://github.com/AegisFintech/scalping-bot/issues/221).
+- Pull request: [#223](https://github.com/AegisFintech/scalping-bot/pull/223);
+  implementation checkpoint `0d824e6` committed and pushed.
 - Branch: `issue-095-unattended-recovery`; dependency: ISSUE-094 / PR #220.
 - Operator requests unattended operation after a repaired protective order filled
   and closed its position but left an unresolved replacement marker.
