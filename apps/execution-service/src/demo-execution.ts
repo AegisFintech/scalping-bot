@@ -78,6 +78,7 @@ export interface DemoTerminalEvidenceReconciliationResult extends DemoExecutionP
   readonly terminalOrderGroupId: string | null;
   readonly terminalBrokerFillId: string | null;
   readonly resolvedEventCount: number;
+  readonly terminalOrders: readonly GatewayOrder[];
 }
 
 export interface DemoExecutionStore {

@@ -221,6 +221,15 @@ other modes retain remaining daily capacity and drawdown reductions.
 
 ## Required completion checks
 
+ISSUE-095 terminal recovery is documented in `docs/unattended-recovery-report.md`.
+Use exact per-position full-fill or zero-fill cancellation evidence for native
+protective children. Preserve original journal payloads/reasons, ownership,
+volume/time equality and complete group proof. Gateway recovery consumes both
+exact terminal entry orders; only the incident's own group may release slippage.
+Keep idempotent responses after removing completed active callback state. Never
+clear uncertainty based on elapsed time or a flat broker snapshot. Keep the
+database lifecycle permutation/failure suite in unattended qualification.
+
 Run formatting, linting, TypeScript type checks, Node tests, Python formatting/lint/type checks/tests, JSON Schema tests, migration tests, replay/fail-closed tests, secret scanning, and dependency audits. Record commands and results in `plan.md` or the implementation report.
 
 ## GitHub delivery discipline

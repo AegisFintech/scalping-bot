@@ -1,5 +1,13 @@
 # Current release operations
 
+For `0.2.5-market-stop.8`, use the [unattended recovery qualification](unattended-recovery-report.md).
+Recovery runs automatically; never reset a journal marker or restart merely to
+clear it. A fully closed group can resolve a protective child's exact full fill
+or zero-fill cancellation and replace stale gateway callbacks. Partial, missing
+or contradictory proof still needs investigation. PM2 online is not trading
+readiness: check the ready endpoint, status reasons, fresh exposure and watchdog.
+Retain the documented prospective demo/alert/restore evidence before live review.
+
 ISSUE-094 applies the operator-authorized demo development policy: shared 1%
 current-equity setup risk, recorded daily/high-water losses without enforcement.
 Do not reset the accounting rows. Other modes retain loss enforcement; all modes

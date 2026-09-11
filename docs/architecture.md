@@ -1,6 +1,11 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.7`, policy `market-stop-v2`.
+Current source: `0.2.5-market-stop.8`, policy `market-stop-v2`.
+
+ISSUE-095 proves terminal protective outcomes per position, resolves filled or
+cancelled child markers, and supplies exact terminal entry orders to the gateway
+to replace stale callback state. Database lock waits are bounded and retried by
+the existing serialized recovery loop. See [qualification and limits](unattended-recovery-report.md).
 
 ISSUE-094 separates loss accounting from demo admission. Successful daily and
 capital reconciliation still persist measured losses/locks; `capitalAdmission`

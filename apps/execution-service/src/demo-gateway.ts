@@ -157,6 +157,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
   readonly #orders = new Map<string, TrackedOrder>();
   readonly #cancelInFlight = new Set<string>();
   #uncertainReason: string | null = null;
+  #slippageOrderGroupId: string | null = null;
 
   constructor(options: CTraderDemoGatewayOptions) {
     this.#options = {
@@ -437,6 +438,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     readonly orderGroupId: string;
     readonly terminalProofKey: string;
     readonly certain: boolean;
+    readonly orders: readonly GatewayOrder[];
   }): void {
     if (
       input.orderGroupId.length === 0 ||
@@ -444,23 +446,52 @@ export class CTraderDemoGateway implements ExecutionGateway {
     ) {
       throw new Error("DEMO_GATEWAY_TERMINAL_RECOVERY_ACK_INVALID");
     }
-    if (
-      !input.certain ||
-      this.#uncertainReason !== "DEMO_FILL_SLIPPAGE_EXCEEDED"
-    )
-      return;
+    if (!input.certain) return;
     const group = [...this.#groups.values()].find(
       (candidate) => candidate.orderGroupId === input.orderGroupId,
     );
     if (
       group === undefined ||
-      group.orders.some((order) =>
-        ["UNKNOWN", "PENDING", "PARTIALLY_FILLED"].includes(order.state),
+      input.orders.length !== 2 ||
+      new Set(input.orders.map((order) => order.clientOrderId)).size !== 2 ||
+      group.orders.some(
+        (order) =>
+          !input.orders.some(
+            (proof) =>
+              proof.clientOrderId === order.command.clientOrderId &&
+              proof.brokerOrderId === order.brokerOrderId &&
+              ["FILLED", "CANCELLED", "EXPIRED", "REJECTED"].includes(
+                proof.state,
+              ) &&
+              /^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/.test(proof.filledVolume) &&
+              new Decimal(proof.filledVolume).eq(
+                proof.state === "FILLED" ? order.command.volume : "0",
+              ) &&
+              Number.isFinite(Date.parse(proof.updatedAt)),
+          ),
       )
     ) {
       return;
     }
-    this.#uncertainReason = null;
+    // Complete durable group evidence supersedes a missed or delayed callback.
+    // Retain the idempotent response; retirement must never permit resubmission.
+    for (const order of group.orders) {
+      const proof = input.orders.find(
+        (item) => item.clientOrderId === order.command.clientOrderId,
+      )!;
+      order.state = proof.state;
+      order.filledVolume = proof.filledVolume;
+      order.updatedAt = proof.updatedAt;
+      order.reasonCode = null;
+      this.#orders.delete(order.command.clientOrderId);
+    }
+    if (
+      this.#uncertainReason === "DEMO_FILL_SLIPPAGE_EXCEEDED" &&
+      this.#slippageOrderGroupId === input.orderGroupId
+    ) {
+      this.#uncertainReason = null;
+      this.#slippageOrderGroupId = null;
+    }
   }
 
   #assertPlacementEnabled(commands: readonly PendingOrderCommand[]): void {
@@ -634,6 +665,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
         basisPoints.gt(this.#options.maxSlippageBps)
       ) {
         this.#uncertainReason = "DEMO_FILL_SLIPPAGE_EXCEEDED";
+        this.#slippageOrderGroupId = tracked.command.orderGroupId;
         tracked.reasonCode = this.#uncertainReason;
       }
     }
