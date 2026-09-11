@@ -12,6 +12,20 @@ costs, broker margin and volume increments. Keep the shared 1% setup ceiling.
 ISSUE-094 disables daily/high-water enforcement and reductions only in demo;
 other modes retain remaining daily capacity and drawdown reductions.
 
+## ISSUE-097 unsubmitted entry recovery (current operator authorization)
+
+- Read `docs/entry-recovery-report.md`. Prompt `entry-pair-v3` preserves nearby
+  completed-candle structure and adds deterministic executable bid/ask/tick bounds.
+  The small spread/tick movement buffer is guidance only, never an extra gate.
+- Retire only a proven completed, unusable, never-submitted entry context using
+  fresh evidence. Never shift old prices, retire an accepted pair or erase history.
+- Migration 0024 permits exactly one immediate replacement per original context;
+  a replacement cannot parent another replacement. This supersedes waiting on
+  crossed direct-entry maps below. Historical scenario-map behavior is unchanged.
+- Preserve scope locks, unique parent claims, failed/unknown-request cooldowns,
+  active-group exclusion and the database retirement/intent interlock across
+  restarts. Shared 1% current-equity sizing, SL/TP and accepted GTC orders remain.
+
 ## ISSUE-094 demo development policy (current operator authorization)
 
 - The operator explicitly requested unlocking demo trading for development while
@@ -148,7 +162,7 @@ other modes retain remaining daily capacity and drawdown reductions.
   Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Production uses `entry-pair-v2` / locally bound `entry-pair-1.0`; local derived OCO
+- Production uses `entry-pair-v3` / locally bound `entry-pair-1.0`; local derived OCO
   proposals use `entry-pair-execution-v1` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
 - The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch

@@ -234,7 +234,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v2",
+        version: "entry-pair-v3",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

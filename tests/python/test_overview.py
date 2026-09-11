@@ -34,6 +34,22 @@ def test_control_and_position_precedence() -> None:
     assert overview.operating_state(status)[0] == "Stopped"
 
 
+def test_retired_entries_are_not_reported_as_a_ready_opportunity() -> None:
+    now = datetime(2026, 9, 11, tzinfo=UTC)
+    context = {"state": "READY", "retired_at": now.isoformat(), "entry_replacement": False}
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "automaticAnalysisEnabled": True,
+        "reasonCodes": [],
+        "scenarioContext": context,
+    }
+    assert overview.operating_state(status, now)[0] == "Refreshing entry prices"
+    assert overview.context_state(context, now) == "Unusable entries — waiting for replacement"
+    status["reasonCodes"] = ["RECONCILIATION_UNCERTAIN"]
+    assert overview.operating_state(status, now)[0] == "Blocked"
+
+
 def test_protection_requires_fresh_broker_values() -> None:
     now = datetime(2026, 9, 9, tzinfo=UTC)
     position = {"state": "OPEN"}

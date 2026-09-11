@@ -115,6 +115,11 @@ def operating_state(status: dict[str, Any], now: datetime | None = None) -> tupl
             "The market-map request has no timely completion. "
             "Recovery checks are automatic; protective management continues."
         )
+    if context.get("retired_at"):
+        return "Refreshing entry prices", (
+            "The previous unsubmitted pair is no longer executable. "
+            "Replacement is automatic; repeated failures retain request backoff."
+        )
     map_state = context_state(context, current)
     if map_state != "Ready":
         return "Waiting for map", f"{map_state}. No replacement order has been submitted."
@@ -136,6 +141,8 @@ def position_rows(positions: list[dict[str, Any]], now: datetime) -> list[dict[s
 def context_state(context: dict[str, Any], now: datetime) -> str:
     if context.get("consumed"):
         return "Consumed — waiting for next map"
+    if context.get("retired_at"):
+        return "Unusable entries — waiting for replacement"
     if context.get("state") == "READY":
         try:
             expiry = datetime.fromisoformat(str(context["valid_until"]))

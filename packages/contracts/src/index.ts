@@ -244,6 +244,7 @@ export interface ModelPromptArtifact {
     | "scenario-execution-v2"
     | "entry-pair-v1"
     | "entry-pair-v2"
+    | "entry-pair-v3"
     | "entry-pair-execution-v1"
     | "scenario-v2"
     | "scenario-v3"
@@ -297,6 +298,21 @@ export interface SymbolMetadata {
   readonly minStopDistance: DecimalString;
   readonly commission: SymbolCommissionMetadata;
   readonly metadataTime: IsoTimestamp;
+}
+
+export interface EntryRetirementEvidence {
+  readonly schemaVersion: "1.0";
+  readonly phase:
+    "PROVIDER_RETURN" | "LOCAL_REUSE" | "POST_MODEL" | "PRE_PLACEMENT";
+  readonly reasonCodes: readonly (
+    "BUY_ENTRY_TOO_CLOSE" | "SELL_ENTRY_TOO_CLOSE"
+  )[];
+  readonly observedAt: string;
+  readonly quote: Quote;
+  readonly tickSize: DecimalString;
+  readonly minimumEntryDistance: DecimalString;
+  readonly buyStop: DecimalString;
+  readonly sellStop: DecimalString;
 }
 
 export interface Quote {

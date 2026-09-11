@@ -1,0 +1,393 @@
+{
+  "issue": "ISSUE-097",
+  "release": "0.2.5-market-stop.9",
+  "mode": "demo",
+  "initial_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 15.73,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 1,
+      "seconds": 32.89,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 15.48,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 15.4,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 47.21,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 5.75,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.23,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 1,
+      "seconds": 19.71,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.59,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.56,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.5,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.53,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.5,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.27,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-097/archive-backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-097/archive-scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.87,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.1,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.96,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 20.71,
+      "log": "21.log"
+    }
+  ],
+  "reruns": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 20.16,
+      "log": "format-check.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 37.65,
+      "log": "lint.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 2,
+      "seconds": 11.49,
+      "log": "typecheck.log"
+    },
+    {
+      "command": "npm run test",
+      "exit_code": 0,
+      "seconds": 47.06,
+      "log": "test.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 30.38
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
+      "exit_code": 0,
+      "log": ".runtime/issue-097/final-typecheck.log"
+    }
+  ],
+  "final_gates": {
+    "npm run format:check": 0,
+    "npm run lint": 0,
+    "npm run typecheck": 0,
+    "npm run build": 0,
+    "npm test": 0,
+    "npm run test:schemas": 0,
+    "npm run test:migrations": 0,
+    "npm run test:integration": 0,
+    ".venv/bin/ruff format --check python apps/dashboard tests/python": 0,
+    ".venv/bin/ruff check python apps/dashboard tests/python": 0,
+    ".venv/bin/mypy python apps/dashboard": 0,
+    ".venv/bin/pytest -q": 0,
+    "npm run config:check -- .env.sample": 0,
+    "npm run config:check -- .env.sample --startup": 0,
+    "npm run config:check -- .env": 0,
+    "npm run config:check -- .env --startup": 0,
+    ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl": 0,
+    ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-097/archive-backtest.json": 0,
+    "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-097/archive-scenario-replay.json": 0,
+    "bash scripts/secret-scan.sh": 0,
+    "npm audit --audit-level=high": 0,
+    ".venv/bin/pip-audit -r requirements.lock": 0
+  },
+  "counts": {
+    "node": 681,
+    "python": 163,
+    "schema": 47,
+    "migration": 3,
+    "postgres_integration": 65,
+    "new_entry_recovery_postgres": 22
+  },
+  "corrected_findings": [
+    "Initial focused fixtures needed canonical decimal and capture-time expectations.",
+    "New test mocks needed explicit promise signatures, typed SQL rows and optional row assertions.",
+    "Integration migration expectations were extended from 0023 to 0024."
+  ],
+  "browser": [
+    {
+      "theme": "light",
+      "stable": {
+        "navigation": true,
+        "input": true,
+        "value": "Never submitted",
+        "focused": true,
+        "caret": 3
+      },
+      "color": {
+        "text": "rgb(49, 51, 63)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "historyVisible": true,
+      "storageStatusVisible": true,
+      "demoRiskPolicyVisible": true,
+      "controlsSubmitted": false,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "stable": {
+        "navigation": true,
+        "input": true,
+        "value": "Never submitted",
+        "focused": true,
+        "caret": 3
+      },
+      "color": {
+        "text": "rgb(250, 250, 250)",
+        "background": "rgb(14, 17, 23)"
+      },
+      "historyVisible": true,
+      "storageStatusVisible": true,
+      "demoRiskPolicyVisible": true,
+      "controlsSubmitted": false,
+      "errors": []
+    }
+  ],
+  "graphify": {
+    "nodes": 3804,
+    "edges": 7715,
+    "communities": 271,
+    "new_explicit_links": 6,
+    "external_api_calls": 0,
+    "dangling_edges": 0
+  },
+  "backup": {
+    "backup": "backup-20260911T063313Z-c0198f43",
+    "retiredBackups": 1,
+    "scope": "current",
+    "verified": true
+  },
+  "rollout": {
+    "status": "deployed_demo",
+    "migration": "0024_entry_recovery.sql",
+    "migration_at": "2026-09-11T06:36:38.643Z",
+    "pause_at": "2026-09-11T06:36:13.771Z",
+    "resume_at": "2026-09-11T06:37:04.410Z",
+    "broker_before": "2026-09-11T06:36:29.083Z",
+    "broker_after": "2026-09-11T06:37:01.487Z",
+    "same_order_identities": true,
+    "same_order_prices_protection": true,
+    "pending_orders": 2,
+    "positions": 0,
+    "buy_stop": "4353.69",
+    "sell_stop": "4348.52",
+    "native_order_type": 3,
+    "time_in_force": "GTC",
+    "relative_stop_loss": "1.06",
+    "relative_take_profit": "0.53",
+    "environment_unchanged": true,
+    "daily_accounting_unchanged": true,
+    "capital_accounting_unchanged": true,
+    "effective_shared_setup_risk_percent": "1",
+    "cached_pm2_model_database_policy_overrides": false,
+    "startup_checks_passed": true,
+    "operational_ready": true,
+    "automatic_analysis": true,
+    "paused": false,
+    "emergency": false,
+    "reason_codes": ["RELEVANT_PENDING_ORDER_EXISTS"],
+    "manual_analysis_or_forced_invalid_response": false,
+    "provider_retirement_replacement_observed": false,
+    "five_services_online": true,
+    "read_only_observer_online": true,
+    "pm2_state_saved_private": true,
+    "final_broker_observed_at": "2026-09-11T06:40:08.183Z"
+  },
+  "restore": {
+    "restored": true,
+    "verifiedTables": 45,
+    "scope": "current"
+  },
+  "post_migration_backup": {
+    "backup": "backup-20260911T063906Z-f2b3d0c0",
+    "scope": "current",
+    "verified": true
+  },
+  "post_migration_restore": {
+    "restored": true,
+    "verifiedTables": 46,
+    "scope": "current"
+  },
+  "observer": {
+    "previous": {
+      "release": "0.2.5-market-stop.8",
+      "startedAt": "2026-09-11T05:38:09.991Z",
+      "lastSampleAt": "2026-09-11T06:37:03.396Z",
+      "samples": 224,
+      "unavailableSamples": 4,
+      "notReadySamples": 8,
+      "samplingGaps": 0,
+      "maximumClosedTrades": 13,
+      "complete": false
+    },
+    "current": {
+      "release": "0.2.5-market-stop.9",
+      "startedAt": "2026-09-11T06:37:26.171Z",
+      "lastSampleAt": "2026-09-11T06:39:49.768Z",
+      "samples": 10,
+      "unavailableSamples": 0,
+      "notReadySamples": 0,
+      "samplingGaps": 0,
+      "maximumClosedTrades": 0,
+      "complete": false
+    }
+  },
+  "delivery": {
+    "issue": "https://github.com/AegisFintech/scalping-bot/issues/224",
+    "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/225",
+    "implementation_commit": "386db630508f143147ee795ddc9c80405cc7a8b8"
+  },
+  "staged_secret_scan": {
+    "files": 482,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
+  },
+  "handoff_checks": [
+    {
+      "command": "graphify update .",
+      "exit_code": 0
+    },
+    {
+      "command": "/root/.local/share/graphify/venv/bin/python3 artifacts/issue-097/graph-links.py",
+      "exit_code": 0
+    },
+    {
+      "command": "graphify cluster-only .",
+      "exit_code": 0
+    },
+    {
+      "command": "graphify path entry-recovery-report.md checkEntryPrices",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/prettier/bin/prettier.cjs --check plan.md docs/entry-recovery-report.md docs/evidence/entry-recovery-validation.json",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --cached --check",
+      "exit_code": 0
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node artifacts/issue-097/scan-index.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node scripts/storage-maintenance.mjs backup",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/python artifacts/issue-097/post-migration-restore-proof.py",
+      "exit_code": 0
+    }
+  ]
+}

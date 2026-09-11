@@ -431,6 +431,17 @@ async function main(): Promise<void> {
         reason_code: reason,
       }),
     true,
+    {
+      snapshot: () =>
+        marketClient.snapshot(
+          config.symbol,
+          candleCounts,
+          integer(environment, "ORDER_BOOK_DEPTH", 20),
+        ),
+      maxQuoteAgeMs: config.maxQuoteAgeMs,
+      maxMetadataAgeMs: config.maxMetadataAgeMs,
+      minimumPoints: optionalDecimal(environment.MIN_STOP_DISTANCE_POINTS),
+    },
   );
   let capitalMultiplier = "0";
   let capitalRiskCap = "0";

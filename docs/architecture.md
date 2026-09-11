@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.8`, policy `market-stop-v2`.
+Current source: `0.2.5-market-stop.9`, policy `market-stop-v2`.
 
 ISSUE-095 proves terminal protective outcomes per position, resolves filled or
 cancelled child markers, and supplies exact terminal entry orders to the gateway
@@ -25,6 +25,30 @@ and deterministic protected OCO execution. Paid inference runs separately from
 execution and independent maintenance. The original directional replay remains
 research-only; its confirmation/structural-close rules are distinct from OCO price
 triggers. See [the integration report](reusable-scenario-report.md).
+
+## Entry recovery (ISSUE-097)
+
+The provider prompt v3 receives exact tick-rounded buy/sell boundaries and a small
+spread-based guidance buffer. Completed-candle nearby structure remains the basis
+for entries. Returned prices are never clamped or shifted locally. The same broker
+minimum/tick rules are checked on provider return using a new read, on map reuse,
+and again through the existing final semantic checks. A failed/stale market read
+cannot manufacture retirement evidence or authorize new orders.
+
+Migration 0024 retains a completed provider response as immutable history and adds
+separate `context_entry_retirements` evidence. A durably retired map cannot be reused
+if price returns. Only a completed, never-submitted original context may parent one
+immediate replacement through `refresh_after_entry_context_id`. A replacement cannot
+parent another replacement. Subsequent failed/unusable replacements wait for the
+ordinary durable cooldown; old prices are not repeatedly evaluated. Failed/unknown
+requests elsewhere in the same recent scope still block the new exception.
+
+Retirement and order intent lock the same context row. Database triggers prohibit
+retirement after any intent and prohibit intent after retirement, including from
+older workers. The provider claim retains the account/symbol/mode advisory lock,
+unique parent link and active-group prohibition. This exception does not apply to
+accepted GTC orders, broker rejections or ambiguous dispatches. See
+[implementation, validation and rollback](entry-recovery-report.md).
 
 ## Services and authority
 
@@ -76,7 +100,7 @@ loopback and deployments support Debian/systemd.
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
    A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links
    the recorded numeric market inputs. A separate task calls `/v2/entry-pair`, using
-   exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v2`, two readable prices, and
+   exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v3`, two readable prices, and
    structured completed-candle tails (M1 240 / M5 144 / M15 96). The text-only
    model receives no image; exact provider input, prompt and available output are
    durably journaled. Historical chart bytes remain protected. Completion/failure
