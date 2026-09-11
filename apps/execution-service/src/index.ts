@@ -640,6 +640,7 @@ async function main(): Promise<void> {
             orderGroupId: terminal.terminalOrderGroupId,
             terminalProofKey: terminal.terminalProofKey,
             certain: finalRecovery.certain,
+            orders: terminal.terminalOrders,
           });
         }
         return finalRecovery;
@@ -657,9 +658,7 @@ async function main(): Promise<void> {
       return {
         certain: false,
         reasonCodes: [
-          error instanceof Error
-            ? error.message
-            : "DEMO_EXECUTION_RECOVERY_FAILED",
+          stableFailureReason(error, "DEMO_EXECUTION_RECOVERY_FAILED"),
         ],
       };
     }

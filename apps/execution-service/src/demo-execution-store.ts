@@ -107,6 +107,11 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
+      // A blocked database lock must release the maintenance loop. PostgreSQL
+      // aborts this transaction; the periodic runner retries without discarding
+      // evidence or starting an overlapping reconciliation.
+      await client.query("SET LOCAL lock_timeout = '5s'");
+      await client.query("SET LOCAL statement_timeout = '15s'");
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
         [
@@ -119,9 +124,11 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         terminal_order_group_id: string | null;
         terminal_broker_fill_id: string | null;
       }>(
-        `WITH terminal_proofs AS MATERIALIZED (
-           SELECT DISTINCT ON (terminal.order_group_id)
+        `WITH terminal_fills AS MATERIALIZED (
+           SELECT DISTINCT ON (terminal.position_id)
                   terminal.order_group_id,
+                  terminal.position_id,
+                  terminal.broker_order_id,
                   terminal.broker_event_key,
                   terminal.payload_hash,
                   terminal.broker_fill_id,
@@ -152,11 +159,20 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
              AND p.account_id = $1 AND p.symbol_id = $2
              AND p.state = 'CLOSED' AND p.strategy_owned = true
              AND p.closed_at = terminal.occurred_at
+             AND t.closed_at = terminal.occurred_at
+             AND terminal.broker_position_id = p.broker_position_id
+             AND terminal.normalized_payload->'position'->>'state' = 'CLOSED'
+             AND terminal.normalized_payload->'order'->>'state' = 'FILLED'
+             AND (terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric =
+                 (SELECT sum(entry_fill.volume) FROM fills entry_fill
+                  WHERE entry_fill.position_id = p.id AND entry_fill.order_id IS NOT NULL)
              AND EXISTS (
                SELECT 1 FROM fills terminal_fill
                WHERE terminal_fill.position_id = p.id
                  AND terminal_fill.broker_fill_id = terminal.broker_fill_id
                  AND terminal_fill.occurred_at = terminal.occurred_at
+                 AND terminal_fill.volume =
+                     (terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric
              )
              AND (SELECT count(*) FROM positions gp
                   WHERE gp.order_group_id = og.id) BETWEEN 1 AND 2
@@ -194,8 +210,11 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                      AND terminal_trade.position_id = terminal_position.id
                  )
              )
-           ORDER BY terminal.order_group_id, terminal.occurred_at DESC,
+           ORDER BY terminal.position_id, terminal.occurred_at DESC,
                     terminal.id DESC
+         ), terminal_proofs AS MATERIALIZED (
+           SELECT DISTINCT ON (order_group_id) * FROM terminal_fills
+           ORDER BY order_group_id, occurred_at DESC, broker_event_key DESC
          ), resolved AS (
            UPDATE broker_execution_events blocked
            SET resolved_at = GREATEST(proof.occurred_at, blocked.occurred_at),
@@ -255,7 +274,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                  AND closed_position.state='CLOSED' AND closed_position.strategy_owned=true
                  AND closed_position.closed_at=closed_trade.closed_at
              )
-             AND EXISTS (
+             AND (EXISTS (
                SELECT 1 FROM broker_execution_events cancelled
                WHERE cancelled.account_id=$1 AND cancelled.symbol_id=$2
                  AND cancelled.order_group_id=blocked.order_group_id
@@ -268,7 +287,13 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                  AND cancelled.normalized_payload->'closeDetail'='null'::jsonb
                  AND cancelled.normalized_payload->'order'->>'state'='CANCELLED'
                  AND cancelled.normalized_payload->'order'->>'filledVolume'='0'
-             )
+             ) OR EXISTS (
+               SELECT 1 FROM terminal_fills closed
+               WHERE closed.order_group_id=blocked.order_group_id
+                 AND closed.position_id=blocked.position_id
+                 AND closed.broker_order_id=blocked.broker_order_id
+                 AND closed.occurred_at>=blocked.occurred_at
+             ))
            RETURNING blocked.id
          )
          SELECT ((SELECT count(*) FROM resolved) + (SELECT count(*) FROM resolved_children))::text AS resolved_event_count,
@@ -305,6 +330,40 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       ) {
         throw new Error("DEMO_TERMINAL_EVIDENCE_RESULT_INVALID");
       }
+      const terminalOrders: GatewayOrder[] = [];
+      if (terminalOrderGroupId !== null) {
+        const orders = await client.query<{
+          client_order_id: string;
+          broker_order_id: string | null;
+          state: GatewayOrder["state"];
+          filled_volume: string;
+          updated_at: Date;
+        }>(
+          `SELECT client_order_id, broker_order_id, state, filled_volume::text,
+                  COALESCE(broker_updated_at, updated_at) AS updated_at
+           FROM orders WHERE order_group_id=$1 AND account_id=$2 AND strategy_owned=true`,
+          [terminalOrderGroupId, this.#options.accountId],
+        );
+        if (
+          orders.rows.length !== 2 ||
+          orders.rows.some(
+            (order) =>
+              !["FILLED", "CANCELLED", "EXPIRED", "REJECTED"].includes(
+                order.state,
+              ),
+          )
+        )
+          throw new Error("DEMO_TERMINAL_ORDER_EVIDENCE_INVALID");
+        for (const order of orders.rows)
+          terminalOrders.push({
+            clientOrderId: order.client_order_id,
+            brokerOrderId: order.broker_order_id,
+            state: order.state,
+            filledVolume: new Decimal(order.filled_volume).toString(),
+            updatedAt: order.updated_at.toISOString(),
+            reasonCode: null,
+          });
+      }
       await client.query("COMMIT");
       const readiness = await this.readiness();
       return {
@@ -314,6 +373,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         terminalOrderGroupId,
         terminalBrokerFillId,
         resolvedEventCount: Number(resolvedText),
+        terminalOrders,
       };
     } catch (error) {
       await client.query("ROLLBACK");

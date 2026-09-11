@@ -2,6 +2,50 @@
 
 ## Scope
 
+### ISSUE-095 — Unattended lifecycle recovery (implemented; validated on demo)
+
+- Issue: [#221](https://github.com/AegisFintech/scalping-bot/issues/221).
+- Branch: `issue-095-unattended-recovery`; dependency: ISSUE-094 / PR #220.
+- Operator requests unattended operation after a repaired protective order filled
+  and closed its position but left an unresolved replacement marker.
+- Acceptance: exact terminal evidence resolves both filled and cancelled native
+  protective children regardless of callback arrival order or process restart;
+  no broker-flat shortcut, timeout reset, duplicate command or loss-account reset.
+- Exercise the real PostgreSQL journal with lifecycle permutations, duplicates,
+  restart boundaries, missing/foreign/partial/conflicting evidence and repeated
+  cycles. Verify periodic recovery and scoped in-memory failure release.
+- Review supervision, bounded dependencies, existing stall alerts and backup
+  recovery; publish an operational qualification/runbook with explicit remaining
+  evidence. Preserve demo-only authority and the shared current-equity 1% budget.
+- Run all required checks, update Graphify, deliver issue/PR and verify demo
+  deployment through automatic recovery and subsequent protected cycles.
+- All 22 check categories passed: 658 Node / 162 Python / 40 schema / three
+  migration / 43 PostgreSQL tests. Both dependency audits are clean. New lifecycle
+  permutations/failure cases cover 38 PostgreSQL scenarios; exact reruns recorded.
+- Original marker resolved automatically at 13:37:22 SGT on September 11.
+  Broker-confirmed two GTC STOP orders with attached SL/TP instructions at 13:38:02;
+  shared budget 6538.6818 on equity 653868.18 (1%). No journal/control/account reset.
+- Paired current backup restored all 45 table fingerprints; Graphify refreshed.
+  [Report](docs/unattended-recovery-report.md) and [exact evidence](docs/evidence/unattended-recovery-validation.json).
+- A normal execution restart at 13:39–13:40 preserved the same two broker order
+  identities/prices/SL/TP instructions and recovered automatically without a new
+  provider request. No filled-position lifecycle is claimed from this short drill.
+- Sustained prospective trade-cycle, restart/rollover and alert evidence continues
+  under ISSUE-096. This release is not certified for unattended live production.
+
+### ISSUE-096 — Prospective unattended qualification (running)
+
+- Issue: [#222](https://github.com/AegisFintech/scalping-bot/issues/222).
+- Dependency: ISSUE-095. No live authority is granted.
+- Initial read-only 24-hour wall-clock observer started September 11 at 13:38:09
+  SGT; checkpoints persist counts, reasons and sampling gaps across restart.
+- Acceptance: at least 24 market-open hours, repeated protected fill/close/new
+  cycles without manual unlocks, normal restart/reconnect/dependency recovery,
+  UTC rollover, verified current restore and existing alert delivery. Review
+  sampled status together with durable broker/protection/trade evidence.
+- Market closure may require extending the evidence window. Do not infer readiness
+  from elapsed time, process uptime or fixture results. Live remains disabled.
+
 ### ISSUE-094 — Demo development with current-equity setup risk (implemented; validated)
 
 - Issue: [#219](https://github.com/AegisFintech/scalping-bot/issues/219).

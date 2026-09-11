@@ -1,0 +1,250 @@
+{
+  "issue": "ISSUE-095",
+  "release": "0.2.5-market-stop.8",
+  "mode": "demo",
+  "policy": "market-stop-v2",
+  "issue_url": "https://github.com/AegisFintech/scalping-bot/issues/221",
+  "checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 17.02,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 27.53,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 2,
+      "seconds": 11.1,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 13.9,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 33.27,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 9.06,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.68,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 20.69,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 6.3,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.46,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.44,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.25,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-095/archive-backtest.json",
+      "exit_code": 0,
+      "seconds": 0.21,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-095/archive-scenario-replay.json",
+      "exit_code": 1,
+      "seconds": 0.71,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.81,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 10.83,
+      "log": "21.log"
+    }
+  ],
+  "reruns": [
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
+      "exit_code": 0,
+      "reason": "Use the repository-compatible typed AJV formats import in the new schema test."
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/eslint/bin/eslint.js scripts/observe-unattended.ts tests/schema/unattended-observation.test.ts tests/operations/unattended-observer.test.ts tests/integration/unattended-lifecycle.integration.test.ts",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/tsx/dist/cli.mjs scripts/replay-scenarios.ts tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-095/final-scenario-replay.json",
+      "exit_code": 0,
+      "reason": "Use a new output path; an existing immutable replay output is not overwritten."
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/prettier/bin/prettier.cjs --check '**/*.{ts,mjs,json,md,yml,yaml}'",
+      "exit_code": 0
+    }
+  ],
+  "counts": {
+    "node": 658,
+    "python": 162,
+    "json_schema": 40,
+    "migration": 3,
+    "postgres_integration": 43,
+    "new_lifecycle_integration": 38
+  },
+  "prior_attempt_notes": [
+    "Initial fixture setup corrected a required volume scale and SQL parameter casts.",
+    "Test-only mutable fixture typing and JSON parse assertion corrected.",
+    "New observer uses typed TypeScript and a strict checkpoint schema; caught errors retain causes."
+  ],
+  "backup": {
+    "name": "backup-20260911T053407Z-c1cf8edd",
+    "verified": true,
+    "restored": true,
+    "verified_tables": 45,
+    "scratch_database_removed": true
+  },
+  "pre_deployment": {
+    "broker_certain": true,
+    "positions": 0,
+    "pending_orders": 0,
+    "at": "2026-09-11T05:36:21.928Z",
+    "environment_unchanged": true,
+    "pm2_cached_policy_keys": []
+  },
+  "graphify": {
+    "nodes": 3701,
+    "edges": 7487,
+    "communities": 269,
+    "new_source_grounded_links": 5,
+    "external_api_calls": 0
+  },
+  "rollout": {
+    "status": "demo deployed; protected entry pair confirmed; sustained qualification running",
+    "incident_resolved_at": "2026-09-11T05:37:22.495Z",
+    "original_replacement_event_retained": true,
+    "provider_requested_at": "2026-09-11T05:37:28.103Z",
+    "provider_model": "deepseek-v4-pro/u5W",
+    "provider_duration_ms": 5157,
+    "pair_created_at": "2026-09-11T05:37:42.934Z",
+    "broker_pair_confirmed_at": "2026-09-11T05:38:02.030Z",
+    "pending_orders": 2,
+    "positions": 0,
+    "order_type": "STOP",
+    "time_in_force": "GTC",
+    "buy_stop": "4341.02",
+    "sell_stop": "4333.54",
+    "buy_relative_sl": "1.06",
+    "buy_relative_tp": "0.53",
+    "sell_relative_sl": "1.04",
+    "sell_relative_tp": "0.52",
+    "equity": "653868.18",
+    "shared_risk_budget": "6538.6818",
+    "setup_risk_percent": "1",
+    "environment_unchanged": true,
+    "daily_high_water_history_preserved": true,
+    "execution_pid": 3098560,
+    "unexpected_execution_restarts": 0,
+    "manual_analysis_dispatch": false,
+    "manual_journal_reset": false,
+    "pm2_saved": true,
+    "restart_drill": {
+      "before_at": "2026-09-11T05:39:40.109Z",
+      "after_at": "2026-09-11T05:40:05.072Z",
+      "same_broker_order_identities": true,
+      "same_pending_protection_instructions": true,
+      "startup_recovery_passed": true,
+      "automatic_control_unchanged": true,
+      "execution_pid_after": 3098924
+    },
+    "intended_execution_restarts": 2
+  },
+  "qualification": {
+    "production_certified": false,
+    "sustained_demo_evidence": "pending",
+    "live_enabled": false,
+    "observation_started_at": "2026-09-11T05:38:09.991Z",
+    "initial_window_ends_at": "2026-09-12T05:38:09.992Z",
+    "window_kind": "24 wall-clock hours; not a claim of 24 market-open hours",
+    "observer_process": "scalper-qualification",
+    "observer_sample_seconds": 15,
+    "observer_http_timeout_seconds": 10,
+    "broker_authority": false,
+    "initial_launcher_corrected": "Run the Node binary directly under PM2 so the CLI entry point executes.",
+    "issue_url": "https://github.com/AegisFintech/scalping-bot/issues/222"
+  }
+}

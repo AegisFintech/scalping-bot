@@ -5,7 +5,10 @@ import {
   DEMO_ACKNOWLEDGEMENT,
   type CTraderTradingClient,
 } from "../../apps/execution-service/src/demo-gateway.js";
-import type { PendingOrderCommand } from "../../packages/contracts/src/index.js";
+import type {
+  GatewayOrder,
+  PendingOrderCommand,
+} from "../../packages/contracts/src/index.js";
 import type {
   BrokerExecution,
   RawReconciliation,
@@ -26,6 +29,30 @@ function command(side: "BUY" | "SELL"): PendingOrderCommand {
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
     strategyLabel: "ctrader-ai-scalper:test",
   };
+}
+
+function terminalOrders(
+  buy = "client-BUY",
+  sell = "client-SELL",
+): GatewayOrder[] {
+  return [
+    {
+      clientOrderId: buy,
+      brokerOrderId: "101",
+      state: "FILLED",
+      filledVolume: "100",
+      updatedAt: new Date().toISOString(),
+      reasonCode: null,
+    },
+    {
+      clientOrderId: sell,
+      brokerOrderId: "102",
+      state: "CANCELLED",
+      filledVolume: "0",
+      updatedAt: new Date().toISOString(),
+      reasonCode: null,
+    },
+  ];
 }
 
 function event(
@@ -146,6 +173,10 @@ class MockClient implements CTraderTradingClient {
       receivedAt: new Date().toISOString(),
     };
     this.#handler?.(result);
+  }
+
+  deliver(execution: BrokerExecution): void {
+    this.#handler?.(execution);
   }
 
   closeWithBrokerChild(clientOrderId: string): void {
@@ -407,6 +438,7 @@ describe("cTrader demo gateway", () => {
     gateway.acknowledgeCertainTerminalRecovery({
       orderGroupId: "group",
       terminalProofKey: `terminal:${"a".repeat(64)}`,
+      orders: terminalOrders(),
       certain: false,
     });
     await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
@@ -434,6 +466,7 @@ describe("cTrader demo gateway", () => {
     gateway.acknowledgeCertainTerminalRecovery({
       orderGroupId: "different-group",
       terminalProofKey: `terminal:${"b".repeat(64)}`,
+      orders: terminalOrders(),
       certain: true,
     });
     await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
@@ -444,6 +477,7 @@ describe("cTrader demo gateway", () => {
     gateway.acknowledgeCertainTerminalRecovery({
       orderGroupId: "group",
       terminalProofKey: `terminal:${"c".repeat(64)}`,
+      orders: terminalOrders(),
       certain: true,
     });
     await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
@@ -521,5 +555,97 @@ describe("ordinary STOP demo OCO", () => {
       gateway(client).placeOco([command("BUY"), command("SELL")]),
     ).rejects.toThrow("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
     expect(client.orders).toHaveLength(2);
+  });
+  it("uses exact durable terminal orders after a delayed callback and retains replay idempotency", async () => {
+    const client = new MockClient();
+    const gateway = new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    const commands = [command("BUY"), command("SELL")] as const;
+    await gateway.placeOco(commands);
+    const delayed = event(commands[0], 1);
+    client.fill("client-BUY", 2001.1);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+    client.deliver(delayed);
+    client.orders.splice(0); // Broker is flat; callback cache is deliberately stale.
+    const proof = {
+      orderGroupId: "group",
+      terminalProofKey: `terminal:${"d".repeat(64)}`,
+      certain: true,
+      orders: terminalOrders(),
+    };
+    for (const orders of [
+      [],
+      terminalOrders().slice(0, 1),
+      terminalOrders().map((o) => ({ ...o, brokerOrderId: "999" })),
+      terminalOrders().map((o) => ({ ...o, state: "UNKNOWN" as const })),
+      terminalOrders().map((o) => ({ ...o, filledVolume: "101" })),
+      [terminalOrders()[0]!, terminalOrders()[0]!],
+    ]) {
+      gateway.acknowledgeCertainTerminalRecovery({ ...proof, orders });
+      expect((await gateway.reconcile("XAUUSD")).certain).toBe(false);
+    }
+    gateway.acknowledgeCertainTerminalRecovery(proof);
+    gateway.acknowledgeCertainTerminalRecovery(proof);
+    client.deliver(delayed);
+    expect(await gateway.reconcile("XAUUSD")).toMatchObject({
+      certain: true,
+      orders: [],
+    });
+    const replay = await gateway.placeOco(commands);
+    expect(replay.idempotentReplay).toBe(true);
+    expect(replay.orders.map((o) => o.state)).toEqual(["FILLED", "CANCELLED"]);
+    expect(client.orders).toHaveLength(0);
+  });
+
+  it("does not let an older closed group release a newer group's slippage latch", async () => {
+    const client = new MockClient();
+    const gateway = new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    const proof = {
+      orderGroupId: "group",
+      terminalProofKey: `terminal:${"e".repeat(64)}`,
+      certain: true,
+      orders: terminalOrders(),
+    };
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    client.fill("client-BUY", 2001.1);
+    await vi.waitFor(() => expect(client.cancelled).toHaveLength(1));
+    gateway.acknowledgeCertainTerminalRecovery(proof);
+    client.orders.splice(0);
+    const commands = (["BUY", "SELL"] as const).map((side) => ({
+      ...command(side),
+      orderGroupId: "next-group",
+      clientOrderId: `next-${side}`,
+      idempotencyKey: `next-${side}`,
+    }));
+    await gateway.placeOco([commands[0]!, commands[1]!]);
+    client.fill("next-BUY", 2001.1);
+    await vi.waitFor(() => expect(client.cancelled).toHaveLength(2));
+    gateway.acknowledgeCertainTerminalRecovery(proof);
+    expect((await gateway.reconcile("XAUUSD")).reasonCodes).toEqual([
+      "DEMO_FILL_SLIPPAGE_EXCEEDED",
+    ]);
+    gateway.acknowledgeCertainTerminalRecovery({
+      ...proof,
+      orderGroupId: "next-group",
+      orders: terminalOrders("next-BUY", "next-SELL"),
+    });
+    expect((await gateway.reconcile("XAUUSD")).certain).toBe(true);
   });
 });
