@@ -1,6 +1,7 @@
 # ISSUE-097: Unsubmitted entry recovery
 
-Status: implemented; completion checks passed; demo rollout pending. [Issue #224](https://github.com/AegisFintech/scalping-bot/issues/224).
+Status: implemented, tested and deployed to demo. [Issue #224](https://github.com/AegisFintech/scalping-bot/issues/224),
+[pull request #225](https://github.com/AegisFintech/scalping-bot/pull/225), implementation checkpoint `386db63`.
 Release `0.2.5-market-stop.9`, unchanged money policy `market-stop-v2`; demo only.
 
 ## Observed problem
@@ -65,7 +66,9 @@ updates, with no submitted controls or browser errors. Graphify was updated with
 six explicit report links and zero provider calls. Its existing pyproject.toml
 zero-node and community-label warnings remain informational.
 
-The paired current backup restored with all 45 table fingerprints matching.
+The pre-migration paired current backup restored with all 45 table fingerprints
+matching. A second current backup after migration restored all 46 tables,
+including retirement evidence; both isolated scratch databases were removed.
 
 The dedicated tests
 cover response movement, stale/invalid data, retirement storage failure, bounded
@@ -73,6 +76,38 @@ replacement, provider failures, restart, concurrency and intent/retirement races
 Synthetic tests establish software behavior, not improved win rate or guaranteed
 continuous order coverage. Broker sessions/outages and uncertain account evidence
 can still prevent new risk.
+
+On September 11, new analyses were paused at 14:36:13 SGT. Additive migration
+0024 completed at 14:36:38, followed by normal AI/execution service restarts.
+At 14:37:01 the independent read-only broker check confirmed the same two order
+identities, prices and protection instructions as before migration: BUY STOP
+4353.69 / SELL STOP 4348.52, GTC, relative SL 1.06 and TP 0.53. There were no open
+positions. These were accepted pending orders, not fills. No order was cancelled
+or replaced for deployment.
+
+Automatic analysis resumed at 14:37:04. At 14:39:26 release `.9` was ready,
+startup checks passed, pause/emergency controls were off and the existing group
+was active. `RELEVANT_PENDING_ORDER_EXISTS` correctly prevented a second setup.
+The environment, daily risk rows and high-water accounting matched their paused
+snapshots exactly; the effective demo setup cap remained shared 1% current equity.
+PM2 had no cached model/database/policy overrides. All five services and the
+read-only observer were online; supervision state was saved with private file
+permissions.
+
+The earlier `.8` observer checkpoint remains intact: 224 samples, four unavailable
+and eight not-ready samples, no sampling gaps, and 13 maximum recorded closed
+trades. Those counters include earlier conditions and the controlled restart;
+they are not a pass certificate. A separate `.9` observation started at
+14:37:26 SGT, with six healthy samples by 14:38:46. The initial 24-hour wall-clock
+window restarts for this release; [ISSUE-096](../plan.md) still requires at least
+24 market-open hours and the remaining operational acceptance evidence.
+
+At the rollout snapshot, the preserved GTC pair had not filled. Consequently
+there was no `.9` provider request or natural retirement/replacement event yet.
+The prompt and recovery branches have fixture/PostgreSQL validation; their
+prospective demo observation continues automatically after the current setup
+closes. No manual analysis or forced bad provider response was used. This short
+rollout does not establish unattended live-production readiness or a better win rate.
 
 ## Migration and rollback
 

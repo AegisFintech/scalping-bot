@@ -251,10 +251,11 @@
   ],
   "graphify": {
     "nodes": 3804,
-    "edges": 7714,
-    "communities": 272,
+    "edges": 7715,
+    "communities": 271,
     "new_explicit_links": 6,
-    "external_api_calls": 0
+    "external_api_calls": 0,
+    "dangling_edges": 0
   },
   "backup": {
     "backup": "backup-20260911T063313Z-c0198f43",
@@ -262,10 +263,131 @@
     "scope": "current",
     "verified": true
   },
-  "rollout": "pending",
+  "rollout": {
+    "status": "deployed_demo",
+    "migration": "0024_entry_recovery.sql",
+    "migration_at": "2026-09-11T06:36:38.643Z",
+    "pause_at": "2026-09-11T06:36:13.771Z",
+    "resume_at": "2026-09-11T06:37:04.410Z",
+    "broker_before": "2026-09-11T06:36:29.083Z",
+    "broker_after": "2026-09-11T06:37:01.487Z",
+    "same_order_identities": true,
+    "same_order_prices_protection": true,
+    "pending_orders": 2,
+    "positions": 0,
+    "buy_stop": "4353.69",
+    "sell_stop": "4348.52",
+    "native_order_type": 3,
+    "time_in_force": "GTC",
+    "relative_stop_loss": "1.06",
+    "relative_take_profit": "0.53",
+    "environment_unchanged": true,
+    "daily_accounting_unchanged": true,
+    "capital_accounting_unchanged": true,
+    "effective_shared_setup_risk_percent": "1",
+    "cached_pm2_model_database_policy_overrides": false,
+    "startup_checks_passed": true,
+    "operational_ready": true,
+    "automatic_analysis": true,
+    "paused": false,
+    "emergency": false,
+    "reason_codes": ["RELEVANT_PENDING_ORDER_EXISTS"],
+    "manual_analysis_or_forced_invalid_response": false,
+    "provider_retirement_replacement_observed": false,
+    "five_services_online": true,
+    "read_only_observer_online": true,
+    "pm2_state_saved_private": true,
+    "final_broker_observed_at": "2026-09-11T06:40:08.183Z"
+  },
   "restore": {
     "restored": true,
     "verifiedTables": 45,
     "scope": "current"
-  }
+  },
+  "post_migration_backup": {
+    "backup": "backup-20260911T063906Z-f2b3d0c0",
+    "scope": "current",
+    "verified": true
+  },
+  "post_migration_restore": {
+    "restored": true,
+    "verifiedTables": 46,
+    "scope": "current"
+  },
+  "observer": {
+    "previous": {
+      "release": "0.2.5-market-stop.8",
+      "startedAt": "2026-09-11T05:38:09.991Z",
+      "lastSampleAt": "2026-09-11T06:37:03.396Z",
+      "samples": 224,
+      "unavailableSamples": 4,
+      "notReadySamples": 8,
+      "samplingGaps": 0,
+      "maximumClosedTrades": 13,
+      "complete": false
+    },
+    "current": {
+      "release": "0.2.5-market-stop.9",
+      "startedAt": "2026-09-11T06:37:26.171Z",
+      "lastSampleAt": "2026-09-11T06:39:49.768Z",
+      "samples": 10,
+      "unavailableSamples": 0,
+      "notReadySamples": 0,
+      "samplingGaps": 0,
+      "maximumClosedTrades": 0,
+      "complete": false
+    }
+  },
+  "delivery": {
+    "issue": "https://github.com/AegisFintech/scalping-bot/issues/224",
+    "pull_request": "https://github.com/AegisFintech/scalping-bot/pull/225",
+    "implementation_commit": "386db630508f143147ee795ddc9c80405cc7a8b8"
+  },
+  "staged_secret_scan": {
+    "files": 482,
+    "scope": "all index blobs including existing screenshot blobs; current deployment and local database credentials",
+    "matches": []
+  },
+  "handoff_checks": [
+    {
+      "command": "graphify update .",
+      "exit_code": 0
+    },
+    {
+      "command": "/root/.local/share/graphify/venv/bin/python3 artifacts/issue-097/graph-links.py",
+      "exit_code": 0
+    },
+    {
+      "command": "graphify cluster-only .",
+      "exit_code": 0
+    },
+    {
+      "command": "graphify path entry-recovery-report.md checkEntryPrices",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node node_modules/prettier/bin/prettier.cjs --check plan.md docs/entry-recovery-report.md docs/evidence/entry-recovery-validation.json",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --cached --check",
+      "exit_code": 0
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node artifacts/issue-097/scan-index.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "/opt/scalper-node22/bin/node scripts/storage-maintenance.mjs backup",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/python artifacts/issue-097/post-migration-restore-proof.py",
+      "exit_code": 0
+    }
+  ]
 }

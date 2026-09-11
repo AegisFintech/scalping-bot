@@ -2,9 +2,11 @@
 
 ## Scope
 
-### ISSUE-097 — Recover unusable unsubmitted entry pairs (in progress)
+### ISSUE-097 — Recover unusable unsubmitted entry pairs (implemented; deployed to demo)
 
 - Issue: [#224](https://github.com/AegisFintech/scalping-bot/issues/224).
+- Pull request: [#225](https://github.com/AegisFintech/scalping-bot/pull/225);
+  implementation checkpoint `386db63` committed and pushed.
 - Branch: `issue-097-entry-recovery`; dependency: ISSUE-095 / PR #223.
 - Operator approved explicit executable price guidance, immediate fresh-quote
   checks and bounded replacement of unusable, never-submitted pairs.
@@ -22,7 +24,14 @@
   Run all completion gates, update Graphify, deliver issue/PR and verify demo.
 - Implementation checks passed: 681 Node / 163 Python / 47 schema / three
   migration / 65 PostgreSQL tests. Both audits are clean; browser and Graphify
-  checks passed. Reviewed demo rollout remains pending.
+  checks passed. Migration 0024 and AI/execution restarts completed on September
+  11 at 14:36–14:37 SGT; automatic demo analysis resumed at 14:37:04.
+- Independent broker checks preserved both exact GTC order identities/prices and
+  relative SL/TP instructions. Environment and daily/high-water records unchanged;
+  shared 1% demo risk retained. Pre/post-migration backups restored 45/46 tables.
+- The existing pair remained pending at the rollout snapshot; no `.9` provider
+  cycle or natural retirement is claimed yet. The release-specific read-only
+  observer is running; prospective qualification continues under ISSUE-096.
 - [Report](docs/entry-recovery-report.md) and [exact checks](docs/evidence/entry-recovery-validation.json).
 
 ### ISSUE-095 — Unattended lifecycle recovery (implemented; validated on demo)
@@ -64,6 +73,10 @@
 - Dependency: ISSUE-095. No live authority is granted.
 - Initial read-only 24-hour wall-clock observer started September 11 at 13:38:09
   SGT; checkpoints persist counts, reasons and sampling gaps across restart.
+- ISSUE-097 replaced the runtime release at 14:36–14:37. The `.8` checkpoint was
+  preserved (224 samples, four unavailable, eight not-ready, no gaps); a separate
+  `.9` observation started at 14:37:26 SGT. Restart the qualification window for
+  the new release and interpret these samples with durable lifecycle evidence.
 - Acceptance: at least 24 market-open hours, repeated protected fill/close/new
   cycles without manual unlocks, normal restart/reconnect/dependency recovery,
   UTC rollover, verified current restore and existing alert delivery. Review
