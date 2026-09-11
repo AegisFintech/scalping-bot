@@ -250,3 +250,16 @@ increase or widening is introduced. Existing SL/TP exits remain broker managed.
 Stop and emergency-close execution can slip or fail; neither modeled risk nor
 this recovery path guarantees a realized loss ceiling. See
 [implementation and limits](missing-stop-recovery-report.md).
+
+## Unsubmitted entry recovery (ISSUE-097)
+
+A readable model response does not authorize execution. Prompt v3 states exact
+buy-above-ask / sell-below-bid boundaries, including the broker minimum and tick.
+An additional max(two ticks, current spread) buffer is guidance only: it is not a
+new distance gate and does not widen a stop, target or position. Fresh quote checks
+retire an unusable unsubmitted pair instead of changing its price. One bounded
+replacement request is permitted for an original successfully completed context;
+failure/unknown-dispatch, active exposure and all sizing/semantic checks remain.
+Retirement cannot follow intent, and a retired map cannot create intent. Existing
+GTC positions/orders and the shared current-equity 1% budget are unchanged. This
+improves recovery behavior; it does not establish better returns or continuous fills.

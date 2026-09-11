@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.8` uses policy `market-stop-v2` in
+Release `0.2.5-market-stop.9` uses policy `market-stop-v2` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -13,6 +13,13 @@ fresh-submission deadline capped by the original map and 90-second asynchronous 
 knobs. A proven local `AI_CIRCUIT_OPEN` result is rechecked after one minute;
 the database retains five-minute failed/unknown-request backoff. One verified post-close or fully proven zero-fill cancellation request may start earlier.
 Unknown/timeout outcomes retain the full cooldown. See [the incident report](provider-recovery-report.md).
+ISSUE-097 adds one immediate replacement for a durably retired, successfully
+returned, never-submitted original entry pair. A replacement cannot receive this
+exception again; failed/unknown calls retain five-minute backoff. These rules and
+the two-tick/one-spread prompt guidance buffer are release policy, not new settings.
+Apply additive migration 0024 before the matching execution build. Original maps,
+provider history, accounting and accepted GTC orders remain intact. See
+[entry recovery and rollback](entry-recovery-report.md).
 The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
@@ -56,7 +63,7 @@ preserving all credentials and operator controls. Forward migration
 Astra/Sol rows and request cooldowns. Deploy matching AI/execution builds together.
 See [model-switch evidence](deepseek-context-report.md). The production scenario
 uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
-production prompt `entry-pair-v2`, explicitly disabled thinking and at most 4,096 output
+production prompt `entry-pair-v3`, explicitly disabled thinking and at most 4,096 output
 tokens within the existing
 90-second deadline. Historical charts remain validated local audit artifacts;
 new numeric analyses generate display charts only on demand. Request bounds,

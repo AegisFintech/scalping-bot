@@ -2,6 +2,19 @@ import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { redactString } from "../../../packages/logging/src/index.js";
 import type pg from "pg";
+import type {
+  EntryRetirementEvidence,
+  MarketSnapshot,
+} from "../../../packages/contracts/src/index.js";
+import {
+  checkEntryPrices,
+  entryMinimumDistance,
+} from "../../../packages/scenario-engine/src/entry-prices.js";
+import {
+  contextScopeLock,
+  entryReplacementProof,
+  retireEntryContext,
+} from "./entry-recovery-store.js";
 import { FIXED_DEFAULTS } from "../../../packages/config/src/policy.js";
 import type { AiAnalysisResult } from "../../../packages/ai-client/src/client.js";
 import {
@@ -65,6 +78,8 @@ export interface StoredContext {
   tickSize: string;
   plan: ContextPlan | null;
   consumed: boolean;
+  retiredAt?: string | null;
+  refreshAfterEntryContextId?: string | null;
   /** Fully reconciled, durably closed setup; permits one fresh analysis. */
   closedAt?: string | null;
   /** Both owned orders broker-confirmed terminal with explicit zero-fill evidence. */
@@ -72,6 +87,10 @@ export interface StoredContext {
   reason: string | null;
 }
 export interface ContextStore {
+  retireEntries?(
+    id: string,
+    evidence: EntryRetirementEvidence,
+  ): Promise<boolean>;
   latest(): Promise<StoredContext | null>;
   claim(input: {
     id: string;
@@ -79,6 +98,7 @@ export interface ContextStore {
     capturedAt: string;
     tickSize: string;
     afterContextId?: string;
+    afterEntryContextId?: string;
     providerEvidence?: {
       requestText: string;
       promptContent: string;
@@ -102,10 +122,19 @@ export class PostgresContextStore implements ContextStore {
       mode: string;
     },
   ) {}
+  retireEntries(
+    id: string,
+    evidence: EntryRetirementEvidence,
+  ): Promise<boolean> {
+    return retireEntryContext(this.pool, this.scope, id, evidence);
+  }
   async summary() {
     const result = await this.pool.query(
       `SELECT c.state,c.requested_at,c.valid_until,c.duration_ms,c.reason,c.requested_model,
       c.telemetry->>'returnedModel' AS returned_model,
+      (SELECT r.recorded_at FROM context_entry_retirements r WHERE r.context_id=c.id) AS retired_at,
+      (SELECT r.evidence->'reasonCodes' FROM context_entry_retirements r WHERE r.context_id=c.id) AS entry_retirement_reasons,
+      c.refresh_after_entry_context_id IS NOT NULL AS entry_replacement,
       EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed,
       (SELECT count(*)::int FROM scenario_contexts x WHERE x.account_id=c.account_id AND x.symbol_id=c.symbol_id AND x.mode=c.mode AND x.requested_at>=clock_timestamp()-interval '24 hours') AS calls_24h
       FROM scenario_contexts c WHERE c.account_id=$1 AND c.symbol_id=$2 AND c.mode=$3 ORDER BY c.requested_at DESC LIMIT 1`,
@@ -115,7 +144,8 @@ export class PostgresContextStore implements ContextStore {
   }
   async latest(): Promise<StoredContext | null> {
     const result = await this.pool.query(
-      `SELECT c.id,c.state,c.reason,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,
+      `SELECT c.id,c.state,c.reason,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,c.refresh_after_entry_context_id,
+      (SELECT r.recorded_at FROM context_entry_retirements r WHERE r.context_id=c.id) AS retired_at,
       EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed,
       (SELECT max(t.closed_at) FROM order_groups g JOIN trades t ON t.order_group_id=g.id
        WHERE g.context_plan_id=c.id AND g.state='CLOSED'
@@ -138,6 +168,8 @@ export class PostgresContextStore implements ContextStore {
           tick_size: string;
           plan: ContextPlan | null;
           consumed: boolean;
+          retired_at: Date | null;
+          refresh_after_entry_context_id: string | null;
           closed_at: Date | null;
           zero_fill_terminal_at: Date | null;
           reason: string | null;
@@ -156,6 +188,8 @@ export class PostgresContextStore implements ContextStore {
           tickSize: r.tick_size,
           plan: r.plan,
           consumed: r.consumed,
+          retiredAt: r.retired_at?.toISOString() ?? null,
+          refreshAfterEntryContextId: r.refresh_after_entry_context_id,
           closedAt: r.closed_at?.toISOString() ?? null,
           zeroFillTerminalAt: r.zero_fill_terminal_at?.toISOString() ?? null,
           reason: r.reason,
@@ -167,6 +201,7 @@ export class PostgresContextStore implements ContextStore {
     capturedAt: string;
     tickSize: string;
     afterContextId?: string;
+    afterEntryContextId?: string;
     providerEvidence?: {
       requestText: string;
       promptContent: string;
@@ -179,27 +214,21 @@ export class PostgresContextStore implements ContextStore {
       // Cross-process single-flight; only proven terminal setups get one early request.
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
-        [
-          JSON.stringify([
-            this.scope.accountId,
-            this.scope.symbolId,
-            this.scope.mode,
-          ]),
-        ],
+        [contextScopeLock(this.scope)],
       );
       const result = await client.query(
         `INSERT INTO scenario_contexts
-        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id,refresh_after_context_id)
-        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7,$9::uuid
+        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id,refresh_after_context_id,refresh_after_entry_context_id)
+        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7,$9::uuid,$10::uuid
         WHERE NOT EXISTS(SELECT 1 FROM order_groups g JOIN analysis_runs a ON a.id=g.analysis_id
           WHERE a.account_id=$2 AND a.symbol_id=$3 AND g.mode=$4
           AND g.state NOT IN ('CLOSED','EXPIRED','FAILED'))
-        AND (($9::uuid IS NULL AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
+        AND (($9::uuid IS NULL AND $10::uuid IS NULL AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
           AND requested_at > clock_timestamp()-interval '5 minutes'
           AND NOT (state='FAILED' AND reason IS NOT DISTINCT FROM 'AI_CIRCUIT_OPEN'))
         AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
           AND requested_at > clock_timestamp()-interval '1 minute'))
-        OR ($9::uuid IS NOT NULL AND EXISTS(
+        OR ($9::uuid IS NOT NULL AND $10::uuid IS NULL AND EXISTS(
           SELECT 1 FROM scenario_contexts c JOIN order_groups g ON g.context_plan_id=c.id
           WHERE c.id=$9 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
             AND c.state='READY'
@@ -211,6 +240,9 @@ export class PostgresContextStore implements ContextStore {
             AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND (p.state<>'CLOSED' OR NOT EXISTS(SELECT 1 FROM trades t WHERE t.position_id=p.id AND t.order_group_id=g.id)))
             AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED')))
             OR (${zeroFillTerminalProof}))
+        )) OR ($9::uuid IS NULL AND $10::uuid IS NOT NULL AND EXISTS(
+          SELECT 1 FROM scenario_contexts c WHERE c.id=$10 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
+            AND ${entryReplacementProof}
         ))) RETURNING id`,
         [
           input.id,
@@ -222,6 +254,7 @@ export class PostgresContextStore implements ContextStore {
           input.sourceAnalysisId,
           FIXED_DEFAULTS.AI_MODEL,
           input.afterContextId ?? null,
+          input.afterEntryContextId ?? null,
         ],
       );
       if (result.rowCount === 1 && input.providerEvidence !== undefined) {
@@ -320,6 +353,12 @@ export class ReusableScenarioModel implements ModelProvider {
     private readonly now = Date.now,
     private readonly report: (reason: string) => void = () => {},
     private readonly entryOnly = false,
+    private readonly entryChecks?: {
+      snapshot(): Promise<MarketSnapshot>;
+      maxQuoteAgeMs: number;
+      maxMetadataAgeMs: number;
+      minimumPoints: string | null;
+    },
   ) {
     this.providerPrompt = entryOnly
       ? readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim()
@@ -338,6 +377,57 @@ export class ReusableScenarioModel implements ModelProvider {
       sha256: createHash("sha256").update(content).digest("hex"),
     };
   }
+  private get priceCheckOptions() {
+    return (
+      this.entryChecks ?? {
+        maxQuoteAgeMs: 3000,
+        maxMetadataAgeMs: 86400000,
+        minimumPoints: null,
+      }
+    );
+  }
+  async retireEntries(
+    contextId: string,
+    snapshot: MarketSnapshot,
+    phase: EntryRetirementEvidence["phase"],
+  ): Promise<boolean> {
+    const row = await this.store.latest();
+    if (
+      !this.entryOnly ||
+      row?.id !== contextId ||
+      row.state !== "READY" ||
+      row.consumed ||
+      row.plan?.schema_version !== "entry-pair-1.0"
+    )
+      return false;
+    if (row.retiredAt != null) return true;
+    if (
+      row.availableAt === null ||
+      row.tickSize !== snapshot.metadata.tickSize ||
+      time(row.availableAt) > this.now()
+    )
+      throw new Error("SCENARIO_CONTEXT_METADATA_CHANGED");
+    const plan = validateEntryPlan(JSON.stringify(row.plan), {
+      analysisId: row.id,
+      symbol: snapshot.metadata.symbolName,
+      capturedAt: row.capturedAt,
+      availableAt: row.availableAt,
+      tickSize: row.tickSize,
+    });
+    const evidence = checkEntryPrices(
+      plan,
+      snapshot,
+      phase,
+      this.now(),
+      this.priceCheckOptions,
+    );
+    if (evidence === null) return false;
+    if (this.store.retireEntries === undefined)
+      throw new Error("SCENARIO_ENTRY_RECOVERY_UNAVAILABLE");
+    const retired = await this.store.retireEntries(contextId, evidence);
+    if (retired) this.nextEvaluationAt = 0;
+    return retired;
+  }
   get canEvaluate(): boolean {
     return this.task === null && this.now() >= this.nextEvaluationAt;
   }
@@ -348,13 +438,50 @@ export class ReusableScenarioModel implements ModelProvider {
     input: Parameters<NonNullable<ModelProvider["prepare"]>>[0],
   ): Promise<string | null> {
     this.prepared = null;
-    const existing = await this.store.latest();
+    let existing = await this.store.latest();
     const now = this.now();
+    if (
+      this.entryOnly &&
+      existing?.state === "READY" &&
+      !existing.consumed &&
+      existing.retiredAt == null &&
+      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      existing.plan?.schema_version === "entry-pair-1.0" &&
+      time(existing.validUntil) >= now + 65_000
+    ) {
+      if (
+        existing.tickSize !== input.snapshot.metadata.tickSize ||
+        existing.availableAt === null
+      )
+        throw new Error("SCENARIO_CONTEXT_METADATA_CHANGED");
+      const plan = validateEntryPlan(JSON.stringify(existing.plan), {
+        analysisId: existing.id,
+        symbol: input.snapshot.metadata.symbolName,
+        capturedAt: existing.capturedAt,
+        availableAt: existing.availableAt,
+        tickSize: existing.tickSize,
+      });
+      const evidence = checkEntryPrices(
+        plan,
+        input.snapshot,
+        "LOCAL_REUSE",
+        now,
+        this.priceCheckOptions,
+      );
+      if (evidence !== null) {
+        if (this.store.retireEntries === undefined)
+          throw new Error("SCENARIO_ENTRY_RECOVERY_UNAVAILABLE");
+        if (!(await this.store.retireEntries(existing.id, evidence)))
+          return "SCENARIO_ENTRY_RECONCILIATION_REQUIRED";
+        existing = { ...existing, retiredAt: evidence.observedAt };
+      }
+    }
     if (
       existing !== null &&
       existing.state === "READY" &&
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
       !existing.consumed &&
+      existing.retiredAt == null &&
       (!this.entryOnly || existing.plan?.schema_version === "entry-pair-1.0") &&
       time(existing.validUntil) >= now + 65_000
     ) {
@@ -403,14 +530,25 @@ export class ReusableScenarioModel implements ModelProvider {
       [existing.closedAt, existing.zeroFillTerminalAt].some(
         (at) => at != null && time(at) <= now,
       );
-    const due = afterTerminal
-      ? 0
-      : existing === null
+    const afterEntry =
+      this.entryOnly &&
+      existing?.state === "READY" &&
+      !existing.consumed &&
+      existing.retiredAt != null &&
+      existing.refreshAfterEntryContextId == null &&
+      now <
+        time(existing.requestedAt) +
+          SCENARIO_REQUEST_POLICY.dispatchCooldownMs &&
+      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL;
+    const due =
+      afterTerminal || afterEntry
         ? 0
-        : time(existing.requestedAt) +
-          (isLocalCircuitRejection(existing.state, existing.reason)
-            ? SCENARIO_REQUEST_POLICY.localCircuitRecheckMs
-            : SCENARIO_REQUEST_POLICY.dispatchCooldownMs);
+        : existing === null
+          ? 0
+          : time(existing.requestedAt) +
+            (isLocalCircuitRejection(existing.state, existing.reason)
+              ? SCENARIO_REQUEST_POLICY.localCircuitRecheckMs
+              : SCENARIO_REQUEST_POLICY.dispatchCooldownMs);
     if (now < due || this.task !== null) {
       // Poll consumed setup evidence locally so a newly completed setup does
       // not remain hidden behind a cached five-minute provider cooldown.
@@ -420,9 +558,11 @@ export class ReusableScenarioModel implements ModelProvider {
             ? Math.min(due, now + 5_000)
             : due
           : now + 5_000;
-      return existing?.consumed
-        ? "SCENARIO_MAP_CONSUMED"
-        : "SCENARIO_REFRESH_PENDING";
+      return existing?.retiredAt != null
+        ? "SCENARIO_ENTRY_REFRESH_BACKOFF"
+        : existing?.consumed
+          ? "SCENARIO_MAP_CONSUMED"
+          : "SCENARIO_REFRESH_PENDING";
     }
     if (!this.entryOnly && input.chart === null)
       throw new Error("SCENARIO_CHART_MISSING");
@@ -435,7 +575,10 @@ export class ReusableScenarioModel implements ModelProvider {
       candles: input.snapshot.candles,
       chart: input.chart,
       quote: input.snapshot.quote,
-      minimumStopDistance: input.snapshot.metadata.minStopDistance,
+      minimumStopDistance: entryMinimumDistance(
+        input.snapshot.metadata,
+        this.priceCheckOptions.minimumPoints,
+      ),
       ...(this.entryOnly && input.chart === null
         ? { schemaVersion: "2.0" as const }
         : {}),
@@ -457,7 +600,9 @@ export class ReusableScenarioModel implements ModelProvider {
           : {}),
         ...(afterTerminal && existing !== null
           ? { afterContextId: existing.id }
-          : {}),
+          : afterEntry && existing !== null
+            ? { afterEntryContextId: existing.id }
+            : {}),
       }))
     ) {
       this.nextEvaluationAt = now + 10_000;
@@ -479,6 +624,18 @@ export class ReusableScenarioModel implements ModelProvider {
           },
         );
         await this.store.finish(id, { ...result, response: plan }, null);
+        // A read failure must not rewrite a proven provider completion as a failed dispatch.
+        if (this.entryOnly && this.entryChecks !== undefined) {
+          try {
+            await this.retireEntries(
+              id,
+              await this.entryChecks.snapshot(),
+              "PROVIDER_RETURN",
+            );
+          } catch {
+            this.report("SCENARIO_ENTRY_RECHECK_UNAVAILABLE");
+          }
+        }
         this.nextEvaluationAt = 0;
       })
       .catch(async (error: unknown) => {
@@ -503,7 +660,9 @@ export class ReusableScenarioModel implements ModelProvider {
       .finally(() => {
         this.task = null;
       });
-    return "SCENARIO_REFRESH_STARTED";
+    return afterEntry
+      ? "SCENARIO_ENTRY_REFRESH_STARTED"
+      : "SCENARIO_REFRESH_STARTED";
   }
   analyze(
     request: Parameters<ModelProvider["analyze"]>[0],

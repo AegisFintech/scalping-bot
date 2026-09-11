@@ -1488,6 +1488,89 @@ describe("analysis coordinator", () => {
     expect(place).not.toHaveBeenCalled();
   });
 
+  it.each(["POST_MODEL", "PRE_PLACEMENT"] as const)(
+    "retires an unsubmitted crossed pair at %s without placing orders",
+    async (phase) => {
+      const stable = snapshot();
+      const moved = {
+        ...stable,
+        quote: { ...stable.quote, bid: "2000.85", ask: "2000.95" },
+        orderBook: {
+          ...stable.orderBook,
+          bids: [{ price: "2000.85", size: "1" }],
+          asks: [{ price: "2000.95", size: "1" }],
+        },
+      };
+      const read = vi.fn().mockResolvedValueOnce(stable);
+      if (phase === "PRE_PLACEMENT") read.mockResolvedValueOnce(stable);
+      read.mockResolvedValue(moved);
+      const retireEntries = vi.fn(() => Promise.resolve(true));
+      const configured = options({
+        market: { snapshot: read },
+        model: {
+          circuitOpen: false,
+          retireEntries,
+          analyze: (r) =>
+            Promise.resolve({
+              response: ocoProposal(r.analysisId),
+              rawResponse: "{}",
+              promptArtifact: promptArtifact(),
+              contextPlanId: "00000000-0000-4000-8000-000000000097",
+            }),
+        },
+      });
+      const place = vi.spyOn(configured.gateway, "placeOco");
+      expect(await new AnalysisCoordinator(configured).runOnce()).toMatchObject(
+        { outcome: "REJECTED", reasonCodes: ["BUY_ENTRY_TOO_CLOSE"] },
+      );
+      expect(retireEntries).toHaveBeenCalledExactlyOnceWith(
+        "00000000-0000-4000-8000-000000000097",
+        moved,
+        phase,
+      );
+      expect(place).not.toHaveBeenCalled();
+    },
+  );
+
+  it("never grants price recovery for a mixed stale-quote rejection", async () => {
+    const stable = snapshot();
+    const moved = {
+      ...stable,
+      quote: {
+        ...stable.quote,
+        bid: "2000.85",
+        ask: "2000.95",
+        sourceTime: new Date(Date.now() - 10000).toISOString(),
+      },
+    };
+    const retireEntries = vi.fn(() => Promise.resolve(true));
+    const configured = options({
+      market: {
+        snapshot: vi
+          .fn()
+          .mockResolvedValueOnce(stable)
+          .mockResolvedValue(moved),
+      },
+      model: {
+        circuitOpen: false,
+        retireEntries,
+        analyze: (r) =>
+          Promise.resolve({
+            response: ocoProposal(r.analysisId),
+            rawResponse: "{}",
+            promptArtifact: promptArtifact(),
+            contextPlanId: "00000000-0000-4000-8000-000000000097",
+          }),
+      },
+    });
+    const place = vi.spyOn(configured.gateway, "placeOco");
+    expect(await new AnalysisCoordinator(configured).runOnce()).toMatchObject({
+      outcome: "REJECTED",
+    });
+    expect(retireEntries).not.toHaveBeenCalled();
+    expect(place).not.toHaveBeenCalled();
+  });
+
   it("rejects changed execution metadata at the final refresh", async () => {
     const stable = snapshot();
     const changed: MarketSnapshot = {

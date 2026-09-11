@@ -2,6 +2,29 @@
 
 ## Scope
 
+### ISSUE-097 — Recover unusable unsubmitted entry pairs (in progress)
+
+- Issue: [#224](https://github.com/AegisFintech/scalping-bot/issues/224).
+- Branch: `issue-097-entry-recovery`; dependency: ISSUE-095 / PR #223.
+- Operator approved explicit executable price guidance, immediate fresh-quote
+  checks and bounded replacement of unusable, never-submitted pairs.
+- Acceptance: version the prompt with deterministic bid/ask/tick boundaries and
+  a small spread-based guidance buffer; retain original prices and historical
+  prompts. Check responses on return, reuse and immediately before placement.
+- Durably retire a confirmed completed but unusable unsubmitted pair. Permit
+  one immediate replacement per original context, with no replacement chains,
+  duplicate dispatch, retirement after intent, or restart reset. Unknown/failed
+  provider outcomes keep the existing full cooldown; active groups prohibit calls.
+- Preserve GTC orders, independent protection, current-equity shared 1% sizing,
+  ownership, fresh completed data and all broker/risk gates. Live stays disabled.
+- Add forward-only storage/schema evidence and rollback notes; exercise invalid
+  prices, movement, stale/ambiguous evidence, concurrent claims and restarts.
+  Run all completion gates, update Graphify, deliver issue/PR and verify demo.
+- Implementation checks passed: 681 Node / 163 Python / 47 schema / three
+  migration / 65 PostgreSQL tests. Both audits are clean; browser and Graphify
+  checks passed. Reviewed demo rollout remains pending.
+- [Report](docs/entry-recovery-report.md) and [exact checks](docs/evidence/entry-recovery-validation.json).
+
 ### ISSUE-095 — Unattended lifecycle recovery (implemented; validated on demo)
 
 - Issue: [#221](https://github.com/AegisFintech/scalping-bot/issues/221).

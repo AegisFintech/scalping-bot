@@ -11,11 +11,12 @@ import {
 } from "./entry-plan.js";
 import { validateScenarioMarket, type ScenarioInput } from "./planner.js";
 import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
+import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-pair-v2" as const,
-  path: "prompts/entry-pair-v2.md",
+  version: "entry-pair-v3" as const,
+  path: "prompts/entry-pair-v3.md",
 });
 
 export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
@@ -31,11 +32,17 @@ export function entryProviderPayload(
 ): Readonly<Record<string, unknown>> {
   if (input.quote === undefined || input.minimumStopDistance === undefined)
     throw new Error("SCENARIO_ENTRY_QUOTE_MISSING");
+  const boundaries = entryPriceBounds(
+    input.quote,
+    input.tickSize,
+    input.minimumStopDistance,
+  );
   return {
     captured_at: input.capturedAt,
     tick_size: input.tickSize,
     quote: input.quote,
-    minimum_entry_distance: input.minimumStopDistance,
+    minimum_entry_distance: boundaries.minimum_entry_distance,
+    entry_boundaries: boundaries,
     candles: input.candles.map((s) => ({
       timeframe: s.timeframe,
       columns: [

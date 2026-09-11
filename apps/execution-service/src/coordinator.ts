@@ -21,6 +21,7 @@ import type {
   Timeframe,
   Quote,
   SymbolMetadata,
+  EntryRetirementEvidence,
 } from "../../../packages/contracts/src/index.js";
 import {
   canonical,
@@ -70,6 +71,11 @@ export interface AnalyticsProvider {
 
 export interface ModelProvider {
   readonly circuitOpen: boolean;
+  retireEntries?(
+    contextId: string,
+    snapshot: MarketSnapshot,
+    phase: EntryRetirementEvidence["phase"],
+  ): Promise<boolean>;
   prepare?(input: {
     snapshot: MarketSnapshot;
     chart: AnalysisChartArtifact | null;
@@ -1014,6 +1020,25 @@ export class AnalysisCoordinator {
           );
           throw error;
         });
+      const retireUnusableEntries = async (
+        reasons: readonly string[],
+        current: MarketSnapshot,
+        phase: EntryRetirementEvidence["phase"],
+      ) => {
+        if (
+          model.contextPlanId !== undefined &&
+          reasons.length > 0 &&
+          reasons.every(
+            (r) => r === "BUY_ENTRY_TOO_CLOSE" || r === "SELL_ENTRY_TOO_CLOSE",
+          )
+        ) {
+          await this.#options.model.retireEntries?.(
+            model.contextPlanId,
+            current,
+            phase,
+          );
+        }
+      };
       if (model.promptArtifact.version !== this.#options.promptVersion) {
         return await reject(["MODEL_PROMPT_VERSION_MISMATCH"]);
       }
@@ -1190,8 +1215,14 @@ export class AnalysisCoordinator {
           exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
         },
       );
-      if (!proposalSemantic.accepted)
+      if (!proposalSemantic.accepted) {
+        await retireUnusableEntries(
+          proposalSemantic.reasonCodes,
+          decisionSnapshot,
+          "POST_MODEL",
+        );
         return await reject(proposalSemantic.reasonCodes);
+      }
 
       const maximumEffectiveStopDistance = canonical(
         Decimal.min(
@@ -1413,8 +1444,14 @@ export class AnalysisCoordinator {
           exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
         },
       );
-      if (!placementProposalSemantic.accepted)
+      if (!placementProposalSemantic.accepted) {
+        await retireUnusableEntries(
+          placementProposalSemantic.reasonCodes,
+          placementSnapshot,
+          "PRE_PLACEMENT",
+        );
         return await reject(placementProposalSemantic.reasonCodes);
+      }
 
       const placementEffectiveSemantic = validateSemantics(
         transformed.response,

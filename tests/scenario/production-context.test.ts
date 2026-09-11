@@ -14,6 +14,7 @@ import type { ScenarioPlanner } from "../../packages/scenario-engine/src/planner
 import { analysisChart } from "../helpers/analysis-chart.js";
 import { usageTelemetry } from "../../packages/ai-client/src/telemetry.js";
 import { bindEntryPrices } from "../../packages/scenario-engine/src/entry-plan.js";
+import { entryPriceBounds } from "../../packages/scenario-engine/src/entry-prices.js";
 import { ENTRY_PAIR_PROMPT } from "../../packages/scenario-engine/src/entry-planner.js";
 
 const fixture = JSON.parse(
@@ -43,11 +44,17 @@ function payload() {
     },
   };
 }
-function input() {
+function input(seconds = 0) {
   return {
     snapshot: {
-      serverTime: at(0),
-      metadata: fixture.metadata,
+      serverTime: at(seconds),
+      quote: {
+        bid: "4404.95",
+        ask: "4405.05",
+        sourceTime: at(seconds),
+        receivedAt: at(seconds),
+      },
+      metadata: { ...fixture.metadata, metadataTime: at(0) },
       candles: [],
     } as unknown as MarketSnapshot,
     chart: analysisChart(),
@@ -122,6 +129,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     const request = input();
     const snapshot = {
       ...request.snapshot,
+      serverTime: at(0),
       quote: {
         bid: "4404.95",
         ask: "4405.05",
@@ -134,13 +142,22 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-pair-v2",
+          promptVersion: "entry-pair-v3",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),
             tick_size: snapshot.metadata.tickSize,
             quote: snapshot.quote,
-            minimum_entry_distance: snapshot.metadata.minStopDistance,
+            minimum_entry_distance: entryPriceBounds(
+              snapshot.quote,
+              snapshot.metadata.tickSize,
+              snapshot.metadata.minStopDistance,
+            ).minimum_entry_distance,
+            entry_boundaries: entryPriceBounds(
+              snapshot.quote,
+              snapshot.metadata.tickSize,
+              snapshot.metadata.minStopDistance,
+            ),
             candles: [],
           }),
         },
@@ -174,7 +191,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       () => {},
       true,
     );
-    expect(await model.prepare(input())).toBeNull();
+    expect(await model.prepare(input(40))).toBeNull();
     const result = await model.analyze({
       analysisId: String(payload().analysis_id),
       timeoutMs: 5000,
@@ -185,7 +202,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(result.response.buy_stop.entry_price).toBe("4420");
     expect(result.promptArtifact.version).toBe("entry-pair-execution-v1");
     store.row = { ...store.row, consumed: true };
-    expect(await model.prepare(input())).toBe("SCENARIO_MAP_CONSUMED");
+    expect(await model.prepare(input(40))).toBe("SCENARIO_MAP_CONSUMED");
     expect(generate).not.toHaveBeenCalled();
   });
   it("does not treat a historical scenario map as a direct entry pair", async () => {
