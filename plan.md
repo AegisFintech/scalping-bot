@@ -5,6 +5,8 @@
 ### ISSUE-098 — Broker-session gate for new analysis and orders (implemented; deployed to demo)
 
 - Issue: [#226](https://github.com/AegisFintech/scalping-bot/issues/226).
+- Pull request: [#227](https://github.com/AegisFintech/scalping-bot/pull/227);
+  implementation checkpoint `e662169` committed and pushed.
 - Branch: `issue-098-market-session-gate`; dependency: ISSUE-097 / PR #225.
 - Operator approved broker-session checks before EPR requests and new order
   placement, automatic reopening recovery and uninterrupted protective maintenance.

@@ -1,7 +1,9 @@
 # ISSUE-098: Broker-session gate
 
 Status: implemented and deployed to demo; retained shutdown warning described below.
-[Issue #226](https://github.com/AegisFintech/scalping-bot/issues/226).
+[Issue #226](https://github.com/AegisFintech/scalping-bot/issues/226) ·
+[PR #227](https://github.com/AegisFintech/scalping-bot/pull/227).
+Implementation checkpoint `e662169` was committed and pushed.
 Release `0.2.5-market-stop.10`, unchanged `market-stop-v2` money policy; demo only.
 
 ## Behavior
