@@ -37,6 +37,8 @@ export interface AiClientOptions<T = ModelResponse> {
   readonly circuitBreakerResetMs?: number;
   readonly maxRequestBytes?: number;
   readonly fetchImpl?: typeof fetch;
+  /** Trusted runtime check immediately before transport, never model-controlled. */
+  readonly beforeDispatch?: (symbol: string) => Promise<void>;
   readonly now?: () => number;
   readonly inputProfile?: "chart" | "structured";
   readonly outputSchemaName?: string;
@@ -259,6 +261,8 @@ export class OpenAiCompatibleClient<
     const started = now();
     let lastError: Error = new Error("AI_REQUEST_FAILED");
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      // A local session denial is not a failed provider request or circuit strike.
+      await this.#options.beforeDispatch?.(request.symbol);
       let attemptTelemetry: ProviderTelemetry | undefined;
       let attemptRawResponse: string | undefined;
       try {

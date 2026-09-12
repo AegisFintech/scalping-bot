@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.9` uses policy `market-stop-v2` in
+Release `0.2.5-market-stop.10` uses policy `market-stop-v2` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -24,6 +24,16 @@ The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
+
+## Broker-session policy (ISSUE-098)
+
+No additional environment keys are introduced. Broker metadata/session evidence
+is cached for at most 30 seconds, with bounded five-second HTTP reads and no
+transport retries. Closed/unavailable sessions are checked automatically without
+EPR prompts. Matching market, AI and execution builds are required; the new
+endpoint also supplies metadata for startup during closure. Existing financial
+state, provider backoffs and populated environment remain unchanged. See
+[the session report](market-session-report.md).
 
 ## Demo development policy (ISSUE-094)
 

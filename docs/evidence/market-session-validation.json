@@ -1,0 +1,371 @@
+{
+  "issue": "ISSUE-098",
+  "release": "0.2.5-market-stop.10",
+  "mode": "demo",
+  "initial_checks": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 1,
+      "seconds": 22.95,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 1,
+      "seconds": 31.62,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 18.59,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 15.89,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 39.73,
+      "log": "04.log"
+    },
+    {
+      "command": "npm run test:schemas",
+      "exit_code": 0,
+      "seconds": 6.08,
+      "log": "05.log"
+    },
+    {
+      "command": "npm run test:migrations",
+      "exit_code": 0,
+      "seconds": 1.15,
+      "log": "06.log"
+    },
+    {
+      "command": "npm run test:integration",
+      "exit_code": 0,
+      "seconds": 23.42,
+      "log": "07.log"
+    },
+    {
+      "command": ".venv/bin/ruff format --check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "08.log"
+    },
+    {
+      "command": ".venv/bin/ruff check python apps/dashboard tests/python",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "09.log"
+    },
+    {
+      "command": ".venv/bin/mypy python apps/dashboard",
+      "exit_code": 0,
+      "seconds": 0.61,
+      "log": "10.log"
+    },
+    {
+      "command": ".venv/bin/pytest -q",
+      "exit_code": 0,
+      "seconds": 7.37,
+      "log": "11.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "12.log"
+    },
+    {
+      "command": "npm run config:check -- .env.sample --startup",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": "13.log"
+    },
+    {
+      "command": "npm run config:check -- .env",
+      "exit_code": 0,
+      "seconds": 0.48,
+      "log": "14.log"
+    },
+    {
+      "command": "npm run config:check -- .env --startup",
+      "exit_code": 0,
+      "seconds": 0.5,
+      "log": "15.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl",
+      "exit_code": 0,
+      "seconds": 0.27,
+      "log": "16.log"
+    },
+    {
+      "command": ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-098/archive-backtest.json",
+      "exit_code": 0,
+      "seconds": 0.25,
+      "log": "17.log"
+    },
+    {
+      "command": "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-098/archive-scenario-replay.json",
+      "exit_code": 0,
+      "seconds": 0.74,
+      "log": "18.log"
+    },
+    {
+      "command": "bash scripts/secret-scan.sh",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "log": "19.log"
+    },
+    {
+      "command": "npm audit --audit-level=high",
+      "exit_code": 0,
+      "seconds": 0.79,
+      "log": "20.log"
+    },
+    {
+      "command": ".venv/bin/pip-audit -r requirements.lock",
+      "exit_code": 0,
+      "seconds": 15.6,
+      "log": "21.log"
+    }
+  ],
+  "reruns": [
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "seconds": 29.95,
+      "log": "00.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "seconds": 36.87,
+      "log": "01.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "seconds": 14.2,
+      "log": "02.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "seconds": 16.27,
+      "log": "03.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "seconds": 42.44,
+      "log": "04.log"
+    }
+  ],
+  "final_gates": {
+    "npm run format:check": 0,
+    "npm run lint": 0,
+    "npm run typecheck": 0,
+    "npm run build": 0,
+    "npm test": 0,
+    "npm run test:schemas": 0,
+    "npm run test:migrations": 0,
+    "npm run test:integration": 0,
+    ".venv/bin/ruff format --check python apps/dashboard tests/python": 0,
+    ".venv/bin/ruff check python apps/dashboard tests/python": 0,
+    ".venv/bin/mypy python apps/dashboard": 0,
+    ".venv/bin/pytest -q": 0,
+    "npm run config:check -- .env.sample": 0,
+    "npm run config:check -- .env.sample --startup": 0,
+    "npm run config:check -- .env": 0,
+    "npm run config:check -- .env --startup": 0,
+    ".venv/bin/python -m python.replay.cli --input tests/fixtures/replay/analytics-requests.jsonl": 0,
+    ".venv/bin/python -m python.backtest.cli --input tests/fixtures/backtest/oco-scenario.json --output artifacts/issue-098/archive-backtest.json": 0,
+    "npm run scenario:replay -- tests/fixtures/scenario/manual-levels-synthetic.json artifacts/issue-098/archive-scenario-replay.json": 0,
+    "bash scripts/secret-scan.sh": 0,
+    "npm audit --audit-level=high": 0,
+    ".venv/bin/pip-audit -r requirements.lock": 0
+  },
+  "counts": {
+    "node": 712,
+    "python": 164,
+    "schema": 55,
+    "migration": 3,
+    "postgres_integration": 70,
+    "new_session_postgres": 5
+  },
+  "corrected_findings": [
+    "Gateway option initialization and named type imports corrected.",
+    "New fixture mock assertions use typed spies; unnecessary async removed.",
+    "PostgreSQL fixture UUID/text parameters explicitly cast; all five persistence tests pass.",
+    "Initial formatting warning corrected; final formatting and lint pass."
+  ],
+  "browser": [
+    {
+      "theme": "light",
+      "stable": {
+        "navigation": true,
+        "input": true,
+        "value": "Never submitted",
+        "focused": true,
+        "caret": 3
+      },
+      "color": {
+        "text": "rgb(49, 51, 63)",
+        "background": "rgb(255, 255, 255)"
+      },
+      "historyVisible": true,
+      "storageStatusVisible": true,
+      "demoRiskPolicyVisible": true,
+      "controlsSubmitted": false,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "stable": {
+        "navigation": true,
+        "input": true,
+        "value": "Never submitted",
+        "focused": true,
+        "caret": 3
+      },
+      "color": {
+        "text": "rgb(250, 250, 250)",
+        "background": "rgb(14, 17, 23)"
+      },
+      "historyVisible": true,
+      "storageStatusVisible": true,
+      "demoRiskPolicyVisible": true,
+      "controlsSubmitted": false,
+      "errors": []
+    }
+  ],
+  "graphify": {
+    "nodes": 3962,
+    "edges": 7966,
+    "communities": 287,
+    "new_explicit_links": 7,
+    "external_api_calls": 0,
+    "dangling_edges": 0
+  },
+  "backup": {
+    "backup": "backup-20260912T023737Z-68d2618f",
+    "retiredBackups": 1,
+    "scope": "current",
+    "verified": true
+  },
+  "restore": {
+    "restored": true,
+    "verifiedTables": 46,
+    "scope": "current"
+  },
+  "session_endpoint": {
+    "at": "2026-09-12T02:40:09.814Z",
+    "schemaVersion": "1.0",
+    "symbolMatched": true,
+    "timeZone": "America/New_York",
+    "weeklyIntervals": 5,
+    "holidayOverrides": 1,
+    "status": {
+      "checkedAt": "2026-09-12T02:40:09.815Z",
+      "scheduleFetchedAt": "2026-09-12T02:40:09.765Z",
+      "state": "CLOSED",
+      "reasonCode": "MARKET_SESSION_CLOSED"
+    }
+  },
+  "rollout": {
+    "pause_at": "2026-09-12T02:39:57.533Z",
+    "resume_at": "2026-09-12T02:41:15.232Z",
+    "broker_before": "2026-09-12T02:37:43.325Z",
+    "broker_after": "2026-09-12T02:40:32.693Z",
+    "same_order_identities": true,
+    "same_order_prices_protection": true,
+    "pending_orders": 2,
+    "positions": 0,
+    "buy_stop": "4353.76",
+    "sell_stop": "4344.24",
+    "native_order_type": 3,
+    "time_in_force": "GTC",
+    "relative_stop_loss": "1.06",
+    "relative_take_profit": "0.53",
+    "environment_unchanged": true,
+    "daily_accounting_unchanged": true,
+    "capital_accounting_unchanged": true,
+    "effective_shared_setup_risk_percent": "1",
+    "cached_pm2_model_database_policy_overrides": false,
+    "startup_checks_passed": true,
+    "operational_ready": false,
+    "automatic_analysis": true,
+    "paused": false,
+    "emergency": false,
+    "reason_codes": [
+      "MARKET_SESSION_CLOSED",
+      "ORDER_MAINTENANCE_RECONCILIATION_REQUIRED",
+      "RELEVANT_PENDING_ORDER_EXISTS"
+    ],
+    "session": {
+      "checkedAt": "2026-09-12T02:41:50.207Z",
+      "scheduleFetchedAt": "2026-09-12T02:41:26.487Z",
+      "state": "CLOSED",
+      "reasonCode": "MARKET_SESSION_CLOSED"
+    },
+    "manual_analysis_or_forced_broker_action": false,
+    "provider_claims_unchanged": true,
+    "provider_claim_count": 441,
+    "last_provider_claim": "2026-09-11T20:01:20.042Z",
+    "five_services_online": true,
+    "read_only_observer_online": true,
+    "pm2_state_saved_private": true,
+    "last_checked_at": "2026-09-12T02:41:50.529Z"
+  },
+  "retained_operational_fault": {
+    "reasonCode": "ORDER_MAINTENANCE_RECONCILIATION_REQUIRED",
+    "failedAt": "2026-09-12T02:40:12.322Z",
+    "retryAt": "2026-09-12T02:41:12.322Z"
+  },
+  "observer": {
+    "previous": {
+      "release": "0.2.5-market-stop.9",
+      "startedAt": "2026-09-11T06:37:26.171Z",
+      "deadline": "2026-09-12T06:37:26.171Z",
+      "lastSampleAt": "2026-09-12T02:39:45.174Z",
+      "samples": 4556,
+      "unavailableSamples": 4,
+      "notReadySamples": 42,
+      "samplingGaps": 0,
+      "maximumClosedTrades": 137,
+      "complete": false
+    },
+    "current": {
+      "release": "0.2.5-market-stop.10",
+      "startedAt": "2026-09-12T02:41:20.113Z",
+      "deadline": "2026-09-15T02:41:20.113Z",
+      "lastSampleAt": "2026-09-12T02:41:52.518Z",
+      "samples": 3,
+      "unavailableSamples": 0,
+      "notReadySamples": 3,
+      "samplingGaps": 0,
+      "maximumClosedTrades": 0,
+      "complete": false
+    }
+  },
+  "limits": [
+    "Calendar checks are not atomic with provider/broker receipt; pre-close dispatched work can finish.",
+    "Thirty-second metadata refresh cannot instantly detect unscheduled halts.",
+    "The old process recorded a shutdown reconciliation failure; preserved fault remains visible until a successful durable cycle, despite current certain broker state. Retry deadline elapsed; protection and future eligible scheduler retry remain enabled.",
+    "Closed-market runtime evidence includes existing GTC orders; flat suppression and reopening are software-tested, not yet prospectively observed.",
+    "Market-open unattended production qualification remains incomplete (ISSUE-096)."
+  ],
+  "staged_secret_scan": {
+    "command": "node artifacts/issue-098/scan-index.mjs",
+    "scope": "all 490 index blobs, including seven pre-existing deleted screenshot blobs",
+    "matches": 0,
+    "repository_script_note": "Existing missing screenshot paths and documentation-pattern matches were printed; all-index credential scan supplements the repository script."
+  }
+}

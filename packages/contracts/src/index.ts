@@ -412,6 +412,7 @@ export interface MarketDataAdapter {
   disconnect(): Promise<void>;
   getServerTime(): Promise<IsoTimestamp>;
   discoverSymbol(symbol: string): Promise<SymbolMetadata>;
+  getTradingSchedule(symbolId: string): Promise<BrokerTradingSchedule>;
   getCompletedCandles(
     symbolId: string,
     timeframe: Timeframe,
@@ -422,6 +423,36 @@ export interface MarketDataAdapter {
     depth: number,
   ): Promise<OrderBookSnapshot>;
   getQuote(symbolId: string): Promise<Quote>;
+}
+
+export interface BrokerTradingSchedule {
+  readonly timeZone: string;
+  readonly intervals: readonly {
+    readonly startSecond: number;
+    readonly endSecond: number;
+  }[];
+  readonly holidays: readonly {
+    readonly holidayDate: number;
+    readonly isRecurring: boolean;
+    readonly startSecond: number;
+    readonly endSecond: number;
+    readonly timeZone: string;
+  }[];
+}
+
+/** Independent of quotes: permits supervised startup during a scheduled closure. */
+export interface MarketSessionSnapshot {
+  readonly schemaVersion: "1.0";
+  readonly metadata: SymbolMetadata;
+  readonly schedule: BrokerTradingSchedule;
+}
+
+export interface MarketSessionStatus {
+  readonly state: "OPEN" | "CLOSED" | "UNAVAILABLE";
+  readonly checkedAt: IsoTimestamp;
+  readonly scheduleFetchedAt: IsoTimestamp | null;
+  readonly reasonCode:
+    "MARKET_SESSION_CLOSED" | "MARKET_SESSION_UNAVAILABLE" | null;
 }
 
 export interface MarketSnapshot {

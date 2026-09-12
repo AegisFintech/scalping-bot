@@ -80,6 +80,7 @@ export class EntryPairPlanner {
     baseUrl: string;
     apiKey: string;
     fetchImpl?: typeof fetch;
+    beforeDispatch?: (symbol: string) => Promise<void>;
     now?: () => number;
   }) {
     this.now = options.now ?? Date.now;

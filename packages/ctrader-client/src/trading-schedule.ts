@@ -148,7 +148,12 @@ export function weeklyTradingSchedule(
   };
 }
 
-function isOpen(at: Date, schedule: WeeklyTradingSchedule): boolean {
+export function isBrokerSessionOpen(
+  at: Date,
+  schedule: WeeklyTradingSchedule,
+): boolean {
+  if (!Number.isSafeInteger(at.getTime()) || at.getTime() < 0)
+    throw new Error("CTRADER_SCHEDULE_CLOCK_INVALID");
   const second = weekSecond(at, schedule.timeZone);
   for (const holiday of schedule.holidays) {
     const parts = localParts(at, holiday.timeZone);
@@ -224,12 +229,13 @@ export function markBrokerSessionGaps(
       for (const offset of offsets) {
         if (
           cursor + offset < currentStart &&
-          isOpen(new Date(cursor + offset), schedule)
+          isBrokerSessionOpen(new Date(cursor + offset), schedule)
         )
           return candle;
       }
     }
-    if (isOpen(new Date(currentStart - 1), schedule)) return candle;
+    if (isBrokerSessionOpen(new Date(currentStart - 1), schedule))
+      return candle;
     return {
       ...candle,
       qualityFlags: [

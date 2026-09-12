@@ -1,3 +1,4 @@
+import { sessionStatus } from "../helpers/market-session.js";
 import { createHash } from "node:crypto";
 
 import { describe, expect, it, vi } from "vitest";
@@ -1694,5 +1695,81 @@ describe("final placement freshness and safety intersection", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("broker session admission", () => {
+  it.each(["CLOSED", "UNAVAILABLE"] as const)(
+    "blocks %s before collecting data or calling the model",
+    async (state) => {
+      const o = options({
+        marketSession: () => Promise.resolve(sessionStatus(state)),
+      });
+      expect(
+        (await new AnalysisCoordinator(o).runOnce()).reasonCodes,
+      ).toContain(sessionStatus(state).reasonCode);
+      expect(vi.spyOn(o.market, "snapshot")).not.toHaveBeenCalled();
+      expect(vi.spyOn(o.model, "analyze")).not.toHaveBeenCalled();
+      expect(vi.spyOn(o.gateway, "placeOco")).not.toHaveBeenCalled();
+    },
+  );
+  it("rechecks after analytics before starting provider work", async () => {
+    const check = vi
+      .fn<NonNullable<CoordinatorOptions["marketSession"]>>()
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
+      .mockResolvedValue(sessionStatus("CLOSED"));
+    const o = options({ marketSession: check });
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toEqual([
+      "MARKET_SESSION_CLOSED",
+    ]);
+    expect(vi.spyOn(o.model, "analyze")).not.toHaveBeenCalled();
+  });
+  it("blocks a response returned after close before creating order intent", async () => {
+    const check = vi
+      .fn<NonNullable<CoordinatorOptions["marketSession"]>>()
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
+      .mockResolvedValue(sessionStatus("CLOSED"));
+    const o = options({ marketSession: check });
+    const intent = vi.spyOn(o.trail, "intent");
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toEqual([
+      "MARKET_SESSION_CLOSED",
+    ]);
+    expect(vi.spyOn(o.model, "analyze")).toHaveBeenCalledTimes(1);
+    expect(intent).not.toHaveBeenCalled();
+    expect(vi.spyOn(o.gateway, "placeOco")).not.toHaveBeenCalled();
+  });
+  it("resumes through the full existing checks when the session reopens", async () => {
+    const check = vi
+      .fn<NonNullable<CoordinatorOptions["marketSession"]>>()
+      .mockResolvedValueOnce(sessionStatus("CLOSED"))
+      .mockResolvedValue(sessionStatus("OPEN"));
+    const o = options({ marketSession: check });
+    const coordinator = new AnalysisCoordinator(o);
+    expect((await coordinator.runOnce()).outcome).toBe("REJECTED");
+    expect((await coordinator.runOnce()).outcome).toBe("PLACED");
+    expect(vi.spyOn(o.gateway, "placeOco")).toHaveBeenCalledTimes(1);
+  });
+  it("reports an unsent session denial after intent as rejection, not placement", async () => {
+    const o = options({
+      marketSession: () => Promise.resolve(sessionStatus("OPEN")),
+    });
+    vi.spyOn(o.gateway, "placeOco").mockImplementation((submitted) =>
+      Promise.resolve({
+        orderGroupId: submitted[0].orderGroupId,
+        idempotentReplay: false,
+        orders: submitted.map((command) => ({
+          clientOrderId: command.clientOrderId,
+          brokerOrderId: null,
+          state: "REJECTED",
+          filledVolume: "0",
+          updatedAt: new Date().toISOString(),
+          reasonCode: "MARKET_SESSION_CLOSED",
+        })),
+      }),
+    );
+    expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+      "REJECTED",
+    );
   });
 });

@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 
 import type {
+  MarketSessionStatus,
   AccountAdapter,
   AccountState,
   AnalysisChartArtifact,
@@ -266,6 +267,7 @@ export type PlacementControls = Pick<
 >;
 
 export interface CoordinatorOptions {
+  readonly marketSession?: () => Promise<MarketSessionStatus>;
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
   readonly numericAnalytics?: boolean;
@@ -658,6 +660,11 @@ export class AnalysisCoordinator {
         aiCircuitOpen: this.#options.model.circuitOpen,
       });
       if (!preflight.allowed) return await reject(preflight.reasonCodes);
+      const initialSession = await this.#options.marketSession?.();
+      if (initialSession !== undefined && initialSession.state !== "OPEN")
+        return await reject([
+          initialSession.reasonCode ?? "MARKET_SESSION_UNAVAILABLE",
+        ]);
       await this.#options.trail.start({
         analysisId,
         mode: this.#options.mode,
@@ -978,6 +985,25 @@ export class AnalysisCoordinator {
           preferredOrderExpirySeconds: this.#options.preferredExpirySeconds,
         },
       });
+      const providerSession = await this.#options.marketSession?.();
+      if (providerSession !== undefined) {
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          providerSession.state === "OPEN",
+          providerSession.reasonCode === null
+            ? []
+            : [providerSession.reasonCode],
+          {
+            validation_scope: "PRE_PROVIDER_SESSION",
+            session: providerSession,
+          },
+        );
+        if (providerSession.state !== "OPEN")
+          return await reject([
+            providerSession.reasonCode ?? "MARKET_SESSION_UNAVAILABLE",
+          ]);
+      }
       if (this.#options.model.prepare !== undefined) {
         const waiting = await this.#options.model.prepare({
           snapshot: preModelSnapshot,
@@ -1551,10 +1577,38 @@ export class AnalysisCoordinator {
       if (!placementGate.allowed)
         return await reject(placementGate.reasonCodes);
 
+      const placementSession = await this.#options.marketSession?.();
+      if (placementSession !== undefined) {
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          placementSession.state === "OPEN",
+          placementSession.reasonCode === null
+            ? []
+            : [placementSession.reasonCode],
+          {
+            validation_scope: "PRE_PLACEMENT_SESSION",
+            session: placementSession,
+          },
+        );
+        if (placementSession.state !== "OPEN")
+          return await reject([
+            placementSession.reasonCode ?? "MARKET_SESSION_UNAVAILABLE",
+          ]);
+      }
       await this.#options.trail.intent(analysisId, risk);
       const placement = await this.#options.gateway.placeOco(risk.commands);
       await this.#options.trail.placement(analysisId, placement);
       await this.#options.flushExecutionEvents?.();
+      const sessionRejections = placement.orders.flatMap((order) =>
+        order.state === "REJECTED" &&
+        ["MARKET_SESSION_CLOSED", "MARKET_SESSION_UNAVAILABLE"].includes(
+          order.reasonCode ?? "",
+        )
+          ? [order.reasonCode!]
+          : [],
+      );
+      if (sessionRejections.length > 0) return await reject(sessionRejections);
       await this.#recordTransition(analysisId, machine, "ACCEPTED");
       return { analysisId, outcome: "PLACED", reasonCodes: [], placement };
     } catch (error) {

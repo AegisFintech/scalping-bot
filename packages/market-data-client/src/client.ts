@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import type { MarketSnapshot, Timeframe } from "../../contracts/src/index.js";
+import type {
+  MarketSessionSnapshot,
+  MarketSnapshot,
+  Timeframe,
+} from "../../contracts/src/index.js";
+import { weeklyTradingSchedule } from "../../ctrader-client/src/trading-schedule.js";
 
 const decimal = z.string().regex(/^(0|[1-9][0-9]{0,15})(\.[0-9]{1,10})?$/);
 const signedDecimal = z
@@ -117,6 +122,55 @@ const quoteSnapshotSchema = z
   })
   .strict();
 
+const interval = z
+  .object({
+    startSecond: z.number().int().min(0).max(604799),
+    endSecond: z.number().int().min(1).max(604800),
+  })
+  .strict();
+export const marketSessionSchema = z
+  .object({
+    schemaVersion: z.literal("1.0"),
+    metadata: snapshotSchema.shape.metadata,
+    schedule: z
+      .object({
+        timeZone: z.string().min(1).max(100),
+        intervals: z.array(interval).min(1).max(100),
+        holidays: z
+          .array(
+            interval
+              .extend({
+                startSecond: z.number().int().min(0).max(86399),
+                endSecond: z.number().int().min(1).max(86400),
+                holidayDate: z.number().int().min(0).max(100000),
+                isRecurring: z.boolean(),
+                timeZone: z.string().min(1).max(100),
+              })
+              .strict(),
+          )
+          .max(366),
+      })
+      .strict(),
+  })
+  .strict();
+
+export function validateMarketSession(
+  raw: unknown,
+  symbol: string,
+): MarketSessionSnapshot {
+  const value = marketSessionSchema.parse(raw);
+  if (value.metadata.symbolName !== symbol)
+    throw new Error("MARKET_SESSION_SYMBOL_MISMATCH");
+  return {
+    ...value,
+    schedule: weeklyTradingSchedule(
+      value.schedule.timeZone,
+      value.schedule.intervals,
+      value.schedule.holidays,
+    ),
+  };
+}
+
 export interface MarketDataHttpClientOptions {
   readonly baseUrl: string;
   readonly timeoutMs?: number;
@@ -194,6 +248,15 @@ export class MarketDataHttpClient {
       throw new Error("MARKET_DATA_TIMEFRAMES_INCOMPLETE");
     }
     return parsed;
+  }
+
+  async session(symbol: string): Promise<MarketSessionSnapshot> {
+    const response = await this.#request(
+      "/v1/session",
+      { symbol },
+      "MARKET_SESSION_UNAVAILABLE",
+    );
+    return validateMarketSession(await response.json(), symbol);
   }
 
   async quote(symbol: string): Promise<z.infer<typeof quoteSnapshotSchema>> {

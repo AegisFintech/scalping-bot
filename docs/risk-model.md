@@ -263,3 +263,15 @@ failure/unknown-dispatch, active exposure and all sizing/semantic checks remain.
 Retirement cannot follow intent, and a retired map cannot create intent. Existing
 GTC positions/orders and the shared current-equity 1% budget are unchanged. This
 improves recovery behavior; it does not establish better returns or continuous fills.
+
+## Broker-session admission (ISSUE-098)
+
+New analysis, provider transport and each new demo order require a current open
+broker session. Missing, invalid, stale or unavailable calendar evidence blocks
+new risk. Closure does not reset risk/accounting, cancel accepted GTC pairs or
+pause independent protection. An unsent peer is journaled locally if closure
+occurs between submissions; any accepted remainder is cancelled through existing
+ownership controls, with uncertainty and fills preserved. No model-selected risk,
+price clamping, expiry extension or early retry of unknown dispatch is introduced.
+The shared cost-inclusive 1% ceiling and demo accounting policy are unchanged.
+See [the implementation and limits](market-session-report.md).

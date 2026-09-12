@@ -57,6 +57,22 @@ function safeJson(value: unknown): string {
   return JSON.stringify(redact(value as LogValue));
 }
 
+function locallyRejectedBySession(order: GatewayOrder): boolean {
+  if (
+    !["MARKET_SESSION_CLOSED", "MARKET_SESSION_UNAVAILABLE"].includes(
+      order.reasonCode ?? "",
+    )
+  )
+    return false;
+  if (
+    order.state !== "REJECTED" ||
+    order.brokerOrderId !== null ||
+    !new Decimal(order.filledVolume).isZero()
+  )
+    throw new Error("TRAIL_LOCAL_SESSION_REJECTION_INVALID");
+  return true;
+}
+
 function timeframeFeatures(
   response: AnalyticsResponse,
   timeframe: string,
@@ -797,27 +813,40 @@ export class PostgresDecisionTrail implements DecisionTrail {
     try {
       await client.query("BEGIN");
       for (const order of result.orders) {
-        await client.query(
+        const local = locallyRejectedBySession(order);
+        const updated = await client.query(
           `UPDATE orders
            SET broker_order_id = $2, state = $3, filled_volume = $4, updated_at = $5,
-               submitted_at = COALESCE(submitted_at, $5), version = version + 1
-           WHERE client_order_id = $1`,
+               submitted_at = CASE WHEN $6::boolean THEN submitted_at ELSE COALESCE(submitted_at, $5) END, version = version + 1
+           WHERE client_order_id = $1
+             AND (NOT $6::boolean OR (broker_order_id IS NULL AND submitted_at IS NULL
+                  AND filled_volume=0 AND state IN ('INTENT','REJECTED')))`,
           [
             order.clientOrderId,
             order.brokerOrderId,
             order.state,
             order.filledVolume,
             order.updatedAt,
+            local,
           ],
         );
+        if (updated.rowCount !== 1)
+          throw new Error("TRAIL_PLACEMENT_EVIDENCE_CONFLICT");
       }
-      const groupState = result.orders.every(
-        (order) => order.state === "REJECTED",
-      )
-        ? "FAILED"
-        : result.orders.some((order) => order.state === "UNKNOWN")
-          ? "RECONCILIATION_REQUIRED"
-          : "ACTIVE";
+      const sessionTerminal =
+        result.orders.some(locallyRejectedBySession) &&
+        result.orders.every(
+          (order) =>
+            ["REJECTED", "CANCELLED"].includes(order.state) &&
+            new Decimal(order.filledVolume).isZero(),
+        );
+      const groupState =
+        sessionTerminal ||
+        result.orders.every((order) => order.state === "REJECTED")
+          ? "FAILED"
+          : result.orders.some((order) => order.state === "UNKNOWN")
+            ? "RECONCILIATION_REQUIRED"
+            : "ACTIVE";
       await client.query(
         "UPDATE order_groups SET state = $2, updated_at = now() WHERE id = $1",
         [result.orderGroupId, groupState],
@@ -829,15 +858,25 @@ export class PostgresDecisionTrail implements DecisionTrail {
     } finally {
       client.release();
     }
-    await this.#audit(analysisId, "oco_placement_completed", "accepted", null, {
-      order_group_id: result.orderGroupId,
-      idempotent_replay: result.idempotentReplay,
-      orders: result.orders.map((order) => ({
-        state: order.state,
-        filled_volume: order.filledVolume,
-        updated_at: order.updatedAt,
-      })),
-    });
+    const sessionReason =
+      result.orders.find(locallyRejectedBySession)?.reasonCode ?? null;
+    await this.#audit(
+      analysisId,
+      "oco_placement_completed",
+      sessionReason === null ? "accepted" : "rejected",
+      sessionReason,
+      {
+        order_group_id: result.orderGroupId,
+        idempotent_replay: result.idempotentReplay,
+        orders: result.orders.map((order) => ({
+          state: order.state,
+          reason_code: order.reasonCode,
+          locally_unsent: locallyRejectedBySession(order),
+          filled_volume: order.filledVolume,
+          updated_at: order.updatedAt,
+        })),
+      },
+    );
   }
 
   async reconciliation(snapshot: ReconciliationSnapshot): Promise<void> {

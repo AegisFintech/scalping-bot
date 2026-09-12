@@ -1,6 +1,6 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.9`, policy `market-stop-v2`.
+Current source: `0.2.5-market-stop.10`, policy `market-stop-v2`.
 
 ISSUE-095 proves terminal protective outcomes per position, resolves filled or
 cancelled child markers, and supplies exact terminal entry orders to the gateway
@@ -25,6 +25,17 @@ and deterministic protected OCO execution. Paid inference runs separately from
 execution and independent maintenance. The original directional replay remains
 research-only; its confirmation/structural-close rules are distinct from OCO price
 triggers. See [the integration report](reusable-scenario-report.md).
+
+## Broker-session admission (ISSUE-098)
+
+The quote-independent `/v1/session` endpoint exposes fresh broker metadata,
+weekly sessions and holiday overrides. A 30-second bounded cache is evaluated
+against the current calendar on every scheduler, provider and order-leg check.
+Closed/unavailable sessions wait automatically; the AI transport gate prevents
+provider calls and the gateway withholds unsent legs. Protective maintenance and
+accepted GTC orders remain independent. Startup uses validated metadata without
+pretending closed-market quotes are fresh. Local unsent order evidence remains
+distinct from broker rejection. See [behavior, tests and rollback](market-session-report.md).
 
 ## Entry recovery (ISSUE-097)
 

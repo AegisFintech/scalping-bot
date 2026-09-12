@@ -25,6 +25,7 @@ export class ScenarioPlanner {
     baseUrl: string;
     apiKey: string;
     fetchImpl?: typeof fetch;
+    beforeDispatch?: (symbol: string) => Promise<void>;
     now?: () => number;
     executionContext?: boolean;
   }) {

@@ -1,3 +1,4 @@
+import { sessionStatus } from "../helpers/market-session.js";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -647,5 +648,87 @@ describe("ordinary STOP demo OCO", () => {
       orders: terminalOrders("next-BUY", "next-SELL"),
     });
     expect((await gateway.reconcile("XAUUSD")).certain).toBe(true);
+  });
+});
+
+describe("broker session at each demo order submission", () => {
+  function sessionGateway(
+    client: MockClient,
+    marketSession: () => Promise<ReturnType<typeof sessionStatus>>,
+  ) {
+    return new CTraderDemoGateway({
+      client,
+      marketSession,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "30",
+      maxSlippageBps: "2",
+    });
+  }
+  it.each(["CLOSED", "UNAVAILABLE"] as const)(
+    "records %s as locally unsent and cannot replay those intents after reopening",
+    async (state) => {
+      const client = new MockClient();
+      const check = vi
+        .fn<() => Promise<ReturnType<typeof sessionStatus>>>()
+        .mockResolvedValueOnce(sessionStatus(state))
+        .mockResolvedValue(sessionStatus("OPEN"));
+      const gateway = sessionGateway(client, check);
+      const pair = [command("BUY"), command("SELL")] as const;
+      const blocked = await gateway.placeOco(pair);
+      expect(
+        blocked.orders.every(
+          (o) =>
+            o.state === "REJECTED" &&
+            o.brokerOrderId === null &&
+            o.filledVolume === "0",
+        ),
+      ).toBe(true);
+      expect(client.orders).toHaveLength(0);
+      expect((await gateway.placeOco(pair)).idempotentReplay).toBe(true);
+      expect(client.orders).toHaveLength(0);
+    },
+  );
+  it("withholds a second leg if the market closes and cancels only its already accepted owned peer", async () => {
+    const client = new MockClient();
+    const check = vi
+      .fn<() => Promise<ReturnType<typeof sessionStatus>>>()
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
+      .mockResolvedValue(sessionStatus("CLOSED"));
+    const gateway = sessionGateway(client, check);
+    const result = await gateway.placeOco([command("BUY"), command("SELL")]);
+    expect(client.orders).toHaveLength(1);
+    expect(client.cancelled).toEqual(["101"]);
+    expect(result.orders.map((o) => o.state)).toEqual([
+      "CANCELLED",
+      "REJECTED",
+    ]);
+  });
+  it("keeps uncertainty when the accepted peer cannot be cancelled at close", async () => {
+    const client = new MockClient();
+    vi.spyOn(client, "cancelOrder").mockRejectedValue(new Error("unavailable"));
+    const check = vi
+      .fn<() => Promise<ReturnType<typeof sessionStatus>>>()
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
+      .mockResolvedValue(sessionStatus("CLOSED"));
+    const gateway = sessionGateway(client, check);
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    expect(client.orders).toHaveLength(1);
+    expect((await gateway.reconcile("XAUUSD")).certain).toBe(false);
+  });
+  it("keeps explicit cancellation available after the session closes", async () => {
+    const client = new MockClient();
+    const check = vi
+      .fn<() => Promise<ReturnType<typeof sessionStatus>>>()
+      .mockResolvedValue(sessionStatus("OPEN"));
+    const gateway = sessionGateway(client, check);
+    await gateway.placeOco([command("BUY"), command("SELL")]);
+    check.mockResolvedValue(sessionStatus("CLOSED"));
+    await gateway.cancelStrategyOrder("client-BUY", "TEST_EMERGENCY");
+    expect(client.cancelled).toContain("101");
+    expect(check).toHaveBeenCalledTimes(2);
   });
 });

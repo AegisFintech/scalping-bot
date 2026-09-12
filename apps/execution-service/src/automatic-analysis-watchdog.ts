@@ -47,6 +47,7 @@ export function evaluateAutomaticAnalysisActivity(input: {
   readonly automaticAnalysisEnabled: boolean;
   readonly paused: boolean;
   readonly managedSetupActive: boolean;
+  readonly marketSessionState?: "OPEN" | "CLOSED" | "UNAVAILABLE";
   readonly stallAfterMs: number;
   readonly marketActiveWithinMs: number;
   readonly lastClaimedAt: Date | null;
@@ -106,7 +107,12 @@ export function evaluateAutomaticAnalysisActivity(input: {
   if (!input.automaticAnalysisEnabled) return { state: "DISABLED", ...base };
   if (input.paused) return { state: "PAUSED", ...base };
   if (input.managedSetupActive) return { state: "MANAGING_SETUP", ...base };
-  if (market === null || now - market > input.marketActiveWithinMs)
+  if (
+    (input.marketSessionState !== undefined &&
+      input.marketSessionState !== "OPEN") ||
+    market === null ||
+    now - market > input.marketActiveWithinMs
+  )
     return { state: "WAITING_FOR_MARKET", ...base };
   if (
     claimed === null &&
@@ -179,6 +185,7 @@ export class PostgresAutomaticAnalysisWatchdog {
     readonly automaticAnalysisEnabled: boolean;
     readonly paused: boolean;
     readonly managedSetupActive: boolean;
+    readonly marketSessionState?: "OPEN" | "CLOSED" | "UNAVAILABLE";
     readonly now?: Date;
   }): Promise<AutomaticAnalysisActivity> {
     const result = await this.#pool.query<ActivityRows>(
@@ -226,6 +233,7 @@ export class PostgresAutomaticAnalysisWatchdog {
     readonly automaticAnalysisEnabled: boolean;
     readonly paused: boolean;
     readonly managedSetupActive: boolean;
+    readonly marketSessionState?: "OPEN" | "CLOSED" | "UNAVAILABLE";
     readonly now?: Date;
   }): Promise<AutomaticAnalysisActivity> {
     const activity = await this.snapshot(input);

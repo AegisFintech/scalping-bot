@@ -12,6 +12,25 @@ costs, broker margin and volume increments. Keep the shared 1% setup ceiling.
 ISSUE-094 disables daily/high-water enforcement and reductions only in demo;
 other modes retain remaining daily capacity and drawdown reductions.
 
+## ISSUE-098 broker-session gate (current operator authorization)
+
+- Read `docs/market-session-report.md`. Require a freshly verified broker schedule
+  to be open before new analysis, actual EPR dispatch and each new demo order.
+  Weekly intervals and holidays use their broker timezones; boundaries are
+  reevaluated locally on every check. Session metadata is cached for 30 seconds.
+- Closed or unavailable sessions wait automatically without provider calls;
+  protective maintenance, reconciliation and accepted GTC orders remain active.
+  A session denial must never set a global pause or erase request/account history.
+- Startup uses the separate validated metadata/session endpoint, so scheduled
+  closure does not require fabricated quotes. Every trading decision still needs
+  fresh completed candles, quotes, book, account and risk evidence.
+- A locally unsent order is journaled distinctly from broker rejection; do not
+  overwrite broker acknowledgements or fabricate execution events. If the session
+  closes between legs, withhold the unsent leg and cancel the owned pending peer;
+  preserve uncertain cancellation and any fill for independent reconciliation.
+- Session checks are not atomic with broker/provider receipt. Already dispatched
+  calls and commands retain existing unknown-outcome handling and cooldowns.
+
 ## ISSUE-097 unsubmitted entry recovery (current operator authorization)
 
 - Read `docs/entry-recovery-report.md`. Prompt `entry-pair-v3` preserves nearby

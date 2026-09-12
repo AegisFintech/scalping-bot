@@ -2,6 +2,34 @@
 
 ## Scope
 
+### ISSUE-098 — Broker-session gate for new analysis and orders (implemented; deployed to demo)
+
+- Issue: [#226](https://github.com/AegisFintech/scalping-bot/issues/226).
+- Branch: `issue-098-market-session-gate`; dependency: ISSUE-097 / PR #225.
+- Operator approved broker-session checks before EPR requests and new order
+  placement, automatic reopening recovery and uninterrupted protective maintenance.
+- Acceptance: use broker weekly sessions, timezones and holidays; closed,
+  missing, stale or invalid session evidence prohibits new risk and provider
+  dispatch. Refresh session evidence automatically without paid model calls.
+- Recheck at actual provider dispatch and placement, including a session closing
+  during inference. Preserve GTC orders, independent SL/TP/reconciliation,
+  provider cooldown/idempotency and shared 1% current-equity sizing. Live stays off.
+- Support a normal restart while markets are closed using independently validated
+  broker metadata; never fabricate fresh quotes or extend an old context.
+- Add typed HTTP/session schema and clear status; test close/reopen, holidays,
+  DST, unavailable/stale data, dispatch/placement races and maintenance isolation.
+- Run all completion checks, update Graphify, deliver issue/PR and verify the
+  authorized demo deployment without cancelling the existing pending pair.
+- Delivered `.10` to demo on September 12; 712 Node / 70 PostgreSQL / 164 Python
+  tests, all required gates, paired restore proof and Graphify passed. Two original
+  GTC stops and their SL/TP were preserved; closed session blocked new requests.
+- The old process's shutdown reconciliation fault is retained until the next
+  successful durable cycle; its retry deadline has elapsed. Startup passes;
+  operational-ready status remains false. Automatic demo/protection stay enabled.
+- A 72-hour read-only observation spans reopening; ISSUE-096 qualification remains
+  open. See [implementation and limits](docs/market-session-report.md) and
+  [exact validation](docs/evidence/market-session-validation.json).
+
 ### ISSUE-097 — Recover unusable unsubmitted entry pairs (implemented; deployed to demo)
 
 - Issue: [#224](https://github.com/AegisFintech/scalping-bot/issues/224).
