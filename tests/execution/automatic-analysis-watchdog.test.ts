@@ -84,3 +84,25 @@ describe("automatic analysis activity", () => {
     ).toThrow("AUTOMATIC_WATCHDOG_CONFIG_INVALID");
   });
 });
+
+it("treats an explicit closed session as waiting despite recent quotes while retaining active setup precedence", () => {
+  expect(
+    evaluateAutomaticAnalysisActivity({
+      ...defaults,
+      marketSessionState: "CLOSED",
+    }).state,
+  ).toBe("WAITING_FOR_MARKET");
+  expect(
+    evaluateAutomaticAnalysisActivity({
+      ...defaults,
+      marketSessionState: "CLOSED",
+      managedSetupActive: true,
+    }).state,
+  ).toBe("MANAGING_SETUP");
+  expect(
+    evaluateAutomaticAnalysisActivity({
+      ...defaults,
+      marketSessionState: "OPEN",
+    }).state,
+  ).toBe("RUNNING");
+});

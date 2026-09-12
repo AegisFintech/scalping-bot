@@ -1,3 +1,4 @@
+import { marketSession } from "../helpers/market-session.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createMarketDataServer } from "../../apps/market-data-service/src/index.js";
@@ -64,6 +65,13 @@ function adapter(
       return Promise.resolve(serverTime);
     }),
     discoverSymbol: vi.fn(() => Promise.resolve(metadata)),
+    getTradingSchedule: vi.fn(() =>
+      Promise.resolve({
+        timeZone: "UTC",
+        intervals: [{ startSecond: 0, endSecond: 604800 }],
+        holidays: [],
+      }),
+    ),
     getCompletedCandles: vi.fn(() => Promise.resolve([candle])),
     getOrderBookSnapshot: vi.fn(() => {
       calls?.push("order-book");
@@ -258,5 +266,53 @@ describe("market-data freshness", () => {
       reason: "MARKET_SNAPSHOT_STALE_OR_INCOMPLETE",
     });
     await app.close();
+  });
+});
+
+describe("quote-independent broker session endpoint", () => {
+  it("returns validated broker metadata and schedule during closure without requesting quotes, candles or book", async () => {
+    const fixture = marketSession("2026-09-12T12:00:00Z");
+    const source = adapter(
+      {
+        bid: "1",
+        ask: "2",
+        sourceTime: fixture.metadata.metadataTime,
+        receivedAt: fixture.metadata.metadataTime,
+      },
+      orderBook,
+    );
+    vi.spyOn(source, "discoverSymbol").mockResolvedValue(fixture.metadata);
+    vi.spyOn(source, "getTradingSchedule").mockResolvedValue(fixture.schedule);
+    vi.spyOn(source, "getQuote").mockRejectedValue(new Error("closed feed"));
+    const app = createMarketDataServer({
+      adapter: source,
+      maxQuoteAgeMs: 3000,
+      maxOrderBookAgeMs: 3000,
+      maxSnapshotSkewMs: 5000,
+    });
+    try {
+      const response = await app.inject({
+        method: "POST",
+        url: "/v1/session",
+        payload: { symbol: "XAUUSD" },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual(fixture);
+      expect(vi.spyOn(source, "getQuote")).not.toHaveBeenCalled();
+      expect(vi.spyOn(source, "getCompletedCandles")).not.toHaveBeenCalled();
+      expect(vi.spyOn(source, "getOrderBookSnapshot")).not.toHaveBeenCalled();
+      vi.spyOn(source, "getTradingSchedule").mockRejectedValue(
+        new Error("sensitive broker error"),
+      );
+      const failure = await app.inject({
+        method: "POST",
+        url: "/v1/session",
+        payload: { symbol: "XAUUSD" },
+      });
+      expect(failure.statusCode).toBe(503);
+      expect(failure.json()).toEqual({ reason: "MARKET_SESSION_UNAVAILABLE" });
+    } finally {
+      await app.close();
+    }
   });
 });

@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 
 import type {
+  MarketSessionStatus,
   OpenPositionMonitor,
   RiskPolicy,
 } from "../../../packages/contracts/src/index.js";
@@ -13,6 +14,7 @@ import type { ManagedSetupOverview } from "./managed-setup-overview.js";
 import type { AutomaticAnalysisActivity } from "./automatic-analysis-watchdog.js";
 
 export interface ExecutionStatus {
+  readonly marketSession?: MarketSessionStatus;
   readonly operationalReady?: boolean;
   readonly operationalFault?: {
     readonly reasonCode: string;

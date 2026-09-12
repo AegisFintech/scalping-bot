@@ -381,3 +381,24 @@ def test_gtc_reconciliation_failure_is_not_reported_as_normal_waiting() -> None:
         "managedSetup": {"status": "ACTIVE", "groupState": "RECONCILIATION_REQUIRED"},
     }
     assert overview.operating_state(status)[0] == "Checking exposure"
+
+
+def test_broker_session_status_preserves_controls_and_orders_precedence() -> None:
+    now = datetime(2026, 9, 12, tzinfo=UTC)
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "marketSession": {"state": "CLOSED", "checkedAt": now.isoformat()},
+        "reasonCodes": ["MARKET_SESSION_CLOSED"],
+    }
+    assert overview.operating_state(status, now)[0] == "Market closed"
+    status["reasonCodes"] = ["MARKET_SESSION_CLOSED", "RECONCILIATION_UNCERTAIN"]
+    assert overview.operating_state(status, now)[0] == "Blocked"
+    status["reasonCodes"] = ["MARKET_SESSION_CLOSED"]
+    assert overview.operating_state(status, now + timedelta(seconds=31))[0] == "Session unavailable"
+    status["marketSession"] = {"state": "UNAVAILABLE", "checkedAt": now.isoformat()}
+    assert overview.operating_state(status, now)[0] == "Session unavailable"
+    status["managedSetup"] = {"status": "ACTIVE", "orders": [{"timeInForce": "GTC"}]}
+    assert overview.operating_state(status, now)[0] == "Orders pending"
+    status["emergencyStopped"] = True
+    assert overview.operating_state(status, now)[0] == "Stopped"

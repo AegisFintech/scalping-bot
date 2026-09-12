@@ -991,3 +991,42 @@ describe("AI orchestrator HTTP client", () => {
     expect(client.circuitOpen).toBe(true);
   });
 });
+
+describe("provider dispatch session gate", () => {
+  it("sends no provider requests while closed, does not open the AI circuit and resumes after reopening", async () => {
+    const beforeDispatch = vi
+      .fn<(symbol: string) => Promise<void>>()
+      .mockRejectedValue(new Error("AI_MARKET_SESSION_CLOSED"));
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        model: "gpt-5.6-sol",
+        output_text: JSON.stringify(validResponse()),
+      }),
+    );
+    const client = new OpenAiCompatibleClient({
+      baseUrl: "https://example.com/v1",
+      apiKey: "fixture",
+      model: "gpt-5.6-sol/u40",
+      apiStyle: "responses",
+      schemaPath: "schemas/model-response-2.0.json",
+      systemPromptPath,
+      promptVersion: "system-v2",
+      beforeDispatch,
+      fetchImpl,
+      maxRetries: 0,
+      circuitBreakerFailures: 1,
+    });
+    for (let i = 0; i < 4; i++)
+      await expect(client.analyze(analysisRequest)).rejects.toThrow(
+        "AI_MARKET_SESSION_CLOSED",
+      );
+    expect(client.circuitOpen).toBe(false);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    beforeDispatch.mockResolvedValue();
+    await expect(client.analyze(analysisRequest)).resolves.toMatchObject({
+      retryCount: 0,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(beforeDispatch).toHaveBeenLastCalledWith("XAUUSD");
+  });
+});

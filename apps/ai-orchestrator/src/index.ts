@@ -1,6 +1,8 @@
 import { ProviderFailure } from "../../../packages/ai-client/src/telemetry.js";
 import { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
 import { EntryPairPlanner } from "../../../packages/scenario-engine/src/entry-planner.js";
+import { MarketDataHttpClient } from "../../../packages/market-data-client/src/client.js";
+import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import "dotenv/config";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
@@ -154,7 +156,32 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
 async function main(): Promise<void> {
   const environment = resolveRuntimeEnvironment(process.env);
   const reasoningEffort = aiReasoningEffort(environment.AI_REASONING_EFFORT);
+  const sessionClient = new MarketDataHttpClient({
+    baseUrl:
+      environment.MARKET_DATA_BASE_URL ??
+      `http://127.0.0.1:${environment.MARKET_DATA_PORT ?? "8081"}`,
+    timeoutMs: 5_000,
+    maxRetries: 0,
+  });
+  const sessionGate = new BrokerSessionGate(
+    environment.TRADING_SYMBOL ?? "",
+    (symbol) => sessionClient.session(symbol),
+  );
+  const beforeDispatch = async (symbol: string): Promise<void> => {
+    if (symbol !== environment.TRADING_SYMBOL)
+      throw new Error("AI_MARKET_SESSION_UNAVAILABLE");
+    try {
+      await sessionGate.requireOpen();
+    } catch {
+      throw new Error(
+        sessionGate.status.state === "CLOSED"
+          ? "AI_MARKET_SESSION_CLOSED"
+          : "AI_MARKET_SESSION_UNAVAILABLE",
+      );
+    }
+  };
   const client = new OpenAiCompatibleClient({
+    beforeDispatch,
     baseUrl: environment.AI_BASE_URL ?? "",
     apiKey: environment.AI_API_KEY ?? "",
     model: environment.AI_MODEL ?? "",
@@ -178,6 +205,7 @@ async function main(): Promise<void> {
       Number(environment.AI_CIRCUIT_BREAKER_RESET_SECONDS ?? 300) * 1_000,
   });
   const scenarioPlanner = new ScenarioPlanner({
+    beforeDispatch,
     baseUrl: environment.AI_BASE_URL ?? "",
     apiKey: environment.AI_API_KEY ?? "",
     executionContext: true,
@@ -185,6 +213,7 @@ async function main(): Promise<void> {
   const entryPairPlanner = new EntryPairPlanner({
     baseUrl: environment.AI_BASE_URL ?? "",
     apiKey: environment.AI_API_KEY ?? "",
+    beforeDispatch,
   });
   const app = createAiServer({ client, scenarioPlanner, entryPairPlanner });
   await app.listen({

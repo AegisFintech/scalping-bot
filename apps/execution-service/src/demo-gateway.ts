@@ -6,6 +6,7 @@ import {
 import { Decimal } from "decimal.js";
 
 import type {
+  MarketSessionStatus,
   ExecutionGateway,
   GatewayOrder,
   OcoPlacementResult,
@@ -40,6 +41,7 @@ export interface CTraderTradingClient {
 }
 
 export interface CTraderDemoGatewayOptions {
+  readonly marketSession?: () => Promise<MarketSessionStatus>;
   readonly client: CTraderTradingClient;
   readonly symbolId: string;
   readonly symbolName: string;
@@ -148,8 +150,12 @@ export class CTraderDemoGateway implements ExecutionGateway {
   readonly kind = "ctrader-demo" as const;
   readonly canSubmitToBroker = true;
   readonly #options: Required<
-    Omit<CTraderDemoGatewayOptions, "client" | "acknowledgement">
+    Omit<
+      CTraderDemoGatewayOptions,
+      "client" | "acknowledgement" | "marketSession"
+    >
   > & {
+    readonly marketSession: CTraderDemoGatewayOptions["marketSession"];
     readonly client: CTraderTradingClient;
     readonly acknowledgement: string;
   };
@@ -162,6 +168,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
   constructor(options: CTraderDemoGatewayOptions) {
     this.#options = {
       client: options.client,
+      marketSession: options.marketSession,
       symbolId: options.symbolId,
       symbolName: options.symbolName,
       placementEnabled: options.placementEnabled ?? false,
@@ -236,6 +243,13 @@ export class CTraderDemoGateway implements ExecutionGateway {
     for (const item of tracked)
       this.#orders.set(item.command.clientOrderId, item);
 
+    if (await this.#rejectClosedSession(tracked)) {
+      return {
+        orderGroupId: group.orderGroupId,
+        idempotentReplay: false,
+        orders: tracked.map(external),
+      };
+    }
     const firstExecution = await this.#placePendingStop(commands[0]);
     this.#applyExecution(firstExecution);
     if (
@@ -248,6 +262,27 @@ export class CTraderDemoGateway implements ExecutionGateway {
     await this.#options.client.reconcileRaw();
 
     try {
+      if (await this.#rejectClosedSession([tracked[1]])) {
+        if (
+          tracked[0].brokerOrderId !== null &&
+          ["PENDING", "PARTIALLY_FILLED"].includes(tracked[0].state)
+        ) {
+          try {
+            this.#applyExecution(
+              await this.#options.client.cancelOrder(tracked[0].brokerOrderId),
+            );
+          } catch {
+            this.#uncertainReason =
+              "DEMO_SECOND_LEG_FAILED_CANCELLATION_UNCERTAIN";
+          }
+        }
+        await this.#options.client.reconcileRaw();
+        return {
+          orderGroupId: group.orderGroupId,
+          idempotentReplay: false,
+          orders: tracked.map(external),
+        };
+      }
       const secondExecution = await this.#placePendingStop(commands[1]);
       this.#applyExecution(secondExecution);
       await this.#options.client.reconcileRaw();
@@ -285,6 +320,20 @@ export class CTraderDemoGateway implements ExecutionGateway {
           command,
           this.#options.maxSlippagePoints,
         );
+  }
+
+  async #rejectClosedSession(
+    orders: readonly TrackedOrder[],
+  ): Promise<boolean> {
+    if (this.#options.marketSession === undefined) return false;
+    const session = await this.#options.marketSession().catch(() => null);
+    if (session?.state === "OPEN") return false;
+    for (const order of orders) {
+      order.state = "REJECTED";
+      order.updatedAt = new Date().toISOString();
+      order.reasonCode = session?.reasonCode ?? "MARKET_SESSION_UNAVAILABLE";
+    }
+    return true;
   }
 
   async cancelStrategyOrder(

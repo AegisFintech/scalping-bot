@@ -857,6 +857,20 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     return metadata;
   }
 
+  getTradingSchedule(symbolId: string): Promise<WeeklyTradingSchedule> {
+    this.#requireAuthenticated();
+    const schedule = this.#schedules.get(symbolId);
+    if (schedule === undefined)
+      return Promise.reject(new Error("CTRADER_SYMBOL_SCHEDULE_MISSING"));
+    return Promise.resolve(
+      weeklyTradingSchedule(
+        schedule.timeZone,
+        schedule.intervals,
+        schedule.holidays,
+      ),
+    );
+  }
+
   async getQuote(symbolId: string): Promise<Quote> {
     await this.#subscribeSpot(symbolId);
     const quote = await this.#waitFor(

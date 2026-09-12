@@ -1,3 +1,4 @@
+import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
 import { databaseStartup } from "./database-startup.js";
@@ -293,11 +294,23 @@ async function main(): Promise<void> {
       return latestSnapshot;
     },
   };
-  latestSnapshot = await market.snapshot(
+  const sessionClient = new MarketDataHttpClient({
+    baseUrl:
+      environment.MARKET_DATA_BASE_URL ??
+      `http://127.0.0.1:${environment.MARKET_DATA_PORT ?? "8081"}`,
+    timeoutMs: 5_000,
+    maxRetries: 0,
+  });
+  const initialSession = await sessionClient.session(config.symbol);
+  const startupMetadata = initialSession.metadata;
+  const sessionGate = new BrokerSessionGate(
     config.symbol,
-    candleCounts,
-    integer(environment, "ORDER_BOOK_DEPTH", 20),
+    (symbol) => sessionClient.session(symbol),
+    Date.now,
+    initialSession,
   );
+  if (sessionGate.status.state === "UNAVAILABLE")
+    throw new Error("MARKET_SESSION_UNAVAILABLE");
 
   const connectionMode: "demo" | "live" =
     environment.CTRADER_CONNECTION_MODE === "live" ? "live" : "demo";
@@ -317,8 +330,8 @@ async function main(): Promise<void> {
     provider: config.tradingMode === "paper" ? "paper" : "ctrader",
     environment: config.tradingMode === "paper" ? "paper" : connectionMode,
     accountType: config.tradingMode === "paper" ? "paper" : connectionMode,
-    currency: latestSnapshot.metadata.accountAsset,
-    metadata: latestSnapshot.metadata,
+    currency: startupMetadata.accountAsset,
+    metadata: startupMetadata,
     strategyVersion,
     codeHash: createHash("sha256")
       .update(environment.CODE_VERSION ?? "0.1.0")
@@ -343,8 +356,8 @@ async function main(): Promise<void> {
       availableMargin: environment.PAPER_AVAILABLE_MARGIN ?? "10000",
     });
     paperGateway = new PaperGateway({
-      tickSize: latestSnapshot.metadata.tickSize,
-      tickValue: latestSnapshot.metadata.tickValue,
+      tickSize: startupMetadata.tickSize,
+      tickValue: startupMetadata.tickValue,
       slippagePoints: environment.PAPER_SLIPPAGE_POINTS ?? "0",
       maxSlippagePoints: environment.MAX_SLIPPAGE_POINTS ?? "5",
       maxSlippageBps: environment.MAX_SLIPPAGE_BPS ?? "2",
@@ -364,18 +377,18 @@ async function main(): Promise<void> {
     );
     const localMetadata = await brokerClient.discoverSymbol(config.symbol);
     if (
-      localMetadata.symbolId !== latestSnapshot.metadata.symbolId ||
-      localMetadata.tickSize !== latestSnapshot.metadata.tickSize ||
-      localMetadata.pipSize !== latestSnapshot.metadata.pipSize ||
-      localMetadata.tickValue !== latestSnapshot.metadata.tickValue ||
-      localMetadata.volumeScale !== latestSnapshot.metadata.volumeScale ||
-      localMetadata.volumeStep !== latestSnapshot.metadata.volumeStep ||
-      localMetadata.quoteAsset !== latestSnapshot.metadata.quoteAsset ||
-      localMetadata.accountAsset !== latestSnapshot.metadata.accountAsset ||
+      localMetadata.symbolId !== startupMetadata.symbolId ||
+      localMetadata.tickSize !== startupMetadata.tickSize ||
+      localMetadata.pipSize !== startupMetadata.pipSize ||
+      localMetadata.tickValue !== startupMetadata.tickValue ||
+      localMetadata.volumeScale !== startupMetadata.volumeScale ||
+      localMetadata.volumeStep !== startupMetadata.volumeStep ||
+      localMetadata.quoteAsset !== startupMetadata.quoteAsset ||
+      localMetadata.accountAsset !== startupMetadata.accountAsset ||
       localMetadata.quoteToAccountConversionRate !==
-        latestSnapshot.metadata.quoteToAccountConversionRate ||
+        startupMetadata.quoteToAccountConversionRate ||
       JSON.stringify(localMetadata.commission) !==
-        JSON.stringify(latestSnapshot.metadata.commission)
+        JSON.stringify(startupMetadata.commission)
     ) {
       throw new Error("MARKET_AND_EXECUTION_SYMBOL_METADATA_MISMATCH");
     }
@@ -383,6 +396,7 @@ async function main(): Promise<void> {
     margin = new CTraderMarginEstimator(brokerClient);
     if (config.tradingMode === "demo") {
       demoGateway = new CTraderDemoGateway({
+        marketSession: () => sessionGate.check(),
         client: brokerClient,
         symbolId: localMetadata.symbolId,
         symbolName: localMetadata.symbolName,
@@ -486,7 +500,7 @@ async function main(): Promise<void> {
       count: recoveredInterruptedAnalyses,
     });
   }
-  const executionSymbolId = latestSnapshot.metadata.symbolId;
+  const executionSymbolId = startupMetadata.symbolId;
   const automaticAnalysisSchedule = new PostgresAutomaticAnalysisSchedule({
     pool,
     accountId: identity.accountId,
@@ -825,7 +839,7 @@ async function main(): Promise<void> {
     });
     const state = await reconcileAccountSafely(
       account,
-      latestSnapshot!.metadata.symbolId,
+      executionSymbolId,
       (reason) =>
         logger.log("error", {
           event_name: "account_reconciliation_failed",
@@ -1034,7 +1048,7 @@ async function main(): Promise<void> {
         !demoExecutionState.certain ||
         (config.maxOrdersPerDay > 0 && ordersToday >= config.maxOrdersPerDay),
       aiCircuitOpen: model.circuitOpen,
-      symbolMetadataValid: latestSnapshot !== null,
+      symbolMetadataValid: startupMetadata.symbolName === config.symbol,
       aiResponseValid: false,
       deterministicRiskApproved: false,
       spreadSafe: false,
@@ -1071,6 +1085,7 @@ async function main(): Promise<void> {
     throw new Error("CONFIG_ORDER_EXPIRY_RANGE_INVALID");
   }
   const coordinator = new AnalysisCoordinator({
+    marketSession: () => sessionGate.check(),
     entryPairMode: true,
     numericAnalytics: true,
     symbol: config.symbol,
@@ -1228,11 +1243,13 @@ async function main(): Promise<void> {
         ],
       }));
     const eligibility = evaluateAnalysisEligibility(current);
+    const marketSession = sessionGate.status;
     const automationActivity = await automaticAnalysisWatchdog
       .snapshot({
         automaticAnalysisEnabled: config.automaticAnalysisEnabled,
         paused: current.pauseNewAnalyses,
         managedSetupActive: managedSetup.status === "ACTIVE",
+        marketSessionState: marketSession.state,
       })
       .catch(() => ({
         state: "UNAVAILABLE" as const,
@@ -1256,6 +1273,9 @@ async function main(): Promise<void> {
     lastSafetyReasons = [
       ...new Set([
         ...eligibility.reasonCodes,
+        ...(marketSession.reasonCode === null
+          ? []
+          : [marketSession.reasonCode]),
         ...(operationalFault.snapshot
           ? [operationalFault.snapshot.reasonCode]
           : []),
@@ -1302,6 +1322,7 @@ async function main(): Promise<void> {
         reasonCodes: tradeCampaign.reasonCodes,
       },
       automationActivity,
+      marketSession,
       managedSetup,
       aiCircuitOpenUntil: model.circuitOpenUntil,
       strategyVersion,
@@ -1316,6 +1337,7 @@ async function main(): Promise<void> {
       tradingEnabled:
         operationalFault.snapshot === null &&
         eligibility.allowed &&
+        marketSession.state === "OPEN" &&
         gateway.canSubmitToBroker &&
         modeReasons.length === 0,
       startupChecksPassed,
@@ -1356,9 +1378,7 @@ async function main(): Promise<void> {
       if (before.positions.length > 0 || before.orders.length > 0) {
         throw new Error("DEMO_BASELINE_BROKER_STATE_NOT_EMPTY");
       }
-      const accountState = await brokerClient.reconcile(
-        latestSnapshot!.metadata.symbolId,
-      );
+      const accountState = await brokerClient.reconcile(executionSymbolId);
       const firstEvidenceAt = new Date();
       const firstFlows = await brokerClient.externalCashFlows(
         start,
@@ -1372,9 +1392,8 @@ async function main(): Promise<void> {
       if (firstDeals.dealCount > 0 || firstDeals.hasMore) {
         throw new Error("DEMO_BASELINE_DEALS_PRESENT");
       }
-      const confirmedAccountState = await brokerClient.reconcile(
-        latestSnapshot!.metadata.symbolId,
-      );
+      const confirmedAccountState =
+        await brokerClient.reconcile(executionSymbolId);
       if (
         accountState.equity !== confirmedAccountState.equity ||
         accountState.balance !== confirmedAccountState.balance
@@ -1506,7 +1525,7 @@ async function main(): Promise<void> {
           client: brokerClient,
           symbolId: executionSymbolId,
           symbol: config.symbol,
-          tickSize: latestSnapshot.metadata.tickSize,
+          tickSize: startupMetadata.tickSize,
           quote: async () => {
             const result = await marketClient.quote(config.symbol);
             if (result.metadata.symbolId !== executionSymbolId)
@@ -1587,11 +1606,14 @@ async function main(): Promise<void> {
       automaticAnalysisEnabled: boolean;
       paused: boolean;
       managedSetupActive: boolean;
+      marketSessionState: "OPEN" | "CLOSED" | "UNAVAILABLE";
     } | null = null;
     try {
       await protectiveMaintenance.run();
       const current = await safety();
+      const marketSession = await sessionGate.check();
       watchdogContext = {
+        marketSessionState: marketSession.state,
         automaticAnalysisEnabled: config.automaticAnalysisEnabled,
         paused: current.pauseNewAnalyses,
         managedSetupActive:
@@ -1608,6 +1630,7 @@ async function main(): Promise<void> {
       ) {
         await maintenance.cancelAll("AUTOMATIC_SAFETY_CANCELLATION");
       } else if (
+        marketSession.state === "OPEN" &&
         evaluateAutomaticAnalysisEligibility(
           current,
           config.automaticAnalysisEnabled,

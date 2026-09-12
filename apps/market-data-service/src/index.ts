@@ -64,6 +64,35 @@ export function createMarketDataServer(
     () => options.localRecorderStatus?.() ?? { enabled: false },
   );
   app.post<{ Body: { symbol: string } }>(
+    "/v1/session",
+    {
+      schema: {
+        body: {
+          type: "object",
+          additionalProperties: false,
+          required: ["symbol"],
+          properties: {
+            symbol: { type: "string", minLength: 1, maxLength: 64 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const metadata = await options.adapter.discoverSymbol(
+          request.body.symbol,
+        );
+        const schedule = await options.adapter.getTradingSchedule(
+          metadata.symbolId,
+        );
+        return reply.send({ schemaVersion: "1.0", metadata, schedule });
+      } catch {
+        // Session failures do not disable broker-held protection or expose raw errors.
+        return reply.code(503).send({ reason: "MARKET_SESSION_UNAVAILABLE" });
+      }
+    },
+  );
+  app.post<{ Body: { symbol: string } }>(
     "/v1/quote",
     async (request, reply) => {
       try {

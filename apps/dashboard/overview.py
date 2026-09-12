@@ -89,6 +89,25 @@ def operating_state(status: dict[str, Any], now: datetime | None = None) -> tupl
         return "Managing a setup", "An existing position or pending order blocks replacement."
     if status.get("reasonCodes") == ["PREVIOUS_ANALYSIS_ACTIVE"]:
         return "Checking setup", "An execution check is in progress; another check cannot overlap."
+    session = status.get("marketSession")
+    other_reasons = set(status.get("reasonCodes") or []) - {
+        "MARKET_SESSION_CLOSED",
+        "MARKET_SESSION_UNAVAILABLE",
+    }
+    if other_reasons:
+        return "Blocked", "A safety or market-quality gate currently blocks new orders."
+    if isinstance(session, dict) and session.get("state") in {"CLOSED", "UNAVAILABLE"}:
+        if not fresh(session.get("checkedAt"), now or datetime.now(UTC), 30):
+            return "Session unavailable", "Session evidence is stale. Automatic checks continue."
+        if session.get("state") == "CLOSED":
+            return "Market closed", (
+                "New analysis and orders wait for the broker session to reopen and fresh quotes. "
+                "Monitoring and protective management continue automatically."
+            )
+        return "Session unavailable", (
+            "Broker trading hours could not be verified. Automatic checks continue; "
+            "new model requests and orders wait."
+        )
     if status.get("reasonCodes"):
         return "Blocked", "A safety or market-quality gate currently blocks new orders."
     if status.get("automaticAnalysisEnabled") is not True:
