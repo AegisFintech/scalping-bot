@@ -2,6 +2,40 @@
 
 ## Scope
 
+### ISSUE-100 — Variant replay lab and strategy screening (research complete; promotion decided)
+
+- Operator authorized a full review of why demo loses and a drastic redesign
+  keeping the always-trading loop, high-frequency orientation and the pinned
+  level-proposer model role; demo loss locks stay recorded-not-enforced
+  (ISSUE-094 unchanged) during development.
+- Measured diagnosis from the demo database (333 trades, −$726,589, −76%
+  equity): sub-noise 0.53/1.06-class geometry, 9–28% win rates against ~65%
+  random-walk barrier odds, 0.64 mean adverse STOP entry slip, 0.58–0.98 stop
+  overshoot, $256–$770 round-trip fees and 78% whipsaw recovery within 20
+  minutes of stop-outs. Balanced-exit trial (ISSUE-099) confirms geometry-only
+  change is insufficient.
+- Delivered a read-only replay lab: paginated broker M1 history backfill
+  (55,000 bars, 8 weeks), journaled-level exporter with per-release fill
+  calibration, conservative Decimal variant simulator (limit maker fills,
+  stop-limit caps with honest non-fill escalation, serial one-position loop,
+  loss-streak pauses) and a 428-variant chronological train/holdout screen
+  with pierce/commission stress runs. Production replicas reproduce measured
+  expectancy; no paid provider calls were made.
+- Outcome: all breakout/confirm families negative on both splits; trend-aligned
+  fade limits at the same journaled levels positive on both splits under every
+  stress (`v1-fade-sl2.0-tp2.0-e30-noBe-tr30` primary,
+  `v1-fade-sl2.5-tp1.0-e30-noBe-tr30` high-frequency alternative). Four-day
+  sample; no profitability claim. Paid historical level-replay benchmark
+  remains available as out-of-sample confirmation with explicit authorization.
+- Dependencies: none (offline research). Successors: ISSUE-101 limit/stop-limit
+  execution layer, ISSUE-102 fade prompt/regime-gated strategy release,
+  ISSUE-103 demo rollout and instrumentation.
+- Report: [variant replay lab](docs/variant-replay-report.md). Artifacts:
+  `artifacts/variant-inputs-full.json`,
+  `artifacts/variant-screen-full-serial.json`,
+  `artifacts/screen-full-{base,pierce3,comm2,both}.json`,
+  `artifacts/history-candles-m1.json`.
+
 ### ISSUE-099 — Balanced 1:1 exit trial (implemented and deployed to demo)
 
 - Operator requested the smallest trial after the observed 0.53 TP / 1.06 SL

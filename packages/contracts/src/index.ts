@@ -417,6 +417,7 @@ export interface MarketDataAdapter {
     symbolId: string,
     timeframe: Timeframe,
     count: number,
+    toTimestampMs?: number,
   ): Promise<readonly Candle[]>;
   getOrderBookSnapshot(
     symbolId: string,

@@ -1,0 +1,543 @@
+{
+  "label": "VARIANT_REPLAY_SCREEN_SUMMARY_V1",
+  "generated_at": "2026-09-14T10:17:45.510Z",
+  "purpose": "Committed summary of local ISSUE-100 research outputs. Full reports live in gitignored artifacts/: variant-screen-full-serial.json, screen-full-{base,pierce3,comm2,both}.json, variant-inputs-full.json.",
+  "inputs": {
+    "setups": 717,
+    "candles": 55000,
+    "candle_from": "2026-07-20T08:35:00.000Z",
+    "candle_to": "2026-09-14T10:09:00.000Z"
+  },
+  "calibration_per_release": [
+    {
+      "release": "0.2.5-market-stop.10",
+      "trades": 50,
+      "measured_avg_net_usd": "-1249.85",
+      "entry_slip_mean": "0.5620",
+      "entry_slip_p95": "1.0840",
+      "exit_overshoot_mean": "0.6228",
+      "exit_overshoot_max": "1.3900",
+      "dollars_per_point_mean": "983.6800",
+      "commission_round_trip_mean": "256.1394",
+      "winners": 14,
+      "losers": 36
+    },
+    {
+      "release": "0.2.5-market-stop.11",
+      "trades": 49,
+      "measured_avg_net_usd": "-1463.45",
+      "entry_slip_mean": "0.6459",
+      "entry_slip_p95": "1.2980",
+      "exit_overshoot_mean": "0.6786",
+      "exit_overshoot_max": "1.3300",
+      "dollars_per_point_mean": "1148.2449",
+      "commission_round_trip_mean": "297.4543",
+      "winners": 5,
+      "losers": 44
+    },
+    {
+      "release": "0.2.5-market-stop.4",
+      "trades": 5,
+      "measured_avg_net_usd": "-4051.58",
+      "entry_slip_mean": "0.6440",
+      "entry_slip_p95": "1.1440",
+      "exit_overshoot_mean": "0.5100",
+      "exit_overshoot_max": "0.6200",
+      "dollars_per_point_mean": "2906.6000",
+      "commission_round_trip_mean": "769.1720",
+      "winners": 1,
+      "losers": 4
+    },
+    {
+      "release": "0.2.5-market-stop.5",
+      "trades": 21,
+      "measured_avg_net_usd": "-1928.43",
+      "entry_slip_mean": "0.4119",
+      "entry_slip_p95": "0.8700",
+      "exit_overshoot_mean": "3.5336",
+      "exit_overshoot_max": "35.5900",
+      "dollars_per_point_mean": "1275.2857",
+      "commission_round_trip_mean": "338.1757",
+      "winners": 10,
+      "losers": 11
+    },
+    {
+      "release": "0.2.5-market-stop.7",
+      "trades": 67,
+      "measured_avg_net_usd": "-3556.23",
+      "entry_slip_mean": "0.7594",
+      "entry_slip_p95": "1.3090",
+      "exit_overshoot_mean": "0.7702",
+      "exit_overshoot_max": "1.5000",
+      "dollars_per_point_mean": "2402.0299",
+      "commission_round_trip_mean": "631.6616",
+      "winners": 16,
+      "losers": 51
+    },
+    {
+      "release": "0.2.5-market-stop.8",
+      "trades": 14,
+      "measured_avg_net_usd": "-4096.34",
+      "entry_slip_mean": "0.8950",
+      "entry_slip_p95": "1.6195",
+      "exit_overshoot_mean": "0.9831",
+      "exit_overshoot_max": "2.5300",
+      "dollars_per_point_mean": "1928.1429",
+      "commission_round_trip_mean": "503.4471",
+      "winners": 1,
+      "losers": 13
+    },
+    {
+      "release": "0.2.5-market-stop.9",
+      "trades": 137,
+      "measured_avg_net_usd": "-1810.63",
+      "entry_slip_mean": "0.6280",
+      "entry_slip_p95": "1.3200",
+      "exit_overshoot_mean": "0.5822",
+      "exit_overshoot_max": "1.5100",
+      "dollars_per_point_mean": "1395.9781",
+      "commission_round_trip_mean": "364.7209",
+      "winners": 38,
+      "losers": 99
+    }
+  ],
+  "screen": {
+    "variants": 428,
+    "gate_passing_holdout_positive": 95,
+    "both_splits_positive": 125,
+    "mode": {
+      "serial": true,
+      "streak_losses": 3,
+      "streak_pause_bars": 60,
+      "train_until": "2026-09-13T00:00:00+00:00",
+      "train_setups": 441,
+      "holdout_setups": 276
+    },
+    "costs": {
+      "base": {
+        "entry_slip": "0.6445037900874635568513119534",
+        "exit_overshoot": "0.8346215743440233236151603499",
+        "spread": "0.0865"
+      },
+      "stress": {
+        "entry_slip": "1.265432203389830508474576271",
+        "exit_overshoot": "1.092379237288135593220338983",
+        "spread": "0.1200"
+      }
+    },
+    "economics": {
+      "dollars_per_point": "1065.131314141414141414141414",
+      "commission_round_trip": "276.5881888888888888888888889"
+    },
+    "train_until": "2026-09-13T00:00:00+00:00"
+  },
+  "production_replicas": {
+    "v0-replica-double-sl": {
+      "train_ev_filled_usd": "-1834.8621",
+      "train_n_filled": 97,
+      "train_total_usd": "-177981.6230",
+      "holdout_ev_filled_usd": "-1836.4950",
+      "holdout_n_filled": 47,
+      "holdout_total_usd": "-86315.2641",
+      "holdout_win_rate": 0.3191,
+      "holdout_profit_factor": "0.0477",
+      "daily": {
+        "2026-09-10": {
+          "n_filled": 27,
+          "total_net_usd": "-59840.50"
+        },
+        "2026-09-11": {
+          "n_filled": 70,
+          "total_net_usd": "-118141.12"
+        },
+        "2026-09-13": {
+          "n_filled": 13,
+          "total_net_usd": "-8508.03"
+        },
+        "2026-09-14": {
+          "n_filled": 34,
+          "total_net_usd": "-77807.23"
+        }
+      }
+    },
+    "v0-replica-balanced": {
+      "train_ev_filled_usd": "-2114.8504",
+      "train_n_filled": 70,
+      "train_total_usd": "-148039.5246",
+      "holdout_ev_filled_usd": "-2015.6240",
+      "holdout_n_filled": 42,
+      "holdout_total_usd": "-84656.2088",
+      "holdout_win_rate": 0.1905,
+      "holdout_profit_factor": "0.0255",
+      "daily": {
+        "2026-09-10": {
+          "n_filled": 23,
+          "total_net_usd": "-53168.06"
+        },
+        "2026-09-11": {
+          "n_filled": 47,
+          "total_net_usd": "-94871.47"
+        },
+        "2026-09-13": {
+          "n_filled": 7,
+          "total_net_usd": "-15996.12"
+        },
+        "2026-09-14": {
+          "n_filled": 35,
+          "total_net_usd": "-68660.09"
+        }
+      }
+    }
+  },
+  "promoted_candidates": {
+    "v1-fade-sl2.0-tp2.0-e30-noBe-tr30": {
+      "base": {
+        "train_ev_filled_usd": "1355.8971",
+        "train_n_filled": 51,
+        "train_total_usd": "69150.7523",
+        "holdout_ev_filled_usd": "2000.5999",
+        "holdout_n_filled": 34,
+        "holdout_total_usd": "68020.3968",
+        "holdout_win_rate": 0.7353,
+        "holdout_profit_factor": "2.5521",
+        "daily": {
+          "2026-09-10": {
+            "n_filled": 18,
+            "total_net_usd": "25048.99"
+          },
+          "2026-09-11": {
+            "n_filled": 33,
+            "total_net_usd": "44101.77"
+          },
+          "2026-09-13": {
+            "n_filled": 3,
+            "total_net_usd": "973.35"
+          },
+          "2026-09-14": {
+            "n_filled": 31,
+            "total_net_usd": "67047.05"
+          }
+        }
+      },
+      "stress": {
+        "pierce3": {
+          "train_ev_filled_usd": "989.9932",
+          "train_n_filled": 51,
+          "train_total_usd": "50489.6517",
+          "holdout_ev_filled_usd": "2000.5999",
+          "holdout_n_filled": 34,
+          "holdout_total_usd": "68020.3968",
+          "holdout_win_rate": 0.7353,
+          "holdout_profit_factor": "2.5521",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 18,
+              "total_net_usd": "6387.89"
+            },
+            "2026-09-11": {
+              "n_filled": 33,
+              "total_net_usd": "44101.77"
+            },
+            "2026-09-13": {
+              "n_filled": 3,
+              "total_net_usd": "973.35"
+            },
+            "2026-09-14": {
+              "n_filled": 31,
+              "total_net_usd": "67047.05"
+            }
+          }
+        },
+        "comm2": {
+          "train_ev_filled_usd": "1079.3089",
+          "train_n_filled": 51,
+          "train_total_usd": "55044.7547",
+          "holdout_ev_filled_usd": "1724.0117",
+          "holdout_n_filled": 34,
+          "holdout_total_usd": "58616.3984",
+          "holdout_win_rate": 0.7353,
+          "holdout_profit_factor": "2.2656",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 18,
+              "total_net_usd": "20070.40"
+            },
+            "2026-09-11": {
+              "n_filled": 33,
+              "total_net_usd": "34974.36"
+            },
+            "2026-09-13": {
+              "n_filled": 3,
+              "total_net_usd": "143.59"
+            },
+            "2026-09-14": {
+              "n_filled": 31,
+              "total_net_usd": "58472.81"
+            }
+          }
+        },
+        "both": {
+          "train_ev_filled_usd": "713.4050",
+          "train_n_filled": 51,
+          "train_total_usd": "36383.6541",
+          "holdout_ev_filled_usd": "1724.0117",
+          "holdout_n_filled": 34,
+          "holdout_total_usd": "58616.3984",
+          "holdout_win_rate": 0.7353,
+          "holdout_profit_factor": "2.2656",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 18,
+              "total_net_usd": "1409.30"
+            },
+            "2026-09-11": {
+              "n_filled": 33,
+              "total_net_usd": "34974.36"
+            },
+            "2026-09-13": {
+              "n_filled": 3,
+              "total_net_usd": "143.59"
+            },
+            "2026-09-14": {
+              "n_filled": 31,
+              "total_net_usd": "58472.81"
+            }
+          }
+        }
+      }
+    },
+    "v1-fade-sl2.5-tp1.0-e30-noBe-tr30": {
+      "base": {
+        "train_ev_filled_usd": "1050.3676",
+        "train_n_filled": 75,
+        "train_total_usd": "78777.5714",
+        "holdout_ev_filled_usd": "957.6571",
+        "holdout_n_filled": 39,
+        "holdout_total_usd": "37348.6271",
+        "holdout_win_rate": 0.8205,
+        "holdout_profit_factor": "2.0087",
+        "daily": {
+          "2026-09-10": {
+            "n_filled": 21,
+            "total_net_usd": "33581.73"
+          },
+          "2026-09-11": {
+            "n_filled": 54,
+            "total_net_usd": "45195.85"
+          },
+          "2026-09-13": {
+            "n_filled": 4,
+            "total_net_usd": "-9430.35"
+          },
+          "2026-09-14": {
+            "n_filled": 35,
+            "total_net_usd": "46778.98"
+          }
+        }
+      },
+      "stress": {
+        "pierce3": {
+          "train_ev_filled_usd": "989.5969",
+          "train_n_filled": 74,
+          "train_total_usd": "73230.1737",
+          "holdout_ev_filled_usd": "957.6571",
+          "holdout_n_filled": 39,
+          "holdout_total_usd": "37348.6271",
+          "holdout_win_rate": 0.8205,
+          "holdout_profit_factor": "2.0087",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 20,
+              "total_net_usd": "28600.37"
+            },
+            "2026-09-11": {
+              "n_filled": 54,
+              "total_net_usd": "44629.80"
+            },
+            "2026-09-13": {
+              "n_filled": 4,
+              "total_net_usd": "-9430.35"
+            },
+            "2026-09-14": {
+              "n_filled": 35,
+              "total_net_usd": "46778.98"
+            }
+          }
+        },
+        "comm2": {
+          "train_ev_filled_usd": "773.7794",
+          "train_n_filled": 75,
+          "train_total_usd": "58033.4572",
+          "holdout_ev_filled_usd": "681.0689",
+          "holdout_n_filled": 39,
+          "holdout_total_usd": "26561.6878",
+          "holdout_win_rate": 0.8205,
+          "holdout_profit_factor": "1.6866",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 21,
+              "total_net_usd": "27773.37"
+            },
+            "2026-09-11": {
+              "n_filled": 54,
+              "total_net_usd": "30260.08"
+            },
+            "2026-09-13": {
+              "n_filled": 4,
+              "total_net_usd": "-10536.71"
+            },
+            "2026-09-14": {
+              "n_filled": 35,
+              "total_net_usd": "37098.39"
+            }
+          }
+        },
+        "both": {
+          "train_ev_filled_usd": "713.0088",
+          "train_n_filled": 74,
+          "train_total_usd": "52762.6477",
+          "holdout_ev_filled_usd": "681.0689",
+          "holdout_n_filled": 39,
+          "holdout_total_usd": "26561.6878",
+          "holdout_win_rate": 0.8205,
+          "holdout_profit_factor": "1.6866",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 20,
+              "total_net_usd": "23068.61"
+            },
+            "2026-09-11": {
+              "n_filled": 54,
+              "total_net_usd": "29694.04"
+            },
+            "2026-09-13": {
+              "n_filled": 4,
+              "total_net_usd": "-10536.71"
+            },
+            "2026-09-14": {
+              "n_filled": 35,
+              "total_net_usd": "37098.39"
+            }
+          }
+        }
+      }
+    },
+    "v1-fade-sl2.5-tp2.0-e60-noBe-tr30": {
+      "base": {
+        "train_ev_filled_usd": "1495.6646",
+        "train_n_filled": 46,
+        "train_total_usd": "68800.5725",
+        "holdout_ev_filled_usd": "2726.9378",
+        "holdout_n_filled": 29,
+        "holdout_total_usd": "79081.1969",
+        "holdout_win_rate": 0.7931,
+        "holdout_profit_factor": "3.3741",
+        "daily": {
+          "2026-09-10": {
+            "n_filled": 11,
+            "total_net_usd": "42349.24"
+          },
+          "2026-09-11": {
+            "n_filled": 35,
+            "total_net_usd": "26451.33"
+          },
+          "2026-09-13": {
+            "n_filled": 2,
+            "total_net_usd": "-12874.46"
+          },
+          "2026-09-14": {
+            "n_filled": 27,
+            "total_net_usd": "91955.66"
+          }
+        }
+      },
+      "stress": {
+        "pierce3": {
+          "train_ev_filled_usd": "452.9771",
+          "train_n_filled": 46,
+          "train_total_usd": "20836.9486",
+          "holdout_ev_filled_usd": "2726.9378",
+          "holdout_n_filled": 29,
+          "holdout_total_usd": "79081.1969",
+          "holdout_win_rate": 0.7931,
+          "holdout_profit_factor": "3.3741",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 11,
+              "total_net_usd": "-5614.38"
+            },
+            "2026-09-11": {
+              "n_filled": 35,
+              "total_net_usd": "26451.33"
+            },
+            "2026-09-13": {
+              "n_filled": 2,
+              "total_net_usd": "-12874.46"
+            },
+            "2026-09-14": {
+              "n_filled": 27,
+              "total_net_usd": "91955.66"
+            }
+          }
+        },
+        "comm2": {
+          "train_ev_filled_usd": "1219.0764",
+          "train_n_filled": 46,
+          "train_total_usd": "56077.5158",
+          "holdout_ev_filled_usd": "2450.3496",
+          "holdout_n_filled": 29,
+          "holdout_total_usd": "71060.1395",
+          "holdout_win_rate": 0.7931,
+          "holdout_profit_factor": "3.0482",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 11,
+              "total_net_usd": "39306.77"
+            },
+            "2026-09-11": {
+              "n_filled": 35,
+              "total_net_usd": "16770.74"
+            },
+            "2026-09-13": {
+              "n_filled": 2,
+              "total_net_usd": "-13427.64"
+            },
+            "2026-09-14": {
+              "n_filled": 27,
+              "total_net_usd": "84487.78"
+            }
+          }
+        },
+        "both": {
+          "train_ev_filled_usd": "176.3890",
+          "train_n_filled": 46,
+          "train_total_usd": "8113.8919",
+          "holdout_ev_filled_usd": "2450.3496",
+          "holdout_n_filled": 29,
+          "holdout_total_usd": "71060.1395",
+          "holdout_win_rate": 0.7931,
+          "holdout_profit_factor": "3.0482",
+          "daily": {
+            "2026-09-10": {
+              "n_filled": 11,
+              "total_net_usd": "-8656.85"
+            },
+            "2026-09-11": {
+              "n_filled": 35,
+              "total_net_usd": "16770.74"
+            },
+            "2026-09-13": {
+              "n_filled": 2,
+              "total_net_usd": "-13427.64"
+            },
+            "2026-09-14": {
+              "n_filled": 27,
+              "total_net_usd": "84487.78"
+            }
+          }
+        }
+      }
+    }
+  },
+  "decision": "Promote trend-aligned (30-bar) fade-limit family with ATR geometry and stop-limit exits; primary v1-fade-sl2.0-tp2.0-e30-noBe-tr30, high-frequency alternative v1-fade-sl2.5-tp1.0-e30-noBe-tr30. Breakout, balanced and sweep families rejected. Research-only: no profitability claim; four trading days of journaled levels."
+}
