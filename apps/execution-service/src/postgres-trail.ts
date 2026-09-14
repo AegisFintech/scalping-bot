@@ -761,7 +761,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
             (id, account_id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
              strategy_label, idempotency_key, entry_price, stop_loss, take_profit,
              requested_volume, normalized_volume, expires_at, time_in_force, submission_valid_until, execution_order_type)
-           VALUES ($1, $2, $3, $4, 'STOP', 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12, $13, $14, $15)`,
+           VALUES ($1, $2, $3, $4, $16, 'INTENT', $5, true, $6, $7, $8, $9, $10, $11, $11, $12, $13, $14, $15, $16)`,
           [
             randomUUID(),
             this.#options.accountId,
@@ -778,6 +778,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
             orderTimeInForce(command),
             command.expiresAt,
             pendingOrderType(command),
+            pendingOrderType(command) === "LIMIT" ? "LIMIT" : "STOP",
           ],
         );
       }

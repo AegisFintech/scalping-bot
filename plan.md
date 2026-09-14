@@ -2,6 +2,41 @@
 
 ## Scope
 
+
+### ISSUE-101 — LIMIT pending entry execution layer (plumbing complete; release off)
+
+- Adds `"LIMIT"` to the trusted pending execution intent (`PendingOrderCommand`,
+  `pendingOrderType`, `brokerOrderTypeNumber`) together with `schemas/pending-order-execution-1.1.json`
+  while preserving the immutable 1.0 schema and historical journal rows.
+- `CTraderClient.placeLimit` + `limitProtectionFields` send a single
+  `NEW_ORDER_REQ` payload with `orderType=2`, `limitPrice` and relative SL/TP
+  (no `stopTriggerMethod`). Acknowledgement is type-matched via
+  `brokerOrderTypeNumber` (3 / 6 / 2). Wire + dispatch tests in
+  `tests/ctrader/limit-transport.test.ts`.
+- `CTraderDemoGateway` dispatches LIMIT pairs through the new client method,
+  treats recovered orders as owned when `orderType ∈ {2,3,6}`, and keeps
+  peer-cancel / slippage-monitor / proportional-volume idempotency paths
+  unchanged. Paper gateway fills LIMIT legs only when the market trades
+  through the limit and never on the inverse stop-trigger. Demo + paper
+  tests added.
+- Risk engine threads `executionOrderType` into `PositionRiskInput` and
+  `stopCostReserve`; maker entries omit the entry-price uplift (no adverse
+  fill beyond the limit) while the stop-side reserves remain. Semantic
+  validator gains `entryBrackets` to invert `BUY/SELL_ENTRY_TOO_CLOSE` and
+  the `*_ENTRY_DISTANCE_ATR_EXCEEDED` checks when the brackets rest on the
+  maker side.
+- `migrations/0025_limit_execution.sql` widens the `orders.execution_order_type`
+  and `orders.order_type` CHECK constraints to admit `LIMIT`. Filename +
+  checksum added to `tests/migrations/migrations.test.ts`. No destructive
+  statements, no historical rewrite, no automatic rollback path.
+- Postgres trail emits family column `order_type` as `'LIMIT'` for the new
+  intent while keeping `'STOP'` for STOP/STOP_LIMIT historical rows
+  (`STOP_LIMIT` rows in the past were already stored with the family `'STOP'`).
+- Dependencies: none. Successor: ISSUE-102 flips `executionOrderType` +
+  `entryBrackets` defaults to release-managed fade constants and wires the
+  trend / streak / bracket replacement guards.
+- Evidence: docs/limit-execution-summary.md
+
 ### ISSUE-100 — Variant replay lab and strategy screening (research complete; promotion decided)
 
 - Operator authorized a full review of why demo loses and a drastic redesign

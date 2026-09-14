@@ -161,6 +161,7 @@ function formatError(error: ErrorObject): string {
 
 export interface SemanticContext {
   readonly enforceStrategyLimits?: boolean;
+  readonly entryBrackets?: "STOP" | "LIMIT";
   readonly analysisId: string;
   readonly symbol: string;
   readonly now: Date;
@@ -230,25 +231,51 @@ function checkLeg(
   }
   const risk = entry.minus(stop).abs();
   const reward = target.minus(entry).abs();
+  const brackets = context.entryBrackets === "LIMIT";
   if (side === "BUY") {
     if (!(stop.lt(entry) && target.gt(entry)))
       reasons.push("BUY_LEVEL_ORDER_INVALID");
-    if (entry.lt(ask.plus(minDistance))) reasons.push("BUY_ENTRY_TOO_CLOSE");
-    if (
-      maximumEntryDistance !== null &&
-      entry.minus(ask).gt(maximumEntryDistance)
-    )
-      reasons.push("BUY_ENTRY_DISTANCE_ATR_EXCEEDED");
+    if (brackets) {
+      // BUY limit rests at or below bid−min and must remain within the bid side
+      // of the market; it cannot fill above the bid until price returns.
+      if (entry.gt(bid.minus(minDistance)))
+        reasons.push("BUY_ENTRY_TOO_CLOSE");
+      if (
+        maximumEntryDistance !== null &&
+        bid.minus(entry).gt(maximumEntryDistance)
+      )
+        reasons.push("BUY_ENTRY_DISTANCE_ATR_EXCEEDED");
+    } else {
+      if (entry.lt(ask.plus(minDistance)))
+        reasons.push("BUY_ENTRY_TOO_CLOSE");
+      if (
+        maximumEntryDistance !== null &&
+        entry.minus(ask).gt(maximumEntryDistance)
+      )
+        reasons.push("BUY_ENTRY_DISTANCE_ATR_EXCEEDED");
+    }
     if (!invalidation.lte(entry)) reasons.push("BUY_INVALIDATION_INVALID");
   } else {
     if (!(stop.gt(entry) && target.lt(entry)))
       reasons.push("SELL_LEVEL_ORDER_INVALID");
-    if (entry.gt(bid.minus(minDistance))) reasons.push("SELL_ENTRY_TOO_CLOSE");
-    if (
-      maximumEntryDistance !== null &&
-      bid.minus(entry).gt(maximumEntryDistance)
-    )
-      reasons.push("SELL_ENTRY_DISTANCE_ATR_EXCEEDED");
+    if (brackets) {
+      // SELL limit rests at or above ask+min and remains on the ask side.
+      if (entry.lt(ask.plus(minDistance)))
+        reasons.push("SELL_ENTRY_TOO_CLOSE");
+      if (
+        maximumEntryDistance !== null &&
+        entry.minus(ask).gt(maximumEntryDistance)
+      )
+        reasons.push("SELL_ENTRY_DISTANCE_ATR_EXCEEDED");
+    } else {
+      if (entry.gt(bid.minus(minDistance)))
+        reasons.push("SELL_ENTRY_TOO_CLOSE");
+      if (
+        maximumEntryDistance !== null &&
+        bid.minus(entry).gt(maximumEntryDistance)
+      )
+        reasons.push("SELL_ENTRY_DISTANCE_ATR_EXCEEDED");
+    }
     if (!invalidation.gte(entry)) reasons.push("SELL_INVALIDATION_INVALID");
   }
   if (risk.lt(minDistance)) reasons.push(`${side}_STOP_DISTANCE_TOO_SMALL`);

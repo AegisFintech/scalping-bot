@@ -380,6 +380,12 @@ def main() -> None:
     parser.add_argument("--streak-pause-bars", type=int, default=0)
     parser.add_argument("--limit-pierce-ticks", type=int, default=-1)
     parser.add_argument("--commission-multiplier", default="")
+    parser.add_argument(
+        "--exit-style",
+        default="",
+        choices=["", "STOP_MARKET", "STOP_LIMIT"],
+        help="override exit style for every screened variant",
+    )
     args = parser.parse_args()
 
     artifact: dict[str, Any] = json.loads(args.input.read_text(encoding="utf-8"))
@@ -413,6 +419,9 @@ def main() -> None:
             raise ValueError("VARIANT_FILTER_EMPTY")
     if args.limit_pierce_ticks >= 0:
         variants = [replace(v, limit_pierce_ticks=args.limit_pierce_ticks) for v in variants]
+    if args.exit_style:
+        forced = ExitStyle(args.exit_style)
+        variants = [replace(v, exit=forced) for v in variants]
 
     reports: list[dict[str, Any]] = []
     for spec in variants:
@@ -532,6 +541,7 @@ def main() -> None:
         "overrides": {
             "limit_pierce_ticks": args.limit_pierce_ticks,
             "commission_multiplier": args.commission_multiplier or None,
+            "exit_style": args.exit_style or None,
         },
         "splits": {
             "serial": args.serial,

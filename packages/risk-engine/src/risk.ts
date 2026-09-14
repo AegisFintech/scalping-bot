@@ -20,6 +20,7 @@ export interface PositionRiskInput {
   readonly maxPositionNotional: DecimalString | null;
   readonly metadata: SymbolMetadata;
   readonly adverseSlippagePoints?: DecimalString;
+  readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
 }
 
 export interface PositionRiskDecision {
@@ -236,6 +237,7 @@ export function sizePosition(input: PositionRiskInput): PositionRiskDecision {
           stopLoss: input.stopLoss,
           volume: canonical(volume),
           adverseSlippagePoints: input.adverseSlippagePoints ?? "10",
+          executionOrderType: input.executionOrderType,
         }),
       );
     // Fees may have a minimum. Binary search the monotone cost-inclusive loss on

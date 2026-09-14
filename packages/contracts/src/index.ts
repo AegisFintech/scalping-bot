@@ -344,7 +344,7 @@ export type OpenPositionMonitor =
 export type OrderSide = "BUY" | "SELL";
 
 export interface PendingOrderCommand {
-  readonly executionOrderType?: "STOP" | "STOP_LIMIT";
+  readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly idempotencyKey: string;
   readonly analysisId: string;
   readonly orderGroupId: string;

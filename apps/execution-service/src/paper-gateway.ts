@@ -2,6 +2,7 @@ import {
   orderTimeInForce,
   validateSubmissionDeadline,
 } from "../../../packages/contracts/src/order-lifetime.js";
+import { pendingOrderType } from "../../../packages/contracts/src/order-type.js";
 import { Decimal } from "decimal.js";
 
 import type {
@@ -273,11 +274,12 @@ export class PaperGateway implements ExecutionGateway {
         group.state = "CLOSED";
         continue;
       }
-      const triggered = pending.filter((order) =>
-        order.command.side === "BUY"
-          ? ask.gte(decimal(order.command.entryPrice))
-          : bid.lte(decimal(order.command.entryPrice)),
-      );
+      const triggered = pending.filter((order) => {
+        const level = decimal(order.command.entryPrice);
+        if (pendingOrderType(order.command) === "LIMIT")
+          return order.command.side === "BUY" ? ask.lte(level) : bid.gte(level);
+        return order.command.side === "BUY" ? ask.gte(level) : bid.lte(level);
+      });
       if (triggered.length === 0) continue;
       for (const order of triggered) {
         const requested = decimal(order.command.volume);
@@ -287,12 +289,17 @@ export class PaperGateway implements ExecutionGateway {
             : Decimal.min(decimal(partialVolume), requested);
         const marketPrice = order.command.side === "BUY" ? ask : bid;
         const entry = decimal(order.command.entryPrice);
-        const baseFill =
-          order.command.side === "BUY"
+        const isLimit = pendingOrderType(order.command) === "LIMIT";
+        const baseFill = isLimit
+          ? order.command.side === "BUY"
+            ? Decimal.min(entry, marketPrice)
+            : Decimal.max(entry, marketPrice)
+          : order.command.side === "BUY"
             ? Decimal.max(entry, marketPrice)
             : Decimal.min(entry, marketPrice);
-        const fillPrice =
-          order.command.side === "BUY"
+        const fillPrice = isLimit
+          ? baseFill
+          : order.command.side === "BUY"
             ? baseFill.plus(this.#tickSize.mul(this.#slippagePoints))
             : baseFill.minus(this.#tickSize.mul(this.#slippagePoints));
         const deviation = fillPrice.minus(entry).abs().div(this.#tickSize);

@@ -1,4 +1,7 @@
-import { pendingOrderType } from "../../contracts/src/order-type.js";
+import {
+  brokerOrderTypeNumber,
+  pendingOrderType,
+} from "../../contracts/src/order-type.js";
 import {
   orderTimeInForce,
   validateSubmissionDeadline,
@@ -124,12 +127,15 @@ function relativeProtectionDistance(
   return protocolInteger(canonical(encoded), reason);
 }
 
-export function stopProtectionFields(
+interface RelativeProtection {
+  readonly entryPriceText: string;
+  readonly relativeStopLoss: number;
+  readonly relativeTakeProfit: number;
+}
+
+function validatedRelativeProtection(
   command: PendingOrderCommand,
-  metadata: Pick<SymbolMetadata, "digits">,
-): Omit<StopLimitProtectionFields, "orderType" | "slippageInPoints"> & {
-  readonly orderType: 3;
-} {
+): RelativeProtection {
   const entry = new Decimal(command.entryPrice);
   const stopLoss = new Decimal(command.stopLoss);
   const takeProfit = new Decimal(command.takeProfit);
@@ -147,8 +153,7 @@ export function stopProtectionFields(
     throw new Error("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
   }
   return {
-    orderType: 3,
-    stopPrice: exactProtocolDouble(command.entryPrice, metadata.digits),
+    entryPriceText: command.entryPrice,
     relativeStopLoss: relativeProtectionDistance(
       entry,
       stopLoss,
@@ -159,6 +164,41 @@ export function stopProtectionFields(
       takeProfit,
       "CTRADER_RELATIVE_TAKE_PROFIT_INVALID",
     ),
+  };
+}
+
+export function stopProtectionFields(
+  command: PendingOrderCommand,
+  metadata: Pick<SymbolMetadata, "digits">,
+): Omit<StopLimitProtectionFields, "orderType" | "slippageInPoints"> & {
+  readonly orderType: 3;
+} {
+  const protection = validatedRelativeProtection(command);
+  return {
+    orderType: 3,
+    stopPrice: exactProtocolDouble(protection.entryPriceText, metadata.digits),
+    relativeStopLoss: protection.relativeStopLoss,
+    relativeTakeProfit: protection.relativeTakeProfit,
+  };
+}
+
+export interface LimitProtectionFields {
+  readonly orderType: 2;
+  readonly limitPrice: number;
+  readonly relativeStopLoss: number;
+  readonly relativeTakeProfit: number;
+}
+
+export function limitProtectionFields(
+  command: PendingOrderCommand,
+  metadata: Pick<SymbolMetadata, "digits">,
+): LimitProtectionFields {
+  const protection = validatedRelativeProtection(command);
+  return {
+    orderType: 2,
+    limitPrice: exactProtocolDouble(protection.entryPriceText, metadata.digits),
+    relativeStopLoss: protection.relativeStopLoss,
+    relativeTakeProfit: protection.relativeTakeProfit,
   };
 }
 
@@ -1032,16 +1072,22 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   ): Promise<BrokerExecution> {
     if (pendingOrderType(command) !== "STOP_LIMIT")
       throw new Error("CTRADER_ORDER_EXECUTION_TYPE_MISMATCH");
-    return this.#placePendingStop(command, maxSlippagePoints);
+    return this.#placePendingEntry(command, maxSlippagePoints);
   }
 
   async placeStop(command: PendingOrderCommand): Promise<BrokerExecution> {
     if (pendingOrderType(command) !== "STOP")
       throw new Error("CTRADER_ORDER_EXECUTION_TYPE_MISMATCH");
-    return this.#placePendingStop(command);
+    return this.#placePendingEntry(command);
   }
 
-  async #placePendingStop(
+  async placeLimit(command: PendingOrderCommand): Promise<BrokerExecution> {
+    if (pendingOrderType(command) !== "LIMIT")
+      throw new Error("CTRADER_ORDER_EXECUTION_TYPE_MISMATCH");
+    return this.#placePendingEntry(command);
+  }
+
+  async #placePendingEntry(
     command: PendingOrderCommand,
     maxSlippagePoints?: string,
   ): Promise<BrokerExecution> {
@@ -1051,6 +1097,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     );
     if (metadata === undefined)
       throw new Error("CTRADER_ORDER_SYMBOL_METADATA_MISSING");
+    const kind = pendingOrderType(command);
     const response = await this.#transport.request(
       CTraderPayload.NEW_ORDER_REQ,
       {
@@ -1062,23 +1109,24 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
           metadata.symbolId,
           "CTRADER_SYMBOL_ID_INVALID",
         ),
-        ...(pendingOrderType(command) === "STOP"
+        ...(kind === "STOP"
           ? stopProtectionFields(command, metadata)
-          : stopLimitProtectionFields(command, metadata, maxSlippagePoints!)),
+          : kind === "LIMIT"
+            ? limitProtectionFields(command, metadata)
+            : stopLimitProtectionFields(command, metadata, maxSlippagePoints!)),
         tradeSide: command.side === "BUY" ? 1 : 2,
         volume: protocolInteger(command.volume, "CTRADER_ORDER_VOLUME_INVALID"),
         ...stopLimitLifetimeFields(command),
         label: command.strategyLabel.slice(0, 100),
         clientOrderId: command.clientOrderId.slice(0, 50),
-        stopTriggerMethod: 1,
+        ...(kind === "LIMIT" ? {} : { stopTriggerMethod: 1 }),
       },
       [CTraderPayload.EXECUTION_EVENT],
     );
     const execution = this.#parseExecution(response);
     if (
       execution.order !== null &&
-      numberField(execution.order, "orderType") !==
-        (pendingOrderType(command) === "STOP" ? 3 : 6)
+      numberField(execution.order, "orderType") !== brokerOrderTypeNumber(kind)
     )
       throw new Error("CTRADER_ORDER_TYPE_ACKNOWLEDGEMENT_MISMATCH");
     validateGtcAcknowledgement(command, execution.order);

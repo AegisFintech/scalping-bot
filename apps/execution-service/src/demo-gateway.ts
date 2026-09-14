@@ -1,4 +1,7 @@
-import { pendingOrderType } from "../../../packages/contracts/src/order-type.js";
+import {
+  brokerOrderTypeNumber,
+  pendingOrderType,
+} from "../../../packages/contracts/src/order-type.js";
 import {
   orderTimeInForce,
   validateSubmissionDeadline,
@@ -35,6 +38,7 @@ export interface CTraderTradingClient {
     command: PendingOrderCommand,
     maxSlippagePoints: string,
   ): Promise<BrokerExecution>;
+  placeLimit(command: PendingOrderCommand): Promise<BrokerExecution>;
   cancelOrder(brokerOrderId: string): Promise<BrokerExecution>;
   reconcileRaw(): Promise<RawReconciliation>;
   onExecution(handler: (execution: BrokerExecution) => void): () => void;
@@ -250,7 +254,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
         orders: tracked.map(external),
       };
     }
-    const firstExecution = await this.#placePendingStop(commands[0]);
+    const firstExecution = await this.#placePendingEntry(commands[0]);
     this.#applyExecution(firstExecution);
     if (
       firstExecution.executionType === 3 ||
@@ -283,7 +287,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
           orders: tracked.map(external),
         };
       }
-      const secondExecution = await this.#placePendingStop(commands[1]);
+      const secondExecution = await this.#placePendingEntry(commands[1]);
       this.#applyExecution(secondExecution);
       await this.#options.client.reconcileRaw();
     } catch (error) {
@@ -313,13 +317,14 @@ export class CTraderDemoGateway implements ExecutionGateway {
     };
   }
 
-  #placePendingStop(command: PendingOrderCommand): Promise<BrokerExecution> {
-    return pendingOrderType(command) === "STOP"
-      ? this.#options.client.placeStop(command)
-      : this.#options.client.placeStopLimit(
-          command,
-          this.#options.maxSlippagePoints,
-        );
+  #placePendingEntry(command: PendingOrderCommand): Promise<BrokerExecution> {
+    const kind = pendingOrderType(command);
+    if (kind === "STOP") return this.#options.client.placeStop(command);
+    if (kind === "LIMIT") return this.#options.client.placeLimit(command);
+    return this.#options.client.placeStopLimit(
+      command,
+      this.#options.maxSlippagePoints,
+    );
   }
 
   async #rejectClosedSession(
@@ -389,7 +394,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
           this.#options.strategyLabelPrefix,
         ) ||
         isBrokerGeneratedClosingOrder(order) ||
-        ![3, 6].includes(numberField(order, "orderType"))
+        ![2, 3, 6].includes(numberField(order, "orderType"))
       )
         throw new Error("DEMO_RECOVERED_ORDER_OWNERSHIP_UNCERTAIN");
       const state = stateFromOrder(order);
@@ -581,7 +586,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
       const match = matches[index] as Record<string, unknown>;
       if (
         numberField(match, "orderType") !==
-        (pendingOrderType(command) === "STOP" ? 3 : 6)
+        brokerOrderTypeNumber(pendingOrderType(command))
       )
         throw new Error("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
       return {

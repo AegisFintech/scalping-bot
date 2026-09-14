@@ -86,6 +86,7 @@ describe("migrations", () => {
       "0022_position_protection.sql",
       "0023_local_evidence_storage.sql",
       "0024_entry_recovery.sql",
+      "0025_limit_execution.sql",
     ]);
     const sql = (
       await Promise.all(
