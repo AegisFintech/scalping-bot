@@ -933,13 +933,21 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     symbolId: string,
     timeframe: Timeframe,
     count: number,
+    toTimestampMs?: number,
   ): Promise<readonly Candle[]> {
     if (!Number.isSafeInteger(count) || count < 1 || count > 5_000)
       throw new Error("CTRADER_CANDLE_COUNT_INVALID");
+    if (
+      toTimestampMs !== undefined &&
+      (!Number.isSafeInteger(toTimestampMs) || toTimestampMs < 1)
+    )
+      throw new Error("CTRADER_CANDLE_TO_TIMESTAMP_INVALID");
     const server = new Date(await this.getServerTime()).getTime();
     const period = PERIOD[timeframe];
+    const upperBound =
+      toTimestampMs === undefined ? server : Math.min(server, toTimestampMs);
     const completedBoundary =
-      Math.floor(server / period.milliseconds) * period.milliseconds;
+      Math.floor(upperBound / period.milliseconds) * period.milliseconds;
     const response = await this.#transport.request(
       CTraderPayload.GET_TRENDBARS_REQ,
       {
