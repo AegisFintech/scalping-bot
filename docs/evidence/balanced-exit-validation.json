@@ -31,7 +31,17 @@
     "graphify": "updated locally; no external API calls"
   },
   "rollout": {
-    "status": "pending",
-    "blocker": "PM2 daemon is outside the current sandbox writable scope; no live process was changed."
+    "status": "deployed_demo",
+    "release_observed": "0.2.5-market-stop.11",
+    "trial_groups": 2,
+    "trial_trades": 2,
+    "trial_wins": 0,
+    "trial_net_pnl": "-4180.84",
+    "trial_order_distances": ["0.52", "0.53"],
+    "final_positions": 0,
+    "final_pending_orders": 0,
+    "final_session_state": "UNAVAILABLE",
+    "epr_claim_count_at_final_check": 581,
+    "blocker": "Broker session evidence is currently unavailable; new analysis and orders remain fail-closed."
   }
 }

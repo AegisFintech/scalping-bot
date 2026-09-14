@@ -30,5 +30,16 @@ Node run reached 708/712 tests; four existing temporary-environment configuratio
 tests fail because their spawned config process returns empty output under the
 current host runtime. The full Python run reached 160/161; its sole failure is the
 pre-existing GPG encrypted-export fixture. These failures do not exercise exit
-geometry. Demo rollout is pending because the current sandbox cannot access the
-running PM2 daemon outside the workspace.
+geometry. The release was subsequently restarted on the demo host.
+
+## Demo observation
+
+Two `.11` order groups were recorded before the broker session became
+unavailable. Both filled on the SELL side and closed about two seconds later;
+both were net losses: **−$1,919.59** with order SL/TP **0.52 / 0.52**, and
+**−$2,261.25** with order SL/TP **0.53 / 0.53**. The 0.01 difference is broker
+tick/fee-aware rounding, not a code-side reversal error. The combined result was
+**2 losses / 2 trades** and **−$4,180.84 net**, far too small a sample to judge
+the new geometry. The fast exits show that equal distances do not by themselves
+solve entry timing, slippage or adverse short-term movement. At the final check
+there were no open positions and no pending orders; no existing order was amended.

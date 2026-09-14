@@ -2,7 +2,7 @@
 
 ## Scope
 
-### ISSUE-099 — Balanced 1:1 exit trial (implemented locally; demo rollout pending)
+### ISSUE-099 — Balanced 1:1 exit trial (implemented and deployed to demo)
 
 - Operator requested the smallest trial after the observed 0.53 TP / 1.06 SL
   payoff required an unsustainably high break-even win rate.
@@ -13,6 +13,9 @@
   and TypeScript validation pass; demo rollout and full required gates remain.
 - Report: [balanced exit trial](docs/balanced-exit-trial-report.md).
 - Validation: [exact checks](docs/evidence/balanced-exit-validation.json).
+- Demo recorded two `.11` groups, both fast SELL losses, with broker-rounded
+  equal 0.52/0.53 distances; no position or pending order remained at final check.
+  Session evidence is currently unavailable, so new analysis/orders are blocked.
 
 ### ISSUE-098 — Broker-session gate for new analysis and orders (implemented; deployed to demo)
 
