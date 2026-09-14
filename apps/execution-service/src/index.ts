@@ -13,6 +13,7 @@ import {
   resolveRuntimeEnvironment,
   POLICY_VERSION,
   executionRiskPolicy,
+  FADE_LIMIT_RELEASE,
   STOP_EXECUTION_POLICY,
 } from "../../../packages/config/src/policy.js";
 
@@ -324,7 +325,11 @@ async function main(): Promise<void> {
     throw new Error("SHADOW_OR_LIVE_MODE_REQUIRES_LIVE_DATA_CONNECTION");
   }
   const configHash = safetyConfigHash(config);
-  const strategyVersion = environment.STRATEGY_VERSION ?? "0.1.0";
+  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.1";
+  const fadeLimitActive = strategyVersion.startsWith("0.3.0");
+  const activeExecutionPolicy = fadeLimitActive
+    ? FADE_LIMIT_RELEASE
+    : STOP_EXECUTION_POLICY;
   const identity = await ensureRuntimeIdentity(pool, {
     accountKey: config.accountKey,
     provider: config.tradingMode === "paper" ? "paper" : "ctrader",
@@ -461,8 +466,8 @@ async function main(): Promise<void> {
   let capitalRiskCap = "0";
   const capitalRiskStore = new CapitalRiskStore(pool);
   const risk = new OcoRiskEvaluator({
-    executionOrderType: STOP_EXECUTION_POLICY.orderType,
-    adverseSlippagePoints: STOP_EXECUTION_POLICY.adverseSlippagePoints,
+    executionOrderType: activeExecutionPolicy.orderType,
+    adverseSlippagePoints: activeExecutionPolicy.adverseSlippagePoints,
     timeInForce: ORDER_LIFECYCLE.timeInForce,
     riskMultiplier: () => capitalMultiplier,
     riskPercentCap: () => capitalRiskCap,
@@ -1113,7 +1118,11 @@ async function main(): Promise<void> {
     promptVersion: "entry-pair-execution-v1",
     schemaVersion: "2.1",
     strategyVersion,
-    minRiskRewardRatio: config.minRiskRewardRatio,
+    minRiskRewardRatio: fadeLimitActive
+      ? FADE_LIMIT_RELEASE.minRiskRewardRatio
+      : config.minRiskRewardRatio,
+    entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
+    executionOrderType: fadeLimitActive ? "LIMIT" : "STOP",
     minimumExpectedNetToFeesRatio: config.minimumExpectedNetToFeesRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
