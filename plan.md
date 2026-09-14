@@ -2,6 +2,21 @@
 
 ## Scope
 
+### ISSUE-099 — Balanced 1:1 exit trial (implemented and deployed to demo)
+
+- Operator requested the smallest trial after the observed 0.53 TP / 1.06 SL
+  payoff required an unsustainably high break-even win rate.
+- New setups use equal 0.53-class TP and SL distances through the existing
+  deterministic fee-aware transform. Dynamic current-equity sizing and the shared
+  1% setup ceiling remain unchanged; accepted broker orders are never amended.
+- Historical transform records remain readable in the dashboard. Focused tests
+  and TypeScript validation pass; demo rollout and full required gates remain.
+- Report: [balanced exit trial](docs/balanced-exit-trial-report.md).
+- Validation: [exact checks](docs/evidence/balanced-exit-validation.json).
+- Demo recorded two `.11` groups, both fast SELL losses, with broker-rounded
+  equal 0.52/0.53 distances; no position or pending order remained at final check.
+  Session evidence is currently unavailable, so new analysis/orders are blocked.
+
 ### ISSUE-098 — Broker-session gate for new analysis and orders (implemented; deployed to demo)
 
 - Issue: [#226](https://github.com/AegisFintech/scalping-bot/issues/226).

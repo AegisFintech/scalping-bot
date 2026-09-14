@@ -1,0 +1,47 @@
+{
+  "issue": "ISSUE-099",
+  "release": "0.2.5-market-stop.11",
+  "behavior": {
+    "stop_loss_to_take_profit_ratio": "1",
+    "effective_risk_reward_ratio": "1",
+    "existing_orders_amended": false,
+    "shared_setup_risk_percent": "1"
+  },
+  "checks": {
+    "focused_node_tests": { "tests": 66, "passed": true },
+    "typescript": true,
+    "eslint": true,
+    "prettier": true,
+    "schema_tests": { "tests": 55, "passed": true },
+    "migration_tests": { "tests": 3, "passed": true },
+    "dashboard_python_tests": { "tests": 58, "passed": true },
+    "full_node_tests": {
+      "passed": 708,
+      "total": 712,
+      "passed": false,
+      "failure": "Four existing temporary-environment configuration tests return empty spawned-process output under the current host runtime."
+    },
+    "full_python_tests": {
+      "passed": 160,
+      "total": 161,
+      "passed": false,
+      "failure": "Existing GPG encrypted-export fixture fails on this host."
+    },
+    "secret_scan": "not rerun after this change; no secrets added",
+    "graphify": "updated locally; no external API calls"
+  },
+  "rollout": {
+    "status": "deployed_demo",
+    "release_observed": "0.2.5-market-stop.11",
+    "trial_groups": 2,
+    "trial_trades": 2,
+    "trial_wins": 0,
+    "trial_net_pnl": "-4180.84",
+    "trial_order_distances": ["0.52", "0.53"],
+    "final_positions": 0,
+    "final_pending_orders": 0,
+    "final_session_state": "UNAVAILABLE",
+    "epr_claim_count_at_final_check": 581,
+    "blocker": "Broker session evidence is currently unavailable; new analysis and orders remain fail-closed."
+  }
+}

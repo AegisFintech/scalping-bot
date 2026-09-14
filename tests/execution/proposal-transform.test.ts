@@ -126,7 +126,7 @@ describe("commission-aware exit transform", () => {
     );
     expect(impossible.accepted).toBe(false);
   });
-  it("chooses the first fee-buffered pip and sets SL to twice TP", () => {
+  it("chooses the first fee-buffered pip and sets SL equal to TP", () => {
     const original = response();
     const result = applyCommissionAwareExitPolicy(
       original,
@@ -139,17 +139,17 @@ describe("commission-aware exit transform", () => {
     expect(result).toMatchObject({ accepted: true, reasonCodes: [] });
     expect(result.response?.buy_stop).toMatchObject({
       entry_price: "4444",
-      stop_loss: "4442.92",
+      stop_loss: "4443.46",
       take_profit: "4444.54",
-      invalidation_price: "4442.92",
-      risk_reward_ratio: "0.5",
+      invalidation_price: "4443.46",
+      risk_reward_ratio: "1",
     });
     expect(result.response?.sell_stop).toMatchObject({
       entry_price: "4443",
-      stop_loss: "4444.08",
+      stop_loss: "4443.54",
       take_profit: "4442.46",
-      invalidation_price: "4444.08",
-      risk_reward_ratio: "0.5",
+      invalidation_price: "4443.54",
+      risk_reward_ratio: "1",
     });
     expect(result.details?.buy).toMatchObject({
       pip_size: "0.01",
@@ -158,7 +158,7 @@ describe("commission-aware exit transform", () => {
       total_estimated_fees: "0.2666562",
       required_minimum_net_profit: "0.2666562",
       expected_net_profit: "0.2733438",
-      stop_loss_distance: "1.08",
+      stop_loss_distance: "0.54",
     });
     expect(result.details?.sell.take_profit_pips).toBe("54");
     expect(original.buy_stop.take_profit).toBe("4445");
@@ -179,7 +179,7 @@ describe("commission-aware exit transform", () => {
       accepted: true,
       reasonCodes: [],
       takeProfitDistance: "0.54",
-      stopLossDistance: "1.08",
+      stopLossDistance: "0.54",
     });
   });
 

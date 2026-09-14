@@ -13,8 +13,8 @@ import {
   type CommissionCoverageEvidence,
 } from "../../../packages/risk-engine/src/index.js";
 
-export const STOP_LOSS_TO_TAKE_PROFIT_RATIO = "2";
-export const COMMISSION_AWARE_RISK_REWARD_RATIO = "0.5";
+export const STOP_LOSS_TO_TAKE_PROFIT_RATIO = "1";
+export const COMMISSION_AWARE_RISK_REWARD_RATIO = "1";
 
 function pipBound(
   stopDistance: string,
@@ -39,7 +39,7 @@ export interface CommissionAwareTransformLegDetails extends CommissionCoverageEv
   readonly original_invalidation_price: string;
   readonly effective_invalidation_price: string;
   readonly original_risk_reward_ratio: string;
-  readonly effective_risk_reward_ratio: "0.5";
+  readonly effective_risk_reward_ratio: "1";
   readonly stop_loss_distance: string;
 }
 
@@ -48,8 +48,8 @@ export interface CommissionAwareTransformDetails {
   readonly commission_type: "USD_PER_MILLION_USD";
   readonly commission_rate: string;
   readonly commission_basis_volume: string;
-  readonly stop_loss_to_take_profit_ratio: "2";
-  readonly effective_risk_reward_ratio: "0.5";
+  readonly stop_loss_to_take_profit_ratio: "1";
+  readonly effective_risk_reward_ratio: "1";
   readonly minimum_expected_net_to_fees_ratio: string;
   readonly buy: CommissionAwareTransformLegDetails;
   readonly sell: CommissionAwareTransformLegDetails;
@@ -298,9 +298,9 @@ export function applyCommissionAwareExitPolicy(
             commission_rate: metadata.commission.rate,
             commission_basis_volume: metadata.minVolume,
             stop_loss_to_take_profit_ratio:
-              STOP_LOSS_TO_TAKE_PROFIT_RATIO as "2",
+              STOP_LOSS_TO_TAKE_PROFIT_RATIO as "1",
             effective_risk_reward_ratio:
-              COMMISSION_AWARE_RISK_REWARD_RATIO as "0.5",
+              COMMISSION_AWARE_RISK_REWARD_RATIO as "1",
             minimum_expected_net_to_fees_ratio: minimumExpectedNetToFeesRatio,
             buy: buy.details,
             sell: sell.details,

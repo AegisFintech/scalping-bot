@@ -633,12 +633,12 @@ describe("analysis coordinator", () => {
     expect(submitted?.[0]).toMatchObject({
       side: "BUY",
       stopLoss: "2000.9",
-      takeProfit: "2001.05",
+      takeProfit: "2001.1",
     });
     expect(submitted?.[1]).toMatchObject({
       side: "SELL",
       stopLoss: "1999.1",
-      takeProfit: "1998.95",
+      takeProfit: "1998.9",
     });
     expect(
       trail.events.some((event) => {
@@ -914,10 +914,10 @@ describe("analysis coordinator", () => {
       minimum_stop_distance: "0.1",
       maximum_stop_distance: "0.5",
       pip_size: "0.01",
-      minimum_fee_buffered_take_profit_distance: "0.05",
+      minimum_fee_buffered_take_profit_distance: "0.1",
       minimum_expected_net_to_fees_ratio: "1",
-      stop_loss_to_take_profit_ratio: "2",
-      effective_risk_reward_ratio: "0.5",
+      stop_loss_to_take_profit_ratio: "1",
+      effective_risk_reward_ratio: "1",
     });
     expect(constraints).not.toHaveProperty("equity");
     expect(constraints).not.toHaveProperty("risk_budget");
@@ -1242,9 +1242,9 @@ describe("analysis coordinator", () => {
     const riskInput = riskEvaluate.mock.calls[0]?.[0];
     expect(riskInput?.quote).toEqual(refreshed.quote);
     expect(riskInput?.response.buy_stop.stop_loss).toBe("2000.9");
-    expect(riskInput?.response.buy_stop.take_profit).toBe("2001.05");
+    expect(riskInput?.response.buy_stop.take_profit).toBe("2001.1");
     expect(riskInput?.response.sell_stop.stop_loss).toBe("1999.1");
-    expect(riskInput?.response.sell_stop.take_profit).toBe("1998.95");
+    expect(riskInput?.response.sell_stop.take_profit).toBe("1998.9");
     expect(place).toHaveBeenCalledOnce();
   });
 
