@@ -329,3 +329,167 @@ export function applyCommissionAwareExitPolicy(
     };
   }
 }
+
+/** ISSUE-102: fade-limit release transform. */
+export interface FadeLimitExitDetails {
+  readonly entry: string;
+  readonly stop: string;
+  readonly target: string;
+  readonly risk_reward: string;
+}
+
+export interface FadeLimitExitResult {
+  readonly accepted: boolean;
+  readonly response: ModelResponse | null;
+  readonly reasonCodes: readonly string[];
+  readonly buy: FadeLimitExitDetails | null;
+  readonly sell: FadeLimitExitDetails | null;
+  readonly details: {
+    readonly code: "FADE_LIMIT_EXIT";
+    readonly atr: string;
+    readonly sl_distance: string;
+    readonly tp_distance: string;
+  } | null;
+}
+
+function alignToTick(price: Decimal, tickSize: Decimal): string {
+  if (price.lte(0) || tickSize.lte(0)) {
+    throw new Error("FADE_LIMIT_TICK_INVALID");
+  }
+  const ticks = price.div(tickSize);
+  return canonical(ticks.toDecimalPlaces(0, 4).mul(tickSize));
+}
+
+function fadeLeg(
+  side: "BUY" | "SELL",
+  level: string,
+  atr: string,
+  slAtr: string,
+  tpAtr: string,
+  maximumStopDistance: string,
+  metadata: SymbolMetadata,
+  expiresAt: string,
+  reasons: string[],
+): { proposal: ModelOrderProposal; details: FadeLimitExitDetails } {
+  const entry = decimal(level);
+  const atrDecimal = decimal(atr);
+  const tick = decimal(metadata.tickSize);
+  if (!entry.gt(0) || !atrDecimal.gt(0)) {
+    throw new Error("FADE_LIMIT_INPUT_INVALID");
+  }
+  const slDistance = decimal(slAtr).mul(atrDecimal);
+  const tpDistance = decimal(tpAtr).mul(atrDecimal);
+  const max = decimal(maximumStopDistance);
+  const sl = side === "BUY" ? entry.minus(slDistance) : entry.plus(slDistance);
+  const tp = side === "BUY" ? entry.plus(tpDistance) : entry.minus(tpDistance);
+  if (slDistance.gt(max)) reasons.push(`${side}_FADE_SL_DISTANCE_EXCEEDS_MAX`);
+  if (tpDistance.gt(max)) reasons.push(`${side}_FADE_TP_DISTANCE_EXCEEDS_MAX`);
+  const slAligned = alignToTick(sl, tick);
+  const tpAligned = alignToTick(tp, tick);
+  if (side === "BUY") {
+    if (!(decimal(slAligned).lt(entry) && decimal(tpAligned).gt(entry)))
+      reasons.push("BUY_FADE_LEVEL_ORDER_INVALID");
+  } else {
+    if (!(decimal(slAligned).gt(entry) && decimal(tpAligned).lt(entry)))
+      reasons.push("SELL_FADE_LEVEL_ORDER_INVALID");
+  }
+  const risk = entry.minus(decimal(slAligned)).abs();
+  const reward = decimal(tpAligned).minus(entry).abs();
+  const rr = risk.gt(0) ? canonical(reward.div(risk)) : "0";
+  return {
+    proposal: {
+      trigger_price: level,
+      entry_price: level,
+      stop_loss: slAligned,
+      take_profit: tpAligned,
+      invalidation_price: slAligned,
+      risk_reward_ratio: rr,
+      expires_at: expiresAt,
+    },
+    details: {
+      entry: level,
+      stop: slAligned,
+      target: tpAligned,
+      risk_reward: rr,
+    },
+  };
+}
+
+export function applyFadeLimitExitPolicy(input: {
+  readonly response: ModelResponse;
+  readonly metadata: SymbolMetadata;
+  readonly atr: string;
+  readonly slAtr: string;
+  readonly tpAtr: string;
+  readonly maximumStopDistance: string;
+}): FadeLimitExitResult {
+  try {
+    const reasonCodes: string[] = [];
+    const buy = fadeLeg(
+      "BUY",
+      input.response.sell_stop.entry_price,
+      input.atr,
+      input.slAtr,
+      input.tpAtr,
+      input.maximumStopDistance,
+      input.metadata,
+      input.response.buy_stop.expires_at,
+      reasonCodes,
+    );
+    const sell = fadeLeg(
+      "SELL",
+      input.response.buy_stop.entry_price,
+      input.atr,
+      input.slAtr,
+      input.tpAtr,
+      input.maximumStopDistance,
+      input.metadata,
+      input.response.buy_stop.expires_at,
+      reasonCodes,
+    );
+    if (reasonCodes.length > 0) {
+      return {
+        accepted: false,
+        response: null,
+        reasonCodes,
+        buy: null,
+        sell: null,
+        details: null,
+      };
+    }
+    const buyDetails = buy.details;
+    const sellDetails = sell.details;
+    return {
+      accepted: true,
+      reasonCodes: [],
+      buy: buyDetails,
+      sell: sellDetails,
+      details: {
+        code: "FADE_LIMIT_EXIT" as const,
+        atr: input.atr,
+        sl_distance: decimal(input.slAtr).mul(decimal(input.atr)).toString(),
+        tp_distance: decimal(input.tpAtr).mul(decimal(input.atr)).toString(),
+      },
+      response: {
+        ...input.response,
+        buy_stop: buy.proposal,
+        sell_stop: sell.proposal,
+        setup_tags: [
+          ...input.response.setup_tags.filter(
+            (tag) => tag !== "DIRECT_ENTRY_PAIR_OCO",
+          ),
+          "DIRECT_FADE_LIMIT_PAIR_OCO",
+        ],
+      },
+    };
+  } catch {
+    return {
+      accepted: false,
+      response: null,
+      reasonCodes: ["FADE_LIMIT_TRANSFORM_INVALID"],
+      buy: null,
+      sell: null,
+      details: null,
+    };
+  }
+}

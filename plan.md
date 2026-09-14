@@ -3,6 +3,47 @@
 ## Scope
 
 
+
+### ISSUE-102 — Fade-limit strategy release 0.3.0-fade-limit.1 (transform ready; observation pending)
+
+- Operator authorized the v0.3.0-fade-limit release: provider prompt continues
+  to emit breakout-style support/resistance levels (`entry-pair-v3`,
+  immutable); the deterministic local transform inverts the legs and
+  sizes SL/TP from a 14-bar M1 ATR (`applyFadeLimitExitPolicy`). The
+  resulting `ModelResponse` keeps schema_version `2.1`, marks the geometry
+  with `DIRECT_FADE_LIMIT_PAIR_OCO`, and binds relative protection to the
+  fade entries via the already-wired LIMIT placement path (ISSUE-101).
+- Release constants in `packages/config/src/policy.ts`: `FADE_LIMIT_RELEASE`
+  carries `orderType:"LIMIT"`, `adverseSlippagePoints:"65"` (calibrated to
+  measured 0.62 average stop-side overshoot), `slAtr:"2.5"` / `tpAtr:"1.0"`,
+  `atrBars:"14"`, `trendFilterBars:"30"` (deferred to next iteration),
+  `bracketRecallBars:"30"` (deferred), `streakLosses:"3"` /
+  `streakPauseMinutes:"60"` (deferred), and `minRiskRewardRatio:"0.3"`
+  allowing the 1:2.5/1:1 fade geometry. Versions bumped to
+  `0.3.0-fade-limit.1` in `strategy_versions` and `code_version`.
+- `executionRiskPolicy` keeps demo `lossLimitsEnforced:false` per
+  ISSUE-094; `schemas/risk-policy-1.0.json` learned the new release as a
+  sibling of `market-stop-v2` for the demo unlock branch without altering
+  historical percentages.
+- Coordinator selects the fade transform when `executionOrderType` is
+  `"LIMIT"`; the existing `applyCommissionAwareExitPolicy` path remains
+  untouched for the `STOP` releases. The transformed geometry is fed
+  through the same `validateSemantics` + `risk.evaluate` + budget
+  re-checks. `OCO` evaluator constructs two LIMIT commands; the
+  `entry-pair` `risk_reward_ratio` is derived from the computed TP/SL
+  pair (≈0.4, accepted against the release's `0.3` threshold).
+- Deferred (planned for the next release iteration: tracked in
+  plan.md / docs/fade-limit-strategy-plan.md, no implementation this PR):
+  30-bar `trendFilterBars` to keep only the trend-following leg,
+  `bracketRecallBars` to cancel owned unfilled LIMIT pendings once their
+  context is stale, and `streakLosses`/`streakPauseMinutes` to admit only
+  after recovery from a 3-loss streak. Each deferred gate has a dedicated
+  plan entry; demo observation of the deployed fade-limit release
+  (ISSUE-103) will inform whether the gates ship or are tuned.
+- Dependencies: ISSUE-101 (LIMIT execution plumbing); plugins: ISSUE-103
+  (deploy + telemetry + observation).
+- Evidence: docs/fade-limit-strategy-report.md, plan.md entry
+
 ### ISSUE-101 — LIMIT pending entry execution layer (plumbing complete; release off)
 
 - Adds `"LIMIT"` to the trusted pending execution intent (`PendingOrderCommand`,

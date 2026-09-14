@@ -18,7 +18,8 @@
         "fixed-risk-v4",
         "direct-entry-v1",
         "market-stop-v1",
-        "market-stop-v2"
+        "market-stop-v2",
+        "0.3.0-fade-limit.1"
       ]
     },
     "mode": {
@@ -61,7 +62,7 @@
       "if": {
         "properties": {
           "version": {
-            "const": "market-stop-v2"
+            "enum": ["market-stop-v2", "0.3.0-fade-limit.1"]
           }
         }
       },

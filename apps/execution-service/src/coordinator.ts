@@ -42,6 +42,7 @@ import type {
 } from "./oco-risk-evaluator.js";
 import {
   applyCommissionAwareExitPolicy,
+  applyFadeLimitExitPolicy,
   COMMISSION_AWARE_RISK_REWARD_RATIO,
   deriveCommissionAwareMinimumDistances,
   STOP_LOSS_TO_TAKE_PROFIT_RATIO,
@@ -271,6 +272,7 @@ export interface CoordinatorOptions {
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
   readonly entryBrackets?: "STOP" | "LIMIT";
+  readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly numericAnalytics?: boolean;
   readonly symbol: string;
   readonly mode: "paper" | "demo" | "shadow" | "live";
@@ -1260,13 +1262,23 @@ export class AnalysisCoordinator {
           decimal(currentRiskConstraints.maxStopDistance),
         ),
       );
-      const transformed = applyCommissionAwareExitPolicy(
-        model.response,
-        decisionSnapshot.metadata,
-        canonical(minimumStopDistance),
-        maximumEffectiveStopDistance,
-        this.#options.minimumExpectedNetToFeesRatio,
-      );
+      const fadeLimitActive = this.#options.executionOrderType === "LIMIT";
+      const transformed = fadeLimitActive
+        ? applyFadeLimitExitPolicy({
+            response: model.response,
+            metadata: decisionSnapshot.metadata,
+            atr,
+            slAtr: "2.5",
+            tpAtr: "1.0",
+            maximumStopDistance: maximumEffectiveStopDistance,
+          })
+        : applyCommissionAwareExitPolicy(
+            model.response,
+            decisionSnapshot.metadata,
+            canonical(minimumStopDistance),
+            maximumEffectiveStopDistance,
+            this.#options.minimumExpectedNetToFeesRatio,
+          );
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",
