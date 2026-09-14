@@ -1654,8 +1654,15 @@ def take_profit_transform_view(
             transform.get("commission_type") != "USD_PER_MILLION_USD"
             or not isinstance(transform.get("commission_rate"), str)
             or not isinstance(transform.get("commission_basis_volume"), str)
-            or transform.get("stop_loss_to_take_profit_ratio") != "2"
-            or transform.get("effective_risk_reward_ratio") != "0.5"
+            or (
+                transform.get("stop_loss_to_take_profit_ratio") == "2"
+                and transform.get("effective_risk_reward_ratio") != "0.5"
+            )
+            or (
+                transform.get("stop_loss_to_take_profit_ratio") == "1"
+                and transform.get("effective_risk_reward_ratio") != "1"
+            )
+            or transform.get("stop_loss_to_take_profit_ratio") not in {"1", "2"}
         ):
             raise DecisionViewError("DECISION_VIEW_TP_TRANSFORM_INVALID")
         if fee_buffered and not isinstance(

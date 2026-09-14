@@ -1,6 +1,10 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.10`, policy `market-stop-v2`.
+Current source: `0.2.5-market-stop.11`, policy `market-stop-v2`.
+
+ISSUE-099 changes only new exit transformation to equal TP/SL distance. Existing
+broker orders and historical transform records retain their original values.
+See [the balanced exit trial](balanced-exit-trial-report.md).
 
 ISSUE-095 proves terminal protective outcomes per position, resolves filled or
 cancelled child markers, and supplies exact terminal entry orders to the gateway

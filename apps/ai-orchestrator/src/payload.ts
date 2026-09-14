@@ -33,8 +33,8 @@ export interface ModelPayloadInput {
     readonly pipSize: string;
     readonly minimumFeeBufferedTakeProfitDistance: string;
     readonly minimumExpectedNetToFeesRatio: string;
-    readonly stopLossToTakeProfitRatio: "2";
-    readonly effectiveRiskRewardRatio: "0.5";
+    readonly stopLossToTakeProfitRatio: "1";
+    readonly effectiveRiskRewardRatio: "1";
     readonly maxAffordableStopDistance: string;
     readonly maxStopDistanceAtr: string;
     readonly maxEntryDistanceAtr: string;

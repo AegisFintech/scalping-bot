@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.10` uses policy `market-stop-v2` in
+Release `0.2.5-market-stop.11` uses policy `market-stop-v2` in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
@@ -24,6 +24,10 @@ The original observe/replay tools remain separate research utilities.
 The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
+
+ISSUE-099 uses equal stop-loss and take-profit distances for new demo setups;
+this is a release-level strategy change with no new environment key. Existing
+orders are not amended. See [the trial report](balanced-exit-trial-report.md).
 
 ## Broker-session policy (ISSUE-098)
 
