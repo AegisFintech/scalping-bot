@@ -98,16 +98,19 @@ export function stopCostReserve(input: {
   readonly stopLoss: string;
   readonly volume: string;
   readonly adverseSlippagePoints: string;
+  readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT" | undefined;
 }): Decimal {
   const tick = decimal(input.metadata.tickSize);
   const points = decimal(input.adverseSlippagePoints);
   if (!points.isInteger() || points.lte(0) || tick.lte(0))
     throw new Error("RISK_SLIPPAGE_RESERVE_INVALID");
   const adverseDistance = tick.mul(points);
+  // A maker LIMIT entry cannot fill adversely beyond its limit price; the
+  // adverse-distance lift then models only the stop-side execution risk.
   const price = Decimal.max(
     decimal(input.entryPrice),
     decimal(input.stopLoss),
-  ).plus(adverseDistance);
+  ).plus(input.executionOrderType === "LIMIT" ? decimal("0") : adverseDistance);
   const volume = decimal(input.volume);
   const adverseLoss = decimal(input.entryPrice)
     .minus(decimal(input.stopLoss))

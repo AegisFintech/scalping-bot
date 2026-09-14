@@ -65,7 +65,12 @@ function event(
     order: {
       orderId: command.side === "BUY" ? "101" : "102",
       orderStatus,
-      orderType: command.executionOrderType === "STOP" ? 3 : 6,
+      orderType:
+        command.executionOrderType === "STOP"
+          ? 3
+          : command.executionOrderType === "LIMIT"
+            ? 2
+            : 6,
       clientOrderId: command.clientOrderId,
       executedVolume: "0",
       tradeData: {
@@ -87,6 +92,7 @@ class MockClient implements CTraderTradingClient {
   readonly tradePermission = true;
   readonly orders: Record<string, unknown>[] = [];
   readonly cancelled: string[] = [];
+  readonly limitOrders: string[] = [];
   readonly placementSlippagePoints: string[] = [];
   failSecond = false;
   #handler: ((execution: BrokerExecution) => void) | null = null;
@@ -101,6 +107,16 @@ class MockClient implements CTraderTradingClient {
   placeStop(order: PendingOrderCommand): Promise<BrokerExecution> {
     if (this.failSecond && order.side === "SELL")
       return Promise.reject(new Error("broker rejected"));
+    const result = event(order, 1);
+    this.orders.push(result.order as Record<string, unknown>);
+    this.#handler?.(result);
+    return Promise.resolve(result);
+  }
+
+  placeLimit(order: PendingOrderCommand): Promise<BrokerExecution> {
+    if (this.failSecond && order.side === "SELL")
+      return Promise.reject(new Error("broker rejected"));
+    this.limitOrders.push(order.clientOrderId);
     const result = event(order, 1);
     this.orders.push(result.order as Record<string, unknown>);
     this.#handler?.(result);
@@ -730,5 +746,46 @@ describe("broker session at each demo order submission", () => {
     await gateway.cancelStrategyOrder("client-BUY", "TEST_EMERGENCY");
     expect(client.cancelled).toContain("101");
     expect(check).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("ordinary LIMIT demo OCO", () => {
+  const pair = (): [PendingOrderCommand, PendingOrderCommand] => [
+    { ...command("BUY"), executionOrderType: "LIMIT", timeInForce: "GTC" },
+    { ...command("SELL"), executionOrderType: "LIMIT", timeInForce: "GTC" },
+  ];
+  const gateway = (client: MockClient) =>
+    new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "30",
+      maxSlippageBps: "2",
+    });
+  it("dispatches LIMIT legs as broker type 2 and keeps peer cancellation", async () => {
+    const client = new MockClient();
+    const g = gateway(client);
+    const commands = pair();
+    await g.placeOco(commands);
+    expect(client.limitOrders).toEqual(["client-BUY", "client-SELL"]);
+    expect(client.orders.map((o) => o.orderType)).toEqual([2, 2]);
+    expect(client.placementSlippagePoints).toEqual([]);
+    expect((await g.placeOco(commands)).idempotentReplay).toBe(true);
+    client.fill("client-BUY", 2001.15);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+    expect((await g.reconcile("XAUUSD")).certain).toBe(true);
+  });
+  it("flags an adverse limit fill beyond the modeled reserve", async () => {
+    const client = new MockClient();
+    const g = gateway(client);
+    await g.placeOco(pair());
+    client.fill("client-BUY", 2001.65);
+    await vi.waitFor(() => expect(client.cancelled).toEqual(["102"]));
+    const state = await g.reconcile("XAUUSD");
+    expect(state.certain).toBe(false);
+    expect(state.reasonCodes).toContain("DEMO_FILL_SLIPPAGE_EXCEEDED");
   });
 });

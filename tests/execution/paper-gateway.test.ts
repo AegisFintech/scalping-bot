@@ -120,3 +120,70 @@ describe("GTC lifecycle (synthetic, no broker or performance evidence)", () => {
     );
   });
 });
+
+describe("paper gateway limit entries", () => {
+  function limitCommands(): [PendingOrderCommand, PendingOrderCommand] {
+    const base = {
+      analysisId: "analysis-2",
+      orderGroupId: "group-limit",
+      symbol: "XAUUSD",
+      volume: "10",
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      strategyLabel: "scalper:v1",
+      executionOrderType: "LIMIT" as const,
+    };
+    return [
+      {
+        ...base,
+        idempotencyKey: "buy-limit-key",
+        clientOrderId: "buy-limit",
+        side: "BUY",
+        entryPrice: "99",
+        stopLoss: "97",
+        takeProfit: "101",
+      },
+      {
+        ...base,
+        idempotencyKey: "sell-limit-key",
+        clientOrderId: "sell-limit",
+        side: "SELL",
+        entryPrice: "103",
+        stopLoss: "105",
+        takeProfit: "101",
+      },
+    ];
+  }
+
+  it("does not fill a resting buy limit while the stop trigger would fire", async () => {
+    const gateway = new PaperGateway();
+    await gateway.placeOco(limitCommands());
+    const changes = gateway.processQuote(
+      "XAUUSD",
+      "100.90",
+      "101.00",
+      new Date(),
+    );
+    expect(
+      changes.find((order) => order.clientOrderId === "buy-limit")?.state,
+    ).toBeUndefined();
+  });
+
+  it("fills the limit leg at its price when the market trades through and cancels the peer", async () => {
+    const gateway = new PaperGateway();
+    await gateway.placeOco(limitCommands());
+    const changes = gateway.processQuote(
+      "XAUUSD",
+      "98.90",
+      "99.00",
+      new Date(),
+    );
+    const filled = changes.find(
+      (order) => order.clientOrderId === "buy-limit",
+    );
+    expect(filled?.state).toBe("FILLED");
+    expect(
+      changes.find((order) => order.clientOrderId === "sell-limit")?.state,
+    ).toBe("CANCELLED");
+    expect((await gateway.reconcile("XAUUSD")).relevantPositionCount).toBe(1);
+  });
+});

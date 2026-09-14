@@ -270,6 +270,7 @@ export interface CoordinatorOptions {
   readonly marketSession?: () => Promise<MarketSessionStatus>;
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
+  readonly entryBrackets?: "STOP" | "LIMIT";
   readonly numericAnalytics?: boolean;
   readonly symbol: string;
   readonly mode: "paper" | "demo" | "shadow" | "live";
@@ -1176,6 +1177,7 @@ export class AnalysisCoordinator {
       const now = new Date();
       const semanticContext = {
         enforceStrategyLimits: !this.#options.entryPairMode,
+        entryBrackets: this.#options.entryBrackets ?? "STOP",
         analysisId,
         symbol: this.#options.symbol,
         now,

@@ -34,7 +34,7 @@ export interface OcoRiskEvaluatorOptions {
   readonly maxMarginUsagePercent: string;
   readonly maxPositionNotional: string | null;
   readonly strategyVersion: string;
-  readonly executionOrderType?: "STOP" | "STOP_LIMIT";
+  readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly adverseSlippagePoints?: string;
   readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabelPrefix?: string;
@@ -197,6 +197,9 @@ export class OcoRiskEvaluator {
         maxPositionNotional: this.#options.maxPositionNotional,
         metadata: input.metadata,
         adverseSlippagePoints: this.#options.adverseSlippagePoints ?? "10",
+        ...(this.#options.executionOrderType === undefined
+          ? {}
+          : { executionOrderType: this.#options.executionOrderType }),
       };
       const leg = (
         entryPrice: string,
