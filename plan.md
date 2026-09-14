@@ -4,6 +4,42 @@
 
 
 
+
+### ISSUE-103 — 0.3.0-fade-limit.1 deploy and demo observation
+
+- Deploy procedure: after ISSUE-100/101/102 are merged, pause new
+  analyses (`runtime_controls.PAUSE_NEW_ANALYSES`), apply migrations
+  (`db:migrate` rolls the 0024 → 0025 drop/recreate of
+  `orders.execution_order_type_check` / `orders.order_type_check`),
+  redeploy services (`pm2 restart scalper-execution
+  scalper-market-data scalper-ai`), and resume (`PAUSE_NEW_ANALYSES`
+  enabled=false). The release defaults to `"0.3.0-fade-limit.1"`
+  (`STRATEGY_VERSION ??= "0.3.0-fade-limit.1"`).
+- Telemetry: `scripts/summarize-demo-trades.ts` reads the existing
+  `trades / orders / fills / capital_risk_state` audit and prints a
+  per-day + per-release summary with realised entry slippage and stop
+  overshoot (`artifacts/demo-trade-summary.json`). Pair it with the
+  protective `DEMO_FILL_SLIPPAGE_EXCEEDED` latch and `setup_statistics`
+  decay tables for the existing slippage/commission evidence surface.
+- Observation gates:
+  * Daily net P&L positive on 3+ of the first 5 demo sessions;
+  * `avg_stop_overshoot_vs_sl` p50 ≤ modeled 0.65 price units (matches
+    the calibrated reserve);
+  * `avg_entry_slippage_vs_trigger` p50 ≤ 0.10 price units (maker fills
+    resting at or beyond the level);
+  * holdout `per_release` net positive for `"0.3.0-fade-limit.1"`.
+- Promotion criteria: when observation gates pass for 20 demo sessions,
+  the operator may proceed with the deferred policy gates
+  (`trendFilterBars:30`, `bracketRecallBars:30`, `streakLosses:3 /
+  streakPauseMinutes:60`) per ISSUE-102b. Until then, ISSUE-103 keeps the
+  `.10` branch on by default and `EMERGENCY_STOP_FILE` covers
+  forced shutdown.
+- Dependencies: ISSUE-100 (evidence), ISSUE-101 (LIMIT plumbing),
+  ISSUE-102 (fade-limit transform).
+- Successors: ISSUE-102b deferred gates; paid historical level replay
+  benchmark (out-of-sample validation across the 8-week backfill).
+- Evidence: docs/demo-observation.md, artifacts/demo-trade-summary.json
+
 ### ISSUE-102 — Fade-limit strategy release 0.3.0-fade-limit.1 (transform ready; observation pending)
 
 - Operator authorized the v0.3.0-fade-limit release: provider prompt continues
