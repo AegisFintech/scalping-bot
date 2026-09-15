@@ -779,6 +779,11 @@ async function main(): Promise<void> {
     gateway,
     config.symbol,
     identity,
+    {
+      bracketRecallBars: fadeLimitActive
+        ? Number(FADE_LIMIT_RELEASE.bracketRecallBars)
+        : 0,
+    },
   );
   const metrics = new MetricsCollector({
     pool,
@@ -827,6 +832,28 @@ async function main(): Promise<void> {
       netFlows: summary.netFlows,
     };
     return summary.netFlows;
+  };
+
+  const computeLossStreakPause = async (
+    streakLosses: number,
+    streakPauseMinutes: number,
+  ): Promise<boolean> => {
+    if (streakLosses <= 0 || streakPauseMinutes <= 0) return false;
+    const streakCount = Math.max(1, streakLosses);
+    const result = await pool.query<{ is_loss: boolean; closed_at: Date }>(
+      `SELECT (realized_pnl <= 0) AS is_loss, closed_at
+       FROM trades
+       WHERE mode = 'demo' AND account_id = $1
+       ORDER BY closed_at DESC
+       LIMIT $2`,
+      [identity.accountId, streakCount],
+    );
+    if (result.rows.length < streakCount) return false;
+    if (!result.rows.every((row) => row.is_loss)) return false;
+    const lastLoss = result.rows[0];
+    if (lastLoss === undefined) return false;
+    const pauseMs = streakPauseMinutes * 60_000;
+    return Date.now() - lastLoss.closed_at.getTime() < pauseMs;
   };
 
   const safety = async (): Promise<SafetyGateInput> => {
@@ -1063,6 +1090,10 @@ async function main(): Promise<void> {
         reconciliationPersisted &&
         demoRecoveryState.certain &&
         demoExecutionState.certain,
+      lossStreakPauseActive: await computeLossStreakPause(
+        fadeLimitActive ? Number(FADE_LIMIT_RELEASE.streakLosses) : 0,
+        fadeLimitActive ? Number(FADE_LIMIT_RELEASE.streakPauseMinutes) : 0,
+      ),
     };
   };
 
@@ -1123,6 +1154,9 @@ async function main(): Promise<void> {
       : config.minRiskRewardRatio,
     entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
     executionOrderType: fadeLimitActive ? "LIMIT" : "STOP",
+    trendFilterBars: fadeLimitActive
+      ? Number(FADE_LIMIT_RELEASE.trendFilterBars)
+      : 0,
     minimumExpectedNetToFeesRatio: config.minimumExpectedNetToFeesRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
@@ -1187,6 +1221,7 @@ async function main(): Promise<void> {
         databaseEmergencyStop: runtime.emergencyStop,
         dashboardAcknowledged: runtime.dashboardAcknowledged,
         pauseNewAnalyses: config.pauseNewAnalyses || runtime.pauseNewAnalyses,
+        lossStreakPauseActive: false,
       };
     },
     ...(demoExecutionRecorder === null
@@ -1593,6 +1628,7 @@ async function main(): Promise<void> {
     )
       await maintenance.cancelAll("INDEPENDENT_EMERGENCY_CANCELLATION");
     try {
+      await maintenance.recallStaleBrackets();
       await maintenance.expireAndReconcile();
     } finally {
       await refreshDemoRecovery();

@@ -9,16 +9,46 @@ export class OrderMaintenance {
   readonly #pool: pg.Pool;
   readonly #gateway: ExecutionGateway;
   readonly #symbol: string;
+  readonly #bracketRecallBars: number;
 
   constructor(
     pool: pg.Pool,
     gateway: ExecutionGateway,
     symbol: string,
     private readonly scope: { accountId: string; symbolId: string },
+    options: { bracketRecallBars?: number } = {},
   ) {
     this.#pool = pool;
     this.#gateway = gateway;
     this.#symbol = symbol;
+    this.#bracketRecallBars = Math.max(0, options.bracketRecallBars ?? 0);
+  }
+
+  async recallStaleBrackets(): Promise<void> {
+    if (this.#bracketRecallBars <= 0) return;
+    // ISSUE-102b: cancel owned unfilled LIMIT pendings whose scenario context
+    // has expired by `bracketRecallBars` M1 bars. The follow-on zero-fill refresh
+    // exception (ISSUE-097/089) admits one fresh request after proven cancel.
+    const result = await this.#pool.query<{
+      client_order_id: string;
+      order_group_id: string;
+      analysis_id: string;
+    }>(
+      `SELECT o.client_order_id, o.order_group_id, og.analysis_id
+       FROM orders o
+       JOIN order_groups og ON og.id = o.order_group_id
+       JOIN analysis_runs ar ON ar.id = og.analysis_id
+       JOIN scenario_contexts sc ON sc.id = og.context_plan_id
+       WHERE ar.account_id = $1
+         AND ar.symbol_id = $2
+         AND o.strategy_owned = true
+         AND o.state IN ('INTENT', 'SUBMITTING', 'PENDING', 'PARTIALLY_FILLED', 'CANCEL_PENDING', 'UNKNOWN')
+         AND sc.valid_until < (now() - ($3 || ' minutes')::interval)
+       LIMIT 100`,
+      [this.scope.accountId, this.scope.symbolId, this.#bracketRecallBars],
+    );
+    if (result.rows.length === 0) return;
+    await this.#cancelRows(result.rows, "BRACKET_CONTEXT_EXPIRED_RECALL");
   }
 
   async expireAndReconcile(): Promise<void> {

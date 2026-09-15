@@ -153,6 +153,7 @@ export interface SafetyGateInput {
   readonly spreadSafe: boolean;
   readonly duplicateFree: boolean;
   readonly criticalAuditAvailable: boolean;
+  readonly lossStreakPauseActive: boolean;
 }
 
 export interface SafetyGateResult {
@@ -184,6 +185,7 @@ function commonReasons(input: SafetyGateInput): string[] {
     [!input.operationalRiskLockout, "OPERATIONAL_RISK_LOCKOUT"],
     [!input.aiCircuitOpen, "AI_CIRCUIT_OPEN"],
     [input.symbolMetadataValid, "SYMBOL_METADATA_INVALID"],
+    [!input.lossStreakPauseActive, "LOSS_STREAK_PAUSE_ACTIVE"],
   ];
   return checks.filter(([accepted]) => !accepted).map(([, reason]) => reason);
 }

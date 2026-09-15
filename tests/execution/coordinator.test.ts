@@ -56,6 +56,7 @@ function safety(): SafetyGateInput {
     spreadSafe: false,
     duplicateFree: true,
     criticalAuditAvailable: true,
+    lossStreakPauseActive: false,
   };
 }
 
