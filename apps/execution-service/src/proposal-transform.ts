@@ -422,12 +422,26 @@ export function applyFadeLimitExitPolicy(input: {
   readonly slAtr: string;
   readonly tpAtr: string;
   readonly maximumStopDistance: string;
+  readonly quote?: { readonly bid: string; readonly ask: string };
 }): FadeLimitExitResult {
   try {
     const reasonCodes: string[] = [];
+    const tickSize = decimal(input.metadata.tickSize);
+    // Clamp the LLM-chosen support / resistance inward so the maker entry
+    // rests one tick on the right side of the current quote even when the
+    // provider output crosses the spread. The fade geometry (SL/TP distances
+    // computed from ATR) is preserved by recentring on the clamped level.
+    const lmmSupport = input.response.sell_stop.entry_price;
+    const lmmResistance = input.response.buy_stop.entry_price;
+    const buyEntry = input.quote
+      ? canonical(decimal(input.quote.bid).minus(tickSize))
+      : lmmSupport;
+    const sellEntry = input.quote
+      ? canonical(decimal(input.quote.ask).plus(tickSize))
+      : lmmResistance;
     const buy = fadeLeg(
       "BUY",
-      input.response.sell_stop.entry_price,
+      buyEntry,
       input.atr,
       input.slAtr,
       input.tpAtr,
@@ -438,7 +452,7 @@ export function applyFadeLimitExitPolicy(input: {
     );
     const sell = fadeLeg(
       "SELL",
-      input.response.buy_stop.entry_price,
+      sellEntry,
       input.atr,
       input.slAtr,
       input.tpAtr,
