@@ -220,7 +220,9 @@ def render_history(model: dict[str, Any]) -> None:
     st.subheader("Closed trades")
     st.caption(
         "Net P&L already includes signed broker fees. "
-        "Model costs are separate and unavailable for legacy trades."
+        "Model costs are separate and unavailable for legacy trades. "
+        "entry_slip is the first fill minus the order trigger (adverse when positive). "
+        "stop_overshoot is the exit fill minus the stop loss (negative when exits fill favourably)."
     )
     if not model["available"]:
         st.warning("Trade history is unavailable.")
@@ -231,6 +233,12 @@ def render_history(model: dict[str, Any]) -> None:
         figure.update_layout(uirevision="trade-history", margin=dict(l=0, r=10, t=20, b=0))
         st.plotly_chart(figure, width="stretch", theme="streamlit", key="history_chart")
         table(model["trades"], "closed_trades")
+        if "execution_order_type" in data.columns:
+            mix = data.groupby(
+                ["strategy_version", "execution_order_type"],
+            ).size().reset_index(name="trades")
+            st.caption("Trade count by release / order type")
+            st.dataframe(mix, hide_index=True, width="stretch")
     else:
         st.info("No closed trades for this account, symbol and mode.")
 

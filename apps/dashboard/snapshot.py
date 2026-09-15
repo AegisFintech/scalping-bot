@@ -144,7 +144,24 @@ def load_snapshot(view: str) -> dict[str, Any]:
             else:
                 data["trades"] = rows(
                     """SELECT t.closed_at, t.direction, t.realized_pnl AS net_pnl,
-                        t.fees, t.strategy_version
+                        t.fees, t.strategy_version,
+                        COALESCE((
+                          SELECT o.execution_order_type FROM orders o
+                          WHERE o.order_group_id = og.id AND o.state = 'FILLED'
+                          LIMIT 1
+                        ), 'STOP') AS execution_order_type,
+                        COALESCE((
+                          SELECT ef.price - o.entry_price
+                          FROM fills ef JOIN orders o ON o.id = ef.order_id
+                          WHERE o.order_group_id = og.id
+                          ORDER BY ef.occurred_at ASC LIMIT 1
+                        ), 0)::numeric AS entry_slip,
+                        COALESCE((
+                          SELECT xf.price - o.stop_loss
+                          FROM fills xf JOIN orders o ON o.id = xf.order_id
+                          WHERE o.order_group_id = og.id AND o.state = 'FILLED'
+                          ORDER BY xf.occurred_at DESC LIMIT 1
+                        ), 0)::numeric AS stop_overshoot
                     FROM trades t JOIN order_groups og ON og.id=t.order_group_id
                     JOIN analysis_runs ar ON ar.id=og.analysis_id
                     WHERE ar.account_id=%s AND ar.symbol_id=%s AND t.mode=%s
