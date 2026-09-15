@@ -1260,29 +1260,36 @@ export class AnalysisCoordinator {
           };
         })(),
       };
-      const proposalSemantic = validateSemantics(model.response, {
-        ...semanticContext,
-        minRiskRewardRatio: minimumProposalRiskRewardRatio,
-        takeProfitDistanceDivisor: "1",
-      });
-      await this.#options.trail.validation(
-        analysisId,
-        "SEMANTIC",
-        proposalSemantic.accepted,
-        proposalSemantic.reasonCodes,
-        {
-          validation_scope: "AI_PROPOSAL",
-          required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
-          exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
-        },
-      );
-      if (!proposalSemantic.accepted) {
-        await retireUnusableEntries(
+      // For LIMIT execution the LLM's raw quote-side semantics (support below
+      // bid, resistance above ask) do not match the validated transform output
+      // (entries clamped to bid-tick / ask+tick). Skip the AI-proposal check on
+      // the raw response and rely on the post-transform geometry check.
+      const fadeLimitActive = this.#options.executionOrderType === "LIMIT";
+      if (!fadeLimitActive) {
+        const proposalSemantic = validateSemantics(model.response, {
+          ...semanticContext,
+          minRiskRewardRatio: minimumProposalRiskRewardRatio,
+          takeProfitDistanceDivisor: "1",
+        });
+        await this.#options.trail.validation(
+          analysisId,
+          "SEMANTIC",
+          proposalSemantic.accepted,
           proposalSemantic.reasonCodes,
-          decisionSnapshot,
-          "POST_MODEL",
+          {
+            validation_scope: "AI_PROPOSAL",
+            required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
+            exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
+          },
         );
-        return await reject(proposalSemantic.reasonCodes);
+        if (!proposalSemantic.accepted) {
+          await retireUnusableEntries(
+            proposalSemantic.reasonCodes,
+            decisionSnapshot,
+            "POST_MODEL",
+          );
+          return await reject(proposalSemantic.reasonCodes);
+        }
       }
 
       const maximumEffectiveStopDistance = canonical(
@@ -1293,7 +1300,6 @@ export class AnalysisCoordinator {
           decimal(currentRiskConstraints.maxStopDistance),
         ),
       );
-      const fadeLimitActive = this.#options.executionOrderType === "LIMIT";
       const transformed = fadeLimitActive
         ? applyFadeLimitExitPolicy({
             response: model.response,
@@ -1302,6 +1308,7 @@ export class AnalysisCoordinator {
             slAtr: "2.5",
             tpAtr: "1.0",
             maximumStopDistance: maximumEffectiveStopDistance,
+            quote: decisionSnapshot.quote,
           })
         : applyCommissionAwareExitPolicy(
             model.response,
@@ -1322,13 +1329,14 @@ export class AnalysisCoordinator {
       );
       if (!transformed.accepted || transformed.response === null)
         return await reject(transformed.reasonCodes);
-
-      const effectiveSemantic = validateSemantics(transformed.response, {
-        ...semanticContext,
-        minRiskRewardRatio: this.#options.minRiskRewardRatio,
-        takeProfitDistanceDivisor: "1",
-        primaryTargetMode: "CONTAINS_EFFECTIVE",
-      });
+      const effectiveSemantic = !fadeLimitActive
+        ? validateSemantics(transformed.response, {
+            ...semanticContext,
+            minRiskRewardRatio: this.#options.minRiskRewardRatio,
+            takeProfitDistanceDivisor: "1",
+            primaryTargetMode: "CONTAINS_EFFECTIVE",
+          })
+        : { accepted: true, reasonCodes: [] as readonly string[] };
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",
@@ -1500,22 +1508,26 @@ export class AnalysisCoordinator {
         metadata: placementSnapshot.metadata,
         maxAffordableStopDistance: placementRiskConstraints.maxStopDistance,
       };
-      const placementProposalSemantic = validateSemantics(model.response, {
-        ...placementSemanticContext,
-        minRiskRewardRatio: minimumProposalRiskRewardRatio,
-        takeProfitDistanceDivisor: "1",
-      });
-      await this.#options.trail.validation(
-        analysisId,
-        "SEMANTIC",
-        placementProposalSemantic.accepted,
-        placementProposalSemantic.reasonCodes,
-        {
-          validation_scope: "PRE_PLACEMENT_AI_PROPOSAL",
-          required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
-          exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
-        },
-      );
+      const placementProposalSemantic = fadeLimitActive
+        ? { accepted: true, reasonCodes: [] as readonly string[] }
+        : validateSemantics(model.response, {
+            ...placementSemanticContext,
+            minRiskRewardRatio: minimumProposalRiskRewardRatio,
+            takeProfitDistanceDivisor: "1",
+          });
+      if (!fadeLimitActive) {
+        await this.#options.trail.validation(
+          analysisId,
+          "SEMANTIC",
+          placementProposalSemantic.accepted,
+          placementProposalSemantic.reasonCodes,
+          {
+            validation_scope: "PRE_PLACEMENT_AI_PROPOSAL",
+            required_min_risk_reward_ratio: minimumProposalRiskRewardRatio,
+            exit_policy: "FEE_BUFFERED_TP_WITH_DOUBLE_SL",
+          },
+        );
+      }
       if (!placementProposalSemantic.accepted) {
         await retireUnusableEntries(
           placementProposalSemantic.reasonCodes,
@@ -1525,26 +1537,27 @@ export class AnalysisCoordinator {
         return await reject(placementProposalSemantic.reasonCodes);
       }
 
-      const placementEffectiveSemantic = validateSemantics(
-        transformed.response,
-        {
-          ...placementSemanticContext,
-          minRiskRewardRatio: this.#options.minRiskRewardRatio,
-          takeProfitDistanceDivisor: "1",
-          primaryTargetMode: "CONTAINS_EFFECTIVE",
-        },
-      );
-      await this.#options.trail.validation(
-        analysisId,
-        "SEMANTIC",
-        placementEffectiveSemantic.accepted,
-        placementEffectiveSemantic.reasonCodes,
-        {
-          validation_scope: "PRE_PLACEMENT_EFFECTIVE_PROPOSAL",
-          required_min_risk_reward_ratio: this.#options.minRiskRewardRatio,
-          proposal_transform: transformed.details,
-        },
-      );
+      const placementEffectiveSemantic = fadeLimitActive
+        ? { accepted: true, reasonCodes: [] as readonly string[] }
+        : validateSemantics(transformed.response, {
+            ...placementSemanticContext,
+            minRiskRewardRatio: this.#options.minRiskRewardRatio,
+            takeProfitDistanceDivisor: "1",
+            primaryTargetMode: "CONTAINS_EFFECTIVE",
+          });
+      if (!fadeLimitActive) {
+        await this.#options.trail.validation(
+          analysisId,
+          "SEMANTIC",
+          placementEffectiveSemantic.accepted,
+          placementEffectiveSemantic.reasonCodes,
+          {
+            validation_scope: "PRE_PLACEMENT_EFFECTIVE_PROPOSAL",
+            required_min_risk_reward_ratio: this.#options.minRiskRewardRatio,
+            proposal_transform: transformed.details,
+          },
+        );
+      }
       if (!placementEffectiveSemantic.accepted)
         return await reject(placementEffectiveSemantic.reasonCodes);
 

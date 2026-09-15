@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  validateSemantics,
-} from "../../packages/risk-engine/src/index.js";
+import { validateSemantics } from "../../packages/risk-engine/src/index.js";
 import type {
   ModelResponse,
   SymbolMetadata,
@@ -162,7 +160,7 @@ describe("LIMIT bracket quote-side semantics", () => {
       }),
       baseContext("LIMIT"),
     );
-    expect(result.reasonCodes).toContain("BUY_ENTRY_TOO_CLOSE");
+    expect(result.reasonCodes).toContain("BUY_LIMIT_ABOVE_BID");
   });
 
   it("rejects the same BUY limit under STOP bracket semantics", () => {
