@@ -6,6 +6,31 @@
 
 
 
+
+### ISSUE-103b — Demo trade-history telemetry: order type + slippage columns
+
+- `apps/dashboard/snapshot.py` enriches the `trades` query with
+  `execution_order_type`, `entry_slip` (first fill - trigger), and
+  `stop_overshoot` (last fill - stop_loss). Each is subqueried against
+  `orders` + `fills`, defaulting to `'STOP'` / `0` for legacy rows where
+  the column didn't exist. The query stays bounded by the existing
+  1000-row trade limit.
+- `apps/dashboard/app.py` shows the new columns in the Trade history table
+  caption + a "Trade count by release / order type" mini-table grouping
+  by `strategy_version` × `execution_order_type`. Cumulative P&L chart
+  unchanged.
+- `scripts/summarize-demo-trades.ts` adds a
+  `per_release_per_execution_type` field to the artifact with the same
+  slip metrics plus fees and win/loss totals. Run after every restart
+  to confirm the fade-limit release is producing lower entry_slip than
+  the legacy `STOP` releases.
+- Plan: this PR is observability only — no broker wiring change, no
+  safety gate change.
+- Dependencies: ISSUE-103 (demo deploy), ISSU-101 (LIMIT plumbing),
+  ISSU-102b (deferred gates).
+- Evidence: artifacts/demo-trade-summary.json (gitignored), per-release
+  × execution type breakdown captured in CI.
+
 ### ISSUE-102b — Fade-limit deferred admission gates (trend / bracket recall / loss-streak pause)
 
 - All three deferred gates from ISSU-102 land here. The release now ships
