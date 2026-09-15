@@ -236,10 +236,10 @@ function checkLeg(
     if (!(stop.lt(entry) && target.gt(entry)))
       reasons.push("BUY_LEVEL_ORDER_INVALID");
     if (brackets) {
-      // BUY limit rests at or below bid−min and must remain within the bid side
-      // of the market; it cannot fill above the bid until price returns.
-      if (entry.gt(bid.minus(minDistance)))
-        reasons.push("BUY_ENTRY_TOO_CLOSE");
+      // BUY limit may rest anywhere at or below the bid; the placement
+      // engine considers an immediate fill at the maker side acceptable.
+      if (entry.gt(bid))
+        reasons.push("BUY_LIMIT_ABOVE_BID");
       if (
         maximumEntryDistance !== null &&
         bid.minus(entry).gt(maximumEntryDistance)
@@ -259,9 +259,8 @@ function checkLeg(
     if (!(stop.gt(entry) && target.lt(entry)))
       reasons.push("SELL_LEVEL_ORDER_INVALID");
     if (brackets) {
-      // SELL limit rests at or above ask+min and remains on the ask side.
-      if (entry.lt(ask.plus(minDistance)))
-        reasons.push("SELL_ENTRY_TOO_CLOSE");
+      if (entry.lt(ask))
+        reasons.push("SELL_LIMIT_BELOW_ASK");
       if (
         maximumEntryDistance !== null &&
         entry.minus(ask).gt(maximumEntryDistance)
