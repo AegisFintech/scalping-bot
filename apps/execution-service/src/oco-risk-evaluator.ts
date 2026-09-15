@@ -146,6 +146,7 @@ export class OcoRiskEvaluator {
     readonly account: AccountState;
     readonly metadata: SymbolMetadata;
     readonly quote: Quote;
+    readonly trend?: -1 | 0 | 1;
   }): Promise<OcoEvaluation> {
     if (!input.account.certain) return this.#reject("RISK_ACCOUNT_UNCERTAIN");
     if (
@@ -155,6 +156,10 @@ export class OcoRiskEvaluator {
       input.account.hasCancellationPending
     )
       return this.#reject("RISK_EXISTING_EXPOSURE");
+    const trend = input.trend ?? 0;
+    const trendActive =
+      this.#options.executionOrderType === "LIMIT" && trend === 0;
+    if (trendActive) return this.#reject("FADE_LIMIT_TREND_UNCLEAR");
     try {
       const minimum = input.metadata.minVolume;
       const [buyMinimumMargin, sellMinimumMargin] = await Promise.all([

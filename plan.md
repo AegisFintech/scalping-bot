@@ -5,6 +5,41 @@
 
 
 
+
+### ISSUE-102b — Fade-limit deferred admission gates (trend / bracket recall / loss-streak pause)
+
+- All three deferred gates from ISSU-102 land here. The release now ships
+  with `trendFilterBars:30`, `bracketRecallBars:30`, and
+  `streakLosses:3 / streakPauseMinutes:60` active by default.
+- Trend filter: coordinator reads `trendFilterBars` M1 bars from
+  `snapshot.candles` and computes `m1TrendDirection` (closes compare).
+  For `LIMIT` execution with trend=0 (no clear direction) the OCO
+  evaluator rejects with `FADE_LIMIT_TREND_UNCLEAR`; for trend=±1 both
+  fade legs stay constructed (single-leg isolation deferred — both legs
+  preserve the simulator's strongest evaluated geometry). The
+  `OcoRiskProvider` interface accepts the new optional `trend` field.
+- Bracket recall: `OrderMaintenance.recallStaleBrackets()` selects owned
+  `PENDING`/`INTENT` orders whose `scenario_contexts.valid_until` is more
+  than `bracketRecallBars` minutes in the past and cancels them with
+  reason `BRACKET_CONTEXT_EXPIRED_RECALL`. The follow-on zero-fill refresh
+  exception (ISSUE-089/097) admits one fresh request after proven cancel.
+  Wired into the existing maintenance loop.
+- Loss-streak pause: `computeLossStreakPause()` reads the last
+  `streakLosses` closed trades for the account; if all are losses and the
+  latest loss is within `streakPauseMinutes`, `LOSS_STREAK_PAUSE_ACTIVE`
+  blocks admission in `evaluateAnalysisEligibility`. Recovery is
+  automatic once the cooldown expires.
+- Plan: trend filter and loss-streak pause are tested via
+  `tests/execution/oco-risk-evaluator-trend.test.ts` and
+  `tests/execution/safety-gates.test.ts`; bracket recall via
+  `tests/execution/order-maintenance-recall.test.ts`.
+- Dependencies: ISSUE-101 (LIMIT plumbing), ISSUE-102 (fade transform);
+  no migration. The demo unlocks the gates automatically once the
+  release runs.
+- Successor: paid historical level replay benchmark for out-of-sample
+  validation of the combined edge.
+- Evidence: docs/fade-limit-deferred-gates-report.md
+
 ### ISSUE-103 — 0.3.0-fade-limit.1 deploy and demo observation
 
 - Deploy procedure: after ISSUE-100/101/102 are merged, pause new

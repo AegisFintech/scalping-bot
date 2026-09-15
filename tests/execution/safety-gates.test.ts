@@ -12,6 +12,7 @@ import { DisabledLiveGateway } from "../../apps/execution-service/src/live-compa
 import {
   LIVE_ACKNOWLEDGEMENT,
   LIVE_FILE_STATEMENT,
+  evaluateAnalysisEligibility,
   evaluateAutomaticAnalysisEligibility,
   evaluatePlacementEligibility,
   readFilesystemControls,
@@ -53,6 +54,7 @@ function safeInput(): SafetyGateInput {
     spreadSafe: true,
     duplicateFree: true,
     criticalAuditAvailable: true,
+    lossStreakPauseActive: false,
   };
 }
 
@@ -381,5 +383,64 @@ describe("execution safety gates", () => {
       liveEnablementValid: true,
       reasonCodes: [],
     });
+  });
+});
+
+function buildSafetyGateInput(overrides: Record<string, unknown> = {}) {
+  return {
+    tradingMode: "live" as const,
+    liveTradingEnabled: true,
+    liveAcknowledgement: LIVE_ACKNOWLEDGEMENT,
+    environmentEmergencyStop: false,
+    filesystemControlsCertain: true,
+    filesystemEmergencyStop: false,
+    liveEnablementFileValid: true,
+    runtimeControlsCertain: true,
+    databaseEmergencyStop: false,
+    dashboardAcknowledged: true,
+    pauseNewAnalyses: false,
+    startupChecksPassed: true,
+    serviceHealthy: true,
+    accountAuthenticated: true,
+    accountReconciled: true,
+    reconciliationCertain: true,
+    relevantPositionCount: 0,
+    relevantPendingOrderCount: 0,
+    partialFillPresent: false,
+    cancellationPending: false,
+    previousAnalysisExpired: true,
+    candlesSynchronized: true,
+    orderBookFresh: true,
+    marketDataFresh: true,
+    dailyLossLockout: false,
+    operationalRiskLockout: false,
+    aiCircuitOpen: false,
+    symbolMetadataValid: true,
+    aiResponseValid: true,
+    deterministicRiskApproved: true,
+    spreadSafe: true,
+    duplicateFree: true,
+    criticalAuditAvailable: true,
+    lossStreakPauseActive: false,
+    ...overrides,
+  };
+}
+
+describe("loss-streak pause admission gate", () => {
+  it("blocks when the streak gate is active and allows when it is not", () => {
+    expect(
+      evaluateAnalysisEligibility(
+        buildSafetyGateInput({ lossStreakPauseActive: true }),
+      ),
+    ).toMatchObject({
+      allowed: false,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      reasonCodes: expect.arrayContaining(["LOSS_STREAK_PAUSE_ACTIVE"]),
+    });
+    expect(
+      evaluateAnalysisEligibility(
+        buildSafetyGateInput({ lossStreakPauseActive: false }),
+      ).reasonCodes.includes("LOSS_STREAK_PAUSE_ACTIVE"),
+    ).toBe(false);
   });
 });

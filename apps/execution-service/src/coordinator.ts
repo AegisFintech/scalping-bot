@@ -156,6 +156,7 @@ export interface OcoRiskProvider {
     readonly account: AccountState;
     readonly metadata: SymbolMetadata;
     readonly quote: Quote;
+    readonly trend?: -1 | 0 | 1;
   }): Promise<OcoEvaluation>;
 }
 
@@ -272,6 +273,7 @@ export interface CoordinatorOptions {
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
   readonly entryBrackets?: "STOP" | "LIMIT";
+  readonly trendFilterBars?: number;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly numericAnalytics?: boolean;
   readonly symbol: string;
@@ -512,6 +514,28 @@ function m1Atr(response: AnalyticsResponse): string {
   return atr;
 }
 
+function m1TrendDirection(
+  snapshot: MarketSnapshot,
+  lookbackBars: number,
+  tickSize: Decimal,
+): -1 | 0 | 1 {
+  if (lookbackBars <= 0) return 0;
+  const series = snapshot.candles.find((entry) => entry.timeframe === "M1");
+  if (series === undefined) return 0;
+  const closes = series.candles
+    .filter((candle) => candle.complete)
+    .map((candle) => decimal(candle.close));
+  if (closes.length <= lookbackBars) return 0;
+  const latest = closes[closes.length - 1];
+  const prior = closes[closes.length - 1 - lookbackBars];
+  if (latest === undefined || prior === undefined) return 0;
+  const delta = latest.minus(prior);
+  const noise = tickSize;
+  if (delta.gt(noise)) return 1;
+  if (delta.lt(noise.neg())) return -1;
+  return 0;
+}
+
 function configuredMinimumStopDistance(
   snapshot: MarketSnapshot,
   minimumPoints: string | null,
@@ -716,6 +740,13 @@ export class AnalysisCoordinator {
       if (!numeric && analytics.chart === null)
         return await reject(["ANALYTICS_CHART_MISSING"]);
       const atr = m1Atr(analytics);
+      const trendDirection: -1 | 0 | 1 = this.#options.entryPairMode
+        ? m1TrendDirection(
+            snapshot,
+            this.#options.trendFilterBars ?? 0,
+            decimal(snapshot.metadata.tickSize),
+          )
+        : 0;
       const spreadContext = this.#options.entryPairMode
         ? { observedPercentile: null, sessionAbnormal: false }
         : await this.#options.spreadContext(snapshot);
@@ -1317,6 +1348,7 @@ export class AnalysisCoordinator {
         account,
         metadata: decisionSnapshot.metadata,
         quote: decisionSnapshot.quote,
+        trend: trendDirection,
       });
       await this.#options.trail.validation(
         analysisId,
