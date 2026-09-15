@@ -841,10 +841,12 @@ async function main(): Promise<void> {
     if (streakLosses <= 0 || streakPauseMinutes <= 0) return false;
     const streakCount = Math.max(1, streakLosses);
     const result = await pool.query<{ is_loss: boolean; closed_at: Date }>(
-      `SELECT (realized_pnl <= 0) AS is_loss, closed_at
-       FROM trades
-       WHERE mode = 'demo' AND account_id = $1
-       ORDER BY closed_at DESC
+      `SELECT (t.realized_pnl <= 0) AS is_loss, t.closed_at
+       FROM trades t
+       JOIN order_groups og ON og.id = t.order_group_id
+       JOIN analysis_runs ar ON ar.id = og.analysis_id
+       WHERE t.mode = 'demo' AND ar.account_id = $1
+       ORDER BY t.closed_at DESC
        LIMIT $2`,
       [identity.accountId, streakCount],
     );
@@ -1758,10 +1760,14 @@ async function main(): Promise<void> {
       }
     } catch (error) {
       operationalFault.fail(error);
+      const message = error instanceof Error ? error.message : String(error);
+      const stack = error instanceof Error ? error.stack : undefined;
       logger.log("error", {
         event_name: "scheduler_tick_failed",
         outcome: "failed",
         reason_code: stableFailureReason(error, "SCHEDULER_FAILED"),
+        message,
+        stack,
       });
     } finally {
       if (watchdogContext !== null) {
