@@ -2,10 +2,20 @@
 
 ## Scope
 
+### ISSUE-104 — Entry-pair prompt v4 structure selectivity
 
-
-
-
+- Status: implemented locally; prospective demo observation required.
+- Acceptance: version the production entry prompt, preserve the two-price
+  `entry-pair-1.0` response and deterministic local risk/exit authority, and add
+  completed-candle guidance for choppy structure, fresh/untested levels,
+  session-gap separation and comparative continuation space.
+- Dependencies: ISSUE-092 / ISSUE-097; no migration or new configuration key.
+- Validation: focused entry-pair/production-context tests passed (55 tests),
+  schema tests passed (56), migration tests passed (3), TypeScript typecheck and
+  build passed, and the tracked-file secret scan reported only the repository's
+  existing risk-budget filename false positive. The repository-wide formatter
+  still reports five pre-existing unrelated files. No profitability claim is made.
+- Evidence: `docs/entry-pair-v4-report.md`.
 
 ### ISSUE-103b — Demo trade-history telemetry: order type + slippage columns
 
@@ -72,7 +82,7 @@
   (`db:migrate` rolls the 0024 → 0025 drop/recreate of
   `orders.execution_order_type_check` / `orders.order_type_check`),
   redeploy services (`pm2 restart scalper-execution
-  scalper-market-data scalper-ai`), and resume (`PAUSE_NEW_ANALYSES`
+scalper-market-data scalper-ai`), and resume (`PAUSE_NEW_ANALYSES`
   enabled=false). The release defaults to `"0.3.0-fade-limit.1"`
   (`STRATEGY_VERSION ??= "0.3.0-fade-limit.1"`).
 - Telemetry: `scripts/summarize-demo-trades.ts` reads the existing
@@ -82,16 +92,16 @@
   protective `DEMO_FILL_SLIPPAGE_EXCEEDED` latch and `setup_statistics`
   decay tables for the existing slippage/commission evidence surface.
 - Observation gates:
-  * Daily net P&L positive on 3+ of the first 5 demo sessions;
-  * `avg_stop_overshoot_vs_sl` p50 ≤ modeled 0.65 price units (matches
+  - Daily net P&L positive on 3+ of the first 5 demo sessions;
+  - `avg_stop_overshoot_vs_sl` p50 ≤ modeled 0.65 price units (matches
     the calibrated reserve);
-  * `avg_entry_slippage_vs_trigger` p50 ≤ 0.10 price units (maker fills
+  - `avg_entry_slippage_vs_trigger` p50 ≤ 0.10 price units (maker fills
     resting at or beyond the level);
-  * holdout `per_release` net positive for `"0.3.0-fade-limit.1"`.
+  - holdout `per_release` net positive for `"0.3.0-fade-limit.1"`.
 - Promotion criteria: when observation gates pass for 20 demo sessions,
   the operator may proceed with the deferred policy gates
   (`trendFilterBars:30`, `bracketRecallBars:30`, `streakLosses:3 /
-  streakPauseMinutes:60`) per ISSUE-102b. Until then, ISSUE-103 keeps the
+streakPauseMinutes:60`) per ISSUE-102b. Until then, ISSUE-103 keeps the
   `.10` branch on by default and `EMERGENCY_STOP_FILE` covers
   forced shutdown.
 - Dependencies: ISSUE-100 (evidence), ISSUE-101 (LIMIT plumbing),
