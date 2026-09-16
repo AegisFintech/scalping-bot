@@ -30,6 +30,17 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
+  it("uses v4 structure-selectivity guidance without changing the two-price contract", () => {
+    const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v4");
+    expect(prompt).toContain("overlapping/choppy structure");
+    expect(prompt).toContain("cleaner continuation space");
+    expect(prompt).toContain("broker session gap");
+    expect(prompt).toContain(
+      'Return only {"buy_stop":"<entry price>","sell_stop":"<entry price>"}',
+    );
+  });
+
   it("removes all spread strategy gates even without ATR, while rejecting crossed quotes", () => {
     const input = {
       skipStrategyLimits: true,
@@ -234,7 +245,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v3",
+        version: "entry-pair-v4",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

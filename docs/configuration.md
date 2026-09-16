@@ -77,7 +77,7 @@ preserving all credentials and operator controls. Forward migration
 Astra/Sol rows and request cooldowns. Deploy matching AI/execution builds together.
 See [model-switch evidence](deepseek-context-report.md). The production scenario
 uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
-production prompt `entry-pair-v3`, explicitly disabled thinking and at most 4,096 output
+production prompt `entry-pair-v4`, explicitly disabled thinking and at most 4,096 output
 tokens within the existing
 90-second deadline. Historical charts remain validated local audit artifacts;
 new numeric analyses generate display charts only on demand. Request bounds,
