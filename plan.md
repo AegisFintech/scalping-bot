@@ -4,8 +4,8 @@
 
 ### ISSUE-106 — Automatic OCO cancel-rejection terminal recovery
 
-- Status: implemented; focused integration validation passed; deployment pending
-  final quality gates and controlled execution-service restart.
+- Status: implemented and deployed to the local demo execution worker; PR #239
+  is open for review.
 - Acceptance: preserve `DEMO_CANCEL_REJECTED` evidence, resolve it automatically
   only when the exact strategy-owned order is filled and the matching closed
   position plus complete terminal group proof are present; retain the fail-closed
