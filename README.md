@@ -5,20 +5,32 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.5-market-stop.7`, policy `market-stop-v2`.
+The current source policy is `0.3.0-fade-limit.1`, with provider prompt
+`entry-pair-v4`. The bot is intended to operate continuously whenever the broker
+session is open: it keeps evaluating fresh opportunities and resumes after
+normal temporary failures or scheduled closures.
+
+Continuous operation does not mean forced trading. Active orders/positions,
+provider cooldowns, stale data, unavailable sessions, reconciliation or
+protection faults, affordability, and other safety gates must cause the bot to
+wait. Accepted GTC orders and protective maintenance continue during those
+waits. No AI response can choose risk, volume, broker precision, or live
+authority.
+
 Demo development retains the shared 1% current-equity setup ceiling, while daily
 and high-water losses remain recorded without blocking demo admission. Other
 modes retain their loss limits. [Current policy](docs/demo-development-risk-report.md).
-EPRToken returns only buy/sell stop-entry prices using `entry-pair-v2`, prioritizing
+EPRToken returns only buy/sell entry prices using `entry-pair-v4`, prioritizing
 nearby M1 support/resistance and candle-based order blocks. See the
 [entry guidance report](docs/nearby-order-block-report.md). The script
 binds identity/time locally and calculates fee-buffered TP, double SL and position
 size. Spread, ATR distance, model target-room and daily order-count filters are
 removed; broker, risk, data-integrity and lifecycle requirements remain.
 See [the change and retained constraints](docs/direct-entry-report.md).
-Accepted STOP orders are **good till cancelled (GTC)**, without timer expiry.
-The loop is analyze → pending buy/sell pair → fill/cancel peer → SL/TP close →
-fresh analysis. No paid refresh runs while orders or a position are active.
+Accepted strategy-owned pending orders are **good till cancelled (GTC)**, without
+timer expiry. The loop is analyze → pending entry pair → fill/cancel peer →
+SL/TP close → fresh analysis. No paid refresh runs while orders or a position
+is active.
 Fresh placement deadlines and all risk/reconciliation gates still apply.
 See [the persistent-order lifecycle and rollout](docs/persistent-order-loop-report.md).
 

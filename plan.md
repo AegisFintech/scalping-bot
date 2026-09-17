@@ -2,6 +2,19 @@
 
 ## Scope
 
+### ISSUE-105 — Core bot contract and continuous market-open operation
+
+- Status: documentation implemented locally; runtime behavior unchanged.
+- Acceptance: make the bot's purpose, deterministic safety authority, live-disabled
+  boundary, and continuous market-open evaluation requirement explicit in the
+  repository's core agent and user documents.
+- Continuous means continuous readiness/evaluation and automatic recovery from
+  normal waits, never forced orders or bypassed cooldown, session, reconciliation,
+  protection, affordability or risk gates.
+- Dependencies: current strategy policy and broker-session gate; no migration or
+  new configuration key.
+- Evidence: `AGENTS.md`, `README.md`.
+
 ### ISSUE-104 — Entry-pair prompt v4 structure selectivity
 
 - Status: implemented locally; prospective demo observation required.

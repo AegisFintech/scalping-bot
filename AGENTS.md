@@ -2,6 +2,36 @@
 
 Read `plan.md`, this file, and the relevant architecture/risk documents before changing code.
 
+## Core bot purpose and operating contract (authoritative)
+
+This repository implements an AI-assisted XAUUSD short-term trading system for
+controlled demo evaluation. It continuously observes completed market candles,
+quotes, order-book/account/risk state and broker session status; the AI proposes
+two entry prices, while deterministic code owns validation, order type, SL/TP,
+dynamic sizing, broker precision, margin, ownership, reconciliation and all
+execution authority. The system records the complete decision and broker
+lifecycle for later analysis. Live submission is disabled by default and must
+never be inferred from credentials or configuration alone.
+
+When the broker session is open, the scheduler must keep the demo system
+continuously ready and evaluating new opportunities, and must resume
+automatically after normal temporary failures or scheduled closures. “Trading
+all the time” means continuous market-open operation, not forced order flow:
+the bot must wait without a new provider call or order whenever an active group,
+request cooldown, stale/invalid market data, unavailable broker session,
+unreconciled account/order/position state, protection/recovery fault, affordability
+failure, or other fail-closed gate applies. Accepted GTC orders and protective
+maintenance remain active during waiting periods. No prompt, timer or operator
+request may bypass these gates, manufacture a trade, or increase risk to maintain
+frequency.
+
+The current source contract uses the versioned `entry-pair-v4` provider prompt
+and the `0.3.0-fade-limit.1` strategy policy. Historical prompt/release names in
+older issue sections and archived evidence describe immutable past behavior and
+must not be treated as current authority. The shared setup ceiling remains 1%
+of reconciled current equity, both OCO/fade legs share that budget, and the
+system makes no profitability claim.
+
 ## Communication preference
 
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
@@ -181,7 +211,7 @@ other modes retain remaining daily capacity and drawdown reductions.
   Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Production uses `entry-pair-v3` / locally bound `entry-pair-1.0`; local derived OCO
+- Production uses `entry-pair-v4` / locally bound `entry-pair-1.0`; local derived OCO
   proposals use `entry-pair-execution-v1` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
 - The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch
