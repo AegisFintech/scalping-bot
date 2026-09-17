@@ -1669,6 +1669,38 @@ describe("PostgreSQL migrations integration", () => {
         certain: true,
         reasonCodes: [],
       });
+      let cancelRejected: ReturnType<typeof normalizeDemoExecution> = null;
+      if (closeMode) {
+        const cancelRejectedRaw = {
+          ...acceptedRaw,
+          executionType: 8 as const,
+          receivedAt: "2026-08-24T04:00:00.200Z",
+          position: {
+            positionId: "801",
+            positionStatus: 1,
+            tradeData: {
+              symbolId: "7",
+              volume: "100",
+              tradeSide: 1,
+              openTimestamp: 1787544060000,
+              label: "ctrader-ai-scalper:integration",
+            },
+          },
+        };
+        cancelRejected = normalizeDemoExecution(cancelRejectedRaw, {
+          symbolId: "7",
+        });
+        expect(cancelRejected).not.toBeNull();
+        await expect(store.persist(cancelRejected!)).resolves.toEqual({
+          certain: false,
+          reasonCodes: ["DEMO_CANCEL_REJECTED"],
+        });
+        // A rejected cancel remains blocking until the complete closed-group
+        // proof exists; elapsed time or a partial broker snapshot is not enough.
+        await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
+          certain: false,
+        });
+      }
       const completedExecution = await isolated.query<{
         order_state: string;
         filled_volume: string;
@@ -1917,7 +1949,7 @@ describe("PostgreSQL migrations integration", () => {
         );
         await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
           certain: true,
-          resolvedEventCount: 1,
+          resolvedEventCount: 2,
         });
         await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
           certain: true,
@@ -1989,6 +2021,26 @@ describe("PostgreSQL migrations integration", () => {
         closing_order: true,
         unresolved: "0",
       });
+      if (cancelRejected !== null) {
+        const resolvedCancellation = await isolated.query<{
+          reason_codes: string[];
+          resolved: boolean;
+          resolution_event_key: string | null;
+        }>(
+          `SELECT reason_codes, resolved_at IS NOT NULL AS resolved,
+                  resolution_event_key
+           FROM broker_execution_events
+           WHERE account_id = $1 AND broker_event_key = $2`,
+          [demoAccountId, cancelRejected.eventKey],
+        );
+        expect(resolvedCancellation.rows[0]).toMatchObject({
+          reason_codes: ["DEMO_CANCEL_REJECTED"],
+          resolved: true,
+        });
+        expect(resolvedCancellation.rows[0]?.resolution_event_key).toBe(
+          closed!.eventKey,
+        );
+      }
       const duplicateFilledRaw = await eventFixture(
         "demo-order-filled-v1.json",
       );

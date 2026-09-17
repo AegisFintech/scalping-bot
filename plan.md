@@ -2,6 +2,21 @@
 
 ## Scope
 
+### ISSUE-106 — Automatic OCO cancel-rejection terminal recovery
+
+- Status: implemented; focused integration validation passed; deployment pending
+  final quality gates and controlled execution-service restart.
+- Acceptance: preserve `DEMO_CANCEL_REJECTED` evidence, resolve it automatically
+  only when the exact strategy-owned order is filled and the matching closed
+  position plus complete terminal group proof are present; retain the fail-closed
+  block for partial, ambiguous, unknown or zero-fill evidence.
+- Dependencies: ISSUE-095 terminal recovery; existing broker reconciliation and
+  demo execution journal; no migration or policy change.
+- Validation: database integration lifecycle test covers both the unresolved
+  pre-proof state and durable post-proof resolution; typecheck, lint, tests,
+  secret scan and deployment observation remain required.
+- Evidence: `docs/cancel-rejection-recovery-report.md`.
+
 ### ISSUE-105 — Core bot contract and continuous market-open operation
 
 - Status: documentation implemented locally; runtime behavior unchanged.
