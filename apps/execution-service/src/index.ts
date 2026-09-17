@@ -894,6 +894,7 @@ async function main(): Promise<void> {
       reconciliationPersisted = false;
     }
     let dailyLocked: boolean;
+    let dailyRiskCertain = true;
     try {
       const riskNow = new Date();
       const netFlows = await dailyNetFlows(riskNow);
@@ -936,7 +937,8 @@ async function main(): Promise<void> {
       capitalRiskCap = admission.riskPercentCap;
       dailyLocked = admission.lockedOut;
     } catch (error) {
-      dailyLocked = true;
+      dailyRiskCertain = false;
+      dailyLocked = config.tradingMode !== "demo";
       capitalMultiplier = "0";
       capitalRiskCap = "0";
       logger.log("error", {
@@ -1052,6 +1054,7 @@ async function main(): Promise<void> {
         external.certain &&
         demoRecoveryState.certain &&
         demoExecutionState.certain &&
+        dailyRiskCertain &&
         reconciliationPersisted &&
         !databaseReconciliationPending,
       relevantPositionCount: Math.max(
@@ -1089,6 +1092,7 @@ async function main(): Promise<void> {
       duplicateFree: external.certain,
       criticalAuditAvailable:
         databaseHealthy &&
+        dailyRiskCertain &&
         reconciliationPersisted &&
         demoRecoveryState.certain &&
         demoExecutionState.certain,

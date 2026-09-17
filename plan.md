@@ -2,6 +2,19 @@
 
 ## Scope
 
+### ISSUE-107 — Demo reconciliation classification and bounded recovery telemetry
+
+- Status: in progress.
+- Acceptance: demo financial loss measurements remain non-blocking under ISSUE-094,
+  while failed daily/capital reconciliation remains fail-closed as reconciliation
+  uncertainty; serious misalignment events retain durable evidence and are handled
+  by bounded automatic recovery rather than prompt intervention.
+- Dependencies: ISSUE-094 demo development policy; existing reconciliation,
+  protection, idempotency and watchdog contracts.
+- Validation: focused safety-gate regression, execution typecheck/lint/tests,
+  integration recovery tests, secret scan and runtime observation.
+- Evidence: `docs/demo-recovery-autofix-report.md`.
+
 ### ISSUE-106 — Automatic OCO cancel-rejection terminal recovery
 
 - Status: implemented and deployed to the local demo execution worker; PR #239

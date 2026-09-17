@@ -181,7 +181,10 @@ function commonReasons(input: SafetyGateInput): string[] {
     [input.candlesSynchronized, "CANDLES_UNSYNCHRONIZED"],
     [input.orderBookFresh, "ORDER_BOOK_STALE"],
     [input.marketDataFresh, "MARKET_DATA_STALE"],
-    [!input.dailyLossLockout, "DAILY_LOSS_LOCKOUT"],
+    [
+      input.tradingMode === "demo" || !input.dailyLossLockout,
+      "DAILY_LOSS_LOCKOUT",
+    ],
     [!input.operationalRiskLockout, "OPERATIONAL_RISK_LOCKOUT"],
     [!input.aiCircuitOpen, "AI_CIRCUIT_OPEN"],
     [input.symbolMetadataValid, "SYMBOL_METADATA_INVALID"],
