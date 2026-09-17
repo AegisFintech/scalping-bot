@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cashFlowRangeWindows,
   normalizeDealHistory,
   normalizeExternalCashFlows,
   normalizePositionUnrealizedPnl,
@@ -59,6 +60,21 @@ describe("cTrader cash-flow normalization", () => {
         to,
       ),
     ).toThrow("CTRADER_CASH_FLOW_TYPE_UNKNOWN");
+  });
+
+  it("splits capital history at cTrader's seven-day boundary", () => {
+    const windows = cashFlowRangeWindows(
+      new Date("2026-01-01T00:00:00.000Z"),
+      new Date("2026-01-16T00:00:00.000Z"),
+    );
+
+    expect(windows).toHaveLength(3);
+    expect(windows[0]).toEqual({
+      from: new Date("2026-01-01T00:00:00.000Z"),
+      to: new Date("2026-01-08T00:00:00.000Z"),
+    });
+    expect(windows[1]?.from).toEqual(new Date("2026-01-08T00:00:00.001Z"));
+    expect(windows[2]?.to).toEqual(new Date("2026-01-16T00:00:00.000Z"));
   });
 });
 

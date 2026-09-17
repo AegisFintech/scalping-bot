@@ -15,6 +15,60 @@ interface PendingRequest {
   readonly timeout: NodeJS.Timeout;
 }
 
+export interface CTraderErrorDetails {
+  readonly payloadType: number;
+  readonly code: string | null;
+  readonly description: string | null;
+}
+
+function safeText(value: unknown, maximumLength: number): string | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const text = Array.from(String(value), (character) =>
+    character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
+      ? " "
+      : character,
+  )
+    .join("")
+    .trim();
+  return text.length === 0 ? null : text.slice(0, maximumLength);
+}
+
+function firstText(
+  payload: Record<string, unknown>,
+  keys: readonly string[],
+  maximumLength: number,
+): string | null {
+  for (const key of keys) {
+    const value = safeText(payload[key], maximumLength);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
+export class CTraderRequestRejectedError extends Error {
+  readonly details: CTraderErrorDetails;
+
+  constructor(payloadType: number, payload: Record<string, unknown>) {
+    super("CTRADER_REQUEST_REJECTED");
+    this.name = "CTraderRequestRejectedError";
+    this.details = {
+      payloadType,
+      code: firstText(payload, ["errorCode", "code"], 160),
+      description: firstText(
+        payload,
+        ["description", "errorMessage", "message"],
+        500,
+      ),
+    };
+  }
+}
+
+export function cTraderErrorDetails(
+  error: unknown,
+): CTraderErrorDetails | null {
+  return error instanceof CTraderRequestRejectedError ? error.details : null;
+}
+
 export interface CTraderTransportOptions {
   readonly host: string;
   readonly port?: number;
@@ -195,7 +249,12 @@ export class CTraderJsonTransport {
           message.payloadType === CTraderPayload.ERROR_RES ||
           message.payloadType === CTraderPayload.ORDER_ERROR_EVENT
         ) {
-          pending.reject(new Error("CTRADER_REQUEST_REJECTED"));
+          pending.reject(
+            new CTraderRequestRejectedError(
+              message.payloadType,
+              message.payload,
+            ),
+          );
         } else if (!pending.expectedPayloadTypes.has(message.payloadType)) {
           pending.reject(
             new Error(`CTRADER_RESPONSE_TYPE_MISMATCH:${message.payloadType}`),

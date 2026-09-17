@@ -227,6 +227,27 @@ export interface ExternalCashFlowSummary {
   readonly to: string;
 }
 
+const MAX_CASH_FLOW_RANGE_MS = 604_800_000;
+
+export function cashFlowRangeWindows(
+  from: Date,
+  to: Date,
+): readonly { readonly from: Date; readonly to: Date }[] {
+  const fromMs = from.getTime();
+  const toMs = to.getTime();
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs < fromMs)
+    return [];
+  const windows: { from: Date; to: Date }[] = [];
+  let cursor = fromMs;
+  while (cursor <= toMs) {
+    const chunkTo = Math.min(cursor + MAX_CASH_FLOW_RANGE_MS, toMs);
+    windows.push({ from: new Date(cursor), to: new Date(chunkTo) });
+    if (chunkTo === toMs) break;
+    cursor = chunkTo + 1;
+  }
+  return windows;
+}
+
 export interface DealHistorySummary {
   readonly dealCount: number;
   readonly hasMore: boolean;
@@ -554,23 +575,38 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     to: Date,
   ): Promise<ExternalCashFlowSummary> {
     this.#requireAuthenticated();
-    const response = await this.#transport.request(
-      CTraderPayload.CASH_FLOW_HISTORY_LIST_REQ,
-      {
-        ctidTraderAccountId: protocolInteger(
-          this.accountId,
-          "CTRADER_ACCOUNT_ID_INVALID",
-        ),
-        fromTimestamp: from.getTime(),
-        toTimestamp: to.getTime(),
-      },
-      [CTraderPayload.CASH_FLOW_HISTORY_LIST_RES],
+    const windows = cashFlowRangeWindows(from, to);
+    if (windows.length === 0) return normalizeExternalCashFlows([], from, to);
+    const accountId = protocolInteger(
+      this.accountId,
+      "CTRADER_ACCOUNT_ID_INVALID",
     );
-    return normalizeExternalCashFlows(
-      recordsField(response.payload, "depositWithdraw"),
-      from,
-      to,
-    );
+    let netFlows = new Decimal(0);
+    let operationCount = 0;
+    for (const window of windows) {
+      const response = await this.#transport.request(
+        CTraderPayload.CASH_FLOW_HISTORY_LIST_REQ,
+        {
+          ctidTraderAccountId: accountId,
+          fromTimestamp: window.from.getTime(),
+          toTimestamp: window.to.getTime(),
+        },
+        [CTraderPayload.CASH_FLOW_HISTORY_LIST_RES],
+      );
+      const chunk = normalizeExternalCashFlows(
+        recordsField(response.payload, "depositWithdraw"),
+        window.from,
+        window.to,
+      );
+      netFlows = netFlows.plus(chunk.netFlows);
+      operationCount += chunk.operationCount;
+    }
+    return {
+      netFlows: canonical(netFlows),
+      operationCount,
+      from: from.toISOString(),
+      to: to.toISOString(),
+    };
   }
 
   async dealHistory(

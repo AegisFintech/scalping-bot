@@ -34,6 +34,10 @@ import type {
   Timeframe,
 } from "../../../packages/contracts/src/index.js";
 import { CTraderClient } from "../../../packages/ctrader-client/src/client.js";
+import {
+  cTraderErrorDetails,
+  type CTraderErrorDetails,
+} from "../../../packages/ctrader-client/src/transport.js";
 import { CTraderTokenManager } from "../../../packages/ctrader-client/src/token-manager.js";
 import { SecureTokenFileStore } from "../../../packages/ctrader-client/src/token-store.js";
 import {
@@ -580,6 +584,8 @@ async function main(): Promise<void> {
       : null;
   let latestDemoExecutionReasonCodes: readonly string[] = [];
   let latestSafetyDetailReasonCodes: readonly string[] = [];
+  let lastBrokerError:
+    (CTraderErrorDetails & { readonly observedAt: string }) | null = null;
   const demoExecutionRecorder =
     demoExecutionStore === null
       ? null
@@ -874,12 +880,20 @@ async function main(): Promise<void> {
     const state = await reconcileAccountSafely(
       account,
       executionSymbolId,
-      (reason) =>
+      (reason, error) => {
+        const details = cTraderErrorDetails(error);
+        if (details !== null)
+          lastBrokerError = {
+            ...details,
+            observedAt: new Date().toISOString(),
+          };
         logger.log("error", {
           event_name: "account_reconciliation_failed",
           outcome: "blocked",
           reason_code: reason,
-        }),
+          ...(details ?? {}),
+        });
+      },
     );
     const external = await gateway.reconcile(config.symbol);
     const demoExecutionState =
@@ -948,7 +962,11 @@ async function main(): Promise<void> {
           error instanceof Error && /^[A-Z0-9_:]{1,160}$/.test(error.message)
             ? error.message
             : "DAILY_RISK_RECONCILIATION_FAILED",
+        ...(cTraderErrorDetails(error) ?? {}),
       });
+      const details = cTraderErrorDetails(error);
+      if (details !== null)
+        lastBrokerError = { ...details, observedAt: new Date().toISOString() };
     }
     let databaseHealthy = true;
     let previousAnalysisExpired = false;
@@ -1384,6 +1402,7 @@ async function main(): Promise<void> {
         .catch(() => ({ state: "UNAVAILABLE" })),
       operationalReady: operationalFault.snapshot === null,
       operationalFault: operationalFault.snapshot,
+      lastBrokerError,
       tradingEnabled:
         operationalFault.snapshot === null &&
         eligibility.allowed &&

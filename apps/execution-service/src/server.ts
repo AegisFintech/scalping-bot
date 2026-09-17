@@ -21,6 +21,12 @@ export interface ExecutionStatus {
     readonly failedAt: string;
     readonly retryAt: string;
   } | null;
+  readonly lastBrokerError?: {
+    readonly payloadType: number;
+    readonly code: string | null;
+    readonly description: string | null;
+    readonly observedAt: string;
+  } | null;
   readonly strategyVersion?: string;
   readonly requestedModel?: string;
   readonly remainingCapitalRiskPercent?: string | null;
