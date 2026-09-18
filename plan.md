@@ -2,6 +2,18 @@
 
 ## Scope
 
+### ISSUE-108 — Fade-limit reward/risk asymmetry correction
+
+- Status: in progress.
+- Acceptance: preserve continuous market-open analysis and repeat behavior while
+  revising the demo fade geometry from 1.0×ATR TP / 2.5×ATR SL to 1.5×ATR TP /
+  2.5×ATR SL with a 0.5 minimum reward/risk ratio; version the strategy release
+  and measure results separately from the prior release.
+- Dependencies: ISSUE-102 fade-limit release; overnight demo observation.
+- Validation: focused transform/policy tests, typecheck, build, full non-integration
+  tests, runtime health and post-restart status.
+- Evidence: `docs/fade-limit-improvement-v2-report.md`.
+
 ### ISSUE-107 — Demo reconciliation classification and bounded recovery telemetry
 
 - Status: in progress.

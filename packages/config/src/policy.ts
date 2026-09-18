@@ -1,7 +1,7 @@
 import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
-export const POLICY_VERSION = "0.3.0-fade-limit.1";
+export const POLICY_VERSION = "0.3.0-fade-limit.2";
 export const STOP_EXECUTION_POLICY = {
   orderType: "STOP",
   adverseSlippagePoints: "30",
@@ -12,9 +12,9 @@ export const FADE_LIMIT_RELEASE = {
   adverseSlippagePoints: "65",
   /** 14 completed M1 candles for the working ATR. */
   atrBars: "14",
-  /** SL = 2.5×ATR; TP floored by the fee buffer and capped at 1×ATR. */
+  /** SL = 2.5×ATR; TP targets 1.5×ATR to reduce loss/win asymmetry. */
   slAtr: "2.5",
-  tpAtr: "1.0",
+  tpAtr: "1.5",
   /** Discard opponent-direction fades for 30-bar direction windows. */
   trendFilterBars: "30",
   /** Loss-streak admission gate: 3 consecutive losses → 60-minute cooling. */
@@ -22,13 +22,13 @@ export const FADE_LIMIT_RELEASE = {
   streakPauseMinutes: "60",
   /** Replace owned unfilled LIMIT pendings once their context is this stale. */
   bracketRecallBars: "30",
-  /** Reward/risk tolerance for the fade geometry (SL 2.5 / TP 1 ≈ RR 0.4). */
-  minRiskRewardRatio: "0.3",
+  /** Require at least 0.5 reward/risk for the revised fade geometry. */
+  minRiskRewardRatio: "0.5",
 } as const;
 
 export const RELEASES = {
   "market-stop-v2": STOP_EXECUTION_POLICY,
-  "0.3.0-fade-limit.1": FADE_LIMIT_RELEASE,
+  "0.3.0-fade-limit.2": FADE_LIMIT_RELEASE,
 } as const;
 export type ReleaseKey = keyof typeof RELEASES;
 export function releasePolicy(key: ReleaseKey) {
@@ -162,8 +162,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.3.0-fade-limit.1",
-  CODE_VERSION: "0.3.0-fade-limit.1",
+  STRATEGY_VERSION: "0.3.0-fade-limit.2",
+  CODE_VERSION: "0.3.0-fade-limit.2",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

@@ -13,7 +13,8 @@ export interface RiskPolicy {
     | "direct-entry-v1"
     | "market-stop-v1"
     | "market-stop-v2"
-    | "0.3.0-fade-limit.1";
+    | "0.3.0-fade-limit.1"
+    | "0.3.0-fade-limit.2";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;

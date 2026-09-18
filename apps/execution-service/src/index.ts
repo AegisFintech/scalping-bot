@@ -329,7 +329,7 @@ async function main(): Promise<void> {
     throw new Error("SHADOW_OR_LIVE_MODE_REQUIRES_LIVE_DATA_CONNECTION");
   }
   const configHash = safetyConfigHash(config);
-  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.1";
+  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.2";
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
   const activeExecutionPolicy = fadeLimitActive
     ? FADE_LIMIT_RELEASE
@@ -1176,6 +1176,12 @@ async function main(): Promise<void> {
     minRiskRewardRatio: fadeLimitActive
       ? FADE_LIMIT_RELEASE.minRiskRewardRatio
       : config.minRiskRewardRatio,
+    ...(fadeLimitActive
+      ? {
+          fadeLimitSlAtr: FADE_LIMIT_RELEASE.slAtr,
+          fadeLimitTpAtr: FADE_LIMIT_RELEASE.tpAtr,
+        }
+      : {}),
     entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
     executionOrderType: fadeLimitActive ? "LIMIT" : "STOP",
     trendFilterBars: fadeLimitActive
