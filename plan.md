@@ -2,6 +2,16 @@
 
 ## Scope
 
+### ISSUE-110 — Fade-limit v3 expectancy correction and transient feed retry
+
+- Status: implemented and deployed only after validation; demo observation
+  required.
+- Acceptance: version the replay-supported fade candidate at
+  `0.3.0-fade-limit.3` with TP `2.0×ATR`, SL `2.5×ATR`, minimum RR `0.75`,
+  and 1.5× fee-buffer admission; preserve shared 1% sizing and all safety
+  gates. Raise transient market-data 503 retries from one to three.
+- Evidence: `docs/fade-limit-improvement-v3-report.md`.
+
 ### ISSUE-109 — Bounded automatic strategy improvement
 
 - Status: implemented as a research-only evaluator; runtime promotion remains

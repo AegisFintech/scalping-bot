@@ -26,7 +26,7 @@ request may bypass these gates, manufacture a trade, or increase risk to maintai
 frequency.
 
 The current source contract uses the versioned `entry-pair-v4` provider prompt
-and the `0.3.0-fade-limit.1` strategy policy. Historical prompt/release names in
+and the `0.3.0-fade-limit.3` strategy policy. Historical prompt/release names in
 older issue sections and archived evidence describe immutable past behavior and
 must not be treated as current authority. The shared setup ceiling remains 1%
 of reconciled current equity, both OCO/fade legs share that budget, and the

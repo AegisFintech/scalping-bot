@@ -1,7 +1,7 @@
 import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
-export const POLICY_VERSION = "0.3.0-fade-limit.2";
+export const POLICY_VERSION = "0.3.0-fade-limit.3";
 export const STOP_EXECUTION_POLICY = {
   orderType: "STOP",
   adverseSlippagePoints: "30",
@@ -25,10 +25,18 @@ export const FADE_LIMIT_RELEASE = {
   /** Require at least 0.5 reward/risk for the revised fade geometry. */
   minRiskRewardRatio: "0.5",
 } as const;
+export const FADE_LIMIT_RELEASE_V3 = {
+  ...FADE_LIMIT_RELEASE,
+  /** Replay-selected candidate: preserve the stop while giving winners room. */
+  tpAtr: "2.0",
+  /** The realized geometry is 0.8:1; reject lower-ratio proposals. */
+  minRiskRewardRatio: "0.75",
+} as const;
 
 export const RELEASES = {
   "market-stop-v2": STOP_EXECUTION_POLICY,
   "0.3.0-fade-limit.2": FADE_LIMIT_RELEASE,
+  "0.3.0-fade-limit.3": FADE_LIMIT_RELEASE_V3,
 } as const;
 export type ReleaseKey = keyof typeof RELEASES;
 export function releasePolicy(key: ReleaseKey) {
@@ -162,8 +170,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.3.0-fade-limit.2",
-  CODE_VERSION: "0.3.0-fade-limit.2",
+  STRATEGY_VERSION: "0.3.0-fade-limit.3",
+  CODE_VERSION: "0.3.0-fade-limit.3",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

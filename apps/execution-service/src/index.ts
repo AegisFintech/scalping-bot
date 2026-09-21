@@ -14,6 +14,7 @@ import {
   POLICY_VERSION,
   executionRiskPolicy,
   FADE_LIMIT_RELEASE,
+  FADE_LIMIT_RELEASE_V3,
   STOP_EXECUTION_POLICY,
 } from "../../../packages/config/src/policy.js";
 
@@ -282,7 +283,7 @@ async function main(): Promise<void> {
       environment.MARKET_DATA_BASE_URL ??
       `http://127.0.0.1:${environment.MARKET_DATA_PORT ?? "8081"}`,
     timeoutMs: 20_000,
-    maxRetries: integer(environment, "MARKET_DATA_MAX_RETRIES", 1),
+    maxRetries: integer(environment, "MARKET_DATA_MAX_RETRIES", 3),
   });
   let latestSnapshot: MarketSnapshot | null = null;
   const market = {
@@ -329,10 +330,14 @@ async function main(): Promise<void> {
     throw new Error("SHADOW_OR_LIVE_MODE_REQUIRES_LIVE_DATA_CONNECTION");
   }
   const configHash = safetyConfigHash(config);
-  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.2";
+  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.3";
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
+  const fadeExecutionPolicy =
+    strategyVersion === "0.3.0-fade-limit.3"
+      ? FADE_LIMIT_RELEASE_V3
+      : FADE_LIMIT_RELEASE;
   const activeExecutionPolicy = fadeLimitActive
-    ? FADE_LIMIT_RELEASE
+    ? fadeExecutionPolicy
     : STOP_EXECUTION_POLICY;
   const identity = await ensureRuntimeIdentity(pool, {
     accountKey: config.accountKey,
@@ -787,7 +792,7 @@ async function main(): Promise<void> {
     identity,
     {
       bracketRecallBars: fadeLimitActive
-        ? Number(FADE_LIMIT_RELEASE.bracketRecallBars)
+        ? Number(fadeExecutionPolicy.bracketRecallBars)
         : 0,
     },
   );
@@ -1115,8 +1120,8 @@ async function main(): Promise<void> {
         demoRecoveryState.certain &&
         demoExecutionState.certain,
       lossStreakPauseActive: await computeLossStreakPause(
-        fadeLimitActive ? Number(FADE_LIMIT_RELEASE.streakLosses) : 0,
-        fadeLimitActive ? Number(FADE_LIMIT_RELEASE.streakPauseMinutes) : 0,
+        fadeLimitActive ? Number(fadeExecutionPolicy.streakLosses) : 0,
+        fadeLimitActive ? Number(fadeExecutionPolicy.streakPauseMinutes) : 0,
       ),
     };
   };
@@ -1174,20 +1179,23 @@ async function main(): Promise<void> {
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: fadeLimitActive
-      ? FADE_LIMIT_RELEASE.minRiskRewardRatio
+      ? fadeExecutionPolicy.minRiskRewardRatio
       : config.minRiskRewardRatio,
     ...(fadeLimitActive
       ? {
-          fadeLimitSlAtr: FADE_LIMIT_RELEASE.slAtr,
-          fadeLimitTpAtr: FADE_LIMIT_RELEASE.tpAtr,
+          fadeLimitSlAtr: fadeExecutionPolicy.slAtr,
+          fadeLimitTpAtr: fadeExecutionPolicy.tpAtr,
         }
       : {}),
     entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
     executionOrderType: fadeLimitActive ? "LIMIT" : "STOP",
     trendFilterBars: fadeLimitActive
-      ? Number(FADE_LIMIT_RELEASE.trendFilterBars)
+      ? Number(fadeExecutionPolicy.trendFilterBars)
       : 0,
-    minimumExpectedNetToFeesRatio: config.minimumExpectedNetToFeesRatio,
+    minimumExpectedNetToFeesRatio:
+      strategyVersion === "0.3.0-fade-limit.3"
+        ? "1.5"
+        : config.minimumExpectedNetToFeesRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
     preferredExpirySeconds: preferredOrderExpirySeconds,

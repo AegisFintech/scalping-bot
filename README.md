@@ -5,7 +5,7 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source policy is `0.3.0-fade-limit.1`, with provider prompt
+The current source policy is `0.3.0-fade-limit.3`, with provider prompt
 `entry-pair-v4`. The bot is intended to operate continuously whenever the broker
 session is open: it keeps evaluating fresh opportunities and resumes after
 normal temporary failures or scheduled closures.

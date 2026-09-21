@@ -437,11 +437,12 @@ daily-loss, exposure, notional, margin, spread, freshness, or reconciliation
 gates.
 
 Prompt `system-v14` tells the endpoint that execution selects the nearest whole
-broker-pip TP whose expected net profit is greater than one full estimated
-round-trip fee, then sets SL distance to exactly twice TP distance (reward:risk
-`1:2`, numeric reward/risk `0.5`). `MIN_EXPECTED_NET_TO_FEES_RATIO` defaults to
-and cannot be set below `1`; at `1`, gross TP must be strictly greater than
-twice estimated fees. The request supplies the resulting minimum TP/SL
+broker-pip TP whose expected net profit is greater than the release's estimated
+round-trip fee buffer, then sets SL/TP from the active versioned policy. The
+current `0.3.0-fade-limit.3` release uses a 1.5× net-to-fees requirement and
+2.0×ATR TP / 2.5×ATR SL; historical releases retain their recorded values.
+`MIN_EXPECTED_NET_TO_FEES_RATIO` cannot be set below `1`; the release override
+is deterministic and recorded in the strategy version. The request supplies the resulting minimum TP/SL
 floor, exact tick-aligned BUY/SELL entry ranges, an inclusive stop-distance
 range, and one exact preferred expiry. Those ranges combine current quote,
 broker/configured minimum, M1 ATR caps, commission metadata, and the maximum

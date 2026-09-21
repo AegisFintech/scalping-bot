@@ -14,7 +14,8 @@ export interface RiskPolicy {
     | "market-stop-v1"
     | "market-stop-v2"
     | "0.3.0-fade-limit.1"
-    | "0.3.0-fade-limit.2";
+    | "0.3.0-fade-limit.2"
+    | "0.3.0-fade-limit.3";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
