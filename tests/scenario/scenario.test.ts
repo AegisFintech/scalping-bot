@@ -602,8 +602,8 @@ describe("bounded scenario provider adapter", () => {
             output_text: JSON.stringify(fixture().plan),
             usage: {
               input_tokens: 12000,
-              output_tokens: 4096,
-              total_tokens: 16096,
+              output_tokens: 1024,
+              total_tokens: 13024,
             },
           }),
         ),
@@ -613,7 +613,7 @@ describe("bounded scenario provider adapter", () => {
       message: "AI_RESPONSE_INCOMPLETE",
       telemetry: {
         requestedModel: "grok-4.5",
-        outputTokens: 4096,
+        outputTokens: 1024,
         costAmount: null,
       },
     });

@@ -188,17 +188,19 @@ boundary, while Better Stack continues to receive only bounded summaries.
 ## Current provider boundary (ISSUE-085)
 
 The production adapter requests `grok-4.5` through the existing EPRToken
-Responses endpoint. The returned identity must be `grok-4.5`; no alias or fallback
-is accepted.
+chat-completions endpoint with `reasoning_effort: low`. The returned identity must be
+`grok-4.5`; no alias or fallback is accepted. Grok rejects `none` and defaults to
+slow high reasoning when the field is omitted.
 Other or missing returned identities are rejected. See
 `grok-model-switch-report.md` for the rollout record.
-Historical Astra/Sol evidence and migrations remain immutable. Production uses
-`scenario-v3`; observation uses `scenario-research-v2`. Both send structured OHLCV
-history up to 240 M1 / 144 M5 / 96 M15 bars and no images, with 4,096 output tokens.
+Historical Astra/Sol/DeepSeek evidence and migrations remain immutable. Production
+uses `entry-pair-v4` and sends structured OHLCV history up to 120 M1 / 72 M5 / 48 M15
+bars and no images, with 1,024 output tokens. Historical scenario observation remains
+separate and unchanged.
 All input bars are checked before tail selection, and local charts remain verified.
-The strict `scenario-1.0` output and telemetry JSON Schemas are unchanged. No model fallback or temperature override is enabled. The scenario planner
-requests disabled thinking explicitly to fit the deadline; it is not inferred
-from the literal route suffix. One in-flight request,
+The strict `scenario-1.0` output and telemetry JSON Schemas are unchanged. No model fallback or temperature override is enabled. The production entry planner
+requests low reasoning explicitly to fit the deadline; it is not inferred from
+the literal route suffix. One in-flight request,
 90-second asynchronous deadline (95-second local HTTP envelope), no automatic
 retries, bounded payload/response bodies and
 a three-failure/five-minute circuit contain outages. Provider cost is null until

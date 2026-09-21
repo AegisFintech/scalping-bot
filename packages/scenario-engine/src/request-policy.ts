@@ -7,7 +7,7 @@ export const SCENARIO_REQUEST_POLICY = Object.freeze({
   // Pro is text-only. More numeric history replaces provider-side chart reading.
   candleLimits: Object.freeze({ M1: 240, M5: 144, M15: 96 }),
   maxOutputTokens: 4096,
-  // EPRToken's thinking output exhausted 4096 tokens without a plan, even at low.
+  // Historical scenario path contract; production entry-pair uses its own Grok policy.
   reasoningEffort: "none" as const,
 });
 

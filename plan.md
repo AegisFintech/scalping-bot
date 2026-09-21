@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-112 — Grok production inference compatibility and latency
+
+- Status: implementation in progress; deployment observation pending.
+- Acceptance: use EPRToken chat-completions, Grok low reasoning, bounded 120/72/48
+  completed-candle tails and 1,024 completion tokens; preserve local validation,
+  shared risk, protection, reconciliation and live-disabled rules.
+- Evidence: `docs/grok-model-switch-report.md`.
+
 ### ISSUE-111 — Authorize reviewed Grok model pin
 
 - Status: implemented and deployed; fresh provider observation pending.

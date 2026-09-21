@@ -19,6 +19,12 @@ export const ENTRY_PAIR_PROMPT = Object.freeze({
   path: "prompts/entry-pair-v4.md",
 });
 
+const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
+  candleLimits: Object.freeze({ M1: 120, M5: 72, M15: 48 }),
+  maxOutputTokens: 1024,
+  reasoningEffort: "low" as const,
+});
+
 export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
   readonly chart: ScenarioInput["chart"] | null;
   readonly schemaVersion?: "2.0";
@@ -57,7 +63,7 @@ export function entryProviderPayload(
         "qualityFlags",
       ],
       rows: s.candles
-        .slice(-SCENARIO_REQUEST_POLICY.candleLimits[s.timeframe])
+        .slice(-ENTRY_PAIR_REQUEST_POLICY.candleLimits[s.timeframe])
         .map((b) => [
           b.startTime,
           b.endTime,
@@ -87,7 +93,9 @@ export class EntryPairPlanner {
     this.client = new OpenAiCompatibleClient<EntryPairPlan>({
       ...options,
       model: FIXED_DEFAULTS.AI_MODEL,
-      apiStyle: "responses",
+      // EPRToken's Grok route supports the OpenAI-compatible chat contract;
+      // its Responses route rejects the structured reasoning field below.
+      apiStyle: "chat_completions",
       schemaPath: "schemas/entry-pair-provider-1.0.json",
       outputSchemaName: "stop_entries_1_0",
       systemPromptPath: ENTRY_PAIR_PROMPT.path,
@@ -95,8 +103,9 @@ export class EntryPairPlanner {
       inputProfile: "structured",
       timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
       maxRetries: 0,
-      maxOutputTokens: SCENARIO_REQUEST_POLICY.maxOutputTokens,
-      reasoningEffort: SCENARIO_REQUEST_POLICY.reasoningEffort,
+      maxOutputTokens: ENTRY_PAIR_REQUEST_POLICY.maxOutputTokens,
+      // Grok rejects `none`; low keeps the mandatory reasoning bounded.
+      reasoningEffort: ENTRY_PAIR_REQUEST_POLICY.reasoningEffort,
       // The operator accepts readable entries; requested/returned identities remain recorded.
       requireReturnedModelMatch: false,
       parseResponse: (raw, request) =>

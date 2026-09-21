@@ -105,20 +105,20 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Model and decision path
 
-The operator-selected model is now `grok-4.5`. The EPRToken Responses endpoint
+The operator-selected model is now `grok-4.5`. The EPRToken chat-completions endpoint
 must return this exact identity.
 Every reply undergoes independent local schema and semantic validation. Both identifiers, timing and available token usage are
 retained; pricing remains unknown. See [model-switch evidence](docs/grok-model-switch-report.md).
 No fallback model is substituted. Temperature remains omitted; the scenario
-planner explicitly requests disabled thinking within the existing deadline.
-`/u5W` is sent literally, without inferred client-side semantics.
+planner uses Grok's supported low reasoning effort within the existing deadline.
 Historical model observations remain immutable; a switch does not establish improved fills.
 
-The active scenario input contains up to 240 M1, 144 M5 and 96 M15 completed
+The active scenario input contains up to 120 M1, 72 M5 and 48 M15 completed
 OHLCV bars as numeric data. The text-only Pro model receives no image; charts
 remain verified and archived locally. New prompt `scenario-v3` uses the larger
 history to distinguish nearby structure from distant levels without selecting
-SL, TP or size. More history does not establish better analysis or profitability.
+SL, TP or size. The bounded production tail is a latency safeguard; more history
+does not establish better analysis or profitability.
 Every response crosses
 strict schema, identity, tick-precision and fixed-validity checks. Requests have a
 90-second background deadline, no automatic retry, bounded bodies and a circuit breaker.

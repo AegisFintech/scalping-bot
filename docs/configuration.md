@@ -76,8 +76,8 @@ preserving all credentials and operator controls. Forward migration
 `0026_grok_context_model.sql` admits Grok while preserving historical
 Astra/Sol/DeepSeek rows and request cooldowns. Deploy matching AI/execution builds together.
 The production scenario
-uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
-production prompt `entry-pair-v4`, explicitly disabled thinking and at most 4,096 output
+uses structured numeric history (up to 120 M1 / 72 M5 / 48 M15 completed bars),
+production prompt `entry-pair-v4`, low reasoning and at most 1,024 output
 tokens within the existing
 90-second deadline. Historical charts remain validated local audit artifacts;
 new numeric analyses generate display charts only on demand. Request bounds,

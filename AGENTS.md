@@ -194,8 +194,8 @@ other modes retain remaining daily capacity and drawdown reductions.
 - Preserve existing daily/drawdown locks when applying a policy update. Risk
   percentages are release constants, not environment tuning controls. Read
   `docs/fixed-risk-report.md` before changing the money-management policy.
-- Request `grok-4.5` literally through the configured EPRToken Responses
-  endpoint. Record requested/returned identities; never add a silent fallback.
+- Request `grok-4.5` literally through the configured EPRToken chat-completions
+  endpoint with `reasoning_effort: low`. Record requested/returned identities; never add a silent fallback.
   The returned identity must be `grok-4.5`; historical Astra, Sol and DeepSeek
   normalization remains documented.
   Unknown cost is null. Historical provider records remain immutable; a previous-model
