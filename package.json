@@ -32,7 +32,8 @@
     "provider:benchmark": "tsx scripts/benchmark-provider.ts",
     "evaluation:export": "tsx scripts/export-evaluation.ts",
     "scenario:replay": "tsx scripts/replay-scenarios.ts",
-    "scenario:observe": "tsx scripts/observe-scenario.ts"
+    "scenario:observe": "tsx scripts/observe-scenario.ts",
+    "strategy:auto-improve": ".venv/bin/python -m python.backtest.auto_improve"
   },
   "dependencies": {
     "ajv": "8.20.0",

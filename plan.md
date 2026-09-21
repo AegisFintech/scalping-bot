@@ -2,6 +2,18 @@
 
 ## Scope
 
+### ISSUE-109 — Bounded automatic strategy improvement
+
+- Status: implemented as a research-only evaluator; runtime promotion remains
+  manual and fail-closed.
+- Acceptance: evaluate the existing variant family with expanding-train,
+  forward-test, embargoed walk-forward folds, measured and stressed costs, and
+  a repeated-selection requirement; emit `HOLD` when history or evidence is
+  insufficient. Never change broker orders, risk, protection, or production
+  policy automatically.
+- Evidence: `python/backtest/auto_improve.py` and
+  `tests/python/test_auto_improve.py`.
+
 ### ISSUE-108 — Fade-limit reward/risk asymmetry correction
 
 - Status: in progress.
