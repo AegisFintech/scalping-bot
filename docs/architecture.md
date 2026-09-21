@@ -115,7 +115,7 @@ loopback and deployments support Debian/systemd.
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
    A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links
    the recorded numeric market inputs. A separate task calls `/v2/entry-pair`, using
-   exact `deepseek-v4-pro/u5W`, prompt `entry-pair-v4`, two readable prices, and
+   exact `grok-4.5`, prompt `entry-pair-v4`, two readable prices, and
    structured completed-candle tails (M1 240 / M5 144 / M15 96). The text-only
    model receives no image; exact provider input, prompt and available output are
    durably journaled. Historical chart bytes remain protected. Completion/failure

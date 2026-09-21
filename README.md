@@ -105,10 +105,10 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Model and decision path
 
-The operator-selected model is now `deepseek-v4-pro/u5W`. The existing EPRToken
-Responses endpoint accepted this literal identifier, returning `deepseek-v4-pro`.
+The operator-selected model is now `grok-4.5`. The EPRToken Responses endpoint
+must return this exact identity.
 Every reply undergoes independent local schema and semantic validation. Both identifiers, timing and available token usage are
-retained; pricing remains unknown. See [model-switch evidence](docs/deepseek-context-report.md).
+retained; pricing remains unknown. See [model-switch evidence](docs/grok-model-switch-report.md).
 No fallback model is substituted. Temperature remains omitted; the scenario
 planner explicitly requests disabled thinking within the existing deadline.
 `/u5W` is sent literally, without inferred client-side semantics.
@@ -147,7 +147,7 @@ The normal [.env.sample](.env.sample) has **20 settings, down from 176 (88.6%)**
 It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=deepseek-v4-pro/u5W` is explicit; other AI and strategy tuning is fixed in
+`AI_MODEL=grok-4.5` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
 24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the

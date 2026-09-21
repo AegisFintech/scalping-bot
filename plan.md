@@ -2,6 +2,17 @@
 
 ## Scope
 
+### ISSUE-111 — Authorize reviewed Grok model pin
+
+- Status: implemented and deployed; fresh provider observation pending.
+- Acceptance: authorize `grok-4.5` for new requests, preserve historical model
+  identities, require exact returned identity, update the forward database
+  constraint and current operator documentation, then validate and deploy the
+  matching AI/execution build.
+- Safety: no fallback model, live execution remains disabled, and existing
+  risk/session/reconciliation/protection gates remain unchanged.
+- Evidence: `docs/grok-model-switch-report.md`.
+
 ### ISSUE-110 — Fade-limit v3 expectancy correction and transient feed retry
 
 - Status: implemented and deployed only after validation; demo observation

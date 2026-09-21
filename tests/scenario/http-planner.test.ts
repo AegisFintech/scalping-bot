@@ -23,8 +23,8 @@ const input = {
   chart: analysisChart(),
 };
 const usage = {
-  requestedModel: "deepseek-v4-pro/u5W",
-  returnedModel: "deepseek-v4-pro" as string | null,
+  requestedModel: "grok-4.5",
+  returnedModel: "grok-4.5" as string | null,
   inputProfile: "structured",
   requestBytes: 100,
   responseBytes: 100,
@@ -33,7 +33,7 @@ const usage = {
 function envelope() {
   const content = readFileSync("prompts/scenario-v3.md", "utf8").trim();
   return {
-    model: "deepseek-v4-pro/u5W",
+    model: "grok-4.5",
     rawResponse: JSON.stringify(plan),
     latencyMs: 40000,
     retryCount: 0,
@@ -55,7 +55,7 @@ it("checks the exact requested model, contract and raw response independently", 
     fetcher,
   ).generate(input);
   expect(result.response).toEqual(plan);
-  expect(result.telemetry.returnedModel).toBe("deepseek-v4-pro");
+  expect(result.telemetry.returnedModel).toBe("grok-4.5");
   expect(String(fetcher.mock.calls[0]?.[0])).toBe(
     "http://127.0.0.1:8082/v1/scenario",
   );

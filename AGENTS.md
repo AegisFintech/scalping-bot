@@ -194,13 +194,13 @@ other modes retain remaining daily capacity and drawdown reductions.
 - Preserve existing daily/drawdown locks when applying a policy update. Risk
   percentages are release constants, not environment tuning controls. Read
   `docs/fixed-risk-report.md` before changing the money-management policy.
-- Request `deepseek-v4-pro/u5W` literally through the configured EPRToken Responses
+- Request `grok-4.5` literally through the configured EPRToken Responses
   endpoint. Record requested/returned identities; never add a silent fallback.
-  Observed `deepseek-v4-pro` return normalization and structured input are documented
-  in `docs/deepseek-context-report.md`. Historical Astra normalization remains documented.
+  The returned identity must be `grok-4.5`; historical Astra, Sol and DeepSeek
+  normalization remains documented.
   Unknown cost is null. Historical provider records remain immutable; a previous-model
   map cannot authorize new execution after a switch. Failure/unknown-dispatch cooldowns remain; one proven post-close refresh is the documented exception.
-  Migration 0020 admits DeepSeek alongside historical Astra and Sol journal identities;
+  Migration 0026 admits Grok alongside historical Astra, Sol and DeepSeek journal identities;
   never rewrite prior migration checksums or model history.
 - Preserve model-independent protective maintenance and account/symbol ownership
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.

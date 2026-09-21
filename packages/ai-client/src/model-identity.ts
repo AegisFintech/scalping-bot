@@ -4,10 +4,13 @@ export function returnedModelMatches(
   returned: unknown,
 ): boolean {
   return (
-    (returned === null && requested !== "deepseek-v4-pro/u5W") ||
+    (returned === null &&
+      requested !== "deepseek-v4-pro/u5W" &&
+      requested !== "grok-4.5") ||
     returned === requested ||
     (requested === "gpt-6-astra/u64" && returned === "gpt-6-astra") ||
     (requested === "gpt-5.6-sol/u40" && returned === "gpt-5.6-sol") ||
-    (requested === "deepseek-v4-pro/u5W" && returned === "deepseek-v4-pro")
+    (requested === "deepseek-v4-pro/u5W" && returned === "deepseek-v4-pro") ||
+    (requested === "grok-4.5" && returned === "grok-4.5")
   );
 }

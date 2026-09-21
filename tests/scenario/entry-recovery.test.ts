@@ -65,7 +65,7 @@ function plan(
 }
 function response(p: EntryPairPlan): AiAnalysisResult<EntryPairPlan> {
   return {
-    model: "deepseek-v4-pro/u5W",
+    model: "grok-4.5",
     response: p,
     rawResponse: JSON.stringify(p),
     latencyMs: 10,
@@ -76,8 +76,8 @@ function response(p: EntryPairPlan): AiAnalysisResult<EntryPairPlan> {
       sha256: "a".repeat(64),
     },
     telemetry: {
-      requestedModel: "deepseek-v4-pro/u5W",
-      returnedModel: "deepseek-v4-pro",
+      requestedModel: "grok-4.5",
+      returnedModel: "grok-4.5",
       inputProfile: "structured",
       requestBytes: 100,
       responseBytes: 100,
@@ -112,7 +112,7 @@ function memory(now: () => number, initial: EntryPairPlan | null = plan()) {
     ? [
         {
           id: initial.analysis_id,
-          requestedModel: "deepseek-v4-pro/u5W",
+          requestedModel: "grok-4.5",
           state: "READY",
           requestedAt: iso(),
           capturedAt: iso(),
@@ -143,7 +143,7 @@ function memory(now: () => number, initial: EntryPairPlan | null = plan()) {
         return Promise.resolve(false);
       rows.push({
         id: i.id,
-        requestedModel: "deepseek-v4-pro/u5W",
+        requestedModel: "grok-4.5",
         state: "REQUESTING",
         requestedAt: iso(now()),
         capturedAt: i.capturedAt,

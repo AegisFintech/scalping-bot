@@ -34,7 +34,7 @@ describe("fixed percentage policy, synthetic risk evidence only", () => {
       ORDER_EXPIRY_MIN_SECONDS: "60",
       ORDER_EXPIRY_MAX_SECONDS: "180",
       PREFERRED_ORDER_EXPIRY_SECONDS: "180",
-      AI_MODEL: "deepseek-v4-pro/u5W",
+      AI_MODEL: "grok-4.5",
       LIVE_TRADING_ENABLED: "false",
     });
     expect(() =>

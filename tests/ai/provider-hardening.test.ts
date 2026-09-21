@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { OpenAiCompatibleClient } from "../../packages/ai-client/src/client.js";
+import { returnedModelMatches } from "../../packages/ai-client/src/model-identity.js";
 import {
   boundedResponseText,
   usageTelemetry,
@@ -7,9 +8,14 @@ import {
 import { resolveRuntimeEnvironment } from "../../packages/config/src/policy.js";
 
 describe("bounded provider and configuration", () => {
+  it("accepts only the exact Grok identity for the new pin", () => {
+    expect(returnedModelMatches("grok-4.5", "grok-4.5")).toBe(true);
+    expect(returnedModelMatches("grok-4.5", "grok-4.5/u1")).toBe(false);
+    expect(returnedModelMatches("grok-4.5", null)).toBe(false);
+  });
   it("keeps exact model identity and explicit stopped authority", () => {
     const env = resolveRuntimeEnvironment({ AI_API_KEY: "fixture-secret" });
-    expect(env.AI_MODEL).toBe("deepseek-v4-pro/u5W");
+    expect(env.AI_MODEL).toBe("grok-4.5");
     expect(env.LIVE_TRADING_ENABLED).toBe("false");
     expect(env.BASE_RISK_PERCENT).toBe("1");
     expect(env.MAX_RISK_PERCENT).toBe("1");

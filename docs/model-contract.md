@@ -187,11 +187,11 @@ boundary, while Better Stack continues to receive only bounded summaries.
 
 ## Current provider boundary (ISSUE-085)
 
-The production adapter requests `deepseek-v4-pro/u5W` through the existing EPRToken
-Responses endpoint. A bounded endpoint probe returned valid strict JSON and
-the identity `deepseek-v4-pro`. This observed alias is allowed only for this exact request;
-other or missing returned identities reject for DeepSeek. See
-`deepseek-context-report.md` for runtime evidence.
+The production adapter requests `grok-4.5` through the existing EPRToken
+Responses endpoint. The returned identity must be `grok-4.5`; no alias or fallback
+is accepted.
+Other or missing returned identities are rejected. See
+`grok-model-switch-report.md` for the rollout record.
 Historical Astra/Sol evidence and migrations remain immutable. Production uses
 `scenario-v3`; observation uses `scenario-research-v2`. Both send structured OHLCV
 history up to 240 M1 / 144 M5 / 96 M15 bars and no images, with 4,096 output tokens.
