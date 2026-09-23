@@ -12,6 +12,7 @@ import type {
 import { CTraderClient } from "../../../packages/ctrader-client/src/client.js";
 import { CTraderTokenManager } from "../../../packages/ctrader-client/src/token-manager.js";
 import { SecureTokenFileStore } from "../../../packages/ctrader-client/src/token-store.js";
+import { cTraderErrorDetails } from "../../../packages/ctrader-client/src/transport.js";
 import {
   LocalMarketRecorder,
   type LocalMarketRecorderStatus,
@@ -24,6 +25,27 @@ export interface MarketDataServerOptions {
   readonly maxSnapshotSkewMs: number;
   readonly localRecorderStatus?: () =>
     LocalMarketRecorderStatus | { readonly enabled: false };
+}
+
+type MarketFailureOperation = "session" | "quote" | "snapshot";
+
+function safeMarketFailure(
+  error: unknown,
+  fallback: string,
+  operation: MarketFailureOperation,
+): Record<string, unknown> {
+  const reason =
+    error instanceof Error && /^[A-Z0-9_:-]{1,160}$/.test(error.message)
+      ? error.message
+      : fallback;
+  const details = cTraderErrorDetails(error);
+  if (details === null) return { reason };
+  return {
+    reason,
+    operation,
+    observedAt: new Date().toISOString(),
+    broker: details,
+  };
 }
 
 function configuredBoolean(
@@ -86,9 +108,13 @@ export function createMarketDataServer(
           metadata.symbolId,
         );
         return reply.send({ schemaVersion: "1.0", metadata, schedule });
-      } catch {
+      } catch (error) {
         // Session failures do not disable broker-held protection or expose raw errors.
-        return reply.code(503).send({ reason: "MARKET_SESSION_UNAVAILABLE" });
+        return reply
+          .code(503)
+          .send(
+            safeMarketFailure(error, "MARKET_SESSION_UNAVAILABLE", "session"),
+          );
       }
     },
   );
@@ -120,8 +146,7 @@ export function createMarketDataServer(
         ready = false;
         return reply.code(503).send({
           error: "MARKET_QUOTE_UNAVAILABLE",
-          reason:
-            error instanceof Error ? error.message : "MARKET_QUOTE_FAILED",
+          ...safeMarketFailure(error, "MARKET_QUOTE_FAILED", "quote"),
         });
       }
     },
@@ -192,8 +217,7 @@ export function createMarketDataServer(
       ready = false;
       return reply.code(503).send({
         error: "MARKET_SNAPSHOT_UNAVAILABLE",
-        reason:
-          error instanceof Error ? error.message : "MARKET_SNAPSHOT_FAILED",
+        ...safeMarketFailure(error, "MARKET_SNAPSHOT_FAILED", "snapshot"),
       });
     }
   });

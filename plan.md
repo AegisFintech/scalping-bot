@@ -2,6 +2,30 @@
 
 ## Scope
 
+### ISSUE-242 — cTrader rate-limit budgeting and automatic recovery
+
+- Status: planned; follows ISSUE-241 diagnostics.
+- Acceptance: centralize bounded cTrader request scheduling/backoff, avoid
+  repeated symbol discovery while metadata is valid, recover from request-level
+  rate-limit responses without blind order retries, and expose recovery health.
+- Validation: transport/client/market-data failure tests, full quality gates,
+  secret scan, Graphify update and demo observation.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/242.
+
+### ISSUE-241 — Actionable cTrader rejection diagnostics
+
+- Status: implemented on `issue-241-ctrader-diagnostics`; push pending final
+  quality gates.
+- Acceptance: preserve bounded broker payload type/code/description, operation
+  and observation time through market-data failures; keep secrets and raw
+  payloads out of responses/logs; distinguish broker rejection, timeout and
+  stale-data failures in tests and operator diagnostics without weakening any
+  fail-closed gate.
+- Validation: transport and market-data tests, lint, typecheck, build, full
+  tests, secret scan and Graphify update.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/241.
+- Evidence: `docs/ctrader-diagnostics-report.md`.
+
 ### ISSUE-112 — Grok production inference compatibility and latency
 
 - Status: implementation in progress; deployment observation pending.

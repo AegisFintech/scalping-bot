@@ -179,6 +179,79 @@ export interface MarketDataHttpClientOptions {
   readonly fetchImpl?: typeof fetch;
 }
 
+export interface MarketDataBrokerDiagnostic {
+  readonly payloadType: number;
+  readonly code: string | null;
+  readonly description: string | null;
+}
+
+export interface MarketDataFailureDiagnostic {
+  readonly operation: "session" | "quote" | "snapshot";
+  readonly observedAt: string;
+  readonly broker: MarketDataBrokerDiagnostic;
+}
+
+export class MarketDataHttpError extends Error {
+  readonly status: number;
+  readonly reason: string | null;
+  readonly diagnostic: MarketDataFailureDiagnostic | null;
+
+  constructor(
+    message: string,
+    status: number,
+    reason: string | null,
+    diagnostic: MarketDataFailureDiagnostic | null,
+  ) {
+    super(message);
+    this.name = "MarketDataHttpError";
+    this.status = status;
+    this.reason = reason;
+    this.diagnostic = diagnostic;
+  }
+}
+
+function failureDiagnostic(value: unknown): {
+  reason: string | null;
+  diagnostic: MarketDataFailureDiagnostic | null;
+} {
+  if (typeof value !== "object" || value === null) {
+    return { reason: null, diagnostic: null };
+  }
+  const body = value as Record<string, unknown>;
+  const reason = typeof body.reason === "string" ? body.reason : null;
+  const broker = body.broker;
+  if (
+    typeof body.operation !== "string" ||
+    !["session", "quote", "snapshot"].includes(body.operation) ||
+    typeof body.observedAt !== "string" ||
+    typeof broker !== "object" ||
+    broker === null
+  ) {
+    return { reason, diagnostic: null };
+  }
+  const details = broker as Record<string, unknown>;
+  if (
+    typeof details.payloadType !== "number" ||
+    !Number.isSafeInteger(details.payloadType) ||
+    (details.code !== null && typeof details.code !== "string") ||
+    (details.description !== null && typeof details.description !== "string")
+  ) {
+    return { reason, diagnostic: null };
+  }
+  return {
+    reason,
+    diagnostic: {
+      operation: body.operation as MarketDataFailureDiagnostic["operation"],
+      observedAt: body.observedAt,
+      broker: {
+        payloadType: details.payloadType,
+        code: details.code,
+        description: details.description,
+      },
+    },
+  };
+}
+
 export class MarketDataHttpClient {
   readonly #options: MarketDataHttpClientOptions;
 
@@ -221,7 +294,18 @@ export class MarketDataHttpClient {
       );
       if (response.ok) return response;
       if (response.status !== 503 || attempt === maxRetries) {
-        throw new Error(`${errorPrefix}:${response.status}`);
+        const body = await response.json().catch(() => null);
+        const failure = failureDiagnostic(body);
+        const brokerSuffix =
+          failure.diagnostic === null
+            ? ""
+            : `:${failure.diagnostic.broker.code ?? "UNKNOWN"}:${failure.diagnostic.broker.description ?? ""}`;
+        throw new MarketDataHttpError(
+          `${errorPrefix}:${response.status}${brokerSuffix}`,
+          response.status,
+          failure.reason,
+          failure.diagnostic,
+        );
       }
       const delayMs = this.#options.retryDelayMs ?? 250;
       if (delayMs > 0) {

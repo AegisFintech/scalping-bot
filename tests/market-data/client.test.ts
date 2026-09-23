@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MarketDataHttpClient } from "../../packages/market-data-client/src/client.js";
+import {
+  MarketDataHttpClient,
+  type MarketDataHttpError,
+} from "../../packages/market-data-client/src/client.js";
 
 describe("market-data HTTP client", () => {
   it("rejects URLs containing credentials", () => {
@@ -126,5 +129,46 @@ describe("market-data HTTP client", () => {
       "MARKET_QUOTE_HTTP_ERROR:503",
     );
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("surfaces bounded broker diagnostics on a rejected market request", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json(
+        {
+          error: "MARKET_QUOTE_UNAVAILABLE",
+          reason: "CTRADER_REQUEST_REJECTED",
+          operation: "quote",
+          observedAt: "2026-08-25T12:00:00.000Z",
+          broker: {
+            payloadType: 2142,
+            code: "BLOCKED_PAYLOAD_TYPE",
+            description: "You are being rate limited",
+          },
+        },
+        { status: 503 },
+      ),
+    );
+    const client = new MarketDataHttpClient({
+      baseUrl: "http://127.0.0.1:8081",
+      maxRetries: 0,
+      fetchImpl,
+    });
+
+    await expect(client.quote("XAUUSD")).rejects.toMatchObject({
+      name: "MarketDataHttpError",
+      message:
+        "MARKET_QUOTE_HTTP_ERROR:503:BLOCKED_PAYLOAD_TYPE:You are being rate limited",
+      status: 503,
+      reason: "CTRADER_REQUEST_REJECTED",
+      diagnostic: {
+        operation: "quote",
+        observedAt: "2026-08-25T12:00:00.000Z",
+        broker: {
+          payloadType: 2142,
+          code: "BLOCKED_PAYLOAD_TYPE",
+          description: "You are being rate limited",
+        },
+      },
+    } satisfies Partial<MarketDataHttpError>);
   });
 });

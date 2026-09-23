@@ -2,6 +2,7 @@ import { marketSession } from "../helpers/market-session.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createMarketDataServer } from "../../apps/market-data-service/src/index.js";
+import { CTraderRequestRejectedError } from "../../packages/ctrader-client/src/transport.js";
 import type {
   Candle,
   MarketDataAdapter,
@@ -182,6 +183,53 @@ describe("market-data freshness", () => {
 
     expect(response.statusCode).toBe(503);
     expect(response.json()).toMatchObject({ reason: "MARKET_QUOTE_STALE" });
+    await app.close();
+  });
+
+  it("preserves bounded broker rejection diagnostics without raw payload data", async () => {
+    const source = adapter(
+      {
+        bid: "4499.99",
+        ask: "4500.01",
+        sourceTime: "2026-08-24T00:00:00.050Z",
+        receivedAt: "2026-08-24T00:00:00.080Z",
+      },
+      orderBook,
+    );
+    vi.spyOn(source, "getQuote").mockRejectedValue(
+      new CTraderRequestRejectedError(2142, {
+        errorCode: "BLOCKED_PAYLOAD_TYPE",
+        description: "You are being rate limited",
+        accessToken: "must-not-be-recorded",
+      }),
+    );
+    const app = createMarketDataServer({
+      adapter: source,
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/quote",
+      payload: { symbol: "XAUUSD" },
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toMatchObject({
+      error: "MARKET_QUOTE_UNAVAILABLE",
+      reason: "CTRADER_REQUEST_REJECTED",
+      operation: "quote",
+      broker: {
+        payloadType: 2142,
+        code: "BLOCKED_PAYLOAD_TYPE",
+        description: "You are being rate limited",
+      },
+    });
+    expect(JSON.stringify(response.json())).not.toContain(
+      "must-not-be-recorded",
+    );
     await app.close();
   });
 
