@@ -21,6 +21,14 @@ export interface CTraderErrorDetails {
   readonly description: string | null;
 }
 
+export function isCTraderRateLimitDetails(
+  details: CTraderErrorDetails,
+): boolean {
+  const text =
+    `${details.code ?? ""} ${details.description ?? ""}`.toUpperCase();
+  return /RATE.?LIMIT|TOO.?MANY|THROTTL/.test(text);
+}
+
 function safeText(value: unknown, maximumLength: number): string | null {
   if (typeof value !== "string" && typeof value !== "number") return null;
   const text = Array.from(String(value), (character) =>
@@ -94,6 +102,8 @@ export class CTraderJsonTransport {
   #reconnectHandler: (() => Promise<void>) | null = null;
   #historicalNextAt = 0;
   #regularNextAt = 0;
+  #rateLimitBlockedUntil = 0;
+  #rateLimitBackoffMs = 1_000;
 
   constructor(options: CTraderTransportOptions) {
     this.#options = options;
@@ -221,11 +231,32 @@ export class CTraderJsonTransport {
 
   async #rateLimit(historical: boolean): Promise<void> {
     const now = Date.now();
-    const next = historical ? this.#historicalNextAt : this.#regularNextAt;
+    const next = Math.max(
+      historical ? this.#historicalNextAt : this.#regularNextAt,
+      this.#rateLimitBlockedUntil,
+    );
     if (next > now)
       await new Promise((resolve) => setTimeout(resolve, next - now));
-    if (historical) this.#historicalNextAt = Math.max(now, next) + 200;
-    else this.#regularNextAt = Math.max(now, next) + 20;
+    const scheduledAt = Date.now();
+    if (historical) this.#historicalNextAt = scheduledAt + 200;
+    else this.#regularNextAt = scheduledAt + 20;
+  }
+
+  #noteRateLimit(details: CTraderErrorDetails): void {
+    if (!isCTraderRateLimitDetails(details)) return;
+    const now = Date.now();
+    this.#rateLimitBlockedUntil = Math.max(
+      this.#rateLimitBlockedUntil,
+      now + this.#rateLimitBackoffMs,
+    );
+    this.#rateLimitBackoffMs = Math.min(this.#rateLimitBackoffMs * 2, 30_000);
+  }
+
+  #noteSuccessfulRequest(): void {
+    if (Date.now() >= this.#rateLimitBlockedUntil) {
+      this.#rateLimitBlockedUntil = 0;
+      this.#rateLimitBackoffMs = 1_000;
+    }
   }
 
   #receive(data: RawData): void {
@@ -249,17 +280,18 @@ export class CTraderJsonTransport {
           message.payloadType === CTraderPayload.ERROR_RES ||
           message.payloadType === CTraderPayload.ORDER_ERROR_EVENT
         ) {
-          pending.reject(
-            new CTraderRequestRejectedError(
-              message.payloadType,
-              message.payload,
-            ),
+          const error = new CTraderRequestRejectedError(
+            message.payloadType,
+            message.payload,
           );
+          this.#noteRateLimit(error.details);
+          pending.reject(error);
         } else if (!pending.expectedPayloadTypes.has(message.payloadType)) {
           pending.reject(
             new Error(`CTRADER_RESPONSE_TYPE_MISMATCH:${message.payloadType}`),
           );
         } else {
+          this.#noteSuccessfulRequest();
           pending.resolve(message);
         }
       }

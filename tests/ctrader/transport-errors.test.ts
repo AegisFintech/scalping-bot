@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CTraderRequestRejectedError,
   cTraderErrorDetails,
+  isCTraderRateLimitDetails,
 } from "../../packages/ctrader-client/src/transport.js";
 
 describe("cTrader rejection diagnostics", () => {
@@ -36,5 +37,22 @@ describe("cTrader rejection diagnostics", () => {
       code: null,
       description: null,
     });
+  });
+
+  it("classifies broker rate-limit details without treating other rejections as transient", () => {
+    expect(
+      isCTraderRateLimitDetails({
+        payloadType: 2142,
+        code: "BLOCKED_PAYLOAD_TYPE",
+        description: "You are being rate limited",
+      }),
+    ).toBe(true);
+    expect(
+      isCTraderRateLimitDetails({
+        payloadType: 2142,
+        code: "CH_ACCESS_DENIED",
+        description: "Cash-flow history is not available",
+      }),
+    ).toBe(false);
   });
 });

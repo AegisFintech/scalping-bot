@@ -28,6 +28,8 @@ export interface MarketDataServerOptions {
 }
 
 type MarketFailureOperation = "session" | "quote" | "snapshot";
+type MarketMetadata = Awaited<ReturnType<MarketDataAdapter["discoverSymbol"]>>;
+const SYMBOL_METADATA_CACHE_MS = 30_000;
 
 function safeMarketFailure(
   error: unknown,
@@ -75,6 +77,21 @@ export function createMarketDataServer(
 ): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 64_000 });
   let ready = true;
+  const metadataCache = new Map<
+    string,
+    { readonly metadata: MarketMetadata; readonly expiresAt: number }
+  >();
+  const dataMetadata = async (symbol: string): Promise<MarketMetadata> => {
+    const cached = metadataCache.get(symbol.toUpperCase());
+    if (cached !== undefined && cached.expiresAt > Date.now())
+      return cached.metadata;
+    const metadata = await options.adapter.discoverSymbol(symbol);
+    metadataCache.set(symbol.toUpperCase(), {
+      metadata,
+      expiresAt: Date.now() + SYMBOL_METADATA_CACHE_MS,
+    });
+    return metadata;
+  };
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", (_request, reply) =>
     ready
@@ -122,9 +139,7 @@ export function createMarketDataServer(
     "/v1/quote",
     async (request, reply) => {
       try {
-        const metadata = await options.adapter.discoverSymbol(
-          request.body.symbol,
-        );
+        const metadata = await dataMetadata(request.body.symbol);
         const quote = await options.adapter.getQuote(metadata.symbolId);
         const serverTime = await options.adapter.getServerTime();
         const serverMs = Date.parse(serverTime);
@@ -156,7 +171,7 @@ export function createMarketDataServer(
   }>("/v1/snapshot", async (request, reply) => {
     try {
       const { symbol, counts, depth } = request.body;
-      const metadata = await options.adapter.discoverSymbol(symbol);
+      const metadata = await dataMetadata(symbol);
       const quote = await options.adapter.getQuote(metadata.symbolId);
       const [m1, m5, m15, orderBook] = await Promise.all([
         options.adapter.getCompletedCandles(metadata.symbolId, "M1", counts.M1),

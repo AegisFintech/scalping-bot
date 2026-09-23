@@ -186,6 +186,45 @@ describe("market-data freshness", () => {
     await app.close();
   });
 
+  it("caches data metadata while keeping the session endpoint fresh", async () => {
+    const source = adapter(
+      {
+        bid: "4499.99",
+        ask: "4500.01",
+        sourceTime: "2026-08-24T00:00:00.050Z",
+        receivedAt: "2026-08-24T00:00:00.080Z",
+      },
+      orderBook,
+    );
+    const discover = vi.spyOn(source, "discoverSymbol");
+    const app = createMarketDataServer({
+      adapter: source,
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/quote",
+      payload: { symbol: "XAUUSD" },
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/quote",
+      payload: { symbol: "XAUUSD" },
+    });
+    expect(discover).toHaveBeenCalledTimes(1);
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/session",
+      payload: { symbol: "XAUUSD" },
+    });
+    expect(discover).toHaveBeenCalledTimes(2);
+    await app.close();
+  });
+
   it("preserves bounded broker rejection diagnostics without raw payload data", async () => {
     const source = adapter(
       {

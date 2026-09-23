@@ -4,13 +4,14 @@
 
 ### ISSUE-242 — cTrader rate-limit budgeting and automatic recovery
 
-- Status: planned; follows ISSUE-241 diagnostics.
+- Status: implementation in progress on `issue-242-ctrader-rate-limit-recovery`.
 - Acceptance: centralize bounded cTrader request scheduling/backoff, avoid
   repeated symbol discovery while metadata is valid, recover from request-level
   rate-limit responses without blind order retries, and expose recovery health.
 - Validation: transport/client/market-data failure tests, full quality gates,
   secret scan, Graphify update and demo observation.
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/242.
+- Evidence: `docs/ctrader-rate-limit-recovery-report.md`.
 
 ### ISSUE-241 — Actionable cTrader rejection diagnostics
 
