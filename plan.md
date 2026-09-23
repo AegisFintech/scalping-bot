@@ -4,7 +4,7 @@
 
 ### ISSUE-242 — cTrader rate-limit budgeting and automatic recovery
 
-- Status: implementation in progress on `issue-242-ctrader-rate-limit-recovery`.
+- Status: implemented and pushed in PR #244; demo observation pending.
 - Acceptance: centralize bounded cTrader request scheduling/backoff, avoid
   repeated symbol discovery while metadata is valid, recover from request-level
   rate-limit responses without blind order retries, and expose recovery health.
@@ -15,8 +15,7 @@
 
 ### ISSUE-241 — Actionable cTrader rejection diagnostics
 
-- Status: implemented on `issue-241-ctrader-diagnostics`; push pending final
-  quality gates.
+- Status: implemented and pushed in PR #243; runtime observation pending.
 - Acceptance: preserve bounded broker payload type/code/description, operation
   and observation time through market-data failures; keep secrets and raw
   payloads out of responses/logs; distinguish broker rejection, timeout and
