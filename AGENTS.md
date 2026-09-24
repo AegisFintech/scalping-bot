@@ -1,5 +1,13 @@
 # Agent Instructions
 
+ISSUE-245: session dependency failures must retry with bounded backoff inside
+startup, never create a supervisor restart storm. Market-only reconnects require
+fresh subscriptions and quotes; rejected commands are never replayed. Concurrent
+broker requests must be paced serially. See `docs/session-recurrence-report.md`.
+Do not attribute a new outage to an old broker error. Missing daily baselines
+remain explicit accounting failures and require the existing audited evidence
+procedure; reconnecting does not authorize an accounting reset.
+
 Read `plan.md`, this file, and the relevant architecture/risk documents before changing code.
 
 ## Core bot purpose and operating contract (authoritative)

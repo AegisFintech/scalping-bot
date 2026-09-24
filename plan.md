@@ -2,6 +2,21 @@
 
 ## Scope
 
+### ISSUE-245 — startup storm and concurrent admission (ISSUE-242 follow-up)
+
+- Status: implemented and deployed; accounting recovery remains blocked on
+  `fix/session-startup-request-queue`; follows PR #244.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/245.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/246.
+- Acceptance: reproduce and serialize concurrent request admission, reject
+  locally during broker cooldown, wait with capped backoff during initial
+  session failure, and recover the read-only market connection after three
+  failed 30-second probes with reconnect backoff capped at five minutes.
+- Reconnection must clear old quote/subscription state; no command replay or
+  change to risk, protection, session or reconciliation authority.
+- Evidence: `docs/session-recurrence-report.md`. Original rejection unknown;
+  old rate-limit observation must not be presented as this incident's cause.
+
 ### ISSUE-242 — cTrader rate-limit budgeting and automatic recovery
 
 - Status: implemented and pushed in PR #244; demo observation pending.

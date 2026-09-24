@@ -104,6 +104,7 @@ export class CTraderJsonTransport {
   #regularNextAt = 0;
   #rateLimitBlockedUntil = 0;
   #rateLimitBackoffMs = 1_000;
+  #admission: Promise<void> = Promise.resolve();
 
   constructor(options: CTraderTransportOptions) {
     this.#options = options;
@@ -230,16 +231,22 @@ export class CTraderJsonTransport {
   }
 
   async #rateLimit(historical: boolean): Promise<void> {
-    const now = Date.now();
-    const next = Math.max(
-      historical ? this.#historicalNextAt : this.#regularNextAt,
-      this.#rateLimitBlockedUntil,
-    );
-    if (next > now)
-      await new Promise((resolve) => setTimeout(resolve, next - now));
-    const scheduledAt = Date.now();
-    if (historical) this.#historicalNextAt = scheduledAt + 200;
-    else this.#regularNextAt = scheduledAt + 20;
+    const admission = this.#admission.then(async () => {
+      // Reject locally during cooldown: never queue an order until its price
+      // authorization may have expired, and never replay a rejected command.
+      if (Date.now() < this.#rateLimitBlockedUntil)
+        throw new Error("CTRADER_RATE_LIMIT_COOLDOWN");
+      const next = historical ? this.#historicalNextAt : this.#regularNextAt;
+      if (next > Date.now())
+        await new Promise((resolve) => setTimeout(resolve, next - Date.now()));
+      // A broker response can extend the cooldown while admission is waiting.
+      if (Date.now() < this.#rateLimitBlockedUntil)
+        throw new Error("CTRADER_RATE_LIMIT_COOLDOWN");
+      if (historical) this.#historicalNextAt = Date.now() + 210;
+      else this.#regularNextAt = Date.now() + 25;
+    });
+    this.#admission = admission.catch(() => undefined);
+    await admission;
   }
 
   #noteRateLimit(details: CTraderErrorDetails): void {
