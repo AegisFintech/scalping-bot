@@ -398,6 +398,7 @@ describe("quote-independent broker session endpoint", () => {
       });
       expect(failure.statusCode).toBe(503);
       expect(failure.json()).toEqual({ reason: "MARKET_SESSION_UNAVAILABLE" });
+      expect((await app.inject("/health/ready")).statusCode).toBe(503);
     } finally {
       await app.close();
     }

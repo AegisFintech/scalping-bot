@@ -695,6 +695,11 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   async disconnect(): Promise<void> {
     this.#authenticated = false;
     await this.#transport.close();
+    this.#subscribedSpots.clear();
+    this.#subscribedDepth.clear();
+    this.#quotes.clear();
+    this.#books.clear();
+    this.#lastServerTime = null;
   }
 
   async #authorize(): Promise<void> {

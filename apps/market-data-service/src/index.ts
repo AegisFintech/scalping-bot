@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { SessionRecovery } from "./session-recovery.js";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
 import { pathToFileURL } from "node:url";
@@ -127,6 +128,21 @@ export function createMarketDataServer(
         return reply.send({ schemaVersion: "1.0", metadata, schedule });
       } catch (error) {
         // Session failures do not disable broker-held protection or expose raw errors.
+        ready = false;
+        const details = cTraderErrorDetails(error);
+        console.warn(
+          JSON.stringify({
+            event: "MARKET_SESSION_REQUEST_FAILED",
+            observedAt: new Date().toISOString(),
+            brokerCode:
+              details?.code !== null &&
+              details?.code !== undefined &&
+              /^[A-Z0-9_]{1,80}$/.test(details.code)
+                ? details.code
+                : null,
+            payloadType: details?.payloadType ?? null,
+          }),
+        );
         return reply
           .code(503)
           .send(
@@ -397,7 +413,26 @@ async function main(): Promise<void> {
     ),
     localRecorderStatus: () => recorder?.status ?? { enabled: false },
   });
+  const recovery = new SessionRecovery({
+    probe: async () => {
+      const metadata = await adapter.discoverSymbol(
+        environment.TRADING_SYMBOL ?? "XAUUSD",
+      );
+      await adapter.getTradingSchedule(metadata.symbolId);
+    },
+    reconnect: async () => {
+      await adapter.disconnect();
+      await adapter.connect();
+    },
+    observe: (event, failures) =>
+      console.warn(JSON.stringify({ event, failures })),
+  });
+  const recoveryTimer = setInterval(() => {
+    void recovery.check();
+  }, 30_000);
   const shutdown = async (): Promise<void> => {
+    clearInterval(recoveryTimer);
+    await recovery.drain();
     if (recorderTimer !== null) clearInterval(recorderTimer);
     await captureInFlight;
     if (recorder !== null) await recorder.stop();

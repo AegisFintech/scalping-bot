@@ -2,6 +2,7 @@ import { BrokerSessionGate } from "../../../packages/market-data-client/src/sess
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
 import { databaseStartup } from "./database-startup.js";
+import { waitForSession } from "./session-startup.js";
 import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
 import { capitalAdmission } from "../../../packages/risk-engine/src/capital.js";
@@ -307,7 +308,28 @@ async function main(): Promise<void> {
     timeoutMs: 5_000,
     maxRetries: 0,
   });
-  const initialSession = await sessionClient.session(config.symbol);
+  const sessionStartupAbort = new AbortController();
+  const abortSessionStartup = (): void => sessionStartupAbort.abort();
+  process.once("SIGTERM", abortSessionStartup);
+  process.once("SIGINT", abortSessionStartup);
+  const initialSession = await waitForSession({
+    read: () => sessionClient.session(config.symbol),
+    signal: sessionStartupAbort.signal,
+    observe: (attempt, retryMs) =>
+      console.warn(
+        JSON.stringify({
+          event: "MARKET_SESSION_STARTUP_WAIT",
+          attempt,
+          retryMs,
+        }),
+      ),
+  });
+  process.off("SIGTERM", abortSessionStartup);
+  process.off("SIGINT", abortSessionStartup);
+  if (initialSession === null) {
+    await pool.end();
+    return;
+  }
   const startupMetadata = initialSession.metadata;
   const sessionGate = new BrokerSessionGate(
     config.symbol,
@@ -914,6 +936,7 @@ async function main(): Promise<void> {
     }
     let dailyLocked: boolean;
     let dailyRiskCertain = true;
+    let dailyRiskFailureReason: string | null = null;
     try {
       const riskNow = new Date();
       const netFlows = await dailyNetFlows(riskNow);
@@ -957,6 +980,11 @@ async function main(): Promise<void> {
       dailyLocked = admission.lockedOut;
     } catch (error) {
       dailyRiskCertain = false;
+      dailyRiskFailureReason =
+        error instanceof Error &&
+        /^DAILY_RISK_[A-Z0-9_]{1,100}$/.test(error.message)
+          ? error.message
+          : "DAILY_RISK_RECONCILIATION_FAILED";
       dailyLocked = config.tradingMode !== "demo";
       capitalMultiplier = "0";
       capitalRiskCap = "0";
@@ -1044,6 +1072,7 @@ async function main(): Promise<void> {
     }
     latestSafetyDetailReasonCodes = [
       ...new Set([
+        ...(dailyRiskFailureReason === null ? [] : [dailyRiskFailureReason]),
         ...(state.certain ? [] : state.reasonCodes),
         ...(external.certain ? [] : external.reasonCodes),
         ...(demoRecoveryState.certain ? [] : demoRecoveryState.reasonCodes),
