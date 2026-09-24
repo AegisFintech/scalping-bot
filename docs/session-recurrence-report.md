@@ -98,3 +98,9 @@ Repository secret scan flags existing `risk-budget` document-name false
 positives. Staged changes were separately inspected and scanned; no new
 credential patterns were detected. These existing scan/format failures and
 skipped integration tests prevent claiming all repository gates are green.
+
+Final observed status: session OPEN, automation RUNNING, trading disabled with
+DAILY_RISK_BASELINE_UNAVAILABLE and RECONCILIATION_UNCERTAIN. The missing daily
+baseline is now explicitly confirmed by runtime, not merely inferred from SQL.
+Graphify final refresh: 4,276 nodes / 8,744 edges. Delivery: PR #246,
+implementation commit 041ffe2. No successful new trade is claimed.

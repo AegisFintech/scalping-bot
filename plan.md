@@ -7,6 +7,7 @@
 - Status: implemented and deployed; accounting recovery remains blocked on
   `fix/session-startup-request-queue`; follows PR #244.
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/245.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/246.
 - Acceptance: reproduce and serialize concurrent request admission, reject
   locally during broker cooldown, wait with capped backoff during initial
   session failure, and recover the read-only market connection after three
