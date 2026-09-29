@@ -2,10 +2,31 @@
 
 ## Scope
 
+### ISSUE-247 — Recovery preflight and remaining liveness defects
+
+- Status: audit complete; no current baseline mutation needed; additional runtime
+  repairs are not implemented by this audit. Delivery checks recorded in report;
+  full formatting/security/integration qualification is not green.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/247.
+- Dependencies: ISSUE-245 and its existing audited baseline recovery contract.
+- Acceptance: inspect current accounting before any initialization, preserve
+  existing baselines/history, verify actual demo activity, reproduce similar
+  recovery failures without touching broker orders, and record bounded repair
+  criteria with their severity and evidence.
+- Result: current baseline exists and demo resumed at September 25 UTC rollover;
+  no recovery mutation needed. Four mock-reproduced defects remain: queued work
+  crossing reconnect, unbounded handshake, stale socket close callbacks and
+  conflated readiness. Prioritize transport generation/deadline tests before
+  further recovery deployment; never replay unknown commands.
+- Evidence and validation: `docs/recovery-preflight-audit.md`.
+
 ### ISSUE-245 — startup storm and concurrent admission (ISSUE-242 follow-up)
 
 - Status: implemented and deployed; accounting recovery remains blocked on
   `fix/session-startup-request-queue`; follows PR #244.
+- September 29 follow-up: the above was the September 24 handoff state. Current
+  daily accounting and demo flow have resumed; see ISSUE-247. Historical missing
+  September 24 accounting has not been overwritten or fabricated.
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/245.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/246.
 - Acceptance: reproduce and serialize concurrent request admission, reject
