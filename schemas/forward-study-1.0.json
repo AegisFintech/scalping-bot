@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalper.local/schemas/forward-study-1.0.json",
+  "title": "Prospective research registration, no trading authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "label",
+    "registered_at",
+    "start",
+    "until",
+    "release",
+    "days",
+    "window_ms",
+    "settlement_delay_ms",
+    "candidates",
+    "source_sha256",
+    "decision",
+    "broker_authority"
+  ],
+  "properties": {
+    "label": { "const": "PROSPECTIVE_CONDITIONAL_STUDY_V1" },
+    "registered_at": { "type": "string", "format": "date-time" },
+    "start": { "type": "string", "format": "date-time" },
+    "until": { "type": "string", "format": "date-time" },
+    "release": { "const": "0.3.0-fade-limit.3" },
+    "days": { "const": 30 },
+    "window_ms": { "const": 86400000 },
+    "settlement_delay_ms": { "const": 600000 },
+    "candidates": {
+      "const": [
+        "approved_entries",
+        "model_levels",
+        "tp_original",
+        "tp_0_75",
+        "tp_1_25"
+      ]
+    },
+    "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "decision": { "const": "HOLD" },
+    "broker_authority": { "const": false }
+  }
+}

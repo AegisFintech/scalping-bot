@@ -25,7 +25,8 @@ try {
      WHERE og.mode='demo' AND sv.version=$1 AND og.created_at >= $2 AND og.created_at < $3`,
     args,
   );
-  if (Number(scope.rows[0]?.scopes) !== 1)
+  const scopes = Number(scope.rows[0]?.scopes);
+  if (!Number.isInteger(scopes) || scopes < 0 || scopes > 1)
     throw new Error("PAIRED_SINGLE_SCOPE_REQUIRED");
   const result = await client.query<PairedReplayRow>(
     `SELECT og.created_at AS created, sc.captured_at AS captured,
@@ -60,6 +61,8 @@ try {
     args,
   );
   if (result.rows.length > 1000) throw new Error("PAIRED_TOO_MANY_SETUPS");
+  if (scopes === 0 && result.rows.length !== 0)
+    throw new Error("PAIRED_SINGLE_SCOPE_REQUIRED");
   await client.query("ROLLBACK");
   console.log(
     JSON.stringify({

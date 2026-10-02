@@ -2,6 +2,25 @@
 
 ## Scope
 
+### ISSUE-255 — Frozen prospective research observer
+
+- Status: isolated observer implemented and enabled; prospective collection starts
+  October 2 at 04:00 UTC. No forward result or trading-strategy change yet.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/255.
+- Dependencies: ISSUE-253 paired replay and ISSUE-249 actual-fee review.
+- Acceptance: register future fixed windows/candidate code before outcomes;
+  bounded serialized read-only exports and immutable private daily reports;
+  restart, concurrency, drift, empty-window and failure tests; isolated scheduling.
+- Preserve the demo cycle, provider cadence, orders, shared 1% sizing, protection,
+  environment and database history. Research failures never gate demo trading.
+- Unknown counterfactual economics and censored paths remain explicit. No automatic
+  promotion, profitability claim or assertion that 30 days validates a strategy.
+- Evidence: `docs/forward-observer-report.md` and committed registration
+  `docs/evidence/forward-study-255.json`. 785 Node / 247 Python tests pass;
+  unrelated formatting/security findings and skipped isolated integration remain,
+  so the source PR stays draft with no merge/promotion. Research timer is separate
+  from the unchanged trading deployment.
+
 ### ISSUE-253 — Causal conditional entry and TP comparisons
 
 - Status: bounded conditional research implemented and run on 145 intents /
