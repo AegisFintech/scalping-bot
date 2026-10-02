@@ -1,5 +1,13 @@
 # Agent Instructions
 
+ISSUE-253: use the causal conditional paired replay for entry/TP research; read
+`docs/paired-replay-report.md`. It has no broker or promotion authority. Use actual
+provider availability and broker acceptance events, not `orders.submitted_at`
+(a locally persisted placement-result timestamp). Preserve GTC lifetime and
+censor missing paths, open outcomes and OCO ambiguity. Unknown counterfactual
+fees/swap/FX/margin remain null; frozen approved quantities are not a dynamically
+resized portfolio backtest. Never promote from a selected complete subset.
+
 ISSUE-245: session dependency failures must retry with bounded backoff inside
 startup, never create a supervisor restart storm. Market-only reconnects require
 fresh subscriptions and quotes; rejected commands are never replayed. Concurrent

@@ -38,8 +38,14 @@ No consumers of the V1 label were found in repository schemas or runtime code.
 
 ## Remaining comparison work
 
-Entry preservation and TP comparisons are **not complete**. Before using their
-results to select a strategy, implement a separate bounded path with actual
+October 2 follow-up: ISSUE-253 implements and runs a separate conditional
+sampled-path comparison. See [the completed comparison scope and evidence](paired-replay-report.md).
+The historical limitations below still prevent a production-equivalent portfolio
+backtest or automatic promotion; the legacy guard remains in place.
+
+Production-equivalent entry/TP validation remains **unqualified**. ISSUE-253's
+conditional comparison does not establish that qualification. Before using such
+results to select a strategy, require a separately qualified path with actual
 provider availability, paired baseline/candidate evidence, sampled bid/ask
 gap censoring, GTC/OCO lifecycle, causal costs and explicit unresolved outcomes.
 Keep entry-only comparison separate from TP-only comparison, preserve SL and

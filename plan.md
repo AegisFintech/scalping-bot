@@ -2,6 +2,22 @@
 
 ## Scope
 
+### ISSUE-253 — Causal conditional entry and TP comparisons
+
+- Status: bounded conditional research implemented and run on 145 intents /
+  2,552,341 samples. No robust promotion evidence; production unchanged. Draft
+  delivery because existing global formatting/security/integration gates remain.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/253.
+- Dependencies: ISSUE-249 observed demo review; ISSUE-251 legacy qualification guard.
+- Acceptance: bounded read-only export, actual provider-availability and broker
+  acceptance clocks, separate entry/TP paired comparisons, GTC lifetime, explicit
+  gap/open/OCO-race censoring, Decimal executable-side prices, archive checksums,
+  unknown counterfactual economics, tests and repeatable retained-cohort run.
+- Preserve the continuous demo cycle, shared 1% cap, prompt, exits, environment,
+  historical journals and running services. No automatic strategy promotion.
+- Evidence: `docs/paired-replay-report.md`; 780 Node / 219 Python tests pass;
+  exact commands, remaining qualification limits and sanitized results recorded.
+
 ### ISSUE-251 — Qualify research recommendations before entry/TP comparison
 
 - Status: research-only recommendation guard implemented; comparison itself
@@ -12,6 +28,8 @@
   statistically passing screen; explicit timing, lifecycle, gaps, sizing and
   causal-cost blockers; regression/short-history tests; preserve demo operation.
 - Evidence and remaining scope: `docs/research-evidence-gate-report.md`.
+- Follow-up: ISSUE-253 completes the conditional sampled-path comparison;
+  production-equivalent portfolio validation remains unqualified.
 
 ### ISSUE-249 — Demo learning evidence and isolated entry-guidance candidate
 

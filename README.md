@@ -5,6 +5,11 @@ proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
+For bounded entry/TP research, use the [paired replay workflow](docs/paired-replay-report.md).
+It compares frozen observed demo opportunities, checks archived quote integrity,
+and reports missing paths and unknown economics explicitly. It does not change
+trading, claim exact counterfactual net returns, or automatically promote a strategy.
+
 The current source policy is `0.3.0-fade-limit.3`, with provider prompt
 `entry-pair-v4`. The bot is intended to operate continuously whenever the broker
 session is open: it keeps evaluating fresh opportunities and resumes after
