@@ -2,6 +2,23 @@
 
 ## Scope
 
+### ISSUE-249 — Demo learning evidence and isolated entry-guidance candidate
+
+- Status: first observational milestone implemented; final qualification recorded
+  in report. No runtime promotion; draft delivery while pre-existing global
+  formatting/security and isolated-integration gates remain unresolved.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/249.
+- Dependencies: immutable demo journal, ISSUE-110 fade policy; no dependency on
+  deploying the outstanding ISSUE-247 recovery repairs.
+- Acceptance: read-only, bounded, fixed-window review; signed cost decomposition,
+  explicit missing/ambiguous evidence, honestly labelled risk-budget ratios,
+  entry-time conditions and model/effective entry displacement; audited exceptional
+  winner; isolated prompt candidate and failure tests. Preserve continuous demo
+  cycle, shared 1% ceiling, broker protections and all historical financial rows.
+- Runtime prompt/transform and TP promotion require separate prospective evidence;
+  current quote-adjacent transform makes prompt-only entry improvements ineffective.
+- Evidence: `docs/demo-learning-review-report.md`.
+
 ### ISSUE-247 — Recovery preflight and remaining liveness defects
 
 - Status: audit complete; no current baseline mutation needed; additional runtime

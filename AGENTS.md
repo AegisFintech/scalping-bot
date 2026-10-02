@@ -42,6 +42,14 @@ system makes no profitability claim.
 
 ## Communication preference
 
+ISSUE-249 adds a read-only learning review and an unregistered research prompt.
+Read `docs/demo-learning-review-report.md` before changing entry guidance based
+on its results. The current fade transform replaces model levels with
+quote-adjacent prices. Do not claim prompt-only entry improvement, mislabel an
+approved leg budget as actual stop risk, infer exact SL/TP reason from P/L, or
+promote a candidate automatically. Historical journals and the active cycle stay
+unchanged; economic transform/prompt/TP changes require separate evidence.
+
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
 

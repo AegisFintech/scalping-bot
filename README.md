@@ -178,6 +178,18 @@ from `requirements.lock`. Headless services and hardened systemd units are in
 
 ## Reproducible research and validation
 
+Read-only demo learning review (no trading or provider calls):
+
+```sh
+npm run demo:learning-review -- 0.3.0-fade-limit.3 2026-09-25T01:23:01.040Z 2026-10-02T01:23:01.040Z
+```
+
+This exposes signed costs, entry-time EMA alignment, approved-budget ratios and
+model/effective entry displacement without rewriting trades. The isolated entry
+guidance candidate is **not deployed**. Current quote-adjacent entry replacement
+must be reviewed before a prompt-only trial can establish entry improvement.
+See [measurement definitions and findings](docs/demo-learning-review-report.md).
+
 ```sh
 # Read-only export, scoped by existing account identity; never exports broker IDs.
 npm run evaluation:export -- 0.1.0-actionable-oco-auto-demo.43 artifacts/legacy-plans.json
