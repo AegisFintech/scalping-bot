@@ -3,13 +3,17 @@
 The bot now has a research-only auto-improvement evaluator. It runs the
 existing replay variant family through expanding-train, forward-test folds with
 an embargo gap, serial one-position behavior, measured costs, and stressed
-costs. It emits either `RECOMMEND_CANDIDATE` or `HOLD`.
+costs. ISSUE-251 supersedes its recommendation behavior: it now always emits
+`HOLD` with explicit replay-fidelity blockers, even if the statistical screen
+passes. See [the qualification report](research-evidence-gate-report.md).
 
 The evaluator cannot place orders, change risk, change protection, modify the
 active release, or authorize live execution. A candidate must be selected
 repeatedly, remain profitable on unseen test folds after stressed costs, and
 meet a minimum sample before it can be reviewed for a separately versioned
-release. Insufficient history always produces `HOLD`.
+release. Those statistical conditions alone are insufficient: the current
+OHLC simulator is not production-equivalent. Insufficient history also
+produces `HOLD`.
 
 Run it with:
 
@@ -25,9 +29,10 @@ tried so repeated experimentation is visible. This is intentional: selecting
 the best result from many trials without accounting for selection bias can
 make a losing strategy look successful.
 
-The method follows the practical safeguards described by Bailey and López de
-Prado's Deflated Sharpe Ratio work and purged/embargoed financial time-series
-validation. It is a robustness filter, not a profitability guarantee.
+The references below motivate further validation; this implementation does not
+compute a Deflated Sharpe Ratio or establish control of multiple-testing bias.
+Its purge and embargo do not cure missing model-availability timestamps,
+non-causal cost calibration, unresolved outcomes or execution mismatch.
 
 References:
 

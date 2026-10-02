@@ -2,6 +2,17 @@
 
 ## Scope
 
+### ISSUE-251 — Qualify research recommendations before entry/TP comparison
+
+- Status: research-only recommendation guard implemented; comparison itself
+  remains incomplete pending faithful replay. No production deployment.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/251.
+- Dependency: ISSUE-249 observational review and legacy walk-forward evaluator.
+- Acceptance: reproduce unfinished-outcome optimism; return HOLD even for a
+  statistically passing screen; explicit timing, lifecycle, gaps, sizing and
+  causal-cost blockers; regression/short-history tests; preserve demo operation.
+- Evidence and remaining scope: `docs/research-evidence-gate-report.md`.
+
 ### ISSUE-249 — Demo learning evidence and isolated entry-guidance candidate
 
 - Status: first observational milestone implemented; final qualification recorded
