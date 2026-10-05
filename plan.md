@@ -3880,3 +3880,12 @@ runtime.
 - Implementation and validation evidence: [report](docs/broker-exit-loop-report.md).
 
 - ISSUE-089 evidence: [all 22 required checks](docs/evidence/broker-exit-loop-validation.json) passed (608 Node, 141 Python, 35 schema, 3 migration, 4 TLS integration tests). [Rollout](docs/evidence/broker-exit-loop-rollout.json): release restarted 08:35:40 UTC, legacy pause cleared 08:35:58, DeepSeek completed in 5,560 ms, two GTC STOPs confirmed 08:36:55. Environment, high water/daily state and locks preserved.
+
+## October 5 standalone CI backport — ISSUE-259
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/265; dependent upgrade PRs follow.
+- Acceptance: backport the two existing fixture corrections, preserve production gates/history, qualify current heads before merging, and push ancestor updates through the stack without force-push.
+- Dependencies: existing qualification batch and #269 fixture evidence.
+- Status: corrected #265 source qualifies locally (798 Node / 70 DB / 251 Python, no skips; audits clean); dependent hosted qualification pending.
+- Commands/evidence: [CI backport report](docs/upgrade-ci-backport-report.md).
