@@ -1,8 +1,69 @@
 # Agent Instructions
 
+ISSUE-255: prospective research is an isolated read-only observer, never an order
+or strategy-promotion authority. Read `docs/forward-observer-report.md`. Register
+future windows and freeze candidate code before collecting outcomes; do not edit
+registrations, overwrite reports or select only complete winning paths. Source
+drift halts research only. Preserve daily cutoff/open/gap censoring and null
+counterfactual costs; 30 calendar days is a collection batch, not qualification.
+
+ISSUE-253: use the causal conditional paired replay for entry/TP research; read
+`docs/paired-replay-report.md`. It has no broker or promotion authority. Use actual
+provider availability and broker acceptance events, not `orders.submitted_at`
+(a locally persisted placement-result timestamp). Preserve GTC lifetime and
+censor missing paths, open outcomes and OCO ambiguity. Unknown counterfactual
+fees/swap/FX/margin remain null; frozen approved quantities are not a dynamically
+resized portfolio backtest. Never promote from a selected complete subset.
+
+ISSUE-245: session dependency failures must retry with bounded backoff inside
+startup, never create a supervisor restart storm. Market-only reconnects require
+fresh subscriptions and quotes; rejected commands are never replayed. Concurrent
+broker requests must be paced serially. See `docs/session-recurrence-report.md`.
+Do not attribute a new outage to an old broker error. Missing daily baselines
+remain explicit accounting failures and require the existing audited evidence
+procedure; reconnecting does not authorize an accounting reset.
+
 Read `plan.md`, this file, and the relevant architecture/risk documents before changing code.
 
+## Core bot purpose and operating contract (authoritative)
+
+This repository implements an AI-assisted XAUUSD short-term trading system for
+controlled demo evaluation. It continuously observes completed market candles,
+quotes, order-book/account/risk state and broker session status; the AI proposes
+two entry prices, while deterministic code owns validation, order type, SL/TP,
+dynamic sizing, broker precision, margin, ownership, reconciliation and all
+execution authority. The system records the complete decision and broker
+lifecycle for later analysis. Live submission is disabled by default and must
+never be inferred from credentials or configuration alone.
+
+When the broker session is open, the scheduler must keep the demo system
+continuously ready and evaluating new opportunities, and must resume
+automatically after normal temporary failures or scheduled closures. “Trading
+all the time” means continuous market-open operation, not forced order flow:
+the bot must wait without a new provider call or order whenever an active group,
+request cooldown, stale/invalid market data, unavailable broker session,
+unreconciled account/order/position state, protection/recovery fault, affordability
+failure, or other fail-closed gate applies. Accepted GTC orders and protective
+maintenance remain active during waiting periods. No prompt, timer or operator
+request may bypass these gates, manufacture a trade, or increase risk to maintain
+frequency.
+
+The current source contract uses the versioned `entry-pair-v4` provider prompt
+and the `0.3.0-fade-limit.3` strategy policy. Historical prompt/release names in
+older issue sections and archived evidence describe immutable past behavior and
+must not be treated as current authority. The shared setup ceiling remains 1%
+of reconciled current equity, both OCO/fade legs share that budget, and the
+system makes no profitability claim.
+
 ## Communication preference
+
+ISSUE-249 adds a read-only learning review and an unregistered research prompt.
+Read `docs/demo-learning-review-report.md` before changing entry guidance based
+on its results. The current fade transform replaces model levels with
+quote-adjacent prices. Do not claim prompt-only entry improvement, mislabel an
+approved leg budget as actual stop risk, infer exact SL/TP reason from P/L, or
+promote a candidate automatically. Historical journals and the active cycle stay
+unchanged; economic transform/prompt/TP changes require separate evidence.
 
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.
@@ -164,13 +225,13 @@ other modes retain remaining daily capacity and drawdown reductions.
 - Preserve existing daily/drawdown locks when applying a policy update. Risk
   percentages are release constants, not environment tuning controls. Read
   `docs/fixed-risk-report.md` before changing the money-management policy.
-- Request `deepseek-v4-pro/u5W` literally through the configured EPRToken Responses
-  endpoint. Record requested/returned identities; never add a silent fallback.
-  Observed `deepseek-v4-pro` return normalization and structured input are documented
-  in `docs/deepseek-context-report.md`. Historical Astra normalization remains documented.
+- Request `grok-4.5` literally through the configured EPRToken chat-completions
+  endpoint with `reasoning_effort: low`. Record requested/returned identities; never add a silent fallback.
+  The returned identity must be `grok-4.5`; historical Astra, Sol and DeepSeek
+  normalization remains documented.
   Unknown cost is null. Historical provider records remain immutable; a previous-model
   map cannot authorize new execution after a switch. Failure/unknown-dispatch cooldowns remain; one proven post-close refresh is the documented exception.
-  Migration 0020 admits DeepSeek alongside historical Astra and Sol journal identities;
+  Migration 0026 admits Grok alongside historical Astra, Sol and DeepSeek journal identities;
   never rewrite prior migration checksums or model history.
 - Preserve model-independent protective maintenance and account/symbol ownership
   scope. Missing account P/L evidence or other-symbol exposure blocks new risk.
@@ -181,7 +242,7 @@ other modes retain remaining daily capacity and drawdown reductions.
   Preserve safe account failure codes without exposing raw broker errors.
 - Cost-inclusive OCO sizing shares one budget across both race-exposed legs.
   Durable daily/high-water accounting and risk reductions must survive restarts.
-- Production uses `entry-pair-v3` / locally bound `entry-pair-1.0`; local derived OCO
+- Production uses `entry-pair-v4` / locally bound `entry-pair-1.0`; local derived OCO
   proposals use `entry-pair-execution-v1` / schema `2.1`. Historical contracts remain
   immutable. Read `docs/reusable-scenario-report.md` before changing this path.
 - The operator authorized integrated demo evaluation in ISSUE-075. Provider dispatch is durably claimed before inference. Five-minute failure/unknown-dispatch

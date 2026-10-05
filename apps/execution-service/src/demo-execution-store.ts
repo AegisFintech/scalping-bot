@@ -295,8 +295,41 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                  AND closed.occurred_at>=blocked.occurred_at
              ))
            RETURNING blocked.id
+         ), resolved_cancel_rejections AS (
+           UPDATE broker_execution_events blocked
+           SET resolved_at = GREATEST(proof.occurred_at, blocked.occurred_at, now()),
+               resolution_event_key = proof.broker_event_key
+           FROM terminal_proofs proof
+           WHERE blocked.account_id=$1 AND blocked.symbol_id=$2
+             AND blocked.order_group_id=proof.order_group_id
+             AND blocked.mapping_state='MAPPED' AND blocked.resolved_at IS NULL
+             AND blocked.execution_type=8
+             AND blocked.reason_codes='["DEMO_CANCEL_REJECTED"]'::jsonb
+             AND blocked.order_id IS NOT NULL
+             AND EXISTS (
+               SELECT 1 FROM orders rejected_order
+               WHERE rejected_order.id=blocked.order_id
+                 AND rejected_order.order_group_id=blocked.order_group_id
+                 AND rejected_order.account_id=$1
+                 AND rejected_order.strategy_owned=true
+                 AND rejected_order.broker_order_id=blocked.broker_order_id
+                 AND rejected_order.state='FILLED'
+                 AND rejected_order.filled_volume > 0
+             )
+             AND EXISTS (
+               SELECT 1 FROM positions closed_position
+               WHERE closed_position.order_group_id=blocked.order_group_id
+                 AND closed_position.account_id=$1
+                 AND closed_position.symbol_id=$2
+                 AND closed_position.strategy_owned=true
+                 AND closed_position.broker_position_id=blocked.broker_position_id
+                 AND closed_position.state='CLOSED'
+             )
+           RETURNING blocked.id
          )
-         SELECT ((SELECT count(*) FROM resolved) + (SELECT count(*) FROM resolved_children))::text AS resolved_event_count,
+         SELECT ((SELECT count(*) FROM resolved) +
+                 (SELECT count(*) FROM resolved_children) +
+                 (SELECT count(*) FROM resolved_cancel_rejections))::text AS resolved_event_count,
                 (SELECT payload_hash FROM terminal_proofs
                  ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
                    AS terminal_proof_hash,

@@ -13,7 +13,9 @@ export interface RiskPolicy {
     | "direct-entry-v1"
     | "market-stop-v1"
     | "market-stop-v2"
-    | "0.3.0-fade-limit.1";
+    | "0.3.0-fade-limit.1"
+    | "0.3.0-fade-limit.2"
+    | "0.3.0-fade-limit.3";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
@@ -484,4 +486,13 @@ export interface AccountState {
 export interface AccountAdapter {
   authenticate(): Promise<void>;
   reconcile(symbolId: string): Promise<AccountState>;
+}
+
+/** Observed component availability, never trade admission or data freshness authority. */
+export interface MarketReadiness {
+  readonly schemaVersion: "1.0";
+  readonly status: "ready" | "not_ready";
+  readonly components: Readonly<
+    Record<"session" | "quote" | "snapshot", "UNKNOWN" | "HEALTHY" | "FAILED">
+  >;
 }

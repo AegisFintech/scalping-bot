@@ -275,6 +275,8 @@ export interface CoordinatorOptions {
   readonly entryBrackets?: "STOP" | "LIMIT";
   readonly trendFilterBars?: number;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
+  readonly fadeLimitSlAtr?: string;
+  readonly fadeLimitTpAtr?: string;
   readonly numericAnalytics?: boolean;
   readonly symbol: string;
   readonly mode: "paper" | "demo" | "shadow" | "live";
@@ -1305,8 +1307,8 @@ export class AnalysisCoordinator {
             response: model.response,
             metadata: decisionSnapshot.metadata,
             atr,
-            slAtr: "2.5",
-            tpAtr: "1.0",
+            slAtr: this.#options.fadeLimitSlAtr ?? "2.5",
+            tpAtr: this.#options.fadeLimitTpAtr ?? "1.0",
             maximumStopDistance: maximumEffectiveStopDistance,
             quote: decisionSnapshot.quote,
           })

@@ -71,7 +71,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
       if (this.row) return Promise.resolve(false);
       this.row = {
         id: i.id,
-        requestedModel: "deepseek-v4-pro/u5W",
+        requestedModel: "grok-4.5",
         state: "REQUESTING",
         requestedAt: at(0),
         capturedAt: i.capturedAt,
@@ -100,7 +100,7 @@ function memory(): ContextStore & { row: StoredContext | null } {
 function stored(): StoredContext {
   return {
     id: fixture.plan.analysis_id,
-    requestedModel: "deepseek-v4-pro/u5W",
+    requestedModel: "grok-4.5",
     state: "READY",
     requestedAt: at(0),
     capturedAt: at(0),
@@ -449,7 +449,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     now = base + 40_000;
     const plan = { ...fixture.plan, analysis_id: store.row!.id };
     release({
-      model: "deepseek-v4-pro/u5W",
+      model: "grok-4.5",
       response: plan,
       rawResponse: JSON.stringify(plan),
       promptArtifact: {
@@ -460,8 +460,8 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       latencyMs: 40_000,
       retryCount: 0,
       telemetry: {
-        requestedModel: "deepseek-v4-pro/u5W",
-        returnedModel: "deepseek-v4-pro",
+        requestedModel: "grok-4.5",
+        returnedModel: "grok-4.5",
         inputProfile: "chart",
         requestBytes: 100,
         responseBytes: 100,

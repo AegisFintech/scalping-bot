@@ -34,7 +34,7 @@ describe("concise environment and read-only preflight", () => {
     const template = parse(readFileSync(".env.sample"));
     expect(Object.keys(template).sort()).toEqual([...OPERATOR_KEYS].sort());
     expect(Object.keys(template)).toHaveLength(20);
-    expect(template.AI_MODEL).toBe("deepseek-v4-pro/u5W");
+    expect(template.AI_MODEL).toBe("grok-4.5");
     expect(template).toMatchObject({
       TRADING_MODE: "paper",
       EMERGENCY_STOP: "true",
@@ -49,7 +49,7 @@ describe("concise environment and read-only preflight", () => {
   });
   it("reports actual file counts separately from the normal template without exposing credentials", () => {
     const result = check(
-      "AI_MODEL=deepseek-v4-pro/u5W\nAI_API_KEY=fixture-private-value\nGH_PAT=fixture-delivery-value\n",
+      "AI_MODEL=grok-4.5\nAI_API_KEY=fixture-private-value\nGH_PAT=fixture-delivery-value\n",
       ["--startup"],
     );
     expect(result.status).toBe(0);
@@ -58,7 +58,7 @@ describe("concise environment and read-only preflight", () => {
       scope: "execution_configuration",
       normalSettings: 20,
       fileSettings: 3,
-      requestedModel: "deepseek-v4-pro/u5W",
+      requestedModel: "grok-4.5",
     });
     expect(result.output).not.toContain("fixture-");
     expect(result.unchanged).toBe(true);

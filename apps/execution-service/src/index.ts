@@ -2,6 +2,7 @@ import { BrokerSessionGate } from "../../../packages/market-data-client/src/sess
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
 import { databaseStartup } from "./database-startup.js";
+import { waitForSession } from "./session-startup.js";
 import { CapitalRiskStore } from "./capital-risk-store.js";
 import { reconcileAccountSafely } from "./account-reconciliation.js";
 import { capitalAdmission } from "../../../packages/risk-engine/src/capital.js";
@@ -14,6 +15,7 @@ import {
   POLICY_VERSION,
   executionRiskPolicy,
   FADE_LIMIT_RELEASE,
+  FADE_LIMIT_RELEASE_V3,
   STOP_EXECUTION_POLICY,
 } from "../../../packages/config/src/policy.js";
 
@@ -34,6 +36,10 @@ import type {
   Timeframe,
 } from "../../../packages/contracts/src/index.js";
 import { CTraderClient } from "../../../packages/ctrader-client/src/client.js";
+import {
+  cTraderErrorDetails,
+  type CTraderErrorDetails,
+} from "../../../packages/ctrader-client/src/transport.js";
 import { CTraderTokenManager } from "../../../packages/ctrader-client/src/token-manager.js";
 import { SecureTokenFileStore } from "../../../packages/ctrader-client/src/token-store.js";
 import {
@@ -278,7 +284,7 @@ async function main(): Promise<void> {
       environment.MARKET_DATA_BASE_URL ??
       `http://127.0.0.1:${environment.MARKET_DATA_PORT ?? "8081"}`,
     timeoutMs: 20_000,
-    maxRetries: integer(environment, "MARKET_DATA_MAX_RETRIES", 1),
+    maxRetries: integer(environment, "MARKET_DATA_MAX_RETRIES", 3),
   });
   let latestSnapshot: MarketSnapshot | null = null;
   const market = {
@@ -302,7 +308,28 @@ async function main(): Promise<void> {
     timeoutMs: 5_000,
     maxRetries: 0,
   });
-  const initialSession = await sessionClient.session(config.symbol);
+  const sessionStartupAbort = new AbortController();
+  const abortSessionStartup = (): void => sessionStartupAbort.abort();
+  process.once("SIGTERM", abortSessionStartup);
+  process.once("SIGINT", abortSessionStartup);
+  const initialSession = await waitForSession({
+    read: () => sessionClient.session(config.symbol),
+    signal: sessionStartupAbort.signal,
+    observe: (attempt, retryMs) =>
+      console.warn(
+        JSON.stringify({
+          event: "MARKET_SESSION_STARTUP_WAIT",
+          attempt,
+          retryMs,
+        }),
+      ),
+  });
+  process.off("SIGTERM", abortSessionStartup);
+  process.off("SIGINT", abortSessionStartup);
+  if (initialSession === null) {
+    await pool.end();
+    return;
+  }
   const startupMetadata = initialSession.metadata;
   const sessionGate = new BrokerSessionGate(
     config.symbol,
@@ -325,10 +352,14 @@ async function main(): Promise<void> {
     throw new Error("SHADOW_OR_LIVE_MODE_REQUIRES_LIVE_DATA_CONNECTION");
   }
   const configHash = safetyConfigHash(config);
-  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.1";
+  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.3";
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
+  const fadeExecutionPolicy =
+    strategyVersion === "0.3.0-fade-limit.3"
+      ? FADE_LIMIT_RELEASE_V3
+      : FADE_LIMIT_RELEASE;
   const activeExecutionPolicy = fadeLimitActive
-    ? FADE_LIMIT_RELEASE
+    ? fadeExecutionPolicy
     : STOP_EXECUTION_POLICY;
   const identity = await ensureRuntimeIdentity(pool, {
     accountKey: config.accountKey,
@@ -580,6 +611,8 @@ async function main(): Promise<void> {
       : null;
   let latestDemoExecutionReasonCodes: readonly string[] = [];
   let latestSafetyDetailReasonCodes: readonly string[] = [];
+  let lastBrokerError:
+    (CTraderErrorDetails & { readonly observedAt: string }) | null = null;
   const demoExecutionRecorder =
     demoExecutionStore === null
       ? null
@@ -781,7 +814,7 @@ async function main(): Promise<void> {
     identity,
     {
       bracketRecallBars: fadeLimitActive
-        ? Number(FADE_LIMIT_RELEASE.bracketRecallBars)
+        ? Number(fadeExecutionPolicy.bracketRecallBars)
         : 0,
     },
   );
@@ -874,12 +907,20 @@ async function main(): Promise<void> {
     const state = await reconcileAccountSafely(
       account,
       executionSymbolId,
-      (reason) =>
+      (reason, error) => {
+        const details = cTraderErrorDetails(error);
+        if (details !== null)
+          lastBrokerError = {
+            ...details,
+            observedAt: new Date().toISOString(),
+          };
         logger.log("error", {
           event_name: "account_reconciliation_failed",
           outcome: "blocked",
           reason_code: reason,
-        }),
+          ...(details ?? {}),
+        });
+      },
     );
     const external = await gateway.reconcile(config.symbol);
     const demoExecutionState =
@@ -894,6 +935,8 @@ async function main(): Promise<void> {
       reconciliationPersisted = false;
     }
     let dailyLocked: boolean;
+    let dailyRiskCertain = true;
+    let dailyRiskFailureReason: string | null = null;
     try {
       const riskNow = new Date();
       const netFlows = await dailyNetFlows(riskNow);
@@ -936,7 +979,13 @@ async function main(): Promise<void> {
       capitalRiskCap = admission.riskPercentCap;
       dailyLocked = admission.lockedOut;
     } catch (error) {
-      dailyLocked = true;
+      dailyRiskCertain = false;
+      dailyRiskFailureReason =
+        error instanceof Error &&
+        /^DAILY_RISK_[A-Z0-9_]{1,100}$/.test(error.message)
+          ? error.message
+          : "DAILY_RISK_RECONCILIATION_FAILED";
+      dailyLocked = config.tradingMode !== "demo";
       capitalMultiplier = "0";
       capitalRiskCap = "0";
       logger.log("error", {
@@ -946,7 +995,11 @@ async function main(): Promise<void> {
           error instanceof Error && /^[A-Z0-9_:]{1,160}$/.test(error.message)
             ? error.message
             : "DAILY_RISK_RECONCILIATION_FAILED",
+        ...(cTraderErrorDetails(error) ?? {}),
       });
+      const details = cTraderErrorDetails(error);
+      if (details !== null)
+        lastBrokerError = { ...details, observedAt: new Date().toISOString() };
     }
     let databaseHealthy = true;
     let previousAnalysisExpired = false;
@@ -1019,6 +1072,7 @@ async function main(): Promise<void> {
     }
     latestSafetyDetailReasonCodes = [
       ...new Set([
+        ...(dailyRiskFailureReason === null ? [] : [dailyRiskFailureReason]),
         ...(state.certain ? [] : state.reasonCodes),
         ...(external.certain ? [] : external.reasonCodes),
         ...(demoRecoveryState.certain ? [] : demoRecoveryState.reasonCodes),
@@ -1052,6 +1106,7 @@ async function main(): Promise<void> {
         external.certain &&
         demoRecoveryState.certain &&
         demoExecutionState.certain &&
+        dailyRiskCertain &&
         reconciliationPersisted &&
         !databaseReconciliationPending,
       relevantPositionCount: Math.max(
@@ -1089,12 +1144,13 @@ async function main(): Promise<void> {
       duplicateFree: external.certain,
       criticalAuditAvailable:
         databaseHealthy &&
+        dailyRiskCertain &&
         reconciliationPersisted &&
         demoRecoveryState.certain &&
         demoExecutionState.certain,
       lossStreakPauseActive: await computeLossStreakPause(
-        fadeLimitActive ? Number(FADE_LIMIT_RELEASE.streakLosses) : 0,
-        fadeLimitActive ? Number(FADE_LIMIT_RELEASE.streakPauseMinutes) : 0,
+        fadeLimitActive ? Number(fadeExecutionPolicy.streakLosses) : 0,
+        fadeLimitActive ? Number(fadeExecutionPolicy.streakPauseMinutes) : 0,
       ),
     };
   };
@@ -1152,14 +1208,23 @@ async function main(): Promise<void> {
     schemaVersion: "2.1",
     strategyVersion,
     minRiskRewardRatio: fadeLimitActive
-      ? FADE_LIMIT_RELEASE.minRiskRewardRatio
+      ? fadeExecutionPolicy.minRiskRewardRatio
       : config.minRiskRewardRatio,
+    ...(fadeLimitActive
+      ? {
+          fadeLimitSlAtr: fadeExecutionPolicy.slAtr,
+          fadeLimitTpAtr: fadeExecutionPolicy.tpAtr,
+        }
+      : {}),
     entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
     executionOrderType: fadeLimitActive ? "LIMIT" : "STOP",
     trendFilterBars: fadeLimitActive
-      ? Number(FADE_LIMIT_RELEASE.trendFilterBars)
+      ? Number(fadeExecutionPolicy.trendFilterBars)
       : 0,
-    minimumExpectedNetToFeesRatio: config.minimumExpectedNetToFeesRatio,
+    minimumExpectedNetToFeesRatio:
+      strategyVersion === "0.3.0-fade-limit.3"
+        ? "1.5"
+        : config.minimumExpectedNetToFeesRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
     preferredExpirySeconds: preferredOrderExpirySeconds,
@@ -1380,6 +1445,7 @@ async function main(): Promise<void> {
         .catch(() => ({ state: "UNAVAILABLE" })),
       operationalReady: operationalFault.snapshot === null,
       operationalFault: operationalFault.snapshot,
+      lastBrokerError,
       tradingEnabled:
         operationalFault.snapshot === null &&
         eligibility.allowed &&

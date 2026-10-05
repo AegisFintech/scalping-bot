@@ -10,6 +10,7 @@ export default tseslint.config(
       "artifacts/**",
       "eslint.config.js",
       "ecosystem.config.cjs",
+      "ecosystem.release.config.cjs",
       "scripts/**/*.mjs",
     ],
   },

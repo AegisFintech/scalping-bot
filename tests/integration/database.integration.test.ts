@@ -1,3 +1,4 @@
+import { FIXED_DEFAULTS } from "../../packages/config/src/policy.js";
 import type { OcoEvaluation } from "../../apps/execution-service/src/oco-risk-evaluator.js";
 import { transitionCharts } from "../../packages/database/src/chart-archive.js";
 import { readChart } from "../../packages/database/src/chart-store.js";
@@ -241,6 +242,8 @@ describe("PostgreSQL migrations integration", () => {
         "0022",
         "0023",
         "0024",
+        "0025",
+        "0026",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -809,7 +812,7 @@ describe("PostgreSQL migrations integration", () => {
       expect(claims.filter(Boolean)).toHaveLength(1);
       const currentContext = await contextStore.latest();
       expect(currentContext?.state).toBe("REQUESTING");
-      expect(currentContext?.requestedModel).toBe("deepseek-v4-pro/u5W");
+      expect(currentContext?.requestedModel).toBe(FIXED_DEFAULTS.AI_MODEL);
       const evidence = await isolated.query(
         `SELECT e.request_text,e.response_text,p.content
         FROM context_provider_evidence e JOIN provider_prompt_artifacts p ON p.content_sha256=e.prompt_sha256
@@ -1669,6 +1672,38 @@ describe("PostgreSQL migrations integration", () => {
         certain: true,
         reasonCodes: [],
       });
+      let cancelRejected: ReturnType<typeof normalizeDemoExecution> = null;
+      if (closeMode) {
+        const cancelRejectedRaw = {
+          ...acceptedRaw,
+          executionType: 8 as const,
+          receivedAt: "2026-08-24T04:00:00.200Z",
+          position: {
+            positionId: "801",
+            positionStatus: 1,
+            tradeData: {
+              symbolId: "7",
+              volume: "100",
+              tradeSide: 1,
+              openTimestamp: 1787544060000,
+              label: "ctrader-ai-scalper:integration",
+            },
+          },
+        };
+        cancelRejected = normalizeDemoExecution(cancelRejectedRaw, {
+          symbolId: "7",
+        });
+        expect(cancelRejected).not.toBeNull();
+        await expect(store.persist(cancelRejected!)).resolves.toEqual({
+          certain: false,
+          reasonCodes: ["DEMO_CANCEL_REJECTED"],
+        });
+        // A rejected cancel remains blocking until the complete closed-group
+        // proof exists; elapsed time or a partial broker snapshot is not enough.
+        await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
+          certain: false,
+        });
+      }
       const completedExecution = await isolated.query<{
         order_state: string;
         filled_volume: string;
@@ -1696,8 +1731,8 @@ describe("PostgreSQL migrations integration", () => {
         unresolved_partials: "0",
       });
       await expect(store.readiness()).resolves.toEqual({
-        certain: true,
-        reasonCodes: [],
+        certain: !closeMode,
+        reasonCodes: closeMode ? ["DEMO_CANCEL_REJECTED"] : [],
       });
       await expect(store.persist(partial!)).resolves.toEqual({
         certain: true,
@@ -1739,7 +1774,9 @@ describe("PostgreSQL migrations integration", () => {
       });
       await expect(store.readiness()).resolves.toEqual({
         certain: false,
-        reasonCodes: ["DEMO_CLOSING_ORDER_AWAITING_DEAL"],
+        reasonCodes: closeMode
+          ? ["DEMO_CANCEL_REJECTED", "DEMO_CLOSING_ORDER_AWAITING_DEAL"]
+          : ["DEMO_CLOSING_ORDER_AWAITING_DEAL"],
       });
       const unchangedEntryOrder = await isolated.query<{
         broker_order_id: string;
@@ -1870,8 +1907,8 @@ describe("PostgreSQL migrations integration", () => {
           }),
         ).toBe(false);
         await expect(store.readiness()).resolves.toEqual({
-          certain: true,
-          reasonCodes: [],
+          certain: false,
+          reasonCodes: ["DEMO_CANCEL_REJECTED"],
         });
         closedRaw.order!.orderType = 1;
         // A distinct, unfilled TP child remains pending when a market close starts.
@@ -1894,7 +1931,10 @@ describe("PostgreSQL migrations integration", () => {
       });
       if (closeMode) {
         // Even a complete position close cannot discard an unproven child outcome.
-        expect((await store.reconcileTerminalEvidence()).certain).toBe(false);
+        await expect(store.reconcileTerminalEvidence()).resolves.toMatchObject({
+          certain: false,
+          resolvedEventCount: 1, // Filled-order cancel rejection has its own terminal proof.
+        });
         const cancelledChild = structuredClone(closingAcceptedRaw);
         cancelledChild.executionType = 5;
         cancelledChild.order!.orderId = "605";
@@ -1989,6 +2029,26 @@ describe("PostgreSQL migrations integration", () => {
         closing_order: true,
         unresolved: "0",
       });
+      if (cancelRejected !== null) {
+        const resolvedCancellation = await isolated.query<{
+          reason_codes: string[];
+          resolved: boolean;
+          resolution_event_key: string | null;
+        }>(
+          `SELECT reason_codes, resolved_at IS NOT NULL AS resolved,
+                  resolution_event_key
+           FROM broker_execution_events
+           WHERE account_id = $1 AND broker_event_key = $2`,
+          [demoAccountId, cancelRejected.eventKey],
+        );
+        expect(resolvedCancellation.rows[0]).toMatchObject({
+          reason_codes: ["DEMO_CANCEL_REJECTED"],
+          resolved: true,
+        });
+        expect(resolvedCancellation.rows[0]?.resolution_event_key).toBe(
+          closed!.eventKey,
+        );
+      }
       const duplicateFilledRaw = await eventFixture(
         "demo-order-filled-v1.json",
       );
@@ -2472,8 +2532,8 @@ describe("PostgreSQL migrations integration", () => {
         [cancelledGroupId],
       );
       await isolated.query(
-        "UPDATE scenario_contexts SET state='READY',plan='{}',available_at=clock_timestamp(),requested_model='deepseek-v4-pro/u5W' WHERE id=$1",
-        [currentContext!.id],
+        "UPDATE scenario_contexts SET state='READY',plan='{}',available_at=clock_timestamp(),requested_model=$2 WHERE id=$1",
+        [currentContext!.id, FIXED_DEFAULTS.AI_MODEL],
       );
       expect((await contextStore.latest())?.zeroFillTerminalAt).not.toBeNull();
       const afterZero = {

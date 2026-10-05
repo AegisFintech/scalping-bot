@@ -19,7 +19,9 @@
         "direct-entry-v1",
         "market-stop-v1",
         "market-stop-v2",
-        "0.3.0-fade-limit.1"
+        "0.3.0-fade-limit.1",
+        "0.3.0-fade-limit.2",
+        "0.3.0-fade-limit.3"
       ]
     },
     "mode": {
@@ -62,7 +64,12 @@
       "if": {
         "properties": {
           "version": {
-            "enum": ["market-stop-v2", "0.3.0-fade-limit.1"]
+            "enum": [
+              "market-stop-v2",
+              "0.3.0-fade-limit.1",
+              "0.3.0-fade-limit.2",
+              "0.3.0-fade-limit.3"
+            ]
           }
         }
       },

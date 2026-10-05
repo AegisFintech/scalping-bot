@@ -1,24 +1,46 @@
 # cTrader scalper
 
+For scheduled prospective comparison alongside demo trading, see the
+[read-only forward observer](docs/forward-observer-report.md). It freezes future
+daily windows and candidate definitions, records costs from actual trades
+separately, and never places orders or automatically changes the strategy.
+
 A Debian-compatible, AI-assisted XAUUSD analysis and execution system. The model
 proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
 
-The current source release is `0.2.5-market-stop.7`, policy `market-stop-v2`.
+For bounded entry/TP research, use the [paired replay workflow](docs/paired-replay-report.md).
+It compares frozen observed demo opportunities, checks archived quote integrity,
+and reports missing paths and unknown economics explicitly. It does not change
+trading, claim exact counterfactual net returns, or automatically promote a strategy.
+
+The current source policy is `0.3.0-fade-limit.3`, with provider prompt
+`entry-pair-v4`. The bot is intended to operate continuously whenever the broker
+session is open: it keeps evaluating fresh opportunities and resumes after
+normal temporary failures or scheduled closures.
+
+Continuous operation does not mean forced trading. Active orders/positions,
+provider cooldowns, stale data, unavailable sessions, reconciliation or
+protection faults, affordability, and other safety gates must cause the bot to
+wait. Accepted GTC orders and protective maintenance continue during those
+waits. No AI response can choose risk, volume, broker precision, or live
+authority.
+
 Demo development retains the shared 1% current-equity setup ceiling, while daily
 and high-water losses remain recorded without blocking demo admission. Other
 modes retain their loss limits. [Current policy](docs/demo-development-risk-report.md).
-EPRToken returns only buy/sell stop-entry prices using `entry-pair-v2`, prioritizing
+EPRToken returns only buy/sell entry prices using `entry-pair-v4`, prioritizing
 nearby M1 support/resistance and candle-based order blocks. See the
 [entry guidance report](docs/nearby-order-block-report.md). The script
 binds identity/time locally and calculates fee-buffered TP, double SL and position
 size. Spread, ATR distance, model target-room and daily order-count filters are
 removed; broker, risk, data-integrity and lifecycle requirements remain.
 See [the change and retained constraints](docs/direct-entry-report.md).
-Accepted STOP orders are **good till cancelled (GTC)**, without timer expiry.
-The loop is analyze → pending buy/sell pair → fill/cancel peer → SL/TP close →
-fresh analysis. No paid refresh runs while orders or a position are active.
+Accepted strategy-owned pending orders are **good till cancelled (GTC)**, without
+timer expiry. The loop is analyze → pending entry pair → fill/cancel peer →
+SL/TP close → fresh analysis. No paid refresh runs while orders or a position
+is active.
 Fresh placement deadlines and all risk/reconciliation gates still apply.
 See [the persistent-order lifecycle and rollout](docs/persistent-order-loop-report.md).
 
@@ -93,20 +115,20 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Model and decision path
 
-The operator-selected model is now `deepseek-v4-pro/u5W`. The existing EPRToken
-Responses endpoint accepted this literal identifier, returning `deepseek-v4-pro`.
+The operator-selected model is now `grok-4.5`. The EPRToken chat-completions endpoint
+must return this exact identity.
 Every reply undergoes independent local schema and semantic validation. Both identifiers, timing and available token usage are
-retained; pricing remains unknown. See [model-switch evidence](docs/deepseek-context-report.md).
+retained; pricing remains unknown. See [model-switch evidence](docs/grok-model-switch-report.md).
 No fallback model is substituted. Temperature remains omitted; the scenario
-planner explicitly requests disabled thinking within the existing deadline.
-`/u5W` is sent literally, without inferred client-side semantics.
+planner uses Grok's supported low reasoning effort within the existing deadline.
 Historical model observations remain immutable; a switch does not establish improved fills.
 
-The active scenario input contains up to 240 M1, 144 M5 and 96 M15 completed
+The active scenario input contains up to 120 M1, 72 M5 and 48 M15 completed
 OHLCV bars as numeric data. The text-only Pro model receives no image; charts
 remain verified and archived locally. New prompt `scenario-v3` uses the larger
 history to distinguish nearby structure from distant levels without selecting
-SL, TP or size. More history does not establish better analysis or profitability.
+SL, TP or size. The bounded production tail is a latency safeguard; more history
+does not establish better analysis or profitability.
 Every response crosses
 strict schema, identity, tick-precision and fixed-validity checks. Requests have a
 90-second background deadline, no automatic retry, bounded bodies and a circuit breaker.
@@ -135,7 +157,7 @@ The normal [.env.sample](.env.sample) has **20 settings, down from 176 (88.6%)**
 It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=deepseek-v4-pro/u5W` is explicit; other AI and strategy tuning is fixed in
+`AI_MODEL=grok-4.5` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
 24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the
@@ -165,6 +187,18 @@ from `requirements.lock`. Headless services and hardened systemd units are in
 [operations runbook](docs/operations-runbook.md). Docker is not required.
 
 ## Reproducible research and validation
+
+Read-only demo learning review (no trading or provider calls):
+
+```sh
+npm run demo:learning-review -- 0.3.0-fade-limit.3 2026-09-25T01:23:01.040Z 2026-10-02T01:23:01.040Z
+```
+
+This exposes signed costs, entry-time EMA alignment, approved-budget ratios and
+model/effective entry displacement without rewriting trades. The isolated entry
+guidance candidate is **not deployed**. Current quote-adjacent entry replacement
+must be reviewed before a prompt-only trial can establish entry improvement.
+See [measurement definitions and findings](docs/demo-learning-review-report.md).
 
 ```sh
 # Read-only export, scoped by existing account identity; never exports broker IDs.

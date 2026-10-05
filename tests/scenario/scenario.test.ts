@@ -448,7 +448,7 @@ describe("bounded scenario provider adapter", () => {
       return Promise.resolve(
         new Response(
           JSON.stringify({
-            model: "deepseek-v4-pro",
+            model: "grok-4.5",
             output_text: JSON.stringify(fixture().plan),
           }),
         ),
@@ -461,7 +461,7 @@ describe("bounded scenario provider adapter", () => {
       now: () => base,
     });
     const result = await planner.generate(input());
-    expect(request.model).toBe("deepseek-v4-pro/u5W");
+    expect(request.model).toBe("grok-4.5");
     expect(JSON.stringify(request)).not.toContain("input_image");
     expect(JSON.stringify(request)).not.toContain("data:image");
     expect(request.max_output_tokens).toBe(4096);
@@ -469,7 +469,7 @@ describe("bounded scenario provider adapter", () => {
     expect(request.text).toMatchObject({
       format: { name: "chart_scenario_1_0", strict: true },
     });
-    expect(result.telemetry.returnedModel).toBe("deepseek-v4-pro");
+    expect(result.telemetry.returnedModel).toBe("grok-4.5");
     expect(result.telemetry.inputProfile).toBe("structured");
     expect(result.promptArtifact.version).toBe("scenario-research-v2");
     expect(result.telemetry.costAmount).toBeNull();
@@ -483,7 +483,7 @@ describe("bounded scenario provider adapter", () => {
       body = JSON.parse(options.body) as typeof body;
       return Promise.resolve(
         Response.json({
-          model: "deepseek-v4-pro",
+          model: "grok-4.5",
           output_text: JSON.stringify(fixture().plan),
         }),
       );
@@ -597,13 +597,13 @@ describe("bounded scenario provider adapter", () => {
       fetchImpl: vi.fn<typeof fetch>(() =>
         Promise.resolve(
           Response.json({
-            model: "deepseek-v4-pro",
+            model: "grok-4.5",
             status: "incomplete",
             output_text: JSON.stringify(fixture().plan),
             usage: {
               input_tokens: 12000,
-              output_tokens: 4096,
-              total_tokens: 16096,
+              output_tokens: 1024,
+              total_tokens: 13024,
             },
           }),
         ),
@@ -612,8 +612,8 @@ describe("bounded scenario provider adapter", () => {
     await expect(planner.generate(input())).rejects.toMatchObject({
       message: "AI_RESPONSE_INCOMPLETE",
       telemetry: {
-        requestedModel: "deepseek-v4-pro/u5W",
-        outputTokens: 4096,
+        requestedModel: "grok-4.5",
+        outputTokens: 1024,
         costAmount: null,
       },
     });
@@ -643,7 +643,7 @@ describe("bounded scenario provider adapter", () => {
     finish!(
       new Response(
         JSON.stringify({
-          model: "deepseek-v4-pro",
+          model: "grok-4.5",
           output_text: JSON.stringify(f.plan),
         }),
       ),
@@ -671,7 +671,7 @@ describe("bounded scenario provider adapter", () => {
       Promise.resolve(
         new Response(
           JSON.stringify({
-            model: "deepseek-v4-pro",
+            model: "grok-4.5",
             output_text: JSON.stringify(fixture().plan),
           }),
         ),

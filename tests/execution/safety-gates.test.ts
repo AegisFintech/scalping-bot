@@ -444,3 +444,26 @@ describe("loss-streak pause admission gate", () => {
     ).toBe(false);
   });
 });
+
+describe("demo loss-policy admission", () => {
+  it("does not turn stored demo loss measurements into a financial lockout", () => {
+    const result = evaluateAnalysisEligibility(
+      buildSafetyGateInput({
+        tradingMode: "demo",
+        dailyLossLockout: true,
+      }),
+    );
+
+    expect(result.allowed).toBe(true);
+    expect(result.reasonCodes).not.toContain("DAILY_LOSS_LOCKOUT");
+  });
+
+  it("retains the financial lockout for non-demo modes", () => {
+    const result = evaluateAnalysisEligibility(
+      buildSafetyGateInput({ dailyLossLockout: true }),
+    );
+
+    expect(result.allowed).toBe(false);
+    expect(result.reasonCodes).toContain("DAILY_LOSS_LOCKOUT");
+  });
+});

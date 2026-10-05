@@ -70,14 +70,14 @@ No setting can make this build submit live orders. Shadow uses a separately
 specified connection environment without submission authority. An API key or
 broker token is not an authorization to trade.
 
-The model pin is visible as `AI_MODEL=deepseek-v4-pro/u5W`, and a different nonempty
-model is rejected. ISSUE-085 changes only this assignment in a populated file,
+The model pin is visible as `AI_MODEL=grok-4.5`, and a different nonempty
+model is rejected. ISSUE-111 changes only this assignment in a populated file,
 preserving all credentials and operator controls. Forward migration
-`0020_deepseek_context_model.sql` admits DeepSeek while preserving historical
-Astra/Sol rows and request cooldowns. Deploy matching AI/execution builds together.
-See [model-switch evidence](deepseek-context-report.md). The production scenario
-uses structured numeric history (up to 240 M1 / 144 M5 / 96 M15 completed bars),
-production prompt `entry-pair-v4`, explicitly disabled thinking and at most 4,096 output
+`0026_grok_context_model.sql` admits Grok while preserving historical
+Astra/Sol/DeepSeek rows and request cooldowns. Deploy matching AI/execution builds together.
+The production scenario
+uses structured numeric history (up to 120 M1 / 72 M5 / 48 M15 completed bars),
+production prompt `entry-pair-v4`, low reasoning and at most 1,024 output
 tokens within the existing
 90-second deadline. Historical charts remain validated local audit artifacts;
 new numeric analyses generate display charts only on demand. Request bounds,

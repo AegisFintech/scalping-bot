@@ -2,6 +2,7 @@ import { marketSession } from "../helpers/market-session.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createMarketDataServer } from "../../apps/market-data-service/src/index.js";
+import { CTraderRequestRejectedError } from "../../packages/ctrader-client/src/transport.js";
 import type {
   Candle,
   MarketDataAdapter,
@@ -117,7 +118,7 @@ describe("market-data freshness", () => {
     });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ enabled: false });
-    expect((await app.inject("/health/ready")).statusCode).toBe(200);
+    expect((await app.inject("/health/ready")).statusCode).toBe(503);
     await app.close();
   });
 
@@ -182,6 +183,92 @@ describe("market-data freshness", () => {
 
     expect(response.statusCode).toBe(503);
     expect(response.json()).toMatchObject({ reason: "MARKET_QUOTE_STALE" });
+    await app.close();
+  });
+
+  it("caches data metadata while keeping the session endpoint fresh", async () => {
+    const source = adapter(
+      {
+        bid: "4499.99",
+        ask: "4500.01",
+        sourceTime: "2026-08-24T00:00:00.050Z",
+        receivedAt: "2026-08-24T00:00:00.080Z",
+      },
+      orderBook,
+    );
+    const discover = vi.spyOn(source, "discoverSymbol");
+    const app = createMarketDataServer({
+      adapter: source,
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/quote",
+      payload: { symbol: "XAUUSD" },
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/quote",
+      payload: { symbol: "XAUUSD" },
+    });
+    expect(discover).toHaveBeenCalledTimes(1);
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/session",
+      payload: { symbol: "XAUUSD" },
+    });
+    expect(discover).toHaveBeenCalledTimes(2);
+    await app.close();
+  });
+
+  it("preserves bounded broker rejection diagnostics without raw payload data", async () => {
+    const source = adapter(
+      {
+        bid: "4499.99",
+        ask: "4500.01",
+        sourceTime: "2026-08-24T00:00:00.050Z",
+        receivedAt: "2026-08-24T00:00:00.080Z",
+      },
+      orderBook,
+    );
+    vi.spyOn(source, "getQuote").mockRejectedValue(
+      new CTraderRequestRejectedError(2142, {
+        errorCode: "BLOCKED_PAYLOAD_TYPE",
+        description: "You are being rate limited",
+        accessToken: "must-not-be-recorded",
+      }),
+    );
+    const app = createMarketDataServer({
+      adapter: source,
+      maxQuoteAgeMs: 3_000,
+      maxOrderBookAgeMs: 3_000,
+      maxSnapshotSkewMs: 5_000,
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/quote",
+      payload: { symbol: "XAUUSD" },
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toMatchObject({
+      error: "MARKET_QUOTE_UNAVAILABLE",
+      reason: "CTRADER_REQUEST_REJECTED",
+      operation: "quote",
+      broker: {
+        payloadType: 2142,
+        code: "BLOCKED_PAYLOAD_TYPE",
+        description: "You are being rate limited",
+      },
+    });
+    expect(JSON.stringify(response.json())).not.toContain(
+      "must-not-be-recorded",
+    );
     await app.close();
   });
 
@@ -311,8 +398,138 @@ describe("quote-independent broker session endpoint", () => {
       });
       expect(failure.statusCode).toBe(503);
       expect(failure.json()).toEqual({ reason: "MARKET_SESSION_UNAVAILABLE" });
+      expect((await app.inject("/health/ready")).statusCode).toBe(503);
     } finally {
       await app.close();
+    }
+  });
+});
+
+describe("independent readiness", () => {
+  function setup() {
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.parse("2026-08-24T00:00:00.100Z"),
+    );
+    const source = adapter(
+      {
+        bid: "4499.99",
+        ask: "4500.01",
+        sourceTime: "2026-08-24T00:00:00.050Z",
+        receivedAt: "2026-08-24T00:00:00.080Z",
+      },
+      orderBook,
+    );
+    const app = createMarketDataServer({
+      adapter: source,
+      maxQuoteAgeMs: 3000,
+      maxOrderBookAgeMs: 3000,
+      maxSnapshotSkewMs: 5000,
+    });
+    const session = () =>
+      app.inject({
+        method: "POST",
+        url: "/v1/session",
+        payload: { symbol: "XAUUSD" },
+      });
+    const quote = () =>
+      app.inject({
+        method: "POST",
+        url: "/v1/quote",
+        payload: { symbol: "XAUUSD" },
+      });
+    const snapshot = () =>
+      app.inject({
+        method: "POST",
+        url: "/v1/snapshot",
+        payload: {
+          symbol: "XAUUSD",
+          counts: { M1: 1, M5: 1, M15: 1 },
+          depth: 1,
+        },
+      });
+    return { source, app, session, quote, snapshot };
+  }
+  it("requires observed session availability and recovers without asking for quotes", async () => {
+    const f = setup();
+    try {
+      expect((await f.app.inject("/health/ready")).statusCode).toBe(503);
+      vi.spyOn(f.source, "getTradingSchedule").mockRejectedValueOnce(
+        new Error("failed"),
+      );
+      await f.session();
+      expect((await f.app.inject("/health/ready")).statusCode).toBe(503);
+      await f.session();
+      const healthy = await f.app.inject("/health/ready");
+      expect(healthy.statusCode).toBe(200);
+      expect(healthy.json()).toMatchObject({
+        components: {
+          session: "HEALTHY",
+          quote: "UNKNOWN",
+          snapshot: "UNKNOWN",
+        },
+      });
+      expect(vi.spyOn(f.source, "getQuote")).not.toHaveBeenCalled();
+    } finally {
+      await f.app.close();
+    }
+  });
+  it("quote and snapshot successes cannot clear a failed session", async () => {
+    const f = setup();
+    try {
+      vi.spyOn(f.source, "getTradingSchedule").mockRejectedValue(
+        new Error("failed"),
+      );
+      await f.session();
+      await f.quote();
+      await f.snapshot();
+      expect((await f.app.inject("/health/ready")).statusCode).toBe(503);
+    } finally {
+      await f.app.close();
+    }
+  });
+  it("session and quote successes cannot clear a snapshot failure", async () => {
+    const f = setup();
+    try {
+      vi.spyOn(f.source, "getOrderBookSnapshot").mockRejectedValueOnce(
+        new Error("failed"),
+      );
+      await f.snapshot();
+      await f.session();
+      await f.quote();
+      expect((await f.app.inject("/health/ready")).statusCode).toBe(503);
+      await f.snapshot();
+      expect((await f.app.inject("/health/ready")).statusCode).toBe(200);
+    } finally {
+      await f.app.close();
+    }
+  });
+  it("ignores an obsolete concurrent session result", async () => {
+    const f = setup();
+    let resolve!: (
+      value: Awaited<ReturnType<MarketDataAdapter["getTradingSchedule"]>>,
+    ) => void;
+    const delayed = new Promise<
+      Awaited<ReturnType<MarketDataAdapter["getTradingSchedule"]>>
+    >((r) => {
+      resolve = r;
+    });
+    const schedule = vi
+      .spyOn(f.source, "getTradingSchedule")
+      .mockReturnValueOnce(delayed)
+      .mockRejectedValueOnce(new Error("new failure"));
+    try {
+      const old = f.session();
+      await vi.waitFor(() => expect(schedule).toHaveBeenCalledTimes(1));
+      await f.session();
+      resolve({
+        timeZone: "UTC",
+        intervals: [{ startSecond: 0, endSecond: 604800 }],
+        holidays: [],
+      });
+      await old;
+      expect((await f.app.inject("/health/ready")).statusCode).toBe(503);
+    } finally {
+      await f.app.close();
     }
   });
 });

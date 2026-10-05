@@ -2,6 +2,7 @@ import type {
   AccountAdapter,
   AccountState,
 } from "../../../packages/contracts/src/index.js";
+import { cTraderErrorDetails } from "../../../packages/ctrader-client/src/transport.js";
 
 const FAILURE_CODES = new Set([
   "CTRADER_ACCOUNT_PNL_INCOMPLETE",
@@ -29,14 +30,15 @@ export function accountFailureCode(error: unknown): string {
 export async function reconcileAccountSafely(
   account: Pick<AccountAdapter, "reconcile">,
   symbolId: string,
-  report: (reason: string) => void,
+  report: (reason: string, error?: unknown) => void,
   now = () => new Date().toISOString(),
 ): Promise<AccountState> {
   try {
     return await account.reconcile(symbolId);
   } catch (error) {
     const reason = accountFailureCode(error);
-    report(reason);
+    if (cTraderErrorDetails(error) === null) report(reason);
+    else report(reason, error);
     return {
       reconciledAt: now(),
       certain: false,

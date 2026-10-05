@@ -185,7 +185,13 @@ describe("direct entries (synthetic, no broker authority)", () => {
       Promise.resolve(
         Response.json({
           model: "provider-normalized-identity",
-          output_text: '{"buy_stop":4410,"sell_stop":4400,"other":"ignored"}',
+          choices: [
+            {
+              message: {
+                content: '{"buy_stop":4410,"sell_stop":4400,"other":"ignored"}',
+              },
+            },
+          ],
         }),
       ),
     );
@@ -225,6 +231,16 @@ describe("direct entries (synthetic, no broker authority)", () => {
         },
       );
       const result = await http.generate(input);
+      const providerBodyValue = fetchImpl.mock.calls[0]?.[1]?.body;
+      if (typeof providerBodyValue !== "string")
+        throw new Error("fixture-provider-body");
+      const providerBody = JSON.parse(providerBodyValue) as Record<
+        string,
+        unknown
+      >;
+      expect(providerBody.model).toBe("grok-4.5");
+      expect(providerBody.reasoning_effort).toBe("low");
+      expect(providerBody.messages).toBeDefined();
       expect(result.response).toMatchObject({
         buy_stop: "4410",
         sell_stop: "4400",
@@ -251,10 +267,10 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const requestBody = fetchImpl.mock.calls.at(-1)?.[1]?.body;
       if (typeof requestBody !== "string") throw new Error("fixture-body");
-      const request = JSON.parse(requestBody) as { input: unknown[] };
-      expect(request.input[0]).toEqual({
+      const request = JSON.parse(requestBody) as { messages: unknown[] };
+      expect(request.messages[0]).toEqual({
         role: "system",
-        content: [{ type: "input_text", text: prompt }],
+        content: prompt,
       });
       for (const mismatch of [
         { version: "entry-pair-v1" },
@@ -289,8 +305,8 @@ describe("direct entries (synthetic, no broker authority)", () => {
       expect(legacyWithoutImage.statusCode).toBe(400);
       fetchImpl.mockResolvedValueOnce(
         Response.json({
-          model: "deepseek-v4-pro",
-          output_text: '{"buy_stop":"4410"}',
+          model: "grok-4.5",
+          choices: [{ message: { content: '{"buy_stop":"4410"}' } }],
         }),
       );
       await expect(

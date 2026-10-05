@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { SessionRecovery } from "./session-recovery.js";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
 import { pathToFileURL } from "node:url";
@@ -7,11 +8,13 @@ import Fastify, { type FastifyInstance } from "fastify";
 
 import type {
   MarketDataAdapter,
+  MarketReadiness,
   Timeframe,
 } from "../../../packages/contracts/src/index.js";
 import { CTraderClient } from "../../../packages/ctrader-client/src/client.js";
 import { CTraderTokenManager } from "../../../packages/ctrader-client/src/token-manager.js";
 import { SecureTokenFileStore } from "../../../packages/ctrader-client/src/token-store.js";
+import { cTraderErrorDetails } from "../../../packages/ctrader-client/src/transport.js";
 import {
   LocalMarketRecorder,
   type LocalMarketRecorderStatus,
@@ -24,6 +27,29 @@ export interface MarketDataServerOptions {
   readonly maxSnapshotSkewMs: number;
   readonly localRecorderStatus?: () =>
     LocalMarketRecorderStatus | { readonly enabled: false };
+}
+
+type MarketFailureOperation = "session" | "quote" | "snapshot";
+type MarketMetadata = Awaited<ReturnType<MarketDataAdapter["discoverSymbol"]>>;
+const SYMBOL_METADATA_CACHE_MS = 30_000;
+
+function safeMarketFailure(
+  error: unknown,
+  fallback: string,
+  operation: MarketFailureOperation,
+): Record<string, unknown> {
+  const reason =
+    error instanceof Error && /^[A-Z0-9_:-]{1,160}$/.test(error.message)
+      ? error.message
+      : fallback;
+  const details = cTraderErrorDetails(error);
+  if (details === null) return { reason };
+  return {
+    reason,
+    operation,
+    observedAt: new Date().toISOString(),
+    broker: details,
+  };
 }
 
 function configuredBoolean(
@@ -52,13 +78,51 @@ export function createMarketDataServer(
   options: MarketDataServerOptions,
 ): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 64_000 });
-  let ready = true;
+  const components: Record<
+    "session" | "quote" | "snapshot",
+    "UNKNOWN" | "HEALTHY" | "FAILED"
+  > = {
+    session: "UNKNOWN",
+    quote: "UNKNOWN",
+    snapshot: "UNKNOWN",
+  };
+  const versions = { session: 0, quote: 0, snapshot: 0 };
+  const finish = (
+    component: keyof typeof components,
+    version: number,
+    healthy: boolean,
+  ): void => {
+    if (versions[component] === version)
+      components[component] = healthy ? "HEALTHY" : "FAILED";
+  };
+  const metadataCache = new Map<
+    string,
+    { readonly metadata: MarketMetadata; readonly expiresAt: number }
+  >();
+  const dataMetadata = async (symbol: string): Promise<MarketMetadata> => {
+    const cached = metadataCache.get(symbol.toUpperCase());
+    if (cached !== undefined && cached.expiresAt > Date.now())
+      return cached.metadata;
+    const metadata = await options.adapter.discoverSymbol(symbol);
+    metadataCache.set(symbol.toUpperCase(), {
+      metadata,
+      expiresAt: Date.now() + SYMBOL_METADATA_CACHE_MS,
+    });
+    return metadata;
+  };
   app.get("/health/live", () => ({ status: "alive" }));
-  app.get("/health/ready", (_request, reply) =>
-    ready
-      ? reply.send({ status: "ready" })
-      : reply.code(503).send({ status: "not_ready" }),
-  );
+  app.get("/health/ready", (_request, reply) => {
+    const ready =
+      components.session === "HEALTHY" &&
+      components.quote !== "FAILED" &&
+      components.snapshot !== "FAILED";
+    const health: MarketReadiness = {
+      schemaVersion: "1.0",
+      status: ready ? "ready" : "not_ready",
+      components: { ...components },
+    };
+    return reply.code(ready ? 200 : 503).send(health);
+  });
   app.get(
     "/v1/local-recorder",
     () => options.localRecorderStatus?.() ?? { enabled: false },
@@ -78,6 +142,7 @@ export function createMarketDataServer(
       },
     },
     async (request, reply) => {
+      const version = ++versions.session;
       try {
         const metadata = await options.adapter.discoverSymbol(
           request.body.symbol,
@@ -85,20 +150,39 @@ export function createMarketDataServer(
         const schedule = await options.adapter.getTradingSchedule(
           metadata.symbolId,
         );
+        finish("session", version, true);
         return reply.send({ schemaVersion: "1.0", metadata, schedule });
-      } catch {
+      } catch (error) {
         // Session failures do not disable broker-held protection or expose raw errors.
-        return reply.code(503).send({ reason: "MARKET_SESSION_UNAVAILABLE" });
+        finish("session", version, false);
+        const details = cTraderErrorDetails(error);
+        console.warn(
+          JSON.stringify({
+            event: "MARKET_SESSION_REQUEST_FAILED",
+            observedAt: new Date().toISOString(),
+            brokerCode:
+              details?.code !== null &&
+              details?.code !== undefined &&
+              /^[A-Z0-9_]{1,80}$/.test(details.code)
+                ? details.code
+                : null,
+            payloadType: details?.payloadType ?? null,
+          }),
+        );
+        return reply
+          .code(503)
+          .send(
+            safeMarketFailure(error, "MARKET_SESSION_UNAVAILABLE", "session"),
+          );
       }
     },
   );
   app.post<{ Body: { symbol: string } }>(
     "/v1/quote",
     async (request, reply) => {
+      const version = ++versions.quote;
       try {
-        const metadata = await options.adapter.discoverSymbol(
-          request.body.symbol,
-        );
+        const metadata = await dataMetadata(request.body.symbol);
         const quote = await options.adapter.getQuote(metadata.symbolId);
         const serverTime = await options.adapter.getServerTime();
         const serverMs = Date.parse(serverTime);
@@ -114,14 +198,13 @@ export function createMarketDataServer(
         ) {
           throw new Error("MARKET_QUOTE_STALE");
         }
-        ready = true;
+        finish("quote", version, true);
         return reply.send({ serverTime, metadata, quote });
       } catch (error) {
-        ready = false;
+        finish("quote", version, false);
         return reply.code(503).send({
           error: "MARKET_QUOTE_UNAVAILABLE",
-          reason:
-            error instanceof Error ? error.message : "MARKET_QUOTE_FAILED",
+          ...safeMarketFailure(error, "MARKET_QUOTE_FAILED", "quote"),
         });
       }
     },
@@ -129,9 +212,10 @@ export function createMarketDataServer(
   app.post<{
     Body: { symbol: string; counts: Record<Timeframe, number>; depth: number };
   }>("/v1/snapshot", async (request, reply) => {
+    const version = ++versions.snapshot;
     try {
       const { symbol, counts, depth } = request.body;
-      const metadata = await options.adapter.discoverSymbol(symbol);
+      const metadata = await dataMetadata(symbol);
       const quote = await options.adapter.getQuote(metadata.symbolId);
       const [m1, m5, m15, orderBook] = await Promise.all([
         options.adapter.getCompletedCandles(metadata.symbolId, "M1", counts.M1),
@@ -174,7 +258,7 @@ export function createMarketDataServer(
       ) {
         throw new Error("MARKET_SNAPSHOT_STALE_OR_INCOMPLETE");
       }
-      ready = true;
+      finish("snapshot", version, true);
       return reply.send({
         serverTime,
         capturedAt: new Date(capturedAtMs).toISOString(),
@@ -189,11 +273,10 @@ export function createMarketDataServer(
         orderBook,
       });
     } catch (error) {
-      ready = false;
+      finish("snapshot", version, false);
       return reply.code(503).send({
         error: "MARKET_SNAPSHOT_UNAVAILABLE",
-        reason:
-          error instanceof Error ? error.message : "MARKET_SNAPSHOT_FAILED",
+        ...safeMarketFailure(error, "MARKET_SNAPSHOT_FAILED", "snapshot"),
       });
     }
   });
@@ -358,7 +441,26 @@ async function main(): Promise<void> {
     ),
     localRecorderStatus: () => recorder?.status ?? { enabled: false },
   });
+  const recovery = new SessionRecovery({
+    probe: async () => {
+      const metadata = await adapter.discoverSymbol(
+        environment.TRADING_SYMBOL ?? "XAUUSD",
+      );
+      await adapter.getTradingSchedule(metadata.symbolId);
+    },
+    reconnect: async () => {
+      await adapter.disconnect();
+      await adapter.connect();
+    },
+    observe: (event, failures) =>
+      console.warn(JSON.stringify({ event, failures })),
+  });
+  const recoveryTimer = setInterval(() => {
+    void recovery.check();
+  }, 30_000);
   const shutdown = async (): Promise<void> => {
+    clearInterval(recoveryTimer);
+    await recovery.drain();
     if (recorderTimer !== null) clearInterval(recorderTimer);
     await captureInFlight;
     if (recorder !== null) await recorder.stop();
