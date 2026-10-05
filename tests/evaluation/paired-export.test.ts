@@ -58,8 +58,8 @@ it("uses one bounded read-only snapshot and projects causal clocks without raw b
   expect(payload.label).toBe("PAIRED_REPLAY_INPUT_V1");
   expect(db.end).toHaveBeenCalledOnce();
 });
-it.each(["0", "2"])(
-  "rejects ambiguous or empty scopes (%s)",
+it.each(["2", "NaN", "-1"])(
+  "rejects ambiguous or invalid scopes (%s)",
   async (scopes) => {
     db.query.mockImplementation((sql: string) => ({
       rows: sql.includes("scopes") ? [{ scopes }] : [],
@@ -69,6 +69,28 @@ it.each(["0", "2"])(
     expect(console.log).not.toHaveBeenCalled();
   },
 );
+it("exports an explicitly empty cohort rather than failing a closed-market window", async () => {
+  db.query.mockImplementation((sql: string) => ({
+    rows: sql.includes("scopes") ? [{ scopes: "0" }] : [],
+  }));
+  await import("../../scripts/export-paired-replay.js");
+  expect(console.error).not.toHaveBeenCalled();
+  const payload = JSON.parse(
+    vi.mocked(console.log).mock.calls[0]?.[0] as string,
+  ) as { setups: unknown[] };
+  expect(payload.setups).toEqual([]);
+});
+it("rejects inconsistent empty-scope evidence", async () => {
+  db.query.mockImplementation((sql: string) => ({
+    rows: sql.includes("scopes")
+      ? [{ scopes: "0" }]
+      : sql.includes("LIMIT 1001")
+        ? [{}]
+        : [],
+  }));
+  await import("../../scripts/export-paired-replay.js");
+  expect(console.error).toHaveBeenCalledWith("PAIRED_SINGLE_SCOPE_REQUIRED");
+});
 it("rejects oversized exports without a partial result", async () => {
   db.query.mockImplementation((sql: string) => ({
     rows: sql.includes("scopes")

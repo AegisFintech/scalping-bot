@@ -1,5 +1,12 @@
 # Agent Instructions
 
+ISSUE-255: prospective research is an isolated read-only observer, never an order
+or strategy-promotion authority. Read `docs/forward-observer-report.md`. Register
+future windows and freeze candidate code before collecting outcomes; do not edit
+registrations, overwrite reports or select only complete winning paths. Source
+drift halts research only. Preserve daily cutoff/open/gap censoring and null
+counterfactual costs; 30 calendar days is a collection batch, not qualification.
+
 ISSUE-253: use the causal conditional paired replay for entry/TP research; read
 `docs/paired-replay-report.md`. It has no broker or promotion authority. Use actual
 provider availability and broker acceptance events, not `orders.submitted_at`

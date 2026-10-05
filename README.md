@@ -1,5 +1,10 @@
 # cTrader scalper
 
+For scheduled prospective comparison alongside demo trading, see the
+[read-only forward observer](docs/forward-observer-report.md). It freezes future
+daily windows and candidate definitions, records costs from actual trades
+separately, and never places orders or automatically changes the strategy.
+
 A Debian-compatible, AI-assisted XAUUSD analysis and execution system. The model
 proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated

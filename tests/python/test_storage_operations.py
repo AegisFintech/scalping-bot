@@ -3,9 +3,11 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import tarfile
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -190,7 +192,18 @@ def test_backup_rotation_preserves_historical_and_proven_restore(tmp_path: Path)
     assert {path for path in entries if path.exists()} == expected
 
 
-def test_cleanup_leaves_open_logs_while_pruning_closed_routine_files(tmp_path: Path) -> None:
+def test_cleanup_leaves_open_logs_while_pruning_closed_routine_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = Path.iterdir
+
+    def visible_processes(path: Path) -> Iterator[Path]:
+        if path == Path("/proc"):
+            return iter([path / str(os.getpid())])
+        return original(path)
+
+    # Isolate the process inventory; still inspect the real held-open descriptor.
+    monkeypatch.setattr(Path, "iterdir", visible_processes)
     active, closed = tmp_path / "active.log", tmp_path / "old.log.1.gz"
     active.write_bytes(b"active")
     closed.write_bytes(b"old")
@@ -299,3 +312,23 @@ def test_encrypted_export_round_trip_and_invalid_key(tmp_path: Path) -> None:
     with pytest.raises((ValueError, BrokenPipeError)):
         encrypted_export(directory, recipient, tmp_path / "invalid.gpg")
     assert not (tmp_path / "invalid.gpg").exists()
+
+
+def test_log_cleanup_refuses_uncertain_process_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    active = tmp_path / "preserve.log"
+    active.write_bytes(b"preserve")
+    original = Path.iterdir
+
+    def denied(path: Path) -> Iterator[Path]:
+        if path == Path("/proc"):
+            return iter([path / "12345"])
+        if path == Path("/proc/12345/fd"):
+            raise PermissionError("fixture process inventory denied")
+        return original(path)
+
+    monkeypatch.setattr(Path, "iterdir", denied)
+    with pytest.raises(ValueError, match="STORAGE_LOG_OPEN_FILES_UNCERTAIN"):
+        prune_routine_logs(tmp_path, datetime.now(UTC), budget=0)
+    assert active.read_bytes() == b"preserve"

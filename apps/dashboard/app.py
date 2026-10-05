@@ -234,9 +234,13 @@ def render_history(model: dict[str, Any]) -> None:
         st.plotly_chart(figure, width="stretch", theme="streamlit", key="history_chart")
         table(model["trades"], "closed_trades")
         if "execution_order_type" in data.columns:
-            mix = data.groupby(
-                ["strategy_version", "execution_order_type"],
-            ).size().reset_index(name="trades")
+            mix = (
+                data.groupby(
+                    ["strategy_version", "execution_order_type"],
+                )
+                .size()
+                .reset_index(name="trades")
+            )
             st.caption("Trade count by release / order type")
             st.dataframe(mix, hide_index=True, width="stretch")
     else:
