@@ -1,9 +1,19 @@
 # cTrader scalper
 
+For scheduled prospective comparison alongside demo trading, see the
+[read-only forward observer](docs/forward-observer-report.md). It freezes future
+daily windows and candidate definitions, records costs from actual trades
+separately, and never places orders or automatically changes the strategy.
+
 A Debian-compatible, AI-assisted XAUUSD analysis and execution system. The model
 proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
+
+For bounded entry/TP research, use the [paired replay workflow](docs/paired-replay-report.md).
+It compares frozen observed demo opportunities, checks archived quote integrity,
+and reports missing paths and unknown economics explicitly. It does not change
+trading, claim exact counterfactual net returns, or automatically promote a strategy.
 
 The current source policy is `0.3.0-fade-limit.3`, with provider prompt
 `entry-pair-v4`. The bot is intended to operate continuously whenever the broker
@@ -177,6 +187,18 @@ from `requirements.lock`. Headless services and hardened systemd units are in
 [operations runbook](docs/operations-runbook.md). Docker is not required.
 
 ## Reproducible research and validation
+
+Read-only demo learning review (no trading or provider calls):
+
+```sh
+npm run demo:learning-review -- 0.3.0-fade-limit.3 2026-09-25T01:23:01.040Z 2026-10-02T01:23:01.040Z
+```
+
+This exposes signed costs, entry-time EMA alignment, approved-budget ratios and
+model/effective entry displacement without rewriting trades. The isolated entry
+guidance candidate is **not deployed**. Current quote-adjacent entry replacement
+must be reviewed before a prompt-only trial can establish entry improvement.
+See [measurement definitions and findings](docs/demo-learning-review-report.md).
 
 ```sh
 # Read-only export, scoped by existing account identity; never exports broker IDs.

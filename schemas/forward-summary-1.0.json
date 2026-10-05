@@ -1,0 +1,576 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalper.local/schemas/forward-summary-1.0.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["body", "sha256"],
+  "properties": {
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reportVersion",
+        "label",
+        "studySha256",
+        "sourceSha256",
+        "asOf",
+        "registeredWindows",
+        "completedWindows",
+        "dueUnreportedWindows",
+        "windows",
+        "actualClosedTradeTotals",
+        "counterfactualNetPnl",
+        "providerCost",
+        "decision",
+        "brokerAuthority",
+        "productionChanged",
+        "qualification"
+      ],
+      "properties": {
+        "reportVersion": {
+          "const": "forward-summary-1.0"
+        },
+        "label": {
+          "const": "RETAINED_CONDITIONAL_WINDOWS_NOT_PORTFOLIO_RETURN"
+        },
+        "studySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registeredWindows": {
+          "const": 30
+        },
+        "completedWindows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "dueUnreportedWindows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "windows": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "index",
+              "from",
+              "until",
+              "reportSha256",
+              "inputSetups",
+              "validSetups",
+              "excluded",
+              "actualClosedTrades",
+              "comparisons",
+              "limitations"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 29
+              },
+              "from": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reportSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "inputSetups": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "validSetups": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "excluded": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "actualClosedTrades": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "trades",
+                  "wins",
+                  "matchedCloseEvidence",
+                  "netPnl",
+                  "grossPnl",
+                  "signedCosts"
+                ],
+                "properties": {
+                  "trades": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "wins": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "matchedCloseEvidence": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "netPnl": {
+                    "type": "string"
+                  },
+                  "grossPnl": {
+                    "type": "string"
+                  },
+                  "signedCosts": {
+                    "type": "string"
+                  }
+                }
+              },
+              "comparisons": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["assumptions", "entry", "tp"],
+                  "properties": {
+                    "assumptions": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "name",
+                        "latency_ms",
+                        "cancel_ms",
+                        "max_gap_ms",
+                        "spread_multiplier",
+                        "stop_slippage"
+                      ],
+                      "properties": {
+                        "name": {
+                          "enum": ["base", "stress"]
+                        },
+                        "latency_ms": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "cancel_ms": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "max_gap_ms": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "spread_multiplier": {
+                          "type": "string"
+                        },
+                        "stop_slippage": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "entry": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["baseline", "model_levels", "paired"],
+                      "properties": {
+                        "baseline": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "experiments",
+                            "statuses",
+                            "observed_path_closes",
+                            "gross_price_over_sl_sum_closed_subset",
+                            "cohort_net_pnl",
+                            "cohort_win_rate"
+                          ],
+                          "properties": {
+                            "experiments": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "statuses": {
+                              "type": "object",
+                              "propertyNames": {
+                                "pattern": "^[A-Z0-9_]{1,80}$"
+                              },
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "observed_path_closes": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_price_over_sl_sum_closed_subset": {
+                              "type": "string"
+                            },
+                            "cohort_net_pnl": {
+                              "type": "null"
+                            },
+                            "cohort_win_rate": {
+                              "type": "null"
+                            }
+                          }
+                        },
+                        "model_levels": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "experiments",
+                            "statuses",
+                            "observed_path_closes",
+                            "gross_price_over_sl_sum_closed_subset",
+                            "cohort_net_pnl",
+                            "cohort_win_rate"
+                          ],
+                          "properties": {
+                            "experiments": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "statuses": {
+                              "type": "object",
+                              "propertyNames": {
+                                "pattern": "^[A-Z0-9_]{1,80}$"
+                              },
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "observed_path_closes": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_price_over_sl_sum_closed_subset": {
+                              "type": "string"
+                            },
+                            "cohort_net_pnl": {
+                              "type": "null"
+                            },
+                            "cohort_win_rate": {
+                              "type": "null"
+                            }
+                          }
+                        },
+                        "paired": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "complete_pairs",
+                            "unresolved_pairs",
+                            "gross_delta_over_sl_complete_subset",
+                            "selection_warning"
+                          ],
+                          "properties": {
+                            "complete_pairs": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "unresolved_pairs": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_delta_over_sl_complete_subset": {
+                              "type": "string"
+                            },
+                            "selection_warning": {
+                              "const": "COMPLETE_SUBSET_NOT_FULL_COHORT_EXPECTANCY"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "tp": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "baseline",
+                        "factor_0_75",
+                        "factor_1_25",
+                        "lower_paired",
+                        "higher_paired",
+                        "not_single_full_fill",
+                        "policy_note"
+                      ],
+                      "properties": {
+                        "baseline": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "experiments",
+                            "statuses",
+                            "observed_path_closes",
+                            "gross_price_over_sl_sum_closed_subset",
+                            "cohort_net_pnl",
+                            "cohort_win_rate"
+                          ],
+                          "properties": {
+                            "experiments": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "statuses": {
+                              "type": "object",
+                              "propertyNames": {
+                                "pattern": "^[A-Z0-9_]{1,80}$"
+                              },
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "observed_path_closes": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_price_over_sl_sum_closed_subset": {
+                              "type": "string"
+                            },
+                            "cohort_net_pnl": {
+                              "type": "null"
+                            },
+                            "cohort_win_rate": {
+                              "type": "null"
+                            }
+                          }
+                        },
+                        "factor_0_75": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "experiments",
+                            "statuses",
+                            "observed_path_closes",
+                            "gross_price_over_sl_sum_closed_subset",
+                            "cohort_net_pnl",
+                            "cohort_win_rate"
+                          ],
+                          "properties": {
+                            "experiments": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "statuses": {
+                              "type": "object",
+                              "propertyNames": {
+                                "pattern": "^[A-Z0-9_]{1,80}$"
+                              },
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "observed_path_closes": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_price_over_sl_sum_closed_subset": {
+                              "type": "string"
+                            },
+                            "cohort_net_pnl": {
+                              "type": "null"
+                            },
+                            "cohort_win_rate": {
+                              "type": "null"
+                            }
+                          }
+                        },
+                        "factor_1_25": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "experiments",
+                            "statuses",
+                            "observed_path_closes",
+                            "gross_price_over_sl_sum_closed_subset",
+                            "cohort_net_pnl",
+                            "cohort_win_rate"
+                          ],
+                          "properties": {
+                            "experiments": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "statuses": {
+                              "type": "object",
+                              "propertyNames": {
+                                "pattern": "^[A-Z0-9_]{1,80}$"
+                              },
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "observed_path_closes": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_price_over_sl_sum_closed_subset": {
+                              "type": "string"
+                            },
+                            "cohort_net_pnl": {
+                              "type": "null"
+                            },
+                            "cohort_win_rate": {
+                              "type": "null"
+                            }
+                          }
+                        },
+                        "lower_paired": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "complete_pairs",
+                            "unresolved_pairs",
+                            "gross_delta_over_sl_complete_subset",
+                            "selection_warning"
+                          ],
+                          "properties": {
+                            "complete_pairs": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "unresolved_pairs": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_delta_over_sl_complete_subset": {
+                              "type": "string"
+                            },
+                            "selection_warning": {
+                              "const": "COMPLETE_SUBSET_NOT_FULL_COHORT_EXPECTANCY"
+                            }
+                          }
+                        },
+                        "higher_paired": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "complete_pairs",
+                            "unresolved_pairs",
+                            "gross_delta_over_sl_complete_subset",
+                            "selection_warning"
+                          ],
+                          "properties": {
+                            "complete_pairs": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "unresolved_pairs": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gross_delta_over_sl_complete_subset": {
+                              "type": "string"
+                            },
+                            "selection_warning": {
+                              "const": "COMPLETE_SUBSET_NOT_FULL_COHORT_EXPECTANCY"
+                            }
+                          }
+                        },
+                        "not_single_full_fill": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "policy_note": {
+                          "const": "FACTOR_0_75_IS_RESEARCH_ONLY_BELOW_CURRENT_0_75_MIN_REWARD_RISK"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "limitations": {
+                "type": "array",
+                "minItems": 5,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "actualClosedTradeTotals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trades",
+            "wins",
+            "matchedCloseEvidence",
+            "netPnl",
+            "grossPnl",
+            "signedCosts"
+          ],
+          "properties": {
+            "trades": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "wins": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "matchedCloseEvidence": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "netPnl": {
+              "type": "string"
+            },
+            "grossPnl": {
+              "type": "string"
+            },
+            "signedCosts": {
+              "type": "string"
+            }
+          }
+        },
+        "counterfactualNetPnl": {
+          "type": "null"
+        },
+        "providerCost": {
+          "type": "null"
+        },
+        "decision": {
+          "const": "HOLD"
+        },
+        "brokerAuthority": {
+          "const": false
+        },
+        "productionChanged": {
+          "const": false
+        },
+        "qualification": {
+          "const": "COLLECTION_ONLY_NOT_STRATEGY_QUALIFICATION"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

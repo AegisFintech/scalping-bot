@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "release-manifest-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "runtimeLinks",
+    "commit",
+    "sourceSha256",
+    "nodeVersion",
+    "nodeSha256",
+    "qualification",
+    "files"
+  ],
+  "properties": {
+    "manifestVersion": { "const": "1.0" },
+    "runtimeLinks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [".runtime", "logs"],
+      "properties": {
+        ".runtime": { "type": "string", "pattern": "^/" },
+        "logs": { "type": "string", "pattern": "^/" }
+      }
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+    },
+    "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nodeSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nodeVersion": { "type": "string", "pattern": "^v22\\." },
+    "qualification": { "$ref": "qualification-report-1.0" },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sha256"],
+        "properties": {
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "link": { "type": "string" }
+        }
+      }
+    }
+  }
+}
