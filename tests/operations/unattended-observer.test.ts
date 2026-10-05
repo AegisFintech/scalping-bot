@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseObservationArguments,
   observation,
   accumulate,
   type ObservationCounters,
@@ -132,5 +133,66 @@ describe("read-only unattended service observation", () => {
       unavailableSamples: 100,
       notReadySamples: 100,
     });
+  });
+});
+
+describe("unattended observer release selection", () => {
+  const args = (release: string, hours = "24") => [
+    "--release",
+    release,
+    "--hours",
+    hours,
+    "--output",
+    "/tmp/observer.json",
+  ];
+  it.each(["0.3.0-fade-limit.3", "0.2.5-market-stop.8"])(
+    "accepts the current or historical observation release %s",
+    (release) => {
+      expect(parseObservationArguments(args(release))).toEqual({
+        release,
+        hours: 24,
+        output: "/tmp/observer.json",
+      });
+      expect(
+        observation({ ...status, strategyVersion: release }, release).available,
+      ).toBe(true);
+      expect(
+        observation({ ...status, strategyVersion: "different" }, release),
+      ).toEqual({
+        available: false,
+        reasons: ["OBSERVATION_IDENTITY_MISMATCH"],
+      });
+    },
+  );
+  it.each(["0.3.0-fade-limit.999", "live", "", "0.3.0-fade-limit.3\n"])(
+    "rejects unsupported or malformed release %s",
+    (release) => {
+      expect(() => parseObservationArguments(args(release))).toThrow(
+        "OBSERVATION_ARGUMENTS_INVALID",
+      );
+    },
+  );
+  it.each(["0", "169", "NaN", "Infinity"])(
+    "rejects unbounded duration %s",
+    (hours) => {
+      expect(() =>
+        parseObservationArguments(args("0.3.0-fade-limit.3", hours)),
+      ).toThrow("OBSERVATION_ARGUMENTS_INVALID");
+    },
+  );
+  it("rejects missing or reordered arguments", () => {
+    expect(() => parseObservationArguments([])).toThrow(
+      "OBSERVATION_ARGUMENTS_INVALID",
+    );
+    expect(() =>
+      parseObservationArguments([
+        "--hours",
+        "24",
+        "--release",
+        "0.3.0-fade-limit.3",
+        "--output",
+        "/tmp/observer.json",
+      ]),
+    ).toThrow("OBSERVATION_ARGUMENTS_INVALID");
   });
 });

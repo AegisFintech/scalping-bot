@@ -55,25 +55,25 @@ last-loss timestamp is older than the configured pause.
 
 ## Wire
 
-| file | change |
-|---|---|
-| `packages/config/src/policy.ts` | `FADE_LIMIT_RELEASE` already includes `trendFilterBars`, `bracketRecallBars`, `streakLosses`, `streakPauseMinutes`. |
-| `apps/execution-service/src/safety-gates.ts` | `SafetyGateInput.lossStreakPauseActive` + `LOSS_STREAK_PAUSE_ACTIVE` reason. |
-| `apps/execution-service/src/index.ts` | safety producer computes `lossStreakPauseActive` from DB when the fade-limit release is active. |
-| `apps/execution-service/src/coordinator.ts` | `m1TrendDirection` helper + `trendFilterBars` option + `trend` passed to `risk.evaluate`. |
-| `apps/execution-service/src/oco-risk-evaluator.ts` | `trend?: -1 \| 0 \| 1` input field; `FADE_LIMIT_TREND_UNCLEAR` rejection when LIMIT-mode + trend = 0. |
-| `apps/execution-service/src/order-maintenance.ts` | `bracketRecallBars` option + `recallStaleBrackets()` method. |
-| `apps/execution-service/src/order-maintenance.ts` (test) | bracket recall exercised via a fake `pg.Pool` and `ExecutionGateway`. |
+| file                                                     | change                                                                                                              |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `packages/config/src/policy.ts`                          | `FADE_LIMIT_RELEASE` already includes `trendFilterBars`, `bracketRecallBars`, `streakLosses`, `streakPauseMinutes`. |
+| `apps/execution-service/src/safety-gates.ts`             | `SafetyGateInput.lossStreakPauseActive` + `LOSS_STREAK_PAUSE_ACTIVE` reason.                                        |
+| `apps/execution-service/src/index.ts`                    | safety producer computes `lossStreakPauseActive` from DB when the fade-limit release is active.                     |
+| `apps/execution-service/src/coordinator.ts`              | `m1TrendDirection` helper + `trendFilterBars` option + `trend` passed to `risk.evaluate`.                           |
+| `apps/execution-service/src/oco-risk-evaluator.ts`       | `trend?: -1 \| 0 \| 1` input field; `FADE_LIMIT_TREND_UNCLEAR` rejection when LIMIT-mode + trend = 0.               |
+| `apps/execution-service/src/order-maintenance.ts`        | `bracketRecallBars` option + `recallStaleBrackets()` method.                                                        |
+| `apps/execution-service/src/order-maintenance.ts` (test) | bracket recall exercised via a fake `pg.Pool` and `ExecutionGateway`.                                               |
 
 ## Behaviour matrix
 
-| regime | release | trend | admission |
-|---|---|---|---|
-| demo | market-stop-v2 | any | unchanged (gate disabled, `streakLosses=0`) |
-| demo | 0.3.0-fade-limit.1 | clear ±1 | place both fade legs |
-| demo | 0.3.0-fade-limit.1 | unclear (0) | reject (`FADE_LIMIT_TREND_UNCLEAR`) |
-| demo | 0.3.0-fade-limit.1 | n/a | reject if last 3 closed trades are losses (`LOSS_STREAK_PAUSE_ACTIVE`) |
-| demo | 0.3.0-fade-limit.1 | n/a | recall unfilled pendings older than 30 minutes |
+| regime | release            | trend       | admission                                                              |
+| ------ | ------------------ | ----------- | ---------------------------------------------------------------------- |
+| demo   | market-stop-v2     | any         | unchanged (gate disabled, `streakLosses=0`)                            |
+| demo   | 0.3.0-fade-limit.1 | clear ±1    | place both fade legs                                                   |
+| demo   | 0.3.0-fade-limit.1 | unclear (0) | reject (`FADE_LIMIT_TREND_UNCLEAR`)                                    |
+| demo   | 0.3.0-fade-limit.1 | n/a         | reject if last 3 closed trades are losses (`LOSS_STREAK_PAUSE_ACTIVE`) |
+| demo   | 0.3.0-fade-limit.1 | n/a         | recall unfilled pendings older than 30 minutes                         |
 
 The Trend filter and loss-streak pause are pure admission gates — they
 neither rewrite the response nor change the broker wiring. Bracket

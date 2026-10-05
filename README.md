@@ -1,9 +1,19 @@
 # cTrader scalper
 
+For scheduled prospective comparison alongside demo trading, see the
+[read-only forward observer](docs/forward-observer-report.md). It freezes future
+daily windows and candidate definitions, records costs from actual trades
+separately, and never places orders or automatically changes the strategy.
+
 A Debian-compatible, AI-assisted XAUUSD analysis and execution system. The model
 proposes prices; deterministic code controls money, validation and execution.
 **Live submission is disabled. The tested strategies have not demonstrated
 positive net expectancy.**
+
+For bounded entry/TP research, use the [paired replay workflow](docs/paired-replay-report.md).
+It compares frozen observed demo opportunities, checks archived quote integrity,
+and reports missing paths and unknown economics explicitly. It does not change
+trading, claim exact counterfactual net returns, or automatically promote a strategy.
 
 The current source policy is `0.3.0-fade-limit.3`, with provider prompt
 `entry-pair-v4`. The bot is intended to operate continuously whenever the broker

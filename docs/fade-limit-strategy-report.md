@@ -8,17 +8,17 @@ ISSUE-101 and the validation evidence from ISSUE-100.
 
 `packages/config/src/policy.ts` adds `FADE_LIMIT_RELEASE`:
 
-| field | value | meaning |
-|---|---|---|
-| `orderType` | `"LIMIT"` | routed through `placeLimit` |
-| `adverseSlippagePoints` | `"65"` | calibrated to measured 0.62 average stop-side overshoot |
-| `atrBars` | `"14"` | M1 ATR window for the geometry |
-| `slAtr` | `"2.5"` | SL distance = 2.5 × ATR(14) |
-| `tpAtr` | `"1.0"` | TP distance = 1.0 × ATR(14) (reward ~ 0.4 × risk) |
-| `trendFilterBars` | `"30"` | (deferred — future iteration) |
-| `bracketRecallBars` | `"30"` | (deferred — bracket replacement) |
-| `streakLosses` / `streakPauseMinutes` | `"3"` / `"60"` | (deferred — losing-streak pause) |
-| `minRiskRewardRatio` | `"0.3"` | honours the fade 1:2.5/1:1 risk reward |
+| field                                 | value          | meaning                                                 |
+| ------------------------------------- | -------------- | ------------------------------------------------------- |
+| `orderType`                           | `"LIMIT"`      | routed through `placeLimit`                             |
+| `adverseSlippagePoints`               | `"65"`         | calibrated to measured 0.62 average stop-side overshoot |
+| `atrBars`                             | `"14"`         | M1 ATR window for the geometry                          |
+| `slAtr`                               | `"2.5"`        | SL distance = 2.5 × ATR(14)                             |
+| `tpAtr`                               | `"1.0"`        | TP distance = 1.0 × ATR(14) (reward ~ 0.4 × risk)       |
+| `trendFilterBars`                     | `"30"`         | (deferred — future iteration)                           |
+| `bracketRecallBars`                   | `"30"`         | (deferred — bracket replacement)                        |
+| `streakLosses` / `streakPauseMinutes` | `"3"` / `"60"` | (deferred — losing-streak pause)                        |
+| `minRiskRewardRatio`                  | `"0.3"`        | honours the fade 1:2.5/1:1 risk reward                  |
 
 `POLICY_VERSION`, `STRATEGY_VERSION` and `CODE_VERSION` are bumped to
 `"0.3.0-fade-limit.1"`. The risk-policy schema adds the new release as a

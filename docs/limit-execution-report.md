@@ -65,10 +65,10 @@ ISSUE-089 / ISSUE-093 / ISSUE-095 protection machinery intact.
 
 ## Risk-engine semantics
 
-| entry type | modeled per-side adverse movement | entry-side price uplift for commission |
-|---|---|---|
-| STOP / STOP_LIMIT | `points × tick` (30-point reserve) | yes (entry + reserve) |
-| LIMIT | `points × tick` (stop-side overshoot) | no (fill at limit price) |
+| entry type        | modeled per-side adverse movement     | entry-side price uplift for commission |
+| ----------------- | ------------------------------------- | -------------------------------------- |
+| STOP / STOP_LIMIT | `points × tick` (30-point reserve)    | yes (entry + reserve)                  |
+| LIMIT             | `points × tick` (stop-side overshoot) | no (fill at limit price)               |
 
 This matches the simulation calibration in `python/backtest/variants.py`
 where LIMIT entries fill at the level with no entry slippage and exits pay the
