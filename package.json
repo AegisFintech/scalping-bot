@@ -38,7 +38,9 @@
     "strategy:paired-export": "tsx scripts/export-paired-replay.ts",
     "strategy:paired-replay": ".venv/bin/python -m python.backtest.paired",
     "strategy:forward": ".venv/bin/python -m python.backtest.forward",
-    "qualify": "node scripts/qualify.mjs"
+    "qualify": "node scripts/qualify.mjs",
+    "release:prepare": "node scripts/prepare-release.mjs prepare",
+    "release:verify": "node scripts/prepare-release.mjs verify"
   },
   "dependencies": {
     "ajv": "8.20.0",
