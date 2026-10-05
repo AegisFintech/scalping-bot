@@ -129,6 +129,8 @@ export class CTraderJsonTransport {
   async connect(): Promise<void> {
     if (this.connected) return;
     if (this.#connectPromise !== null) return this.#connectPromise;
+    if (this.#reconnectTimer !== null) clearTimeout(this.#reconnectTimer);
+    this.#reconnectTimer = null;
     this.#explicitClose = false;
     const generation = ++this.#generation;
     const attempt = this.#open(generation);
