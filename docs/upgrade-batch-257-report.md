@@ -30,3 +30,9 @@ Validation under Node 22.23.2:
   its known empty pyproject.toml warning remains.
 - Full qualification has known baseline formatting/security and missing isolated
   integration failures. Batch 259 owns their repair; this PR cannot bypass them.
+
+Follow-up: an explicit connection now cancels the prior retry timer before
+starting its new generation. Otherwise a second disconnect could be suppressed
+by the stale timer, which would later return without scheduling recovery.
+A deterministic two-disconnect test requires the third socket to open and recover.
+This is source-only repair; no broker/session fault was injected into the demo.

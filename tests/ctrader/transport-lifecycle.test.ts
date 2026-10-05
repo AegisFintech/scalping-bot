@@ -48,6 +48,7 @@ function fixture(requestTimeoutMs = 1000) {
     handshakeTimeoutMs: 50,
     reconnectMinMs: 10000,
     reconnectMaxMs: 10000,
+    random: () => 0.5,
     socketFactory: () => {
       const socket = new Socket();
       sockets.push(socket);
@@ -67,6 +68,20 @@ function fixture(requestTimeoutMs = 1000) {
 }
 afterEach(() => vi.useRealTimers());
 describe("connection-bound cTrader work", () => {
+  it("replaces a stale retry timer when explicit recovery connects before it fires", async () => {
+    vi.useFakeTimers();
+    const f = fixture();
+    await f.connect();
+    f.sockets[0]!.terminate();
+    await f.connect();
+    f.sockets[1]!.terminate();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(f.sockets).toHaveLength(3);
+    f.sockets[2]!.open();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.transport.connected).toBe(true);
+    await f.transport.close();
+  });
   it("rejects queued work on explicit close and never sends it on a new socket", async () => {
     vi.useFakeTimers();
     const f = fixture();
