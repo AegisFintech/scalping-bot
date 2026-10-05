@@ -23,7 +23,7 @@
 ### ISSUE-260 — Upgrade batch 4: Deployment: prepare immutable versioned builds with pinned runtimes
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: release preparation/verification implemented; operational supervisor activation remains a separate rollout milestone.
 - Batch 4 of the operator-authorized October 5 codebase upgrade. - Problem: Prevent in-place dist builds from changing code loaded by later restarts. - Acceptance: Build into exclusive release directories; manifest fingerprints source/runtime/assets; reject dirty/incomplete/unqualified release; validate manifest before launch; deterministic launch and rollback instructions; failure tests; no restart or automatic rollout. - Dependencies: Qualification batch; deployed credentials and accounting preserved. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-261 — Upgrade batch 5: Trading diagnostics: attribute fill/protection/cost evidence and normalized outcomes

@@ -1,6 +1,15 @@
+import { sourceFingerprint, sha256 } from "./release-integrity.mjs";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { mkdtemp, mkdir, writeFile, chmod, chown, rm } from "node:fs/promises";
+import {
+  mkdtemp,
+  readFile,
+  mkdir,
+  writeFile,
+  chmod,
+  chown,
+  rm,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +21,11 @@ const directory = await mkdtemp(path.join(tmpdir(), "scalper-qualification-"));
 await chmod(directory, 0o755);
 const logs = path.join(directory, "checks");
 await mkdir(logs, { mode: 0o700 });
+const sourceSha256 = await sourceFingerprint(root);
+const nodeSha256 = sha256(await readFile(process.execPath));
+const pythonSha256 = sha256(
+  await readFile(path.join(root, ".venv/bin/python")),
+);
 const results = [];
 let activeChild = null;
 let stopping = false;
@@ -242,9 +256,28 @@ try {
       process.exitCode = 1;
     }
   }
+  if (sourceSha256 !== (await sourceFingerprint(root))) {
+    process.exitCode = 1;
+    process.stderr.write("QUALIFICATION_SOURCE_CHANGED\n");
+  }
   await writeFile(
     path.join(logs, "results.json"),
-    JSON.stringify({ results }, null, 2),
+    JSON.stringify(
+      {
+        qualificationVersion: "1.0",
+        qualified:
+          !process.exitCode &&
+          !process.argv.includes("--database-only") &&
+          sourceSha256 === (await sourceFingerprint(root)),
+        sourceSha256,
+        nodeSha256,
+        pythonSha256,
+        nodeVersion: process.version,
+        results,
+      },
+      null,
+      2,
+    ),
     { mode: 0o600 },
   );
   // Retain private validation logs, remove only this runner's disposable DB and test key.
