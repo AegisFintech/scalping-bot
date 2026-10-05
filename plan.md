@@ -2,6 +2,15 @@
 
 ## Scope
 
+### ISSUE-260 — Pinned supervisor activation receipt
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/275.
+- Dependencies: qualified main PR #274 and immutable release #267/#271.
+- Acceptance: verify exclusive bundle and unchanged private configuration; activate explicit pinned service paths; preserve financial state/GTC/frozen research; inspect actual PM2 definitions and component health; record normal restart and failure limits, commit/push a receipt PR.
+- Status: bundle 61602fb verified and demo services activated; normal market restart and explicit read-only snapshot recovered; supervisor definitions saved. The initial UNKNOWN snapshot criterion was too strict and is retained as failed evidence. Full source qualification passes; no current-backup or unattended-readiness claim.
+- Report: [release activation and checks](docs/release-activation-report.md).
+
 ### ISSUE-273 — Main source integration
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/273.
@@ -50,7 +59,7 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
 - PRs: https://github.com/AegisFintech/scalping-bot/pull/267, https://github.com/AegisFintech/scalping-bot/pull/271.
 - Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
-- Status: implemented and pushed; real exclusive bundle and supervisor verification pass; operational activation/failure drills remain a separate rollout milestone.
+- Status: implemented and pushed; real exclusive bundle and supervisor verification pass; activation and normal restart are now recorded in docs/release-activation-report.md; sustained recovery qualification remains #222.
 - Batch 4 of the operator-authorized October 5 codebase upgrade. - Problem: Prevent in-place dist builds from changing code loaded by later restarts. - Acceptance: Build into exclusive release directories; manifest fingerprints source/runtime/assets; reject dirty/incomplete/unqualified release; validate manifest before launch; deterministic launch and rollback instructions; failure tests; no restart or automatic rollout. - Dependencies: Qualification batch; deployed credentials and accounting preserved. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-261 — Upgrade batch 5: Trading diagnostics: attribute fill/protection/cost evidence and normalized outcomes
