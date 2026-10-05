@@ -1,0 +1,25 @@
+[Unit]
+Description=Read-only prospective scalper research (no trading authority)
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/scalping-bot
+ExecStart=/root/scalping-bot/.venv/bin/python -m python.backtest.forward run --directory /root/scalping-bot/.runtime/forward-study-255
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=TSX_DISABLE_CACHE=1
+UMask=0077
+Nice=15
+IOSchedulingClass=idle
+CPUQuota=50%
+MemoryMax=2G
+MemorySwapMax=0
+TasksMax=32
+LimitFSIZE=32M
+TimeoutStartSec=600
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/root/scalping-bot/.runtime/forward-study-255
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

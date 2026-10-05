@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalper.local/schemas/forward-daily-1.0.json",
+  "title": "Immutable conditional research daily report envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["body", "sha256"],
+  "properties": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "study_sha256",
+        "window_index",
+        "from",
+        "until",
+        "observed_at",
+        "elapsed_ms",
+        "decision",
+        "broker_authority",
+        "production_changed",
+        "counterfactual_net_pnl",
+        "limitations",
+        "evidence"
+      ],
+      "properties": {
+        "label": { "const": "PROSPECTIVE_CONDITIONAL_DAILY_V1" },
+        "study_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "window_index": { "type": "integer", "minimum": 0, "maximum": 29 },
+        "from": { "type": "string", "format": "date-time" },
+        "until": { "type": "string", "format": "date-time" },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "elapsed_ms": { "type": "integer", "minimum": 0 },
+        "decision": { "const": "HOLD" },
+        "broker_authority": { "const": false },
+        "production_changed": { "const": false },
+        "counterfactual_net_pnl": { "type": "null" },
+        "limitations": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "type": "string" }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["input", "actual_closed_trades", "conditional_replay"],
+          "properties": {
+            "input": {
+              "$ref": "https://scalper.local/schemas/paired-replay-input-1.0.json"
+            },
+            "actual_closed_trades": { "type": "object" },
+            "conditional_replay": { "type": "object" }
+          }
+        }
+      }
+    }
+  }
+}
