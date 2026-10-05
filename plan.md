@@ -5,6 +5,7 @@
 ### ISSUE-222 — Current-release unattended observation compatibility
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/222.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/272.
 - Dependencies: ISSUE-095 observer; qualified October 5 integration source.
 - Acceptance: permit the exact current source release, preserve historical CLI compatibility and exact demo/status identity, reject unsupported releases/unbounded duration, retain checkpoint contract and all historical evidence, run full qualification and deliver a dedicated PR.
 - Status: compatibility fix implemented; 24 focused tests pass; full qualification passes (824 Node / 70 isolated DB / 261 Python, no skips, clean audits). Operational acceptance remains open; existing checkpoints are historical/incomplete and do not prove current-release readiness.
