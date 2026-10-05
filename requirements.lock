@@ -77,7 +77,7 @@ tomli==2.4.1
 tomli_w==1.2.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
-urllib3==2.7.0
+urllib3==2.8.0
 uvicorn==0.52.4
 watchdog==6.0.0
 websockets==16.1.1

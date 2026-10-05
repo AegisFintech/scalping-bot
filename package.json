@@ -37,14 +37,15 @@
     "strategy:auto-improve": ".venv/bin/python -m python.backtest.auto_improve",
     "strategy:paired-export": "tsx scripts/export-paired-replay.ts",
     "strategy:paired-replay": ".venv/bin/python -m python.backtest.paired",
-    "strategy:forward": ".venv/bin/python -m python.backtest.forward"
+    "strategy:forward": ".venv/bin/python -m python.backtest.forward",
+    "qualify": "node scripts/qualify.mjs"
   },
   "dependencies": {
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "decimal.js": "10.6.0",
     "dotenv": "17.4.2",
-    "fastify": "5.12.1",
+    "fastify": "5.12.5",
     "pg": "8.23.0",
     "pino": "10.3.1",
     "pino-roll": "4.0.0",
