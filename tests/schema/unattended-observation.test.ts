@@ -52,3 +52,9 @@ it("rejects invalid counts, modes, times and unexpected evidence fields", () => 
     expect(validate(value)).toBe(false);
   }
 });
+
+it("preserves the checkpoint contract for the current fade release", () => {
+  const value = { ...checkpoint, release: "0.3.0-fade-limit.3" };
+  expect(checkpointSchema.safeParse(value).success).toBe(true);
+  expect(validate(value)).toBe(true);
+});
