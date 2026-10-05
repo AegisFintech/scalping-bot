@@ -58,3 +58,8 @@ JSON Schema/migration/replay/fail-closed coverage, secret scan and both dependen
 audits passed; audits report zero vulnerabilities. Private logs:
 `/tmp/scalper-qualification-jOUCti/checks`. No production fault injection or
 broker command is used for integration checks.
+
+The source stack PRs #256/#254/#252/#250/#248 and current-release fix #272 are
+merged after both hosted full qualification runs at each updated head.
+Their merge ancestry is retained in this integration. Main delivery:
+[PR #274](https://github.com/AegisFintech/scalping-bot/pull/274).
