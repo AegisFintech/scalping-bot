@@ -5,6 +5,8 @@ import { pathToFileURL } from "node:url";
 
 import { z } from "zod";
 
+import { POLICY_VERSION } from "../packages/config/src/policy.js";
+
 const reason = z.string().regex(/^[A-Z][A-Z0-9_]{0,95}$/);
 const validObservation = z
   .object({
@@ -123,8 +125,11 @@ export function accumulate(
   };
 }
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+export function parseObservationArguments(args: string[]): {
+  release: string;
+  hours: number;
+  output: string;
+} {
   if (
     args.length !== 6 ||
     args[0] !== "--release" ||
@@ -135,13 +140,20 @@ async function main(): Promise<void> {
   const release = args[1]!;
   const hours = Number(args[3]);
   if (
-    !/^0\.[0-9]+\.[0-9]+-market-stop\.[0-9]+$/.test(release) ||
+    (release !== POLICY_VERSION &&
+      !/^0\.[0-9]+\.[0-9]+-market-stop\.[0-9]+$/.test(release)) ||
     !Number.isFinite(hours) ||
     hours < 1 ||
     hours > 168
   )
     throw new Error("OBSERVATION_ARGUMENTS_INVALID");
-  const output = path.resolve(args[5]!);
+  return { release, hours, output: path.resolve(args[5]!) };
+}
+
+async function main(): Promise<void> {
+  const { release, hours, output } = parseObservationArguments(
+    process.argv.slice(2),
+  );
   const at = new Date().toISOString();
   let state: z.infer<typeof checkpointSchema> = {
     schemaVersion: 1,
