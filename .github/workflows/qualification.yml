@@ -24,3 +24,13 @@ jobs:
       - run: npm ci
       - run: python -m venv .venv && .venv/bin/python -m pip install -r requirements.lock
       - run: npm run qualify
+      - name: Retain isolated test failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualification-failure-${{ github.run_id }}
+          path: |
+            /tmp/scalper-qualification-*/checks/python-tests.log
+            /tmp/scalper-qualification-*/checks/results.json
+          retention-days: 7
+          if-no-files-found: ignore
