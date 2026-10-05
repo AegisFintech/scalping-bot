@@ -487,3 +487,12 @@ export interface AccountAdapter {
   authenticate(): Promise<void>;
   reconcile(symbolId: string): Promise<AccountState>;
 }
+
+/** Observed component availability, never trade admission or data freshness authority. */
+export interface MarketReadiness {
+  readonly schemaVersion: "1.0";
+  readonly status: "ready" | "not_ready";
+  readonly components: Readonly<
+    Record<"session" | "quote" | "snapshot", "UNKNOWN" | "HEALTHY" | "FAILED">
+  >;
+}

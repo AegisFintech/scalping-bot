@@ -11,13 +11,13 @@
 ### ISSUE-258 — Upgrade batch 2: Market health: track independent session and data readiness
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/258.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: implemented; focused 13 market tests pass; additive health type/schema; final qualification pending.
 - Batch 2 of the operator-authorized October 5 codebase upgrade. - Problem: Remove the shared readiness boolean that can mask independent failures. - Acceptance: Separate session, quote and snapshot component status; successful session clears only its fault; quotes cannot clear session failure; scheduled closure needs no fabricated quote; failure/concurrency regression tests and documented health contract. - Dependencies: Broker transport batch; preserve downstream gates. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-259 — Upgrade batch 3: Qualification: patch dependencies and make isolated release checks reproducible
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: implemented; both audits clean, baseline formatting repaired; disposable database qualification in progress.
 - Batch 3 of the operator-authorized October 5 codebase upgrade. - Problem: Resolve security, formatting, flaky CLI and skipped database qualification gaps. - Acceptance: Patched npm and Python lock files; secret scanner rejects actual secrets without filename false positives; formatting/lint/types/schema/migration/replay/full tests pass; disposable database lifecycle suite runs; CI pins Node 22 and Python; no production database or shared dist mutation. - Dependencies: Transport and health batches; dependency changes isolated from the registered observer. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-260 — Upgrade batch 4: Deployment: prepare immutable versioned builds with pinned runtimes
@@ -3880,3 +3880,12 @@ runtime.
 - Implementation and validation evidence: [report](docs/broker-exit-loop-report.md).
 
 - ISSUE-089 evidence: [all 22 required checks](docs/evidence/broker-exit-loop-validation.json) passed (608 Node, 141 Python, 35 schema, 3 migration, 4 TLS integration tests). [Rollout](docs/evidence/broker-exit-loop-rollout.json): release restarted 08:35:40 UTC, legacy pause cleared 08:35:58, DeepSeek completed in 5,560 ms, two GTC STOPs confirmed 08:36:55. Environment, high water/daily state and locks preserved.
+
+## October 5 standalone CI backport — ISSUE-259
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/265; dependent upgrade PRs follow.
+- Acceptance: backport the two existing fixture corrections, preserve production gates/history, qualify current heads before merging, and push ancestor updates through the stack without force-push.
+- Dependencies: existing qualification batch and #269 fixture evidence.
+- Status: corrected #265 source qualifies locally (798 Node / 70 DB / 251 Python, no skips; audits clean); dependent hosted qualification pending.
+- Commands/evidence: [CI backport report](docs/upgrade-ci-backport-report.md).
