@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalper.local/schemas/trading-diagnostics-1.0.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reportVersion",
+    "label",
+    "release",
+    "from",
+    "until",
+    "equityBasis",
+    "brokerAuthority",
+    "observations"
+  ],
+  "properties": {
+    "reportVersion": {
+      "const": "trading-diagnostics-1.0"
+    },
+    "label": {
+      "const": "OBSERVED_DEMO_NOT_PORTFOLIO_RETURN"
+    },
+    "release": {
+      "type": "string",
+      "pattern": "^0\\.3\\.0-fade-limit\\.[123]$"
+    },
+    "from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "equityBasis": {
+      "const": "PER_TRADE_PRE_INTENT_RECONCILED_EQUITY_NOT_ACCOUNT_RETURN"
+    },
+    "brokerAuthority": {
+      "const": false
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "direction",
+          "openedAt",
+          "closedAt",
+          "netPnl",
+          "signedCosts",
+          "grossPnl",
+          "entryEmaAlignment",
+          "closeEvidenceStatus",
+          "exitMechanism",
+          "equityEvidenceStatus",
+          "fillEvidenceStatus",
+          "protectionEvidenceStatus",
+          "approvedLegBudget",
+          "netOverApprovedLegBudget",
+          "modelLevel",
+          "effectiveEntry",
+          "entryDisplacement",
+          "preIntentEquity",
+          "netOverPreIntentEquityPercent",
+          "filledVolume",
+          "entryFillVwap",
+          "protectionSamples",
+          "verifiedProtectionSamples",
+          "missingStopSamples",
+          "holdingSeconds",
+          "actualFilledStopRisk",
+          "exactExitReason",
+          "providerCost",
+          "costComponents"
+        ],
+        "properties": {
+          "direction": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string"
+          },
+          "closedAt": {
+            "type": "string"
+          },
+          "netPnl": {
+            "type": "string"
+          },
+          "signedCosts": {
+            "type": "string"
+          },
+          "grossPnl": {
+            "type": "string"
+          },
+          "entryEmaAlignment": {
+            "type": "string"
+          },
+          "closeEvidenceStatus": {
+            "type": "string"
+          },
+          "exitMechanism": {
+            "type": "string"
+          },
+          "equityEvidenceStatus": {
+            "type": "string"
+          },
+          "fillEvidenceStatus": {
+            "type": "string"
+          },
+          "protectionEvidenceStatus": {
+            "type": "string"
+          },
+          "approvedLegBudget": {
+            "type": ["string", "null"]
+          },
+          "netOverApprovedLegBudget": {
+            "type": ["string", "null"]
+          },
+          "modelLevel": {
+            "type": ["string", "null"]
+          },
+          "effectiveEntry": {
+            "type": ["string", "null"]
+          },
+          "entryDisplacement": {
+            "type": ["string", "null"]
+          },
+          "preIntentEquity": {
+            "type": ["string", "null"]
+          },
+          "netOverPreIntentEquityPercent": {
+            "type": ["string", "null"]
+          },
+          "filledVolume": {
+            "type": ["string", "null"]
+          },
+          "entryFillVwap": {
+            "type": ["string", "null"]
+          },
+          "protectionSamples": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verifiedProtectionSamples": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "missingStopSamples": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "holdingSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "actualFilledStopRisk": {
+            "type": "null"
+          },
+          "exactExitReason": {
+            "type": "null"
+          },
+          "providerCost": {
+            "type": "null"
+          },
+          "costComponents": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["gross", "swap", "commission", "conversion"],
+                "properties": {
+                  "gross": {
+                    "type": "string"
+                  },
+                  "swap": {
+                    "type": "string"
+                  },
+                  "commission": {
+                    "type": "string"
+                  },
+                  "conversion": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

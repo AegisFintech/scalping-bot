@@ -29,7 +29,7 @@
 ### ISSUE-261 — Upgrade batch 5: Trading diagnostics: attribute fill/protection/cost evidence and normalized outcomes
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/261.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: implemented; 159 fixed-window trades have matched equity/fill/protection/cost evidence; final qualification pending.
 - Batch 5 of the operator-authorized October 5 codebase upgrade. - Problem: Improve measurement without rewriting journals or inventing exact SL/TP reasons. - Acceptance: Bounded read-only diagnostics with explicit missing/ambiguous attribution; realized P/L normalized only against reconciled equity available before intent; approved leg budget remains distinct from actual filled stop risk; signed costs reconcile; provider costs and exact SL/TP reasons stay unknown where unavailable; tests/schema/docs. - Dependencies: Existing #249/#253; qualification batch. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-262 — Upgrade batch 6: Research: retain frozen observer and evaluate entry and TP independently
