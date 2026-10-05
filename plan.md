@@ -5,6 +5,7 @@
 ### ISSUE-260 — Pinned supervisor activation receipt
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/275.
 - Dependencies: qualified main PR #274 and immutable release #267/#271.
 - Acceptance: verify exclusive bundle and unchanged private configuration; activate explicit pinned service paths; preserve financial state/GTC/frozen research; inspect actual PM2 definitions and component health; record normal restart and failure limits, commit/push a receipt PR.
 - Status: bundle 61602fb verified and demo services activated; normal market restart and explicit read-only snapshot recovered; supervisor definitions saved. The initial UNKNOWN snapshot criterion was too strict and is retained as failed evidence. Full source qualification passes; no current-backup or unattended-readiness claim.
