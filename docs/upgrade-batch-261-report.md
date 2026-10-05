@@ -40,3 +40,5 @@ ESLint pass. Initial broad SQL review hit the 15-second deadline; repeated journ
 scans were replaced by the bounded cohort projection, and the same frozen window
 then completed. Full cross-batch qualification is recorded separately. Rollback:
 stop using this optional review command; no trading state needs rollback.
+
+Final combined validation and remote delivery: [upgrade delivery report](upgrade-delivery-report.md).

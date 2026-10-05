@@ -41,3 +41,5 @@ SHAs, installs native PostgreSQL (no container requirement), and runs full
 qualification. Its first remote run remains separate evidence from local success.
 Rollback restores source/lockfiles only in a prepared release; never install old
 locks over active environments or edit the existing research registration.
+
+Final combined validation and remote delivery: [upgrade delivery report](upgrade-delivery-report.md).

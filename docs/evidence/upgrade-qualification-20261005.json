@@ -1,0 +1,124 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "21f8dfea84f57c7d9da43e2bb348ba96874f4260ba9a20cddc33543708d1c5b9",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "checks": [
+    {
+      "name": "postgres-bindir",
+      "status": "PASS",
+      "elapsedMs": 17
+    },
+    {
+      "name": "test-certificate",
+      "status": "PASS",
+      "elapsedMs": 142
+    },
+    {
+      "name": "postgres-uid",
+      "status": "PASS",
+      "elapsedMs": 16
+    },
+    {
+      "name": "postgres-gid",
+      "status": "PASS",
+      "elapsedMs": 19
+    },
+    {
+      "name": "database-init",
+      "status": "PASS",
+      "elapsedMs": 799
+    },
+    {
+      "name": "database-start",
+      "status": "PASS",
+      "elapsedMs": 142
+    },
+    {
+      "name": "format",
+      "status": "PASS",
+      "elapsedMs": 32237
+    },
+    {
+      "name": "lint",
+      "status": "PASS",
+      "elapsedMs": 79810
+    },
+    {
+      "name": "types",
+      "status": "PASS",
+      "elapsedMs": 25203
+    },
+    {
+      "name": "build",
+      "status": "PASS",
+      "elapsedMs": 22214
+    },
+    {
+      "name": "node-tests",
+      "status": "PASS",
+      "elapsedMs": 60843
+    },
+    {
+      "name": "python-format",
+      "status": "PASS",
+      "elapsedMs": 61
+    },
+    {
+      "name": "python-lint",
+      "status": "PASS",
+      "elapsedMs": 40
+    },
+    {
+      "name": "python-types",
+      "status": "PASS",
+      "elapsedMs": 1787
+    },
+    {
+      "name": "secrets",
+      "status": "PASS",
+      "elapsedMs": 230
+    },
+    {
+      "name": "npm-audit",
+      "status": "PASS",
+      "elapsedMs": 1418
+    },
+    {
+      "name": "python-audit",
+      "status": "PASS",
+      "elapsedMs": 14814
+    },
+    {
+      "name": "database-lifecycle",
+      "status": "PASS",
+      "elapsedMs": 26487
+    },
+    {
+      "name": "python-tests",
+      "status": "PASS",
+      "elapsedMs": 10310
+    },
+    {
+      "name": "database-stop",
+      "status": "PASS",
+      "elapsedMs": 125
+    }
+  ],
+  "counts": {
+    "nodeTests": 812,
+    "nodeFiles": 106,
+    "databaseTests": 70,
+    "pythonTests": 261,
+    "skippedTests": 0,
+    "npmVulnerabilities": 0,
+    "pythonVulnerabilities": 0
+  },
+  "validatedCodeCommit": "9d5db54",
+  "hostedRuns": [
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/37260441361",
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/37260445219"
+  ]
+}
