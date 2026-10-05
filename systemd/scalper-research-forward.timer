@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly bounded prospective research check
+
+[Timer]
+OnCalendar=*-*-* *:15:00 UTC
+Persistent=true
+RandomizedDelaySec=30
+Unit=scalper-research-forward.service
+
+[Install]
+WantedBy=timers.target

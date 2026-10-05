@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Read-only demo learning observation; not execution authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "direction",
+    "openedAt",
+    "closedAt",
+    "holdingSeconds",
+    "netPnl",
+    "signedCosts",
+    "grossPnl",
+    "approvedLegBudget",
+    "netOverApprovedLegBudget",
+    "modelLevel",
+    "effectiveEntry",
+    "entryDisplacement",
+    "entryEmaAlignment",
+    "closeEvidenceStatus",
+    "costComponents",
+    "exitMechanism"
+  ],
+  "properties": {
+    "direction": { "enum": ["LONG", "SHORT"] },
+    "openedAt": { "type": "string", "format": "date-time" },
+    "closedAt": { "type": "string", "format": "date-time" },
+    "holdingSeconds": { "type": "number", "minimum": 0 },
+    "netPnl": { "$ref": "#/$defs/decimal" },
+    "signedCosts": { "$ref": "#/$defs/decimal" },
+    "grossPnl": { "$ref": "#/$defs/decimal" },
+    "approvedLegBudget": { "$ref": "#/$defs/nullableDecimal" },
+    "netOverApprovedLegBudget": { "$ref": "#/$defs/nullableDecimal" },
+    "modelLevel": { "$ref": "#/$defs/nullableDecimal" },
+    "effectiveEntry": { "$ref": "#/$defs/nullableDecimal" },
+    "entryDisplacement": { "$ref": "#/$defs/nullableDecimal" },
+    "entryEmaAlignment": { "enum": ["BULLISH", "BEARISH", "FLAT", "UNKNOWN"] },
+    "closeEvidenceStatus": {
+      "enum": ["MATCHED", "MISSING", "AMBIGUOUS_OR_MISMATCHED"]
+    },
+    "exitMechanism": {
+      "enum": ["NATIVE_PROTECTION", "MARKET_CLOSE", "UNKNOWN"]
+    },
+    "costComponents": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["gross", "swap", "commission", "conversion"],
+          "properties": {
+            "gross": { "$ref": "#/$defs/decimal" },
+            "swap": { "$ref": "#/$defs/decimal" },
+            "commission": { "$ref": "#/$defs/decimal" },
+            "conversion": { "$ref": "#/$defs/decimal" }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,10})?$"
+    },
+    "nullableDecimal": {
+      "oneOf": [{ "$ref": "#/$defs/decimal" }, { "type": "null" }]
+    }
+  }
+}

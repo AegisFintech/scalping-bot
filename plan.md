@@ -2,10 +2,153 @@
 
 ## Scope
 
+### ISSUE-222 — Current-release unattended observation compatibility
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/222.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/272.
+- Dependencies: ISSUE-095 observer; qualified October 5 integration source.
+- Acceptance: permit the exact current source release, preserve historical CLI compatibility and exact demo/status identity, reject unsupported releases/unbounded duration, retain checkpoint contract and all historical evidence, run full qualification and deliver a dedicated PR.
+- Status: compatibility fix implemented; 24 focused tests pass; full qualification passes (824 Node / 70 isolated DB / 261 Python, no skips, clean audits). Operational acceptance remains open; existing checkpoints are historical/incomplete and do not prove current-release readiness.
+- Report: [current-release observation audit](docs/unattended-current-release-report.md).
+- No service launch, rollout, broker command, financial reset or frozen-research change.
+
+### ISSUE-257 — Upgrade batch 1: Broker transport: reject stale queued requests and bound reconnect lifecycle
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/257.
+- PRs: https://github.com/AegisFintech/scalping-bot/pull/263, https://github.com/AegisFintech/scalping-bot/pull/266.
+- Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
+- Status: implemented and pushed; transport follow-up included; final combined qualification passes; review/merge pending.
+- Batch 1 of the operator-authorized October 5 codebase upgrade. - Problem: Fix the three confirmed transport defects from #247. - Acceptance: Connection generations bind queued requests, socket callbacks and reconnect continuations; admission and response share a bounded deadline; silent/early-close/shutdown handshakes settle and terminate; stale work never sends after reconnect; accepted/unknown commands retain reconciliation and are never replayed. - Dependencies: Existing #245/#247; no strategy or risk change. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-258 — Upgrade batch 2: Market health: track independent session and data readiness
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/258.
+- PRs: https://github.com/AegisFintech/scalping-bot/pull/264.
+- Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
+- Status: implemented and pushed; independent component/schema regressions pass; final combined qualification passes; review/merge pending.
+- Batch 2 of the operator-authorized October 5 codebase upgrade. - Problem: Remove the shared readiness boolean that can mask independent failures. - Acceptance: Separate session, quote and snapshot component status; successful session clears only its fault; quotes cannot clear session failure; scheduled closure needs no fabricated quote; failure/concurrency regression tests and documented health contract. - Dependencies: Broker transport batch; preserve downstream gates. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-259 — Upgrade batch 3: Qualification: patch dependencies and make isolated release checks reproducible
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
+- PRs: https://github.com/AegisFintech/scalping-bot/pull/265, https://github.com/AegisFintech/scalping-bot/pull/269.
+- Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
+- Status: implemented and pushed; 812 Node, 70 isolated DB and 261 Python tests pass without skips; both audits clean; hosted portability follow-up included.
+- Batch 3 of the operator-authorized October 5 codebase upgrade. - Problem: Resolve security, formatting, flaky CLI and skipped database qualification gaps. - Acceptance: Patched npm and Python lock files; secret scanner rejects actual secrets without filename false positives; formatting/lint/types/schema/migration/replay/full tests pass; disposable database lifecycle suite runs; CI pins Node 22 and Python; no production database or shared dist mutation. - Dependencies: Transport and health batches; dependency changes isolated from the registered observer. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-260 — Upgrade batch 4: Deployment: prepare immutable versioned builds with pinned runtimes
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
+- PRs: https://github.com/AegisFintech/scalping-bot/pull/267, https://github.com/AegisFintech/scalping-bot/pull/271.
+- Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
+- Status: implemented and pushed; real exclusive bundle and supervisor verification pass; operational activation/failure drills remain a separate rollout milestone.
+- Batch 4 of the operator-authorized October 5 codebase upgrade. - Problem: Prevent in-place dist builds from changing code loaded by later restarts. - Acceptance: Build into exclusive release directories; manifest fingerprints source/runtime/assets; reject dirty/incomplete/unqualified release; validate manifest before launch; deterministic launch and rollback instructions; failure tests; no restart or automatic rollout. - Dependencies: Qualification batch; deployed credentials and accounting preserved. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-261 — Upgrade batch 5: Trading diagnostics: attribute fill/protection/cost evidence and normalized outcomes
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/261.
+- PRs: https://github.com/AegisFintech/scalping-bot/pull/268.
+- Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
+- Status: implemented and pushed; 159 fixed-window trades have matched equity/fill/protection/cost evidence; final combined qualification passes.
+- Batch 5 of the operator-authorized October 5 codebase upgrade. - Problem: Improve measurement without rewriting journals or inventing exact SL/TP reasons. - Acceptance: Bounded read-only diagnostics with explicit missing/ambiguous attribution; realized P/L normalized only against reconciled equity available before intent; approved leg budget remains distinct from actual filled stop risk; signed costs reconcile; provider costs and exact SL/TP reasons stay unknown where unavailable; tests/schema/docs. - Dependencies: Existing #249/#253; qualification batch. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-262 — Upgrade batch 6: Research: retain frozen observer and evaluate entry and TP independently
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/262.
+- PRs: https://github.com/AegisFintech/scalping-bot/pull/270.
+- Validation/delivery: [final upgrade report](docs/upgrade-delivery-report.md).
+- Status: implemented and pushed; immutable summary/recovery tooling qualifies; prospective collection and independent economic qualification remain ongoing.
+- Batch 6 of the operator-authorized October 5 codebase upgrade. - Problem: Continue causal prospective measurement without promoting selected complete subsets. - Acceptance: Preserve #255 registrations/reports; verify and summarize immutable daily windows including empty/censored/open outcomes; candidate entry and TP remain separate; no counterfactual cost fabrication or dynamic-portfolio claim; immutable integrity-checked aggregate artifact and portable recovery instructions; no promotion or economic runtime change. - Dependencies: Existing #253/#255; diagnostics batch. Collection and independent strategy qualification remain ongoing external milestones. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-255 — Frozen prospective research observer
+
+- Status: original isolated observer remains enabled for October 2–November 1 collection; two immutable windows verified as of October 5 03:26 UTC, HOLD. No trading-strategy change.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/255.
+- Dependencies: ISSUE-253 paired replay and ISSUE-249 actual-fee review.
+- Acceptance: register future fixed windows/candidate code before outcomes;
+  bounded serialized read-only exports and immutable private daily reports;
+  restart, concurrency, drift, empty-window and failure tests; isolated scheduling.
+- Preserve the demo cycle, provider cadence, orders, shared 1% sizing, protection,
+  environment and database history. Research failures never gate demo trading.
+- Unknown counterfactual economics and censored paths remain explicit. No automatic
+  promotion, profitability claim or assertion that 30 days validates a strategy.
+- Evidence: `docs/forward-observer-report.md` and committed registration
+  `docs/evidence/forward-study-255.json`. 785 Node / 247 Python tests pass;
+  unrelated formatting/security findings and skipped isolated integration remain,
+  so the source PR stays draft with no merge/promotion. Research timer is separate
+  from the unchanged trading deployment.
+
+### ISSUE-253 — Causal conditional entry and TP comparisons
+
+- Status: bounded conditional research implemented and run on 145 intents /
+  2,552,341 samples. No robust promotion evidence; production unchanged. Draft
+  delivery because existing global formatting/security/integration gates remain.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/253.
+- Dependencies: ISSUE-249 observed demo review; ISSUE-251 legacy qualification guard.
+- Acceptance: bounded read-only export, actual provider-availability and broker
+  acceptance clocks, separate entry/TP paired comparisons, GTC lifetime, explicit
+  gap/open/OCO-race censoring, Decimal executable-side prices, archive checksums,
+  unknown counterfactual economics, tests and repeatable retained-cohort run.
+- Preserve the continuous demo cycle, shared 1% cap, prompt, exits, environment,
+  historical journals and running services. No automatic strategy promotion.
+- Evidence: `docs/paired-replay-report.md`; 780 Node / 219 Python tests pass;
+  exact commands, remaining qualification limits and sanitized results recorded.
+
+### ISSUE-251 — Qualify research recommendations before entry/TP comparison
+
+- Status: research-only recommendation guard implemented; comparison itself
+  remains incomplete pending faithful replay. No production deployment.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/251.
+- Dependency: ISSUE-249 observational review and legacy walk-forward evaluator.
+- Acceptance: reproduce unfinished-outcome optimism; return HOLD even for a
+  statistically passing screen; explicit timing, lifecycle, gaps, sizing and
+  causal-cost blockers; regression/short-history tests; preserve demo operation.
+- Evidence and remaining scope: `docs/research-evidence-gate-report.md`.
+- Follow-up: ISSUE-253 completes the conditional sampled-path comparison;
+  production-equivalent portfolio validation remains unqualified.
+
+### ISSUE-249 — Demo learning evidence and isolated entry-guidance candidate
+
+- Status: first observational milestone implemented; final qualification recorded
+  in report. No runtime promotion; draft delivery while pre-existing global
+  formatting/security and isolated-integration gates remain unresolved.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/249.
+- Dependencies: immutable demo journal, ISSUE-110 fade policy; no dependency on
+  deploying the outstanding ISSUE-247 recovery repairs.
+- Acceptance: read-only, bounded, fixed-window review; signed cost decomposition,
+  explicit missing/ambiguous evidence, honestly labelled risk-budget ratios,
+  entry-time conditions and model/effective entry displacement; audited exceptional
+  winner; isolated prompt candidate and failure tests. Preserve continuous demo
+  cycle, shared 1% ceiling, broker protections and all historical financial rows.
+- Runtime prompt/transform and TP promotion require separate prospective evidence;
+  current quote-adjacent transform makes prompt-only entry improvements ineffective.
+- Evidence: `docs/demo-learning-review-report.md`.
+
+### ISSUE-247 — Recovery preflight and remaining liveness defects
+
+- Status: audit complete; no current baseline mutation needed; additional runtime
+  repairs are not implemented by this audit. Delivery checks recorded in report;
+  full formatting/security/integration qualification is not green.
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/247.
+- Dependencies: ISSUE-245 and its existing audited baseline recovery contract.
+- Acceptance: inspect current accounting before any initialization, preserve
+  existing baselines/history, verify actual demo activity, reproduce similar
+  recovery failures without touching broker orders, and record bounded repair
+  criteria with their severity and evidence.
+- Result: current baseline exists and demo resumed at September 25 UTC rollover;
+  no recovery mutation needed. Four mock-reproduced defects remain: queued work
+  crossing reconnect, unbounded handshake, stale socket close callbacks and
+  conflated readiness. Prioritize transport generation/deadline tests before
+  further recovery deployment; never replay unknown commands.
+- Evidence and validation: `docs/recovery-preflight-audit.md`.
+
 ### ISSUE-245 — startup storm and concurrent admission (ISSUE-242 follow-up)
 
 - Status: implemented and deployed; accounting recovery remains blocked on
   `fix/session-startup-request-queue`; follows PR #244.
+- September 29 follow-up: the above was the September 24 handoff state. Current
+  daily accounting and demo flow have resumed; see ISSUE-247. Historical missing
+  September 24 accounting has not been overwritten or fabricated.
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/245.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/246.
 - Acceptance: reproduce and serialize concurrent request admission, reject
@@ -3758,3 +3901,12 @@ runtime.
 - Implementation and validation evidence: [report](docs/broker-exit-loop-report.md).
 
 - ISSUE-089 evidence: [all 22 required checks](docs/evidence/broker-exit-loop-validation.json) passed (608 Node, 141 Python, 35 schema, 3 migration, 4 TLS integration tests). [Rollout](docs/evidence/broker-exit-loop-rollout.json): release restarted 08:35:40 UTC, legacy pause cleared 08:35:58, DeepSeek completed in 5,560 ms, two GTC STOPs confirmed 08:36:55. Environment, high water/daily state and locks preserved.
+
+## October 5 standalone CI backport — ISSUE-259
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/265; dependent upgrade PRs follow.
+- Acceptance: backport the two existing fixture corrections, preserve production gates/history, qualify current heads before merging, and push ancestor updates through the stack without force-push.
+- Dependencies: existing qualification batch and #269 fixture evidence.
+- Status: corrected #265 source qualifies locally (798 Node / 70 DB / 251 Python, no skips; audits clean); dependent hosted qualification pending.
+- Commands/evidence: [CI backport report](docs/upgrade-ci-backport-report.md).

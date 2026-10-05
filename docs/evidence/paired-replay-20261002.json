@@ -1,0 +1,70 @@
+{
+  "label": "CONDITIONAL_PAIRED_REPLAY_AGGREGATE_V1",
+  "decision": "HOLD",
+  "productionChanged": false,
+  "from": "2026-09-21T00:00:00Z",
+  "untilExclusive": "2026-10-02T02:00:00Z",
+  "release": "0.3.0-fade-limit.3",
+  "inputSha256": "e42da5cfdfecc6432abc0e0f5618c372288dd969f13e35c83b928dfe66435597",
+  "tapeSha256": "247893abefe9a4233ba6bb924f33bab9f23b62f46fbd9a66d41a3762698ebe99",
+  "intents": 145,
+  "validIntents": 145,
+  "singleFullFillIntents": 140,
+  "sealedSegments": 2240,
+  "sampledQuotes": 2552341,
+  "deltaUnits": "SUM_GROSS_PRICE_MOVE_OVER_ORIGINAL_SL_DISTANCE_COMPLETE_PAIRS_ONLY",
+  "counterfactualNetPnl": null,
+  "base": {
+    "entry": {
+      "complete": 11,
+      "unresolved": 134,
+      "delta": "2.159569523935332120454899345"
+    },
+    "tpLower": {
+      "complete": 64,
+      "unresolved": 76,
+      "delta": "-0.1878902957299692295201222940"
+    },
+    "tpHigher": {
+      "complete": 57,
+      "unresolved": 83,
+      "delta": "1.641854100357436186410942216"
+    }
+  },
+  "stress": {
+    "entry": {
+      "complete": 17,
+      "unresolved": 128,
+      "delta": "0.041985290298566522471853309"
+    },
+    "tpLower": {
+      "complete": 65,
+      "unresolved": 75,
+      "delta": "0.5625676477320019698453934610"
+    },
+    "tpHigher": {
+      "complete": 58,
+      "unresolved": 82,
+      "delta": "-0.8496323543643126529849560005"
+    }
+  },
+  "actualClosedTradeCohortSeparateFromReplay": {
+    "trades": 146,
+    "wins": 80,
+    "gross": "1524.88",
+    "signedCosts": "-3171.14",
+    "net": "-1646.26",
+    "matchedCostRecords": 146,
+    "profitFactor": "0.9400381422",
+    "netExcludingLargestWinner": "-4596.82"
+  },
+  "resources": { "elapsedSeconds": 244.082, "maxRssKiBLinux": 1287648 },
+  "limitations": [
+    "SAMPLED_PATH_NOT_COMPLETE_TICKS",
+    "ASSUMED_COUNTERFACTUAL_EXECUTION",
+    "COMPLETE_SUBSETS_DIFFER_BY_SCENARIO",
+    "UNKNOWN_COUNTERFACTUAL_FEES_SWAP_FX_MARGIN",
+    "FROZEN_QUANTITIES_NOT_DYNAMIC_PORTFOLIO",
+    "HISTORICAL_REQUEST_STREAM_CONDITIONAL_ON_ORIGINAL_STRATEGY"
+  ]
+}

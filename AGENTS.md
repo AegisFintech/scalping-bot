@@ -1,5 +1,20 @@
 # Agent Instructions
 
+ISSUE-255: prospective research is an isolated read-only observer, never an order
+or strategy-promotion authority. Read `docs/forward-observer-report.md`. Register
+future windows and freeze candidate code before collecting outcomes; do not edit
+registrations, overwrite reports or select only complete winning paths. Source
+drift halts research only. Preserve daily cutoff/open/gap censoring and null
+counterfactual costs; 30 calendar days is a collection batch, not qualification.
+
+ISSUE-253: use the causal conditional paired replay for entry/TP research; read
+`docs/paired-replay-report.md`. It has no broker or promotion authority. Use actual
+provider availability and broker acceptance events, not `orders.submitted_at`
+(a locally persisted placement-result timestamp). Preserve GTC lifetime and
+censor missing paths, open outcomes and OCO ambiguity. Unknown counterfactual
+fees/swap/FX/margin remain null; frozen approved quantities are not a dynamically
+resized portfolio backtest. Never promote from a selected complete subset.
+
 ISSUE-245: session dependency failures must retry with bounded backoff inside
 startup, never create a supervisor restart storm. Market-only reconnects require
 fresh subscriptions and quotes; rejected commands are never replayed. Concurrent
@@ -41,6 +56,14 @@ of reconciled current equity, both OCO/fade legs share that budget, and the
 system makes no profitability claim.
 
 ## Communication preference
+
+ISSUE-249 adds a read-only learning review and an unregistered research prompt.
+Read `docs/demo-learning-review-report.md` before changing entry guidance based
+on its results. The current fade transform replaces model levels with
+quote-adjacent prices. Do not claim prompt-only entry improvement, mislabel an
+approved leg budget as actual stop risk, infer exact SL/TP reason from P/L, or
+promote a candidate automatically. Historical journals and the active cycle stay
+unchanged; economic transform/prompt/TP changes require separate evidence.
 
 Keep replies very short. Lead with the result or current blocker; put detailed evidence
 in linked reports. Give longer explanations only when explicitly requested.

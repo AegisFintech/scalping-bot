@@ -1,0 +1,20 @@
+{
+  "label": "PROSPECTIVE_CONDITIONAL_STUDY_V1",
+  "registered_at": "2026-10-02T03:10:49.700Z",
+  "start": "2026-10-02T04:00:00.000Z",
+  "until": "2026-11-01T04:00:00.000Z",
+  "release": "0.3.0-fade-limit.3",
+  "days": 30,
+  "window_ms": 86400000,
+  "settlement_delay_ms": 600000,
+  "candidates": [
+    "approved_entries",
+    "model_levels",
+    "tp_original",
+    "tp_0_75",
+    "tp_1_25"
+  ],
+  "source_sha256": "93fb9f790ee2a6da2b09e5ae48e2f496ec74b9754ea45a7e0124e0e1c6539505",
+  "decision": "HOLD",
+  "broker_authority": false
+}

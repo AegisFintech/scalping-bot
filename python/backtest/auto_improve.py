@@ -1,9 +1,9 @@
 """Bounded walk-forward strategy improvement.
 
 This module is research-only.  It evaluates the existing replay variants in
-chronological folds, with an embargo and stressed costs, and emits either a
-candidate recommendation or ``HOLD``.  It never changes production policy,
-risk, orders, or broker state.
+chronological folds, with an embargo and stressed costs, and emits exploratory
+statistics and ``HOLD`` until replay fidelity is qualified. It never changes
+production policy, risk, orders, or broker state.
 """
 
 from __future__ import annotations
@@ -55,6 +55,17 @@ class AutoImprovementConfig:
 
 
 DEFAULT_CONFIG = AutoImprovementConfig()
+
+# These are implementation limitations, not caller-supplied attestations. Do not
+# add an override flag: removing one requires implementing and testing its proof.
+REPLAY_EVIDENCE_BLOCKERS = (
+    "MODEL_AVAILABILITY_NOT_REPLAYED",
+    "GTC_AND_OCO_LIFECYCLE_NOT_EQUIVALENT",
+    "SAMPLED_PATH_GAPS_NOT_CENSORED",
+    "OPEN_OUTCOMES_INCLUDED_IN_EXPLORATORY_PNL",
+    "COST_CALIBRATION_NOT_FOLD_CAUSAL",
+    "DYNAMIC_SIZING_AND_SWAP_NOT_REPLAYED",
+)
 
 
 @dataclass(frozen=True)
@@ -179,16 +190,22 @@ def evaluate_auto_improvement(
     ]
     selected_name = max(set(selections), key=selections.count) if selections else None
     positive_fraction = Decimal(len(positive)) / Decimal(len(eligible)) if eligible else Decimal(0)
-    promoted = (
+    statistical_screen_passed = (
         selected_name is not None
         and len(eligible) >= 3
         and positive_fraction >= config.min_positive_fold_fraction
         and selections.count(selected_name) >= 2
     )
     return {
-        "label": "AUTO_IMPROVEMENT_WALK_FORWARD_V1",
-        "decision": "RECOMMEND_CANDIDATE" if promoted else "HOLD",
-        "candidate": selected_name if promoted else None,
+        "label": "AUTO_IMPROVEMENT_WALK_FORWARD_V2",
+        "decision": "HOLD",
+        "candidate": None,
+        "evidence_gate": {
+            "qualified": False,
+            "blockers": list(REPLAY_EVIDENCE_BLOCKERS),
+            "statistical_screen_passed": statistical_screen_passed,
+            "metrics_basis": "EXPLORATORY_OHLC_NOT_REALIZED_OR_PRODUCTION_EQUIVALENT",
+        },
         "variants_tested": len(variants),
         "folds": fold_reports,
         "selection_counts": {name: selections.count(name) for name in sorted(set(selections))},

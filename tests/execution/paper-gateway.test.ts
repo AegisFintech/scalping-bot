@@ -177,9 +177,7 @@ describe("paper gateway limit entries", () => {
       "99.00",
       new Date(),
     );
-    const filled = changes.find(
-      (order) => order.clientOrderId === "buy-limit",
-    );
+    const filled = changes.find((order) => order.clientOrderId === "buy-limit");
     expect(filled?.state).toBe("FILLED");
     expect(
       changes.find((order) => order.clientOrderId === "sell-limit")?.state,
