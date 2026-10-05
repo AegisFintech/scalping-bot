@@ -12,3 +12,8 @@ export function treeFingerprint(
   runtimeLinks?: Readonly<Record<string, string>>,
 ): Promise<Record<string, { sha256: string; link?: string }>>;
 export function verifyRelease(directory: string): Promise<unknown>;
+
+export function copyReleaseTree(
+  source: string,
+  destination: string,
+): Promise<void>;

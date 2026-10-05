@@ -75,3 +75,5 @@ Validation: Python summary tests **10 passed**, schema test **1 passed**, Ruff a
 mypy passed; retained actual envelopes verified without mutation. Full cross-batch
 qualification follows in the final report. Rollback: stop using this optional
 command and preserve its artifacts; original trading/research state is unchanged.
+
+Final combined validation and remote delivery: [upgrade delivery report](upgrade-delivery-report.md).

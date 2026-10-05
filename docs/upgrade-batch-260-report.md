@@ -57,3 +57,7 @@ release/supervisor configuration. TypeScript and changed-test lint pass. Final f
 report. These manifests provide deterministic integrity checks, not cryptographic
 third-party attestation or protection against a privileged operator forging both
 bundle and report.
+
+Final combined validation and remote delivery: [upgrade delivery report](upgrade-delivery-report.md).
+
+Real bundle preparation found Node cp rewriting relative installed-package links; the release follow-up preserves verbatim links. Six focused release/schema tests and the actual exclusive bundle/supervisor verification now pass. No service was started.

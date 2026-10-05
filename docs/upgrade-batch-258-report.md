@@ -24,3 +24,5 @@ Focused market server tests: 13 passed. Schema, TypeScript, lint and final globa
 qualification are recorded in the cross-batch report. No services were restarted;
 rollback reverts this source batch without cancelling accepted orders or changing
 financial history.
+
+Final combined validation and remote delivery: [upgrade delivery report](upgrade-delivery-report.md).

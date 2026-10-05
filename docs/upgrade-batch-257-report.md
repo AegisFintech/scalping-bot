@@ -36,3 +36,5 @@ starting its new generation. Otherwise a second disconnect could be suppressed
 by the stale timer, which would later return without scheduling recovery.
 A deterministic two-disconnect test requires the third socket to open and recover.
 This is source-only repair; no broker/session fault was injected into the demo.
+
+Final combined validation and remote delivery: [upgrade delivery report](upgrade-delivery-report.md).
