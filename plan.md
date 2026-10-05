@@ -35,7 +35,7 @@
 ### ISSUE-262 — Upgrade batch 6: Research: retain frozen observer and evaluate entry and TP independently
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/262.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: implemented; immutable summary/recovery tooling; prospective collection and independent economic qualification remain ongoing.
 - Batch 6 of the operator-authorized October 5 codebase upgrade. - Problem: Continue causal prospective measurement without promoting selected complete subsets. - Acceptance: Preserve #255 registrations/reports; verify and summarize immutable daily windows including empty/censored/open outcomes; candidate entry and TP remain separate; no counterfactual cost fabrication or dynamic-portfolio claim; immutable integrity-checked aggregate artifact and portable recovery instructions; no promotion or economic runtime change. - Dependencies: Existing #253/#255; diagnostics batch. Collection and independent strategy qualification remain ongoing external milestones. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-255 — Frozen prospective research observer

@@ -41,7 +41,8 @@
     "qualify": "node scripts/qualify.mjs",
     "release:prepare": "node scripts/prepare-release.mjs prepare",
     "release:verify": "node scripts/prepare-release.mjs verify",
-    "demo:diagnostics": "tsx scripts/review-trading-diagnostics.ts"
+    "demo:diagnostics": "tsx scripts/review-trading-diagnostics.ts",
+    "strategy:forward-summary": ".venv/bin/python -m python.backtest.forward_summary"
   },
   "dependencies": {
     "ajv": "8.20.0",
