@@ -11,7 +11,7 @@
 ### ISSUE-258 — Upgrade batch 2: Market health: track independent session and data readiness
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/258.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: implemented; focused 13 market tests pass; additive health type/schema; final qualification pending.
 - Batch 2 of the operator-authorized October 5 codebase upgrade. - Problem: Remove the shared readiness boolean that can mask independent failures. - Acceptance: Separate session, quote and snapshot component status; successful session clears only its fault; quotes cannot clear session failure; scheduled closure needs no fabricated quote; failure/concurrency regression tests and documented health contract. - Dependencies: Broker transport batch; preserve downstream gates. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-259 — Upgrade batch 3: Qualification: patch dependencies and make isolated release checks reproducible
