@@ -40,7 +40,8 @@
     "strategy:forward": ".venv/bin/python -m python.backtest.forward",
     "qualify": "node scripts/qualify.mjs",
     "release:prepare": "node scripts/prepare-release.mjs prepare",
-    "release:verify": "node scripts/prepare-release.mjs verify"
+    "release:verify": "node scripts/prepare-release.mjs verify",
+    "demo:diagnostics": "tsx scripts/review-trading-diagnostics.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",
