@@ -1,3 +1,4 @@
+import { FIXED_DEFAULTS } from "../../packages/config/src/policy.js";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -63,7 +64,7 @@ suite(
         providerEvidence: {
           requestText: '{"candles":[]}',
           promptContent: "entry recovery fixture",
-          promptVersion: "entry-pair-v3",
+          promptVersion: "entry-pair-v4",
         },
       });
       async function finish(id: string) {
@@ -85,19 +86,19 @@ suite(
         await store.finish(
           id,
           {
-            model: "deepseek-v4-pro/u5W",
+            model: FIXED_DEFAULTS.AI_MODEL,
             response: plan,
             rawResponse: JSON.stringify(plan),
             latencyMs: 1,
             retryCount: 0,
             promptArtifact: {
-              version: "entry-pair-v3",
+              version: "entry-pair-v4",
               content: "fixture",
               sha256: "a".repeat(64),
             },
             telemetry: {
-              requestedModel: "deepseek-v4-pro/u5W",
-              returnedModel: "deepseek-v4-pro",
+              requestedModel: FIXED_DEFAULTS.AI_MODEL,
+              returnedModel: FIXED_DEFAULTS.AI_MODEL,
               inputProfile: "structured",
               requestBytes: 100,
               responseBytes: 100,

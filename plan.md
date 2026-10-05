@@ -17,7 +17,7 @@
 ### ISSUE-259 — Upgrade batch 3: Qualification: patch dependencies and make isolated release checks reproducible
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
-- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Status: implemented; both audits clean, baseline formatting repaired; disposable database qualification in progress.
 - Batch 3 of the operator-authorized October 5 codebase upgrade. - Problem: Resolve security, formatting, flaky CLI and skipped database qualification gaps. - Acceptance: Patched npm and Python lock files; secret scanner rejects actual secrets without filename false positives; formatting/lint/types/schema/migration/replay/full tests pass; disposable database lifecycle suite runs; CI pins Node 22 and Python; no production database or shared dist mutation. - Dependencies: Transport and health batches; dependency changes isolated from the registered observer. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
 
 ### ISSUE-260 — Upgrade batch 4: Deployment: prepare immutable versioned builds with pinned runtimes
