@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { FIXED_DEFAULTS } from "../../packages/config/src/policy.js";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -130,6 +131,9 @@ suite(
       const root = claim();
       expect(await store.claim(root)).toBe(true);
       await finish(root.id);
+      // Broker/provider SQL availability has microseconds; JS evidence has milliseconds.
+      // Observe in a later millisecond instead of occasionally predating availability.
+      await delay(2);
       const intent = async (contextId: string | null = root.id) =>
         pool.query(
           "INSERT INTO order_groups(id,analysis_id,idempotency_key,mode,state,expires_at,context_plan_id) VALUES($1::uuid,$2,$1::text,'demo','INTENT_RECORDED',now()+interval '3 minutes',$3)",
@@ -271,7 +275,7 @@ suite(
     );
     it("retains the full cooldown when the immediate replacement times out", async () => {
       const x = await setup();
-      await x.store.retireEntries(x.root.id, x.evidence());
+      expect(await x.store.retireEntries(x.root.id, x.evidence())).toBe(true);
       const child = x.claim(x.root.id);
       expect(await x.store.claim(child)).toBe(true);
       await x.store.finish(child.id, null, "AI_PROVIDER_TIMEOUT");
