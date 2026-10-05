@@ -6,12 +6,14 @@ import {
   symlinkSync,
   mkdirSync,
   readFileSync,
+  readlinkSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
 import {
   treeFingerprint,
+  copyReleaseTree,
   validateQualification,
   requiredChecks,
   verifyRelease,
@@ -174,5 +176,36 @@ it("verifies a bound manifest and rejects later asset or state-link changes", as
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(state, { recursive: true, force: true });
+  }
+});
+
+it("copies relative dependency links into the release without binding the old checkout", async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "release-copy-"));
+  try {
+    const source = path.join(directory, "source"),
+      destination = path.join(directory, "bundle");
+    mkdirSync(path.join(source, ".bin"), { recursive: true });
+    mkdirSync(path.join(source, "pkg"));
+    writeFileSync(
+      path.join(source, "pkg/runner.js"),
+      "export const fixture=true;\n",
+    );
+    symlinkSync("../pkg/runner.js", path.join(source, ".bin/runner"));
+    await copyReleaseTree(source, destination);
+    expect(readlinkSync(path.join(destination, ".bin/runner"))).toBe(
+      "../pkg/runner.js",
+    );
+    expect(await treeFingerprint(destination)).toEqual(
+      await treeFingerprint(source),
+    );
+    symlinkSync(
+      path.join(source, "pkg/runner.js"),
+      path.join(destination, "outside"),
+    );
+    await expect(treeFingerprint(destination)).rejects.toThrow(
+      "RELEASE_EXTERNAL_LINK",
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });

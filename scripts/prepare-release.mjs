@@ -11,6 +11,7 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  copyReleaseTree,
   sha256,
   sourceFiles,
   sourceFingerprint,
@@ -62,17 +63,14 @@ async function prepare(directory, evidenceFile, stateDirectory) {
       force: false,
     });
   }
-  await cp(
+  await copyReleaseTree(
     path.join(root, "node_modules"),
     path.join(destination, "node_modules"),
-    { recursive: true, dereference: false, errorOnExist: true, force: false },
   );
-  await cp(path.join(root, ".venv"), path.join(destination, ".venv"), {
-    recursive: true,
-    dereference: false,
-    errorOnExist: true,
-    force: false,
-  });
+  await copyReleaseTree(
+    path.join(root, ".venv"),
+    path.join(destination, ".venv"),
+  );
   const build = spawnSync(
     process.execPath,
     [

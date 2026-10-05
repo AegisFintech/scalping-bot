@@ -3,7 +3,14 @@ import { fileURLToPath } from "node:url";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { readFile, readdir, readlink, lstat, realpath } from "node:fs/promises";
+import {
+  cp,
+  readFile,
+  readdir,
+  readlink,
+  lstat,
+  realpath,
+} from "node:fs/promises";
 import path from "node:path";
 const schemas = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -81,6 +88,15 @@ export function validateQualification(value, sourceHash, nodeVersion) {
     if (rows.length !== 1 || rows[0].code !== 0)
       throw new Error("RELEASE_CHECK_MISSING_OR_FAILED:" + label);
   }
+}
+export async function copyReleaseTree(source, destination) {
+  await cp(source, destination, {
+    recursive: true,
+    dereference: false,
+    verbatimSymlinks: true,
+    errorOnExist: true,
+    force: false,
+  });
 }
 export async function treeFingerprint(root, runtimeLinks = {}) {
   const entries = {};
