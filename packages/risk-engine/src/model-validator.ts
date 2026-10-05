@@ -238,16 +238,14 @@ function checkLeg(
     if (brackets) {
       // BUY limit may rest anywhere at or below the bid; the placement
       // engine considers an immediate fill at the maker side acceptable.
-      if (entry.gt(bid))
-        reasons.push("BUY_LIMIT_ABOVE_BID");
+      if (entry.gt(bid)) reasons.push("BUY_LIMIT_ABOVE_BID");
       if (
         maximumEntryDistance !== null &&
         bid.minus(entry).gt(maximumEntryDistance)
       )
         reasons.push("BUY_ENTRY_DISTANCE_ATR_EXCEEDED");
     } else {
-      if (entry.lt(ask.plus(minDistance)))
-        reasons.push("BUY_ENTRY_TOO_CLOSE");
+      if (entry.lt(ask.plus(minDistance))) reasons.push("BUY_ENTRY_TOO_CLOSE");
       if (
         maximumEntryDistance !== null &&
         entry.minus(ask).gt(maximumEntryDistance)
@@ -259,8 +257,7 @@ function checkLeg(
     if (!(stop.gt(entry) && target.lt(entry)))
       reasons.push("SELL_LEVEL_ORDER_INVALID");
     if (brackets) {
-      if (entry.lt(ask))
-        reasons.push("SELL_LIMIT_BELOW_ASK");
+      if (entry.lt(ask)) reasons.push("SELL_LIMIT_BELOW_ASK");
       if (
         maximumEntryDistance !== null &&
         entry.minus(ask).gt(maximumEntryDistance)

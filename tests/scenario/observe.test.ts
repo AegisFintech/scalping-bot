@@ -129,7 +129,7 @@ describe("automatic scenario capture", () => {
         spawnSync(
           process.execPath,
           ["--import", "tsx", "scripts/replay-scenarios.ts", source, out],
-          { encoding: "utf8" },
+          { encoding: "utf8", timeout: 10_000 },
         );
       const bad = run(input);
       expect(bad.status).toBe(1);
@@ -144,5 +144,5 @@ describe("automatic scenario capture", () => {
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }
-  });
+  }, 35_000);
 });

@@ -8,6 +8,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 
 import type {
   MarketDataAdapter,
+  MarketReadiness,
   Timeframe,
 } from "../../../packages/contracts/src/index.js";
 import { CTraderClient } from "../../../packages/ctrader-client/src/client.js";
@@ -77,7 +78,23 @@ export function createMarketDataServer(
   options: MarketDataServerOptions,
 ): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 64_000 });
-  let ready = true;
+  const components: Record<
+    "session" | "quote" | "snapshot",
+    "UNKNOWN" | "HEALTHY" | "FAILED"
+  > = {
+    session: "UNKNOWN",
+    quote: "UNKNOWN",
+    snapshot: "UNKNOWN",
+  };
+  const versions = { session: 0, quote: 0, snapshot: 0 };
+  const finish = (
+    component: keyof typeof components,
+    version: number,
+    healthy: boolean,
+  ): void => {
+    if (versions[component] === version)
+      components[component] = healthy ? "HEALTHY" : "FAILED";
+  };
   const metadataCache = new Map<
     string,
     { readonly metadata: MarketMetadata; readonly expiresAt: number }
@@ -94,11 +111,18 @@ export function createMarketDataServer(
     return metadata;
   };
   app.get("/health/live", () => ({ status: "alive" }));
-  app.get("/health/ready", (_request, reply) =>
-    ready
-      ? reply.send({ status: "ready" })
-      : reply.code(503).send({ status: "not_ready" }),
-  );
+  app.get("/health/ready", (_request, reply) => {
+    const ready =
+      components.session === "HEALTHY" &&
+      components.quote !== "FAILED" &&
+      components.snapshot !== "FAILED";
+    const health: MarketReadiness = {
+      schemaVersion: "1.0",
+      status: ready ? "ready" : "not_ready",
+      components: { ...components },
+    };
+    return reply.code(ready ? 200 : 503).send(health);
+  });
   app.get(
     "/v1/local-recorder",
     () => options.localRecorderStatus?.() ?? { enabled: false },
@@ -118,6 +142,7 @@ export function createMarketDataServer(
       },
     },
     async (request, reply) => {
+      const version = ++versions.session;
       try {
         const metadata = await options.adapter.discoverSymbol(
           request.body.symbol,
@@ -125,10 +150,11 @@ export function createMarketDataServer(
         const schedule = await options.adapter.getTradingSchedule(
           metadata.symbolId,
         );
+        finish("session", version, true);
         return reply.send({ schemaVersion: "1.0", metadata, schedule });
       } catch (error) {
         // Session failures do not disable broker-held protection or expose raw errors.
-        ready = false;
+        finish("session", version, false);
         const details = cTraderErrorDetails(error);
         console.warn(
           JSON.stringify({
@@ -154,6 +180,7 @@ export function createMarketDataServer(
   app.post<{ Body: { symbol: string } }>(
     "/v1/quote",
     async (request, reply) => {
+      const version = ++versions.quote;
       try {
         const metadata = await dataMetadata(request.body.symbol);
         const quote = await options.adapter.getQuote(metadata.symbolId);
@@ -171,10 +198,10 @@ export function createMarketDataServer(
         ) {
           throw new Error("MARKET_QUOTE_STALE");
         }
-        ready = true;
+        finish("quote", version, true);
         return reply.send({ serverTime, metadata, quote });
       } catch (error) {
-        ready = false;
+        finish("quote", version, false);
         return reply.code(503).send({
           error: "MARKET_QUOTE_UNAVAILABLE",
           ...safeMarketFailure(error, "MARKET_QUOTE_FAILED", "quote"),
@@ -185,6 +212,7 @@ export function createMarketDataServer(
   app.post<{
     Body: { symbol: string; counts: Record<Timeframe, number>; depth: number };
   }>("/v1/snapshot", async (request, reply) => {
+    const version = ++versions.snapshot;
     try {
       const { symbol, counts, depth } = request.body;
       const metadata = await dataMetadata(symbol);
@@ -230,7 +258,7 @@ export function createMarketDataServer(
       ) {
         throw new Error("MARKET_SNAPSHOT_STALE_OR_INCOMPLETE");
       }
-      ready = true;
+      finish("snapshot", version, true);
       return reply.send({
         serverTime,
         capturedAt: new Date(capturedAtMs).toISOString(),
@@ -245,7 +273,7 @@ export function createMarketDataServer(
         orderBook,
       });
     } catch (error) {
-      ready = false;
+      finish("snapshot", version, false);
       return reply.code(503).send({
         error: "MARKET_SNAPSHOT_UNAVAILABLE",
         ...safeMarketFailure(error, "MARKET_SNAPSHOT_FAILED", "snapshot"),

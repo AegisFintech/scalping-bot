@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market-readiness-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "components"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "status": { "enum": ["ready", "not_ready"] },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session", "quote", "snapshot"],
+      "properties": {
+        "session": { "enum": ["UNKNOWN", "HEALTHY", "FAILED"] },
+        "quote": { "enum": ["UNKNOWN", "HEALTHY", "FAILED"] },
+        "snapshot": { "enum": ["UNKNOWN", "HEALTHY", "FAILED"] }
+      }
+    }
+  }
+}
