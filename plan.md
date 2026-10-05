@@ -2,6 +2,42 @@
 
 ## Scope
 
+### ISSUE-257 — Upgrade batch 1: Broker transport: reject stale queued requests and bound reconnect lifecycle
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/257.
+- Status: implemented; focused 9 tests, typecheck and lint pass; draft source delivery pending final qualification.
+- Batch 1 of the operator-authorized October 5 codebase upgrade. - Problem: Fix the three confirmed transport defects from #247. - Acceptance: Connection generations bind queued requests, socket callbacks and reconnect continuations; admission and response share a bounded deadline; silent/early-close/shutdown handshakes settle and terminate; stale work never sends after reconnect; accepted/unknown commands retain reconciliation and are never replayed. - Dependencies: Existing #245/#247; no strategy or risk change. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-258 — Upgrade batch 2: Market health: track independent session and data readiness
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/258.
+- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Batch 2 of the operator-authorized October 5 codebase upgrade. - Problem: Remove the shared readiness boolean that can mask independent failures. - Acceptance: Separate session, quote and snapshot component status; successful session clears only its fault; quotes cannot clear session failure; scheduled closure needs no fabricated quote; failure/concurrency regression tests and documented health contract. - Dependencies: Broker transport batch; preserve downstream gates. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-259 — Upgrade batch 3: Qualification: patch dependencies and make isolated release checks reproducible
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/259.
+- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Batch 3 of the operator-authorized October 5 codebase upgrade. - Problem: Resolve security, formatting, flaky CLI and skipped database qualification gaps. - Acceptance: Patched npm and Python lock files; secret scanner rejects actual secrets without filename false positives; formatting/lint/types/schema/migration/replay/full tests pass; disposable database lifecycle suite runs; CI pins Node 22 and Python; no production database or shared dist mutation. - Dependencies: Transport and health batches; dependency changes isolated from the registered observer. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-260 — Upgrade batch 4: Deployment: prepare immutable versioned builds with pinned runtimes
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
+- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Batch 4 of the operator-authorized October 5 codebase upgrade. - Problem: Prevent in-place dist builds from changing code loaded by later restarts. - Acceptance: Build into exclusive release directories; manifest fingerprints source/runtime/assets; reject dirty/incomplete/unqualified release; validate manifest before launch; deterministic launch and rollback instructions; failure tests; no restart or automatic rollout. - Dependencies: Qualification batch; deployed credentials and accounting preserved. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-261 — Upgrade batch 5: Trading diagnostics: attribute fill/protection/cost evidence and normalized outcomes
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/261.
+- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Batch 5 of the operator-authorized October 5 codebase upgrade. - Problem: Improve measurement without rewriting journals or inventing exact SL/TP reasons. - Acceptance: Bounded read-only diagnostics with explicit missing/ambiguous attribution; realized P/L normalized only against reconciled equity available before intent; approved leg budget remains distinct from actual filled stop risk; signed costs reconcile; provider costs and exact SL/TP reasons stay unknown where unavailable; tests/schema/docs. - Dependencies: Existing #249/#253; qualification batch. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
+### ISSUE-262 — Upgrade batch 6: Research: retain frozen observer and evaluate entry and TP independently
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/262.
+- Status: planned; batch 1 in implementation, subsequent batches sequential.
+- Batch 6 of the operator-authorized October 5 codebase upgrade. - Problem: Continue causal prospective measurement without promoting selected complete subsets. - Acceptance: Preserve #255 registrations/reports; verify and summarize immutable daily windows including empty/censored/open outcomes; candidate entry and TP remain separate; no counterfactual cost fabrication or dynamic-portfolio claim; immutable integrity-checked aggregate artifact and portable recovery instructions; no promotion or economic runtime change. - Dependencies: Existing #253/#255; diagnostics batch. Collection and independent strategy qualification remain ongoing external milestones. - Delivery: dedicated branch and PR, coherent commits pushed, exact validation recorded in plan.md/report. Respect protections and required reviews. Preserve shared dynamic 1% setup risk, GTC protection/ownership/idempotency, accounting history, exact model and live disablement. Runtime rollout is separate from source delivery.
+
 ### ISSUE-255 — Frozen prospective research observer
 
 - Status: isolated observer implemented and enabled; prospective collection starts
