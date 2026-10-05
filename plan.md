@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-273 — Main source integration
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/273.
+- Dependencies: qualified recovery/research stack (#248/#250/#252/#254/#256), upgrades #257–#262 and observer fix #272.
+- Acceptance: resolve current main conflicts without changing the approved entry-pair-v4/fade-limit.3/Grok contract; preserve historical evidence, shared dynamic 1% risk and disabled live; qualify, commit/push and deliver a dedicated main PR without runtime rollout.
+- Status: four conflicts resolved; integrated executable source matches the qualified #272 tree; full qualification passes (824 Node / 70 isolated DB / 261 Python, no skips, clean audits). Research and operational collection remain open; backup work deferred by operator.
+- Report: [main integration and pending milestones](docs/main-integration-report.md).
+
 ### ISSUE-222 — Current-release unattended observation compatibility
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/222.
