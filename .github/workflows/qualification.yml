@@ -31,6 +31,8 @@ jobs:
           name: qualification-failure-${{ github.run_id }}
           path: |
             /tmp/scalper-qualification-*/checks/python-tests.log
+            /tmp/scalper-qualification-*/checks/database-lifecycle.log
+            /tmp/scalper-qualification-*/checks/node-tests.log
             /tmp/scalper-qualification-*/checks/results.json
           retention-days: 7
           if-no-files-found: ignore
