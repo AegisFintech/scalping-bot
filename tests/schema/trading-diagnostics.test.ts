@@ -1,9 +1,12 @@
 import { readFileSync } from "node:fs";
 import { Ajv2020, type AnySchema } from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+import * as formatsModule from "ajv-formats";
 import { expect, it } from "vitest";
 import { diagnosticReport } from "../../packages/evaluation/src/trading-diagnostics.js";
 const ajv = new Ajv2020({ strict: true });
+const addFormats = formatsModule.default as unknown as (
+  instance: Ajv2020,
+) => Ajv2020;
 addFormats(ajv);
 const validate = ajv.compile(
   JSON.parse(
