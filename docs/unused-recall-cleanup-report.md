@@ -1,6 +1,7 @@
 # ISSUE-286 — Remove unused recall code
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/286.
+PR: https://github.com/AegisFintech/scalping-bot/pull/287.
 Depends on the GTC operating fix #283 / merged #284 and activation receipt #285.
 The operator requested removal of unused code after the persistence correction.
 
@@ -24,7 +25,9 @@ Archived implementation reports and their numeric evidence retain their original
 checkpoint descriptions. In particular the #283 report accurately describes the
 source at that delivery, when the disconnected legacy helper was still retained.
 This later cleanup removes it from current main; prior Git revisions still retain
-its implementation/tests. No historical journal, SQL migration/checksum, schema,
+its implementation/tests. Historical deferred-gate guide text is not authority
+to reintroduce context-age cancellation; current GTC requirements govern. No
+historical journal, SQL migration/checksum, schema,
 strategy economics, risk percentage, broker precision or command authority changes.
 
 Cleanup occurs only in the isolated development worktree. The original clean
