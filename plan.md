@@ -8,6 +8,7 @@
 - Dependencies: #281 contract review, #222 operational proof.
 - Acceptance: operating maintenance cannot cancel by expired context; preserve historical helper/evidence, emergency/OCO/GTD reconciliation, recovery failure behavior, shared dynamic 1% risk and frozen research; behavior tests/full qualification; commit/push dedicated source PR.
 - Source PR: https://github.com/AegisFintech/scalping-bot/pull/284.
+- Activation receipt PR: https://github.com/AegisFintech/scalping-bot/pull/285.
 - Status: source merged after both hosted full runs pass on 9b35d877 (37876073509/37876067156); isolated qualification 851 Node / 70 DB / 261 Python, no skips, clean audits. New verified artifact activated for execution only; fresh owned-position protection/startup readiness verified, expected active-position waiting preserved. Other four processes, private environment, financial history and original frozen research remain unchanged. Activation receipt is committed/pushed and qualified separately.
 - Report: [persistent GTC maintenance](docs/persistent-gtc-maintenance-report.md).
 
@@ -22,7 +23,7 @@
 
 ### Remaining external milestones — October 9
 
-- #222 remains open for broker-calendar verified market-open coverage, exact protected cycles and current-release trading recovery proof. Five UTC daily rows and 96 existing alert transport acknowledgments were reviewed; collector restart proof is separate from trading-worker recovery. Current restore remains deferred by the operator and unproven.
+- #222 remains open for broker-calendar verified market-open coverage, exact protected cycles and current-release trading recovery proof. Five UTC daily rows and 96 existing alert transport acknowledgments were reviewed; collector restart proof is separate from trading-worker recovery. ISSUE-283 adds a finite execution-only restart with fresh owned SL/TP; production reconnect/dependency and complete lifecycle/calendar proof remain incomplete. Current restore remains deferred by the operator and unproven.
 - #255 retains the original frozen 30-window registration: six immutable windows verified through October 9 01:35 UTC, no due missing reports, HOLD. Collection ends November 1 04:00 UTC; 30 days does not qualify a strategy. Independent economic qualification and a reviewed release remain required before any entry/TP change.
 - #262 bounded source batch is delivered through merged #270/#274. Its future collection and economic milestones remain tracked in #255; closing the duplicate source issue does not finish the study or authorize promotion.
 - Both existing observers and the new persistent #278 collector are active; no trading, accounting or frozen-research reset.

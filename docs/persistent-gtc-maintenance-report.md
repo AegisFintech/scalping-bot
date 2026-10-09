@@ -1,6 +1,8 @@
 # ISSUE-283 — Preserve accepted GTC in operating maintenance
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/283.
+Source PR: https://github.com/AegisFintech/scalping-bot/pull/284.
+Activation receipt PR: https://github.com/AegisFintech/scalping-bot/pull/285.
 Dependency: #281 contract review; operational proof remains #222.
 
 The current worker configured a 30-minute context-age recall and invoked it from
