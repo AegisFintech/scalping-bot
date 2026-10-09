@@ -2,6 +2,15 @@
 
 ## Scope
 
+### ISSUE-281 — Current guides and qualification acceptance review
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/281.
+- Dependencies: #222, #255, #278.
+- Acceptance: correct stale current-release/exit/sizing descriptions; distinguish immutable historical evidence; retained-evidence acceptance matrix with repeatable read-only commands, explicit missing proofs and source/contract discrepancies; qualify, commit/push and deliver dedicated PR.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/282.
+- Status: documentation corrections and acceptance review delivered; 95-sample operational journal and six retained research windows verify. Changed-file formatting/secret scan pass; both full hosted qualifications pass on e20dae1 (runs 37875193371/37875189690). Receipt checks precede merge. No future qualification, restore, economic or runtime change claimed.
+- Report: [current contract and evidence](docs/current-contract-review-report.md).
+
 ### Remaining external milestones — October 9
 
 - #222 remains open for broker-calendar verified market-open coverage, exact protected cycles and current-release trading recovery proof. Five UTC daily rows and 96 existing alert transport acknowledgments were reviewed; collector restart proof is separate from trading-worker recovery. Current restore remains deferred by the operator and unproven.

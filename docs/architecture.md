@@ -1,8 +1,17 @@
 # Architecture
 
-Current source: `0.2.5-market-stop.11`, policy `market-stop-v2`.
+Current source policy: `0.3.0-fade-limit.3`; provider prompt `entry-pair-v4`.
+The AI proposes two prices. Deterministic code owns the quote-adjacent fade LIMIT
+transform, protection, shared dynamic 1% setup budget, broker precision/margin,
+ownership and reconciliation. Source delivery and runtime activation are separate;
+see [current operating contract and evidence limits](current-contract-review-report.md).
 
-ISSUE-099 changes only new exit transformation to equal TP/SL distance. Existing
+Continuous market-open operation includes legitimate waiting. An active group,
+cooldown, stale data, unavailable session, uncertain account/order state or
+protection fault must block new provider calls/orders while independent maintenance
+continues. Credentials never grant live authority.
+
+Historical ISSUE-099 changed new exit transformation to equal TP/SL distance. Existing
 broker orders and historical transform records retain their original values.
 See [the balanced exit trial](balanced-exit-trial-report.md).
 
@@ -18,8 +27,9 @@ in demo. Other modes retain loss limits/reductions. Accounting failures still
 block all modes. See [authorization and evidence](demo-development-risk-report.md).
 
 Production uses `/v2/entry-pair`, a two-price provider reply and locally
-bound `entry-pair-1.0` journal context. Spread/ATR/target-room/count selection
-filters are removed. The older scenario-map contracts remain available for
+bound `entry-pair-1.0` journal context. The direct-entry release removed older spread/ATR/target-room/count selection
+filters. Subsequent fade releases have their own documented admission checks;
+those historical removals do not describe every current gate. The older scenario-map contracts remain available for
 history/research. Production details and retained broker/risk/data requirements
 are specified in [the direct-entry report](direct-entry-report.md). Previous release
 observations are historical evidence in `plan.md`, not the current source contract.
@@ -43,9 +53,11 @@ distinct from broker rejection. See [behavior, tests and rollback](market-sessio
 
 ## Entry recovery (ISSUE-097)
 
-The provider prompt v3 receives exact tick-rounded buy/sell boundaries and a small
+Historical ISSUE-097 provider prompt v3 received exact tick-rounded buy/sell boundaries and a small
 spread-based guidance buffer. Completed-candle nearby structure remains the basis
-for entries. Returned prices are never clamped or shifted locally. The same broker
+for entries. That direct-entry path did not clamp or shift returned prices locally. The
+current fade transform replaces model levels with quote-adjacent prices; prompt-only
+entry improvement cannot be inferred from its results. The same broker
 minimum/tick rules are checked on provider return using a new read, on map reuse,
 and again through the existing final semantic checks. A failed/stale market read
 cannot manufacture retirement evidence or authorize new orders.
