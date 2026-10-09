@@ -20,8 +20,6 @@ export const FADE_LIMIT_RELEASE = {
   /** Loss-streak admission gate: 3 consecutive losses → 60-minute cooling. */
   streakLosses: "3",
   streakPauseMinutes: "60",
-  /** Replace owned unfilled LIMIT pendings once their context is this stale. */
-  bracketRecallBars: "30",
   /** Require at least 0.5 reward/risk for the revised fade geometry. */
   minRiskRewardRatio: "0.5",
 } as const;
@@ -32,16 +30,6 @@ export const FADE_LIMIT_RELEASE_V3 = {
   /** The realized geometry is 0.8:1; reject lower-ratio proposals. */
   minRiskRewardRatio: "0.75",
 } as const;
-
-export const RELEASES = {
-  "market-stop-v2": STOP_EXECUTION_POLICY,
-  "0.3.0-fade-limit.2": FADE_LIMIT_RELEASE,
-  "0.3.0-fade-limit.3": FADE_LIMIT_RELEASE_V3,
-} as const;
-export type ReleaseKey = keyof typeof RELEASES;
-export function releasePolicy(key: ReleaseKey) {
-  return RELEASES[key];
-}
 
 /** ISSUE-094: loss thresholds remain measured, but do not stop demo development. */
 export function enforcesLossLimits(mode: TradingMode): boolean {
