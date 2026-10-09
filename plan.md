@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-286 — Remove unused recall and release lookup
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/286.
+- Dependencies: #283, merged #284/#285.
+- Acceptance: reference-verified removal of unused context-age cancellation method/option/field, inactive recall setting and release registry/type/lookup; retire only obsolete API tests; preserve current behavior/safety regressions, archives and frozen study; full qualification and dedicated committed/pushed PR.
+- Status: unused source paths removed; 14 focused maintenance tests and full qualification pass (848 Node / 70 isolated DB / 261 Python, no skips, clean audits). Three obsolete API tests removed; current safety regressions retained. Active execution policy and operational paths remain unchanged; no deployment, environment, accounting or frozen-source change.
+- Report: [unused recall cleanup](docs/unused-recall-cleanup-report.md).
+
 ### ISSUE-283 — Preserve accepted GTC operating maintenance
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/283.
