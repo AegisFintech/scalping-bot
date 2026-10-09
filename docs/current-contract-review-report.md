@@ -38,9 +38,9 @@ new demo leg; cached metadata is valid for 30 seconds. Normal market-open waitin
 is required when admission fails. Protection, ownership, reconciliation, emergency
 controls and unknown-outcome handling remain independent. Live stays disabled.
 
-## Source/operating-contract discrepancy retained for review
+## Deployed persistence discrepancy and source correction
 
-The existing fade source has a 30-bar trend check, a three-loss/60-minute admission
+The pre-fix fade source has a 30-bar trend check, a three-loss/60-minute admission
 pause and `OrderMaintenance.recallStaleBrackets()`. The latter is invoked by the
 independent maintenance loop and can cancel owned orders when their context expiry
 is over 30 minutes old. It is not broker GTC expiry. Its SQL also includes partial
@@ -48,11 +48,11 @@ and unknown states; the downstream cancellation/reconciliation path remains rele
 The authoritative AGENTS.md requires accepted GTC persistence and prohibits timed
 cancellation. These descriptions cannot both be treated as one consistent contract.
 
-This review does not hide that discrepancy, claim that accepted orders can never
-be recalled, or silently change economic behavior during the frozen study. A
-separate reviewed source fix must remove context-age recall from the current
-operating path while preserving OCO/emergency/protection cancellation and immutable
-historical evidence. Runtime rollout must be explicit; the original #255 source
+ISSUE-283 removes context-age recall from the source operating path while
+preserving OCO/emergency/protection cancellation and immutable historical evidence.
+See [source fix and tests](persistent-gtc-maintenance-report.md). This does not
+change the already deployed artifact: its recall behavior remains a deployment
+limitation until separate verified activation. Runtime rollout must be explicit; the original #255 source
 and registration must not change. Trend/loss-streak economic changes are outside
 this evidence review and require their own evidence/release.
 
@@ -62,15 +62,21 @@ Fixed event cohort: October 5 05:36:05 UTC through October 9 01:35 UTC. Existing
 read-only repeatable database audit used a ten-second statement timeout and no
 writes. Current collector/research summaries use cutoff October 9 02:32:15 UTC.
 
-| Acceptance                                          | Verified evidence                                                                                                                                         | Remaining proof / status                                                                                                                                                                         |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| At least 24 market-open hours without manual unlock | New journal: 95 samples, 1,452,811 sampled-ready-open ms, five unavailable/not-ready samples, zero >45-second gaps                                        | Adjacent samples are not independent broker-calendar coverage or proof of no manual unlocks. UNQUALIFIED.                                                                                        |
-| Multiple protected fill/close/new-cycle transitions | 34 demo closes in 33 groups in the fixed event cohort                                                                                                     | Counts alone do not prove exact SL/TP acknowledgments, complete terminal orders, peer cancellation or next-cycle admission. Link each owned lifecycle before counting protected cycles.          |
-| Normal restart                                      | Qualified pinned release activation and market-worker restart in the existing activation receipt; collector restart preserves journal registration/prefix | Collector restart is separate from trading recovery. The initial overly strict snapshot drill failure remains retained; subsequent bounded snapshot verified recovery.                           |
-| Reconnect/dependency failure                        | Qualified mock/database failure tests and bounded retry implementation                                                                                    | Production prospective request-generation/subscription/quote/reconciliation recovery has not been independently traced. A normal restart does not substitute for this.                           |
-| UTC rollover                                        | One reconciled daily row on each UTC date October 5–9                                                                                                     | Verify ordered rollover and admission against original journal/accounting evidence; row existence alone is partial proof.                                                                        |
-| Existing alert delivery                             | 96 HIGH_CPU events joined to DELIVERED outbox records                                                                                                     | This is configured transport acceptance, not human receipt. Last acknowledgment 01:35:01.637 UTC follows the event cutoff; no claim that delivery was complete at cutoff. No new alert was sent. |
-| Current paired backup restore                       | None claimed                                                                                                                                              | Explicitly deferred by operator; qualification remains incomplete. Existing timers are preserved.                                                                                                |
+| Acceptance                                          | Verified evidence                                                                                                                                                        | Remaining proof / status                                                                                                                                                                         |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| At least 24 market-open hours without manual unlock | New journal: 95 samples, 1,452,811 sampled-ready-open ms, five unavailable/not-ready samples, zero >45-second gaps                                                       | Adjacent samples are not independent broker-calendar coverage or proof of no manual unlocks. UNQUALIFIED.                                                                                        |
+| Multiple protected fill/close/new-cycle transitions | 34 demo closes in 33 groups; all 34 have matched pre-intent equity/full entry volume and sampled protection, with 13,448 verified samples and zero sampled missing stops | Counts alone do not prove exact SL/TP acknowledgments, complete terminal orders, peer cancellation or next-cycle admission. Link each owned lifecycle before counting protected cycles.          |
+| Normal restart                                      | Qualified pinned release activation and market-worker restart in the existing activation receipt; collector restart preserves journal registration/prefix                | Collector restart is separate from trading recovery. The initial overly strict snapshot drill failure remains retained; subsequent bounded snapshot verified recovery.                           |
+| Reconnect/dependency failure                        | Qualified mock/database failure tests and bounded retry implementation                                                                                                   | Production prospective request-generation/subscription/quote/reconciliation recovery has not been independently traced. A normal restart does not substitute for this.                           |
+| UTC rollover                                        | One reconciled daily row on each UTC date October 5–9                                                                                                                    | Verify ordered rollover and admission against original journal/accounting evidence; row existence alone is partial proof.                                                                        |
+| Existing alert delivery                             | 96 HIGH_CPU events joined to DELIVERED outbox records                                                                                                                    | This is configured transport acceptance, not human receipt. Last acknowledgment 01:35:01.637 UTC follows the event cutoff; no claim that delivery was complete at cutoff. No new alert was sent. |
+| Current paired backup restore                       | None claimed                                                                                                                                                             | Explicitly deferred by operator; qualification remains incomplete. Existing timers are preserved.                                                                                                |
+
+The existing read-only diagnostics tool independently reviewed the same fixed
+34-close cohort. Its matched fills and sampled SL/TP evidence improve attribution,
+but do not prove uninterrupted protection, complete peer-terminal outcomes or the
+next admission. Exact filled stop risk and exit reason remain null. Retained private
+output: `/tmp/scalper-281-lifecycle-diagnostics.json`.
 
 Collector integrity/registration verification passed; the reported retained tail is
 `eac47cd420c3bac09a55e79b7e3442101e5f5900df93771daa7b54fbc7fc83a2`.
