@@ -1,6 +1,7 @@
 # ISSUE-278 — Complete prospective operational samples
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/278.
+Source PR: https://github.com/AegisFintech/scalping-bot/pull/279.
 Dependencies: #222 operational qualification; qualified current demo status.
 
 The existing observer preserves counters and only its last 64 transitions. Its
