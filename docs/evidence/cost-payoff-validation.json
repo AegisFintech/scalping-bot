@@ -1,0 +1,245 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "012e1451267f8f2e664979272cc3b9846f73d7b75b6402d918750bac3fe8e0d3",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "results": [
+    {
+      "label": "postgres-bindir",
+      "executable": "pg_config",
+      "args": ["--bindir"],
+      "code": 0,
+      "elapsedMs": 21
+    },
+    {
+      "label": "test-certificate",
+      "executable": "openssl",
+      "args": [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-days",
+        "1",
+        "-subj",
+        "/CN=localhost",
+        "-addext",
+        "subjectAltName=DNS:localhost,IP:127.0.0.1",
+        "-keyout",
+        "/tmp/scalper-qualification-SSnI1E/server.key",
+        "-out",
+        "/tmp/scalper-qualification-SSnI1E/server.crt"
+      ],
+      "code": 0,
+      "elapsedMs": 183
+    },
+    {
+      "label": "postgres-uid",
+      "executable": "id",
+      "args": ["-u", "postgres"],
+      "code": 0,
+      "elapsedMs": 8
+    },
+    {
+      "label": "postgres-gid",
+      "executable": "id",
+      "args": ["-g", "postgres"],
+      "code": 0,
+      "elapsedMs": 7
+    },
+    {
+      "label": "database-init",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/initdb",
+        "-D",
+        "/tmp/scalper-qualification-SSnI1E/database",
+        "-U",
+        "scalper_qualification",
+        "--auth-local=trust",
+        "--auth-host=trust",
+        "--no-locale",
+        "--encoding=UTF8"
+      ],
+      "code": 0,
+      "elapsedMs": 856
+    },
+    {
+      "label": "database-start",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-SSnI1E/database",
+        "-l",
+        "/tmp/scalper-qualification-SSnI1E/postgres.log",
+        "-o",
+        "-h 127.0.0.1 -p 41161 -k /tmp/scalper-qualification-SSnI1E -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-SSnI1E/server.crt -c ssl_key_file=/tmp/scalper-qualification-SSnI1E/server.key",
+        "-w",
+        "start"
+      ],
+      "code": 0,
+      "elapsedMs": 124
+    },
+    {
+      "label": "format",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "**/*.{ts,mjs,json,md,yml,yaml}"
+      ],
+      "code": 0,
+      "elapsedMs": 29775
+    },
+    {
+      "label": "lint",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": ["node_modules/eslint/bin/eslint.js", "."],
+      "code": 0,
+      "elapsedMs": 48964
+    },
+    {
+      "label": "types",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.json"
+      ],
+      "code": 0,
+      "elapsedMs": 20655
+    },
+    {
+      "label": "build",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.build.json",
+        "--outDir",
+        "/tmp/scalper-qualification-SSnI1E/build"
+      ],
+      "code": 0,
+      "elapsedMs": 16827
+    },
+    {
+      "label": "node-tests",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--exclude",
+        "**/*.integration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "code": 0,
+      "elapsedMs": 60940
+    },
+    {
+      "label": "python-format",
+      "executable": "/root/scalping-bot-upgrades/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 85
+    },
+    {
+      "label": "python-lint",
+      "executable": "/root/scalping-bot-upgrades/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 58
+    },
+    {
+      "label": "python-types",
+      "executable": "/root/scalping-bot-upgrades/.venv/bin/python",
+      "args": ["-m", "mypy", "python", "apps/dashboard"],
+      "code": 0,
+      "elapsedMs": 650
+    },
+    {
+      "label": "secrets",
+      "executable": "bash",
+      "args": ["scripts/secret-scan.sh"],
+      "code": 0,
+      "elapsedMs": 196
+    },
+    {
+      "label": "npm-audit",
+      "executable": "npm",
+      "args": ["audit", "--audit-level=high"],
+      "code": 0,
+      "elapsedMs": 997
+    },
+    {
+      "label": "python-audit",
+      "executable": "/root/scalping-bot-upgrades/.venv/bin/python",
+      "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+      "code": 0,
+      "elapsedMs": 23541
+    },
+    {
+      "label": "database-lifecycle",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration",
+        "--maxWorkers=1",
+        "--testTimeout=60000"
+      ],
+      "code": 0,
+      "elapsedMs": 24981
+    },
+    {
+      "label": "python-tests",
+      "executable": "/root/scalping-bot-upgrades/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/python", "-q"],
+      "code": 0,
+      "elapsedMs": 9934
+    },
+    {
+      "label": "database-stop",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-SSnI1E/database",
+        "-m",
+        "immediate",
+        "-w",
+        "stop"
+      ],
+      "code": 0,
+      "elapsedMs": 118
+    }
+  ]
+}

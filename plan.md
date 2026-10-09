@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-276 — Audit expected costs and realized payoff
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/276.
+- Dependencies: #262 fixed-cohort review; #255 frozen prospective collection.
+- Acceptance: bounded read-only export; exact pre-intent side/entry/target/full-volume fee matching; null ambiguous estimates and unknown stop risk/exit reason; signed actual commission and fill-slippage comparisons; versioned schema/failure tests; full qualification and issue PR delivery.
+- Status: audit implemented; 197 historical estimates match, commission discrepancy totals -0.2289518; weak realized payoff requires research, no economic/runtime change. Full qualification passes: 829 Node / 70 isolated DB / 261 Python, no skips; clean audits after two development transitive security updates. Exact commands and results in the linked report.
+- Report: [cost and payoff audit](docs/cost-payoff-audit-report.md).
+
 ### ISSUE-260 — Pinned supervisor activation receipt
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/260.
