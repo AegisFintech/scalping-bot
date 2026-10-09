@@ -1,6 +1,7 @@
 # ISSUE-276 — Expected costs and realized payoff
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/276.
+PR: https://github.com/AegisFintech/scalping-bot/pull/277.
 Dependencies: #262 results review and #255 prospective research. This is an
 isolated read-only audit; the running demo and frozen study remain unchanged.
 
