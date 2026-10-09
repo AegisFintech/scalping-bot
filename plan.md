@@ -8,7 +8,7 @@
 - Source PR: https://github.com/AegisFintech/scalping-bot/pull/279.
 - Dependencies: #222 operational qualification; fixed current-release status.
 - Acceptance: bounded read-only complete sample journal, immutable registration, native single writer and integrity/restart/failure checks; conservative sampled-open coverage with unknown qualification evidence retained; schema/tests/full qualification; dedicated PR and fixed-artifact collection.
-- Status: implementation, 18 focused tests and full qualification pass (847 Node / 70 isolated DB / 261 Python, no skips, clean audits); source delivery and activation pending. Existing checkpoint/frozen research/financial history stay unchanged.
+- Status: implementation, 18 focused tests and full qualification pass (847 Node / 70 isolated DB / 261 Python, no skips, clean audits); source PR #279 merged on qualified head 141c7a3; fixed collector enabled October 9, deadline October 16 02:04:53.575 UTC, normal collector restart retains history. Activation receipt delivery pending. Existing checkpoint/frozen research/financial history stay unchanged.
 - Report: [operational evidence journal](docs/operational-evidence-report.md).
 
 ### ISSUE-276 — Audit expected costs and realized payoff
