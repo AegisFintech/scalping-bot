@@ -7,7 +7,8 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/283.
 - Dependencies: #281 contract review, #222 operational proof.
 - Acceptance: operating maintenance cannot cancel by expired context; preserve historical helper/evidence, emergency/OCO/GTD reconciliation, recovery failure behavior, shared dynamic 1% risk and frozen research; behavior tests/full qualification; commit/push dedicated source PR.
-- Status: context-age recall removed from operating wiring; four behavior regressions and 17 focused maintenance tests pass. Full isolated qualification passes: 851 Node / 70 DB / 261 Python, no skips, clean audits; exact results in report. Runtime remains the existing pinned artifact until separate verified activation.
+- Source PR: https://github.com/AegisFintech/scalping-bot/pull/284.
+- Status: source merged after both hosted full runs pass on 9b35d877 (37876073509/37876067156); isolated qualification 851 Node / 70 DB / 261 Python, no skips, clean audits. New verified artifact activated for execution only; fresh owned-position protection/startup readiness verified, expected active-position waiting preserved. Other four processes, private environment, financial history and original frozen research remain unchanged. Activation receipt is committed/pushed and qualified separately.
 - Report: [persistent GTC maintenance](docs/persistent-gtc-maintenance-report.md).
 
 ### ISSUE-281 — Current guides and qualification acceptance review
@@ -16,7 +17,7 @@
 - Dependencies: #222, #255, #278.
 - Acceptance: correct stale current-release/exit/sizing descriptions; distinguish immutable historical evidence; retained-evidence acceptance matrix with repeatable read-only commands, explicit missing proofs and source/contract discrepancies; qualify, commit/push and deliver dedicated PR.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/282.
-- Status: documentation corrections and acceptance review delivered; 95-sample operational journal and six retained research windows verify. Changed-file formatting/secret scan pass; both full hosted qualifications pass on e20dae1 (runs 37875193371/37875189690). Receipt checks precede merge. No future qualification, restore, economic or runtime change claimed.
+- Status: documentation corrections and acceptance review delivered; 95-sample operational journal and six retained research windows verify. Changed-file formatting/secret scan pass; both full hosted qualifications pass on e20dae1 (runs 37875193371/37875189690). Final receipt checks passed (37875538279 full audit rerun / 37875534640); PR #282 merged as d0a93fd. No future qualification, restore, economic or runtime change claimed.
 - Report: [current contract and evidence](docs/current-contract-review-report.md).
 
 ### Remaining external milestones — October 9

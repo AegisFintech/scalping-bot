@@ -50,9 +50,10 @@ cancellation. These descriptions cannot both be treated as one consistent contra
 
 ISSUE-283 removes context-age recall from the source operating path while
 preserving OCO/emergency/protection cancellation and immutable historical evidence.
-See [source fix and tests](persistent-gtc-maintenance-report.md). This does not
-change the already deployed artifact: its recall behavior remains a deployment
-limitation until separate verified activation. Runtime rollout must be explicit; the original #255 source
+See [source fix and tests](persistent-gtc-maintenance-report.md). The reviewed execution-only activation now applies this correction to the demo
+worker, preserving the other four services and all financial/study history. See
+[activation receipt](persistent-gtc-maintenance-report.md#execution-only-activation-receipt).
+Runtime rollout must be explicit; the original #255 source
 and registration must not change. Trend/loss-streak economic changes are outside
 this evidence review and require their own evidence/release.
 
