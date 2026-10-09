@@ -1,0 +1,28 @@
+[Unit]
+Description=Read-only operational evidence collector, fixed artifact %i
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ctrader-ai-scalper/observers/issue-278-%i
+ExecStartPre=/usr/bin/sha256sum --check --quiet manifest.sha256
+Environment=SCALPER_EVIDENCE_LOCKED=
+ExecStart=/opt/scalper-node22/bin/node /opt/ctrader-ai-scalper/observers/issue-278-%i/dist/scripts/observe-operational-evidence.js --release 0.3.0-fade-limit.3 --hours 168 --output /var/lib/ctrader-ai-scalper/observations/issue-278-%i/journal.jsonl
+StateDirectory=ctrader-ai-scalper/observations/issue-278-%i
+StateDirectoryMode=0700
+UMask=0077
+Restart=on-failure
+RestartSec=30
+TimeoutStopSec=30
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+MemoryMax=384M
+CPUQuota=10%
+
+[Install]
+WantedBy=multi-user.target

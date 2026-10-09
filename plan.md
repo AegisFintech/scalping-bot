@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-278 — Complete prospective operational evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/278.
+- Dependencies: #222 operational qualification; fixed current-release status.
+- Acceptance: bounded read-only complete sample journal, immutable registration, native single writer and integrity/restart/failure checks; conservative sampled-open coverage with unknown qualification evidence retained; schema/tests/full qualification; dedicated PR and fixed-artifact collection.
+- Status: implementation, 18 focused tests and full qualification pass (847 Node / 70 isolated DB / 261 Python, no skips, clean audits); source delivery and activation pending. Existing checkpoint/frozen research/financial history stay unchanged.
+- Report: [operational evidence journal](docs/operational-evidence-report.md).
+
 ### ISSUE-276 — Audit expected costs and realized payoff
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/276.

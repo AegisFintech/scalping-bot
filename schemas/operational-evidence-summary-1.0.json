@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "reportVersion": {
+      "type": "string",
+      "const": "operational-evidence-summary-1.0"
+    },
+    "mode": {
+      "type": "string",
+      "const": "demo"
+    },
+    "release": {
+      "type": "string",
+      "const": "0.3.0-fade-limit.3"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "lastSampleAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "samples": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 40321
+    },
+    "unavailableSamples": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "notReadySamples": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "gapIntervals": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "sampledOpenMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "sampledReadyOpenMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "coverageBasis": {
+      "type": "string",
+      "const": "ADJACENT_FRESH_SAMPLES_NOT_CONTINUOUS_UPTIME_OR_BROKER_CALENDAR_PROOF"
+    },
+    "journalSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "collectionWindowElapsed": {
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "type": "boolean",
+      "const": false
+    },
+    "promotionAuthority": {
+      "type": "boolean",
+      "const": false
+    },
+    "brokerCalendarVerifiedHours": {
+      "type": "null"
+    },
+    "protectedCycles": {
+      "type": "null"
+    },
+    "alertReceipt": {
+      "type": "null"
+    },
+    "currentRestore": {
+      "type": "null"
+    },
+    "qualification": {
+      "type": "string",
+      "const": "UNQUALIFIED"
+    }
+  },
+  "required": [
+    "reportVersion",
+    "mode",
+    "release",
+    "startedAt",
+    "deadline",
+    "asOf",
+    "lastSampleAt",
+    "samples",
+    "unavailableSamples",
+    "notReadySamples",
+    "gapIntervals",
+    "sampledOpenMs",
+    "sampledReadyOpenMs",
+    "coverageBasis",
+    "journalSha256",
+    "collectionWindowElapsed",
+    "brokerAuthority",
+    "promotionAuthority",
+    "brokerCalendarVerifiedHours",
+    "protectedCycles",
+    "alertReceipt",
+    "currentRestore",
+    "qualification"
+  ],
+  "additionalProperties": false
+}
