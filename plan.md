@@ -2,13 +2,21 @@
 
 ## Scope
 
+### Remaining external milestones — October 9
+
+- #222 remains open for broker-calendar verified market-open coverage, exact protected cycles and current-release trading recovery proof. Five UTC daily rows and 96 existing alert transport acknowledgments were reviewed; collector restart proof is separate from trading-worker recovery. Current restore remains deferred by the operator and unproven.
+- #255 retains the original frozen 30-window registration: six immutable windows verified through October 9 01:35 UTC, no due missing reports, HOLD. Collection ends November 1 04:00 UTC; 30 days does not qualify a strategy. Independent economic qualification and a reviewed release remain required before any entry/TP change.
+- #262 bounded source batch is delivered through merged #270/#274. Its future collection and economic milestones remain tracked in #255; closing the duplicate source issue does not finish the study or authorize promotion.
+- Both existing observers and the new persistent #278 collector are active; no trading, accounting or frozen-research reset.
+
 ### ISSUE-278 — Complete prospective operational evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/278.
 - Source PR: https://github.com/AegisFintech/scalping-bot/pull/279.
+- Activation receipt PR: https://github.com/AegisFintech/scalping-bot/pull/280.
 - Dependencies: #222 operational qualification; fixed current-release status.
 - Acceptance: bounded read-only complete sample journal, immutable registration, native single writer and integrity/restart/failure checks; conservative sampled-open coverage with unknown qualification evidence retained; schema/tests/full qualification; dedicated PR and fixed-artifact collection.
-- Status: implementation, 18 focused tests and full qualification pass (847 Node / 70 isolated DB / 261 Python, no skips, clean audits); source PR #279 merged on qualified head 141c7a3; fixed collector enabled October 9, deadline October 16 02:04:53.575 UTC, normal collector restart retains history. Activation receipt delivery pending. Existing checkpoint/frozen research/financial history stay unchanged.
+- Status: implementation, 18 focused tests and full qualification pass (847 Node / 70 isolated DB / 261 Python, no skips, clean audits); source PR #279 merged on qualified head 141c7a3; fixed collector enabled October 9, deadline October 16 02:04:53.575 UTC, normal collector restart retains history. Activation and restart receipt committed/pushed in #280; its hosted qualification precedes merge. Existing checkpoint/frozen research/financial history stay unchanged.
 - Report: [operational evidence journal](docs/operational-evidence-report.md).
 
 ### ISSUE-276 — Audit expected costs and realized payoff
