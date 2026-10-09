@@ -43,7 +43,8 @@
     "release:verify": "node scripts/prepare-release.mjs verify",
     "demo:diagnostics": "tsx scripts/review-trading-diagnostics.ts",
     "strategy:forward-summary": ".venv/bin/python -m python.backtest.forward_summary",
-    "demo:cost-payoff": "tsx scripts/review-cost-payoff.ts"
+    "demo:cost-payoff": "tsx scripts/review-cost-payoff.ts",
+    "demo:operational-evidence": "tsx scripts/observe-operational-evidence.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",
