@@ -129,3 +129,12 @@ schema, migration or environment contract changes; no trading restart/drill or
 backup operation. Retained journal/anchor and prospective summary verification
 passed using existing qualified tools. Applicable formatting/secret checks and
 full hosted qualification are required before merge; exact results follow below.
+
+Changed-file Prettier and `bash scripts/secret-scan.sh` passed before source commit
+`e20dae14949c8f913e3c03c392436997ac8cb79e`. Both full hosted qualifications on that
+head passed: pull-request run 37875193371 and push run 37875189690. They execute
+`npm run qualify` with Node 22/Python 3.13 and isolated TLS PostgreSQL: formatting,
+lint, TypeScript/Python types, isolated build, Node/schema/migration/fail-closed
+and database/Python tests, secret scan and both dependency audits. No production
+DB writes. The documentation receipt receives its own full hosted checks before
+merge. Remaining acceptance evidence stays partial as recorded above.
