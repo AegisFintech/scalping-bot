@@ -2,6 +2,7 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/278.
 Source PR: https://github.com/AegisFintech/scalping-bot/pull/279.
+Activation receipt PR: https://github.com/AegisFintech/scalping-bot/pull/280.
 Dependencies: #222 operational qualification; qualified current demo status.
 
 The existing observer preserves counters and only its last 64 transitions. Its
@@ -119,3 +120,34 @@ cycles, complete control history, continuous uptime or human alert acknowledgmen
 Initial audit SQL alias syntax failed and was corrected; failed read-only
 transactions changed no financial state. Frozen prospective summary verifies six
 retained windows with HOLD and no due missing windows; no old report changed.
+
+## Qualified activation — October 9
+
+Source PR #279 merged at 02:03:22 UTC after both hosted full qualification runs
+passed on exact head 141c7a3. Fixed artifact
+`/opt/ctrader-ai-scalper/observers/issue-278-141c7a3` contains the four required
+compiled modules, copied Zod dependency and strict schemas; all 727 manifest
+entries including Node 22.23.2 verify. The independent expired-fixture smoke
+passed without status, broker or provider calls.
+
+The persistent `scalper-operational-evidence@141c7a3.service` is enabled and active,
+with zero automatic restarts. Registration began **October 9 02:04:53.575 UTC**,
+deadline **October 16 02:04:53.575 UTC**. Registration SHA-256:
+`fe214d9719c41e2fb81101ddca8cbc40f5fdd7204ebaddf51b6945fa67370250`.
+Journal and independent registration anchor are private in
+`/var/lib/ctrader-ai-scalper/observations/issue-278-141c7a3/`.
+
+A controlled normal **collector** restart preserved the same header, deadline and
+complete retained record prefix, then appended new samples. Ten samples had been
+verified at the receipt cutoff, with 126,338 sampled-open milliseconds; these are
+not unattended qualification or a trading-worker/protection recovery drill.
+The installed unit and resource/sandbox settings were inspected. All five demo
+process definitions/PIDs, private environment content/mode and original frozen
+checkout were unchanged; the old #222 observer and #255 timer remain active.
+No broker/provider/control calls, trade resets or strategy changes were made.
+
+[Activation and restart receipt](evidence/operational-evidence-activation.json).
+The source and receipt are stored on GitHub; private databases and journal files
+are not backed up by GitHub. Existing #222 qualification and #255 collection
+remain open. No current restore, continuous market-open coverage or economic
+qualification is claimed. Backup remains deferred by the operator.
