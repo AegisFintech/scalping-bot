@@ -11,7 +11,12 @@ submission, or model-selected risk increases are introduced. Stops/targets remai
 broker-held. The new candidate does not automate discretionary structural/time
 closes; those remain separately tested research. See [the report](reusable-scenario-report.md).
 
-Current policy: `market-stop-v2`. ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
+Current policy: `0.3.0-fade-limit.3`. The deterministic fade transform uses
+2.5×ATR stop and 2.0×ATR target constants (nominal reward/risk 0.8; minimum
+proposal ratio 0.75). These intended distances are not actual filled stop risk
+or guaranteed realized outcomes. See [current contract](current-contract-review-report.md).
+
+Historical ISSUE-086 replaces production scenario targets with two direct entry prices and removes spread/ATR/target-room/count strategy filters. Money management and data/lifecycle integrity remain; see [the exact scope](direct-entry-report.md). All money authority lives in the existing
 risk engine and execution coordinator. The model cannot select size, leverage,
 risk, broker precision, credentials, mode or a reset.
 
@@ -81,17 +86,19 @@ For each leg, derive a stop-only upper volume, then search downward on the broke
 volume grid for a cost-inclusive volume inside half the setup budget:
 
 ```text
-setup budget = min(equity * 1% * risk multiplier, remaining daily loss budget)
+demo setup budget = equity * 1%
+other modes setup budget = min(equity * 1% * risk multiplier, remaining daily loss budget)
 leg budget = setup budget / 2
 modeled leg loss = stop ticks * tick value * native volume
                 + conservative opening/closing commissions
-                + thirty ticks * tick value * native volume
+                + release adverse-execution points * tick value * native volume
                 + conservative P/L conversion-fee reserve
 ```
 
 Commission is estimated at the highest bounded entry/stop price plus the adverse
-execution allowance. Minimum commissions are included. Ten ticks are an explicit
-model reserve, not a claim that a stop caps realized slippage. Stop gaps can exceed
+execution allowance. Minimum commissions are included. The production fade policy supplies 65 adverse
+execution points; the historical market-stop policy supplied 30 and the generic
+evaluator default is 10. These are modeled reserves, not stop-fill guarantees. Stop gaps can exceed
 it and are modeled adversely in research. Spread is already represented by
 executable entry/exit sides and is not added a second time to realized P&L.
 

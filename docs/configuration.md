@@ -1,12 +1,12 @@
 # Configuration and migration
 
-Release `0.2.5-market-stop.11` uses policy `market-stop-v2` in
+Current release `0.3.0-fade-limit.3` uses the versioned fade LIMIT policy in
 `packages/config/src/policy.ts`. The normal template has 20 assignments, previously
 176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
 reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
 four retained deployment credentials/identifiers. No credentials were changed.
-See [the current policy report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file. See [direct-entry policy](direct-entry-report.md) for the two-price provider contract, removed strategy filters and retained execution requirements.
+See [the historical risk-budget recovery report](risk-budget-recovery-report.md) for migration and validation. There is no operator strategy tuning file. See [direct-entry policy](direct-entry-report.md) for the two-price provider contract, removed strategy filters and retained execution requirements.
 Reusable scenario maps add no environment variables or tuning file. Five-minute
 refresh/cooldown, one intent per map, five-second local decisions, three-minute preferred/maximum
 fresh-submission deadline capped by the original map and 90-second asynchronous provider timeout are engineering policy, not operator
@@ -25,8 +25,10 @@ The [complete inventory](configuration-inventory.md) classifies every original
 setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
 
-ISSUE-099 uses equal stop-loss and take-profit distances for new demo setups;
-this is a release-level strategy change with no new environment key. Existing
+Historical ISSUE-099 used equal stop-loss and take-profit distances for new demo setups;
+that was a release-level strategy change with no new environment key. Current
+fade-limit.3 uses 2.5×ATR stop and 2.0×ATR target constants, subject to broker
+rounding/validation; see [current contract](current-contract-review-report.md). Existing
 orders are not amended. See [the trial report](balanced-exit-trial-report.md).
 
 ## Broker-session policy (ISSUE-098)
