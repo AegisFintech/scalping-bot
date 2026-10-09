@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-283 — Preserve accepted GTC operating maintenance
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/283.
+- Dependencies: #281 contract review, #222 operational proof.
+- Acceptance: operating maintenance cannot cancel by expired context; preserve historical helper/evidence, emergency/OCO/GTD reconciliation, recovery failure behavior, shared dynamic 1% risk and frozen research; behavior tests/full qualification; commit/push dedicated source PR.
+- Status: context-age recall removed from operating wiring; four behavior regressions and 17 focused maintenance tests pass. Full isolated qualification passes: 851 Node / 70 DB / 261 Python, no skips, clean audits; exact results in report. Runtime remains the existing pinned artifact until separate verified activation.
+- Report: [persistent GTC maintenance](docs/persistent-gtc-maintenance-report.md).
+
 ### ISSUE-281 — Current guides and qualification acceptance review
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/281.

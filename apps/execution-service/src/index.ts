@@ -96,6 +96,7 @@ import {
   type MarginEstimator,
 } from "./oco-risk-evaluator.js";
 import { OrderMaintenance } from "./order-maintenance.js";
+import { maintainPersistentOrders } from "./order-maintenance-loop.js";
 import {
   PostgresOpenPositionMonitor,
   unavailableOpenPositionMonitor,
@@ -812,11 +813,6 @@ async function main(): Promise<void> {
     gateway,
     config.symbol,
     identity,
-    {
-      bracketRecallBars: fadeLimitActive
-        ? Number(fadeExecutionPolicy.bracketRecallBars)
-        : 0,
-    },
   );
   const metrics = new MetricsCollector({
     pool,
@@ -1689,18 +1685,14 @@ async function main(): Promise<void> {
       accountKey: config.accountKey,
       configHash,
     });
-    if (
-      config.emergencyStop ||
-      filesystem.emergencyStop ||
-      runtime.emergencyStop
-    )
-      await maintenance.cancelAll("INDEPENDENT_EMERGENCY_CANCELLATION");
-    try {
-      await maintenance.recallStaleBrackets();
-      await maintenance.expireAndReconcile();
-    } finally {
-      await refreshDemoRecovery();
-    }
+    await maintainPersistentOrders({
+      maintenance,
+      emergencyStop:
+        config.emergencyStop ||
+        filesystem.emergencyStop ||
+        runtime.emergencyStop,
+      refreshRecovery: refreshDemoRecovery,
+    });
   });
   const protectiveTimer = setInterval(() => {
     void protectiveMaintenance.run().catch(() =>
