@@ -2,13 +2,22 @@
 
 ## Scope
 
+### ISSUE-297 — Causal replacement fixture completion
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/297.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/298.
+- Dependencies: #296 roadmap qualification; existing entry-recovery contract.
+- Acceptance: move fixture-only later-millisecond evidence wait into shared finish helper; preserve production timestamp checks/rejection cases, concurrent replacement/no-chaining/history proof; full isolated qualification; reviewed/committed/pushed dedicated PR.
+- Status: fixture corrected; 848 Node / 70 isolated DB / 261 Python pass, no skips, clean audits. Independent review has no findings. Production source/behavior and frozen study unchanged; both hosted full runs passed on 0645ef4 (38342582664/38342580035), and PR #298 merged as 1d363d6.
+- Report: [causal replacement fixture](docs/entry-fixture-completion-report.md).
+
 ### ISSUE-288 — October 13 trading research roadmap (operator review)
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/288.
-- Review PR: https://github.com/AegisFintech/scalping-bot/pull/296 (draft; operator review pending).
+- Review PR: https://github.com/AegisFintech/scalping-bot/pull/296 (roadmap approved; concrete first-batch designs in draft #299/#300).
 - Dependencies: existing #222 operational acceptance and #255 frozen collection; delivered #249/#251/#253/#261/#276 measurement and research contracts.
 - Acceptance: all recommendations represented as bounded linked issues; explicit proposed order, constraints, dependencies and review status; no production/economic change; planning diff checked, secret-scanned, committed/pushed on dedicated review PR.
-- Status: planning only; awaiting operator review. Creation of these issues does not authorize implementation, new collection, risk-policy changes or economic promotion.
+- Status: roadmap approved for continuation; measurement/protocol written designs are pushed in #299/#300 for concrete review. New collection, numeric qualification criteria, risk changes and economic promotion remain separately reviewed.
 - Design/review brief: [October 13 trading roadmap](docs/trading-research-roadmap-20261013.md).
 
 #### ISSUE-289 — Trading measurement: fill-relative risk, exit attribution and complete cost coverage
