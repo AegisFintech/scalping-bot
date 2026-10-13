@@ -16,3 +16,7 @@ Move the existing two-millisecond observation wait into the fixture's shared com
 The retained failing CI is the red evidence. The complete isolated qualification after the fixture change supplies green evidence; the full tests still include future/stale/missing/ownership/consumed/unknown-path rejection and concurrent restart claims. No new tests mirroring fixture implementation are added. A fixture delay is not authorization to delay or backdate production evidence, retry unknown commands or reset accounting. No runtime activation.
 
 Full `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed on October 13: 848 Node tests / 70 isolated TLS PostgreSQL tests / 261 Python tests, no skips. Formatting, lint, TypeScript/Python types, isolated build, schema/migration/replay/fail-closed suites, secret scan and npm/pip audits passed. Exact wrapper results: `docs/evidence/entry-fixture-validation.json`; private logs `/tmp/scalper-qualification-TS4BgJ/checks`. Independent review found no issues. Staged diff/secret checks precede each commit; both hosted full qualifications must pass the actual pushed PR head before merge.
+
+## Hosted delivery receipt
+
+Both full current-head hosted runs 38342582664 and 38342580035 passed on `0645ef45921cfce55e0a201b387b17af97b8f27f`. PR #298 merged on October 13 at 03:42:06 UTC as `1d363d6409e908e9d45d3b200a6fbfb2b4d43625`. Independent review had no findings; no checks/review bypass. Original failing run remains retained.

@@ -8,8 +8,66 @@
 - PR: https://github.com/AegisFintech/scalping-bot/pull/298.
 - Dependencies: #296 roadmap qualification; existing entry-recovery contract.
 - Acceptance: move fixture-only later-millisecond evidence wait into shared finish helper; preserve production timestamp checks/rejection cases, concurrent replacement/no-chaining/history proof; full isolated qualification; reviewed/committed/pushed dedicated PR.
-- Status: fixture corrected; 848 Node / 70 isolated DB / 261 Python pass, no skips, clean audits. Independent review has no findings. Production source/behavior and frozen study unchanged; hosted current-head checks required before merge.
+- Status: fixture corrected; 848 Node / 70 isolated DB / 261 Python pass, no skips, clean audits. Independent review has no findings. Production source/behavior and frozen study unchanged; both hosted full runs passed on 0645ef4 (38342582664/38342580035), and PR #298 merged as 1d363d6.
 - Report: [causal replacement fixture](docs/entry-fixture-completion-report.md).
+
+### ISSUE-288 — October 13 trading research roadmap (operator review)
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/288.
+- Review PR: https://github.com/AegisFintech/scalping-bot/pull/296 (roadmap approved; concrete first-batch designs in draft #299/#300).
+- Dependencies: existing #222 operational acceptance and #255 frozen collection; delivered #249/#251/#253/#261/#276 measurement and research contracts.
+- Acceptance: all recommendations represented as bounded linked issues; explicit proposed order, constraints, dependencies and review status; no production/economic change; planning diff checked, secret-scanned, committed/pushed on dedicated review PR.
+- Status: roadmap approved for continuation; measurement/protocol written designs are pushed in #299/#300 for concrete review. New collection, numeric qualification criteria, risk changes and economic promotion remain separately reviewed.
+- Design/review brief: [October 13 trading roadmap](docs/trading-research-roadmap-20261013.md).
+
+#### ISSUE-289 — Trading measurement: fill-relative risk, exit attribution and complete cost coverage
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/289.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: Causal fill/protection/exit/cost projection; ambiguous or missing evidence remains null; no history rewrite or runtime gate.
+
+#### ISSUE-290 — Research protocol: chronological evaluation and explicit promotion/retirement criteria
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/290.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: Freeze chronological evaluation, uncertainty and operator-reviewed promotion/retirement criteria before future outcomes; retain HOLD on inadequate evidence.
+
+#### ISSUE-291 — Research decision: review frozen entry-preserving and larger-TP candidates
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/291.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: Review all #255 windows and separately decide entry-only/TP-only hypotheses; batch completion is not qualification or automatic promotion.
+
+#### ISSUE-292 — Research benchmark: measure AI contribution against deterministic entries
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/292.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: One predeclared deterministic baseline versus AI contribution with equivalent causal assumptions and explicit conditional limits.
+
+#### ISSUE-293 — Research experiment: slower M5/M15 setups and transaction-cost balance
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/293.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: One reviewed M5 or M15 prospective candidate, causal completed candles and costs/carry/censoring; no simultaneous parameter optimization.
+
+#### ISSUE-294 — Research experiment: cost-aware selectivity and market-condition attribution
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/294.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: Audit existing gates then test one frozen cost/regime hypothesis; no October-cohort subgroup promotion or automatic production filter.
+
+#### ISSUE-295 — Demo risk containment: review lower shared risk and loss-limit enforcement options
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/295.
+- Status: PROPOSED — awaiting operator review; no implementation started.
+- Dependencies and full acceptance: linked issue; umbrella #288.
+- Acceptance summary: Operator-reviewed unchanged/lower-shared-risk/restored-enforcement options; preserve persisted accounting, accepted GTC and protective maintenance.
 
 ### ISSUE-286 — Remove unused recall and release lookup
 
