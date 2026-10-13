@@ -23,6 +23,7 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/290.
 - Status: roadmap approved for continuation; concrete protocol design and proposed numerical criteria prepared for review, no registration or implementation.
 - Design: [economic evaluation](docs/research-evaluation-design.md).
+- Design PR: https://github.com/AegisFintech/scalping-bot/pull/300 (draft).
 - Dependencies and full acceptance: linked issue; umbrella #288.
 - Acceptance summary: Freeze chronological evaluation, uncertainty and operator-reviewed promotion/retirement criteria before future outcomes; retain HOLD on inadequate evidence.
 
