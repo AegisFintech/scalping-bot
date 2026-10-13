@@ -2,6 +2,8 @@
 
 Operator review issue: https://github.com/AegisFintech/scalping-bot/issues/288.
 
+Documentation review PR: https://github.com/AegisFintech/scalping-bot/pull/296 (draft).
+
 Status: proposed. This document requests review of priorities and bounded scope; it does not authorize implementation, new paid provider calls, order mutations, registrations or runtime policy changes.
 
 ## Why this order

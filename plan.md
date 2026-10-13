@@ -5,6 +5,7 @@
 ### ISSUE-288 — October 13 trading research roadmap (operator review)
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/288.
+- Review PR: https://github.com/AegisFintech/scalping-bot/pull/296 (draft; operator review pending).
 - Dependencies: existing #222 operational acceptance and #255 frozen collection; delivered #249/#251/#253/#261/#276 measurement and research contracts.
 - Acceptance: all recommendations represented as bounded linked issues; explicit proposed order, constraints, dependencies and review status; no production/economic change; planning diff checked, secret-scanned, committed/pushed on dedicated review PR.
 - Status: planning only; awaiting operator review. Creation of these issues does not authorize implementation, new collection, risk-policy changes or economic promotion.
