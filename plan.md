@@ -14,7 +14,8 @@
 #### ISSUE-289 — Trading measurement: fill-relative risk, exit attribution and complete cost coverage
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/289.
-- Status: PROPOSED — awaiting operator review; no implementation started.
+- Status: roadmap approved for continuation; concrete evidence design prepared for review, no product implementation or runtime change.
+- Design: [execution economics](docs/execution-economics-design.md).
 - Dependencies and full acceptance: linked issue; umbrella #288.
 - Acceptance summary: Causal fill/protection/exit/cost projection; ambiguous or missing evidence remains null; no history rewrite or runtime gate.
 
