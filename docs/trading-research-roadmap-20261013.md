@@ -2,7 +2,11 @@
 
 Operator review issue: https://github.com/AegisFintech/scalping-bot/issues/288.
 
-Documentation review PR: https://github.com/AegisFintech/scalping-bot/pull/296 (draft).
+Documentation review PR: https://github.com/AegisFintech/scalping-bot/pull/296.
+
+Roadmap continuation approved. First-batch written designs: [measurement #299](https://github.com/AegisFintech/scalping-bot/pull/299) and [evaluation protocol #300](https://github.com/AegisFintech/scalping-bot/pull/300), both drafts awaiting concrete design review.
+
+Qualification follow-up: test-only #297/#298 fixes a causal-order fixture race. Both full hosted checks passed on 0645ef4 (38342582664/38342580035); source merged as 1d363d6. Original failure 38334644623 remains retained. No production source or behavior changes.
 
 Status: proposed. This document requests review of priorities and bounded scope; it does not authorize implementation, new paid provider calls, order mutations, registrations or runtime policy changes.
 
