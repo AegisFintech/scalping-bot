@@ -108,6 +108,9 @@ suite(
           },
           null,
         );
+        // SQL availability has microseconds; JS evidence has milliseconds.
+        // Every completion, including a replacement, needs a later observation.
+        await delay(2);
       }
       function evidence(): EntryRetirementEvidence {
         const at = new Date().toISOString();
@@ -131,9 +134,6 @@ suite(
       const root = claim();
       expect(await store.claim(root)).toBe(true);
       await finish(root.id);
-      // Broker/provider SQL availability has microseconds; JS evidence has milliseconds.
-      // Observe in a later millisecond instead of occasionally predating availability.
-      await delay(2);
       const intent = async (contextId: string | null = root.id) =>
         pool.query(
           "INSERT INTO order_groups(id,analysis_id,idempotency_key,mode,state,expires_at,context_plan_id) VALUES($1::uuid,$2,$1::text,'demo','INTENT_RECORDED',now()+interval '3 minutes',$3)",
