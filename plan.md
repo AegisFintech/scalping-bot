@@ -5,6 +5,7 @@
 ### ISSUE-297 — Causal replacement fixture completion
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/297.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/298.
 - Dependencies: #296 roadmap qualification; existing entry-recovery contract.
 - Acceptance: move fixture-only later-millisecond evidence wait into shared finish helper; preserve production timestamp checks/rejection cases, concurrent replacement/no-chaining/history proof; full isolated qualification; reviewed/committed/pushed dedicated PR.
 - Status: fixture corrected; 848 Node / 70 isolated DB / 261 Python pass, no skips, clean audits. Independent review has no findings. Production source/behavior and frozen study unchanged; hosted current-head checks required before merge.
