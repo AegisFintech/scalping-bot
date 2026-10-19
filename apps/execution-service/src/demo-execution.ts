@@ -81,8 +81,14 @@ export interface DemoTerminalEvidenceReconciliationResult extends DemoExecutionP
   readonly terminalOrders: readonly GatewayOrder[];
 }
 
+export type DemoExecutionEvidenceSource =
+  "BROKER_CALLBACK" | "HISTORY_RECONSTRUCTION" | "UNSPECIFIED";
+
 export interface DemoExecutionStore {
-  persist(event: DemoExecutionEvent): Promise<DemoExecutionPersistenceResult>;
+  persist(
+    event: DemoExecutionEvent,
+    source?: DemoExecutionEvidenceSource,
+  ): Promise<DemoExecutionPersistenceResult>;
   readiness(): Promise<DemoExecutionPersistenceResult>;
 }
 
@@ -717,7 +723,7 @@ export class DurableDemoExecutionRecorder {
       }
       if (normalized === null) continue;
       try {
-        const result = await this.#store.persist(normalized);
+        const result = await this.#store.persist(normalized, "BROKER_CALLBACK");
         if (result.certain && normalized.brokerFillId !== null) {
           this.#persistedBrokerFillIds.add(normalized.brokerFillId);
         }

@@ -528,11 +528,11 @@ _REASON_GUIDANCE: dict[str, tuple[str, str, str]] = {
     ),
     "DEMO_BROKER_EVENT_KEY_CONFLICT": (
         "Two broker callbacks disagreed about the same event",
-        "The original event is retained and new analysis is blocked until a later exact "
-        "terminal broker event proves the managed setup is fully closed.",
-        "No manual clearing is required. Automatic broker-history recovery retries every "
-        "15 seconds; investigate cTrader and PostgreSQL only if this remains after the setup "
-        "is terminal.",
+        "Conflicting event evidence blocks new analysis. The original journal remains; "
+        "newly observed variants are retained separately with their source.",
+        "Automatic recovery requires complete, consistent terminal proof. A conflict in "
+        "the closing event itself or a missing historical variant can require reviewed "
+        "broker-history attestation; a flat account does not clear it.",
     ),
     "DEMO_EXECUTION_RECOVERY_RUN_FAILED": (
         "Automatic broker-history recovery failed",

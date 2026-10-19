@@ -6,6 +6,7 @@ import type pg from "pg";
 
 import type {
   DemoExecutionEvent,
+  DemoExecutionEvidenceSource,
   DemoExecutionPersistenceResult,
   DemoExecutionStore,
   DemoTerminalEvidenceReconciliationResult,
@@ -418,6 +419,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
 
   async persist(
     event: DemoExecutionEvent,
+    source: DemoExecutionEvidenceSource = "UNSPECIFIED",
   ): Promise<DemoExecutionPersistenceResult> {
     const client = await this.#options.pool.connect();
     try {
@@ -442,13 +444,56 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       let replayTradeOutcomeConflict = false;
       if (duplicate !== undefined) {
         if (duplicate.payload_hash !== event.payloadHash) {
+          // Retain both the immutable original and every distinct conflicting
+          // normalized payload before changing readiness. History reconstruction
+          // is explicitly not a fresh broker callback or protection observation.
           await client.query(
-            `UPDATE broker_execution_events
-             SET mapping_state = 'CONFLICT',
-                 reason_codes = '["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb
-             WHERE account_id = $1 AND broker_event_key = $2`,
-            [this.#options.accountId, event.eventKey],
+            `INSERT INTO broker_execution_event_variants
+              (id, event_id, payload_hash, normalized_payload, evidence_source,
+               original_mapping_state, original_reason_codes, original_resolved_at,
+               original_resolution_event_key, received_at)
+             SELECT $3, id, payload_hash, normalized_payload, 'ORIGINAL_JOURNAL',
+                    mapping_state, reason_codes, resolved_at, resolution_event_key, received_at
+             FROM broker_execution_events
+             WHERE account_id = $1 AND broker_event_key = $2
+             ON CONFLICT (event_id, payload_hash, evidence_source) DO NOTHING`,
+            [this.#options.accountId, event.eventKey, randomUUID()],
           );
+          const variant = await client.query(
+            `INSERT INTO broker_execution_event_variants
+              (id, event_id, payload_hash, normalized_payload, evidence_source,
+               original_mapping_state, original_reason_codes, original_resolved_at,
+               original_resolution_event_key, received_at)
+             SELECT $3, id, $4, $5::jsonb, $6, mapping_state, reason_codes,
+                    resolved_at, resolution_event_key, $7
+             FROM broker_execution_events
+             WHERE account_id = $1 AND broker_event_key = $2
+             ON CONFLICT (event_id, payload_hash, evidence_source) DO NOTHING
+             RETURNING id`,
+            [
+              this.#options.accountId,
+              event.eventKey,
+              randomUUID(),
+              event.payloadHash,
+              JSON.stringify(event),
+              source,
+              event.receivedAt,
+            ],
+          );
+          if (variant.rowCount !== 0 || duplicate.resolved_at === null) {
+            await client.query(
+              `UPDATE broker_execution_events
+               SET mapping_state = 'CONFLICT',
+                   reason_codes = CASE
+                     WHEN reason_codes ? 'DEMO_BROKER_EVENT_KEY_CONFLICT'
+                     THEN reason_codes
+                     ELSE reason_codes || '["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb
+                   END,
+                   resolved_at = NULL, resolution_event_key = NULL
+               WHERE account_id = $1 AND broker_event_key = $2`,
+              [this.#options.accountId, event.eventKey],
+            );
+          }
           await client.query("COMMIT");
           return {
             certain: false,

@@ -200,7 +200,8 @@ def test_reason_code_prefix_explains_observed_semantic_rejection() -> None:
 
     conflict = reason_code_view("DEMO_BROKER_EVENT_KEY_CONFLICT")
     assert conflict["title"] == "Two broker callbacks disagreed about the same event"
-    assert "No manual clearing is required" in conflict["next_action"]
+    assert "reviewed broker-history attestation" in conflict["next_action"]
+    assert "a flat account does not clear it" in conflict["next_action"]
 
     slippage = reason_code_view("DEMO_FILL_SLIPPAGE_EXCEEDED")
     assert "exceeded the configured slippage" in slippage["title"]

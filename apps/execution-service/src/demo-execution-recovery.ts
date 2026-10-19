@@ -218,7 +218,10 @@ export async function recoverDemoExecutions(
         reasons.add("DEMO_RECOVERY_STRATEGY_OWNERSHIP_MISSING");
         return;
       }
-      const result = await options.store.persist(event);
+      const result = await options.store.persist(
+        event,
+        "HISTORY_RECONSTRUCTION",
+      );
       for (const reason of result.reasonCodes) {
         if (!(
           reason === "DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED" &&
