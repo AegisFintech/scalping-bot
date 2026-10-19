@@ -99,3 +99,14 @@ Python worker/schema tests**, including stale candle rejection and session/circu
 separation. HTTP redirects reject and the service bounds concurrent requests.
 The existing authenticated research identity is reused; no new login was created.
 Graphify was refreshed without provider calls (existing pyproject empty-node warning).
+
+Delivery PR: https://github.com/AegisFintech/scalping-bot/pull/311.
+The existing trading session remains blocked by its earlier closing-event conflict;
+this transport does not claim to resolve that incident or enable order submission.
+
+Both complete hosted `npm run qualify` runs pass on source commit
+`9ccd76b0bbb84afb0d2b04f5c88d404d05041f1f`:
+[push 39199529069](https://github.com/AegisFintech/scalping-bot/actions/runs/39199529069)
+and [PR 39199593481](https://github.com/AegisFintech/scalping-bot/actions/runs/39199593481).
+All required gates and dependency audits pass. Final documentation and integration
+with the newly merged recovery batch also receive exact-head qualification.
