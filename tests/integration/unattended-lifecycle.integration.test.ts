@@ -251,7 +251,7 @@ suite(
          JOIN broker_execution_events e ON e.id=v.event_id WHERE e.account_id=$1`,
         [s.accountId],
       );
-      expect(before.rows[0].count).toBe(0);
+      expect(before.rows[0]?.count).toBe(0);
       await s.restart().persist(changed, "BROKER_CALLBACK");
       await s.restart().persist(s.events.closed);
       await s.restart().persist(s.events.peerCancelled);
@@ -262,7 +262,7 @@ suite(
         `SELECT reason_codes FROM broker_execution_events WHERE account_id=$1 AND broker_event_key=$2`,
         [s.accountId, changed.eventKey],
       );
-      expect(row.rows[0].reason_codes).toEqual([
+      expect(row.rows[0]?.reason_codes).toEqual([
         replacement,
         "DEMO_BROKER_EVENT_KEY_CONFLICT",
       ]);

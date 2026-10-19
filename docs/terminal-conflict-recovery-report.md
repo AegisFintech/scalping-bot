@@ -36,6 +36,24 @@ historical variants can need reviewed attestation; it no longer promises that
 automatic recovery always clears them. There is no lock reset, order command,
 trade rewrite, economic change or authority increase.
 
+## Strict proof checker
+
+The isolated `terminal-conflict-proof.ts` checker compares every normalized
+identity, monetary, price, quantity and timestamp field across retained variants;
+only historical position SL/TP context and receipt metadata may differ. It
+requires an originally mapped, reason-free journal snapshot and an independently
+retained callback variant. Missing legacy evidence and unspecified provenance
+reject. It verifies one exact order/deal against fresh, bounded, unpaginated
+history; missing monetary fields reject rather than inheriting normalization
+fallbacks. Raw history receives a separate evidence digest. Reconstructed local
+position context is never represented as independently observed protection.
+
+Twenty unit cases cover context-only agreement and financial/identity/time/
+volume conflicts, missing variants, stale/incomplete/duplicate history and missing
+cost fields. This checker has no database or broker connection and is not wired
+into operational recovery. A match alone cannot release a group: complete entry,
+peer and trade proof plus a separate attestation journal are still required.
+
 ## Remaining acceptance
 
 A separately journaled bounded authoritative-history attestation must verify exact
@@ -65,3 +83,19 @@ resolved conflict while retaining its earlier proof. The database rerun passes a
 passed 287 cases and caught the old dashboard assertion promising manual recovery
 was unnecessary; that assertion now checks the corrected attestation/flat-account
 guidance. Full hosted qualification is pending before merge or activation.
+
+## Delivery boundary and outstanding work
+
+The current incident's discarded variant cannot be recovered by this patch.
+The safe automated policy explicitly rejects missing evidence. Any legacy terminal
+supersession policy must first state which independently attested facts can
+supersede that uncertainty and retain the missing-variant limitation; it must not
+claim the discarded callback was harmless. No such transition has been performed.
+#303 trading-provider activation remains dependent on #301 recovery. #304 candidate
+qualification also needs independently verified sources and untouched future
+outcomes; scheduled proposal generation is not completed strategy evaluation.
+No economic or provider switch is included in this checkpoint.
+
+The first hosted runs on 732dba3 stopped at TypeScript checks: two new test row
+accesses needed explicit possibly-undefined handling. Those assertions now use
+optional access, so missing rows fail the assertions instead of bypassing checks.
