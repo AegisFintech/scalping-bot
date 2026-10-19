@@ -256,13 +256,6 @@ export class CTraderDemoGateway implements ExecutionGateway {
     }
     const firstExecution = await this.#placePendingEntry(commands[0]);
     this.#applyExecution(firstExecution);
-    if (
-      firstExecution.executionType === 3 ||
-      firstExecution.executionType === 11
-    ) {
-      this.#uncertainReason = "DEMO_FIRST_LEG_FILLED_BEFORE_OCO_COMPLETE";
-      throw new Error(this.#uncertainReason);
-    }
     await this.#options.client.reconcileRaw();
 
     try {
@@ -287,8 +280,25 @@ export class CTraderDemoGateway implements ExecutionGateway {
           orders: tracked.map(external),
         };
       }
+      // Callbacks can change the first leg during reconciliation/session IO.
+      // Check the current tracked state, not the original acceptance response.
+      if (
+        tracked[0].state !== "PENDING" ||
+        !new Decimal(tracked[0].filledVolume).isZero() ||
+        this.#uncertainReason !== null
+      ) {
+        tracked[1].state = "REJECTED";
+        tracked[1].updatedAt = new Date().toISOString();
+        tracked[1].reasonCode = "DEMO_PEER_WITHHELD_BEFORE_DISPATCH";
+        return {
+          orderGroupId: group.orderGroupId,
+          idempotentReplay: false,
+          orders: tracked.map(external),
+        };
+      }
       const secondExecution = await this.#placePendingEntry(commands[1]);
       this.#applyExecution(secondExecution);
+      this.#cancelPendingPeer(group);
       await this.#options.client.reconcileRaw();
     } catch (error) {
       const first = tracked[0];
@@ -650,11 +660,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
       return;
     }
     this.#applyExecution(execution);
-    if (
-      execution.order === null ||
-      (execution.executionType !== 3 && execution.executionType !== 11)
-    )
-      return;
+    if (execution.order === null) return;
     const clientOrderId = optionalStringField(execution.order, "clientOrderId");
     if (clientOrderId === undefined) return;
     const filled = this.#orders.get(clientOrderId);
@@ -662,7 +668,17 @@ export class CTraderDemoGateway implements ExecutionGateway {
     const group = [...this.#groups.values()].find((candidate) =>
       candidate.orders.includes(filled),
     );
-    const peer = group?.orders.find((order) => order !== filled);
+    if (group !== undefined) this.#cancelPendingPeer(group);
+  }
+
+  #cancelPendingPeer(group: TrackedGroup): void {
+    // A fill can precede the peer's acknowledgement. Revisit on acceptance as
+    // well as fill, without replaying placement or cancelling a filled peer.
+    const filled = group.orders.find((order) =>
+      new Decimal(order.filledVolume).gt(0),
+    );
+    if (filled === undefined) return;
+    const peer = group.orders.find((order) => order !== filled);
     if (
       peer?.brokerOrderId === null ||
       peer?.brokerOrderId === undefined ||
@@ -690,13 +706,23 @@ export class CTraderDemoGateway implements ExecutionGateway {
     if (clientOrderId === undefined) return;
     const tracked = this.#orders.get(clientOrderId);
     if (tracked === undefined) return;
-    tracked.brokerOrderId = stringField(execution.order, "orderId");
-    tracked.state =
+    const nextVolume =
+      optionalStringField(execution.order, "executedVolume") ?? "0";
+    const nextState =
       execution.executionType === 11
         ? "PARTIALLY_FILLED"
         : stateFromOrder(execution.order);
-    tracked.filledVolume =
-      optionalStringField(execution.order, "executedVolume") ?? "0";
+    // A placement response may resume after a newer callback. Never let an
+    // older acceptance erase a fill/terminal state or its cancellation trigger.
+    if (
+      new Decimal(nextVolume).lt(tracked.filledVolume) ||
+      (nextState === "PENDING" &&
+        ["FILLED", "CANCELLED", "EXPIRED", "REJECTED"].includes(tracked.state))
+    )
+      return;
+    tracked.brokerOrderId = stringField(execution.order, "orderId");
+    tracked.state = nextState;
+    tracked.filledVolume = nextVolume;
     tracked.updatedAt = execution.receivedAt;
     tracked.reasonCode = reasonCode ?? execution.errorCode;
     if (execution.executionType === 3 || execution.executionType === 11) {
@@ -705,13 +731,22 @@ export class CTraderDemoGateway implements ExecutionGateway {
         (execution.deal === null
           ? undefined
           : optionalNumberField(execution.deal, "executionPrice"));
-      if (executionPrice === undefined) {
+      if (
+        executionPrice === undefined ||
+        !Number.isFinite(executionPrice) ||
+        executionPrice <= 0
+      ) {
         this.#uncertainReason = "DEMO_FILL_PRICE_MISSING";
         tracked.reasonCode = this.#uncertainReason;
         return;
       }
       const entry = new Decimal(tracked.command.entryPrice);
-      const deviation = new Decimal(executionPrice).minus(entry).abs();
+      const deviation = Decimal.max(
+        0,
+        tracked.command.side === "BUY"
+          ? new Decimal(executionPrice).minus(entry)
+          : entry.minus(executionPrice),
+      );
       const points = deviation.div(this.#options.tickSize);
       const basisPoints = deviation.div(entry).mul(10_000);
       if (

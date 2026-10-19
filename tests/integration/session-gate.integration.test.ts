@@ -153,6 +153,50 @@ suite("session-denied order intents (isolated PostgreSQL)", () => {
       ),
     ).toBe(true);
   });
+  it("journals a fill with an unsent race-withheld peer without fabricating submission", async () => {
+    const x = await setup();
+    x.orders[0] = {
+      ...x.orders[0]!,
+      state: "FILLED",
+      filledVolume: "100",
+      brokerOrderId: "101",
+      reasonCode: null,
+    };
+    x.orders[1] = {
+      ...x.orders[1]!,
+      reasonCode: "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+    };
+    await x.trail.placement(x.analysisId, {
+      orderGroupId: x.groupId,
+      idempotentReplay: false,
+      orders: x.orders,
+    });
+    const rows = await pool.query(
+      "SELECT state,submitted_at,broker_order_id FROM orders WHERE client_order_id=$1",
+      [x.orders[1].clientOrderId],
+    );
+    expect(rows.rows[0]).toMatchObject({
+      state: "REJECTED",
+      submitted_at: null,
+      broker_order_id: null,
+    });
+    expect(
+      (
+        await pool.query<{ state: string }>(
+          "SELECT state FROM order_groups WHERE id=$1",
+          [x.groupId],
+        )
+      ).rows[0]?.state,
+    ).toBe("ACTIVE");
+    x.orders[1] = { ...x.orders[1], brokerOrderId: "102" };
+    await expect(
+      x.trail.placement(x.analysisId, {
+        orderGroupId: x.groupId,
+        idempotentReplay: false,
+        orders: x.orders,
+      }),
+    ).rejects.toThrow("TRAIL_LOCAL_SESSION_REJECTION_INVALID");
+  });
   it("terminates a cancelled first leg and a locally unsent second leg without leaving an active group", async () => {
     const x = await setup();
     x.orders[0] = {

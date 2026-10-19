@@ -87,7 +87,13 @@ Full local qualification passes: `npm run qualify`, evidence
 `/tmp/scalper-qualification-gSffJ6/checks`: 888 Node, 90 isolated PostgreSQL and
 361 Python tests, with formatting/lint/types/build/schema/migration/fail-closed,
 secret scan and both dependency audits. Focused tests: 22 Python, 2 Node/schema.
-Deployment and registration pending. The separate manual breakout proposal is
+Registered before outcomes for October 20 00:00 UTC through November 19 00:00 UTC,
+using isolated qualified artifact `1bc1ac8` at `/opt/scalper-fast-exit-research`.
+The committed registration is `docs/evidence/fast-exit-study-319.json`.
+The separate hourly timer is enabled. Its sandboxed first run returned
+`WAITING_FOR_WINDOW` with exit 0, without exporting data or issuing a provider call.
+First daily window is eligible October 21 00:10 UTC; the hourly timer should collect
+it around 01:00 UTC. No future outcome is available yet. The separate manual breakout proposal is
 https://github.com/AegisFintech/scalping-bot/issues/321; its private financial
 review and discretionary rules are not copied into the production policy. Rollback disables only the new research timer/service and preserves
 all registrations/reports. Trading services and accepted orders are independent.

@@ -2,12 +2,22 @@
 
 ## Scope
 
+### ISSUE-318 — Directional slippage and OCO acknowledgement races
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/318.
+- Dependencies: #303 provider integration; #098 session gate and #095 terminal recovery.
+- Acceptance: side-aware adverse slippage, second-dispatch state recheck, late peer acknowledgement cancellation, monotonic fill state, local-unsent journaling, regression tests and full qualification.
+- Status: implementation complete; 41 gateway tests and full qualification pass at `/tmp/scalper-qualification-rFxoDM/checks` (format/lint/types/build, Node, isolated PostgreSQL, Python, schema/migration/fail-closed coverage, secret scan and dependency audits). Deployment is separate; no running service or risk state changed.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/320.
+- Report: [execution races](docs/oco-race-slippage-report.md).
+
 ### ISSUE-319 — Cost-aware fast-exit research
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/319.
 - Dependencies: #253/#255 causal research, #289 measurement; execution corrections tracked separately in #318.
 - Acceptance: isolated baseline/small-profit/giveback comparisons, delayed executable quotes and original protection, all censored outcomes, pre-intent fee estimates with counterfactual net unknown, frozen future windows and immutable reports; full tests and qualification.
-- Status: implemented; full qualification passes at `/tmp/scalper-qualification-gSffJ6/checks` (888 Node, 90 isolated PostgreSQL, 361 Python, formatting/lint/types/build/schema/migration/fail-closed/secret scan/dependency audits). Exploratory October 19 sample remains HOLD; prospective registration pending. No trading strategy change.
+- Status: implemented; full qualification passes at `/tmp/scalper-qualification-gSffJ6/checks` (888 Node, 90 isolated PostgreSQL, 361 Python, formatting/lint/types/build/schema/migration/fail-closed/secret scan/dependency audits). Exploratory October 19 sample remains HOLD; prospective registration frozen from October 20 00:00 UTC for 30 daily windows using isolated artifact `1bc1ac8`; separate hourly collector enabled; first sandboxed run WAITING_FOR_WINDOW, exit 0. No trading strategy change.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/322.
 - Report: [fast exits](docs/fast-exit-research-report.md).
 
 ### ISSUE-321 — Manual multi-timeframe breakout specification
@@ -16,6 +26,13 @@
 - Dependencies: #318 execution, #289 measurement, #290 protocol; operator clarification of discretionary exits and runner selection.
 - Acceptance: explicit range/trigger/limit/invalidation/exit rules, cost-normalized comparison and prospective evaluation specification; no automatic promotion or fixed-lot copying.
 - Status: private workbook review complete; proposal only. Account identifiers and detailed financial results remain private. Current fade-exit research does not test this breakout method.
+
+### ISSUE-323 — Filled entry with a locally unsent peer
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/323.
+- Dependencies: #318 local rejection provenance; existing strict terminal group/account/protection proof.
+- Acceptance: durable exact local-unsent evidence plus complete filled-leg close proof; restart/failure/contradiction tests and unattended qualification without fabricated broker events or latch resets.
+- Status: identified qualification gap; execution fixes merged but rollout deferred. Existing terminal proof requires broker identities for both entry orders. No production bypass.
 
 ### ISSUE-303 — Codex production provider integration
 

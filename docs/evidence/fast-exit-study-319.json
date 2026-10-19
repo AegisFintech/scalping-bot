@@ -1,0 +1,20 @@
+{
+  "broker_authority": false,
+  "candidates": {
+    "baseline": {},
+    "giveback": {
+      "arm_over_sl": "0.25",
+      "floor_over_sl": "0.05",
+      "giveback_over_sl": "0.10"
+    },
+    "quick": { "net_price_over_sl": "0.10" }
+  },
+  "days": 30,
+  "decision": "HOLD",
+  "label": "FAST_EXIT_REGISTRATION_V1",
+  "registered_at": "2026-10-19T13:01:17.537Z",
+  "release": "0.3.0-fade-limit.3-codex.1",
+  "source_sha256": "c949344aecf7d988da1604da050151fca678cd25cc0d65b96a39c44ee3affce0",
+  "start": "2026-10-20T00:00:00.000Z",
+  "until": "2026-11-19T00:00:00.000Z"
+}
