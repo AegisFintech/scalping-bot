@@ -674,7 +674,7 @@ describe("broker session at each demo order submission", () => {
   ) {
     return new CTraderDemoGateway({
       client,
-      marketSession,
+      ...(marketSession === undefined ? {} : { marketSession }),
       symbolId: "7",
       symbolName: "XAUUSD",
       placementEnabled: true,
@@ -787,5 +787,160 @@ describe("ordinary LIMIT demo OCO", () => {
     const state = await g.reconcile("XAUUSD");
     expect(state.certain).toBe(false);
     expect(state.reasonCodes).toContain("DEMO_FILL_SLIPPAGE_EXCEEDED");
+  });
+});
+
+describe("ISSUE-318 OCO dispatch races and directional slippage", () => {
+  function gateway(
+    client: MockClient,
+    marketSession?: () => Promise<ReturnType<typeof sessionStatus>>,
+  ) {
+    return new CTraderDemoGateway({
+      client,
+      ...(marketSession === undefined ? {} : { marketSession }),
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+  }
+
+  it.each(["BUY", "SELL"] as const)(
+    "allows favorable %s price improvement but retains adverse limits",
+    async (side) => {
+      const client = new MockClient();
+      const g = gateway(client);
+      await g.placeOco([command("BUY"), command("SELL")]);
+      client.fill(`client-${side}`, side === "BUY" ? 2000 : 2000);
+      await vi.waitFor(() => expect(client.cancelled).toHaveLength(1));
+      expect((await g.reconcile("XAUUSD")).reasonCodes).toEqual([]);
+      client.fill(`client-${side}`, side === "BUY" ? 2001.1 : 1998.9);
+      expect((await g.reconcile("XAUUSD")).reasonCodes).toContain(
+        "DEMO_FILL_SLIPPAGE_EXCEEDED",
+      );
+    },
+  );
+
+  it("rejects a nonpositive fill price even if it looks favorable", async () => {
+    const client = new MockClient();
+    const g = gateway(client);
+    await g.placeOco([command("BUY"), command("SELL")]);
+    client.fill("client-BUY", 0);
+    expect((await g.reconcile("XAUUSD")).reasonCodes).toContain(
+      "DEMO_FILL_PRICE_MISSING",
+    );
+  });
+
+  it.each(["reconcile", "session"])(
+    "withholds the unsent peer after a fill during %s",
+    async (during) => {
+      const client = new MockClient();
+      const original = client.reconcileRaw.bind(client);
+      let checks = 0;
+      if (during === "reconcile")
+        vi.spyOn(client, "reconcileRaw").mockImplementation(() => {
+          if (++checks === 2) client.fill("client-BUY", 2001);
+          return original();
+        });
+      const g = gateway(client, () => {
+        if (during === "session" && ++checks === 2)
+          client.fill("client-BUY", 2001);
+        return Promise.resolve(sessionStatus("OPEN"));
+      });
+      const pair = [command("BUY"), command("SELL")] as const;
+      const result = await g.placeOco(pair);
+      expect(client.orders).toHaveLength(1);
+      expect(result.orders[0]?.state).toBe("FILLED");
+      expect(result.orders[1]).toMatchObject({
+        state: "REJECTED",
+        brokerOrderId: null,
+        reasonCode: "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+      });
+      expect((await g.placeOco(pair)).idempotentReplay).toBe(true);
+      expect(client.orders).toHaveLength(1);
+    },
+  );
+
+  it.each(["full", "partial", "cancelled", "unknown"])(
+    "withholds second dispatch after a %s first-leg update",
+    async (kind) => {
+      const client = new MockClient();
+      const original = client.reconcileRaw.bind(client);
+      let reads = 0;
+      vi.spyOn(client, "reconcileRaw").mockImplementation(() => {
+        if (++reads === 2) {
+          const e = event(
+            command("BUY"),
+            kind === "cancelled" ? 5 : kind === "unknown" ? 99 : 2,
+          );
+          if (kind === "full" || kind === "partial") {
+            e.order!.executedVolume = kind === "full" ? "100" : "50";
+            e.order!.executionPrice = 2001;
+            client.deliver({ ...e, executionType: kind === "full" ? 3 : 11 });
+          } else client.deliver(e);
+        }
+        return original();
+      });
+      const result = await gateway(client).placeOco([
+        command("BUY"),
+        command("SELL"),
+      ]);
+      expect(result.orders[1]?.brokerOrderId).toBe(null);
+      expect(client.orders).toHaveLength(1);
+    },
+  );
+
+  it.each([false, true])(
+    "cancels a late-acknowledged peer; cancellation failure=%s stays uncertain",
+    async (failCancel) => {
+      const client = new MockClient();
+      const original = client.placeStopLimit.bind(client);
+      vi.spyOn(client, "placeStopLimit").mockImplementation(
+        async (order, slippage) => {
+          if (order.side === "SELL") client.fill("client-BUY", 2001);
+          const result = await original(order, slippage);
+          return structuredClone(result);
+        },
+      );
+      if (failCancel)
+        vi.spyOn(client, "cancelOrder").mockRejectedValue(new Error("timeout"));
+      const cancel = vi.spyOn(client, "cancelOrder");
+      const g = gateway(client);
+      await g.placeOco([command("BUY"), command("SELL")]);
+      await vi.waitFor(() => expect(cancel).toHaveBeenCalledTimes(1));
+      const state = await g.reconcile("XAUUSD");
+      if (failCancel)
+        expect(state.reasonCodes).toContain(
+          "DEMO_OCO_CANCELLATION_RECONCILIATION_REQUIRED",
+        );
+      else
+        expect(
+          state.orders.find((o) => o.clientOrderId === "client-SELL")?.state,
+        ).toBe("CANCELLED");
+    },
+  );
+
+  it("does not let a stale acceptance erase a fill received before placement resumes", async () => {
+    const client = new MockClient();
+    const original = client.placeStopLimit.bind(client);
+    vi.spyOn(client, "placeStopLimit").mockImplementation(
+      async (order, slippage) => {
+        const response = structuredClone(await original(order, slippage));
+        if (order.side === "BUY") client.fill("client-BUY", 2001);
+        return response;
+      },
+    );
+    const result = await gateway(client).placeOco([
+      command("BUY"),
+      command("SELL"),
+    ]);
+    expect(result.orders[0]).toMatchObject({
+      state: "FILLED",
+      filledVolume: "100",
+    });
+    expect(client.orders).toHaveLength(1);
   });
 });
