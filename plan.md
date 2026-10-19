@@ -2,6 +2,21 @@
 
 ## Scope
 
+### ISSUE-319 — Cost-aware fast-exit research
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/319.
+- Dependencies: #253/#255 causal research, #289 measurement; execution corrections tracked separately in #318.
+- Acceptance: isolated baseline/small-profit/giveback comparisons, delayed executable quotes and original protection, all censored outcomes, pre-intent fee estimates with counterfactual net unknown, frozen future windows and immutable reports; full tests and qualification.
+- Status: implemented; full qualification passes at `/tmp/scalper-qualification-gSffJ6/checks` (888 Node, 90 isolated PostgreSQL, 361 Python, formatting/lint/types/build/schema/migration/fail-closed/secret scan/dependency audits). Exploratory October 19 sample remains HOLD; prospective registration pending. No trading strategy change.
+- Report: [fast exits](docs/fast-exit-research-report.md).
+
+### ISSUE-321 — Manual multi-timeframe breakout specification
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/321.
+- Dependencies: #318 execution, #289 measurement, #290 protocol; operator clarification of discretionary exits and runner selection.
+- Acceptance: explicit range/trigger/limit/invalidation/exit rules, cost-normalized comparison and prospective evaluation specification; no automatic promotion or fixed-lot copying.
+- Status: private workbook review complete; proposal only. Account identifiers and detailed financial results remain private. Current fade-exit research does not test this breakout method.
+
 ### ISSUE-303 — Codex production provider integration
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/303.
