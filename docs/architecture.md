@@ -1,5 +1,8 @@
 # Architecture
 
+Production proposals use subscription Codex; legacy API routes are disabled. See
+[provider contract](codex-production-report.md).
+
 Current source policy: `0.3.0-fade-limit.3`; provider prompt `entry-pair-v4`.
 The AI proposes two prices. Deterministic code owns the quote-adjacent fade LIMIT
 transform, protection, shared dynamic 1% setup budget, broker precision/margin,
@@ -85,7 +88,7 @@ flowchart LR
   Market --> Analytics[Python completed-candle analytics]
   Analytics --> Coordinator[Execution coordinator]
   Coordinator --> Claim[Durable context request claim]
-  Claim --> AI[Asynchronous AI orchestrator / EPRToken]
+  Claim --> AI[AI orchestrator / isolated Codex worker]
   AI --> Context[Immutable five-minute entry pair]
   Context --> Coordinator
   Coordinator --> Risk[Deterministic risk engine]
@@ -127,7 +130,7 @@ loopback and deployments support Debian/systemd.
    five minutes using a transaction/advisory lock for failed/unknown or unconsumed contexts.
    A uniquely claimed post-close or proven zero-fill cancellation request can start earlier after complete terminal evidence; active groups prohibit requests. The source analysis links
    the recorded numeric market inputs. A separate task calls `/v2/entry-pair`, using
-   exact `grok-4.5`, prompt `entry-pair-v4`, two readable prices, and
+   requested `gpt-6.1-sol`, prompt `entry-pair-v4`, two readable prices, and
    structured completed-candle tails (M1 120 / M5 72 / M15 48). The text-only
    model receives no image; exact provider input, prompt and available output are
    durably journaled. Historical chart bytes remain protected. Completion/failure
@@ -137,7 +140,7 @@ loopback and deployments support Debian/systemd.
    account/symbol/mode cooldown survives a model change.
 6. `EntryPairHttpPlanner` independently reads the raw prices, binds local identity
    and time, and checks the internal prompt hash, requested pin and telemetry.
-   Returned model identity is recorded without gating entry acceptance.
+   Returned backend identity, usage and cost are unavailable and remain null.
    `scenarioOco` uses the unconsumed entry prices directly in a schema-2.1 pair;
    its technical-map fields describe mechanical order geometry. No ATR corridor
    or model target-room check applies. Wrong-side prices, unaffordable local exits

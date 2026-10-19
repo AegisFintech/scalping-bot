@@ -3,6 +3,8 @@ import type pg from "pg";
 import { describe, expect, it, vi } from "vitest";
 import {
   MONEY_MANAGEMENT,
+  FIXED_DEFAULTS,
+  usesFadeV3,
   ORDER_LIFECYCLE,
   resolveRuntimeEnvironment,
 } from "../../packages/config/src/policy.js";
@@ -34,7 +36,7 @@ describe("fixed percentage policy, synthetic risk evidence only", () => {
       ORDER_EXPIRY_MIN_SECONDS: "60",
       ORDER_EXPIRY_MAX_SECONDS: "180",
       PREFERRED_ORDER_EXPIRY_SECONDS: "180",
-      AI_MODEL: "grok-4.5",
+      AI_MODEL: "gpt-6.1-sol",
       LIVE_TRADING_ENABLED: "false",
     });
     expect(() =>
@@ -221,4 +223,12 @@ describe("fixed percentage policy, synthetic risk evidence only", () => {
     });
     expect(query.mock.calls[1]?.[0]).toContain("RETURNING locked_out");
   });
+});
+
+it("gives Codex a new immutable registry identity without changing v3 economics", () => {
+  expect(FIXED_DEFAULTS.STRATEGY_VERSION).toBe("0.3.0-fade-limit.3-codex.1");
+  expect(FIXED_DEFAULTS.CODE_VERSION).toBe("0.3.0-codex.1");
+  expect(usesFadeV3(FIXED_DEFAULTS.STRATEGY_VERSION)).toBe(true);
+  expect(usesFadeV3("0.3.0-fade-limit.3")).toBe(true);
+  expect(usesFadeV3("0.3.0-fade-limit.2")).toBe(false);
 });

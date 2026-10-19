@@ -2,6 +2,15 @@
 
 ## Scope
 
+### ISSUE-303 — Codex production provider integration
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/303.
+- Dependencies: merged transport #311; operational recovery superseded by the separately authorized fresh epoch #314, not by relabelling old conflicts.
+- Acceptance: production factory exclusively uses subscription Codex, additive model migration, immutable requests/provenance, no legacy-provider dispatch/fallback, preserved cooldown/session/risk/protection, full qualification, isolated worker deployment and verified demo activation.
+- Status: complete local qualification passed at `/tmp/scalper-qualification-JOYsWJ/checks` (886 Node, 90 PostgreSQL, full Python suite and all audits). Policy/startup checks and graphify pass; immutable release activation and hosted qualification pending.
+- Report: [Codex production](docs/codex-production-report.md).
+- ISSUE-316 operational follow-up: old local databases and archives permanently removed by explicit operator request; fresh epoch unchanged. https://github.com/AegisFintech/scalping-bot/issues/316.
+
 ### ISSUE-314 — One-time fresh demo accounting epoch
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/314.

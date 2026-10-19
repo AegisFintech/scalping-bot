@@ -1,3 +1,19 @@
+# ISSUE-303 — October 19 Codex production authorization
+
+The operator explicitly requested “use codex instead”. Production entry proposals
+use the isolated subscription-authenticated Codex worker, requested `gpt-6.1-sol`,
+with no API-provider fallback. Returned identity, usage and cost remain null when
+unattested. Migration 0029 preserves earlier model rows. Preserve the current
+fade transform, entry-pair-v4 prompt, shared 1% dynamic risk, GTC/protection,
+all session/account gates and the fresh epoch's claims/history. Read
+`docs/codex-production-report.md`. This supersedes earlier Grok provider instructions;
+it does not authorize strategy promotion or another accounting reset.
+
+ISSUE-316: the operator subsequently required permanent removal of old local
+trading records. That cleanup is complete; the pre-epoch database/archive is no
+longer available for restore/research. Source/Git history remains. Do not restore
+old state or treat deleted evidence as proven recovery. Preserve current records.
+
 # ISSUE-314 — October 19 one-time fresh demo authorization
 
 The operator explicitly authorized a fresh start after the legacy conflict audit.

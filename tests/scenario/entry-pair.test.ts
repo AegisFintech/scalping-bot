@@ -6,14 +6,13 @@ import {
   bindEntryPrices,
   validateEntryPlan,
 } from "../../packages/scenario-engine/src/entry-plan.js";
-import {
-  ENTRY_PAIR_PROMPT,
-  EntryPairPlanner,
-} from "../../packages/scenario-engine/src/entry-planner.js";
+import { ENTRY_PAIR_PROMPT } from "../../packages/scenario-engine/src/entry-planner.js";
 import { EntryPairHttpPlanner } from "../../packages/scenario-engine/src/entry-http-planner.js";
 import { scenarioOco } from "../../packages/scenario-engine/src/oco.js";
-import { createAiServer } from "../../apps/ai-orchestrator/src/index.js";
-import { OpenAiCompatibleClient } from "../../packages/ai-client/src/client.js";
+import {
+  createAiServer,
+  createProductionAiOptions,
+} from "../../apps/ai-orchestrator/src/index.js";
 import type { ReplayInput } from "../../packages/scenario-engine/src/replay.js";
 import type { CandleSeries } from "../../packages/contracts/src/index.js";
 import { analysisChart } from "../helpers/analysis-chart.js";
@@ -140,7 +139,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
     expect(response.buy_stop.risk_reward_ratio).toBe("0.5");
     expect(response.setup_tags).toEqual(["DIRECT_ENTRY_PAIR_OCO"]);
   });
-  it("serves the actual entry HTTP route, binds local provenance and preserves readable returned identities", async () => {
+  it("serves Codex through the production factory with unknown returned identity and immutable prompt", async () => {
     const at = new Date(
       Math.floor(Date.now() / 900_000) * 900_000,
     ).toISOString();
@@ -181,39 +180,38 @@ describe("direct entries (synthetic, no broker authority)", () => {
       quote: { bid: "4404.95", ask: "4405.15", sourceTime: at, receivedAt: at },
       minimumStopDistance: "0.01",
     };
+    const rawResponse = '{"buy_stop":"4410","sell_stop":"4400"}';
+    const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
+    const receipt = {
+      version: "codex-entry-response-1.0",
+      analysisId: input.analysisId,
+      requestedModel: "gpt-6.1-sol",
+      returnedModel: null,
+      promptSha256: createHash("sha256").update(promptText).digest("hex"),
+      capturedAt: at,
+      receivedAt: at,
+      entries: { buy_stop: "4410", sell_stop: "4400" },
+      rawResponse,
+      inputTokens: null,
+      outputTokens: null,
+      costAmount: null,
+      executionAuthority: false,
+    };
     const fetchImpl = vi.fn<typeof fetch>(() =>
-      Promise.resolve(
-        Response.json({
-          model: "provider-normalized-identity",
-          choices: [
-            {
-              message: {
-                content: '{"buy_stop":4410,"sell_stop":4400,"other":"ignored"}',
-              },
-            },
-          ],
-        }),
+      Promise.resolve(Response.json(receipt)),
+    );
+    const beforeDispatch = vi.fn(async () => {});
+    const server = createAiServer(
+      createProductionAiOptions(
+        {
+          AI_MODEL: "gpt-6.1-sol",
+          AI_PROVIDER: "codex-subscription",
+          CODEX_ENTRY_LOCAL_TOKEN: "x".repeat(32),
+        },
+        beforeDispatch,
+        fetchImpl,
       ),
     );
-    const planner = new EntryPairPlanner({
-      baseUrl: "https://example.com/v1",
-      apiKey: "fixture",
-      fetchImpl,
-      now: () => now,
-    });
-    const legacy = new OpenAiCompatibleClient({
-      baseUrl: "https://example.com/v1",
-      apiKey: "fixture",
-      model: "fixture",
-      apiStyle: "responses",
-      schemaPath: "schemas/model-response-2.1.json",
-      systemPromptPath: "prompts/system-v16.md",
-      promptVersion: "system-v16",
-    });
-    const server = createAiServer({
-      client: legacy,
-      entryPairPlanner: planner,
-    });
     try {
       const http = new EntryPairHttpPlanner(
         "http://127.0.0.1:8082",
@@ -230,7 +228,11 @@ describe("direct entries (synthetic, no broker authority)", () => {
           });
         },
       );
-      const result = await http.generate(input);
+      const result = await http.generate({
+        ...input,
+        chart: null,
+        schemaVersion: "2.0",
+      });
       const providerBodyValue = fetchImpl.mock.calls[0]?.[1]?.body;
       if (typeof providerBodyValue !== "string")
         throw new Error("fixture-provider-body");
@@ -238,18 +240,19 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.model).toBe("grok-4.5");
-      expect(providerBody.reasoning_effort).toBe("low");
-      expect(providerBody.messages).toBeDefined();
+      expect(providerBody.version).toBe("codex-entry-request-1.0");
+      expect(fetchImpl.mock.calls[0]?.[0]).toBe(
+        "http://127.0.0.1:8084/v1/entry-proposals",
+      );
+      expect(beforeDispatch).toHaveBeenCalledOnce();
       expect(result.response).toMatchObject({
         buy_stop: "4410",
         sell_stop: "4400",
         analysis_id: input.analysisId,
       });
-      expect(result.telemetry.returnedModel).toBe(
-        "provider-normalized-identity",
-      );
-      expect(result.rawResponse).toContain('"other"');
+      expect(result.telemetry.returnedModel).toBeNull();
+      expect(result.telemetry.costAmount).toBeNull();
+      expect(result.rawResponse).toBe(rawResponse);
       const numeric = await http.generate({
         ...input,
         chart: null,
@@ -267,11 +270,16 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const requestBody = fetchImpl.mock.calls.at(-1)?.[1]?.body;
       if (typeof requestBody !== "string") throw new Error("fixture-body");
-      const request = JSON.parse(requestBody) as { messages: unknown[] };
-      expect(request.messages[0]).toEqual({
-        role: "system",
-        content: prompt,
-      });
+      const request = JSON.parse(requestBody) as { promptSha256: string };
+      expect(request.promptSha256).toBe(receipt.promptSha256);
+      for (const url of ["/v1/scenario", "/v1/analyze"]) {
+        const disabled = await server.inject({
+          method: "POST",
+          url,
+          payload: {},
+        });
+        expect(disabled.statusCode).toBe(503);
+      }
       for (const mismatch of [
         { version: "entry-pair-v1" },
         { content: "unreviewed prompt" },
@@ -304,17 +312,12 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       expect(legacyWithoutImage.statusCode).toBe(400);
       fetchImpl.mockResolvedValueOnce(
-        Response.json({
-          model: "grok-4.5",
-          choices: [{ message: { content: '{"buy_stop":"4410"}' } }],
-        }),
+        Response.json({ ...receipt, requestedModel: "grok-4.5" }),
       );
       await expect(
         http.generate({ ...input, chart: null, schemaVersion: "2.0" }),
-      ).rejects.toMatchObject({
-        message: "AI_ENTRY_PRICE_MISSING",
-        rawResponse: '{"buy_stop":"4410"}',
-      });
+      ).rejects.toThrow("AI_ANALYSIS_FAILED");
+      expect(fetchImpl).toHaveBeenCalledTimes(3);
     } finally {
       await server.close();
       vi.useRealTimers();

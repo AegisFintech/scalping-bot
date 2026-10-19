@@ -1,5 +1,5 @@
 [Unit]
-Description=Isolated Codex entry proposal transport (opt-in, no execution authority)
+Description=Isolated Codex entry proposal transport (no execution authority)
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=300
@@ -34,5 +34,5 @@ ReadWritePaths=/var/lib/scalper-research
 InaccessiblePaths=-/root -/opt/ctrader-ai-scalper -/run/postgresql
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 
-# Deliberately no Install section: qualification and explicit provider activation
-# must precede any service enablement. Credentials alone never select this route.
+[Install]
+WantedBy=multi-user.target

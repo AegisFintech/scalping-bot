@@ -115,16 +115,12 @@ storage; back up `.runtime/analysis-charts` together with PostgreSQL.
 
 ## Model and decision path
 
-The operator-selected model is now `grok-4.5`. The EPRToken chat-completions endpoint
-must return this exact identity.
-Every reply undergoes independent local schema and semantic validation. Both identifiers, timing and available token usage are
-retained; pricing remains unknown. See [model-switch evidence](docs/grok-model-switch-report.md).
-No fallback model is substituted. Temperature remains omitted; the scenario
-planner uses Grok's supported low reasoning effort within the existing deadline.
-Historical model observations remain immutable; a switch does not establish improved fills.
+Production proposals use subscription-authenticated Codex, requested `gpt-6.1-sol`,
+through an isolated worker. No API-key fallback is used; returned backend identity,
+usage and cost remain unknown. See [Codex integration](docs/codex-production-report.md).
 
 The active scenario input contains up to 120 M1, 72 M5 and 48 M15 completed
-OHLCV bars as numeric data. The text-only Pro model receives no image; charts
+OHLCV bars as numeric data. Codex receives no image; charts
 remain verified and archived locally. New prompt `scenario-v3` uses the larger
 history to distinguish nearby structure from distant levels without selecting
 SL, TP or size. The bounded production tail is a latency safeguard; more history
@@ -153,11 +149,11 @@ with a polling decision loop, not institutional HFT. `DEFERRED` means waiting;
 
 ## Configuration and migration
 
-The normal [.env.sample](.env.sample) has **20 settings, down from 176 (88.6%)**.
+The normal [.env.sample](.env.sample) has **19 settings**.
 It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=grok-4.5` is explicit; other AI and strategy tuning is fixed in
+`AI_MODEL=gpt-6.1-sol` is explicit; other AI and strategy tuning is fixed in
 code. The authorized local migration reduced the populated `.env` from **176 to
 24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the

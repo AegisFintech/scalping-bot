@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import pino, { type Logger } from "pino";
 
 const SENSITIVE_KEY =
-  /(?:authorization|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|cookie|database[_-]?url|source[_-]?token|private[_-]?key)/i;
+  /(?:authorization|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|cookie|database[_-]?url|source[_-]?token|local[_-]?token|private[_-]?key)/i;
 const SENSITIVE_QUERY_KEY =
   /(?:token|key|secret|password|authorization|signature)/i;
 const BEARER = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi;

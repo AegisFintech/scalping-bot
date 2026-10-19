@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { FIXED_DEFAULTS } from "../../config/src/policy.js";
+import { HISTORICAL_API_MODEL } from "../../config/src/policy.js";
 import { returnedModelMatches } from "../../ai-client/src/model-identity.js";
 import {
   boundedResponseText,
@@ -75,10 +75,10 @@ export class ScenarioHttpPlanner {
       throw new Error("SCENARIO_PROMPT_MISMATCH");
     const telemetry = providerTelemetrySchema.parse(envelope.telemetry);
     if (
-      envelope.model !== FIXED_DEFAULTS.AI_MODEL ||
+      envelope.model !== HISTORICAL_API_MODEL ||
       telemetry.inputProfile !== "structured" ||
-      telemetry.requestedModel !== FIXED_DEFAULTS.AI_MODEL ||
-      !returnedModelMatches(FIXED_DEFAULTS.AI_MODEL, telemetry.returnedModel)
+      telemetry.requestedModel !== HISTORICAL_API_MODEL ||
+      !returnedModelMatches(HISTORICAL_API_MODEL, telemetry.returnedModel)
     )
       throw new Error("SCENARIO_PROVIDER_IDENTITY_MISMATCH");
     const plan = validatePlan(envelope.rawResponse, {
@@ -86,7 +86,7 @@ export class ScenarioHttpPlanner {
       availableAt: new Date().toISOString(),
     });
     return {
-      model: FIXED_DEFAULTS.AI_MODEL,
+      model: HISTORICAL_API_MODEL,
       response: plan,
       rawResponse: envelope.rawResponse,
       promptArtifact: expected,

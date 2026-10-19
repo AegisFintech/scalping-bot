@@ -1,5 +1,5 @@
 import type { Quote } from "../../contracts/src/index.js";
-import { FIXED_DEFAULTS } from "../../config/src/policy.js";
+import { HISTORICAL_API_MODEL } from "../../config/src/policy.js";
 import {
   OpenAiCompatibleClient,
   type AiAnalysisResult,
@@ -101,7 +101,7 @@ export class EntryPairPlanner {
       options.client ??
       new OpenAiCompatibleClient<EntryPairPlan>({
         ...options,
-        model: FIXED_DEFAULTS.AI_MODEL,
+        model: HISTORICAL_API_MODEL,
         // EPRToken's Grok route supports the OpenAI-compatible chat contract;
         // its Responses route rejects the structured reasoning field below.
         apiStyle: "chat_completions",

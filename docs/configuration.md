@@ -1,8 +1,7 @@
 # Configuration and migration
 
 Current release `0.3.0-fade-limit.3` uses the versioned fade LIMIT policy in
-`packages/config/src/policy.ts`. The normal template has 20 assignments, previously
-176: 156 fewer, an 88.6% reduction. These include secrets and deployment identity;
+`packages/config/src/policy.ts`. The normal template has 19 assignments (Codex local token replaces the API endpoint/key), previously 176. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
 reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
 four retained deployment credentials/identifiers. No credentials were changed.
@@ -59,7 +58,7 @@ remain enforced. See [rollout and rollback](demo-development-risk-report.md).
 | Instance and account identity                 | `INSTANCE_ID`, `ACCOUNT_ID`, `ACCOUNT_KEY`, `TRADING_SYMBOL`                                                           |
 | Explicit operation                            | `TRADING_MODE`, `EMERGENCY_STOP`, `AUTOMATIC_ANALYSIS_ENABLED`, `DEMO_TRADING_ENABLED`, `DEMO_TRADING_ACKNOWLEDGEMENT` |
 | cTrader credentials                           | `CTRADER_CLIENT_ID`, `CTRADER_CLIENT_SECRET`, `CTRADER_ACCESS_TOKEN`, `CTRADER_REFRESH_TOKEN`                          |
-| EPRToken deployment                           | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`                                                                                |
+| Codex subscription transport                  | `CODEX_ENTRY_LOCAL_TOKEN`, `AI_MODEL`                                                                                  |
 | Persistence, controls, optional observability | `DATABASE_URL`, `DASHBOARD_CONTROL_TOKEN`, `BETTERSTACK_SOURCE_TOKEN`, `BETTERSTACK_INGESTING_HOST`                    |
 
 Blank cTrader host/port use the official selected demo/live connection host and
@@ -72,16 +71,16 @@ No setting can make this build submit live orders. Shadow uses a separately
 specified connection environment without submission authority. An API key or
 broker token is not an authorization to trade.
 
-The model pin is visible as `AI_MODEL=grok-4.5`, and a different nonempty
-model is rejected. ISSUE-111 changes only this assignment in a populated file,
-preserving all credentials and operator controls. Forward migration
-`0026_grok_context_model.sql` admits Grok while preserving historical
-Astra/Sol/DeepSeek rows and request cooldowns. Deploy matching AI/execution builds together.
+The model pin is `AI_MODEL=gpt-6.1-sol`; other nonempty values fail policy checks.
+Production uses the isolated subscription Codex worker, not retained API credentials.
+Apply additive migration `0029_codex_context_model.sql` before matching AI/execution
+builds; preserve all old rows/cooldowns. Returned identity/usage/cost stay null when
+unattested. See [provider integration and deployment](codex-production-report.md).
 The production scenario
 uses structured numeric history (up to 120 M1 / 72 M5 / 48 M15 completed bars),
-production prompt `entry-pair-v4`, low reasoning and at most 1,024 output
-tokens within the existing
-90-second deadline. Historical charts remain validated local audit artifacts;
+production prompt `entry-pair-v4` and low reasoning within the existing
+90-second deadline. The worker accepts at most 8,192 bytes of response text;
+actual token usage is unavailable. Historical charts remain validated local audit artifacts;
 new numeric analyses generate display charts only on demand. Request bounds,
 indicator periods, scheduling, execution thresholds and risk percentages are
 managed in versioned code; no extra environment tuning keys are introduced.

@@ -1,6 +1,13 @@
 import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
+export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
+export const HISTORICAL_API_MODEL = "grok-4.5";
+export const CODEX_STRATEGY_VERSION = "0.3.0-fade-limit.3-codex.1";
+/** Provider revision preserves every v3 economic constant and admission threshold. */
+export function usesFadeV3(version: string): boolean {
+  return version === "0.3.0-fade-limit.3" || version === CODEX_STRATEGY_VERSION;
+}
 export const POLICY_VERSION = "0.3.0-fade-limit.3";
 export const STOP_EXECUTION_POLICY = {
   orderType: "STOP",
@@ -111,7 +118,8 @@ export const FIXED_DEFAULTS = {
   LOCAL_MARKET_RECORD_INTERVAL_MS: "250",
   LOCAL_MARKET_RECORD_SEGMENT_SECONDS: "300",
   LOCAL_MARKET_RECORD_MAX_SEGMENTS: "2016",
-  AI_MODEL: "grok-4.5",
+  AI_MODEL: CODEX_ENTRY_MODEL,
+  AI_PROVIDER: "codex-subscription",
   AI_API_STYLE: "responses",
   AI_TIMEOUT_MS: "45000",
   AI_MAX_RETRIES: "0",
@@ -158,8 +166,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: "0.3.0-fade-limit.3",
-  CODE_VERSION: "0.3.0-fade-limit.3",
+  STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
+  CODE_VERSION: "0.3.0-codex.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
@@ -167,8 +175,7 @@ export const FIXED_DEFAULTS = {
 export const OPERATOR_KEYS = [
   "ACCOUNT_ID",
   "ACCOUNT_KEY",
-  "AI_API_KEY",
-  "AI_BASE_URL",
+  "CODEX_ENTRY_LOCAL_TOKEN",
   "AI_MODEL",
   "AUTOMATIC_ANALYSIS_ENABLED",
   "BETTERSTACK_INGESTING_HOST",
