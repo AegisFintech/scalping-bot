@@ -128,3 +128,88 @@ position-ID type guard also passes lint. The frozen checkout remains clean at
 `984f479`; read-only demo status still reports the original journal conflict.
 Source delivery does not claim operational recovery. This final documentation
 receipt will also receive exact-head CI before the evidence-only PR merges.
+
+## Full-group attestation implementation
+
+The follow-up adds migration 0028 and a separate bounded history-attempt journal.
+One closed demo group is durably claimed per maintenance pass, with five-minute
+backoff and at most three attempts per rolling day. Requests for order history,
+deal history and reconciliation run serially. Windows exceeding seven days,
+paginated/oversized histories, stale replies, non-flat account state, unknown
+costs, partial entries and additional unresolved event kinds reject. Rejected
+or verified variant sets are not automatically refetched; new retained variants
+allow another bounded attempt. No unknown request is immediately replayed.
+
+The proof requires both exact owned terminal entry orders, explicit zero-fill
+peer evidence, all entry/close deals, closed positions and trades, matching
+identities, prices, volumes, timestamps, commissions, swap, FX fees and net P/L.
+One or two fully filled legs are supported. Partial/race cases outside this
+strict contract remain blocked. Broker position protection is not reconstructed
+for entry history comparison and history does not assert fresh protection.
+
+Callback persistence and terminal reconciliation share a bounded scope lock.
+The independent history fetch holds no database transaction. Completion rereads
+the local snapshot, and terminal reconciliation rereads it again before using a
+verified attempt. The snapshot binds original event facts and every variant;
+only resolution-marker booleans are excluded from its digest for idempotent
+restart use. The proof checker never ignores conflicting facts just because a
+marker was previously resolved. A new variant or financial mutation invalidates
+the proof. Original payloads/reasons/mapping remain immutable; resolution links
+use `history:<attempt UUID>`, not a fabricated broker callback.
+
+Missing pre-0027 variants remain `DEMO_TERMINAL_VARIANT_MISSING_REVIEW_REQUIRED`.
+This policy cannot establish what the discarded callback contained and does not
+unlock the October incident. An explicit separately reviewed legacy transition
+would be required; no accounting baseline, trade, provider or strategy changes
+are included. Frozen observer checkout remains clean at `984f479`.
+
+Migration 0028 is additive. Rollback reverts application readers while retaining
+both evidence tables; never drop evidence or restore an older trading database.
+No operational migration or restart has been performed.
+
+Validation: the first isolated run exposed an invalid use of the callback
+normalizer without an entry position. Entry history now directly compares raw
+order/deal facts against local fills without fabricating a position. The rerun
+passes 85 PostgreSQL lifecycle tests and all Python tests (`npm run qualify --
+--database-only`, `/tmp/scalper-qualification-4xPMeH/checks`). Added regressions cover
+full-group success/restart, missing variants/costs/zero-fill volume, contradictory
+fees/peers, extra deals, stale/truncated histories, broker failure/backoff, new
+variants and mutation during retrieval. Full final qualification is pending.
+
+The complete local qualification (`npm run qualify`) passed every required gate,
+including both audits, 85 PostgreSQL tests and 288 Python tests, with evidence at
+`/tmp/scalper-qualification-8z7kf7/checks`. Final review extends the positive
+lifecycle fixture to include native close acknowledgements/amendments. These are
+eligible only when their exact order/position has the separately verified closing
+fill; unrelated or missing-child evidence remains rejected. That final adjustment
+requires focused database and exact-head full hosted qualification before merge.
+
+The extended fixture confirms the original close already resolves its acceptance
+marker; the remaining conflict and amendment resolve together (two updates).
+Entry history also checks the broker's original requested volume against the
+approved normalized order volume; matching executed volume alone is insufficient.
+
+Final focused database qualification passes 86 PostgreSQL lifecycle cases and
+288 Python tests (`/tmp/scalper-qualification-hvYcU3/checks`). The frozen source
+remains untouched. Full hosted checks on the pushed head are required before merge.
+
+Attestations are explicitly versioned `full-group-v1`; the resolver rejects an
+unknown verifier version rather than inheriting another policy's conclusions.
+Any future proof-policy change must use a new version and requalification.
+
+The verifier-version rejection case also passes: final isolated qualification
+reports **87 PostgreSQL tests and 288 Python tests** at
+`/tmp/scalper-qualification-uEglj3/checks`. Focused history proof remains 22/22;
+TypeScript and focused ESLint pass. Final-head full CI remains the merge gate.
+
+Full-group implementation PR: https://github.com/AegisFintech/scalping-bot/pull/310.
+Both exact-head hosted qualifications must pass before this PR becomes mergeable;
+#301 remains open for legacy incident policy and verified operational activation.
+
+Final code and linked-report qualification: both full `npm run qualify` runs pass
+on `4ba38c72a5b9f9eef1aefe58a3bcac4e4849c084`:
+[push 39198803973](https://github.com/AegisFintech/scalping-bot/actions/runs/39198803973)
+and [PR 39198806264](https://github.com/AegisFintech/scalping-bot/actions/runs/39198806264).
+All required formatting, lint, types/build, Node/schema/migration/replay, Python,
+isolated PostgreSQL, secret and dependency-audit gates pass. This documentation
+receipt will receive final-head checks too. No runtime activation is claimed.

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type pg from "pg";
 
 import { createPool, migrate } from "../../packages/database/src/index.js";
@@ -10,6 +10,12 @@ import type { BrokerExecution } from "../../packages/ctrader-client/src/client.j
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
 import { DemoExecutionRecoveryRunner } from "../../apps/execution-service/src/demo-execution-recovery-runner.js";
+
+import {
+  TerminalHistoryAttestor,
+  readTerminalGroup,
+} from "../../apps/execution-service/src/terminal-history-attestor.js";
+import { proveTerminalGroup } from "../../apps/execution-service/src/terminal-group-proof.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
 const suite = connectionString ? describe : describe.skip;
@@ -177,6 +183,232 @@ suite(
         ) as Record<Step, ReturnType<typeof normalize>>,
       };
     }
+
+    async function attestationFixture() {
+      const s = await setup();
+      await s.restart().persist(s.events.accepted);
+      await s.restart().persist(s.events.amended);
+      await s.restart().persist(s.events.peerCancelled);
+      await s.restart().persist(s.events.closed);
+      const changed = structuredClone(s.rawEvents.closed);
+      changed.position!.takeProfit = 2007;
+      await s.restart().persist(s.normalize(changed), "BROKER_CALLBACK");
+      const now = new Date(Date.parse(s.events.closed.occurredAt) + 10_000);
+      const receivedAt = now.toISOString();
+      const history = {
+        orders: {
+          orders: [
+            s.entry.order!,
+            s.rawEvents.peerCancelled.order!,
+            s.rawEvents.closed.order!,
+          ],
+          hasMore: false,
+          receivedAt,
+        },
+        deals: {
+          deals: [s.entry.deal!, s.rawEvents.closed.deal!],
+          hasMore: false,
+          receivedAt,
+        },
+        reconciliation: { orders: [], positions: [], receivedAt },
+      };
+      const calls: string[] = [];
+      const broker = {
+        orderHistoryRaw: vi.fn(() => {
+          calls.push("orders");
+          return Promise.resolve(history.orders);
+        }),
+        dealHistoryRaw: vi.fn(() => {
+          calls.push("deals");
+          return Promise.resolve(history.deals);
+        }),
+        reconcileRaw: vi.fn(() => {
+          calls.push("reconcile");
+          return Promise.resolve(history.reconciliation);
+        }),
+      };
+      const attestor = () =>
+        new TerminalHistoryAttestor({
+          pool,
+          accountId: s.accountId,
+          symbolId: s.symbolId,
+          brokerSymbol: "7",
+          client: broker,
+          now: () => now,
+        });
+      const snapshot = () => readTerminalGroup(pool, s.groupId);
+      return { ...s, history, now, calls, broker, attestor, snapshot };
+    }
+
+    it("attests the complete group serially and resolves a retained context-only conflict across restarts", async () => {
+      const s = await attestationFixture();
+      expect(
+        proveTerminalGroup(await s.snapshot(), s.history, "7", s.now).reason,
+      ).toBeNull();
+      await s.attestor().run();
+      expect(s.calls).toEqual(["orders", "deals", "reconcile"]);
+      const attempts = await pool.query<{
+        status: string;
+        reason_code: string | null;
+      }>(
+        "SELECT status,reason_code FROM broker_terminal_history_attempts WHERE order_group_id=$1",
+        [s.groupId],
+      );
+      expect(attempts.rows).toEqual([
+        { status: "VERIFIED", reason_code: null },
+      ]);
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: true,
+        resolvedEventCount: 2,
+        terminalOrderGroupId: s.groupId,
+      });
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: true,
+        resolvedEventCount: 0,
+        terminalOrderGroupId: s.groupId,
+      });
+      await s.attestor().run();
+      expect(s.calls).toHaveLength(3);
+      const row = await pool.query<{
+        normalized_payload: unknown;
+        mapping_state: string;
+        resolution_event_key: string;
+      }>(
+        "SELECT normalized_payload,mapping_state,resolution_event_key FROM broker_execution_events WHERE account_id=$1 AND broker_event_key=$2",
+        [s.accountId, s.events.closed.eventKey],
+      );
+      expect(row.rows[0]).toMatchObject({
+        normalized_payload: s.events.closed,
+        mapping_state: "CONFLICT",
+      });
+      expect(row.rows[0]?.resolution_event_key).toMatch(/^history:/);
+    });
+
+    it.each([
+      "missing_variant",
+      "fee",
+      "extra_deal",
+      "peer",
+      "stale",
+      "truncated",
+      "missing_entry_cost",
+      "missing_peer_volume",
+      "entry_order_volume",
+    ])(
+      "rejects incomplete or conflicting group evidence: %s",
+      async (fault) => {
+        const s = await attestationFixture();
+        if (fault === "missing_variant")
+          await pool.query(
+            "DELETE FROM broker_execution_event_variants WHERE event_id IN (SELECT id FROM broker_execution_events WHERE account_id=$1)",
+            [s.accountId],
+          );
+        if (fault === "fee")
+          await pool.query(
+            "UPDATE trades SET fees=fees-1 WHERE order_group_id=$1",
+            [s.groupId],
+          );
+        if (fault === "extra_deal")
+          s.history.deals.deals.push({ ...s.entry.deal!, dealId: "999" });
+        if (fault === "entry_order_volume")
+          (
+            s.history.orders.orders[0]!.tradeData as Record<string, unknown>
+          ).volume = "200";
+        if (fault === "peer") s.history.orders.orders[1]!.orderStatus = 1;
+        if (fault === "stale")
+          s.history.reconciliation.receivedAt = new Date(
+            s.now.getTime() - 31_000,
+          ).toISOString();
+        if (fault === "truncated") s.history.deals.hasMore = true;
+        if (fault === "missing_entry_cost")
+          delete s.history.deals.deals[0]!.commission;
+        if (fault === "missing_peer_volume")
+          delete s.history.orders.orders[1]!.executedVolume;
+        expect(
+          proveTerminalGroup(await s.snapshot(), s.history, "7", s.now).reason,
+        ).not.toBeNull();
+        await s.attestor().run();
+        expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+          certain: false,
+          resolvedEventCount: 0,
+        });
+      },
+    );
+
+    it("invalidates verified history after a new variant and does not reuse a stale proof", async () => {
+      const s = await attestationFixture();
+      await s.attestor().run();
+      const changed = structuredClone(s.rawEvents.closed);
+      changed.position!.takeProfit = 2008;
+      await s.restart().persist(s.normalize(changed), "BROKER_CALLBACK");
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: false,
+        resolvedEventCount: 0,
+      });
+    });
+
+    it("retains a bounded failed attempt on broker error and blocks immediate retries", async () => {
+      const s = await attestationFixture();
+      s.broker.orderHistoryRaw.mockRejectedValueOnce(
+        new Error("private broker diagnostic"),
+      );
+      await s.attestor().run();
+      await s.attestor().run();
+      expect(s.broker.orderHistoryRaw).toHaveBeenCalledTimes(1);
+      expect(s.broker.dealHistoryRaw).not.toHaveBeenCalled();
+      const attempts = await pool.query<{
+        status: string;
+        reason_code: string;
+      }>(
+        "SELECT status,reason_code FROM broker_terminal_history_attempts WHERE order_group_id=$1",
+        [s.groupId],
+      );
+      expect(attempts.rows).toEqual([
+        { status: "FAILED", reason_code: "DEMO_TERMINAL_HISTORY_FETCH_FAILED" },
+      ]);
+    });
+
+    it("rejects local mutation during the history request", async () => {
+      const s = await attestationFixture();
+      s.broker.reconcileRaw.mockImplementationOnce(async () => {
+        await pool.query(
+          "UPDATE trades SET fees=fees-1 WHERE order_group_id=$1",
+          [s.groupId],
+        );
+        return s.history.reconciliation;
+      });
+      await s.attestor().run();
+      const attempts = await pool.query<{
+        status: string;
+        reason_code: string;
+      }>(
+        "SELECT status,reason_code FROM broker_terminal_history_attempts WHERE order_group_id=$1",
+        [s.groupId],
+      );
+      expect(attempts.rows).toEqual([
+        {
+          status: "FAILED",
+          reason_code: "DEMO_TERMINAL_HISTORY_SOURCE_CHANGED",
+        },
+      ]);
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: false,
+        resolvedEventCount: 0,
+      });
+    });
+
+    it("rejects an attestation from an unrecognized verifier version", async () => {
+      const s = await attestationFixture();
+      await s.attestor().run();
+      await pool.query(
+        "UPDATE broker_terminal_history_attempts SET verifier_version='future-verifier' WHERE order_group_id=$1",
+        [s.groupId],
+      );
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: false,
+        resolvedEventCount: 0,
+      });
+    });
 
     it("retains closing variants with provenance across duplicates and restarts without self-resolving", async () => {
       const s = await setup();
