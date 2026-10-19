@@ -2,6 +2,22 @@
 
 ## Scope
 
+### ISSUE-318 — Directional slippage and OCO acknowledgement races
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/318.
+- Dependencies: #303 provider integration; #098 session gate and #095 terminal recovery.
+- Acceptance: side-aware adverse slippage, second-dispatch state recheck, late peer acknowledgement cancellation, monotonic fill state, local-unsent journaling, regression tests and full qualification.
+- Status: implementation complete; 41 gateway tests and full qualification pass at `/tmp/scalper-qualification-rFxoDM/checks` (format/lint/types/build, Node, isolated PostgreSQL, Python, schema/migration/fail-closed coverage, secret scan and dependency audits). Deployment is separate; no running service or risk state changed.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/320.
+- Report: [execution races](docs/oco-race-slippage-report.md).
+
+### ISSUE-319 — Cost-aware fast-exit research
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/319.
+- Dependencies: #253/#255 causal research; #289 measurement; execution fixes #318.
+- Acceptance: isolated conditional comparisons of baseline, small-profit and giveback exits; frozen candidates, delayed executable quotes, all censored outcomes, unknown counterfactual costs, tests and full qualification. No broker/promotion authority.
+- Status: authorized, next batch; current production exit geometry unchanged.
+
 ### ISSUE-303 — Codex production provider integration
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/303.

@@ -59,9 +59,11 @@ function safeJson(value: unknown): string {
 
 function locallyRejectedBySession(order: GatewayOrder): boolean {
   if (
-    !["MARKET_SESSION_CLOSED", "MARKET_SESSION_UNAVAILABLE"].includes(
-      order.reasonCode ?? "",
-    )
+    ![
+      "MARKET_SESSION_CLOSED",
+      "MARKET_SESSION_UNAVAILABLE",
+      "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+    ].includes(order.reasonCode ?? "")
   )
     return false;
   if (
