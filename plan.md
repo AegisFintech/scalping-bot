@@ -8,6 +8,7 @@
 - Dependencies: #303 provider integration; #098 session gate and #095 terminal recovery.
 - Acceptance: side-aware adverse slippage, second-dispatch state recheck, late peer acknowledgement cancellation, monotonic fill state, local-unsent journaling, regression tests and full qualification.
 - Status: implementation complete; 41 gateway tests and full qualification pass at `/tmp/scalper-qualification-rFxoDM/checks` (format/lint/types/build, Node, isolated PostgreSQL, Python, schema/migration/fail-closed coverage, secret scan and dependency audits). Deployment is separate; no running service or risk state changed.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/320.
 - Report: [execution races](docs/oco-race-slippage-report.md).
 
 ### ISSUE-319 — Cost-aware fast-exit research
