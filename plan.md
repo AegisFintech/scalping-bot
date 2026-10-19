@@ -17,7 +17,7 @@
 - Dependencies: #222 exact terminal lifecycle evidence; immutable #255 observer.
 - Acceptance: durable conflict variants/provenance, bounded separate historical attestation, strict full-group financial proof, legacy missing-variant policy, failure/restart tests, full qualification and verified deployment.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/308.
-- Status: additive evidence checkpoint pushed; 73 isolated PostgreSQL cases pass. Historical conflict remains blocked and no runtime change is claimed. Evidence checkpoint #309 passes both full hosted qualifications on 8773959.
+- Status: full-group history attestation implemented on `issue-301-history-attestation`; 87 isolated PostgreSQL cases and 288 Python tests pass. Complete local qualification passed before the final native-acknowledgement/volume regressions; exact-head hosted qualification is required. Missing legacy variants remain review-required; no runtime deployment or unlock claimed.
 - Report: [terminal conflict recovery](docs/terminal-conflict-recovery-report.md).
 
 ### ISSUE-306 — Isolated Codex research activation and aggregate feed

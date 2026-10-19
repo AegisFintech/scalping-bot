@@ -89,6 +89,7 @@ describe("migrations", () => {
       "0025_limit_execution.sql",
       "0026_grok_context_model.sql",
       "0027_execution_conflict_evidence.sql",
+      "0028_terminal_history_attestation.sql",
     ]);
     const sql = (
       await Promise.all(
