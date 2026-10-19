@@ -178,6 +178,130 @@ suite(
       };
     }
 
+    it("retains closing variants with provenance across duplicates and restarts without self-resolving", async () => {
+      const s = await setup();
+      await s.restart().persist(s.events.peerCancelled);
+      await s.restart().persist(s.events.closed);
+      const raw = structuredClone(s.rawEvents.closed);
+      raw.position!.takeProfit = 2007;
+      const changed = s.normalize(raw);
+      for (let i = 0; i < 2; i++)
+        await expect(
+          s.restart().persist(changed, "BROKER_CALLBACK"),
+        ).resolves.toMatchObject({ certain: false });
+      await s.restart().persist(changed, "HISTORY_RECONSTRUCTION");
+      const variants = await pool.query(
+        `SELECT v.payload_hash, v.normalized_payload, v.evidence_source
+         FROM broker_execution_event_variants v JOIN broker_execution_events e ON e.id=v.event_id
+         WHERE e.account_id=$1 ORDER BY v.evidence_source`,
+        [s.accountId],
+      );
+      expect(variants.rows).toEqual([
+        {
+          payload_hash: changed.payloadHash,
+          normalized_payload: changed,
+          evidence_source: "BROKER_CALLBACK",
+        },
+        {
+          payload_hash: changed.payloadHash,
+          normalized_payload: changed,
+          evidence_source: "HISTORY_RECONSTRUCTION",
+        },
+        {
+          payload_hash: s.events.closed.payloadHash,
+          normalized_payload: s.events.closed,
+          evidence_source: "ORIGINAL_JOURNAL",
+        },
+      ]);
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: false,
+        resolvedEventCount: 0,
+      });
+      const original = await pool.query(
+        `SELECT payload_hash, normalized_payload, resolved_at FROM broker_execution_events
+         WHERE account_id=$1 AND broker_event_key=$2`,
+        [s.accountId, changed.eventKey],
+      );
+      expect(original.rows[0]).toEqual({
+        payload_hash: s.events.closed.payloadHash,
+        normalized_payload: s.events.closed,
+        resolved_at: null,
+      });
+    });
+
+    it("preserves additional conflict reasons and rolls back variant storage failures", async () => {
+      const s = await setup();
+      await pool.query(
+        `UPDATE broker_execution_events SET reason_codes=$2::jsonb
+         WHERE account_id=$1 AND broker_event_key=$3`,
+        [
+          s.accountId,
+          JSON.stringify([replacement]),
+          s.normalize(s.entry).eventKey,
+        ],
+      );
+      const raw = structuredClone(s.entry);
+      raw.position!.takeProfit = 2007;
+      const changed = s.normalize(raw);
+      await expect(
+        s.restart().persist(changed, "INVALID" as never),
+      ).rejects.toThrow();
+      const before = await pool.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM broker_execution_event_variants v
+         JOIN broker_execution_events e ON e.id=v.event_id WHERE e.account_id=$1`,
+        [s.accountId],
+      );
+      expect(before.rows[0].count).toBe(0);
+      await s.restart().persist(changed, "BROKER_CALLBACK");
+      await s.restart().persist(s.events.closed);
+      await s.restart().persist(s.events.peerCancelled);
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: false,
+      });
+      const row = await pool.query<{ reason_codes: string[] }>(
+        `SELECT reason_codes FROM broker_execution_events WHERE account_id=$1 AND broker_event_key=$2`,
+        [s.accountId, changed.eventKey],
+      );
+      expect(row.rows[0].reason_codes).toEqual([
+        replacement,
+        "DEMO_BROKER_EVENT_KEY_CONFLICT",
+      ]);
+    });
+
+    it("reopens a resolved marker only for a new variant and preserves its prior proof", async () => {
+      const s = await setup();
+      await s.restart().persist(s.events.peerCancelled);
+      await s.restart().persist(s.events.closed);
+      const raw = structuredClone(s.entry);
+      raw.position!.takeProfit = 2007;
+      const first = s.normalize(raw);
+      await s.restart().persist(first, "BROKER_CALLBACK");
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: true,
+      });
+      await s.restart().persist(first, "BROKER_CALLBACK");
+      expect(await s.restart().readiness()).toMatchObject({ certain: true });
+      raw.position!.takeProfit = 2008;
+      const next = s.normalize(raw);
+      await s.restart().persist(next, "BROKER_CALLBACK");
+      expect(await s.restart().readiness()).toMatchObject({ certain: false });
+      const retained = await pool.query<{
+        original_resolution_event_key: string | null;
+        was_resolved: boolean;
+      }>(
+        `SELECT v.original_resolution_event_key, v.original_resolved_at IS NOT NULL AS was_resolved
+         FROM broker_execution_event_variants v JOIN broker_execution_events e ON e.id=v.event_id
+         WHERE e.account_id=$1 AND v.payload_hash=$2`,
+        [s.accountId, next.payloadHash],
+      );
+      expect(retained.rows).toEqual([
+        {
+          original_resolution_event_key: s.events.closed.eventKey,
+          was_resolved: true,
+        },
+      ]);
+    });
+
     for (const [index, steps] of permutations<Step>([
       "accepted",
       "amended",
