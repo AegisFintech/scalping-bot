@@ -86,7 +86,10 @@ those segments. No new off-host backup is configured or claimed.
 Full local qualification passes: `npm run qualify`, evidence
 `/tmp/scalper-qualification-gSffJ6/checks`: 888 Node, 90 isolated PostgreSQL and
 361 Python tests, with formatting/lint/types/build/schema/migration/fail-closed,
-secret scan and both dependency audits. Focused tests: 22 Python, 2 Node/schema.
+secret scan and both dependency audits. Combined source after merging #318 also
+passes the complete suite at `/tmp/scalper-qualification-z3VYoj/checks`: 900 Node,
+91 isolated PostgreSQL, 361 Python. Initial hosted research checks also passed;
+final documentation-head hosted qualification is required before merge. Focused tests: 22 Python, 2 Node/schema.
 Registered before outcomes for October 20 00:00 UTC through November 19 00:00 UTC,
 using isolated qualified artifact `1bc1ac8` at `/opt/scalper-fast-exit-research`.
 The committed registration is `docs/evidence/fast-exit-study-319.json`.

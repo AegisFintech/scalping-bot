@@ -16,7 +16,7 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/319.
 - Dependencies: #253/#255 causal research, #289 measurement; execution corrections tracked separately in #318.
 - Acceptance: isolated baseline/small-profit/giveback comparisons, delayed executable quotes and original protection, all censored outcomes, pre-intent fee estimates with counterfactual net unknown, frozen future windows and immutable reports; full tests and qualification.
-- Status: implemented; full qualification passes at `/tmp/scalper-qualification-gSffJ6/checks` (888 Node, 90 isolated PostgreSQL, 361 Python, formatting/lint/types/build/schema/migration/fail-closed/secret scan/dependency audits). Exploratory October 19 sample remains HOLD; prospective registration frozen from October 20 00:00 UTC for 30 daily windows using isolated artifact `1bc1ac8`; separate hourly collector enabled; first sandboxed run WAITING_FOR_WINDOW, exit 0. No trading strategy change.
+- Status: implemented; full qualification passes at `/tmp/scalper-qualification-gSffJ6/checks` (888 Node, 90 isolated PostgreSQL, 361 Python, formatting/lint/types/build/schema/migration/fail-closed/secret scan/dependency audits). Combined source with merged #318 also fully qualifies at `/tmp/scalper-qualification-z3VYoj/checks` (900 Node / 91 PostgreSQL / 361 Python). Exploratory October 19 sample remains HOLD; prospective registration frozen from October 20 00:00 UTC for 30 daily windows using isolated artifact `1bc1ac8`; separate hourly collector enabled; first sandboxed run WAITING_FOR_WINDOW, exit 0. No trading strategy change.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/322.
 - Report: [fast exits](docs/fast-exit-research-report.md).
 
