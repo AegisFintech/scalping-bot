@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "Entries": {
+      "additionalProperties": false,
+      "properties": {
+        "buy_stop": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Buy Stop",
+          "type": "string"
+        },
+        "sell_stop": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Sell Stop",
+          "type": "string"
+        }
+      },
+      "required": ["buy_stop", "sell_stop"],
+      "title": "Entries",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "codex-entry-response-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "analysisId": {
+      "title": "Analysisid",
+      "type": "string"
+    },
+    "requestedModel": {
+      "const": "gpt-6.1-sol",
+      "title": "Requestedmodel",
+      "type": "string"
+    },
+    "returnedModel": {
+      "title": "Returnedmodel",
+      "type": "null"
+    },
+    "promptSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Promptsha256",
+      "type": "string"
+    },
+    "capturedAt": {
+      "title": "Capturedat",
+      "type": "string"
+    },
+    "receivedAt": {
+      "title": "Receivedat",
+      "type": "string"
+    },
+    "entries": {
+      "$ref": "#/$defs/Entries"
+    },
+    "rawResponse": {
+      "maxLength": 8192,
+      "title": "Rawresponse",
+      "type": "string"
+    },
+    "inputTokens": {
+      "title": "Inputtokens",
+      "type": "null"
+    },
+    "outputTokens": {
+      "title": "Outputtokens",
+      "type": "null"
+    },
+    "costAmount": {
+      "title": "Costamount",
+      "type": "null"
+    },
+    "executionAuthority": {
+      "const": false,
+      "title": "Executionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "version",
+    "analysisId",
+    "requestedModel",
+    "returnedModel",
+    "promptSha256",
+    "capturedAt",
+    "receivedAt",
+    "entries",
+    "rawResponse",
+    "inputTokens",
+    "outputTokens",
+    "costAmount",
+    "executionAuthority"
+  ],
+  "title": "Response",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/codex-entry-response-1.0.json"
+}

@@ -1,0 +1,201 @@
+{
+  "$defs": {
+    "Bounds": {
+      "additionalProperties": false,
+      "properties": {
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "buy_stop_minimum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Buy Stop Minimum",
+          "type": "string"
+        },
+        "sell_stop_maximum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Sell Stop Maximum",
+          "type": "string"
+        },
+        "movement_buffer": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Movement Buffer",
+          "type": "string"
+        },
+        "preferred_buy_stop_minimum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Preferred Buy Stop Minimum",
+          "type": "string"
+        },
+        "preferred_sell_stop_maximum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Preferred Sell Stop Maximum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum_entry_distance",
+        "buy_stop_minimum",
+        "sell_stop_maximum",
+        "movement_buffer",
+        "preferred_buy_stop_minimum",
+        "preferred_sell_stop_maximum"
+      ],
+      "title": "Bounds",
+      "type": "object"
+    },
+    "Candles": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "maxItems": 120,
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": ["timeframe", "columns", "rows"],
+      "title": "Candles",
+      "type": "object"
+    },
+    "Payload": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "title": "Captured At",
+          "type": "string"
+        },
+        "tick_size": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Tick Size",
+          "type": "string"
+        },
+        "quote": {
+          "$ref": "#/$defs/Quote"
+        },
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "entry_boundaries": {
+          "$ref": "#/$defs/Bounds"
+        },
+        "candles": {
+          "items": {
+            "$ref": "#/$defs/Candles"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Candles",
+          "type": "array"
+        }
+      },
+      "required": [
+        "captured_at",
+        "tick_size",
+        "quote",
+        "minimum_entry_distance",
+        "entry_boundaries",
+        "candles"
+      ],
+      "title": "Payload",
+      "type": "object"
+    },
+    "Quote": {
+      "additionalProperties": false,
+      "properties": {
+        "bid": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Bid",
+          "type": "string"
+        },
+        "ask": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Ask",
+          "type": "string"
+        },
+        "sourceTime": {
+          "title": "Sourcetime",
+          "type": "string"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        }
+      },
+      "required": ["bid", "ask", "sourceTime", "receivedAt"],
+      "title": "Quote",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "codex-entry-request-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "analysisId": {
+      "title": "Analysisid",
+      "type": "string"
+    },
+    "symbol": {
+      "const": "XAUUSD",
+      "title": "Symbol",
+      "type": "string"
+    },
+    "promptVersion": {
+      "const": "entry-pair-v4",
+      "title": "Promptversion",
+      "type": "string"
+    },
+    "promptSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Promptsha256",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/Payload"
+    }
+  },
+  "required": [
+    "version",
+    "analysisId",
+    "symbol",
+    "promptVersion",
+    "promptSha256",
+    "payload"
+  ],
+  "title": "Request",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/codex-entry-request-1.0.json"
+}
