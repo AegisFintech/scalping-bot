@@ -69,7 +69,7 @@ required for #303. No subscription-authenticated call was made in this delivery.
 
 The systemd templates run that user with read-only system paths, inaccessible root,
 trading releases and PostgreSQL socket directory, a private temporary directory,
-25% CPU, 512 MiB RAM, 1 MiB file cap and four-minute service deadline. Codex itself
+25% CPU, 512 MiB RAM, 32 MiB file cap (corrected in #306 for Codex SQLite state) and four-minute service deadline. Codex itself
 uses a read-only sandbox. Dedicated-user access controls are essential: read-only
 sandboxing alone does not prevent reading secrets. The worker has internet access
 for Codex and weekly research; do not install trading credentials in its home.

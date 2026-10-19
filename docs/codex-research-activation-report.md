@@ -64,5 +64,16 @@ backup or automatic evidence deletion policy is added.
 ## Validation and activation receipt
 
 Focused feed/worker tests: 27 pass. Python lint/types pass. Actual aggregate export
-succeeded after the timestamp correction. Full hosted qualification and service
-activation results will be attached to the issue/PR before handoff.
+succeeded after the timestamp correction. Both complete hosted qualifications passed on aab8d3e (runs 39191037447 and
+39191042049). The real daily worker returned PROPOSAL_ONLY/HOLD with no candidates.
+Feed and duplicate daily service checks succeeded.
+
+The first weekly service failed before producing output. A separate minimal
+service diagnostic reproduced SIGXFSZ (signal 25): the original 1 MiB per-file cap
+was below Codex's existing roughly 2 MiB SQLite WAL. This is an operational resource
+limit, not evidence of a strategy failure or exhausted subscription. The service
+cap is raised to 32 MiB; the worker's 128 KB input/output validation bounds stay
+unchanged. The failed weekly claim remains immutable and is not replayed. A fresh
+isolated diagnostic verifies the corrected service environment before schedules
+are enabled. Updated qualification and final activation receipts are attached to
+the issue/PR.
