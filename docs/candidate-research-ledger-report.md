@@ -94,7 +94,7 @@ change. The service template targets an immutable tracked-source deployment at
 `/opt/scalper-candidate-lab/current`, using the existing isolated research Python
 environment. Its writable ledger directory must exist with the research user's
 ownership before service start. It has CPU/memory/file/time limits and AF_UNIX
-only. No runtime unit has been activated yet.
+only. The qualified intake service is now activated as recorded below.
 
 Rollback stops only the intake timer and retains the ledger and immutable
 artifacts. Do not delete trials, rewrite registrations, reset accounting, edit
@@ -137,3 +137,16 @@ Both full hosted qualifications pass on `0f9963ca33a51a8e9c20bdab80a7c4073e83077
 and [PR 39200268669](https://github.com/AegisFintech/scalping-bot/actions/runs/39200268669).
 All required checks and dependency audits pass. Final delivery includes the newly
 merged Codex transport and receives exact-head checks before merge/activation.
+
+## Operational activation — October 19
+
+Both full qualifications passed on `c44d758d445f91239c6f07f0201b4679c9a6719e`:
+[push](https://github.com/AegisFintech/scalping-bot/actions/runs/39200767246) and
+[PR](https://github.com/AegisFintech/scalping-bot/actions/runs/39200771530).
+That exact tracked-source archive is installed in an immutable release directory
+under `/opt/scalper-candidate-lab/releases`, with `current` pointing to it.
+The intake service succeeded and its hourly timer is enabled and active. A second
+manual service invocation succeeded without duplicating the two existing jobs.
+The ledger retains the daily report and weekly generation failure; no Codex
+request, trading service restart, database migration or broker command occurred.
+The weekly failed claim remains intact. No candidate is qualified or promoted.

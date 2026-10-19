@@ -53,7 +53,7 @@
 - Dependencies: #302, #289/#290 and immutable #255 study.
 - Acceptance: dedicated login/fresh aggregate feed and bounded timers; source verification, full trial ledger, one-change chronological tests, frozen shadow windows and evidence-bearing PRs; no automatic economic promotion.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/312.
-- Status: append-only candidate intake, reviewed-source receipts, frozen future protocols and paired daily evaluation implemented on `issue-304-candidate-ledger`; 14 focused tests, 73 isolated PostgreSQL tests and 302 Python tests pass; real report/failure intake smoke succeeds without provider calls. Both full hosted runs pass on 0f9963c (39200103687 / 39200268669). Final integration checks and timer activation pending. No candidate is qualified or promoted.
+- Status: hourly isolated intake activated from fully qualified c44d758; two existing jobs retained and repeat scan idempotent. No trading authority or candidate promotion. Delivery details: append-only candidate intake, reviewed-source receipts, frozen future protocols and paired daily evaluation implemented on `issue-304-candidate-ledger`; 14 focused tests, 73 isolated PostgreSQL tests and 302 Python tests pass; real report/failure intake smoke succeeds without provider calls. Both full hosted runs pass on 0f9963c (39200103687 / 39200268669). Final integration passed on c44d758 (39200767246 / 39200771530); activation receipt receives final-head checks. No candidate is qualified or promoted.
 - Report: [candidate research ledger](docs/candidate-research-ledger-report.md).
 
 ### ISSUE-297 — Causal replacement fixture completion
