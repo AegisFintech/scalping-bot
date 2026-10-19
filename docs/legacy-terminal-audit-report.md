@@ -72,3 +72,12 @@ Final local checks: `npm run qualify -- --database-only` passes **89 PostgreSQL 
 three CLI rejection tests, formatting and secret scanning pass. Graphify was
 refreshed with AST-only extraction. The frozen observer checkout remains clean
 at `984f479`. Full hosted qualification remains the exact-head merge gate.
+
+Full integration qualification passes on `82fd2a06dda6629772e98711785e2da4c5d9ea46`:
+[push 39201626333](https://github.com/AegisFintech/scalping-bot/actions/runs/39201626333)
+and [PR 39201630680](https://github.com/AegisFintech/scalping-bot/actions/runs/39201630680).
+Both run complete `npm run qualify`: formatting, ESLint, TypeScript/build, Node
+(including schema/migration/replay/fail-closed tests), Python formatting/lint/types,
+secret scan, npm/Python dependency audits, isolated PostgreSQL lifecycle and Python
+tests all pass. This documentation receipt receives exact-head checks before merge.
+The operational result remains HOLD; no recovery or Codex trading activation.
