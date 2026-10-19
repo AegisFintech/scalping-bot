@@ -242,7 +242,8 @@ def run(
             {
                 "at": now.isoformat(),
                 "kind": kind,
-                "input_sha256": digest(raw),
+                "input_sha256": digest(encoded(evidence.model_dump())),
+                "source_input_sha256": digest(raw),
                 "prompt_sha256": digest(prompt.encode()),
                 "worker_sha256": digest(Path(__file__).read_bytes()),
             },

@@ -111,4 +111,23 @@ is installed. Monitor private storage growth before prolonged operation.
 
 ## Validation
 
-Pending full qualification; commands/results will be recorded before handoff.
+On October 19, `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` ran every
+component successfully: formatting, lint, TypeScript types, isolated build,
+848 Node tests (including schemas/migrations/replay/fail-closed suites), Python
+format/lint/types, 70 isolated database lifecycle tests and 283 Python tests.
+Secret scan passed; npm and Python audits reported no vulnerabilities. No tests
+were skipped. Logs: `/tmp/scalper-qualification-zqMqIQ/checks`.
+
+The overall local wrapper exited 1 with `QUALIFICATION_SOURCE_CHANGED`: review
+added the typed report schema and corrected canonical input-snapshot digests while
+it was running. This is not a successful sealed qualification receipt. All Python
+checks ran after those changes; the final committed source must pass the complete
+hosted qualification before merge. PR #305 exposes those exact-commit results.
+
+Independent focused commands: `.venv/bin/pytest -q tests/python/test_codex_research.py`
+(22 passed), `.venv/bin/ruff check python/research tests/python/test_codex_research.py`,
+`.venv/bin/mypy python/research`, changed-file Prettier, `git diff --check`, staged
+diff review and `bash scripts/secret-scan.sh` passed. `graphify update .` refreshed
+the working graph. Frozen checkout remains clean at 984f479. The weekly systemd
+calendar expression parses successfully; installed-service/login/inference/latency
+checks remain outstanding and are not represented by mocked subprocess tests.

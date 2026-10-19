@@ -7,7 +7,8 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/302.
 - Dependencies: #253/#255 causal research contracts; #289 measurement/#290 protocol for future evaluation.
 - Acceptance: aggregate-only input, structured sourced proposals, durable bounded claims/failures, no broker/promotion authority, dedicated-user service/timers, success/rejection/restart tests and full qualification; commit/push/PR.
-- Status: implemented; qualification in progress. No runtime activation or economic evaluation claimed.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/305.
+- Status: implemented and pushed; 848 Node / 70 DB / 283 Python component tests pass, clean audits. Local wrapper rejected a mid-run source change; final-head hosted qualification is required before merge. No runtime activation or economic evaluation claimed.
 - Report: [Codex research loop](docs/codex-research-loop-report.md).
 
 ### ISSUE-303 — Simplified trading loop with Codex analysis

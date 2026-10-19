@@ -57,6 +57,10 @@ def test_daily_claim_is_durable_and_never_replayed(tmp_path: Path) -> None:
     assert report["decision"] == "HOLD"
     assert not report["brokerAuthority"] and not report["promotionAuthority"]
     assert not report["evaluationPerformed"]
+    claim = json.loads((directory / "daily-2026-10-19/claim.json").read_bytes())
+    snapshot = (directory / "daily-2026-10-19/evidence.json").read_bytes()
+    assert claim["input_sha256"] == r.digest(snapshot)
+    assert claim["source_input_sha256"] == r.digest(source.read_bytes())
     assert len(calls) == 1
     assert (directory / "daily-2026-10-19/report.json").stat().st_mode & 0o777 == 0o600
 
