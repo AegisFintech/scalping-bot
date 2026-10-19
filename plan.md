@@ -2,6 +2,35 @@
 
 ## Scope
 
+### ISSUE-324 — Read-only trade evidence brief
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/324.
+- Dependencies: existing numeric analytics, #321 manual method and #289/#290 provenance/protocol.
+- Acceptance: bounded offline technical/depth summary, explicit unavailable news/costs/manual rules, versioned schema, failure tests, no trading authority, full qualification and pushed PR.
+- Status: implemented; 15 focused tests and full qualification passed at `/tmp/scalper-qualification-FpdBfV/checks` (900 Node plus isolated PostgreSQL/Python, all formatting/lint/types/build/schema/migration/fail-closed/secret/dependency checks). No runtime deployment; final-head hosted checks required before merge.
+- Report: [trade evidence](docs/trade-evidence-report.md).
+
+### ISSUE-325 — Journal-linked trade explanation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/325.
+- Dependencies: #324/#289/#321.
+- Acceptance: causal source/intent linkage, separate model/effective prices, all setup states, bounded Diagnostics and stale/ambiguous evidence tests; no provider/broker mutation.
+- Status: planned; original manual prompts/exits remain missing.
+
+### ISSUE-326 — Economic-calendar observer
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/326.
+- Dependencies: #325/#290.
+- Acceptance: primary-source timestamps/timezones/revisions, immutable observations, stale/unavailable distinct from no events, bounded isolated collection and failure tests; no automatic news gate.
+- Status: planned; no collector or paid feed activated.
+
+### ISSUE-327 — Technical/depth incremental evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/327.
+- Dependencies: #321/#289/#290/#325.
+- Acceptance: depth coverage and explicit causal structure definitions, frozen one-feature comparisons, complete censored denominators and cost/latency sensitivity; no automatic promotion.
+- Status: planned; added indicators are not economic validation.
+
 ### ISSUE-318 — Directional slippage and OCO acknowledgement races
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/318.
