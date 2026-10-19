@@ -1,6 +1,7 @@
 # ISSUE-314 — Operator-authorized fresh demo epoch
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/314.
+PR: https://github.com/AegisFintech/scalping-bot/pull/315.
 Status: preparation; no cutover or new trading claimed yet.
 
 On October 19 the operator explicitly requested “clear all historical records and
@@ -60,3 +61,28 @@ The existing authenticated baseline initializer and lifecycle tests supply succe
 repeat-rejection and fail-closed coverage; no executable source behavior is changed.
 Operational checks and immutable release/configuration receipts will be added
 without private identifiers, credentials, URLs or raw broker payloads.
+
+## Pre-cutover evidence
+
+At October 19 06:07 UTC, independent read-only broker checks showed balance and
+equity **85,360.83 USD**, zero orders/positions, zero current-day deals, complete
+deal history and zero external flow operations. The old journal contains 1,165
+trades, one REQUESTING context from October 5 and one FAILED group from September
+10, with no open local position. The stale request remains unknown in the old
+journal; it is not replayed or relabelled successful. These timestamps exclude
+an active current provider dispatch, but fresh broker checks repeat at initialization.
+
+A new separate database contains all 28 forward migrations; every stored checksum
+matches the qualified source. Migrations ran through local PostgreSQL peer admin
+under the existing migration owner, with the same per-file transactions/checksum
+ledger; the application role retains separate DML privileges. No old database
+rows changed. The new mode-0600 environment differs only in DATABASE_URL, an
+explicit existing token-state path and temporary emergency/submission/automation
+controls. A new runtime/log root starts empty. Original credentials and the old
+source environment remain unchanged.
+
+Full `npm run qualify` passed at `/tmp/scalper-qualification-xQifvb/checks`: all
+format/lint/TypeScript/build/Node/schema/migration/replay/fail-closed, Python
+format/lint/types/tests, isolated database, secret scan and both dependency audits.
+Regenerable npm/pip cache removal raised free disk from about 1.7 to 3.6 GiB.
+Release preparation and hosted qualification remain required before cutover.
