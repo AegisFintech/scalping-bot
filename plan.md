@@ -50,7 +50,8 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/304.
 - Dependencies: #302, #289/#290 and immutable #255 study.
 - Acceptance: dedicated login/fresh aggregate feed and bounded timers; source verification, full trial ledger, one-change chronological tests, frozen shadow windows and evidence-bearing PRs; no automatic economic promotion.
-- Status: pending; generated proposals are not evaluated strategies.
+- Status: append-only candidate intake, reviewed-source receipts, frozen future protocols and paired daily evaluation implemented on `issue-304-candidate-ledger`; 14 focused tests, 73 isolated PostgreSQL tests and 302 Python tests pass; real report/failure intake smoke succeeds without provider calls. Exact-head full CI and timer activation pending. No candidate is qualified or promoted.
+- Report: [candidate research ledger](docs/candidate-research-ledger-report.md).
 
 ### ISSUE-297 — Causal replacement fixture completion
 

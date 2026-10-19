@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ctrader-ai-scalper.invalid/schemas/candidate-review-packet-1.0.json",
+  "title": "Candidate research audit packet, never promotion authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "label",
+    "decision",
+    "broker_authority",
+    "promotion_authority",
+    "counterfactual_net_pnl",
+    "events",
+    "event_counts",
+    "unfinished_attempts",
+    "ledger_head",
+    "limitations"
+  ],
+  "properties": {
+    "label": {
+      "const": "CANDIDATE_REVIEW_PACKET_V1"
+    },
+    "decision": {
+      "const": "HOLD"
+    },
+    "broker_authority": {
+      "const": false
+    },
+    "promotion_authority": {
+      "const": false
+    },
+    "counterfactual_net_pnl": {
+      "type": "null"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["seq", "at", "kind", "body", "previous", "digest"],
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string",
+            "pattern": "^[A-Z_]{1,80}$"
+          },
+          "body": {
+            "type": "object"
+          },
+          "previous": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "event_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "unfinished_attempts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "ledger_head": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
