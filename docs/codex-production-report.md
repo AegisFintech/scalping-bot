@@ -2,7 +2,7 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/303.
 PR: https://github.com/AegisFintech/scalping-bot/pull/317.
-Status: production wiring deployed; qualified session-gap worker update being activated.
+Status: Codex production proposals activated; final delivery qualification pending.
 
 The operator explicitly requested “use codex instead” on October 19 after the fresh
 demo restart. The production AI factory now constructs only `CodexEntryClient`:
@@ -104,3 +104,37 @@ session-marker cases. Source `1b73f23` also passed both full hosted checks
 0029, all five services on the new protected environment, no cached database URL,
 and unchanged daily baseline/reference/high-water values across restart. The feed
 and maintenance now use that verified source and the same current epoch.
+
+## Activation result
+
+Trading services run the verified immutable `1b73f23-codex303` release; the isolated
+worker runs seven Git-verified source files from `955cb5aac431adcee90877e29d63a8636833abec`
+with its own copied dependency environment. The same existing ChatGPT login is
+used without copying authentication contents. Worker health returned 200 and an
+unauthenticated proposal returned 401. All five trading/dashboard health endpoints
+returned 200, and post-start release verification passed. Actual PM2 cwd/environment
+paths select the new release/protected environment; no database URL is cached.
+The only intentional environment changes are the model pin and a new local token;
+existing credentials, demo authorization and current database/runtime remain.
+
+Migration 0029 applied once under the migration role after verifying all 28 prior
+checksums and zero in-flight requests/open positions/pending orders. Baseline and
+reference/high-water values matched before migration, after migration and after
+service restart. A new immutable strategy version records the provider change;
+older rows/claims and the first failed Codex request remain unchanged.
+
+After the normal cooldown and worker update, analysis was unpaused through the
+audited control endpoint. A natural `gpt-6.1-sol` context reached READY in **19,284 ms**;
+the worker's durable claim/result agree, with no failure/replay and null returned
+model, usage and cost. No provider request or order was manually triggered. The
+first resulting OCO filled one leg and cancelled its peer; the open position has
+fresh VERIFIED broker SL and TP. The existing fill-slippage/reconciliation gate
+currently holds new risk while that position is maintained. It was not cleared
+or attributed to the provider; this is transport/operation evidence, not improved
+profitability or a guarantee of uninterrupted order flow.
+
+Storage maintenance and the epoch-aware feed succeeded on the new source. The feed
+still waits for a completed new UTC reporting interval without calling a model.
+Only the existing backup-overdue storage warning remains; no backup success is
+claimed. The frozen observer remains disabled, and research has no promotion or
+order authority. Final exact-head hosted checks gate merging PR #317.
