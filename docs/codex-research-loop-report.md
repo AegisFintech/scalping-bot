@@ -76,7 +76,8 @@ for Codex and weekly research; do not install trading credentials in its home.
 
 ## Installation and activation checklist
 
-Templates are provided but not installed/enabled. No runtime services were restarted.
+Original #302 delivery provided templates without activation. See the follow-up
+[activation report](codex-research-activation-report.md) for #306 operations.
 
 1. Install a reviewed copy of `python/research`, its Python environment and Codex
    binary under `/opt/scalper-research` and `/usr/local/bin`, respectively. Keep
@@ -93,7 +94,7 @@ Templates are provided but not installed/enabled. No runtime services were resta
    ```
 
    The output is exclusively created. A trusted feeder must validate and atomically
-   publish this aggregate as `/var/lib/scalper-research/inbox/latest.json`, readable
+   publish this aggregate as `/var/lib/scalper-research-feed/latest.json`, readable
    by the research user. Do not expose the exporter's database environment to Codex.
    The fresh-feed deployment is outstanding in #304; stale files are rejected.
 

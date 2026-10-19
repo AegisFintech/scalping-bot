@@ -1,0 +1,23 @@
+[Unit]
+Description=Trusted read-only aggregate feed for isolated Codex research
+After=postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/scalper-research
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/scalper-research/.venv/bin/python -m python.research.feed --source /opt/ctrader-ai-scalper/releases/9b35d877 --environment-pointer /etc/scalper-research-feed/environment-path --inbox /var/lib/scalper-research-feed
+UMask=0077
+Nice=15
+IOSchedulingClass=idle
+CPUQuota=25%
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=32
+LimitFSIZE=8M
+TimeoutStartSec=90
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/scalper-research-feed

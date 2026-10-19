@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-306 — Isolated Codex research activation and aggregate feed
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/306.
+- Dependencies: #302/#305 worker, #304 research pipeline; operator-completed dedicated-user login.
+- Acceptance: successful read-only Codex trial, separate trusted aggregate export, protected atomic inbox, bounded services/timers, failure tests/full qualification, commit/push/PR and verified activation receipt.
+- Status: smoke and aggregate export succeeded; 27 focused tests pass. Qualification and scheduled activation in progress. No trading/economic or frozen-study change.
+- Report: [research activation](docs/codex-research-activation-report.md).
+
 ### ISSUE-302 — Isolated scheduled Codex research proposals
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/302.
