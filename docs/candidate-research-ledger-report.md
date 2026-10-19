@@ -130,3 +130,10 @@ registration/code references and any successfully loaded tape-evidence digest
 before replay begins. Preflight failures that never read input remain explicit
 failures with no fabricated input hash. Review packets retain those intermediate
 receipts as well as terminal/unknown outcomes.
+
+Delivery PR: https://github.com/AegisFintech/scalping-bot/pull/312.
+Both full hosted qualifications pass on `0f9963ca33a51a8e9c20bdab80a7c4073e830775`:
+[push 39200103687](https://github.com/AegisFintech/scalping-bot/actions/runs/39200103687)
+and [PR 39200268669](https://github.com/AegisFintech/scalping-bot/actions/runs/39200268669).
+All required checks and dependency audits pass. Final delivery includes the newly
+merged Codex transport and receives exact-head checks before merge/activation.
