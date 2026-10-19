@@ -119,3 +119,12 @@ opposite owned-position side, and any explicit order position identity. Those
 fields are not all retained by normalized fills, so normalized equality alone was
 insufficient. The focused checker now has 22 passing cases; the final source
 revision requires its own complete hosted qualification before merge.
+
+Final code qualification: `87739595ccb684477fc714d049c3cb256207621f` passes both
+complete runs [39194701358](https://github.com/AegisFintech/scalping-bot/actions/runs/39194701358)
+and [39194705666](https://github.com/AegisFintech/scalping-bot/actions/runs/39194705666),
+including all required gates and clean dependency audits. The additional raw
+position-ID type guard also passes lint. The frozen checkout remains clean at
+`984f479`; read-only demo status still reports the original journal conflict.
+Source delivery does not claim operational recovery. This final documentation
+receipt will also receive exact-head CI before the evidence-only PR merges.
