@@ -1,5 +1,7 @@
 # ISSUE-301 — Read-only legacy terminal audit
 
+PR: https://github.com/AegisFintech/scalping-bot/pull/313.
+
 This audit does not authorize recovery. On October 19, a fresh bounded broker
 history read and flat account snapshot still produced **HOLD** with
 `DEMO_TERMINAL_ADDITIONAL_UNCERTAINTY`. The group contains an older entry event
@@ -65,7 +67,7 @@ with the existing PostgreSQL lifecycle and Python suites at
 resolved entry conflict, altered fees, strict automatic recovery rejection and CLI
 preflight redaction/preservation. Full final-head qualification gates merge.
 
-Final local checks: `npm run qualify -- --database-only` passes at
+Final local checks: `npm run qualify -- --database-only` passes **89 PostgreSQL and 288 Python tests**, with no skips, at
 `/tmp/scalper-qualification-IVPDwN/checks`; `npm run typecheck`, focused ESLint,
 three CLI rejection tests, formatting and secret scanning pass. Graphify was
 refreshed with AST-only extraction. The frozen observer checkout remains clean

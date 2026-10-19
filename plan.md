@@ -19,7 +19,7 @@
 - PR: https://github.com/AegisFintech/scalping-bot/pull/310.
 - Status: full-group history attestation implemented on `issue-301-history-attestation`; 87 isolated PostgreSQL cases and 288 Python tests pass. Both complete hosted qualifications pass on 4ba38c7 (39198803973 / 39198806264), including final acknowledgement/volume/version regressions and audits. Missing legacy variants remain review-required; no runtime deployment or unlock claimed.
 - Report: [terminal conflict recovery](docs/terminal-conflict-recovery-report.md).
-- Legacy audit: [read-only evidence](docs/legacy-terminal-audit-report.md), branch `issue-301-legacy-audit`. Acceptance: immutable private evidence, no command/write authority, missing-variant and additional-conflict rejection, tested CLI failures, full qualification and pushed PR. Current audit remains HOLD on an additional historical entry conflict; no recovery activation.
+- Legacy audit: [read-only evidence](docs/legacy-terminal-audit-report.md), PR https://github.com/AegisFintech/scalping-bot/pull/313. Acceptance: immutable private evidence, no command/write authority, missing-variant and additional-conflict rejection, tested CLI failures, full qualification and pushed PR. Current audit remains HOLD on an additional historical entry conflict; no recovery activation.
 
 ### ISSUE-306 — Isolated Codex research activation and aggregate feed
 
