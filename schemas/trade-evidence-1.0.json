@@ -1,0 +1,266 @@
+{
+  "$defs": {
+    "DepthEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "const": "BROKER_SNAPSHOT_NOT_GLOBAL_ORDER_FLOW",
+          "default": "BROKER_SNAPSHOT_NOT_GLOBAL_ORDER_FLOW",
+          "title": "Scope",
+          "type": "string"
+        },
+        "source_at": {
+          "title": "Source At",
+          "type": "string"
+        },
+        "received_at": {
+          "title": "Received At",
+          "type": "string"
+        },
+        "source_age_seconds": {
+          "title": "Source Age Seconds",
+          "type": "number"
+        },
+        "bid_levels": {
+          "title": "Bid Levels",
+          "type": "integer"
+        },
+        "ask_levels": {
+          "title": "Ask Levels",
+          "type": "integer"
+        },
+        "spread": {
+          "title": "Spread",
+          "type": "string"
+        },
+        "top_five_imbalance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Top Five Imbalance"
+        },
+        "microprice_bias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Microprice Bias"
+        }
+      },
+      "required": [
+        "source_at",
+        "received_at",
+        "source_age_seconds",
+        "bid_levels",
+        "ask_levels",
+        "spread",
+        "top_five_imbalance",
+        "microprice_bias"
+      ],
+      "title": "DepthEvidence",
+      "type": "object"
+    },
+    "FrameEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "completed_at": {
+          "title": "Completed At",
+          "type": "string"
+        },
+        "age_seconds": {
+          "title": "Age Seconds",
+          "type": "number"
+        },
+        "ema_alignment": {
+          "enum": ["BULLISH", "BEARISH", "FLAT"],
+          "title": "Ema Alignment",
+          "type": "string"
+        },
+        "atr": {
+          "title": "Atr",
+          "type": "string"
+        },
+        "rsi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rsi"
+        },
+        "adx": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Adx"
+        },
+        "five_bar_low": {
+          "title": "Five Bar Low",
+          "type": "string"
+        },
+        "five_bar_high": {
+          "title": "Five Bar High",
+          "type": "string"
+        },
+        "ten_bar_low": {
+          "title": "Ten Bar Low",
+          "type": "string"
+        },
+        "ten_bar_high": {
+          "title": "Ten Bar High",
+          "type": "string"
+        }
+      },
+      "required": [
+        "timeframe",
+        "completed_at",
+        "age_seconds",
+        "ema_alignment",
+        "atr",
+        "rsi",
+        "adx",
+        "five_bar_low",
+        "five_bar_high",
+        "ten_bar_low",
+        "ten_bar_high"
+      ],
+      "title": "FrameEvidence",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "trade-evidence-1.0",
+      "default": "trade-evidence-1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "authority": {
+      "const": "OFFLINE_CONTEXT_ONLY",
+      "default": "OFFLINE_CONTEXT_ONLY",
+      "title": "Authority",
+      "type": "string"
+    },
+    "status": {
+      "enum": ["CONTEXT_AVAILABLE", "REJECTED"],
+      "title": "Status",
+      "type": "string"
+    },
+    "input_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Input Sha256",
+      "type": "string"
+    },
+    "analysis_time": {
+      "title": "Analysis Time",
+      "type": "string"
+    },
+    "snapshot_time": {
+      "title": "Snapshot Time",
+      "type": "string"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "frames": {
+      "items": {
+        "$ref": "#/$defs/FrameEvidence"
+      },
+      "title": "Frames",
+      "type": "array"
+    },
+    "depth": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DepthEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ema_agreement": {
+      "enum": ["ALL_BULLISH", "ALL_BEARISH", "MIXED_OR_FLAT", "UNKNOWN"],
+      "title": "Ema Agreement",
+      "type": "string"
+    },
+    "news_status": {
+      "const": "NOT_COLLECTED",
+      "default": "NOT_COLLECTED",
+      "title": "News Status",
+      "type": "string"
+    },
+    "round_trip_cost": {
+      "default": null,
+      "title": "Round Trip Cost",
+      "type": "null"
+    },
+    "manual_holding_range": {
+      "default": null,
+      "title": "Manual Holding Range",
+      "type": "null"
+    },
+    "entry_rationale": {
+      "default": null,
+      "title": "Entry Rationale",
+      "type": "null"
+    },
+    "invalidation_rule": {
+      "default": null,
+      "title": "Invalidation Rule",
+      "type": "null"
+    },
+    "profit_exit_rule": {
+      "default": null,
+      "title": "Profit Exit Rule",
+      "type": "null"
+    },
+    "needs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Needs",
+      "type": "array"
+    }
+  },
+  "required": [
+    "status",
+    "input_sha256",
+    "analysis_time",
+    "snapshot_time",
+    "reasons",
+    "frames",
+    "depth",
+    "ema_agreement",
+    "needs"
+  ],
+  "title": "EvidenceBrief",
+  "type": "object"
+}
