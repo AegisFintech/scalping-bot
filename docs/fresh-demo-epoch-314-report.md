@@ -171,3 +171,15 @@ the first position remained OPEN with VERIFIED protection, its peer CANCELLED,
 and no broker-event conflict. Waiting for that position is expected; do not force
 a second setup. Low-disk and new-epoch backup-overdue storage warnings remain
 explicit. No code/database rollback to the pre-epoch journal is now permitted.
+
+## Frozen-study boundary
+
+The older #255 observer service's last attempt was **06:15:14 UTC**, before the
+new baseline, and failed with FORWARD_DISK_RESERVE. That pre-existing failure is
+not attributed to the fresh database. Its timer is now stopped because the
+production accounting source has changed; the old database remains historical
+read-only evidence. Frozen code, registered denominators/windows and reports are
+unchanged. Uncollected windows remain missing, never zero performance or a
+selected complete subset; the old study is not qualified. New research collection
+requires its own prospective registration/review. The independent Codex feed and
+candidate intake remain active on their documented boundaries.
