@@ -205,3 +205,11 @@ TypeScript and focused ESLint pass. Final-head full CI remains the merge gate.
 Full-group implementation PR: https://github.com/AegisFintech/scalping-bot/pull/310.
 Both exact-head hosted qualifications must pass before this PR becomes mergeable;
 #301 remains open for legacy incident policy and verified operational activation.
+
+Final code and linked-report qualification: both full `npm run qualify` runs pass
+on `4ba38c72a5b9f9eef1aefe58a3bcac4e4849c084`:
+[push 39198803973](https://github.com/AegisFintech/scalping-bot/actions/runs/39198803973)
+and [PR 39198806264](https://github.com/AegisFintech/scalping-bot/actions/runs/39198806264).
+All required formatting, lint, types/build, Node/schema/migration/replay, Python,
+isolated PostgreSQL, secret and dependency-audit gates pass. This documentation
+receipt will receive final-head checks too. No runtime activation is claimed.
