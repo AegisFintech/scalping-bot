@@ -5,6 +5,7 @@
 ### ISSUE-324 — Read-only trade evidence brief
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/324.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/328.
 - Dependencies: existing numeric analytics, #321 manual method and #289/#290 provenance/protocol.
 - Acceptance: bounded offline technical/depth summary, explicit unavailable news/costs/manual rules, versioned schema, failure tests, no trading authority, full qualification and pushed PR.
 - Status: implemented; 15 focused tests and full qualification passed at `/tmp/scalper-qualification-FpdBfV/checks` (900 Node plus isolated PostgreSQL/Python, all formatting/lint/types/build/schema/migration/fail-closed/secret/dependency checks). No runtime deployment; final-head hosted checks required before merge.
