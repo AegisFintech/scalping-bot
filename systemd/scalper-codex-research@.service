@@ -11,7 +11,7 @@ WorkingDirectory=/var/lib/scalper-research
 Environment=HOME=/var/lib/scalper-research
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-research
-ExecStart=/opt/scalper-research/.venv/bin/python -m python.research.codex_loop --directory /var/lib/scalper-research/jobs --input /var/lib/scalper-research/inbox/latest.json --kind %i
+ExecStart=/opt/scalper-research/.venv/bin/python -m python.research.codex_loop --directory /var/lib/scalper-research/jobs --input /var/lib/scalper-research-feed/latest.json --kind %i
 UMask=0077
 Nice=15
 IOSchedulingClass=idle
@@ -19,7 +19,7 @@ CPUQuota=25%
 MemoryMax=512M
 MemorySwapMax=0
 TasksMax=64
-LimitFSIZE=1M
+LimitFSIZE=32M
 TimeoutStartSec=240
 KillMode=control-group
 NoNewPrivileges=true

@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly fresh aggregate feed for Codex research
+
+[Timer]
+OnCalendar=*-*-* *:10:00 UTC
+Persistent=true
+RandomizedDelaySec=30
+Unit=scalper-codex-feed.service
+
+[Install]
+WantedBy=timers.target
