@@ -1,3 +1,5 @@
+import { readTerminalGroup } from "./terminal-history-attestor.js";
+import { terminalSnapshotHash } from "./terminal-group-proof.js";
 import { randomUUID } from "node:crypto";
 import { protectiveCloseAuthorized } from "./protective-close-evidence.js";
 
@@ -119,22 +121,53 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           `${this.#options.accountId}:${this.#options.symbolId}:terminal-evidence`,
         ],
       );
+      // A historical attestation is usable only for the unchanged complete group.
+      // Event persistence shares this lock, including newly observed variants.
+      const attestations = await client.query<{
+        id: string;
+        order_group_id: string;
+        snapshot_hash: string;
+        event_hashes: Record<string, string>;
+      }>(
+        `SELECT DISTINCT ON (order_group_id) id, order_group_id, snapshot_hash, event_hashes
+         FROM broker_terminal_history_attempts WHERE account_id=$1 AND symbol_id=$2 AND status='VERIFIED' AND verifier_version='full-group-v1'
+         ORDER BY order_group_id, completed_at DESC, id DESC LIMIT 32`,
+        [this.#options.accountId, this.#options.symbolId],
+      );
+      const eligible: { id: string; resolution_key: string }[] = [];
+      for (const attestation of attestations.rows) {
+        const snapshot = await readTerminalGroup(
+          client,
+          attestation.order_group_id,
+        );
+        if (terminalSnapshotHash(snapshot) !== attestation.snapshot_hash)
+          continue;
+        for (const [id, hash] of Object.entries(attestation.event_hashes)) {
+          if (
+            snapshot.events.some(
+              (e) => e.id === id && e.payload.payloadHash === hash,
+            )
+          )
+            eligible.push({ id, resolution_key: `history:${attestation.id}` });
+        }
+      }
       const result = await client.query<{
         resolved_event_count: string;
         terminal_proof_hash: string | null;
         terminal_order_group_id: string | null;
         terminal_broker_fill_id: string | null;
       }>(
-        `WITH terminal_fills AS MATERIALIZED (
+        `WITH attested AS MATERIALIZED (SELECT * FROM jsonb_to_recordset($3::jsonb) AS x(id text, resolution_key text)), terminal_fills AS MATERIALIZED (
            SELECT DISTINCT ON (terminal.position_id)
                   terminal.order_group_id,
                   terminal.position_id,
                   terminal.broker_order_id,
-                  terminal.broker_event_key,
+                  COALESCE(attested.resolution_key, terminal.broker_event_key) AS broker_event_key,
                   terminal.payload_hash,
                   terminal.broker_fill_id,
                   terminal.occurred_at
            FROM broker_execution_events terminal
+           LEFT JOIN attested ON attested.id=terminal.id::text
            JOIN order_groups og ON og.id = terminal.order_group_id
            JOIN analysis_runs ar ON ar.id = og.analysis_id
            JOIN positions p ON p.id = terminal.position_id
@@ -142,8 +175,9 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
            WHERE terminal.account_id = $1 AND terminal.symbol_id = $2
              AND ar.account_id = $1 AND ar.symbol_id = $2
              AND og.mode = 'demo' AND og.state = 'CLOSED'
-             AND terminal.mapping_state = 'MAPPED'
-             AND jsonb_array_length(terminal.reason_codes) = 0
+             AND ((terminal.mapping_state = 'MAPPED' AND jsonb_array_length(terminal.reason_codes) = 0)
+               OR (attested.id IS NOT NULL AND terminal.mapping_state='CONFLICT'
+                 AND terminal.reason_codes='["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb))
              AND terminal.execution_type IN (3, 11)
              AND (terminal.broker_order_type = 4 OR
                (terminal.broker_order_type = 1 AND EXISTS (
@@ -340,7 +374,11 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                 (SELECT broker_fill_id FROM terminal_proofs
                  ORDER BY occurred_at DESC, order_group_id DESC LIMIT 1)
                    AS terminal_broker_fill_id`,
-        [this.#options.accountId, this.#options.symbolId],
+        [
+          this.#options.accountId,
+          this.#options.symbolId,
+          JSON.stringify(eligible),
+        ],
       );
       const resolvedText = result.rows[0]?.resolved_event_count;
       const terminalProofHash = result.rows[0]?.terminal_proof_hash ?? null;
@@ -424,6 +462,14 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query("SET LOCAL lock_timeout = '5s'");
+      await client.query("SET LOCAL statement_timeout = '15s'");
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+        [
+          `${this.#options.accountId}:${this.#options.symbolId}:terminal-evidence`,
+        ],
+      );
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
         [`${this.#options.accountId}:${event.eventKey}`],

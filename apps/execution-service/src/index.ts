@@ -82,6 +82,7 @@ import { compactTailCounts } from "./analytics-config.js";
 import { CTraderMarginEstimator } from "./ctrader-margin.js";
 import { CTraderDemoGateway, DEMO_ACKNOWLEDGEMENT } from "./demo-gateway.js";
 import { DurableDemoExecutionRecorder } from "./demo-execution.js";
+import { TerminalHistoryAttestor } from "./terminal-history-attestor.js";
 import { recoverDemoExecutions } from "./demo-execution-recovery.js";
 import { DemoExecutionRecoveryRunner } from "./demo-execution-recovery-runner.js";
 import { PostgresDemoExecutionStore } from "./demo-execution-store.js";
@@ -663,6 +664,13 @@ async function main(): Promise<void> {
         store: demoExecutionStore,
         normalizer: { symbolId: executionSymbolId },
       });
+      await new TerminalHistoryAttestor({
+        pool,
+        accountId: identity.accountId,
+        symbolId: identity.symbolId,
+        brokerSymbol: executionSymbolId,
+        client: brokerClient,
+      }).run();
       const terminal = await demoExecutionStore.reconcileTerminalEvidence();
       const recoveryReasons = recovered.reasonCodes.filter(
         (reason) =>
