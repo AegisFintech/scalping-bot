@@ -16,6 +16,8 @@ import {
   executionRiskPolicy,
   FADE_LIMIT_RELEASE,
   FADE_LIMIT_RELEASE_V3,
+  usesFadeV3,
+  CODEX_STRATEGY_VERSION,
   STOP_EXECUTION_POLICY,
 } from "../../../packages/config/src/policy.js";
 
@@ -354,12 +356,12 @@ async function main(): Promise<void> {
     throw new Error("SHADOW_OR_LIVE_MODE_REQUIRES_LIVE_DATA_CONNECTION");
   }
   const configHash = safetyConfigHash(config);
-  const strategyVersion = environment.STRATEGY_VERSION ?? "0.3.0-fade-limit.3";
+  const strategyVersion =
+    environment.STRATEGY_VERSION ?? CODEX_STRATEGY_VERSION;
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
-  const fadeExecutionPolicy =
-    strategyVersion === "0.3.0-fade-limit.3"
-      ? FADE_LIMIT_RELEASE_V3
-      : FADE_LIMIT_RELEASE;
+  const fadeExecutionPolicy = usesFadeV3(strategyVersion)
+    ? FADE_LIMIT_RELEASE_V3
+    : FADE_LIMIT_RELEASE;
   const activeExecutionPolicy = fadeLimitActive
     ? fadeExecutionPolicy
     : STOP_EXECUTION_POLICY;
@@ -1225,10 +1227,9 @@ async function main(): Promise<void> {
     trendFilterBars: fadeLimitActive
       ? Number(fadeExecutionPolicy.trendFilterBars)
       : 0,
-    minimumExpectedNetToFeesRatio:
-      strategyVersion === "0.3.0-fade-limit.3"
-        ? "1.5"
-        : config.minimumExpectedNetToFeesRatio,
+    minimumExpectedNetToFeesRatio: usesFadeV3(strategyVersion)
+      ? "1.5"
+      : config.minimumExpectedNetToFeesRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
     preferredExpirySeconds: preferredOrderExpirySeconds,

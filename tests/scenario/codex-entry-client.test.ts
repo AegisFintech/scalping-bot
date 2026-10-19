@@ -111,3 +111,27 @@ describe("isolated Codex transport", () => {
     expect(s.fetchImpl).toHaveBeenCalledTimes(3);
   });
 });
+
+describe("production provider selection", () => {
+  it("requires the reviewed pin and independent local authentication", async () => {
+    const { createProductionAiOptions } =
+      await import("../../apps/ai-orchestrator/src/index.js");
+    const gate = async () => {};
+    expect(() =>
+      createProductionAiOptions(
+        { AI_MODEL: "grok-4.5", AI_PROVIDER: "codex-subscription" },
+        gate,
+      ),
+    ).toThrow("AI_PROVIDER_POLICY_MISMATCH");
+    expect(() =>
+      createProductionAiOptions(
+        {
+          AI_MODEL: "gpt-6.1-sol",
+          AI_PROVIDER: "codex-subscription",
+          AI_API_KEY: "legacy-secret",
+        },
+        gate,
+      ),
+    ).toThrow("CODEX_LOCAL_AUTH_REQUIRED");
+  });
+});

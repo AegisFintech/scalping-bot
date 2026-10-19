@@ -1,24 +1,25 @@
+import { CodexEntryClient } from "../../../packages/ai-client/src/codex-entry-client.js";
+import { FIXED_DEFAULTS } from "../../../packages/config/src/policy.js";
 import { ProviderFailure } from "../../../packages/ai-client/src/telemetry.js";
-import { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
+import type { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
 import { EntryPairPlanner } from "../../../packages/scenario-engine/src/entry-planner.js";
 import { MarketDataHttpClient } from "../../../packages/market-data-client/src/client.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import "dotenv/config";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
 
-import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import Fastify, { type FastifyInstance } from "fastify";
 
-import {
+import type {
   OpenAiCompatibleClient,
-  type AiReasoningEffort,
+  AiReasoningEffort,
 } from "../../../packages/ai-client/src/client.js";
 import type { AnalysisChartArtifact } from "../../../packages/contracts/src/index.js";
 
 export interface AiServerOptions {
-  readonly client: OpenAiCompatibleClient;
+  readonly client?: OpenAiCompatibleClient;
   readonly scenarioPlanner?: ScenarioPlanner;
   readonly entryPairPlanner?: EntryPairPlanner;
 }
@@ -118,7 +119,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", (_request, reply) => {
     if (
-      options.client.circuitOpen ||
+      options.client?.circuitOpen ||
       options.scenarioPlanner?.client.circuitOpen ||
       options.entryPairPlanner?.client.circuitOpen
     )
@@ -137,6 +138,8 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
     };
   }>("/v1/analyze", async (request, reply) => {
     try {
+      if (options.client === undefined)
+        return reply.code(503).send({ reason: "AI_LEGACY_ROUTE_DISABLED" });
       if (request.body.chart == null) throw new Error("AI_CHART_MISSING");
       const result = await options.client.analyze(request.body);
       return reply.send(result);
@@ -153,9 +156,29 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
   return app;
 }
 
+/** Production has exactly one provider; legacy endpoints cannot dispatch API calls. */
+export function createProductionAiOptions(
+  environment: NodeJS.ProcessEnv,
+  beforeDispatch: (symbol: string) => Promise<void>,
+  fetchImpl?: typeof fetch,
+): AiServerOptions {
+  if (
+    environment.AI_MODEL !== FIXED_DEFAULTS.AI_MODEL ||
+    environment.AI_PROVIDER !== FIXED_DEFAULTS.AI_PROVIDER
+  )
+    throw new Error("AI_PROVIDER_POLICY_MISMATCH");
+  const client = new CodexEntryClient({
+    localToken: environment.CODEX_ENTRY_LOCAL_TOKEN ?? "",
+    beforeDispatch,
+    ...(fetchImpl === undefined ? {} : { fetchImpl }),
+  });
+  return {
+    entryPairPlanner: new EntryPairPlanner({ client, baseUrl: "", apiKey: "" }),
+  };
+}
+
 async function main(): Promise<void> {
   const environment = resolveRuntimeEnvironment(process.env);
-  const reasoningEffort = aiReasoningEffort(environment.AI_REASONING_EFFORT);
   const sessionClient = new MarketDataHttpClient({
     baseUrl:
       environment.MARKET_DATA_BASE_URL ??
@@ -180,42 +203,9 @@ async function main(): Promise<void> {
       );
     }
   };
-  const client = new OpenAiCompatibleClient({
-    beforeDispatch,
-    baseUrl: environment.AI_BASE_URL ?? "",
-    apiKey: environment.AI_API_KEY ?? "",
-    model: environment.AI_MODEL ?? "",
-    inputProfile:
-      environment.MODEL_INPUT_PROFILE === "structured" ? "structured" : "chart",
-    apiStyle:
-      environment.AI_API_STYLE === "chat_completions"
-        ? "chat_completions"
-        : "responses",
-    schemaPath: path.resolve("schemas/model-response-2.1.json"),
-    systemPromptPath: path.resolve("prompts/system-v16.md"),
-    promptVersion: "system-v16",
-    timeoutMs: Number(environment.AI_TIMEOUT_MS ?? 30_000),
-    maxRetries: Number(environment.AI_MAX_RETRIES ?? 0),
-    maxOutputTokens: Number(environment.AI_MAX_OUTPUT_TOKENS ?? 3_000),
-    ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
-    circuitBreakerFailures: Number(
-      environment.AI_CIRCUIT_BREAKER_FAILURES ?? 3,
-    ),
-    circuitBreakerResetMs:
-      Number(environment.AI_CIRCUIT_BREAKER_RESET_SECONDS ?? 300) * 1_000,
-  });
-  const scenarioPlanner = new ScenarioPlanner({
-    beforeDispatch,
-    baseUrl: environment.AI_BASE_URL ?? "",
-    apiKey: environment.AI_API_KEY ?? "",
-    executionContext: true,
-  });
-  const entryPairPlanner = new EntryPairPlanner({
-    baseUrl: environment.AI_BASE_URL ?? "",
-    apiKey: environment.AI_API_KEY ?? "",
-    beforeDispatch,
-  });
-  const app = createAiServer({ client, scenarioPlanner, entryPairPlanner });
+  const app = createAiServer(
+    createProductionAiOptions(environment, beforeDispatch),
+  );
   await app.listen({
     host: environment.HOST ?? "127.0.0.1",
     port: Number(environment.AI_ORCHESTRATOR_PORT ?? 8082),

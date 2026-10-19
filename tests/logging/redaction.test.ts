@@ -6,6 +6,7 @@ describe("log redaction", () => {
   it("recursively removes secrets and authorization values", () => {
     const safe = redact({
       api_key: "secret-value",
+      CODEX_ENTRY_LOCAL_TOKEN: "local-credential-value",
       nested: {
         authorization: "Bearer abc.def",
         message: "failed with Bearer raw-token",
@@ -13,6 +14,7 @@ describe("log redaction", () => {
       database: "postgresql://user:pass@host/db?token=abc",
     });
     expect(JSON.stringify(safe)).not.toContain("secret-value");
+    expect(JSON.stringify(safe)).not.toContain("local-credential-value");
     expect(JSON.stringify(safe)).not.toContain("raw-token");
     expect(JSON.stringify(safe)).not.toContain("user:pass");
   });

@@ -62,12 +62,24 @@ class Candles(StrictModel):
             raise ValueError("CODEX_COLUMNS_INVALID")
         previous: datetime | None = None
         for row in self.rows:
-            if len(row) != 9 or row[7] is not True or row[8] != []:
+            if (
+                len(row) != 9
+                or row[7] is not True
+                or row[8] not in ([], ["BROKER_SESSION_GAP_BEFORE"])
+            ):
                 raise ValueError("CODEX_COMPLETED_CANDLES_REQUIRED")
             start, end = timestamp(row[0]), timestamp(row[1])
             seconds = {"M1": 60, "M5": 300, "M15": 900}[self.timeframe]
-            if (end - start).total_seconds() != seconds or (
-                previous is not None and start != previous
+            if (end - start).total_seconds() != seconds:
+                raise ValueError("CODEX_CANDLE_TIME_INVALID")
+            # Same trusted broker-session marker contract as analytics and the Node planner.
+            # No inferred gap repair: unmarked, fractional, overlapping or excessive gaps reject.
+            gap = 0.0 if previous is None else (start - previous).total_seconds()
+            marked = row[8] == ["BROKER_SESSION_GAP_BEFORE"]
+            if (
+                (gap == 0 and marked)
+                or gap < 0
+                or (gap > 0 and (not marked or gap % seconds != 0 or gap > 14 * 86400))
             ):
                 raise ValueError("CODEX_CANDLE_TIME_INVALID")
             previous = end

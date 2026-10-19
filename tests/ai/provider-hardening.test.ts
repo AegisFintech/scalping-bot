@@ -15,7 +15,7 @@ describe("bounded provider and configuration", () => {
   });
   it("keeps exact model identity and explicit stopped authority", () => {
     const env = resolveRuntimeEnvironment({ AI_API_KEY: "fixture-secret" });
-    expect(env.AI_MODEL).toBe("grok-4.5");
+    expect(env.AI_MODEL).toBe("gpt-6.1-sol");
     expect(env.LIVE_TRADING_ENABLED).toBe("false");
     expect(env.BASE_RISK_PERCENT).toBe("1");
     expect(env.MAX_RISK_PERCENT).toBe("1");

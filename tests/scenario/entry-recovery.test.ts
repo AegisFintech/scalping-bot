@@ -65,7 +65,7 @@ function plan(
 }
 function response(p: EntryPairPlan): AiAnalysisResult<EntryPairPlan> {
   return {
-    model: "grok-4.5",
+    model: "gpt-6.1-sol",
     response: p,
     rawResponse: JSON.stringify(p),
     latencyMs: 10,
@@ -76,8 +76,8 @@ function response(p: EntryPairPlan): AiAnalysisResult<EntryPairPlan> {
       sha256: "a".repeat(64),
     },
     telemetry: {
-      requestedModel: "grok-4.5",
-      returnedModel: "grok-4.5",
+      requestedModel: "gpt-6.1-sol",
+      returnedModel: null,
       inputProfile: "structured",
       requestBytes: 100,
       responseBytes: 100,
@@ -112,7 +112,7 @@ function memory(now: () => number, initial: EntryPairPlan | null = plan()) {
     ? [
         {
           id: initial.analysis_id,
-          requestedModel: "grok-4.5",
+          requestedModel: "gpt-6.1-sol",
           state: "READY",
           requestedAt: iso(),
           capturedAt: iso(),
@@ -143,7 +143,7 @@ function memory(now: () => number, initial: EntryPairPlan | null = plan()) {
         return Promise.resolve(false);
       rows.push({
         id: i.id,
-        requestedModel: "grok-4.5",
+        requestedModel: "gpt-6.1-sol",
         state: "REQUESTING",
         requestedAt: iso(now()),
         capturedAt: i.capturedAt,

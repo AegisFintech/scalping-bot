@@ -19,7 +19,7 @@ let failed = false;
 const patterns = [
   [
     "populated-assignment",
-    /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|database_url|authorization)\s*=\s*[^\s#]{8,}/gim,
+    /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|database_url|codex_entry_local_token|authorization)\s*=\s*[^\s#]{8,}/gim,
   ],
   // A token must start at its own boundary: the 'sk-' inside 'risk-budget' is not a key.
   [

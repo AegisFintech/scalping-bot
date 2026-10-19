@@ -8,7 +8,8 @@ import {
   type EntryPairPlan,
 } from "../../scenario-engine/src/entry-plan.js";
 
-export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
+import { CODEX_ENTRY_MODEL } from "../../config/src/policy.js";
+export { CODEX_ENTRY_MODEL };
 const price = z
   .string()
   .regex(/^(0|[1-9][0-9]{0,12})(\.[0-9]{1,10})?$/)
@@ -31,7 +32,7 @@ const receipt = z
   })
   .strict();
 
-/** Opt-in adapter; the production factory remains on its reviewed Grok policy. */
+/** Subscription proposal transport; never owns broker execution authority. */
 export class CodexEntryClient {
   readonly #prompt: string;
   readonly #sha: string;

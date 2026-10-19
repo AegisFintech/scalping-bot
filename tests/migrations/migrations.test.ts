@@ -90,6 +90,7 @@ describe("migrations", () => {
       "0026_grok_context_model.sql",
       "0027_execution_conflict_evidence.sql",
       "0028_terminal_history_attestation.sql",
+      "0029_codex_context_model.sql",
     ]);
     const sql = (
       await Promise.all(

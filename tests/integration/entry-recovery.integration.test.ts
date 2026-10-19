@@ -99,7 +99,7 @@ suite(
             },
             telemetry: {
               requestedModel: FIXED_DEFAULTS.AI_MODEL,
-              returnedModel: FIXED_DEFAULTS.AI_MODEL,
+              returnedModel: null,
               inputProfile: "structured",
               requestBytes: 100,
               responseBytes: 100,
@@ -150,6 +150,23 @@ suite(
         analysisId,
       };
     }
+    it("admits Codex, retains historical identity and cooldown, and rejects unknown pins", async () => {
+      const x = await setup();
+      expect((await x.store.latest())?.requestedModel).toBe("gpt-6.1-sol");
+      await pool.query(
+        "UPDATE scenario_contexts SET requested_model='grok-4.5' WHERE id=$1",
+        [x.root.id],
+      );
+      expect((await x.store.latest())?.requestedModel).toBe("grok-4.5");
+      expect(await x.store.claim(x.claim())).toBe(false);
+      await expect(
+        pool.query(
+          "UPDATE scenario_contexts SET requested_model='unreviewed' WHERE id=$1",
+          [x.root.id],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      expect((await x.store.latest())?.requestedModel).toBe("grok-4.5");
+    });
     it("allows exactly one immediate replacement across concurrent processes and restarts", async () => {
       const x = await setup();
       const original = (

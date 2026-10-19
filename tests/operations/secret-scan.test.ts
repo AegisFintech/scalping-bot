@@ -30,6 +30,12 @@ it("distinguishes document names from credentials and never echoes secret matche
     expect(scan().status).toBe(1);
     writeFileSync(
       path.join(root, "key.txt"),
+      "CODEX_ENTRY_LOCAL_TOKEN=" + "D".repeat(32),
+    );
+    expect(scan().status).toBe(1);
+    expect(scan().stderr).not.toContain("D".repeat(32));
+    writeFileSync(
+      path.join(root, "key.txt"),
       "-----BEGIN " + "PRIVATE KEY-----",
     );
     expect(scan().status).toBe(1);
