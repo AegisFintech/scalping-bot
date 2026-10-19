@@ -49,7 +49,7 @@ history; missing monetary fields reject rather than inheriting normalization
 fallbacks. Raw history receives a separate evidence digest. Reconstructed local
 position context is never represented as independently observed protection.
 
-Twenty unit cases cover context-only agreement and financial/identity/time/
+Twenty-two unit cases cover context-only agreement and financial/identity/time/
 volume conflicts, missing variants, stale/incomplete/duplicate history and missing
 cost fields. This checker has no database or broker connection and is not wired
 into operational recovery. A match alone cannot release a group: complete entry,
@@ -109,7 +109,13 @@ and [PR qualification](https://github.com/AegisFintech/scalping-bot/actions/runs
 These include formatting, ESLint, TypeScript/build, Node/schema/migration/replay
 checks, Python format/lint/types/tests, isolated PostgreSQL lifecycle tests,
 secret scanning and both dependency audits. Focused final history-proof tests:
-20 passed; dashboard tests: 58 passed; isolated database suite: 73 passed.
+22 passed; dashboard tests: 58 passed; isolated database suite: 73 passed.
 Graphify was refreshed without provider calls; its existing pyproject empty-node
 warning remains. No tracked runtime evidence, credential or frozen-study file
 was changed. Documentation receipt changes still receive final-head CI before merge.
+
+Final review additionally checks the raw closing order and deal side against the
+opposite owned-position side, and any explicit order position identity. Those
+fields are not all retained by normalized fills, so normalized equality alone was
+insufficient. The focused checker now has 22 passing cases; the final source
+revision requires its own complete hosted qualification before merge.

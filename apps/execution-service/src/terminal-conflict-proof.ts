@@ -156,6 +156,19 @@ export function verifyTerminalHistory(
     String(deal.positionId) !== original.brokerPositionId
   )
     return reject("DEMO_TERMINAL_HISTORY_IDENTITY_MISMATCH");
+  const expectedSide = position.side === "BUY" ? "2" : "1";
+  const tradeData = order.tradeData;
+  if (
+    tradeData === null ||
+    typeof tradeData !== "object" ||
+    Array.isArray(tradeData) ||
+    !("tradeSide" in tradeData) ||
+    String(tradeData.tradeSide) !== expectedSide ||
+    String(deal.tradeSide) !== expectedSide ||
+    (order.positionId !== undefined &&
+      String(order.positionId) !== position.brokerPositionId)
+  )
+    return reject("DEMO_TERMINAL_HISTORY_IDENTITY_MISMATCH");
   try {
     // This position object is local historical context. It is excluded from the
     // independent-history claim and never persisted as a synthetic callback.

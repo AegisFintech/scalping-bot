@@ -8,7 +8,7 @@
 - Parent/dependencies: #301 recovery incident and #222 terminal lifecycle contract.
 - Acceptance: additive variant/provenance journal, preserved original facts/reasons/proofs, duplicate/restart/rollback regressions, non-authoritative strict history checker, corrected dashboard guidance, full qualification and pushed PR.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/308.
-- Status: implemented and pushed; 73 isolated database tests, 20 focused history-proof cases and 58 dashboard tests pass. Both full hosted qualifications pass on c654804 (39194061154 / 39194064902), including audits. No operational migration, recovery unlock or strategy/provider activation.
+- Status: implemented and pushed; 73 isolated database tests, 22 focused history-proof cases and 58 dashboard tests pass. Both full hosted qualifications pass on c654804 (39194061154 / 39194064902), including audits. No operational migration, recovery unlock or strategy/provider activation.
 - Report: [terminal conflict evidence](docs/terminal-conflict-recovery-report.md).
 
 ### ISSUE-301 — Terminal broker-event conflict recovery

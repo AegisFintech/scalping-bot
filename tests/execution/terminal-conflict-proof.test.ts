@@ -135,6 +135,18 @@ describe("terminal conflict financial attestation (no execution authority)", () 
       verifyTerminalHistory(f.original, f.orders, f.deals, "7", f.now).reason,
     ).toBe("DEMO_TERMINAL_HISTORY_COST_EVIDENCE_MISSING");
   });
+  it("rejects an inconsistent closing order side or position identity", async () => {
+    const f = await fixture();
+    (f.orders.orders[0]!.tradeData as Record<string, unknown>).tradeSide = 1;
+    expect(
+      verifyTerminalHistory(f.original, f.orders, f.deals, "7", f.now).reason,
+    ).toBe("DEMO_TERMINAL_HISTORY_IDENTITY_MISMATCH");
+    (f.orders.orders[0]!.tradeData as Record<string, unknown>).tradeSide = 2;
+    f.orders.orders[0]!.positionId = "999";
+    expect(
+      verifyTerminalHistory(f.original, f.orders, f.deals, "7", f.now).reason,
+    ).toBe("DEMO_TERMINAL_HISTORY_IDENTITY_MISMATCH");
+  });
   it.each([
     "executionPrice",
     "executionTimestamp",
@@ -143,6 +155,7 @@ describe("terminal conflict financial attestation (no execution authority)", () 
     "positionId",
     "orderId",
     "dealStatus",
+    "tradeSide",
     "volume",
   ])("rejects conflicting historical %s", async (key) => {
     const f = await fixture();
