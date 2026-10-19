@@ -1,6 +1,7 @@
 # ISSUE-301 — Terminal conflict evidence and recovery
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/301.
+PR: https://github.com/AegisFintech/scalping-bot/pull/308.
 Status: implementation in progress; no operational recovery or deployment claimed.
 
 ## Confirmed gap
@@ -59,5 +60,8 @@ failure reasons. The first full local run stopped on two test-only unsafe-access
 those were corrected. The first database run passed 71 cases and caught a new
 fixture that changed a non-deal event key instead of creating a same-key conflict;
 the fixture now uses a deal identity. A further regression covers reopening a
-resolved conflict while retaining its earlier proof. Full qualification is pending
-before merge or activation.
+resolved conflict while retaining its earlier proof. The database rerun passes all
+73 cases (`/tmp/scalper-qualification-igm1Ua/checks/database-lifecycle.log`). Python
+passed 287 cases and caught the old dashboard assertion promising manual recovery
+was unnecessary; that assertion now checks the corrected attestation/flat-account
+guidance. Full hosted qualification is pending before merge or activation.
