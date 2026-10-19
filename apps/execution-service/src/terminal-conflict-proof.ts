@@ -166,7 +166,9 @@ export function verifyTerminalHistory(
     String(tradeData.tradeSide) !== expectedSide ||
     String(deal.tradeSide) !== expectedSide ||
     (order.positionId !== undefined &&
-      String(order.positionId) !== position.brokerPositionId)
+      ((typeof order.positionId !== "string" &&
+        typeof order.positionId !== "number") ||
+        String(order.positionId) !== position.brokerPositionId))
   )
     return reject("DEMO_TERMINAL_HISTORY_IDENTITY_MISMATCH");
   try {
