@@ -112,3 +112,125 @@ def test_export_timeout_kills_group_and_does_not_publish(
     with pytest.raises(ValueError, match="EXPORT_TIMEOUT"):
         f.collect(tmp_path, tmp_path / "environment", datetime(2026, 10, 19, tzinfo=UTC))
     assert killed == [(123, f.signal.SIGKILL)]
+
+
+def test_epoch_clips_window_without_inventing_pre_epoch_zero_results() -> None:
+    epoch = datetime(2026, 10, 19, 6, 16, 40, tzinfo=UTC)
+    assert f.window(datetime(2026, 10, 20, 2, tzinfo=UTC), epoch) == (
+        "2026-10-19T06:16:40Z",
+        "2026-10-20T00:00:00Z",
+    )
+    assert f.window(datetime(2026, 10, 30, tzinfo=UTC), epoch) == (
+        "2026-10-23T00:00:00Z",
+        "2026-10-30T00:00:00Z",
+    )
+    with pytest.raises(f.EpochNotComplete):
+        f.window(datetime(2026, 10, 19, 7, tzinfo=UTC), epoch)
+    with pytest.raises(f.EpochNotComplete):
+        f.window(datetime(2026, 10, 19, 7, tzinfo=UTC), datetime(2026, 10, 19, tzinfo=UTC))
+    with pytest.raises(ValueError, match="EPOCH_FUTURE"):
+        f.window(datetime(2026, 10, 19, tzinfo=UTC), epoch)
+    with pytest.raises(ValueError, match="UTC_REQUIRED"):
+        f.window(datetime(2026, 10, 20, tzinfo=UTC), epoch.replace(tzinfo=None))
+
+
+def test_incomplete_epoch_never_starts_export_or_replaces_latest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    latest = tmp_path / "latest.json"
+    latest.write_text("retained historical evidence")
+
+    def forbidden(*_: Any, **__: Any) -> None:
+        pytest.fail("Incomplete epoch must not export")
+
+    monkeypatch.setattr(f.subprocess, "Popen", forbidden)
+    with pytest.raises(f.EpochNotComplete):
+        f.collect(
+            tmp_path,
+            tmp_path / "environment",
+            datetime(2026, 10, 19, 8, tzinfo=UTC),
+            datetime(2026, 10, 19, 6, tzinfo=UTC),
+        )
+    assert latest.read_text() == "retained historical evidence"
+
+
+def test_epoch_is_passed_to_export_and_checked_against_returned_window(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    epoch = datetime(2026, 10, 19, 6, tzinfo=UTC)
+
+    class Process:
+        returncode = 0
+
+        def wait(self, **_: Any) -> None:
+            pass
+
+    def spawn(command: list[str], **kwargs: Any) -> Process:
+        assert command[-2:] == ["2026-10-19T06:00:00Z", "2026-10-20T00:00:00Z"]
+        kwargs["stdout"].write(b"{}")
+        return Process()
+
+    monkeypatch.setattr(f.subprocess, "Popen", spawn)
+    item = Evidence.model_validate_json(evidence(tmp_path).read_bytes()).model_copy(
+        update={
+            "release": f.RELEASE,
+            "start": "2026-10-19T06:00:00Z",
+            "end": "2026-10-20T00:00:00Z",
+        }
+    )
+    monkeypatch.setattr(f, "project", lambda _: item)
+    assert (
+        f.collect(tmp_path, tmp_path / "environment", datetime(2026, 10, 20, 2, tzinfo=UTC), epoch)
+        == item
+    )
+    monkeypatch.setattr(
+        f, "project", lambda _: item.model_copy(update={"start": "2026-10-13T00:00:00Z"})
+    )
+    with pytest.raises(ValueError, match="WINDOW_MISMATCH"):
+        f.collect(tmp_path, tmp_path / "environment", datetime(2026, 10, 20, 2, tzinfo=UTC), epoch)
+
+
+@pytest.mark.parametrize("epoch", ["", "2026-10-19T06:00:00Z"])
+def test_cli_epoch_validation_and_wait_do_not_publish(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    epoch: str,
+) -> None:
+    pointer = tmp_path / "environment-pointer"
+    pointer.write_text(str(tmp_path / "environment"))
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz: Any = None) -> datetime:
+            return datetime(2026, 10, 19, 7, tzinfo=UTC)
+
+    def forbidden(*_: Any, **__: Any) -> None:
+        pytest.fail("Epoch preflight must not export or publish")
+
+    monkeypatch.setattr(f, "datetime", Clock)
+    monkeypatch.setattr(f.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(f.subprocess, "Popen", forbidden)
+    monkeypatch.setattr(f, "publish_latest", forbidden)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "feed",
+            "--source",
+            str(tmp_path),
+            "--environment-pointer",
+            str(pointer),
+            "--inbox",
+            str(tmp_path),
+            "--epoch-start",
+            epoch,
+        ],
+    )
+    if not epoch:
+        with pytest.raises(SystemExit, match="RESEARCH_FEED_FAILED"):
+            f.main()
+    else:
+        f.main()
+        assert capsys.readouterr().out.strip() == "RESEARCH_FEED_WAIT_NEW_EPOCH"

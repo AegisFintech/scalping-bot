@@ -4,9 +4,10 @@ After=postgresql.service
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/scalper-research
+WorkingDirectory=/opt/scalper-research-feed/current
 Environment=PYTHONDONTWRITEBYTECODE=1
-ExecStart=/opt/scalper-research/.venv/bin/python -m python.research.feed --source /opt/ctrader-ai-scalper/releases/9b35d877 --environment-pointer /etc/scalper-research-feed/environment-path --inbox /var/lib/scalper-research-feed
+Environment=PYTHONPATH=/opt/scalper-research-feed/current
+ExecStart=/opt/scalper-research/.venv/bin/python -m python.research.feed --source /opt/ctrader-ai-scalper/releases/70a7d48-epoch314 --environment-pointer /etc/scalper-research-feed/environment-path --inbox /var/lib/scalper-research-feed --epoch-start 2026-10-19T06:16:40.511Z
 UMask=0077
 Nice=15
 IOSchedulingClass=idle

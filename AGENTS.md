@@ -1,3 +1,15 @@
+# ISSUE-314 — October 19 one-time fresh demo authorization
+
+The operator explicitly authorized a fresh start after the legacy conflict audit.
+Use a separate empty local database/runtime and the existing audited baseline
+initializer after fresh flat broker and complete daily evidence. Old history is
+excluded from the new operational epoch, retained separately with the frozen
+research source. This supersedes the prohibition on this specific accounting
+transition only; never infer recurring resets or harmless discarded callbacks.
+Preserve current Grok/fade policy, shared dynamic 1% setup risk, live disabled,
+all reconciliation/protection gates and every new epoch claim. Read
+`docs/fresh-demo-epoch-314-report.md`; no old database rollback after new activity.
+
 # Agent Instructions
 
 ISSUE-255: prospective research is an isolated read-only observer, never an order
