@@ -201,3 +201,7 @@ The verifier-version rejection case also passes: final isolated qualification
 reports **87 PostgreSQL tests and 288 Python tests** at
 `/tmp/scalper-qualification-uEglj3/checks`. Focused history proof remains 22/22;
 TypeScript and focused ESLint pass. Final-head full CI remains the merge gate.
+
+Full-group implementation PR: https://github.com/AegisFintech/scalping-bot/pull/310.
+Both exact-head hosted qualifications must pass before this PR becomes mergeable;
+#301 remains open for legacy incident policy and verified operational activation.
