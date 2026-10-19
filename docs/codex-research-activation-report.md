@@ -77,3 +77,40 @@ unchanged. The failed weekly claim remains immutable and is not replayed. A fres
 isolated diagnostic verifies the corrected service environment before schedules
 are enabled. Updated qualification and final activation receipts are attached to
 the issue/PR.
+
+## Activation receipt — 2026-10-19T02:52:07.693380+00:00
+
+Corrected unit commit `108e2e1` passed both complete hosted qualifications:
+[push run](https://github.com/AegisFintech/scalping-bot/actions/runs/39191610707)
+and [PR run](https://github.com/AegisFintech/scalping-bot/actions/runs/39191615656).
+Installed research modules match committed `aab8d3e`; the later change affects
+only the unit resource limit and documentation. Installed Python dependencies
+match the repository lock for all five packages in the minimal research environment.
+
+A separate service diagnostic with the corrected 32 MiB cap, unprivileged user,
+read-only system/home protections, 512 MiB memory and 25% CPU completed successfully.
+Its structured result was `{"ok":true}`; event metadata records two completed web
+search actions against official Codex documentation. This is a functional web-tool
+test, not a research candidate or trading-performance result.
+
+The trusted feed service and daily duplicate check exited successfully. Starting
+the corrected weekly unit returned the existing-claim wait without inference;
+all failed weekly artifact digests remained unchanged. No failed claim was deleted,
+rewritten or retried. The next timer tick this week may be a no-op; the next new
+weekly research period begins October 26. Daily research next runs October 20.
+
+All three timers are enabled and active: `scalper-codex-feed.timer`,
+`scalper-codex-research-daily.timer`, `scalper-codex-research-weekly.timer`.
+Nominal Singapore times are hourly at minute 10, daily 10:30, and Monday 11:00,
+plus bounded random delay. Reports remain in the dedicated user's private jobs
+directory; the real October 19 daily report is PROPOSAL_ONLY/HOLD with zero candidates.
+The first weekly failure remains recorded and has no completed research report.
+
+Permission checks: research can read `latest.json`, cannot write the feed inbox
+or installed source, and cannot read root's private directory. The privileged
+exporter never invokes Codex. No trading service was restarted or reconfigured.
+Frozen source remains clean at `984f479`; no accounting or risk locks were cleared.
+
+PR: https://github.com/AegisFintech/scalping-bot/pull/307. Generated-candidate testing,
+independent source verification and promotion remain pending in #304; replacing
+the trading AI and simplifying its operating loop remain pending in #303.
