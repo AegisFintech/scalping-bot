@@ -190,3 +190,47 @@ def test_epoch_is_passed_to_export_and_checked_against_returned_window(
     )
     with pytest.raises(ValueError, match="WINDOW_MISMATCH"):
         f.collect(tmp_path, tmp_path / "environment", datetime(2026, 10, 20, 2, tzinfo=UTC), epoch)
+
+
+@pytest.mark.parametrize("epoch", ["", "2026-10-19T06:00:00Z"])
+def test_cli_epoch_validation_and_wait_do_not_publish(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    epoch: str,
+) -> None:
+    pointer = tmp_path / "environment-pointer"
+    pointer.write_text(str(tmp_path / "environment"))
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz: Any = None) -> datetime:
+            return datetime(2026, 10, 19, 7, tzinfo=UTC)
+
+    def forbidden(*_: Any, **__: Any) -> None:
+        pytest.fail("Epoch preflight must not export or publish")
+
+    monkeypatch.setattr(f, "datetime", Clock)
+    monkeypatch.setattr(f.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(f.subprocess, "Popen", forbidden)
+    monkeypatch.setattr(f, "publish_latest", forbidden)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "feed",
+            "--source",
+            str(tmp_path),
+            "--environment-pointer",
+            str(pointer),
+            "--inbox",
+            str(tmp_path),
+            "--epoch-start",
+            epoch,
+        ],
+    )
+    if not epoch:
+        with pytest.raises(SystemExit, match="RESEARCH_FEED_FAILED"):
+            f.main()
+    else:
+        f.main()
+        assert capsys.readouterr().out.strip() == "RESEARCH_FEED_WAIT_NEW_EPOCH"

@@ -141,7 +141,7 @@ def main() -> None:
             args.source,
             environment,
             datetime.now(UTC),
-            timestamp(args.epoch_start) if args.epoch_start else None,
+            timestamp(args.epoch_start) if args.epoch_start is not None else None,
         )
         checksum = publish_latest(args.inbox, result, grp.getgrnam("scalper-research").gr_gid)
         print("RESEARCH_AGGREGATE_PUBLISHED " + checksum)

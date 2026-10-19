@@ -129,7 +129,7 @@ registration is introduced. The original latest aggregate will be retained outsi
 the active latest pointer; original reports/weekly claims remain unchanged.
 
 The new feed uses a separately pinned qualified Python bundle and the new database
-environment; it does not alter the immutable trading release. Eight focused feed
+environment; it does not alter the immutable trading release. Ten focused feed
 tests cover clipping, future/naive rejection, first-window waiting without export,
-exact requested/returned windows, timeout and immutable publication. Full final
+exact requested/returned windows, explicit empty-epoch rejection, CLI waiting, timeout and immutable publication. Full final
 qualification gates this feed deployment and PR completion.
