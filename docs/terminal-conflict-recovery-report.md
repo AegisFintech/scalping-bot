@@ -1,6 +1,7 @@
 # ISSUE-301 — Terminal conflict evidence and recovery
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/301.
+Evidence prerequisite: https://github.com/AegisFintech/scalping-bot/issues/309.
 PR: https://github.com/AegisFintech/scalping-bot/pull/308.
 Status: implementation in progress; no operational recovery or deployment claimed.
 
@@ -99,3 +100,16 @@ No economic or provider switch is included in this checkpoint.
 The first hosted runs on 732dba3 stopped at TypeScript checks: two new test row
 accesses needed explicit possibly-undefined handling. Those assertions now use
 optional access, so missing rows fail the assertions instead of bypassing checks.
+
+## Qualified checkpoint
+
+Both complete `npm run qualify` hosted runs pass on `c654804aae872f8a97be998322523d93c7a640bf`:
+[push qualification](https://github.com/AegisFintech/scalping-bot/actions/runs/39194061154)
+and [PR qualification](https://github.com/AegisFintech/scalping-bot/actions/runs/39194064902).
+These include formatting, ESLint, TypeScript/build, Node/schema/migration/replay
+checks, Python format/lint/types/tests, isolated PostgreSQL lifecycle tests,
+secret scanning and both dependency audits. Focused final history-proof tests:
+20 passed; dashboard tests: 58 passed; isolated database suite: 73 passed.
+Graphify was refreshed without provider calls; its existing pyproject empty-node
+warning remains. No tracked runtime evidence, credential or frozen-study file
+was changed. Documentation receipt changes still receive final-head CI before merge.

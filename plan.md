@@ -2,13 +2,22 @@
 
 ## Scope
 
+### ISSUE-309 — Conflict evidence prerequisite for terminal recovery
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/309.
+- Parent/dependencies: #301 recovery incident and #222 terminal lifecycle contract.
+- Acceptance: additive variant/provenance journal, preserved original facts/reasons/proofs, duplicate/restart/rollback regressions, non-authoritative strict history checker, corrected dashboard guidance, full qualification and pushed PR.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/308.
+- Status: implemented and pushed; 73 isolated database tests, 20 focused history-proof cases and 58 dashboard tests pass. Both full hosted qualifications pass on c654804 (39194061154 / 39194064902), including audits. No operational migration, recovery unlock or strategy/provider activation.
+- Report: [terminal conflict evidence](docs/terminal-conflict-recovery-report.md).
+
 ### ISSUE-301 — Terminal broker-event conflict recovery
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/301.
 - Dependencies: #222 exact terminal lifecycle evidence; immutable #255 observer.
 - Acceptance: durable conflict variants/provenance, bounded separate historical attestation, strict full-group financial proof, legacy missing-variant policy, failure/restart tests, full qualification and verified deployment.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/308.
-- Status: additive evidence checkpoint pushed; 73 isolated PostgreSQL cases pass. Historical conflict remains blocked and no runtime change is claimed; full hosted qualification pending.
+- Status: additive evidence checkpoint pushed; 73 isolated PostgreSQL cases pass. Historical conflict remains blocked and no runtime change is claimed. Evidence checkpoint #309 passes both full hosted qualifications on c654804.
 - Report: [terminal conflict recovery](docs/terminal-conflict-recovery-report.md).
 
 ### ISSUE-306 — Isolated Codex research activation and aggregate feed
