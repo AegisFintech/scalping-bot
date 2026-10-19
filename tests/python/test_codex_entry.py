@@ -234,3 +234,41 @@ def test_published_schema_matches_typed_contract(kind: str, model: Any) -> None:
     schema.pop("$id")
     schema.pop("$schema")
     assert schema == model.model_json_schema()
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [None, "unmarked", "duplicate", "spurious", "overlap", "fractional", "too_long", "first"],
+)
+def test_verified_session_gap_contract(fault: str | None, tmp_path: Path) -> None:
+    body = request().model_dump()
+    series = body["payload"]["candles"][2]
+    later = series["rows"][0]
+    previous = list(later)
+    gap = 2 * 86400
+    if fault == "spurious":
+        gap = 0
+    elif fault == "overlap":
+        gap = -900
+    elif fault == "fractional":
+        gap += 1
+    elif fault == "too_long":
+        gap = 15 * 86400
+    previous[1] = (NOW - timedelta(seconds=900 + gap)).isoformat()
+    previous[0] = (NOW - timedelta(seconds=1800 + gap)).isoformat()
+    later[8] = ["BROKER_SESSION_GAP_BEFORE"]
+    if fault == "unmarked":
+        later[8] = []
+    elif fault == "duplicate":
+        later[8] *= 2
+    series["rows"] = [later] if fault == "first" else [previous, later]
+    if fault is not None:
+        with pytest.raises(ValueError):
+            s.Request.model_validate(body)
+        assert not list(tmp_path.iterdir())
+    else:
+        req = s.Request.model_validate(body)
+        result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=output)
+        assert result["executionAuthority"] is False
+        saved = json.loads((tmp_path / req.analysisId / "request.json").read_text())
+        assert saved["payload"]["candles"][2]["rows"][1][8] == ["BROKER_SESSION_GAP_BEFORE"]

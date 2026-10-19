@@ -1,7 +1,8 @@
 # ISSUE-303 — Codex production proposals
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/303.
-Status: implementation and qualification; activation pending.
+PR: https://github.com/AegisFintech/scalping-bot/pull/317.
+Status: production wiring deployed; qualified session-gap worker update being activated.
 
 The operator explicitly requested “use codex instead” on October 19 after the fresh
 demo restart. The production AI factory now constructs only `CodexEntryClient`:
@@ -79,3 +80,27 @@ no failed check was bypassed. The registry immutability review led to an explici
 provider version with tested unchanged v3 selection. Both policy and `--startup`
 checks pass for the prepared private environment. Graphify AST update completed
 without provider calls; its pyproject.toml empty-node warning is unchanged.
+
+## First deployed input and session-gap compatibility
+
+The first natural request on the deployed transport was rejected before any CLI
+claim/dispatch: its completed M15 tail contained one trusted
+`BROKER_SESSION_GAP_BEFORE` marker from the existing broker schedule classifier.
+The worker had accepted only contiguous unflagged synthetic histories. The worker
+now mirrors the existing Node/analytics contract: exactly one known marker on a
+positive integral timeframe gap, at most 14 days; unmarked gaps, duplicate/unknown
+flags, overlaps, fractional gaps and spurious/first-row markers still reject.
+Original candles and markers are retained unchanged, never interpolated. The
+authenticated caller still performs the independent current broker-session checks.
+The failed database claim and normal cooldown remain; analysis is temporarily held
+while the compatibility fix is qualified. No provider fallback or order was made.
+
+The compatibility source passed a second complete qualification at
+`/tmp/scalper-qualification-2QVY8D/checks`: 886 Node, 90 PostgreSQL and 339 Python
+cases, all formatting/lint/types/build, schema/migration/replay/fail-closed checks,
+secret scan and both dependency audits. The 32 focused worker tests include eight
+session-marker cases. Source `1b73f23` also passed both full hosted checks
+39215086173 / 39215113793. Its immutable trading release is deployed with migration
+0029, all five services on the new protected environment, no cached database URL,
+and unchanged daily baseline/reference/high-water values across restart. The feed
+and maintenance now use that verified source and the same current epoch.
