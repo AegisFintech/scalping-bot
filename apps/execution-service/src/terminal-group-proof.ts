@@ -119,6 +119,36 @@ export function proveTerminalGroup(
   symbol: string,
   now: Date,
 ): TerminalGroupProof {
+  return checkGroup(snapshot, history, symbol, now, false);
+}
+
+/** Read-only financial audit. Missing historical callbacks NEVER become authority. */
+export function auditLegacyTerminalGroup(
+  snapshot: TerminalGroupSnapshot,
+  history: TerminalHistoryEvidence,
+  symbol: string,
+  now: Date,
+) {
+  const result = checkGroup(snapshot, history, symbol, now, true);
+  return {
+    decision: "HOLD" as const,
+    brokerAuthority: false as const,
+    financialEvidenceComplete:
+      result.reason === null || result.legacyFinancialVerified === true,
+    legacyGapIsOnlyFailedCheck: result.legacyFinancialVerified === true,
+    reason: result.reason,
+    evidenceHash: result.evidenceHash,
+  };
+}
+
+function checkGroup(
+  snapshot: TerminalGroupSnapshot,
+  history: TerminalHistoryEvidence,
+  symbol: string,
+  now: Date,
+  readOnlyLegacyAudit: boolean,
+): TerminalGroupProof & { readonly legacyFinancialVerified?: true } {
+  let legacyMissing = false;
   try {
     const { group, orders, positions, fills, trades, events, variants } =
       snapshot;
@@ -356,7 +386,15 @@ export function proveTerminalGroup(
           event.payload,
           variants.filter((v) => v.eventId === event.id),
         );
-        if (eligible !== null) return reject(eligible);
+        if (eligible !== null) {
+          if (
+            readOnlyLegacyAudit &&
+            !variants.some((v) => v.eventId === event.id) &&
+            eligible === "DEMO_TERMINAL_VARIANT_MISSING_REVIEW_REQUIRED"
+          )
+            legacyMissing = true;
+          else return reject(eligible);
+        }
       } else if (
         event.mapping !== "MAPPED" ||
         event.reasons.length !== 0 ||
@@ -432,6 +470,15 @@ export function proveTerminalGroup(
       )
     )
       return reject("DEMO_TERMINAL_UNEXPECTED_DEAL");
+    if (legacyMissing)
+      return {
+        reason: "DEMO_TERMINAL_VARIANT_MISSING_REVIEW_REQUIRED",
+        eventHashes: {},
+        evidenceHash: createHash("sha256")
+          .update(JSON.stringify(history))
+          .digest("hex"),
+        legacyFinancialVerified: true,
+      };
     return {
       reason: null,
       eventHashes,

@@ -11,6 +11,7 @@ import {
 export async function readTerminalGroup(
   client: Pick<pg.PoolClient, "query">,
   groupId: string,
+  includeVariantTable = true,
 ): Promise<TerminalGroupSnapshot> {
   const result = await client.query<{ snapshot: TerminalGroupSnapshot }>(
     `SELECT jsonb_build_object(
@@ -36,11 +37,15 @@ export async function readTerminalGroup(
         SELECT id, jsonb_build_object('id',id,'accountId',account_id,'symbolId',symbol_id,'positionId',position_id,
           'mapping',mapping_state,'reasons',reason_codes,'resolved',resolved_at IS NOT NULL,'payload',normalized_payload) AS data
         FROM broker_execution_events WHERE order_group_id=og.id ORDER BY id LIMIT 129) x),'[]'::jsonb),
-      'variants', COALESCE((SELECT jsonb_agg(x.data ORDER BY x.id) FROM (
+      'variants', ${
+        includeVariantTable
+          ? `COALESCE((SELECT jsonb_agg(x.data ORDER BY x.id) FROM (
         SELECT v.id, jsonb_build_object('id',v.id,'eventId',v.event_id,'payload',v.normalized_payload,'source',v.evidence_source,
           'originalMappingState',v.original_mapping_state,'originalReasonCodes',v.original_reason_codes) AS data
         FROM broker_execution_event_variants v JOIN broker_execution_events e ON e.id=v.event_id
-        WHERE e.order_group_id=og.id ORDER BY v.id LIMIT 65) x),'[]'::jsonb)
+        WHERE e.order_group_id=og.id ORDER BY v.id LIMIT 65) x),'[]'::jsonb)`
+          : `'[]'::jsonb`
+      }
     ) AS snapshot FROM order_groups og JOIN analysis_runs ar ON ar.id=og.analysis_id WHERE og.id=$1`,
     [groupId],
   );
