@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly bounded Codex research hypotheses
+
+[Timer]
+OnCalendar=Mon *-*-* 03:00:00 UTC
+Persistent=true
+RandomizedDelaySec=120
+Unit=scalper-codex-research@weekly.service
+
+[Install]
+WantedBy=timers.target

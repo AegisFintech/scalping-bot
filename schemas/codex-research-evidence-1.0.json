@@ -1,0 +1,100 @@
+{
+  "additionalProperties": false,
+  "description": "Allowlisted aggregate input; individual orders and account identity stay local.",
+  "properties": {
+    "version": {
+      "const": "research-evidence-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "mode": {
+      "const": "demo",
+      "title": "Mode",
+      "type": "string"
+    },
+    "release": {
+      "pattern": "^[a-zA-Z0-9._-]{1,80}$",
+      "title": "Release",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "end": {
+      "title": "End",
+      "type": "string"
+    },
+    "closed_trades": {
+      "minimum": 0,
+      "title": "Closed Trades",
+      "type": "integer"
+    },
+    "wins": {
+      "minimum": 0,
+      "title": "Wins",
+      "type": "integer"
+    },
+    "matched_cost_records": {
+      "minimum": 0,
+      "title": "Matched Cost Records",
+      "type": "integer"
+    },
+    "net_pnl": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Net Pnl"
+    },
+    "gross_pnl": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Gross Pnl"
+    },
+    "signed_costs": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Signed Costs"
+    },
+    "provider_cost": {
+      "title": "Provider Cost",
+      "type": "null"
+    }
+  },
+  "required": [
+    "version",
+    "mode",
+    "release",
+    "start",
+    "end",
+    "closed_trades",
+    "wins",
+    "matched_cost_records",
+    "net_pnl",
+    "gross_pnl",
+    "signed_costs",
+    "provider_cost"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

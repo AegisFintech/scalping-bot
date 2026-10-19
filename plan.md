@@ -2,6 +2,29 @@
 
 ## Scope
 
+### ISSUE-302 — Isolated scheduled Codex research proposals
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/302.
+- Dependencies: #253/#255 causal research contracts; #289 measurement/#290 protocol for future evaluation.
+- Acceptance: aggregate-only input, structured sourced proposals, durable bounded claims/failures, no broker/promotion authority, dedicated-user service/timers, success/rejection/restart tests and full qualification; commit/push/PR.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/305.
+- Status: implemented and pushed; 848 Node / 70 DB / 283 Python component tests pass, clean audits. Local wrapper rejected a mid-run source change; final-head hosted qualification is required before merge. No runtime activation or economic evaluation claimed.
+- Report: [Codex research loop](docs/codex-research-loop-report.md).
+
+### ISSUE-303 — Simplified trading loop with Codex analysis
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/303.
+- Dependencies: #302 isolated adapter, #301 recovery, #289/#290 evidence.
+- Acceptance: subscription login/latency/structured-output trial, durable provider lifecycle, preserved risk/OCO/GTC/protection, reviewed entry transform, full tests and separately verified deployment.
+- Status: pending; current Grok execution unchanged.
+
+### ISSUE-304 — Candidate validation and reviewable upgrades
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/304.
+- Dependencies: #302, #289/#290 and immutable #255 study.
+- Acceptance: dedicated login/fresh aggregate feed and bounded timers; source verification, full trial ledger, one-change chronological tests, frozen shadow windows and evidence-bearing PRs; no automatic economic promotion.
+- Status: pending; generated proposals are not evaluated strategies.
+
 ### ISSUE-297 — Causal replacement fixture completion
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/297.
