@@ -80,9 +80,16 @@ export function entryProviderPayload(
 }
 
 export class EntryPairPlanner {
-  readonly client: OpenAiCompatibleClient<EntryPairPlan>;
+  readonly client: Pick<
+    OpenAiCompatibleClient<EntryPairPlan>,
+    "analyze" | "circuitOpen"
+  >;
   private readonly now: () => number;
   constructor(options: {
+    client?: Pick<
+      OpenAiCompatibleClient<EntryPairPlan>,
+      "analyze" | "circuitOpen"
+    >;
     baseUrl: string;
     apiKey: string;
     fetchImpl?: typeof fetch;
@@ -90,32 +97,34 @@ export class EntryPairPlanner {
     now?: () => number;
   }) {
     this.now = options.now ?? Date.now;
-    this.client = new OpenAiCompatibleClient<EntryPairPlan>({
-      ...options,
-      model: FIXED_DEFAULTS.AI_MODEL,
-      // EPRToken's Grok route supports the OpenAI-compatible chat contract;
-      // its Responses route rejects the structured reasoning field below.
-      apiStyle: "chat_completions",
-      schemaPath: "schemas/entry-pair-provider-1.0.json",
-      outputSchemaName: "stop_entries_1_0",
-      systemPromptPath: ENTRY_PAIR_PROMPT.path,
-      promptVersion: ENTRY_PAIR_PROMPT.version,
-      inputProfile: "structured",
-      timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
-      maxRetries: 0,
-      maxOutputTokens: ENTRY_PAIR_REQUEST_POLICY.maxOutputTokens,
-      // Grok rejects `none`; low keeps the mandatory reasoning bounded.
-      reasoningEffort: ENTRY_PAIR_REQUEST_POLICY.reasoningEffort,
-      // The operator accepts readable entries; requested/returned identities remain recorded.
-      requireReturnedModelMatch: false,
-      parseResponse: (raw, request) =>
-        bindEntryPrices(raw, {
-          analysisId: request.analysisId,
-          symbol: request.symbol,
-          capturedAt: String(request.payload.captured_at),
-          tickSize: String(request.payload.tick_size),
-        }),
-    });
+    this.client =
+      options.client ??
+      new OpenAiCompatibleClient<EntryPairPlan>({
+        ...options,
+        model: FIXED_DEFAULTS.AI_MODEL,
+        // EPRToken's Grok route supports the OpenAI-compatible chat contract;
+        // its Responses route rejects the structured reasoning field below.
+        apiStyle: "chat_completions",
+        schemaPath: "schemas/entry-pair-provider-1.0.json",
+        outputSchemaName: "stop_entries_1_0",
+        systemPromptPath: ENTRY_PAIR_PROMPT.path,
+        promptVersion: ENTRY_PAIR_PROMPT.version,
+        inputProfile: "structured",
+        timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
+        maxRetries: 0,
+        maxOutputTokens: ENTRY_PAIR_REQUEST_POLICY.maxOutputTokens,
+        // Grok rejects `none`; low keeps the mandatory reasoning bounded.
+        reasoningEffort: ENTRY_PAIR_REQUEST_POLICY.reasoningEffort,
+        // The operator accepts readable entries; requested/returned identities remain recorded.
+        requireReturnedModelMatch: false,
+        parseResponse: (raw, request) =>
+          bindEntryPrices(raw, {
+            analysisId: request.analysisId,
+            symbol: request.symbol,
+            capturedAt: String(request.payload.captured_at),
+            tickSize: String(request.payload.tick_size),
+          }),
+      });
   }
   async generate(
     input: EntryPlannerInput,

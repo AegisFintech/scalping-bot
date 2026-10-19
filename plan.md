@@ -43,7 +43,8 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/303.
 - Dependencies: #302 isolated adapter, #301 recovery, #289/#290 evidence.
 - Acceptance: subscription login/latency/structured-output trial, durable provider lifecycle, preserved risk/OCO/GTC/protection, reviewed entry transform, full tests and separately verified deployment.
-- Status: pending; current Grok execution unchanged.
+- Status: isolated typed HTTP transport and injectable planner adapter implemented on `issue-303-codex-transport`; real subscription-authenticated synthetic-candle trial passed in 7.76 seconds. 879 full-suite Node tests, 26 final focused Node tests and 24 Python worker/schema tests pass; exact-head full CI remains required. Production Grok factory, strategy and trading activation remain unchanged.
+- Report: [Codex entry transport](docs/codex-entry-transport-report.md).
 
 ### ISSUE-304 — Candidate validation and reviewable upgrades
 

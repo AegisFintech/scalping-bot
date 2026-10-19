@@ -1,0 +1,38 @@
+[Unit]
+Description=Isolated Codex entry proposal transport (opt-in, no execution authority)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=scalper-research
+Group=scalper-research
+WorkingDirectory=/var/lib/scalper-research
+Environment=HOME=/var/lib/scalper-research
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-codex-entry
+Environment=CODEX_ENTRY_PROMPT_FILE=/opt/scalper-codex-entry/prompts/entry-pair-v4.md
+EnvironmentFile=/etc/scalper-codex-entry/environment
+ExecStart=/opt/scalper-codex-entry/.venv/bin/python -m python.codex_entry.api
+Restart=on-failure
+RestartSec=30
+UMask=0077
+CPUQuota=50%
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=64
+LimitFSIZE=32M
+TimeoutStopSec=10
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-research
+InaccessiblePaths=-/root -/opt/ctrader-ai-scalper -/run/postgresql
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Deliberately no Install section: qualification and explicit provider activation
+# must precede any service enablement. Credentials alone never select this route.
