@@ -2,7 +2,7 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/314.
 PR: https://github.com/AegisFintech/scalping-bot/pull/315.
-Status: fresh demo activated; final delivery and research-feed boundary qualification in progress.
+Status: fresh demo and epoch-aware research feed activated; final delivery receipt under qualification.
 
 On October 19 the operator explicitly requested “clear all historical records and
 start from afresh” after reviewing the legacy conflict blocker. This authorizes a
@@ -133,3 +133,41 @@ environment; it does not alter the immutable trading release. Ten focused feed
 tests cover clipping, future/naive rejection, first-window waiting without export,
 exact requested/returned windows, explicit empty-epoch rejection, CLI waiting, timeout and immutable publication. Full final
 qualification gates this feed deployment and PR completion.
+
+## Final feed deployment and delivery qualification
+
+Both full hosted checks pass on `43d788bf64d919810413b697c892a0e3f4d7c4dc`:
+[push 39209802552](https://github.com/AegisFintech/scalping-bot/actions/runs/39209802552)
+and [PR 39209807766](https://github.com/AegisFintech/scalping-bot/actions/runs/39209807766).
+They include every required quality gate and dependency audit. The earlier full
+local trading-release qualification includes 884 Node and 89 PostgreSQL cases;
+the final feed adds five cases to the existing five, all ten focused tests pass.
+Python types/lint and graphify refresh pass; no semantic-graph/provider call was
+used. This final receipt receives exact-head hosted checks before merge.
+
+The trusted feed now runs a six-file tracked-source bundle pinned to `43d788b`,
+verified byte-for-byte against Git. Its working directory/PYTHONPATH select that
+bundle; its existing isolated Python environment remains unchanged. It exports
+from the verified `70a7d48-epoch314` trading release and new protected database
+environment, with the audited epoch timestamp fixed in its unit. The old latest
+aggregate was retained as `pre-epoch-314-latest.json`, alongside original immutable
+archives. The active latest pointer remains absent until the new reporting window
+exists. The deployed service succeeded with RESEARCH_FEED_WAIT_NEW_EPOCH and zero
+provider calls. The hourly timer is active; the next UTC day permits a first
+partial-day aggregate. No weekly claim was replayed or candidate promoted.
+
+The old database now defaults to read-only for new connections. Its rows, old
+environment and frozen #255 checkout remain preserved; the checkout is clean at
+`984f479`. Frozen registrations/reports are not edited. The new operational review
+pointer selects the fresh environment, with the original pointer retained privately.
+A private durable fresh-epoch receipt records explicit discontinuity and the
+verified baseline/restart checks. Never treat this as proof that old conflicts
+were resolved or that historical returns were erased at the broker.
+
+Post-start release-manifest verification passes. Analytics, market, AI, dashboard
+and execution health endpoints all return 200. All five PM2 services are online
+with only the deliberate activation/restart counts. At the follow-up observation
+the first position remained OPEN with VERIFIED protection, its peer CANCELLED,
+and no broker-event conflict. Waiting for that position is expected; do not force
+a second setup. Low-disk and new-epoch backup-overdue storage warnings remain
+explicit. No code/database rollback to the pre-epoch journal is now permitted.
