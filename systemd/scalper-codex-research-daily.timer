@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily bounded Codex research review
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 UTC
+Persistent=true
+RandomizedDelaySec=120
+Unit=scalper-codex-research@daily.service
+
+[Install]
+WantedBy=timers.target

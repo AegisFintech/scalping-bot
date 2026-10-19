@@ -1,0 +1,128 @@
+{
+  "$defs": {
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "hypothesis": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Hypothesis",
+          "type": "string"
+        },
+        "single_change": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Single Change",
+          "type": "string"
+        },
+        "causal_entry_rule": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Causal Entry Rule",
+          "type": "string"
+        },
+        "baseline": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Baseline",
+          "type": "string"
+        },
+        "evaluation_plan": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Evaluation Plan",
+          "type": "string"
+        },
+        "rejection_criteria": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Rejection Criteria",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "hypothesis",
+        "single_change",
+        "causal_entry_rule",
+        "baseline",
+        "evaluation_plan",
+        "rejection_criteria",
+        "sources"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "claim": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Claim",
+          "type": "string"
+        },
+        "limitation": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Limitation",
+          "type": "string"
+        }
+      },
+      "required": ["url", "title", "claim", "limitation"],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "evidence_limits": {
+      "items": {
+        "maxLength": 2000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "Evidence Limits",
+      "type": "array"
+    },
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/Candidate"
+      },
+      "maxItems": 2,
+      "title": "Candidates",
+      "type": "array"
+    }
+  },
+  "required": ["summary", "evidence_limits", "candidates"],
+  "title": "Proposal",
+  "type": "object"
+}
