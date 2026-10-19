@@ -8,7 +8,7 @@
 - Dependencies: #301/#313 legacy audit; existing #091 baseline initializer and qualified immutable deployment.
 - Acceptance: separate empty database and runtime; fresh flat broker/daily evidence; audited baseline initialization and repeat rejection; unchanged shared 1% risk; full qualification, verified deployment and pushed activation receipt. Preserve the old journal and frozen research without claiming continuity or recovery.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/315.
-- Status: full local qualification passed; fresh broker preflight is flat with no daily deals/flows, new separate database has 28 checksum-verified migrations. Release preparation and final-head CI precede cutover. No new trading claimed yet.
+- Status: full local qualification passed; fresh broker preflight is flat with no daily deals/flows, new separate database has 28 checksum-verified migrations. Trading activated from fully qualified 70a7d48; audited baseline/repeat rejection/restart persistence and first natural protected OCO fill confirmed. Final research-feed epoch isolation and delivery qualification remain.
 - Report: [fresh demo epoch](docs/fresh-demo-epoch-314-report.md).
 
 ### ISSUE-309 — Conflict evidence prerequisite for terminal recovery

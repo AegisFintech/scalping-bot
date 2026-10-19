@@ -2,7 +2,7 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/314.
 PR: https://github.com/AegisFintech/scalping-bot/pull/315.
-Status: preparation; no cutover or new trading claimed yet.
+Status: fresh demo activated; final delivery and research-feed boundary qualification in progress.
 
 On October 19 the operator explicitly requested “clear all historical records and
 start from afresh” after reviewing the legacy conflict blocker. This authorizes a
@@ -86,3 +86,50 @@ format/lint/TypeScript/build/Node/schema/migration/replay/fail-closed, Python
 format/lint/types/tests, isolated database, secret scan and both dependency audits.
 Regenerable npm/pip cache removal raised free disk from about 1.7 to 3.6 GiB.
 Release preparation and hosted qualification remain required before cutover.
+
+## Activation receipt
+
+Both complete hosted checks passed on `70a7d48` (39208504004 / 39208508811).
+The immutable release `/opt/ctrader-ai-scalper/releases/70a7d48-epoch314` was
+prepared against the full local qualification and its manifest verified. All five
+PM2 services were stopped normally and recreated with that exact cwd, pinned Node
+22 and the new protected environment; none caches DATABASE_URL. The frozen
+checkout and old environment were not changed. The application role has no schema
+DDL permission: the migration-status CLI correctly failed its CREATE TABLE attempt;
+a read-only TLS query independently verified all 28 migration checksums instead.
+Application writes to the migration ledger were explicitly revoked.
+
+At **2026-10-19 06:16:40.511 UTC**, the authenticated initializer recorded certain
+reconciliation for the new daily/capital baseline. Its repeat returned HTTP 409 /
+DAILY_RISK_BASELINE_ALREADY_EXISTS. Baseline/reference/high-water evidence hashes
+matched before and after a normal execution restart while submission was disabled.
+Existing authorized demo controls were then restored; no provider call or order
+was manually forced. The first natural context placed two entries: one FILLED,
+one CANCELLED, one OPEN position with VERIFIED protection, and zero conflicts.
+A transient session-unavailable status cleared to OPEN; active-analysis/position
+waiting is normal exclusion, not the old recovery lock. This is operational demo
+evidence, not a completed profitability trial or guaranteed future continuity.
+
+Storage timers now target only the new database and real state directories. The
+first maintenance invocation rejected a symlinked log-directory argument; passing
+the actual state/log paths corrected it without weakening validation. Remaining
+storage warnings are low disk space (about 2.7 GiB after the pinned release) and
+backup overdue in the new epoch. No new backup/restore success is claimed. The
+existing backup schedule remains configured; off-server backup work stays deferred.
+
+## Research epoch boundary
+
+The Codex feed receives an explicit UTC epoch start and clips its reporting window
+to the later of that timestamp or its normal seven-day boundary. It waits without
+an export/provider call when the new epoch has no completed UTC reporting interval.
+It rejects future/non-UTC starts and mismatched returned windows. Pre-epoch absence
+is not published as zero performance. The partial first day is honestly labelled
+with the exact start timestamp. No new schema, promotion authority or frozen-study
+registration is introduced. The original latest aggregate will be retained outside
+the active latest pointer; original reports/weekly claims remain unchanged.
+
+The new feed uses a separately pinned qualified Python bundle and the new database
+environment; it does not alter the immutable trading release. Eight focused feed
+tests cover clipping, future/naive rejection, first-window waiting without export,
+exact requested/returned windows, timeout and immutable publication. Full final
+qualification gates this feed deployment and PR completion.
