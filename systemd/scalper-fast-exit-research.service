@@ -1,0 +1,24 @@
+[Unit]
+Description=Read-only fast-exit conditional research (ISSUE-319)
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/scalper-fast-exit-research
+Environment=DOTENV_CONFIG_PATH=/etc/scalping-bot/codex303.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/scalper-fast-exit-research/.venv/bin/python -B -m python.backtest.fast_exits collect --directory /var/lib/scalper-demo-epoch-314/.runtime/fast-exit-study-319 --recordings /var/lib/scalper-demo-epoch-314/.runtime/market-data
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/scalper-demo-epoch-314/.runtime/fast-exit-study-319
+MemoryMax=2G
+MemorySwapMax=0
+CPUQuota=50%
+TasksMax=32
+TimeoutStartSec=600
+LimitFSIZE=33554432
+Nice=10
+IOSchedulingClass=idle

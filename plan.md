@@ -14,9 +14,25 @@
 ### ISSUE-319 — Cost-aware fast-exit research
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/319.
-- Dependencies: #253/#255 causal research; #289 measurement; execution fixes #318.
-- Acceptance: isolated conditional comparisons of baseline, small-profit and giveback exits; frozen candidates, delayed executable quotes, all censored outcomes, unknown counterfactual costs, tests and full qualification. No broker/promotion authority.
-- Status: authorized, next batch; current production exit geometry unchanged.
+- Dependencies: #253/#255 causal research, #289 measurement; execution corrections tracked separately in #318.
+- Acceptance: isolated baseline/small-profit/giveback comparisons, delayed executable quotes and original protection, all censored outcomes, pre-intent fee estimates with counterfactual net unknown, frozen future windows and immutable reports; full tests and qualification.
+- Status: implemented; full qualification passes at `/tmp/scalper-qualification-gSffJ6/checks` (888 Node, 90 isolated PostgreSQL, 361 Python, formatting/lint/types/build/schema/migration/fail-closed/secret scan/dependency audits). Combined source with merged #318 also fully qualifies at `/tmp/scalper-qualification-z3VYoj/checks` (900 Node / 91 PostgreSQL / 361 Python). Exploratory October 19 sample remains HOLD; prospective registration frozen from October 20 00:00 UTC for 30 daily windows using isolated artifact `1bc1ac8`; separate hourly collector enabled; first sandboxed run WAITING_FOR_WINDOW, exit 0. No trading strategy change.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/322.
+- Report: [fast exits](docs/fast-exit-research-report.md).
+
+### ISSUE-321 — Manual multi-timeframe breakout specification
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/321.
+- Dependencies: #318 execution, #289 measurement, #290 protocol; operator clarification of discretionary exits and runner selection.
+- Acceptance: explicit range/trigger/limit/invalidation/exit rules, cost-normalized comparison and prospective evaluation specification; no automatic promotion or fixed-lot copying.
+- Status: private workbook review complete; proposal only. Account identifiers and detailed financial results remain private. Current fade-exit research does not test this breakout method.
+
+### ISSUE-323 — Filled entry with a locally unsent peer
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/323.
+- Dependencies: #318 local rejection provenance; existing strict terminal group/account/protection proof.
+- Acceptance: durable exact local-unsent evidence plus complete filled-leg close proof; restart/failure/contradiction tests and unattended qualification without fabricated broker events or latch resets.
+- Status: identified qualification gap; execution fixes merged but rollout deferred. Existing terminal proof requires broker identities for both entry orders. No production bypass.
 
 ### ISSUE-303 — Codex production provider integration
 

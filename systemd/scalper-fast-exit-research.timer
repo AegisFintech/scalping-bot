@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect at most one completed fast-exit research window per hour
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=30
+Persistent=true
+Unit=scalper-fast-exit-research.service
+
+[Install]
+WantedBy=timers.target
