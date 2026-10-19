@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-314 — One-time fresh demo accounting epoch
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/314.
+- Dependencies: #301/#313 legacy audit; existing #091 baseline initializer and qualified immutable deployment.
+- Acceptance: separate empty database and runtime; fresh flat broker/daily evidence; audited baseline initialization and repeat rejection; unchanged shared 1% risk; full qualification, verified deployment and pushed activation receipt. Preserve the old journal and frozen research without claiming continuity or recovery.
+- Status: operator explicitly authorized a fresh start on October 19; preparing the transition. No new trading or cutover claimed yet.
+- Report: [fresh demo epoch](docs/fresh-demo-epoch-314-report.md).
+
 ### ISSUE-309 — Conflict evidence prerequisite for terminal recovery
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/309.
