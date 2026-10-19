@@ -15,7 +15,10 @@ import {
   TerminalHistoryAttestor,
   readTerminalGroup,
 } from "../../apps/execution-service/src/terminal-history-attestor.js";
-import { proveTerminalGroup } from "../../apps/execution-service/src/terminal-group-proof.js";
+import {
+  proveTerminalGroup,
+  auditLegacyTerminalGroup,
+} from "../../apps/execution-service/src/terminal-group-proof.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
 const suite = connectionString ? describe : describe.skip;
@@ -408,6 +411,67 @@ suite(
         certain: false,
         resolvedEventCount: 0,
       });
+    });
+
+    it("audits legacy financial completeness without creating recovery authority", async () => {
+      const s = await attestationFixture();
+      await pool.query(
+        "DELETE FROM broker_execution_event_variants WHERE event_id IN (SELECT id FROM broker_execution_events WHERE account_id=$1)",
+        [s.accountId],
+      );
+      const snapshot = await s.snapshot();
+      expect(
+        auditLegacyTerminalGroup(snapshot, s.history, "7", s.now),
+      ).toMatchObject({
+        decision: "HOLD",
+        brokerAuthority: false,
+        financialEvidenceComplete: true,
+        legacyGapIsOnlyFailedCheck: true,
+        reason: "DEMO_TERMINAL_VARIANT_MISSING_REVIEW_REQUIRED",
+      });
+      expect(
+        proveTerminalGroup(snapshot, s.history, "7", s.now).eventHashes,
+      ).toEqual({});
+      const entryConflict = structuredClone(snapshot);
+      const entry = entryConflict.events.find((e) => !e.payload.closingOrder)!;
+      Object.assign(entry, {
+        mapping: "CONFLICT",
+        reasons: ["DEMO_BROKER_EVENT_KEY_CONFLICT"],
+        resolved: true,
+      });
+      expect(
+        auditLegacyTerminalGroup(entryConflict, s.history, "7", s.now),
+      ).toMatchObject({
+        decision: "HOLD",
+        brokerAuthority: false,
+        financialEvidenceComplete: false,
+        reason: "DEMO_TERMINAL_ADDITIONAL_UNCERTAINTY",
+      });
+      await s.attestor().run();
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: false,
+        resolvedEventCount: 0,
+      });
+      await pool.query(
+        "UPDATE trades SET fees=fees-1 WHERE order_group_id=$1",
+        [s.groupId],
+      );
+      expect(
+        auditLegacyTerminalGroup(await s.snapshot(), s.history, "7", s.now),
+      ).toMatchObject({
+        decision: "HOLD",
+        brokerAuthority: false,
+        financialEvidenceComplete: false,
+      });
+    });
+
+    it("can read a pre-variant financial snapshot without using it for automatic recovery", async () => {
+      const s = await attestationFixture();
+      const snapshot = await readTerminalGroup(pool, s.groupId, false);
+      expect(snapshot.variants).toEqual([]);
+      expect(proveTerminalGroup(snapshot, s.history, "7", s.now).reason).toBe(
+        "DEMO_TERMINAL_VARIANT_MISSING_REVIEW_REQUIRED",
+      );
     });
 
     it("retains closing variants with provenance across duplicates and restarts without self-resolving", async () => {
