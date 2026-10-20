@@ -1,0 +1,2395 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Scalper — Landscape design preview</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #090b12;
+        --panel: #11141f;
+        --line: #272b3b;
+        --muted: #a3a8bb;
+        --ink: #f0f1fa;
+        --violet: #b8a0ff;
+        --green: #64e5ba;
+        --red: #ff8d9e;
+        --amber: #f1c47c;
+        --blue: #8abfff;
+        --cyan: #83dbe3;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 13px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      button,
+      select {
+        font: inherit;
+        color: inherit;
+        background: #191d2b;
+        border: 1px solid #363c52;
+        border-radius: 7px;
+        padding: 7px 10px;
+        cursor: pointer;
+      }
+      button:hover,
+      select:hover {
+        border-color: var(--violet);
+        background: #25283b;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 3px;
+      }
+      button[aria-pressed="true"],
+      button[aria-selected="true"] {
+        background: #3a2e57;
+        border-color: #a08bcf;
+        color: #e2d5ff;
+      }
+      button:disabled {
+        cursor: default;
+        opacity: 0.6;
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h2 {
+        font-size: 11px;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+      }
+      small,
+      .muted {
+        color: var(--muted);
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+      .positive {
+        color: var(--green);
+      }
+      .negative {
+        color: var(--red);
+      }
+      .violet {
+        color: var(--violet);
+      }
+      .amber {
+        color: var(--amber);
+      }
+      .blue {
+        color: var(--blue);
+      }
+      .desk {
+        height: 100dvh;
+        min-height: 680px;
+        display: grid;
+        grid-template-rows: 65px 36px 82px 61px minmax(0, 1fr) 30px;
+        gap: 10px;
+        padding: 0 18px;
+        background: radial-gradient(
+          ellipse at 53% 38%,
+          #26203b48,
+          transparent 50%
+        );
+      }
+      .masthead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .brand-icon {
+        height: 33px;
+        width: 33px;
+        border: 1px solid #66537d;
+        background: #272136;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: var(--violet);
+        font-size: 22px;
+      }
+      .brand h1 {
+        font-size: 18px;
+        letter-spacing: 1.2px;
+        font-weight: 750;
+      }
+      .brand small {
+        font-size: 9px;
+        letter-spacing: 2.2px;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .toolbar label {
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+      }
+      .preview-label {
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: #f8d69c;
+        border: 1px solid #685638;
+        background: #34281d;
+        padding: 6px 10px;
+        border-radius: 5px;
+      }
+      .clock {
+        font-size: 17px;
+        letter-spacing: 1px;
+      }
+      .preview-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .preview-strip b {
+        color: #ddcffb;
+      }
+      .dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        margin-right: 7px;
+        box-shadow: 0 0 10px currentColor;
+      }
+      .tag {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        border: 1px solid #41465e;
+        border-radius: 4px;
+        padding: 4px 6px;
+        color: #c4c8db;
+        white-space: nowrap;
+      }
+      .tag.green {
+        color: var(--green);
+        border-color: #315749;
+        background: #142821;
+      }
+      .tag.amber {
+        color: var(--amber);
+        border-color: #625037;
+        background: #2c251c;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr 1fr 1fr 1.2fr;
+        gap: 10px;
+      }
+      .stat {
+        padding: 12px 15px;
+        background: linear-gradient(120deg, #191a28, #11141f);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+      .stat label {
+        display: block;
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        color: #b7b9cb;
+        margin-bottom: 6px;
+      }
+      .stat strong {
+        font-size: 25px;
+        letter-spacing: -0.7px;
+        font-weight: 650;
+      }
+      .stat small {
+        font-size: 9px;
+        display: block;
+        margin-top: 3px;
+      }
+      .spark {
+        position: absolute;
+        right: 12px;
+        bottom: 13px;
+        width: 85px;
+        height: 33px;
+        opacity: 0.65;
+      }
+      .stat:last-child strong {
+        font-size: 22px;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .stage {
+        position: relative;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        padding: 9px 12px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #121520;
+        overflow: hidden;
+      }
+      .stage::after {
+        content: "";
+        height: 2px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--tone);
+        opacity: 0.15;
+      }
+      .stage.active {
+        border-color: var(--tone);
+        background: color-mix(in srgb, var(--tone) 9%, #121520);
+      }
+      .stage.active::after {
+        opacity: 1;
+        animation: breathe 2s infinite;
+      }
+      .stage .stage-icon {
+        font-size: 16px;
+        color: var(--tone);
+        width: 23px;
+      }
+      .stage strong {
+        font-size: 11px;
+        display: block;
+        margin-bottom: 3px;
+      }
+      .stage small {
+        font-size: 9px;
+        display: block;
+      }
+      .stage .stage-number {
+        position: absolute;
+        right: 9px;
+        top: 8px;
+        font-size: 9px;
+        color: #777d94;
+      }
+      .workspace {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1fr);
+        gap: 12px;
+      }
+      .column {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .panel {
+        background: linear-gradient(125deg, #141722, #10131d);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid #242839;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .panel-head h2:before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 10px;
+        background: var(--violet);
+        border-radius: 2px;
+        margin-right: 8px;
+        vertical-align: -1px;
+      }
+      .panel-head small {
+        font-size: 9px;
+        white-space: nowrap;
+      }
+      .market {
+        flex: 1.35;
+      }
+      .market-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        padding: 13px 12px 8px;
+      }
+      .quote-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        align-items: center;
+        margin: 0 2px 6px;
+      }
+      .quote {
+        font-size: 27px;
+        letter-spacing: -1px;
+      }
+      .quote-row small {
+        font-size: 9px;
+        text-align: right;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+      }
+      .tabs button {
+        padding: 4px 8px;
+        font-size: 10px;
+        border-radius: 5px;
+      }
+      .chart-wrap {
+        flex: 1;
+        min-height: 120px;
+        position: relative;
+      }
+      .chart-caption {
+        display: flex;
+        gap: 12px;
+        font-size: 9px;
+        color: var(--muted);
+        padding: 4px 0;
+      }
+      .chart-caption span::before {
+        content: "";
+        display: inline-block;
+        width: 9px;
+        height: 2px;
+        background: currentColor;
+        vertical-align: middle;
+        margin-right: 5px;
+      }
+      .facts {
+        flex: 1;
+      }
+      .fact-list {
+        padding: 4px 14px 8px;
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #494057 transparent;
+      }
+      .fact {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #242839;
+        font-size: 11px;
+      }
+      .fact:last-child {
+        border: 0;
+      }
+      .fact span {
+        color: var(--muted);
+      }
+      .fact strong {
+        font-size: 11px;
+        font-weight: 550;
+        text-align: right;
+      }
+      .fact-note {
+        font-size: 9px;
+        color: var(--muted);
+        line-height: 1.65;
+        padding-top: 10px;
+      }
+      .reactor {
+        flex: 1.6;
+        position: relative;
+        background: radial-gradient(
+          ellipse at 50% 43%,
+          #3a245d65,
+          #16152360 48%,
+          #10131d 80%
+        );
+      }
+      .reactor .panel-head {
+        border-bottom: 0;
+      }
+      .reactor-visual {
+        position: relative;
+        flex: 1;
+        min-height: 185px;
+        overflow: hidden;
+      }
+      .reactor-svg {
+        position: absolute;
+        inset: 0;
+      }
+      .orbit {
+        transform-origin: 300px 166px;
+        animation: orbit 28s linear infinite;
+      }
+      .orbit.reverse {
+        animation-direction: reverse;
+        animation-duration: 37s;
+      }
+      .filament {
+        fill: none;
+        stroke-width: 0.65;
+        opacity: 0.25;
+      }
+      .particle {
+        stroke-dasharray: 3 320;
+        stroke-width: 2;
+        opacity: 0.9;
+        animation: stream 8s linear infinite;
+      }
+      .core-halo {
+        animation: breathe 3s ease-in-out infinite;
+        transform-origin: 300px 166px;
+      }
+      .core-eyes {
+        animation: blink 7s infinite;
+        transform-origin: 300px 160px;
+      }
+      .reactor-title {
+        position: absolute;
+        top: 9px;
+        left: 17px;
+        font-size: 9px;
+        letter-spacing: 2px;
+        color: #c7bddb;
+      }
+      .reactor-note {
+        position: absolute;
+        right: 16px;
+        top: 9px;
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .node {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #51516b;
+        border-radius: 6px;
+        background: #151723e8;
+        padding: 6px 8px;
+        font-size: 9px;
+        max-width: 36%;
+      }
+      .node i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--tone);
+      }
+      .node strong {
+        font-weight: 550;
+        white-space: nowrap;
+      }
+      .node span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 2px;
+      }
+      .node.active {
+        border-color: var(--tone);
+        box-shadow: 0 0 22px color-mix(in srgb, var(--tone) 17%, transparent);
+      }
+      .node.n0 {
+        left: 4%;
+        top: 35%;
+      }
+      .node.n1 {
+        left: 16%;
+        top: 14%;
+      }
+      .node.n2 {
+        right: 15%;
+        top: 14%;
+      }
+      .node.n3 {
+        right: 4%;
+        top: 35%;
+      }
+      .node.n4 {
+        right: 13%;
+        bottom: 12%;
+      }
+      .node.n5 {
+        left: 13%;
+        bottom: 12%;
+      }
+      .core-label {
+        position: absolute;
+        left: 50%;
+        top: 64%;
+        transform: translateX(-50%);
+        font-size: 8px;
+        letter-spacing: 2px;
+        color: #ddd3f2;
+        white-space: nowrap;
+      }
+      .action-block {
+        position: relative;
+        padding: 5px 19px 15px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .action-block .eyebrow {
+        font-size: 9px;
+        letter-spacing: 2px;
+        color: var(--violet);
+        margin-bottom: 7px;
+      }
+      .action-block h3 {
+        font-size: 24px;
+        letter-spacing: -0.8px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+      .action-block p {
+        font-size: 11px;
+        color: #b7b4ca;
+        line-height: 1.55;
+        min-height: 17px;
+      }
+      .next {
+        margin: 11px auto 0;
+        padding: 8px 10px;
+        font-size: 10px;
+        background: #29233780;
+        border: 1px solid #493d5d;
+        border-radius: 6px;
+        color: #d8cbed;
+      }
+      .next span {
+        color: #b3a3cb;
+        font-size: 8px;
+        letter-spacing: 1px;
+        margin-right: 8px;
+      }
+      .log-panel {
+        flex: 1;
+      }
+      .log-tools {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .log-tools button {
+        font-size: 9px;
+        padding: 3px 6px;
+      }
+      .log-count {
+        color: var(--green);
+        font-size: 9px;
+      }
+      .log {
+        flex: 1;
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #4c405f transparent;
+        padding: 3px 12px 9px;
+        min-height: 95px;
+        overscroll-behavior: contain;
+      }
+      .event {
+        display: grid;
+        grid-template-columns: 56px 63px minmax(0, 1fr);
+        gap: 7px;
+        font-size: 10px;
+        line-height: 1.55;
+        padding: 9px 1px;
+        border-bottom: 1px solid #222637;
+        animation: arrive 0.35s ease-out;
+      }
+      .event time {
+        color: #9499ad;
+        font-size: 9px;
+        padding-top: 1px;
+      }
+      .event .source {
+        font-size: 8px;
+        letter-spacing: 0.6px;
+        align-self: start;
+        padding: 2px 4px;
+        background: #262135;
+        border-radius: 3px;
+        color: var(--violet);
+        text-align: center;
+      }
+      .event .source.risk {
+        background: #2d271c;
+        color: var(--amber);
+      }
+      .event .source.broker {
+        background: #192b27;
+        color: var(--green);
+      }
+      .event .message {
+        color: #ccd0df;
+      }
+      .event .message b {
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .log-footer {
+        font-size: 8px;
+        color: #9da2b9;
+        border-top: 1px solid var(--line);
+        padding: 6px 13px;
+        letter-spacing: 0.6px;
+      }
+      .position {
+        flex: 1.25;
+      }
+      .position-body {
+        padding: 13px 15px;
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #494057 transparent;
+      }
+      .position-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .position-heading strong {
+        font-size: 13px;
+      }
+      .big-pnl {
+        font-size: 38px;
+        font-weight: 550;
+        letter-spacing: -1.5px;
+        margin: 9px 0 1px;
+      }
+      .pnl-caption {
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .protection-bar {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 18px 0 6px;
+      }
+      .protection-bar .bar {
+        height: 4px;
+        border-radius: 3px;
+        flex: 1;
+        background: linear-gradient(
+          90deg,
+          var(--red),
+          #6f668a 45%,
+          var(--green)
+        );
+        position: relative;
+      }
+      .protection-bar .bar:after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #f0e4ff;
+        border-radius: 50%;
+        left: 63%;
+        top: -2px;
+        box-shadow: 0 0 10px #fff8;
+      }
+      .protection-bar small {
+        font-size: 8px;
+      }
+      .protection-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+      }
+      .position-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px 12px;
+        margin-top: 15px;
+      }
+      .position-info small {
+        font-size: 9px;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .position-info strong {
+        font-size: 11px;
+        font-weight: 550;
+      }
+      .right-bottom {
+        flex: 1.1;
+      }
+      .net-chart {
+        height: 95px;
+        padding: 6px 10px 0;
+      }
+      .net-number {
+        font-size: 22px;
+        letter-spacing: -0.5px;
+      }
+      .net-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 15px 0;
+        gap: 12px;
+      }
+      .net-summary small {
+        font-size: 9px;
+        line-height: 1.5;
+      }
+      .net-foot {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        padding: 10px 14px;
+        border-top: 1px solid #242839;
+        color: var(--muted);
+        gap: 12px;
+      }
+      .feed-health {
+        margin-top: auto;
+        padding: 10px 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-size: 9px;
+        border-top: 1px solid var(--line);
+      }
+      .feed-health span {
+        display: flex;
+        justify-content: space-between;
+        gap: 7px;
+      }
+      .foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #9fa5ba;
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        border-top: 1px solid var(--line);
+        gap: 12px;
+      }
+      .foot strong {
+        font-weight: 500;
+        color: var(--violet);
+      }
+      .foot .links {
+        display: flex;
+        gap: 12px;
+      }
+      .foot button {
+        border: 0;
+        background: none;
+        color: #b8bbd0;
+        padding: 0;
+        font-size: 9px;
+      }
+      .status-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .still *,
+      .still *::before,
+      .still *::after {
+        animation: none !important;
+      }
+      .empty-value {
+        color: #adb0c2;
+      }
+      .unavailable .reactor-visual {
+        opacity: 0.35;
+      }
+      .unavailable .quote {
+        color: var(--muted);
+      }
+      .unavailable .spark {
+        visibility: hidden;
+      }
+      .notice {
+        position: fixed;
+        right: 18px;
+        bottom: 40px;
+        padding: 14px 17px;
+        border: 1px solid #6c598c;
+        border-radius: 8px;
+        background: #211c31;
+        max-width: min(400px, 90vw);
+        font-size: 12px;
+        line-height: 1.6;
+        box-shadow: 0 12px 60px #0008;
+        z-index: 5;
+      }
+      .notice[hidden] {
+        display: none;
+      }
+      @keyframes orbit {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes stream {
+        to {
+          stroke-dashoffset: -646;
+        }
+      }
+      @keyframes breathe {
+        50% {
+          opacity: 0.45;
+        }
+      }
+      @keyframes blink {
+        0%,
+        46%,
+        50%,
+        100% {
+          transform: scaleY(1);
+        }
+        48% {
+          transform: scaleY(0.12);
+        }
+      }
+      @keyframes arrive {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (min-width: 1700px) {
+        :root {
+          font-size: 14px;
+        }
+        .desk {
+          padding: 0 25px;
+          gap: 14px;
+          grid-template-rows: 76px 38px 94px 70px minmax(0, 1fr) 34px;
+        }
+        .workspace {
+          gap: 16px;
+          grid-template-columns: 1fr 1.72fr 1fr;
+        }
+        .column {
+          gap: 16px;
+        }
+        .panel-head {
+          padding: 15px 18px;
+        }
+        .stat {
+          padding: 15px 20px;
+        }
+        .stat strong {
+          font-size: 30px;
+        }
+        .stage strong {
+          font-size: 13px;
+        }
+        .stage small {
+          font-size: 10px;
+        }
+        .reactor {
+          flex: 1.7;
+        }
+        .action-block h3 {
+          font-size: 30px;
+        }
+        .action-block p {
+          font-size: 12px;
+        }
+        .action-block {
+          padding-bottom: 20px;
+        }
+        .event {
+          font-size: 12px;
+          grid-template-columns: 65px 72px minmax(0, 1fr);
+          padding: 11px 3px;
+        }
+        .event time {
+          font-size: 10px;
+        }
+        .event .source {
+          font-size: 9px;
+        }
+        .fact {
+          font-size: 13px;
+          padding: 13px 0;
+        }
+        .fact strong {
+          font-size: 12px;
+        }
+        .fact-note {
+          font-size: 10px;
+        }
+        .position-body {
+          padding: 17px 20px;
+        }
+        .big-pnl {
+          font-size: 45px;
+        }
+        .position-info {
+          gap: 15px;
+        }
+        .position-info strong {
+          font-size: 13px;
+        }
+        .net-chart {
+          height: 130px;
+        }
+        .node {
+          font-size: 11px;
+          padding: 8px 11px;
+        }
+        .node span {
+          font-size: 9px;
+        }
+        .reactor-title,
+        .reactor-note {
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 1290px) and (min-width: 901px) {
+        .desk {
+          padding: 0 12px;
+          gap: 8px;
+          grid-template-rows: 57px 30px 75px 55px minmax(0, 1fr) 26px;
+        }
+        .workspace,
+        .column {
+          gap: 8px;
+        }
+        .panel-head {
+          padding: 10px;
+        }
+        .panel-head h2 {
+          font-size: 10px;
+          letter-spacing: 1px;
+        }
+        .panel-head small {
+          font-size: 8px;
+        }
+        .reactor {
+          flex: 1.55;
+        }
+        .action-block h3 {
+          font-size: 21px;
+        }
+        .action-block {
+          padding: 3px 12px 10px;
+        }
+        .action-block p {
+          font-size: 10px;
+        }
+        .next {
+          margin-top: 7px;
+          padding: 6px;
+        }
+        .node {
+          padding: 4px 6px;
+          font-size: 8px;
+        }
+        .node span {
+          font-size: 7px;
+        }
+        .reactor-visual {
+          min-height: 135px;
+        }
+        .fact {
+          padding: 8px 0;
+          font-size: 10px;
+        }
+        .fact strong {
+          font-size: 10px;
+        }
+        .position-body {
+          padding: 10px;
+        }
+        .position-info {
+          gap: 8px;
+        }
+        .big-pnl {
+          font-size: 30px;
+        }
+        .protection-bar {
+          margin-top: 12px;
+        }
+        .net-chart {
+          height: 65px;
+        }
+        .net-foot {
+          font-size: 8px;
+          padding: 8px;
+        }
+        .net-summary {
+          padding: 9px 10px 0;
+        }
+        .feed-health {
+          font-size: 8px;
+          padding: 8px;
+        }
+        .preview-strip {
+          font-size: 10px;
+        }
+        .toolbar label {
+          display: none;
+        }
+        .spark {
+          width: 60px;
+        }
+        .stat strong {
+          font-size: 23px;
+        }
+        .stage {
+          padding: 7px 9px;
+        }
+        .stage strong {
+          font-size: 10px;
+        }
+        .stage .stage-number {
+          display: none;
+        }
+      }
+      @media (max-width: 1500px) {
+        .spark {
+          display: none;
+        }
+      }
+      @media (max-width: 900px) {
+        .desk {
+          height: auto;
+          min-height: 100dvh;
+          padding: 0 12px;
+          grid-template-rows: auto auto auto auto auto auto;
+          gap: 12px;
+        }
+        .masthead {
+          padding: 14px 0;
+          flex-wrap: wrap;
+        }
+        .toolbar {
+          flex-wrap: wrap;
+        }
+        .clock,
+        .toolbar label {
+          display: none;
+        }
+        .preview-label {
+          font-size: 9px;
+        }
+        .preview-strip {
+          flex-wrap: wrap;
+          font-size: 10px;
+          gap: 6px;
+        }
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stat:last-child {
+          grid-column: 1/-1;
+        }
+        .flow {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .stage {
+          padding: 9px;
+        }
+        .stage strong {
+          font-size: 10px;
+        }
+        .stage .stage-number {
+          display: none;
+        }
+        .workspace {
+          display: flex;
+          flex-direction: column;
+        }
+        .column {
+          display: contents;
+        }
+        .reactor {
+          order: 0;
+          flex: none;
+          min-height: 400px;
+        }
+        .log-panel {
+          order: 1;
+          flex: none;
+          height: 285px;
+        }
+        .market {
+          order: 2;
+          flex: none;
+          height: 360px;
+        }
+        .position {
+          order: 3;
+          flex: none;
+        }
+        .facts {
+          order: 4;
+          flex: none;
+        }
+        .right-bottom {
+          order: 5;
+          flex: none;
+        }
+        .reactor-visual {
+          min-height: 240px;
+        }
+        .node {
+          font-size: 9px;
+          max-width: 37%;
+        }
+        .reactor .action-block {
+          padding-bottom: 16px;
+        }
+        .foot {
+          padding: 12px 0;
+          flex-wrap: wrap;
+          line-height: 1.8;
+        }
+        .panel-head h2 {
+          font-size: 10px;
+        }
+        .net-chart {
+          height: 120px;
+        }
+        .stat strong {
+          font-size: 26px;
+        }
+        .position-info {
+          margin-bottom: 8px;
+        }
+        .toolbar button,
+        .toolbar select {
+          font-size: 11px;
+        }
+        .preview-strip > span:last-child {
+          font-size: 9px;
+        }
+        .quote-row small {
+          font-size: 9px;
+        }
+      }
+      @media (max-height: 800px) and (min-width: 901px) {
+        .reactor {
+          flex: 1.9;
+        }
+        .reactor-visual {
+          min-height: 92px;
+        }
+        .reactor-title,
+        .reactor-note {
+          font-size: 8px;
+          top: 1px;
+        }
+        .node {
+          padding: 3px 5px;
+        }
+        .node span {
+          display: none;
+        }
+        .action-block {
+          padding: 3px 10px 10px;
+        }
+        .action-block h3 {
+          font-size: 19px;
+        }
+        .action-block p {
+          font-size: 10px;
+        }
+        .next {
+          margin-top: 7px;
+          padding: 5px;
+        }
+        .position {
+          flex: 1.5;
+        }
+        .position-body {
+          padding: 8px 10px;
+        }
+        .position-info {
+          margin-top: 9px;
+          gap: 6px;
+        }
+        .position-info small {
+          font-size: 8px;
+          margin-bottom: 2px;
+        }
+        .position-info strong {
+          font-size: 10px;
+        }
+        .big-pnl {
+          font-size: 28px;
+          margin-top: 7px;
+        }
+        .net-chart {
+          height: 42px;
+        }
+        .net-foot {
+          padding: 6px 10px;
+        }
+        .feed-health {
+          padding: 6px 10px;
+          gap: 5px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="desk" id="desk">
+      <header class="masthead">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">◈</div>
+          <div>
+            <h1>SCALPER<span class="violet"> / </span>DESK</h1>
+            <small>EXECUTION INTELLIGENCE</small>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span class="preview-label">DESIGN PREVIEW · SIMULATED DATA</span
+          ><label for="scenario">SCENE</label
+          ><select id="scenario" aria-label="Preview scenario">
+            <option value="position">Position open</option>
+            <option value="idle">Waiting</option>
+            <option value="ai">AI processing</option>
+            <option value="orders">Orders working</option>
+            <option value="blocked">Entries blocked</option>
+            <option value="unavailable">Data unavailable</option></select
+          ><button
+            id="replay"
+            aria-pressed="true"
+            title="Pause or resume the simulated event replay"
+          >
+            Ⅱ Replay</button
+          ><button id="motion" aria-pressed="true">Motion on</button
+          ><button
+            id="fullscreen"
+            aria-label="Enter fullscreen"
+            title="Fullscreen"
+          >
+            ⛶
+          </button>
+        </div>
+        <div class="clock mono" id="clock" aria-label="Local time GMT plus 8">
+          —
+        </div>
+      </header>
+      <div class="preview-strip">
+        <span
+          ><b><span class="dot"></span>VISUAL PROTOTYPE</b> &nbsp; XAUUSD · DEMO
+          LAYOUT</span
+        ><span
+          >No live connection · Illustrative events and values ·
+          <b>Trading is unaffected</b></span
+        >
+      </div>
+      <section class="stats" aria-label="Illustrative financial overview">
+        <article class="stat">
+          <label>ACCOUNT EQUITY · USD</label
+          ><strong class="mono" id="equity">10,000.00</strong
+          ><small>Illustrative reconciled balance</small>
+          <div class="spark" id="spark-equity" aria-hidden="true"></div>
+        </article>
+        <article class="stat">
+          <label>REALIZED NET · UTC DAY</label
+          ><strong class="mono negative" id="day-net">−18.60</strong
+          ><small>Closed outcomes · includes fees</small>
+          <div class="spark" id="spark-day" aria-hidden="true"></div>
+        </article>
+        <article class="stat">
+          <label>OPEN P/L · BROKER</label
+          ><strong class="mono positive" id="open-net">+12.40</strong
+          ><small>Unrealized · future costs unknown</small>
+          <div class="spark" id="spark-open" aria-hidden="true"></div>
+        </article>
+        <article class="stat">
+          <label>SHARED SETUP CEILING</label
+          ><strong class="mono" id="ceiling"
+            >1.00<span style="font-size: 16px">%</span></strong
+          ><small>Dynamic sizing · both OCO legs</small>
+        </article>
+        <article class="stat">
+          <label>CURRENT ACTION</label
+          ><strong id="top-action" class="violet">Managing position</strong
+          ><small id="top-detail">Broker protection under observation</small>
+        </article>
+      </section>
+      <nav class="flow" aria-label="Workflow illustration" id="flow"></nav>
+      <main class="workspace">
+        <div class="column">
+          <section class="panel market" aria-labelledby="market-title">
+            <div class="panel-head">
+              <h2 id="market-title">Market structure</h2>
+              <div class="tabs" role="tablist" aria-label="Chart timeframe">
+                <button
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="price-chart"
+                  id="tab-M1"
+                  tabindex="0"
+                  data-frame="M1"
+                >
+                  M1</button
+                ><button
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="price-chart"
+                  id="tab-M5"
+                  tabindex="-1"
+                  data-frame="M5"
+                >
+                  M5</button
+                ><button
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="price-chart"
+                  id="tab-M15"
+                  tabindex="-1"
+                  data-frame="M15"
+                >
+                  M15
+                </button>
+              </div>
+            </div>
+            <div class="market-body">
+              <div class="quote-row">
+                <div>
+                  <small>XAUUSD / GOLD</small>
+                  <div class="quote mono" id="quote">2,450.20</div>
+                </div>
+                <small id="chart-source"
+                  >Synthetic completed candles<br /><span class="violet"
+                    >M1 · fixture, not market data</span
+                  ></small
+                >
+              </div>
+              <div
+                class="chart-wrap"
+                id="price-chart"
+                role="tabpanel"
+                aria-labelledby="tab-M1"
+                tabindex="0"
+              ></div>
+              <div class="chart-caption">
+                <span class="violet">Buffered entry corridor</span
+                ><span class="positive">Buy trigger</span>
+              </div>
+              <small style="font-size: 8px"
+                >Illustration only · corridor is not the exact AI holding
+                box</small
+              >
+            </div>
+          </section>
+          <section class="panel facts" aria-labelledby="factors-title">
+            <div class="panel-head">
+              <h2 id="factors-title">Decision factors</h2>
+              <span class="tag">RECORDED CONTEXT*</span>
+            </div>
+            <div class="fact-list">
+              <div class="fact">
+                <span>M15 / M5 / M1</span
+                ><strong id="alignment" class="positive"
+                  >Bullish / bullish / bullish</strong
+                >
+              </div>
+              <div class="fact">
+                <span>Model buy / sell triggers</span
+                ><strong class="mono" id="triggers">2,450.00 / 2,447.80</strong>
+              </div>
+              <div class="fact">
+                <span>Spread / ATR · M1</span
+                ><strong class="mono" id="spread">0.20 / 1.60</strong>
+              </div>
+              <div class="fact">
+                <span>Account &amp; order reconciliation</span
+                ><strong id="reconciliation" class="positive"
+                  >Verified · fixture</strong
+                >
+              </div>
+              <div class="fact">
+                <span>News / consolidated order flow</span
+                ><strong class="empty-value">Unavailable</strong>
+              </div>
+              <div class="fact-note">
+                *All values in this preview are simulated. In production,
+                factors must come from recorded inputs and checks. Codex returns
+                two prices; narrative reasoning and confidence are unavailable.
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="column">
+          <section class="panel reactor" aria-labelledby="reactor-title">
+            <div class="panel-head">
+              <h2 id="reactor-title">The engine</h2>
+              <span class="tag green" id="engine-badge"
+                >SIMULATED · POSITION</span
+              >
+            </div>
+            <div class="reactor-visual">
+              <div class="reactor-title">ONE BOT. SIX WORKFLOW STAGES.</div>
+              <div class="reactor-note">Decorative motion</div>
+              <svg
+                class="reactor-svg"
+                viewBox="0 0 600 330"
+                role="img"
+                aria-label="Decorative execution engine with six workflow stages"
+              >
+                <defs>
+                  <radialGradient id="sphere" cx="35%" cy="25%" r="80%">
+                    <stop offset="0" stop-color="#eee9ff" />
+                    <stop offset=".4" stop-color="#bcb0e7" />
+                    <stop offset=".8" stop-color="#736591" />
+                    <stop offset="1" stop-color="#403851" />
+                  </radialGradient>
+                  <radialGradient id="halo">
+                    <stop offset="0" stop-color="#bc9eff" stop-opacity=".4" />
+                    <stop offset="1" stop-color="#bc9eff" stop-opacity="0" />
+                  </radialGradient>
+                  <linearGradient id="core-line">
+                    <stop stop-color="#ddcaff" />
+                    <stop offset="1" stop-color="#84729e" />
+                  </linearGradient>
+                </defs>
+                <ellipse
+                  cx="300"
+                  cy="280"
+                  rx="120"
+                  ry="12"
+                  fill="#b49bdc"
+                  opacity=".07"
+                />
+                <circle
+                  class="core-halo"
+                  cx="300"
+                  cy="166"
+                  r="130"
+                  fill="url(#halo)"
+                />
+                <g id="filaments" class="orbit"></g>
+                <g id="filaments-reverse" class="orbit reverse"></g>
+                <ellipse
+                  cx="300"
+                  cy="166"
+                  rx="104"
+                  ry="81"
+                  fill="none"
+                  stroke="#b7a0ff"
+                  stroke-opacity=".16"
+                  stroke-dasharray="2 7"
+                />
+                <ellipse
+                  cx="300"
+                  cy="227"
+                  rx="71"
+                  ry="13"
+                  fill="#ae97e0"
+                  opacity=".12"
+                />
+                <circle
+                  cx="300"
+                  cy="166"
+                  r="58"
+                  fill="url(#sphere)"
+                  stroke="#d0b9ff"
+                  stroke-opacity=".5"
+                />
+                <path
+                  d="M244 175 Q300 203 356 175"
+                  fill="none"
+                  stroke="url(#core-line)"
+                  stroke-width="1.2"
+                  opacity=".6"
+                />
+                <g class="core-eyes" fill="#171324">
+                  <rect
+                    x="281"
+                    y="148"
+                    width="10"
+                    height="29"
+                    rx="5"
+                    transform="rotate(-12 286 162)"
+                  />
+                  <rect
+                    x="308"
+                    y="148"
+                    width="10"
+                    height="29"
+                    rx="5"
+                    transform="rotate(12 313 162)"
+                  />
+                </g>
+                <circle cx="325" cy="128" r="7" fill="#fff" opacity=".12" />
+              </svg>
+              <div id="reactor-nodes"></div>
+              <div class="core-label">DETERMINISTIC EXECUTION</div>
+            </div>
+            <div class="action-block">
+              <div class="eyebrow" id="action-eyebrow">
+                PROTECTION &amp; RECONCILIATION
+              </div>
+              <h3 id="action-title">Managing an open position</h3>
+              <p id="action-detail">
+                No new setup while this position remains active.
+              </p>
+              <div class="next">
+                <span>NEXT</span
+                ><span
+                  id="next-action"
+                  style="font-size: 10px; letter-spacing: 0; color: inherit"
+                  >Reconcile the broker outcome, then evaluate the next
+                  opportunity.</span
+                >
+              </div>
+            </div>
+          </section>
+          <section class="panel log-panel" aria-labelledby="log-title">
+            <div class="panel-head">
+              <h2 id="log-title">Decision tape</h2>
+              <div class="log-tools">
+                <span class="log-count" id="log-count">REPLAY</span
+                ><button id="follow" aria-pressed="true">Following ↓</button>
+              </div>
+            </div>
+            <div
+              class="log mono"
+              id="log"
+              role="log"
+              aria-label="Simulated decision event log"
+              aria-live="off"
+              tabindex="0"
+            ></div>
+            <div class="log-footer">
+              SIMULATED REPLAY · NEW ROWS EVERY 3 SECONDS · SCROLL UP TO PAUSE
+              FOLLOW
+            </div>
+          </section>
+        </div>
+        <div class="column">
+          <section class="panel position" aria-labelledby="position-title">
+            <div class="panel-head">
+              <h2 id="position-title">Position &amp; protection</h2>
+              <span class="tag green" id="position-badge"
+                >BROKER · FIXTURE</span
+              >
+            </div>
+            <div class="position-body">
+              <div class="position-heading">
+                <strong id="position-side"
+                  ><span class="dot positive"></span>BUY · XAUUSD</strong
+                ><span class="tag" id="position-state">OPEN</span>
+              </div>
+              <div class="big-pnl mono positive" id="position-pnl">+12.40</div>
+              <div class="pnl-caption" id="position-caption">
+                Illustrative broker net P/L · USD
+              </div>
+              <div class="protection-bar">
+                <small class="negative">SL</small>
+                <div class="bar"></div>
+                <small class="positive">TP</small>
+              </div>
+              <div class="protection-labels mono">
+                <span class="negative" id="stop">2,446.20</span
+                ><span class="positive" id="target">2,451.10</span>
+              </div>
+              <div class="position-info">
+                <div>
+                  <small>Fill price</small
+                  ><strong class="mono" id="fill">2,450.10</strong>
+                </div>
+                <div>
+                  <small>Pending peer</small
+                  ><strong id="peer">Cancelled · fixture</strong>
+                </div>
+                <div>
+                  <small>SL / TP observation</small
+                  ><strong class="positive" id="protection"
+                    >Verified · fixture</strong
+                  >
+                </div>
+                <div>
+                  <small>Future closing costs</small
+                  ><strong class="empty-value">Unavailable</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="panel right-bottom" aria-labelledby="net-title">
+            <div class="panel-head">
+              <h2 id="net-title">Closed net</h2>
+              <small>ILLUSTRATIVE · USD</small>
+            </div>
+            <div class="net-summary">
+              <strong class="net-number mono negative" id="closed-net"
+                >−18.60</strong
+              ><small>Latest fixture outcomes<br />Not an equity curve</small>
+            </div>
+            <div
+              class="net-chart"
+              id="net-chart"
+              role="img"
+              aria-label="Synthetic closed net curve with both wins and losses"
+            ></div>
+            <div class="net-foot">
+              <span>No profitability claim</span
+              ><span>Fees already included</span>
+            </div>
+            <div class="feed-health">
+              <span
+                >Candles
+                <b class="positive" id="candle-health">Fixture</b></span
+              ><span
+                >Quotes <b class="positive" id="quote-health">Fixture</b></span
+              ><span
+                >Broker
+                <b class="positive" id="broker-health">Simulated</b></span
+              ><span>News <b class="muted">Unavailable</b></span>
+            </div>
+          </section>
+        </div>
+      </main>
+      <footer class="foot">
+        <span class="status-line"
+          ><strong><span class="dot"></span>OFFLINE DESIGN PREVIEW</strong
+          ><span>No commands · no credentials · no network</span></span
+        >
+        <div class="links">
+          <button
+            data-note="History and diagnostics remain accessible in the eventual live panel. This preview contains no private trading records."
+          >
+            Trade history ↗</button
+          ><button
+            data-note="Live integration will retain explicit stale/unavailable values, scoped evidence and existing authenticated operator controls. This preview cannot send commands."
+          >
+            Diagnostics ↗</button
+          ><button
+            data-note="Operator controls stay outside automatic updates in the live dashboard. No trading controls are connected in this design preview."
+          >
+            Operator controls ↗
+          </button>
+        </div>
+      </footer>
+    </div>
+    <div class="notice" id="notice" role="status" hidden></div>
+    <script>
+      "use strict";
+      // Offline fixtures only. No network, storage, provider, broker or private data access.
+      const $ = (id) => document.getElementById(id);
+      const stages = [
+        ["idle", "◇", "Ready / wait", "Safety gates", "#b7a0ff"],
+        ["download", "⇣", "Market data", "Completed OHLC", "#83dbe3"],
+        ["process", "⌁", "Process", "Indicators & risk", "#8abfff"],
+        ["ai", "✦", "Codex", "Entry proposals", "#d49eea"],
+        ["orders", "⇄", "Place orders", "STOP_LIMIT / OCO", "#f1c47c"],
+        ["position", "◎", "Manage trade", "Broker SL / TP", "#64e5ba"],
+      ];
+      const scenes = {
+        position: {
+          stage: "position",
+          title: "Managing an open position",
+          short: "Managing position",
+          eyebrow: "PROTECTION & RECONCILIATION",
+          detail: "No new setup while this position remains active.",
+          next: "Reconcile the broker outcome, then evaluate the next opportunity.",
+          events: [
+            [
+              "broker",
+              "Position snapshot received.",
+              "SL and TP present in the simulated broker response.",
+            ],
+            [
+              "risk",
+              "New setup withheld.",
+              "An active group still owns this opportunity.",
+            ],
+            [
+              "engine",
+              "Reconciliation check complete.",
+              "Keep monitoring the existing protection.",
+            ],
+          ],
+        },
+        idle: {
+          stage: "idle",
+          title: "Waiting for an eligible setup",
+          short: "Waiting for setup",
+          eyebrow: "READY DOES NOT MEAN FORCED TRADING",
+          detail:
+            "Request cooldown is active; no provider request or order is sent.",
+          next: "Recheck admission after cooldown with fresh completed data.",
+          events: [
+            [
+              "engine",
+              "Entry admission checked.",
+              "The simulated request cooldown remains active.",
+            ],
+            [
+              "risk",
+              "No new order authorized.",
+              "Protection maintenance remains independent.",
+            ],
+            [
+              "engine",
+              "Waiting is intentional.",
+              "No provider call was started in this fixture step.",
+            ],
+          ],
+        },
+        ai: {
+          stage: "ai",
+          title: "Codex is evaluating the context",
+          short: "Awaiting Codex",
+          eyebrow: "ENTRY PROPOSALS ONLY",
+          detail: "Completed M15 / M5 / M1 context is with the model.",
+          next: "Validate the returned prices before any order can be authorized.",
+          events: [
+            [
+              "engine",
+              "Provider request in progress.",
+              "A simulated durable request claim already exists.",
+            ],
+            [
+              "codex",
+              "Response not yet received.",
+              "No reasoning or confidence is available to display.",
+            ],
+            [
+              "risk",
+              "Execution remains independent.",
+              "The model cannot select size or bypass admission checks.",
+            ],
+          ],
+        },
+        orders: {
+          stage: "orders",
+          title: "Waiting for a breakout",
+          short: "OCO orders working",
+          eyebrow: "ACCEPTED ORDERS · GTC",
+          detail:
+            "Two simulated entry orders are working. No position is filled.",
+          next: "On a broker fill, cancel the peer and verify broker protection.",
+          events: [
+            [
+              "broker",
+              "Working pair observed.",
+              "Both fixture entry orders are accepted and unfilled.",
+            ],
+            [
+              "engine",
+              "Waiting for a broker event.",
+              "No timer repricing or forced entry.",
+            ],
+            [
+              "risk",
+              "No extra setup admitted.",
+              "Both race-exposed legs share the setup ceiling.",
+            ],
+          ],
+        },
+        blocked: {
+          stage: "idle",
+          title: "New entries are blocked",
+          short: "Entries blocked",
+          eyebrow: "RECONCILIATION REQUIRED",
+          detail:
+            "Account evidence is incomplete. New provider calls and orders are withheld.",
+          next: "Wait for complete fresh reconciliation; keep protective maintenance active.",
+          events: [
+            [
+              "risk",
+              "Admission denied.",
+              "The fixture account snapshot is incomplete.",
+            ],
+            [
+              "engine",
+              "No provider request started.",
+              "Missing evidence cannot authorize a new setup.",
+            ],
+            [
+              "broker",
+              "Protection monitoring continues.",
+              "An admission block is not an instruction to close positions.",
+            ],
+          ],
+        },
+        unavailable: {
+          stage: null,
+          title: "Current data is unavailable",
+          short: "Data unavailable",
+          eyebrow: "OBSERVABILITY GAP",
+          detail:
+            "The preview simulates a failed read. Old values are withheld.",
+          next: "Retry bounded read-only polling. Do not infer that the account is flat.",
+          events: [
+            [
+              "engine",
+              "Read-only snapshot unavailable.",
+              "Current balances and exposure cannot be verified.",
+            ],
+            [
+              "risk",
+              "Stale observations withheld.",
+              "No inference of zero exposure or zero P/L.",
+            ],
+            [
+              "engine",
+              "Waiting for a fresh snapshot.",
+              "This illustrative outage does not send a control command.",
+            ],
+          ],
+        },
+      };
+      let scene = "position",
+        frame = "M1",
+        replay = true,
+        follow = true,
+        sequence = 0,
+        eventIndex = 0;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let motion = !reduced.matches;
+      function setText(id, value) {
+        $(id).textContent = value;
+      }
+      function textElement(tag, cls, text) {
+        const node = document.createElement(tag);
+        node.className = cls;
+        node.textContent = text;
+        return node;
+      }
+      function buildStages() {
+        stages.forEach(([key, icon, name, detail, tone], index) => {
+          const node = textElement("div", "stage", "");
+          node.dataset.stage = key;
+          node.style.setProperty("--tone", tone);
+          node.append(textElement("span", "stage-icon", icon));
+          const label = document.createElement("div");
+          label.append(
+            textElement("strong", "", name),
+            textElement("small", "", detail),
+          );
+          node.append(
+            label,
+            textElement(
+              "span",
+              "stage-number mono",
+              String(index + 1).padStart(2, "0"),
+            ),
+          );
+          $("flow").append(node);
+          const orb = textElement("div", `node n${index}`, "");
+          orb.dataset.stage = key;
+          orb.style.setProperty("--tone", tone);
+          const dot = document.createElement("i");
+          const info = document.createElement("div");
+          info.append(
+            textElement("strong", "", name),
+            textElement(
+              "span",
+              "",
+              key === "download" || key === "process"
+                ? "Timing not observed"
+                : "Workflow stage",
+            ),
+          );
+          orb.append(dot, info);
+          $("reactor-nodes").append(orb);
+        });
+        const colors = [
+          "#b7a0ff",
+          "#83dbe3",
+          "#8abfff",
+          "#d49eea",
+          "#f1c47c",
+          "#64e5ba",
+        ];
+        for (let i = 0; i < 42; i++) {
+          const angle = i * 0.17,
+            rx = 135 + (i % 7) * 7,
+            ry = 67 + (i % 5) * 5;
+          const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "ellipse",
+          );
+          for (const [key, value] of Object.entries({
+            cx: 300,
+            cy: 166,
+            rx,
+            ry,
+            transform: `rotate(${(angle * 180) / Math.PI} 300 166)`,
+            stroke: colors[i % 6],
+            class: i % 7 === 0 ? "filament particle" : "filament",
+          }))
+            path.setAttribute(key, String(value));
+          $(i % 2 ? "filaments" : "filaments-reverse").append(path);
+        }
+      }
+      function chartSvg(frameKey) {
+        const count = 32,
+          width = 400,
+          height = 240,
+          left = 5,
+          right = 52,
+          top = 12,
+          bottom = 23,
+          low = 2445.6,
+          high = 2452.3;
+        const scaleY = (v) =>
+          top + ((high - v) / (high - low)) * (height - top - bottom);
+        const factor = { M1: 1, M5: 1.8, M15: 2.5 }[frameKey];
+        let lines = "";
+        for (let i = 0; i < 5; i++) {
+          const price = 2446 + i * 1.5,
+            y = scaleY(price);
+          lines += `<line x1="0" y1="${y}" x2="${width - right}" y2="${y}" stroke="#272b3b"/><text x="${width - right + 7}" y="${y + 3}" fill="#9da4bc" font-size="9">${price.toFixed(1)}</text>`;
+        }
+        const xStep = (width - right - left) / count;
+        let candles = "",
+          emaPath = "",
+          ema = 2447.4;
+        for (let i = 0; i < count; i++) {
+          const open = 2446.85 + i * 0.095 + Math.sin(i * factor * 0.82) * 0.43,
+            close = open + Math.sin((i + 2) * factor * 0.9) * 0.38 + 0.11;
+          const candleHigh = Math.max(open, close) + 0.22 + (i % 3) * 0.08,
+            candleLow = Math.min(open, close) - 0.21 - (i % 4) * 0.05;
+          const x = left + i * xStep + xStep * 0.5,
+            tone = close >= open ? "#64d6b0" : "#e186a2";
+          candles += `<line x1="${x}" y1="${scaleY(candleHigh)}" x2="${x}" y2="${scaleY(candleLow)}" stroke="${tone}"/><rect x="${x - xStep * 0.27}" y="${scaleY(Math.max(open, close))}" width="${xStep * 0.54}" height="${Math.max(1.6, Math.abs(scaleY(open) - scaleY(close)))}" rx=".7" fill="${tone}"/>`;
+          ema = close * 0.2 + ema * 0.8;
+          emaPath += `${i ? "L" : "M"}${x},${scaleY(ema)} `;
+        }
+        const corridor = `<rect x="0" y="${scaleY(2450)}" width="${width - right}" height="${scaleY(2447.8) - scaleY(2450)}" fill="#b7a0ff" opacity=".055"/><line x1="0" x2="${width - right}" y1="${scaleY(2450)}" y2="${scaleY(2450)}" stroke="#64e5ba" stroke-dasharray="4 5" opacity=".6"/><line x1="0" x2="${width - right}" y1="${scaleY(2447.8)}" y2="${scaleY(2447.8)}" stroke="#b7a0ff" stroke-dasharray="4 5" opacity=".5"/>`;
+        return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Synthetic ${frameKey} completed-candle chart, not live data">${lines}${corridor}${candles}<path d="${emaPath}" fill="none" stroke="#b7a0ff" stroke-width="1.2" opacity=".8"/><text x="8" y="237" fill="#9da4bc" font-size="9">14:00</text><text x="145" y="237" fill="#9da4bc" font-size="9">14:15</text><text x="285" y="237" fill="#9da4bc" font-size="9">14:30 GMT+8</text></svg>`;
+      }
+      function spark(id, values, color, large = false) {
+        const width = large ? 350 : 100,
+          height = large ? 90 : 34,
+          min = Math.min(...values) - 3,
+          max = Math.max(...values) + 3;
+        const coords = values.map(
+          (v, i) =>
+            `${(i * width) / (values.length - 1)},${height - 5 - ((v - min) / (max - min)) * (height - 10)}`,
+        );
+        $(id).innerHTML =
+          `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true"><path d="M${coords.join(" L")} L${width},${height} L0,${height} Z" fill="${color}" opacity=".07"/><path d="M${coords.join(" L")}" fill="none" stroke="${color}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+      }
+      function showFrame(next) {
+        frame = next;
+        document.querySelectorAll("[data-frame]").forEach((b) => {
+          const selected = b.dataset.frame === frame;
+          b.setAttribute("aria-selected", String(selected));
+          b.tabIndex = selected ? 0 : -1;
+        });
+        $("price-chart").setAttribute("aria-labelledby", `tab-${frame}`);
+        if (scene === "unavailable") {
+          $("price-chart").replaceChildren(
+            textElement(
+              "p",
+              "muted",
+              "Chart unavailable — simulated read failure.",
+            ),
+          );
+          return;
+        }
+        $("price-chart").innerHTML = chartSvg(frame);
+        $("chart-source").replaceChildren(
+          document.createTextNode("Synthetic completed candles"),
+          document.createElement("br"),
+          textElement("span", "violet", `${frame} · fixture, not market data`),
+        );
+      }
+      function timestamp() {
+        return new Date(Date.UTC(2026, 9, 20, 14, 30, sequence * 3))
+          .toISOString()
+          .slice(11, 19);
+      }
+      function addEvent(source, title, detail) {
+        const row = textElement("div", "event", "");
+        row.append(
+          textElement("time", "", timestamp()),
+          textElement("span", `source ${source}`, source.toUpperCase()),
+        );
+        const message = textElement("div", "message", "");
+        message.append(
+          textElement("b", "", title),
+          document.createTextNode(` ${detail}`),
+        );
+        row.append(message);
+        $("log").append(row);
+        sequence++;
+        while ($("log").children.length > 60)
+          $("log").firstElementChild.remove();
+        if (follow) $("log").scrollTop = $("log").scrollHeight;
+        setText(
+          "log-count",
+          replay
+            ? `REPLAY · ${String(sequence).padStart(3, "0")}`
+            : "REPLAY PAUSED",
+        );
+      }
+      function applyScene(next, announce = true) {
+        scene = next;
+        const s = scenes[scene],
+          gap = scene === "unavailable",
+          position = scene === "position",
+          orders = scene === "orders";
+        $("desk").classList.toggle("unavailable", gap);
+        $("scenario").value = scene;
+        setText("action-title", s.title);
+        setText("top-action", s.short);
+        setText("action-eyebrow", s.eyebrow);
+        setText("action-detail", s.detail);
+        setText("top-detail", s.detail);
+        setText("next-action", s.next);
+        setText("engine-badge", `SIMULATED · ${scene.toUpperCase()}`);
+        $("engine-badge").className =
+          `tag ${["blocked", "unavailable"].includes(scene) ? "amber" : "green"}`;
+        document.querySelectorAll("[data-stage]").forEach((el) => {
+          const active = s.stage === el.dataset.stage;
+          el.classList.toggle("active", active);
+          if (active) el.setAttribute("aria-current", "step");
+          else el.removeAttribute("aria-current");
+        });
+        setText("equity", gap ? "Unavailable" : "10,000.00");
+        setText("day-net", gap ? "Unavailable" : "−18.60");
+        setText("closed-net", gap ? "Unavailable" : "−18.60");
+        setText(
+          "open-net",
+          gap
+            ? "Unavailable"
+            : position
+              ? "+12.40"
+              : scene === "blocked"
+                ? "Unavailable"
+                : "0.00",
+        );
+        setText("quote", gap ? "Unavailable" : "2,450.20");
+        setText(
+          "alignment",
+          gap ? "Unavailable" : "Bullish / bullish / bullish",
+        );
+        setText("triggers", gap ? "Unavailable" : "2,450.00 / 2,447.80");
+        setText("spread", gap ? "Unavailable" : "0.20 / 1.60");
+        setText(
+          "reconciliation",
+          gap
+            ? "Unavailable"
+            : scene === "blocked"
+              ? "Incomplete · blocked"
+              : "Verified · fixture",
+        );
+        $("reconciliation").className = gap
+          ? "muted"
+          : scene === "blocked"
+            ? "amber"
+            : "positive";
+        setText(
+          "position-side",
+          gap
+            ? "Exposure unknown"
+            : position
+              ? "BUY · XAUUSD"
+              : scene === "blocked"
+                ? "Exposure unreconciled"
+                : orders
+                  ? "OCO · XAUUSD"
+                  : "No position · fixture",
+        );
+        setText(
+          "position-state",
+          gap || scene === "blocked"
+            ? "UNKNOWN"
+            : position
+              ? "OPEN"
+              : orders
+                ? "PENDING"
+                : "FLAT",
+        );
+        setText(
+          "position-pnl",
+          gap || scene === "blocked"
+            ? "Unavailable"
+            : position
+              ? "+12.40"
+              : "—",
+        );
+        $("position-pnl").className =
+          `big-pnl mono ${position ? "positive" : "empty-value"}`;
+        setText(
+          "position-caption",
+          gap || scene === "blocked"
+            ? "Do not infer zero exposure"
+            : position
+              ? "Illustrative broker net P/L · USD"
+              : orders
+                ? "Two unfilled STOP_LIMIT orders · fixture"
+                : "No open P/L · simulated flat snapshot",
+        );
+        setText("stop", position ? "2,446.20" : "Unavailable");
+        setText("target", position ? "2,451.10" : "Unavailable");
+        setText("fill", position ? "2,450.10" : "Unavailable");
+        setText(
+          "peer",
+          position
+            ? "Cancelled · fixture"
+            : orders
+              ? "Two accepted · fixture"
+              : "Unavailable",
+        );
+        setText("protection", position ? "Verified · fixture" : "Unavailable");
+        $("protection").className = position ? "positive" : "muted";
+        document.querySelector(".protection-bar").style.visibility = position
+          ? "visible"
+          : "hidden";
+        for (const id of ["candle-health", "quote-health", "broker-health"]) {
+          setText(
+            id,
+            gap
+              ? "Unavailable"
+              : id === "broker-health" && scene === "blocked"
+                ? "Incomplete"
+                : "Fixture",
+          );
+          $(id).className = gap || scene === "blocked" ? "amber" : "positive";
+        }
+        $("net-chart").style.visibility = gap ? "hidden" : "visible";
+        showFrame(frame);
+        if (announce)
+          addEvent(
+            "engine",
+            `Preview scene: ${s.short}.`,
+            "Simulated state; not a live trading event.",
+          );
+        eventIndex = 0;
+      }
+      function updateMotion() {
+        document.body.classList.toggle("still", !motion || reduced.matches);
+        setText(
+          "motion",
+          motion && !reduced.matches ? "Motion on" : "Motion off",
+        );
+        $("motion").setAttribute(
+          "aria-pressed",
+          String(motion && !reduced.matches),
+        );
+      }
+      function setFollow(value) {
+        follow = value;
+        $("follow").setAttribute("aria-pressed", String(value));
+        setText("follow", value ? "Following ↓" : "Follow paused");
+        if (value) $("log").scrollTop = $("log").scrollHeight;
+      }
+      function notify(message) {
+        setText("notice", message);
+        $("notice").hidden = false;
+        clearTimeout(notify.timer);
+        notify.timer = setTimeout(() => {
+          $("notice").hidden = true;
+        }, 6500);
+      }
+      buildStages();
+      spark("spark-equity", [4, 5, 3, 7, 8, 7, 6, 9, 8, 7, 8], "#b7a0ff");
+      spark("spark-day", [0, 8, 13, 5, 7, -2, 4, -7, -10, -18.6], "#ff8d9e");
+      spark("spark-open", [0, -2, 1, 4, 3, 6, 4, 9, 8, 12.4], "#64e5ba");
+      spark(
+        "net-chart",
+        [0, 8, 17, 11, 5, -3, 7, 14, 6, -4, -15, -8, -18.6],
+        "#b7a0ff",
+        true,
+      );
+      applyScene("position", false);
+      addEvent(
+        "engine",
+        "Illustrative setup loaded.",
+        "This is an offline visual prototype.",
+      );
+      addEvent(
+        "broker",
+        "Fixture BUY filled; peer cancelled.",
+        "Not a recorded real trade.",
+      );
+      addEvent(
+        "broker",
+        "Fixture SL and TP observed.",
+        "Future closing costs remain unavailable.",
+      );
+      $("scenario").addEventListener("change", (e) =>
+        applyScene(e.target.value),
+      );
+      $("replay").addEventListener("click", () => {
+        replay = !replay;
+        $("replay").setAttribute("aria-pressed", String(replay));
+        setText("replay", replay ? "Ⅱ Replay" : "▶ Replay");
+        setText(
+          "log-count",
+          replay
+            ? `REPLAY · ${String(sequence).padStart(3, "0")}`
+            : "REPLAY PAUSED",
+        );
+      });
+      $("motion").addEventListener("click", () => {
+        if (reduced.matches) {
+          notify(
+            "Your reduced-motion preference is active. Decorative animations remain disabled.",
+          );
+          return;
+        }
+        motion = !motion;
+        updateMotion();
+      });
+      reduced.addEventListener("change", updateMotion);
+      updateMotion();
+      $("follow").addEventListener("click", () => setFollow(!follow));
+      $("log").addEventListener(
+        "wheel",
+        (e) => {
+          if (e.deltaY < 0) setFollow(false);
+        },
+        { passive: true },
+      );
+      $("log").addEventListener("keydown", (e) => {
+        if (["ArrowUp", "PageUp", "Home"].includes(e.key)) setFollow(false);
+      });
+      $("log").addEventListener("touchmove", () => setFollow(false), {
+        passive: true,
+      });
+      $("log").addEventListener("scroll", () => {
+        if (
+          follow &&
+          $("log").scrollHeight - $("log").scrollTop - $("log").clientHeight >
+            30
+        )
+          setFollow(false);
+      });
+      document.querySelectorAll("[data-frame]").forEach((button) => {
+        button.addEventListener("click", () => showFrame(button.dataset.frame));
+        button.addEventListener("keydown", (e) => {
+          if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key))
+            return;
+          e.preventDefault();
+          const all = [...document.querySelectorAll("[data-frame]")];
+          let index = all.indexOf(button);
+          index =
+            e.key === "Home"
+              ? 0
+              : e.key === "End"
+                ? 2
+                : (index + (e.key === "ArrowRight" ? 1 : 2)) % 3;
+          showFrame(all[index].dataset.frame);
+          all[index].focus();
+        });
+      });
+      $("fullscreen").addEventListener("click", async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else if (document.documentElement.requestFullscreen)
+            await document.documentElement.requestFullscreen();
+          else notify("Fullscreen is unavailable in this browser.");
+        } catch {
+          notify(
+            "Fullscreen is unavailable here. Open the prototype directly in your browser.",
+          );
+        }
+      });
+      document.addEventListener("fullscreenchange", () => {
+        $("fullscreen").setAttribute(
+          "aria-label",
+          document.fullscreenElement ? "Exit fullscreen" : "Enter fullscreen",
+        );
+      });
+      document
+        .querySelectorAll("[data-note]")
+        .forEach((b) =>
+          b.addEventListener("click", () => notify(b.dataset.note)),
+        );
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") $("notice").hidden = true;
+      });
+      function updateClock() {
+        setText(
+          "clock",
+          new Intl.DateTimeFormat("en-GB", {
+            timeZone: "Asia/Singapore",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }).format(new Date()) + " +08",
+        );
+      }
+      updateClock();
+      setInterval(updateClock, 1000);
+      setInterval(() => {
+        if (!replay) return;
+        const events = scenes[scene].events;
+        const [source, title, detail] = events[eventIndex++ % events.length];
+        addEvent(source, title, detail);
+      }, 3000);
+    </script>
+  </body>
+</html>

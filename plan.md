@@ -2,13 +2,21 @@
 
 ## Scope
 
+### ISSUE-342 — Animated landscape design prototype
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/342.
+- Acceptance: full-screen landscape reactor/decision tape/segregated panels, clearly simulated offline fixtures, six state/failure scenes, motion/follow/replay/fullscreen/keyboard controls, responsive browser proof and full qualification; visual review before live replacement.
+- Dependencies: #340 / #341 and the supplied reference video; existing read-only evidence contracts for the subsequent live integration.
+- Status: prototype implemented; browser checks pass at four sizes with no external requests or page errors. Full qualification passed (942 Node / 94 PostgreSQL / 389 Python plus all required gates/audits). Interactive HTML, screenshot, short animation and browser/qualification receipts are ready for visual review; hosted PR checks precede merge. The running dashboard/trading services and research are unchanged.
+- Report: [landscape design and live-integration boundary](docs/landscape-prototype-report.md).
+
 ### ISSUE-340 — Dark trading command centre
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/340.
 - PR: https://github.com/AegisFintech/scalping-bot/pull/341.
 - Acceptance: clear current action and next step, honest recorded decision factors, completed decision charts/levels, separate realized/open P/L and unknown costs, responsive dark design, stable navigation/controls, stale/failure/browser tests, full qualification and dashboard-only rollout.
 - Dependencies: existing read-only polling, scoped PostgreSQL evidence and protected control forms.
-- Status: implemented; full qualification passed (942 Node / 94 PostgreSQL / 389 Python plus all required gates/audits). Desktop/mobile/navigation/refresh/light-base checks pass. No strategy, broker command, history, risk or frozen research changes. Both pre-deployment hosted checks passed. Verified dashboard-only artifact deployed; four other service PIDs/source and prospective registration preserved. Deployed browser checks pass; final receipt checks/merge pending.
+- Status: implemented; full qualification passed (942 Node / 94 PostgreSQL / 389 Python plus all required gates/audits). Desktop/mobile/navigation/refresh/light-base checks pass. No strategy, broker command, history, risk or frozen research changes. Both pre-deployment hosted checks passed. Verified dashboard-only artifact deployed; four other service PIDs/source and prospective registration preserved. Deployed browser checks pass; final receipt checks passed and PR #341 merged.
 - Report: [command-centre implementation](docs/dashboard-command-centre-report.md).
 
 ### ISSUE-334 — Reviewed breakout / small-TP demo release
