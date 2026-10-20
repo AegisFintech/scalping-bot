@@ -4,7 +4,8 @@ Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
 PR: https://github.com/AegisFintech/scalping-bot/pull/337.
 Rollout receipt: https://github.com/AegisFintech/scalping-bot/pull/339.
 Status: implemented, fully qualified, merged in PR #337 and deployed to demo.
-First natural pair accepted; completed cycle observation remains in progress.
+First natural entry/OCO/protection/close/reanalysis cycle observed; economic
+qualification remains unproven.
 
 ## Authorized behavior
 
@@ -167,3 +168,20 @@ At `2026-10-20T05:47:52.498Z`, the first SELL breakout was filled, its BUY peer
 was cancelled, and the open position had freshly broker-verified SL and TP with
 zero repair attempts. This proves the observed entry/OCO/protection sequence, not
 a completed profitable trade. Closure remains pending at this receipt snapshot.
+
+## First completed natural cycle
+
+The same first SELL position opened at `2026-10-20T05:46:37.890Z` and closed at
+`2026-10-20T05:47:52.593Z` (74.703 seconds). At the read-only
+`2026-10-20T05:49:17.819Z` snapshot, its group was CLOSED with one closed position,
+two terminal entry orders and actual reconciled net recorded. The mapped closing
+fill is a native protective order (broker type 4); exact TP versus SL reason is
+not inferred from P/L. Private individual financial evidence stays local.
+
+The bot automatically completed one new v5 request and accepted the next pair:
+two provider contexts / two groups / one closed trade in total at that cutoff.
+This was the first chronological cycle, selected before knowing its result.
+No manual close, order forcing or gate bypass was used. The earlier pending/open
+snapshots above remain historical observations. This single cycle verifies the
+observed operating loop, not economic superiority or unattended qualification.
+Further outcomes remain in the durable journal and #338 observation batch.

@@ -98,5 +98,23 @@
       }
     ]
   },
-  "rolloutReceiptPr": "https://github.com/AegisFintech/scalping-bot/pull/339"
+  "rolloutReceiptPr": "https://github.com/AegisFintech/scalping-bot/pull/339",
+  "firstCompletedCycle": {
+    "observedAt": "2026-10-20T05:49:17.819Z",
+    "groupState": "CLOSED",
+    "openedAt": "2026-10-20T05:46:37.890Z",
+    "closedAt": "2026-10-20T05:47:52.593Z",
+    "holdingSeconds": 74.703,
+    "actualNetRecorded": true,
+    "closedPositions": 1,
+    "terminalEntries": 2,
+    "brokerClosingOrderType": 4,
+    "exactTpSlReason": "UNKNOWN_NOT_INFERRED_FROM_PNL",
+    "postCloseCounts": {
+      "provider_contexts": 2,
+      "groups": 2,
+      "closed_trades": 1
+    },
+    "automaticNextPairAccepted": true
+  }
 }
