@@ -14,7 +14,9 @@ from starlette.concurrency import run_in_threadpool
 from python.codex_entry.service import MAX_BYTES, Request, Response, run
 
 
-def create_app(root: Path, prompt: str, token: str) -> FastAPI:
+def create_app(
+    root: Path, prompt: str, token: str, *, prompt_version: str = "entry-pair-v4"
+) -> FastAPI:
     if len(token) < 32:
         raise ValueError("CODEX_LOCAL_AUTH_REQUIRED")
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -38,6 +40,8 @@ def create_app(root: Path, prompt: str, token: str) -> FastAPI:
                 raise HTTPException(status_code=413, detail="CODEX_INPUT_OVERSIZED")
         try:
             validated = Request.model_validate_json(bytes(body))
+            if validated.promptVersion != prompt_version:
+                raise ValueError("CODEX_PROMPT_VERSION_MISMATCH")
         except Exception:
             raise HTTPException(status_code=422, detail="CODEX_REQUEST_INVALID") from None
         try:
@@ -56,7 +60,10 @@ def main() -> None:
         raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
     root = Path.home() / "entry-jobs"
     prompt = Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).read_text().strip()
-    app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"])
+    expected = Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).stem
+    if expected not in {"entry-pair-v4", "entry-pair-v5"}:
+        raise ValueError("CODEX_PROMPT_VERSION_INVALID")
+    app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"], prompt_version=expected)
     uvicorn.run(
         app,
         host="127.0.0.1",

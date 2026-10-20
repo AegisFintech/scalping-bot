@@ -21,7 +21,8 @@
         "market-stop-v2",
         "0.3.0-fade-limit.1",
         "0.3.0-fade-limit.2",
-        "0.3.0-fade-limit.3"
+        "0.3.0-fade-limit.3",
+        "0.4.0-breakout-scalp.1"
       ]
     },
     "mode": {
@@ -68,7 +69,8 @@
               "market-stop-v2",
               "0.3.0-fade-limit.1",
               "0.3.0-fade-limit.2",
-              "0.3.0-fade-limit.3"
+              "0.3.0-fade-limit.3",
+              "0.4.0-breakout-scalp.1"
             ]
           }
         }

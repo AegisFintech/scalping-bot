@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import type { MarketSnapshot } from "../../packages/contracts/src/index.js";
@@ -113,6 +114,9 @@ function memory(now: () => number, initial: EntryPairPlan | null = plan()) {
         {
           id: initial.analysis_id,
           requestedModel: "gpt-6.1-sol",
+          providerPromptSha256: createHash("sha256")
+            .update(readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim())
+            .digest("hex"),
           state: "READY",
           requestedAt: iso(),
           capturedAt: iso(),
@@ -144,6 +148,9 @@ function memory(now: () => number, initial: EntryPairPlan | null = plan()) {
       rows.push({
         id: i.id,
         requestedModel: "gpt-6.1-sol",
+        providerPromptSha256: createHash("sha256")
+          .update(readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim())
+          .digest("hex"),
         state: "REQUESTING",
         requestedAt: iso(now()),
         capturedAt: i.capturedAt,

@@ -44,7 +44,7 @@ class Bounds(StrictModel):
 class Candles(StrictModel):
     timeframe: Literal["M1", "M5", "M15"]
     columns: list[str]
-    rows: Annotated[list[list[Any]], Field(min_length=1, max_length=120)]
+    rows: Annotated[list[list[Any]], Field(min_length=1, max_length=288)]
 
     @model_validator(mode="after")
     def complete(self) -> Candles:
@@ -129,24 +129,42 @@ class Payload(StrictModel):
             period = {"M1": 60, "M5": 300, "M15": 900}[series.timeframe]
             if not timedelta(0) <= age < timedelta(seconds=period + 30):
                 raise ValueError("CODEX_CANDLE_STALE_OR_FUTURE")
-            if len(series.rows) > {"M1": 120, "M5": 72, "M15": 48}[series.timeframe]:
+            if len(series.rows) > {"M1": 120, "M5": 144, "M15": 288}[series.timeframe]:
                 raise ValueError("CODEX_CANDLE_LIMIT")
         return self
 
 
 class Request(StrictModel):
-    version: Literal["codex-entry-request-1.0"]
+    version: Literal["codex-entry-request-1.0", "codex-entry-request-1.1"]
     analysisId: str
     symbol: Literal["XAUUSD"]
-    promptVersion: Literal["entry-pair-v4"]
+    promptVersion: Literal["entry-pair-v4", "entry-pair-v5"]
     promptSha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
     payload: Payload
 
     @model_validator(mode="after")
     def identifier(self) -> Request:
+        expected = {
+            "codex-entry-request-1.0": "entry-pair-v4",
+            "codex-entry-request-1.1": "entry-pair-v5",
+        }
+        if self.promptVersion != expected[self.version]:
+            raise ValueError("CODEX_PROMPT_VERSION_MISMATCH")
+        if self.version == "codex-entry-request-1.0" and any(
+            len(s.rows) > {"M1": 120, "M5": 72, "M15": 48}[s.timeframe]
+            for s in self.payload.candles
+        ):
+            raise ValueError("CODEX_LEGACY_CANDLE_LIMIT")
         if str(UUID(self.analysisId)) != self.analysisId:
             raise ValueError("CODEX_ANALYSIS_ID_INVALID")
         return self
+
+
+class RequestV11(Request):
+    """Published 1.1 transport contract; historical schema stays immutable."""
+
+    version: Literal["codex-entry-request-1.1"]
+    promptVersion: Literal["entry-pair-v5"]
 
 
 class Entries(StrictModel):

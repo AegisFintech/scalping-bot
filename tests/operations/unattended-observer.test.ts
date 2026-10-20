@@ -196,3 +196,21 @@ describe("unattended observer release selection", () => {
     ).toThrow("OBSERVATION_ARGUMENTS_INVALID");
   });
 });
+
+it("observes the exact Codex breakout identity and rejects a different release", () => {
+  const current = "0.4.0-breakout-scalp.1-codex.1";
+  expect(
+    parseObservationArguments([
+      "--release",
+      current,
+      "--hours",
+      "24",
+      "--output",
+      "/tmp/observer-fixture.json",
+    ]).release,
+  ).toBe(current);
+  expect(
+    observation({ ...status, strategyVersion: current }, current).available,
+  ).toBe(true);
+  expect(observation(status, current).available).toBe(false);
+});

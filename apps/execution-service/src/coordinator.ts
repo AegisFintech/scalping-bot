@@ -42,6 +42,7 @@ import type {
 } from "./oco-risk-evaluator.js";
 import {
   applyCommissionAwareExitPolicy,
+  applyBreakoutScalpExitPolicy,
   applyFadeLimitExitPolicy,
   COMMISSION_AWARE_RISK_REWARD_RATIO,
   deriveCommissionAwareMinimumDistances,
@@ -275,6 +276,7 @@ export interface CoordinatorOptions {
   readonly entryBrackets?: "STOP" | "LIMIT";
   readonly trendFilterBars?: number;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
+  readonly breakoutScalp?: boolean;
   readonly fadeLimitSlAtr?: string;
   readonly fadeLimitTpAtr?: string;
   readonly numericAnalytics?: boolean;
@@ -1312,13 +1314,20 @@ export class AnalysisCoordinator {
             maximumStopDistance: maximumEffectiveStopDistance,
             quote: decisionSnapshot.quote,
           })
-        : applyCommissionAwareExitPolicy(
-            model.response,
-            decisionSnapshot.metadata,
-            canonical(minimumStopDistance),
-            maximumEffectiveStopDistance,
-            this.#options.minimumExpectedNetToFeesRatio,
-          );
+        : this.#options.breakoutScalp
+          ? applyBreakoutScalpExitPolicy({
+              response: model.response,
+              metadata: decisionSnapshot.metadata,
+              atr,
+              maximumStopDistance: maximumEffectiveStopDistance,
+            })
+          : applyCommissionAwareExitPolicy(
+              model.response,
+              decisionSnapshot.metadata,
+              canonical(minimumStopDistance),
+              maximumEffectiveStopDistance,
+              this.#options.minimumExpectedNetToFeesRatio,
+            );
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",
