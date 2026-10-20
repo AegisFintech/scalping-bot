@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-20T06:45:48.798Z",
+  "issue": 340,
+  "artifactCommit": "9bb51ebe1321c818c1ac84edb076c4b93968d5a9",
+  "sourceSha256": "c98652fcc36d9397e2a37168a51f95c8332051c84c2c519abd3b9e67b0d87765",
+  "artifactVerified": true,
+  "dashboardHealth": 200,
+  "tradingProcessesPreserved": true,
+  "registrationPreserved": true,
+  "tradingReady": true,
+  "analysisPaused": false,
+  "operationalFault": null,
+  "strategyVersion": "0.4.0-breakout-scalp.1-codex.1",
+  "credentialsChanged": false,
+  "controlsSubmitted": false,
+  "deployedBrowser": {
+    "desktop": true,
+    "mobile": true,
+    "navigation": true,
+    "tabRetainedAcrossTicks": true,
+    "unsubmittedFormRetained": true,
+    "exceptions": 0,
+    "pageErrors": 0
+  },
+  "preDeploymentHostedQualification": [
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/39381704099",
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/39381697338"
+  ]
+}

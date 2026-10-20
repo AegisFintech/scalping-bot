@@ -10,6 +10,9 @@ import httpx
 import psycopg
 from psycopg.rows import dict_row
 
+from apps.dashboard.command_data import command_data
+from apps.dashboard.decision_inspector import DecisionViewError, open_position_monitor_view
+
 
 def api_url() -> str:
     value = os.getenv("EXECUTION_API_URL", "http://127.0.0.1:8080")
@@ -40,6 +43,11 @@ def load_snapshot(view: str) -> dict[str, Any]:
     except (httpx.HTTPError, ValueError):
         status = {"unavailable": True}
     result["status"] = status
+    if view == "Overview" and not status.get("unavailable"):
+        try:
+            result["monitor"] = open_position_monitor_view(api("/v1/open-position-monitor"))
+        except (httpx.HTTPError, ValueError, DecisionViewError):
+            result["monitor"] = {"status": "UNAVAILABLE"}
     mode = str(status.get("mode", "unknown")).lower()
     symbol = str(status.get("symbol", ""))
     account_environment = (
@@ -141,6 +149,7 @@ def load_snapshot(view: str) -> dict[str, Any]:
                     ORDER BY ar.analysis_time DESC LIMIT 1""",
                     scope,
                 )
+                data.update(command_data(rows, scope))
             else:
                 data["trades"] = rows(
                     """SELECT t.closed_at, t.direction, t.realized_pnl AS net_pnl,

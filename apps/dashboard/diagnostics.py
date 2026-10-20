@@ -12,15 +12,17 @@ import pandas as pd
 import plotly.express as px
 import psycopg
 import streamlit as st
-from background import BackgroundReader
-from charts import (
+from psycopg.rows import dict_row
+
+from apps.dashboard.background import BackgroundReader
+from apps.dashboard.charts import (
     ChartDataError,
     audit_events_figure,
     completed_candles_figure,
     indicators_figure,
     market_quality_figure,
 )
-from decision_inspector import (
+from apps.dashboard.decision_inspector import (
     DecisionViewError,
     analysis_attempt_funnel_view,
     analysis_chart_view,
@@ -43,9 +45,8 @@ from decision_inspector import (
     take_profit_transform_view,
     trade_outcome_view,
 )
-from psycopg.rows import dict_row
-from storage_status import local_storage_status
-from time_display import dataframe_for_display, format_gmt8_timestamp
+from apps.dashboard.storage_status import local_storage_status
+from apps.dashboard.time_display import dataframe_for_display, format_gmt8_timestamp
 
 
 class ExecutionStatusTemporarilyUnavailable(RuntimeError):

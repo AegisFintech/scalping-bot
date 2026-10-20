@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import runpy
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -10,39 +9,20 @@ import httpx
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from background import BackgroundReader
-from overview import context_state, operating_state, position_rows, risk_summary
-from snapshot import api_url, load_snapshot
-from time_display import dataframe_for_display, format_gmt8_timestamp
 
-st.set_page_config(page_title="Scalper · Operations", page_icon="◈", layout="wide")
-st.markdown(
-    """<style>
-.block-container {max-width:1280px;padding-top:3.5rem}
-[data-testid="stMetric"] {
-    border:1px solid;color:inherit;
-    border-color:color-mix(in srgb, currentColor 28%, transparent);
-    border-radius:12px;padding:16px;
-    background:color-mix(in srgb, currentColor 5%, transparent)
-}
-[data-testid="stMetricLabel"] {color:inherit;font-size:.9rem;opacity:1}
-[data-testid="stMetricValue"] {color:inherit;font-size:1.7rem;
-    font-variant-numeric:tabular-nums;white-space:normal}
-[data-testid="stCaptionContainer"] {color:inherit;opacity:1}
-[data-testid="stBaseButton-primaryFormSubmit"] {
-    background:#b42318;border-color:#b42318;color:#fff
-}
-[data-testid="stBaseButton-primaryFormSubmit"]:hover {
-    background:#912018;border-color:#912018;color:#fff
-}
-.js-plotly-plot .xtick text, .js-plotly-plot .ytick text,
-.js-plotly-plot .g-xtitle text, .js-plotly-plot .g-ytitle text {
-    fill:currentColor !important
-}
-h1 {letter-spacing:-.035em}
-</style>""",
-    unsafe_allow_html=True,
+from apps.dashboard.background import BackgroundReader
+from apps.dashboard.command_centre import STYLES, render_command_centre
+from apps.dashboard.overview import operating_state
+from apps.dashboard.snapshot import api_url, load_snapshot
+from apps.dashboard.time_display import dataframe_for_display, format_gmt8_timestamp
+
+st.set_page_config(
+    page_title="Scalper / Trading desk",
+    page_icon="◈",
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
+st.html(STYLES)
 
 
 def table(rows: list[dict[str, Any]], key: str) -> None:
@@ -94,7 +74,7 @@ def controls() -> None:
 
 
 controls()
-st.title("Trading at a glance")
+st.caption("SCALPER / OPERATIONS")
 st.caption("Demo and simulated outcomes are distinct from live results. All times: GMT+8.")
 view = st.radio(
     "View",
@@ -128,92 +108,6 @@ def render_status(model: dict[str, Any]) -> None:
                 st.code(str(reason_code), language=None)
     for warning in model["warnings"]:
         st.warning(warning)
-
-
-def render_money(model: dict[str, Any]) -> None:
-    values = model["values"]
-    for column, label, key in zip(
-        st.columns(4),
-        ["Equity", "Net realized · UTC day", "Unrealized P&L", "Drawdown"],
-        ["equity", "realized", "unrealized", "drawdown"],
-        strict=True,
-    ):
-        column.metric(label, values[key])
-    st.caption(
-        f"{model['currency']} · {values['policy']} · "
-        f"Daily loss capacity (UTC): {values['daily_remaining']} · "
-        f"Next setup ceiling: {values['setup_budget']} · Reconciled: {model['reconciled']}"
-    )
-    if values["equity"] == "Unavailable":
-        st.caption(
-            "Financial values older than 30 seconds are withheld. "
-            "Historical rows remain in the audit trail."
-        )
-    if not model["capital_available"]:
-        st.caption(
-            "Capital policy telemetry unavailable for this running release; "
-            "do not interpret the missing budget as zero exposure."
-        )
-
-
-def render_exposure(model: dict[str, Any]) -> None:
-    st.subheader("Active positions & orders")
-    if not model["available"]:
-        st.warning("Active exposure is unavailable; do not assume the account is flat.")
-        return
-    if model["positions"]:
-        table(model["positions"], "active_positions")
-    if model["orders"]:
-        table(model["orders"], "active_orders")
-        if any(order.get("time_in_force") == "GTC" for order in model["orders"]):
-            st.caption(
-                "GTC: no timer expiry. Orders remain until filled or cancelled; "
-                "fresh analysis follows a confirmed position close."
-            )
-    if not model["positions"] and not model["orders"]:
-        st.info("No active strategy positions or orders in the durable ledger.")
-    st.caption(
-        "Submitted orders, partial fills and reconciled positions are distinct states. "
-        "Ledger rows are not a fresh broker confirmation."
-    )
-
-
-def render_decision(model: dict[str, Any]) -> None:
-    st.subheader("Latest decision & execution")
-    context = model.get("context", {})
-    if context:
-        state = context_state(context, datetime.now(UTC))
-        st.caption(
-            f"Market map: {state} · Refresh attempts in 24h: "
-            f"{context.get('calls_24h', 'Unavailable')} · "
-            f"Fresh-placement deadline: {format_gmt8_timestamp(context.get('valid_until'))}"
-        )
-        with st.expander("Model identity & refresh"):
-            st.write(f"Requested: {context.get('requested_model', 'Not requested')}")
-            st.write(f"Returned: {context.get('returned_model') or 'Unavailable'}")
-            st.write(f"Last request duration: {context.get('duration_ms', 'Unavailable')} ms")
-            if context.get("reason"):
-                st.write(f"Refresh outcome: {context['reason']}")
-            st.caption(
-                "Analysis waits while orders or a position are active. A confirmed close permits "
-                "one fresh request; failed/unknown dispatches retain five-minute backoff. "
-                "A local circuit block sends no provider request and is rechecked "
-                "after one minute. "
-                "Refresh attempts include those local blocks. Local execution checks are not "
-                "paid API calls. Provider cost is unavailable."
-            )
-    if model["outcome"] is not None:
-        outcome = (
-            "Waiting — no order attempted" if model["outcome"] == "DEFERRED" else model["outcome"]
-        )
-        st.write(f"Latest execution check: **{outcome}**")
-        st.caption(" · ".join(str(x) for x in model["reasons"]))
-    if model["latest"]:
-        table(model["latest"], "latest_decision")
-    elif model["available"]:
-        st.info("No recorded analysis for this mode and account.")
-    else:
-        st.warning("Latest decision history is unavailable.")
 
 
 def render_history(model: dict[str, Any]) -> None:
@@ -251,11 +145,7 @@ if view == "Diagnostics":
     # Historical inspection is intentionally stable; only its small recovery probe polls.
     runpy.run_path(str(Path(__file__).with_name("diagnostics.py")))
 else:
-    names = (
-        ["status", "money", "exposure", "decision", "updated"]
-        if view == "Overview"
-        else ["status", "history", "updated"]
-    )
+    names = ["command", "updated"] if view == "Overview" else ["status", "history", "updated"]
     regions = {name: st.empty() for name in names}
 
     def update_region(name: str, model: dict[str, Any], draw: Any) -> None:
@@ -277,58 +167,27 @@ else:
                 "Unavailable",
                 "Current data could not be verified. Retrying in the background.",
             )
-        update_region(
-            "status",
-            {
-                "context": (
-                    f"{str(status.get('mode', 'unknown')).upper()} / "
-                    f"{status.get('symbol', 'Symbol unavailable')} / OPERATIONS"
-                ),
-                "state": state,
-                "explanation": explanation,
-                "reasons": status.get("reasonCodes", []),
-                "warnings": snapshot.get("warnings", []),
-            },
-            render_status,
-        )
         if view == "Overview":
-            daily, capital = snapshot.get("daily", {}), snapshot.get("capital", {})
             update_region(
-                "money",
-                {
-                    "values": risk_summary(daily, capital, datetime.now(UTC)),
-                    "currency": snapshot.get("currency", "Currency unavailable"),
-                    "reconciled": format_gmt8_timestamp(daily.get("reconciled_at")),
-                    "capital_available": bool(capital),
-                },
-                render_money,
-            )
-            update_region(
-                "exposure",
-                {
-                    "available": "positions" in snapshot,
-                    "positions": position_rows(snapshot.get("positions", []), datetime.now(UTC)),
-                    "orders": snapshot.get("orders", []),
-                },
-                render_exposure,
-            )
-            latest = status.get("lastCycle")
-            latest = latest if isinstance(latest, dict) else {}
-            update_region(
-                "decision",
-                {
-                    "available": "latest" in snapshot,
-                    "latest": snapshot.get("latest", []),
-                    "outcome": latest.get("outcome"),
-                    "reasons": latest.get("reasonCodes", []),
-                    "context": {
-                        "requested_model": status.get("requestedModel", "Unavailable"),
-                        **status.get("scenarioContext", {}),
-                    },
-                },
-                render_decision,
+                "command",
+                {"snapshot": snapshot, "poll_state": polled.state},
+                lambda model: render_command_centre(model["snapshot"], model["poll_state"]),
             )
         else:
+            update_region(
+                "status",
+                {
+                    "context": (
+                        f"{str(status.get('mode', 'unknown')).upper()} / "
+                        f"{status.get('symbol', 'Symbol unavailable')} / OPERATIONS"
+                    ),
+                    "state": state,
+                    "explanation": explanation,
+                    "reasons": status.get("reasonCodes", []),
+                    "warnings": snapshot.get("warnings", []),
+                },
+                render_status,
+            )
             update_region(
                 "history",
                 {"available": "trades" in snapshot, "trades": snapshot.get("trades", [])},

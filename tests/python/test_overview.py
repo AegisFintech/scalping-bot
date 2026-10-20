@@ -339,7 +339,7 @@ def test_rendered_provider_outage_is_a_warning_and_labels_local_checks(monkeypat
     from streamlit.testing.v1 import AppTest
 
     monkeypatch.syspath_prepend(str(Path("apps/dashboard").resolve()))
-    import background
+    from apps.dashboard import background
 
     snapshot = {
         "status": {
