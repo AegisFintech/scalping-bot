@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -72,6 +73,9 @@ function memory(): ContextStore & { row: StoredContext | null } {
       this.row = {
         id: i.id,
         requestedModel: "gpt-6.1-sol",
+        providerPromptSha256: createHash("sha256")
+          .update(readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim())
+          .digest("hex"),
         state: "REQUESTING",
         requestedAt: at(0),
         capturedAt: i.capturedAt,
@@ -101,6 +105,9 @@ function stored(): StoredContext {
   return {
     id: fixture.plan.analysis_id,
     requestedModel: "gpt-6.1-sol",
+    providerPromptSha256: createHash("sha256")
+      .update(readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim())
+      .digest("hex"),
     state: "READY",
     requestedAt: at(0),
     capturedAt: at(0),
@@ -142,7 +149,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-pair-v4",
+          promptVersion: "entry-pair-v5",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),
@@ -205,6 +212,53 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(await model.prepare(input(40))).toBe("SCENARIO_MAP_CONSUMED");
     expect(generate).not.toHaveBeenCalled();
   });
+  it.each([
+    null,
+    createHash("sha256")
+      .update(readFileSync("prompts/entry-pair-v4.md", "utf8").trim())
+      .digest("hex"),
+  ])(
+    "does not reuse a same-model map with missing or old prompt proof %s",
+    async (hash) => {
+      const store = memory();
+      store.row = {
+        ...stored(),
+        providerPromptSha256: hash,
+        plan: bindEntryPrices('{"buy_stop":"4420","sell_stop":"4390"}', {
+          analysisId: fixture.plan.analysis_id,
+          symbol: "XAUUSD",
+          capturedAt: at(0),
+          tickSize: "0.01",
+        }),
+      };
+      const generate = vi.fn();
+      const model = new ReusableScenarioModel(
+        store,
+        { generate },
+        () => base + 40_000,
+        () => {},
+        true,
+      );
+      expect(await model.prepare(input(40))).toBe("SCENARIO_REFRESH_PENDING");
+      expect(generate).not.toHaveBeenCalled();
+      expect(
+        await model.retireEntries(
+          store.row.id,
+          input(40).snapshot,
+          "PROVIDER_RETURN",
+        ),
+      ).toBe(false);
+      await expect(
+        model.analyze({
+          analysisId: String(payload().analysis_id),
+          timeoutMs: 5000,
+          symbol: "XAUUSD",
+          payload: payload(),
+          chart: analysisChart(),
+        }),
+      ).rejects.toThrow();
+    },
+  );
   it("does not treat a historical scenario map as a direct entry pair", async () => {
     const store = memory();
     store.row = stored();

@@ -70,6 +70,7 @@ const zeroFillTerminalProof = `
 export interface StoredContext {
   id: string;
   requestedModel: string;
+  providerPromptSha256?: string | null;
   state: "REQUESTING" | "READY" | "FAILED";
   requestedAt: string;
   capturedAt: string;
@@ -145,6 +146,7 @@ export class PostgresContextStore implements ContextStore {
   async latest(): Promise<StoredContext | null> {
     const result = await this.pool.query(
       `SELECT c.id,c.state,c.reason,c.requested_model,c.requested_at,c.captured_at,c.valid_until,c.available_at,c.tick_size,c.plan,c.refresh_after_entry_context_id,
+      (SELECT e.prompt_sha256 FROM context_provider_evidence e WHERE e.context_id=c.id) AS provider_prompt_sha256,
       (SELECT r.recorded_at FROM context_entry_retirements r WHERE r.context_id=c.id) AS retired_at,
       EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed,
       (SELECT max(t.closed_at) FROM order_groups g JOIN trades t ON t.order_group_id=g.id
@@ -160,6 +162,7 @@ export class PostgresContextStore implements ContextStore {
       | {
           id: string;
           requested_model: string;
+          provider_prompt_sha256: string | null;
           state: StoredContext["state"];
           requested_at: Date;
           captured_at: Date;
@@ -180,6 +183,7 @@ export class PostgresContextStore implements ContextStore {
       : {
           id: r.id,
           requestedModel: r.requested_model,
+          providerPromptSha256: r.provider_prompt_sha256,
           state: r.state,
           requestedAt: r.requested_at.toISOString(),
           capturedAt: r.captured_at.toISOString(),
@@ -377,6 +381,13 @@ export class ReusableScenarioModel implements ModelProvider {
       sha256: createHash("sha256").update(content).digest("hex"),
     };
   }
+  private currentProviderPrompt(row: StoredContext): boolean {
+    return (
+      !this.entryOnly ||
+      row.providerPromptSha256 ===
+        createHash("sha256").update(this.providerPrompt!).digest("hex")
+    );
+  }
   private get priceCheckOptions() {
     return (
       this.entryChecks ?? {
@@ -396,6 +407,7 @@ export class ReusableScenarioModel implements ModelProvider {
       !this.entryOnly ||
       row?.id !== contextId ||
       row.state !== "READY" ||
+      !this.currentProviderPrompt(row) ||
       row.consumed ||
       row.plan?.schema_version !== "entry-pair-1.0"
     )
@@ -446,6 +458,7 @@ export class ReusableScenarioModel implements ModelProvider {
       !existing.consumed &&
       existing.retiredAt == null &&
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      this.currentProviderPrompt(existing) &&
       existing.plan?.schema_version === "entry-pair-1.0" &&
       time(existing.validUntil) >= now + 65_000
     ) {
@@ -480,6 +493,7 @@ export class ReusableScenarioModel implements ModelProvider {
       existing !== null &&
       existing.state === "READY" &&
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      this.currentProviderPrompt(existing) &&
       !existing.consumed &&
       existing.retiredAt == null &&
       (!this.entryOnly || existing.plan?.schema_version === "entry-pair-1.0") &&
@@ -539,7 +553,8 @@ export class ReusableScenarioModel implements ModelProvider {
       now <
         time(existing.requestedAt) +
           SCENARIO_REQUEST_POLICY.dispatchCooldownMs &&
-      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL;
+      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      this.currentProviderPrompt(existing);
     const due =
       afterTerminal || afterEntry
         ? 0

@@ -5,7 +5,11 @@ import { pathToFileURL } from "node:url";
 
 import { z } from "zod";
 
-import { POLICY_VERSION } from "../packages/config/src/policy.js";
+import {
+  POLICY_VERSION,
+  CODEX_STRATEGY_VERSION,
+  HISTORICAL_CODEX_FADE_VERSION,
+} from "../packages/config/src/policy.js";
 
 const reason = z.string().regex(/^[A-Z][A-Z0-9_]{0,95}$/);
 const validObservation = z
@@ -141,6 +145,9 @@ export function parseObservationArguments(args: string[]): {
   const hours = Number(args[3]);
   if (
     (release !== POLICY_VERSION &&
+      release !== CODEX_STRATEGY_VERSION &&
+      release !== HISTORICAL_CODEX_FADE_VERSION &&
+      release !== "0.3.0-fade-limit.3" &&
       !/^0\.[0-9]+\.[0-9]+-market-stop\.[0-9]+$/.test(release)) ||
     !Number.isFinite(hours) ||
     hours < 1 ||

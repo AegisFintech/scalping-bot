@@ -1,5 +1,15 @@
 # Deterministic risk model
 
+Current ISSUE-334 policy is the separately authorized
+`0.4.0-breakout-scalp.1` demo experiment. Provider breakout entries are preserved;
+STOP_LIMIT/GTC/OCO and native smaller TP replace the historical fade path.
+SL is 2.5 ATR, inward tick rounded. TP includes modeled fees, 30/65 entry/exit
+tick reserves and 0.10 SL, capped at 2 ATR. Final exact-volume costs, shared
+1% reconciled-equity setup sizing, margin, ownership and protection still govern.
+The three-loss/60-minute pause remains account-wide across the release change.
+See [current release](breakout-scalp-release-report.md); older sections below
+describe historical policies and do not supersede this release.
+
 ISSUE-076 applies the operator-authorized fixed percentage policy to the reusable
 scenario implementation. Local `scenarioOco` constructs prices only; `OcoRiskEvaluator` remains
 the sole sizing/margin authority. Outside demo, the account risk cap reserves

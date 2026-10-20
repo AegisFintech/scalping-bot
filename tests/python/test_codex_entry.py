@@ -228,9 +228,11 @@ def test_cli_isolation_and_timeout_kills_process_group(
     assert killed == [(12345, s.signal.SIGKILL)]
 
 
-@pytest.mark.parametrize("kind,model", [("request", s.Request), ("response", s.Response)])
-def test_published_schema_matches_typed_contract(kind: str, model: Any) -> None:
-    schema = json.loads(Path(f"schemas/codex-entry-{kind}-1.0.json").read_text())
+@pytest.mark.parametrize(
+    "kind,version,model", [("request", "1.1", s.RequestV11), ("response", "1.0", s.Response)]
+)
+def test_published_schema_matches_typed_contract(kind: str, version: str, model: Any) -> None:
+    schema = json.loads(Path(f"schemas/codex-entry-{kind}-{version}.json").read_text())
     schema.pop("$id")
     schema.pop("$schema")
     assert schema == model.model_json_schema()
@@ -272,3 +274,59 @@ def test_verified_session_gap_contract(fault: str | None, tmp_path: Path) -> Non
         assert result["executionAuthority"] is False
         saved = json.loads((tmp_path / req.analysisId / "request.json").read_text())
         assert saved["payload"]["candles"][2]["rows"][1][8] == ["BROKER_SESSION_GAP_BEFORE"]
+
+
+def test_new_breakout_request_identity_and_legacy_pair_rejection() -> None:
+    body = request().model_dump()
+    body.update(version="codex-entry-request-1.1", promptVersion="entry-pair-v5")
+    assert s.Request.model_validate(body).promptVersion == "entry-pair-v5"
+    body["version"] = "codex-entry-request-1.0"
+    with pytest.raises(ValueError, match="PROMPT_VERSION_MISMATCH"):
+        s.Request.model_validate(body)
+
+
+def test_api_rejects_other_prompt_revision_before_claim(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path, PROMPT, "x" * 32, prompt_version="entry-pair-v5"))
+    response = client.post(
+        "/v1/entry-proposals",
+        headers={"authorization": "Bearer " + "x" * 32},
+        json=request().model_dump(),
+    )
+    assert response.status_code == 422
+    assert not list(tmp_path.iterdir())
+
+
+def test_request_schemas_keep_legacy_and_v11_separate() -> None:
+    from jsonschema import Draft202012Validator
+
+    legacy = request().model_dump()
+    current = request(version="codex-entry-request-1.1", promptVersion="entry-pair-v5").model_dump()
+    old_schema = json.loads(Path("schemas/codex-entry-request-1.0.json").read_text())
+    new_schema = json.loads(Path("schemas/codex-entry-request-1.1.json").read_text())
+    Draft202012Validator(old_schema).validate(legacy)
+    Draft202012Validator(new_schema).validate(current)
+    assert list(Draft202012Validator(old_schema).iter_errors(current))
+    assert list(Draft202012Validator(new_schema).iter_errors(legacy))
+
+
+@pytest.mark.parametrize("frame,count", [("M5", 144), ("M15", 288)])
+def test_expanded_context_is_v11_only(frame: str, count: int) -> None:
+    body = request().model_dump()
+    series = next(s for s in body["payload"]["candles"] if s["timeframe"] == frame)
+    seconds = {"M5": 300, "M15": 900}[frame]
+    template = series["rows"][0]
+    series["rows"] = [
+        [
+            (NOW - timedelta(seconds=seconds * (i + 1))).isoformat(),
+            (NOW - timedelta(seconds=seconds * i)).isoformat(),
+            *template[2:],
+        ]
+        for i in reversed(range(count))
+    ]
+    with pytest.raises(ValueError, match="CODEX_LEGACY_CANDLE_LIMIT"):
+        s.Request.model_validate(body)
+    body.update(version="codex-entry-request-1.1", promptVersion="entry-pair-v5")
+    assert s.RequestV11.model_validate(body).payload.candles
+    series["rows"].insert(0, series["rows"][0])
+    with pytest.raises(ValueError):
+        s.RequestV11.model_validate(body)

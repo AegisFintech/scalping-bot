@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { observation } from "../../../scripts/observe-unattended.js";
-import { POLICY_VERSION } from "../../config/src/policy.js";
+// Version 1.0 evidence remains bound to its historical release and schema.
+const OPERATIONAL_EVIDENCE_RELEASE = "0.3.0-fade-limit.3";
 
 export const MAX_JOURNAL_BYTES = 32 * 1024 * 1024;
 export const MAX_SAMPLES = 40321;
@@ -12,7 +13,7 @@ export const registrationSchema = z
     kind: z.literal("REGISTRATION"),
     version: z.literal("operational-evidence-1.0"),
     mode: z.literal("demo"),
-    release: z.literal(POLICY_VERSION),
+    release: z.literal(OPERATIONAL_EVIDENCE_RELEASE),
     startedAt: z.iso.datetime(),
     deadline: z.iso.datetime(),
     cadenceMs: z.literal(CADENCE_MS),
@@ -55,7 +56,7 @@ export function registration(
   at: string,
 ): Registration {
   if (
-    release !== POLICY_VERSION ||
+    release !== OPERATIONAL_EVIDENCE_RELEASE ||
     !Number.isInteger(hours) ||
     hours < 1 ||
     hours > 168
@@ -192,7 +193,7 @@ export const summarySchema = z
   .object({
     reportVersion: z.literal("operational-evidence-summary-1.0"),
     mode: z.literal("demo"),
-    release: z.literal(POLICY_VERSION),
+    release: z.literal(OPERATIONAL_EVIDENCE_RELEASE),
     startedAt: z.iso.datetime(),
     deadline: z.iso.datetime(),
     asOf: z.iso.datetime(),

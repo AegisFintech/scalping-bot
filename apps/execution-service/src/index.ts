@@ -19,6 +19,7 @@ import {
   usesFadeV3,
   CODEX_STRATEGY_VERSION,
   STOP_EXECUTION_POLICY,
+  BREAKOUT_SCALP_RELEASE,
 } from "../../../packages/config/src/policy.js";
 
 import { createHash } from "node:crypto";
@@ -358,13 +359,19 @@ async function main(): Promise<void> {
   const configHash = safetyConfigHash(config);
   const strategyVersion =
     environment.STRATEGY_VERSION ?? CODEX_STRATEGY_VERSION;
+  const breakoutScalpActive =
+    strategyVersion === BREAKOUT_SCALP_RELEASE.strategyVersion;
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
+  if (breakoutScalpActive && !["demo", "paper"].includes(config.tradingMode))
+    throw new Error("BREAKOUT_SCALP_DEMO_ONLY");
   const fadeExecutionPolicy = usesFadeV3(strategyVersion)
     ? FADE_LIMIT_RELEASE_V3
     : FADE_LIMIT_RELEASE;
-  const activeExecutionPolicy = fadeLimitActive
-    ? fadeExecutionPolicy
-    : STOP_EXECUTION_POLICY;
+  const activeExecutionPolicy = breakoutScalpActive
+    ? BREAKOUT_SCALP_RELEASE
+    : fadeLimitActive
+      ? fadeExecutionPolicy
+      : STOP_EXECUTION_POLICY;
   const identity = await ensureRuntimeIdentity(pool, {
     accountKey: config.accountKey,
     provider: config.tradingMode === "paper" ? "paper" : "ctrader",
@@ -1157,8 +1164,12 @@ async function main(): Promise<void> {
         demoRecoveryState.certain &&
         demoExecutionState.certain,
       lossStreakPauseActive: await computeLossStreakPause(
-        fadeLimitActive ? Number(fadeExecutionPolicy.streakLosses) : 0,
-        fadeLimitActive ? Number(fadeExecutionPolicy.streakPauseMinutes) : 0,
+        fadeLimitActive || breakoutScalpActive
+          ? Number(fadeExecutionPolicy.streakLosses)
+          : 0,
+        fadeLimitActive || breakoutScalpActive
+          ? Number(fadeExecutionPolicy.streakPauseMinutes)
+          : 0,
       ),
     };
   };
@@ -1215,9 +1226,12 @@ async function main(): Promise<void> {
     promptVersion: "entry-pair-execution-v1",
     schemaVersion: "2.1",
     strategyVersion,
-    minRiskRewardRatio: fadeLimitActive
-      ? fadeExecutionPolicy.minRiskRewardRatio
-      : config.minRiskRewardRatio,
+    breakoutScalp: breakoutScalpActive,
+    minRiskRewardRatio: breakoutScalpActive
+      ? BREAKOUT_SCALP_RELEASE.minRiskRewardRatio
+      : fadeLimitActive
+        ? fadeExecutionPolicy.minRiskRewardRatio
+        : config.minRiskRewardRatio,
     ...(fadeLimitActive
       ? {
           fadeLimitSlAtr: fadeExecutionPolicy.slAtr,
@@ -1225,13 +1239,15 @@ async function main(): Promise<void> {
         }
       : {}),
     entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
-    executionOrderType: fadeLimitActive ? "LIMIT" : "STOP",
+    executionOrderType: activeExecutionPolicy.orderType,
     trendFilterBars: fadeLimitActive
       ? Number(fadeExecutionPolicy.trendFilterBars)
       : 0,
-    minimumExpectedNetToFeesRatio: usesFadeV3(strategyVersion)
-      ? "1.5"
-      : config.minimumExpectedNetToFeesRatio,
+    minimumExpectedNetToFeesRatio: breakoutScalpActive
+      ? BREAKOUT_SCALP_RELEASE.minimumNetToFees
+      : usesFadeV3(strategyVersion)
+        ? "1.5"
+        : config.minimumExpectedNetToFeesRatio,
     minExpirySeconds: minimumOrderExpirySeconds,
     maxExpirySeconds: maximumOrderExpirySeconds,
     preferredExpirySeconds: preferredOrderExpirySeconds,

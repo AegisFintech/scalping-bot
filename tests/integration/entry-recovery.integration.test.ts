@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { FIXED_DEFAULTS } from "../../packages/config/src/policy.js";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type pg from "pg";
@@ -153,6 +153,9 @@ suite(
     it("admits Codex, retains historical identity and cooldown, and rejects unknown pins", async () => {
       const x = await setup();
       expect((await x.store.latest())?.requestedModel).toBe("gpt-6.1-sol");
+      expect((await x.store.latest())?.providerPromptSha256).toBe(
+        createHash("sha256").update("entry recovery fixture").digest("hex"),
+      );
       await pool.query(
         "UPDATE scenario_contexts SET requested_model='grok-4.5' WHERE id=$1",
         [x.root.id],

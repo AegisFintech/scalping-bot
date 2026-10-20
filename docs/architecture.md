@@ -3,9 +3,10 @@
 Production proposals use subscription Codex; legacy API routes are disabled. See
 [provider contract](codex-production-report.md).
 
-Current source policy: `0.3.0-fade-limit.3`; provider prompt `entry-pair-v4`.
-The AI proposes two prices. Deterministic code owns the quote-adjacent fade LIMIT
-transform, protection, shared dynamic 1% setup budget, broker precision/margin,
+Current source policy: `0.4.0-breakout-scalp.1`; provider prompt `entry-pair-v5`.
+The AI proposes an M15/M5/M1 holding box. Deterministic code preserves its outward
+breakout prices and owns STOP_LIMIT/GTC/OCO, native quick TP, ATR protection,
+shared dynamic 1% setup budget, broker precision/margin,
 ownership and reconciliation. Source delivery and runtime activation are separate;
 see [current operating contract and evidence limits](current-contract-review-report.md).
 
@@ -58,9 +59,10 @@ distinct from broker rejection. See [behavior, tests and rollback](market-sessio
 
 Historical ISSUE-097 provider prompt v3 received exact tick-rounded buy/sell boundaries and a small
 spread-based guidance buffer. Completed-candle nearby structure remains the basis
-for entries. That direct-entry path did not clamp or shift returned prices locally. The
-current fade transform replaces model levels with quote-adjacent prices; prompt-only
-entry improvement cannot be inferred from its results. The same broker
+for entries. That direct-entry path did not clamp or shift returned prices locally. The historical fade transform replaced model levels with quote-adjacent prices;
+prompt-only entry improvement cannot be inferred from those results. The separately
+versioned breakout release preserves provider prices; see
+[release policy and limits](breakout-scalp-release-report.md). The same broker
 minimum/tick rules are checked on provider return using a new read, on map reuse,
 and again through the existing final semantic checks. A failed/stale market read
 cannot manufacture retirement evidence or authorize new orders.

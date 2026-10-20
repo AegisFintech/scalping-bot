@@ -15,7 +15,8 @@ export interface RiskPolicy {
     | "market-stop-v2"
     | "0.3.0-fade-limit.1"
     | "0.3.0-fade-limit.2"
-    | "0.3.0-fade-limit.3";
+    | "0.3.0-fade-limit.3"
+    | "0.4.0-breakout-scalp.1";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
@@ -249,6 +250,7 @@ export interface ModelPromptArtifact {
     | "entry-pair-v2"
     | "entry-pair-v3"
     | "entry-pair-v4"
+    | "entry-pair-v5"
     | "entry-pair-execution-v1"
     | "scenario-v2"
     | "scenario-v3"

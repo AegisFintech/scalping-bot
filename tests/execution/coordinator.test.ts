@@ -1774,3 +1774,37 @@ describe("broker session admission", () => {
     );
   });
 });
+
+describe("breakout scalp release integration", () => {
+  it("passes unchanged breakout entries and quick broker targets through final risk checks", async () => {
+    const o = options({
+      entryPairMode: true,
+      breakoutScalp: true,
+      executionOrderType: "STOP_LIMIT",
+      minRiskRewardRatio: "0.1",
+    });
+    o.risk.proposalConstraints = () => proposalRiskConstraints("20");
+    const risk = vi.spyOn(o.risk, "evaluate");
+    const place = vi.spyOn(o.gateway, "placeOco");
+    const result = await new AnalysisCoordinator(o).runOnce();
+    expect(result.outcome).toBe("PLACED");
+    expect(place).toHaveBeenCalledTimes(1);
+    const proposal = risk.mock.calls[0]![0].response;
+    expect(proposal.buy_stop.entry_price).toBe("2001");
+    expect(proposal.sell_stop.entry_price).toBe("1999");
+    expect(proposal.setup_tags).toContain("DIRECT_BREAKOUT_SCALP_PAIR_OCO");
+    expect(Number(proposal.buy_stop.take_profit)).toBeLessThan(2011);
+  });
+  it("blocks breakout placement when the retained ATR stop cannot be afforded", async () => {
+    const o = options({
+      entryPairMode: true,
+      breakoutScalp: true,
+      executionOrderType: "STOP_LIMIT",
+      minRiskRewardRatio: "0.1",
+    });
+    const place = vi.spyOn(o.gateway, "placeOco");
+    const result = await new AnalysisCoordinator(o).runOnce();
+    expect(result.reasonCodes).toContain("BREAKOUT_SCALP_STOP_UNAFFORDABLE");
+    expect(place).not.toHaveBeenCalled();
+  });
+});

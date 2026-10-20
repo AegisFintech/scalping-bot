@@ -1,0 +1,103 @@
+{
+  "command": "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+  "qualified": true,
+  "sourceSha256": "71ff74f999c9ad08f45393a66864c1e5443626e5ff0d5a20f9d67d21f6647d9b",
+  "nodeVersion": "v22.23.2",
+  "counts": {
+    "node": 942,
+    "postgresql": 94,
+    "python": 381
+  },
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "exitCode": 0
+    },
+    {
+      "label": "test-certificate",
+      "exitCode": 0
+    },
+    {
+      "label": "postgres-uid",
+      "exitCode": 0
+    },
+    {
+      "label": "postgres-gid",
+      "exitCode": 0
+    },
+    {
+      "label": "database-init",
+      "exitCode": 0
+    },
+    {
+      "label": "database-start",
+      "exitCode": 0
+    },
+    {
+      "label": "format",
+      "exitCode": 0
+    },
+    {
+      "label": "lint",
+      "exitCode": 0
+    },
+    {
+      "label": "types",
+      "exitCode": 0
+    },
+    {
+      "label": "build",
+      "exitCode": 0
+    },
+    {
+      "label": "node-tests",
+      "exitCode": 0
+    },
+    {
+      "label": "python-format",
+      "exitCode": 0
+    },
+    {
+      "label": "python-lint",
+      "exitCode": 0
+    },
+    {
+      "label": "python-types",
+      "exitCode": 0
+    },
+    {
+      "label": "secrets",
+      "exitCode": 0
+    },
+    {
+      "label": "npm-audit",
+      "exitCode": 0
+    },
+    {
+      "label": "python-audit",
+      "exitCode": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "exitCode": 0
+    },
+    {
+      "label": "python-tests",
+      "exitCode": 0
+    },
+    {
+      "label": "database-stop",
+      "exitCode": 0
+    }
+  ],
+  "configurationChecks": {
+    "policy": true,
+    "startup": true,
+    "credentialsChanged": false
+  },
+  "limits": [
+    "Software qualification only; no profitability claim",
+    "Known Starlette/httpx warning",
+    "Earlier incomplete or failed runs are not qualification"
+  ]
+}

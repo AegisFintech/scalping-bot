@@ -29,13 +29,15 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses v4 structure-selectivity guidance without changing the two-price contract", () => {
+  it("uses v5 major-box and first-crossing guidance without changing the two-price contract", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v4");
-    expect(prompt).toContain("overlapping/choppy structure");
-    expect(prompt).toContain("cleaner continuation space");
-    expect(prompt).toContain("broker session gap");
-    expect(prompt).toContain(
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v5");
+    expect(prompt.replace(/\s+/g, " ")).toContain(
+      "overlapping/choppy structure",
+    );
+    expect(prompt.replace(/\s+/g, " ")).toContain("cleaner continuation");
+    expect(prompt.replace(/\s+/g, " ")).toContain("broker session gap");
+    expect(prompt.replace(/\s+/g, " ")).toContain(
       'Return only {"buy_stop":"<entry price>","sell_stop":"<entry price>"}',
     );
   });
@@ -240,7 +242,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.0");
+      expect(providerBody.version).toBe("codex-entry-request-1.1");
       expect(fetchImpl.mock.calls[0]?.[0]).toBe(
         "http://127.0.0.1:8084/v1/entry-proposals",
       );
@@ -264,7 +266,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v4",
+        version: "entry-pair-v5",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

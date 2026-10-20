@@ -1,6 +1,6 @@
 # Configuration and migration
 
-Current release `0.3.0-fade-limit.3` uses the versioned fade LIMIT policy in
+Current release `0.4.0-breakout-scalp.1` uses the reviewed breakout STOP_LIMIT policy in
 `packages/config/src/policy.ts`. The normal template has 19 assignments (Codex local token replaces the API endpoint/key), previously 176. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
 reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
@@ -25,9 +25,11 @@ setting. Advanced listener/path/TLS deployment overrides remain available for
 systemd layouts and do not belong in a normal installation's template.
 
 Historical ISSUE-099 used equal stop-loss and take-profit distances for new demo setups;
-that was a release-level strategy change with no new environment key. Current
-fade-limit.3 uses 2.5×ATR stop and 2.0×ATR target constants, subject to broker
-rounding/validation; see [current contract](current-contract-review-report.md). Existing
+that was a release-level strategy change with no new environment key. Historical
+fade-limit.3 used 2.5×ATR stop and 2.0×ATR target constants. The current breakout
+release keeps 2.5×ATR SL and derives a smaller native TP from modeled fees,
+adverse reserves and 0.10 SL, capped at 2×ATR; see
+[release contract](breakout-scalp-release-report.md). Existing
 orders are not amended. See [the trial report](balanced-exit-trial-report.md).
 
 ## Broker-session policy (ISSUE-098)
@@ -77,7 +79,7 @@ Apply additive migration `0029_codex_context_model.sql` before matching AI/execu
 builds; preserve all old rows/cooldowns. Returned identity/usage/cost stay null when
 unattested. See [provider integration and deployment](codex-production-report.md).
 The production scenario
-uses structured numeric history (up to 120 M1 / 72 M5 / 48 M15 completed bars),
+uses structured numeric history (up to 120 M1 / 144 M5 / 288 M15 completed bars),
 production prompt `entry-pair-v4` and low reasoning within the existing
 90-second deadline. The worker accepts at most 8,192 bytes of response text;
 actual token usage is unavailable. Historical charts remain validated local audit artifacts;

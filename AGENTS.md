@@ -76,8 +76,14 @@ maintenance remain active during waiting periods. No prompt, timer or operator
 request may bypass these gates, manufacture a trade, or increase risk to maintain
 frequency.
 
-The current source contract uses the versioned `entry-pair-v4` provider prompt
-and the `0.3.0-fade-limit.3` strategy policy. Historical prompt/release names in
+The current source contract uses `entry-pair-v5` and the separately authorized
+`0.4.0-breakout-scalp.1` policy / `0.4.0-breakout-scalp.1-codex.1` strategy.
+Read `docs/breakout-scalp-release-report.md`. Preserve provider breakout prices,
+first executable crossing, STOP_LIMIT/GTC/OCO and native cost-buffered quick TP.
+There is no candle-close/holding/retest confirmation or sampled-quote profit close.
+Reuse/entry-retirement requires durable current provider-prompt SHA; the same model
+pin alone never permits an older prompt context. Preserve scope-wide cooldowns.
+Historical fade transforms remain historical; frozen research is never promoted. Historical prompt/release names in
 older issue sections and archived evidence describe immutable past behavior and
 must not be treated as current authority. The shared setup ceiling remains 1%
 of reconciled current equity, both OCO/fade legs share that budget, and the
@@ -87,8 +93,8 @@ system makes no profitability claim.
 
 ISSUE-249 adds a read-only learning review and an unregistered research prompt.
 Read `docs/demo-learning-review-report.md` before changing entry guidance based
-on its results. The current fade transform replaces model levels with
-quote-adjacent prices. Do not claim prompt-only entry improvement, mislabel an
+on its results. The historical fade transform replaced model levels with
+quote-adjacent prices; the new breakout release preserves model entry levels. Do not claim prompt-only entry improvement, mislabel an
 approved leg budget as actual stop risk, infer exact SL/TP reason from P/L, or
 promote a candidate automatically. Historical journals and the active cycle stay
 unchanged; economic transform/prompt/TP changes require separate evidence.

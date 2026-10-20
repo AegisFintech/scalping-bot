@@ -15,12 +15,12 @@ import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-pair-v4" as const,
-  path: "prompts/entry-pair-v4.md",
+  version: "entry-pair-v5" as const,
+  path: "prompts/entry-pair-v5.md",
 });
 
 const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
-  candleLimits: Object.freeze({ M1: 120, M5: 72, M15: 48 }),
+  candleLimits: Object.freeze({ M1: 120, M5: 144, M15: 288 }),
   maxOutputTokens: 1024,
   reasoningEffort: "low" as const,
 });

@@ -1,3 +1,4 @@
+import { BREAKOUT_SCALP_RELEASE } from "../../../packages/config/src/policy.js";
 import { Decimal } from "decimal.js";
 
 import type {
@@ -505,5 +506,123 @@ export function applyFadeLimitExitPolicy(input: {
       sell: null,
       details: null,
     };
+  }
+}
+
+/** Production release transform; provider prices remain immutable breakout thresholds. */
+export function applyBreakoutScalpExitPolicy(input: {
+  readonly response: ModelResponse;
+  readonly metadata: SymbolMetadata;
+  readonly atr: string;
+  readonly maximumStopDistance: string;
+}): {
+  readonly accepted: boolean;
+  readonly response: ModelResponse | null;
+  readonly reasonCodes: readonly string[];
+  readonly details: Readonly<Record<string, unknown>> | null;
+} {
+  const reject = (reasons: readonly string[]) => ({
+    accepted: false,
+    response: null,
+    reasonCodes: reasons,
+    details: null,
+  });
+  try {
+    const policy = BREAKOUT_SCALP_RELEASE;
+    const { metadata } = input;
+    const tick = decimal(metadata.tickSize),
+      pip = decimal(metadata.pipSize),
+      atr = decimal(input.atr);
+    if (tick.lte(0) || pip.lte(0) || atr.lte(0))
+      return reject(["BREAKOUT_SCALP_GEOMETRY_INVALID"]);
+    const stopDistance = atr.mul(policy.slAtr).div(tick).floor().mul(tick);
+    const minimum = Decimal.max(tick, decimal(metadata.minStopDistance));
+    const maximum = atr.mul(policy.maximumTpAtr).div(pip).floor().mul(pip);
+    if (
+      stopDistance.lt(minimum) ||
+      stopDistance.gt(decimal(input.maximumStopDistance))
+    )
+      return reject(["BREAKOUT_SCALP_STOP_UNAFFORDABLE"]);
+    const response = structuredClone(input.response);
+    const fees: CommissionCoverageEvidence[] = [];
+    for (const [side, leg] of [
+      ["BUY", response.buy_stop],
+      ["SELL", response.sell_stop],
+    ] as const) {
+      const entry = decimal(leg.entry_price);
+      if (!entry.gt(0) || !isTickAligned(entry, tick))
+        return reject(["BREAKOUT_SCALP_ENTRY_INVALID"]);
+      const floor = minimumFeeBufferedTarget({
+        side,
+        entryPrice: leg.entry_price,
+        volume: metadata.minVolume,
+        minimumTakeProfitDistance: canonical(minimum),
+        maximumTakeProfitDistance: canonical(maximum),
+        minimumExpectedNetToFeesRatio: policy.minimumNetToFees,
+        metadata,
+      });
+      if (!floor.approved || floor.evidence === null)
+        return reject(floor.reasonCodes);
+      const distance = decimal(floor.evidence.take_profit)
+        .minus(entry)
+        .abs()
+        .plus(
+          tick.mul(
+            decimal(policy.entryReservePoints).plus(policy.exitReservePoints),
+          ),
+        )
+        .plus(stopDistance.mul(policy.netStopFraction))
+        .div(pip)
+        .ceil()
+        .mul(pip);
+      if (distance.gt(maximum))
+        return reject(["BREAKOUT_SCALP_COSTS_EXCEED_TARGET_CAP"]);
+      const sl =
+        side === "BUY" ? entry.minus(stopDistance) : entry.plus(stopDistance);
+      const tp = side === "BUY" ? entry.plus(distance) : entry.minus(distance);
+      if (
+        sl.lte(0) ||
+        tp.lte(0) ||
+        !isTickAligned(sl, tick) ||
+        !isTickAligned(tp, tick)
+      )
+        return reject(["BREAKOUT_SCALP_GEOMETRY_INVALID"]);
+      Object.assign(leg, {
+        trigger_price: leg.entry_price,
+        stop_loss: canonical(sl),
+        invalidation_price: canonical(sl),
+        take_profit: canonical(tp),
+        risk_reward_ratio: canonical(
+          distance.div(stopDistance).toDecimalPlaces(10, Decimal.ROUND_DOWN),
+        ),
+      });
+      fees.push(floor.evidence);
+    }
+    // These targets are local scaffolding for a two-entry-only provider, not model targets.
+    Object.assign(response.technical_map, {
+      upside_targets: [response.buy_stop.take_profit],
+      downside_targets: [response.sell_stop.take_profit],
+    });
+    Object.assign(response, {
+      setup_tags: [...response.setup_tags, "DIRECT_BREAKOUT_SCALP_PAIR_OCO"],
+    });
+    return {
+      accepted: true,
+      response,
+      reasonCodes: [],
+      details: {
+        code: "BREAKOUT_SCALP_EXIT",
+        atr: input.atr,
+        sl_distance: canonical(stopDistance),
+        fee_floor_basis_volume: metadata.minVolume,
+        fee_floor_evidence: fees,
+        entry_reserve_points: policy.entryReservePoints,
+        exit_reserve_points: policy.exitReservePoints,
+        minimum_net_stop_fraction: policy.netStopFraction,
+        maximum_tp_atr: policy.maximumTpAtr,
+      },
+    };
+  } catch {
+    return reject(["BREAKOUT_SCALP_TRANSFORM_INVALID"]);
   }
 }

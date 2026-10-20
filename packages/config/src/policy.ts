@@ -3,12 +3,32 @@ import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
 export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
 export const HISTORICAL_API_MODEL = "grok-4.5";
-export const CODEX_STRATEGY_VERSION = "0.3.0-fade-limit.3-codex.1";
+export const CODEX_STRATEGY_VERSION = "0.4.0-breakout-scalp.1-codex.1";
+export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {
-  return version === "0.3.0-fade-limit.3" || version === CODEX_STRATEGY_VERSION;
+  return (
+    version === "0.3.0-fade-limit.3" ||
+    version === HISTORICAL_CODEX_FADE_VERSION
+  );
 }
-export const POLICY_VERSION = "0.3.0-fade-limit.3";
+export const POLICY_VERSION = "0.4.0-breakout-scalp.1";
+/** Operator-authorized immediate range breakout / native quick-TP demo trial. */
+export const BREAKOUT_SCALP_RELEASE = {
+  strategyVersion: CODEX_STRATEGY_VERSION,
+  orderType: "STOP_LIMIT",
+  adverseSlippagePoints: "65",
+  entryRangePoints: "30",
+  slAtr: "2.5",
+  maximumTpAtr: "2",
+  minimumNetToFees: "1.5",
+  netStopFraction: "0.1",
+  entryReservePoints: "30",
+  exitReservePoints: "65",
+  minRiskRewardRatio: "0.1",
+  streakLosses: "3",
+  streakPauseMinutes: "60",
+} as const;
 export const STOP_EXECUTION_POLICY = {
   orderType: "STOP",
   adverseSlippagePoints: "30",
@@ -167,7 +187,7 @@ export const FIXED_DEFAULTS = {
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
   STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
-  CODE_VERSION: "0.3.0-codex.1",
+  CODE_VERSION: "0.4.0-breakout-scalp.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
