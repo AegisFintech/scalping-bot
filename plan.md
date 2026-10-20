@@ -5,6 +5,7 @@
 ### ISSUE-331 — Final pair reconciliation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/331.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/332.
 - Dependencies: existing account/capital and session gates; #323 remains separate.
 - Acceptance: fresh broker and durable journal proof before first dispatch, fail-closed local-unsent provenance, manual/external exposure and dependency failure tests, full qualification and pushed PR.
 - Status: implemented; full qualification passed at `/tmp/scalper-qualification-5AEQc5/checks` (905 Node / 92 PostgreSQL / 376 Python; all required gates and audits). No runtime deployment or lifecycle reset. Hosted final-head checks required before merge.
