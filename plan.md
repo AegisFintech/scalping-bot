@@ -5,9 +5,11 @@
 ### ISSUE-344 — Deploy the approved animated landscape dashboard
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/344.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/345.
 - Acceptance: approved full-screen design connected to real scoped evidence and bounded deduplicated journal events, stable animation/chart/log state, fresh/unknown money and protection, safe text, native navigation/authenticated controls, behavior/browser/full gates and verified dashboard-only rollout.
 - Dependencies: #340 / #341 data and #342 / #343 approved prototype.
-- Status: implemented; focused behavior/browser tests pass, including four viewports, stable native component/controls, text injection, bounded deduplication and independent/disconnected freshness. Full qualification is running. No runtime changes yet.
+- Status: deployed and verified. Full qualification passed (943 Node / 94 PostgreSQL / 405 Python plus all required gates/audits); both source-head hosted checks passed before deployment. Real preview/light-base/deployed browser checks pass at four viewports, including stable state, safe text, bounded events, stale/disconnected values, navigation and unsubmitted controls. Only the dashboard process changed; four trading processes, credentials, database and prospective registration are preserved. Final receipt checks/merge pending.
+- Report: [implementation, qualification and rollout](docs/live-landscape-report.md).
 - Rollback: recreate the previous dashboard only; preserve current database, trading services and frozen research.
 
 ### ISSUE-342 — Animated landscape design prototype
@@ -15,7 +17,7 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/342.
 - Acceptance: full-screen landscape reactor/decision tape/segregated panels, clearly simulated offline fixtures, six state/failure scenes, motion/follow/replay/fullscreen/keyboard controls, responsive browser proof and full qualification; visual review before live replacement.
 - Dependencies: #340 / #341 and the supplied reference video; existing read-only evidence contracts for the subsequent live integration.
-- Status: prototype implemented; browser checks pass at four sizes with no external requests or page errors. Full qualification passed (942 Node / 94 PostgreSQL / 389 Python plus all required gates/audits). Interactive HTML, screenshot, short animation and browser/qualification receipts are ready for visual review; hosted PR checks precede merge. The running dashboard/trading services and research are unchanged.
+- Status: prototype implemented; browser checks pass at four sizes with no external requests or page errors. Full qualification passed (942 Node / 94 PostgreSQL / 389 Python plus all required gates/audits). Interactive HTML, screenshot, short animation and receipts delivered in merged PR #343; the operator approved the design. Production integration/deployment is tracked in #344.
 - Report: [landscape design and live-integration boundary](docs/landscape-prototype-report.md).
 
 ### ISSUE-340 — Dark trading command centre

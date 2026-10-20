@@ -1,6 +1,7 @@
 # ISSUE-344 — Live animated landscape command centre
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/344.
+PR: https://github.com/AegisFintech/scalping-bot/pull/345.
 The operator approved the #342/#343 prototype and explicitly requested connecting
 and deploying that design. This release replaces Overview's report layout with
 the full-width animated desk. Qualification and rollout receipts follow below.
@@ -109,3 +110,45 @@ deduplication/late ordering/bounded retention, partial payload rejection,
 independent and disconnected-client expiry, reduced motion and fullscreen.
 The harness never calls an external endpoint or claims fixture trading results.
 Full completion commands/results and rollout are recorded after final checks.
+
+## Final qualification and deployed evidence
+
+Full qualification passed at `/tmp/scalper-qualification-S3n27W/checks/results.json`:
+943 Node / 94 isolated PostgreSQL / 405 Python tests (1,442 total), including all
+format/lint/types/build, schema/migration/fail-closed, secret-scan and npm/pip audit
+gates. Explicit HTML/CSS/JS formatting and both protected-environment policy and
+`--startup` configuration checks passed. The earlier intentionally interrupted
+run is not qualification. The existing Starlette/httpx deprecation warning remains.
+AST-only Graphify completed with its existing pyproject zero-node/community-name
+notices. No runtime package was added. Preview, light-base compatibility and the
+deployed 8501 panel all passed the browser/harness checks above with zero page
+exceptions. Real financial screenshots remain private outside Git; only sanitized
+[validation results](evidence/live-landscape-validation.json) are published.
+
+Both exact source-head hosted qualification checks passed before deployment.
+Verified artifact `f7bf7f5e126c4da5303b30a605594a5ffdb518c7`, executable source SHA
+`aaf57c684c80ee45ae98da760b62c6fa08a34db61c44995d8b292dde9aa17261`,
+is installed at `/opt/ctrader-ai-scalper/releases/dashboard344`. The single-dashboard
+supervisor definition was verified while the previous panel stayed online, then
+only `scalper-dashboard` was recreated and PM2 state saved. The running dashboard
+selects that artifact and the existing protected environment; cached configuration
+for all four trading services remains at their original artifact/PIDs. Credentials
+were not changed. No populated environment or database was migrated.
+
+At `2026-10-20T08:00:49.684226Z`, dashboard HTTP health was 200 and execution
+readiness was `ready`. All four other service PIDs/paths, the prospective
+registration and the protected environment checksum matched the before receipt.
+Analysis pause and emergency stop were false, operational fault null, and the
+trading strategy remained `0.4.0-breakout-scalp.1-codex.1`. The Codex worker and
+breakout observer stayed active. The deployed browser suite then passed all four
+viewports, stable state, navigation and unsubmitted form checks. No trading control
+or provider/broker command was submitted by this task. The trading artifact and
+research registrations remain unchanged; the dashboard's new fingerprint is
+intentional. [Sanitized rollout receipt](evidence/live-landscape-rollout.json).
+
+The previous `/opt/ctrader-ai-scalper/releases/dashboard340` remains the dashboard
+rollback target against the current database. Temporary preview servers are
+stopped after validation. Regenerable local type-check cache and synthetic
+animation intermediate frames were removed for disk headroom; no trade, audit,
+qualification log, source artifact or research evidence was deleted. Final
+receipt-head hosted checks and normal PR merge follow this recorded deployment.

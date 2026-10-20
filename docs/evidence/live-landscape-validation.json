@@ -1,0 +1,169 @@
+{
+  "qualified": true,
+  "sourceSha256": "aaf57c684c80ee45ae98da760b62c6fa08a34db61c44995d8b292dde9aa17261",
+  "testCounts": {
+    "node-tests": 943,
+    "database-lifecycle": 94,
+    "python-tests": 405
+  },
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "browser": {
+    "preview": {
+      "nativeComponentStateRetainedAcrossTicks": true,
+      "1920x1080": true,
+      "1440x900": true,
+      "1280x720": true,
+      "390x844": true,
+      "unsubmittedControlsRetained": true,
+      "emergencyControlContrast": true,
+      "navigation": true,
+      "pageErrors": 0,
+      "htmlInjectionBlocked": true,
+      "duplicatePollsDoNotCreateEvents": true,
+      "lateEventsSorted": true,
+      "independentClientFreshness": true,
+      "disconnectedClientFailsClosed": true,
+      "partialPayloadFailsClosed": true,
+      "eventRetentionBounded": true,
+      "reducedMotion": true,
+      "fullscreen": true,
+      "harnessPageErrors": 0,
+      "harnessExternalRequests": 0
+    },
+    "lightBaseCompatibility": {
+      "nativeComponentStateRetainedAcrossTicks": true,
+      "1920x1080": true,
+      "1440x900": true,
+      "1280x720": true,
+      "390x844": true,
+      "unsubmittedControlsRetained": true,
+      "emergencyControlContrast": true,
+      "navigation": true,
+      "pageErrors": 0,
+      "htmlInjectionBlocked": true,
+      "duplicatePollsDoNotCreateEvents": true,
+      "lateEventsSorted": true,
+      "independentClientFreshness": true,
+      "disconnectedClientFailsClosed": true,
+      "partialPayloadFailsClosed": true,
+      "eventRetentionBounded": true,
+      "reducedMotion": true,
+      "fullscreen": true,
+      "harnessPageErrors": 0,
+      "harnessExternalRequests": 0
+    },
+    "deployed": {
+      "nativeComponentStateRetainedAcrossTicks": true,
+      "1920x1080": true,
+      "1440x900": true,
+      "1280x720": true,
+      "390x844": true,
+      "unsubmittedControlsRetained": true,
+      "emergencyControlContrast": true,
+      "navigation": true,
+      "pageErrors": 0,
+      "htmlInjectionBlocked": true,
+      "duplicatePollsDoNotCreateEvents": true,
+      "lateEventsSorted": true,
+      "independentClientFreshness": true,
+      "disconnectedClientFailsClosed": true,
+      "partialPayloadFailsClosed": true,
+      "eventRetentionBounded": true,
+      "reducedMotion": true,
+      "fullscreen": true,
+      "harnessPageErrors": 0,
+      "harnessExternalRequests": 0
+    }
+  },
+  "configurationPolicyCheck": true,
+  "configurationStartupCheck": true,
+  "privateScreenshotsPublished": false,
+  "commands": [
+    "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+    "node scripts/check-landscape-live.mjs http://127.0.0.1:8600 /tmp/private-preview-evidence",
+    "node scripts/check-landscape-live.mjs http://127.0.0.1:8601 /tmp/private-light-evidence",
+    "node scripts/check-landscape-live.mjs http://127.0.0.1:8501 /tmp/private-deployed-evidence",
+    "graphify update ."
+  ]
+}
