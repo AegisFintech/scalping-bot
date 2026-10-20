@@ -1,0 +1,120 @@
+{
+  "mode": "demo",
+  "release": "0.4.0-breakout-scalp.1-codex.1",
+  "implementationPr": "https://github.com/AegisFintech/scalping-bot/pull/337",
+  "implementationMerge": "4a26115bf070c5fb84d702d74c2187ce9c52d823",
+  "artifactCommit": "fdc19aa439b3403ac0cc41b10c22af5992ce2db6",
+  "sourceSha256": "71ff74f999c9ad08f45393a66864c1e5443626e5ff0d5a20f9d67d21f6647d9b",
+  "artifactVerified": true,
+  "workerHealth": 200,
+  "workerUnauthenticatedPost": 401,
+  "migrations": {
+    "count": 30,
+    "applied": "0030",
+    "priorChecksumsVerified": 29,
+    "ownerPreserved": true,
+    "applicationLedgerUpdate": false
+  },
+  "credentialsChanged": false,
+  "accountingValuesPreservedBeforeResume": true,
+  "runtimeAndTokenStatePreserved": true,
+  "liveEnabled": false,
+  "services": {
+    "count": 5,
+    "releasePathVerified": true,
+    "environmentFileVerified": true,
+    "healthEndpoints": 200
+  },
+  "resumedAt": "2026-10-20T05:44:02.729Z",
+  "registration": {
+    "registeredAt": "2026-10-20T05:42:36.846Z",
+    "from": "2026-10-20T05:43:36.846Z",
+    "until": "2026-11-19T05:43:36.846Z",
+    "dailyCutoffWindows": 31,
+    "canonicalSha256": "2ec9dcd5b12c1f879b114588b6c2c593c5b54948b6c2686593a429c88a6325ec",
+    "protocolSha256": "3ba6693c145f9119dde87ef8a5223a69cc85c4db51280ede9e6f644588b5a55f",
+    "promptSha256": "58bee5b873c7cf317fa6f189b0e6706ad1b022aef3672ecc6a5ec1e75c85eeea",
+    "privateExclusiveBeforeActivation": true,
+    "qualification": "UNQUALIFIED"
+  },
+  "firstNaturalPair": {
+    "observedAt": "2026-10-20T05:45:21.133Z",
+    "legs": [
+      {
+        "side": "BUY",
+        "state": "PENDING",
+        "execution_order_type": "STOP_LIMIT",
+        "time_in_force": "GTC",
+        "preserves_model_entry": true,
+        "broker_acceptances": 2
+      },
+      {
+        "side": "SELL",
+        "state": "PENDING",
+        "execution_order_type": "STOP_LIMIT",
+        "time_in_force": "GTC",
+        "preserves_model_entry": true,
+        "broker_acceptances": 2
+      }
+    ],
+    "closedCycleObserved": false
+  },
+  "observer": {
+    "cadenceSeconds": 15,
+    "durationHours": 24,
+    "readOnly": true,
+    "running": true
+  },
+  "hostedQualification": [
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/39375788795",
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/39375785323"
+  ],
+  "limitations": [
+    "Initial artifact attempt rejected external dependency links; physical copies verified before activation",
+    "PM2 restart retained old cwd; retries stopped and all process definitions recreated; final paths verified",
+    "Operational acceptance is not a completed trade or economic qualification",
+    "Future economic review is issue 338; no automatic promotion"
+  ],
+  "firstNaturalFill": {
+    "at": "2026-10-20T05:47:52.498Z",
+    "positions": [
+      {
+        "state": "OPEN",
+        "protection": "VERIFIED",
+        "has_sl": true,
+        "has_tp": true,
+        "observed_at": "2026-10-20T05:47:51.549Z",
+        "repair_attempts": 0
+      }
+    ],
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "CANCELLED"
+      },
+      {
+        "side": "SELL",
+        "state": "FILLED"
+      }
+    ]
+  },
+  "rolloutReceiptPr": "https://github.com/AegisFintech/scalping-bot/pull/339",
+  "firstCompletedCycle": {
+    "observedAt": "2026-10-20T05:49:17.819Z",
+    "groupState": "CLOSED",
+    "openedAt": "2026-10-20T05:46:37.890Z",
+    "closedAt": "2026-10-20T05:47:52.593Z",
+    "holdingSeconds": 74.703,
+    "actualNetRecorded": true,
+    "closedPositions": 1,
+    "terminalEntries": 2,
+    "brokerClosingOrderType": 4,
+    "exactTpSlReason": "UNKNOWN_NOT_INFERRED_FROM_PNL",
+    "postCloseCounts": {
+      "provider_contexts": 2,
+      "groups": 2,
+      "closed_trades": 1
+    },
+    "automaticNextPairAccepted": true
+  }
+}

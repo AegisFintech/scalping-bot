@@ -2,7 +2,10 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
 PR: https://github.com/AegisFintech/scalping-bot/pull/337.
-Status: implemented and fully qualified locally; hosted checks and demo activation pending.
+Rollout receipt: https://github.com/AegisFintech/scalping-bot/pull/339.
+Status: implemented, fully qualified, merged in PR #337 and deployed to demo.
+First natural entry/OCO/protection/close/reanalysis cycle observed; economic
+qualification remains unproven.
 
 ## Authorized behavior
 
@@ -110,3 +113,75 @@ Both policy and `--startup` config checks passed against an unchanged protected
 environment copy. [Sanitized validation](evidence/breakout-scalp-validation.json).
 AST-only Graphify update completed (known pyproject warning). Earlier interrupted
 runs and the corrected old-prompt test failure are not qualification.
+
+## October 20 demo activation
+
+Both final-head hosted qualification runs passed before PR #337 merged as
+`4a26115bf070c5fb84d702d74c2187ce9c52d823`. Artifact source commit
+`fdc19aa439b3403ac0cc41b10c22af5992ce2db6` has the exact qualified executable
+fingerprint; the independent prepared tree and pinned binaries passed verification.
+The initial worktree dependency links were rejected by artifact verification.
+Physical dependency copies resolved packaging without a code or dependency change.
+No rejected artifact was activated.
+
+Migration 0030 ran transactionally under the existing migration owner after checking
+all 29 previous checksums; current count is 30. The app can insert proof rows and
+still cannot update the migration ledger. Accounting reference, high water, daily
+baseline, losses and locks matched the private pre-deployment snapshot exactly
+before resuming. The protected environment was copied unchanged. Existing epoch,
+current token-state path, history, callbacks and controls were preserved.
+
+PM2's restart operation retained the previous working directory despite new
+absolute entry paths. AI/execution startup retries were stopped, then all five
+process definitions were recreated from the verified ecosystem. Actual working
+directories and protected environment paths were independently checked; all five
+health endpoints returned 200. The isolated v5 worker returned health 200 and an
+unauthenticated POST returned 401, without an inference probe. PM2 definitions
+were saved for restart. Original trading/worker artifacts remain available for a
+compatible same-DB rollback; history is never rolled back.
+
+An exclusive mode-0400 private registration was frozen at
+`2026-10-20T05:42:36.846Z`, before its future start
+`2026-10-20T05:43:36.846Z` and audited resume
+`2026-10-20T05:44:02.729Z`. Final cutoff is
+`2026-11-19T05:43:36.846Z`, with 31 UTC-cutoff windows including the initial/final
+partial days across a 30-day duration. The initial paused interval is retained.
+The public receipt publishes its original canonical digest after activation; it
+does not pretend the later Git publication was the registration event.
+The [protocol](breakout-demo-observation-protocol.md) and executable/prompt
+fingerprints were frozen before activation. Old #319/#255 registrations are unchanged.
+
+A persistent read-only 24-hour status observer started before resume, samples every
+15 seconds and resumes its original checkpoint/deadline after restart. It has no
+credentials, broker/provider calls, controls or promotion authority. Operational
+monitoring is separate from the registered economic batch. Future review is
+[#338](https://github.com/AegisFintech/scalping-bot/issues/338); a new breakout
+conditional replay adapter remains separately qualified/registered future work.
+
+The first natural Codex v5 request completed and both new STOP_LIMIT/GTC orders
+were broker accepted. Original model prices equal effective entry prices on both
+legs. Pending orders block another paid request. A pending pair is not a completed
+cycle, a win or proof of better entry precision. No order or fill was forced.
+[Sanitized rollout receipt](evidence/breakout-scalp-rollout.json).
+
+At `2026-10-20T05:47:52.498Z`, the first SELL breakout was filled, its BUY peer
+was cancelled, and the open position had freshly broker-verified SL and TP with
+zero repair attempts. This proves the observed entry/OCO/protection sequence, not
+a completed profitable trade. Closure remains pending at this receipt snapshot.
+
+## First completed natural cycle
+
+The same first SELL position opened at `2026-10-20T05:46:37.890Z` and closed at
+`2026-10-20T05:47:52.593Z` (74.703 seconds). At the read-only
+`2026-10-20T05:49:17.819Z` snapshot, its group was CLOSED with one closed position,
+two terminal entry orders and actual reconciled net recorded. The mapped closing
+fill is a native protective order (broker type 4); exact TP versus SL reason is
+not inferred from P/L. Private individual financial evidence stays local.
+
+The bot automatically completed one new v5 request and accepted the next pair:
+two provider contexts / two groups / one closed trade in total at that cutoff.
+This was the first chronological cycle, selected before knowing its result.
+No manual close, order forcing or gate bypass was used. The earlier pending/open
+snapshots above remain historical observations. This single cycle verifies the
+observed operating loop, not economic superiority or unattended qualification.
+Further outcomes remain in the durable journal and #338 observation batch.
