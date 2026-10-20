@@ -1,0 +1,24 @@
+{
+  "kind": "offline-design-prototype",
+  "usesSimulatedData": true,
+  "productionDashboardReplaced": false,
+  "prototypeSha256": "a6e9e44717db279e737d5fe7a55238cd4912bfd5808f034d945cce4f028591af",
+  "browserChecks": {
+    "1920x1080": true,
+    "1440x900": true,
+    "1280x720": true,
+    "390x844": true,
+    "timeframeKeyboardAndRetention": true,
+    "sixScenariosAndFailureWithholding": true,
+    "replayPause": true,
+    "boundedLog": true,
+    "logFollowPause": true,
+    "animationProgress": true,
+    "motionPause": true,
+    "reducedMotion": true,
+    "disconnectedControls": true,
+    "fullscreen": true,
+    "pageErrors": 0,
+    "externalRequests": 0
+  }
+}
