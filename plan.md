@@ -25,7 +25,8 @@
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/330.
 - Dependencies: #329/#289 and separate economic evaluation; frozen #319 remains unchanged.
 - Acceptance: fixed versioned small target with exact-volume commission coverage and adverse reserves, retained ATR stop, cost/affordability/precision failure tests, no local quote-close dispatch or automatic promotion.
-- Status: candidate implementation prepared separately; no production activation.
+- Status: implemented as an isolated research candidate; 12 focused tests and full qualification pass at `/tmp/scalper-qualification-86mF1f/checks` (927 Node / 92 PostgreSQL / 376 Python; all gates/audits). Hosted final-head checks required before merge. No production activation.
+- Report: [smaller broker TP](docs/quick-tp-candidate-report.md).
 
 ### ISSUE-324 — Read-only trade evidence brief
 
