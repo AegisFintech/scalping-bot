@@ -1,6 +1,7 @@
 # ISSUE-340 — Dark trading command centre
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/340.
+PR: https://github.com/AegisFintech/scalping-bot/pull/341.
 Status: implemented and fully qualified; checked PR and dashboard-only deployment pending.
 
 ## Presentation and evidence

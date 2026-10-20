@@ -5,6 +5,7 @@
 ### ISSUE-340 — Dark trading command centre
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/340.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/341.
 - Acceptance: clear current action and next step, honest recorded decision factors, completed decision charts/levels, separate realized/open P/L and unknown costs, responsive dark design, stable navigation/controls, stale/failure/browser tests, full qualification and dashboard-only rollout.
 - Dependencies: existing read-only polling, scoped PostgreSQL evidence and protected control forms.
 - Status: implemented; full qualification passed (942 Node / 94 PostgreSQL / 389 Python plus all required gates/audits). Desktop/mobile/navigation/refresh/light-base checks pass. No strategy, broker command, history, risk or frozen research changes. Checked PR and dashboard-only artifact activation pending.
