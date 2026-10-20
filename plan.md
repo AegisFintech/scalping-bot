@@ -5,6 +5,7 @@
 ### ISSUE-334 — Reviewed breakout / small-TP demo release
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/337.
 - Dependencies: #321 manual zone/confirmation specification, #323 terminal proof, #289 measurement and #329/#330/#331.
 - Acceptance: separately registered causal breakout evidence, reviewed release constants and prompt/identity, final exact-volume risk/protection validation, manual/partial-close and restart proof, qualified artifact/rollback and reconciled demo transition; preserve original frozen studies and shared 1% risk.
 - Status: implementing the explicitly authorized first-crossing breakout demo trial. Operator clarified no candle-close, holding or retest wait. Prompt v5, expanded completed context, STOP_LIMIT/GTC/OCO and native smaller TP are integrated; recovery #323 merged in PR #336. Full qualification passed (942 Node / 94 PostgreSQL / 381 Python plus all required gates/audits); final-head hosted checks and coordinated rollout remain pending; existing demo analyses are held while protection/reconciliation continue. Screenshot timing gaps remain evidence limitations, not entry-rule ambiguity.

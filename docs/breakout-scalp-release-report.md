@@ -1,6 +1,7 @@
 # ISSUE-334 — Immediate breakout and native quick-TP demo release
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
+PR: https://github.com/AegisFintech/scalping-bot/pull/337.
 Status: implemented and fully qualified locally; hosted checks and demo activation pending.
 
 ## Authorized behavior
