@@ -2,6 +2,13 @@
 
 ## Scope
 
+### ISSUE-334 — Reviewed breakout / small-TP demo release
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
+- Dependencies: #321 manual zone/confirmation specification, #323 terminal proof, #289 measurement and #329/#330/#331.
+- Acceptance: separately registered causal breakout evidence, reviewed release constants and prompt/identity, final exact-volume risk/protection validation, manual/partial-close and restart proof, qualified artifact/rollback and reconciled demo transition; preserve original frozen studies and shared 1% risk.
+- Status: planned; current strategy is unchanged. Newly supplied screenshots include conditional holding/failed-reclaim language and unmatched input/outcome windows; matching and entry-confirmation clarification is pending. Candidate utility merges do not authorize deployment.
+
 ### ISSUE-331 — Final pair reconciliation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/331.
@@ -23,6 +30,7 @@
 ### ISSUE-330 — Cost-covered smaller broker TP
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/330.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/335.
 - Dependencies: #329/#289 and separate economic evaluation; frozen #319 remains unchanged.
 - Acceptance: fixed versioned small target with exact-volume commission coverage and adverse reserves, retained ATR stop, cost/affordability/precision failure tests, no local quote-close dispatch or automatic promotion.
 - Status: implemented as an isolated research candidate; 12 focused tests and full qualification pass at `/tmp/scalper-qualification-86mF1f/checks` (927 Node / 92 PostgreSQL / 376 Python; all gates/audits). Hosted final-head checks required before merge. No production activation.

@@ -58,3 +58,8 @@ fail-closed suites, secret scan and npm/pip dependency audits passed. Twelve foc
 TP tests and ten inherited breakout tests pass. Existing Starlette/httpx and
 Graphify pyproject warnings remain. Final-head hosted checks are required before
 merge; no activation or economic superiority is asserted.
+
+The remaining production integration/economic review is tracked separately in
+[#334](https://github.com/AegisFintech/scalping-bot/issues/334). Newly supplied
+manual examples include holding/failed-reclaim conditions; this utility does not
+implement those confirmation rules or establish a match to a specific manual win.
