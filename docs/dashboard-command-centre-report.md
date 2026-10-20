@@ -2,7 +2,7 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/340.
 PR: https://github.com/AegisFintech/scalping-bot/pull/341.
-Status: implemented and fully qualified; checked PR and dashboard-only deployment pending.
+Status: implemented, fully qualified and deployed; final receipt checks/merge pending.
 
 ## Presentation and evidence
 
@@ -77,3 +77,27 @@ checks passed against the existing protected environment. Focused dashboard suit
 compatibility passed with native inputs and four visible metrics. AST-only Graphify
 updated. Earlier interrupted runs are not qualification. Known Starlette/httpx and
 Graphify pyproject warnings remain. [Sanitized results](evidence/dashboard-command-centre-validation.json).
+
+## October 20 dashboard-only rollout
+
+Both final-head pre-deployment hosted qualification runs passed before activation.
+Verified artifact `9bb51ebe1321c818c1ac84edb076c4b93968d5a9`, executable fingerprint
+`c98652fcc36d9397e2a37168a51f95c8332051c84c2c519abd3b9e67b0d87765`,
+is installed at `/opt/ctrader-ai-scalper/releases/dashboard340`. Its single-service
+supervisor definition was prepared and verified while the previous panel stayed
+online, then only `scalper-dashboard` was recreated and PM2 state saved.
+
+At `2026-10-20T06:45:48.798Z`, dashboard HTTP health was 200. All four other
+service PIDs, source paths and the canonical prospective registration were
+unchanged. Trading readiness remained true, analysis pause false and operational
+fault null under the original `0.4.0-breakout-scalp.1-codex.1` trading artifact.
+No provider/broker command, control submission, migration, reset or credential
+change was part of rollout. The dashboard and registered trading artifacts have
+different source fingerprints intentionally; the registered executable stays fixed.
+
+The deployed 8501 panel then passed the same desktop/mobile, all-view navigation,
+M5-tab retention and unsubmitted-form retention checks with zero browser/page
+exceptions. Private screenshots remain outside Git. Temporary preview services
+were stopped after verification. Future rollback restores only the previous
+dashboard artifact against the current database; trading services and research
+remain untouched. [Sanitized receipt](evidence/dashboard-command-centre-rollout.json).
