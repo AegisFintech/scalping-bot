@@ -1,3 +1,4 @@
+import type { LocalUnsentEntryProof } from "../../../packages/contracts/src/local-unsent-entry-proof.js";
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { Decimal } from "decimal.js";
@@ -32,6 +33,7 @@ export interface TerminalGroupSnapshot {
     readonly volume: string;
     readonly filled: string;
     readonly updatedAt: string | null;
+    readonly localUnsent?: LocalUnsentEntryProof;
   }[];
   readonly positions: readonly {
     readonly id: string;
@@ -167,7 +169,7 @@ function checkGroup(
         (o) =>
           !o.owned ||
           o.accountId !== group.accountId ||
-          o.brokerId === null ||
+          (o.brokerId === null && o.localUnsent === undefined) ||
           !["BUY", "SELL"].includes(o.side),
       ) ||
       positions.some(
@@ -250,6 +252,35 @@ function checkGroup(
       return reject("DEMO_TERMINAL_VARIANT_FACT_CONFLICT");
     const expectedDeals = new Set<string>();
     for (const order of orders) {
+      if (order.brokerId === null) {
+        const p = order.localUnsent;
+        if (
+          !p ||
+          p.orderId !== order.id ||
+          p.groupId !== group.id ||
+          p.accountId !== group.accountId ||
+          p.symbolId !== group.symbolId ||
+          p.clientId !== order.clientId ||
+          order.state !== "REJECTED" ||
+          !eq(order.filled, "0") ||
+          ![
+            "MARKET_SESSION_CLOSED",
+            "MARKET_SESSION_UNAVAILABLE",
+            "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+            "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD",
+          ].includes(p.reason) ||
+          !Number.isFinite(Date.parse(p.sourceUpdatedAt)) ||
+          !Number.isFinite(Date.parse(p.recordedAt)) ||
+          Date.parse(p.sourceUpdatedAt) > Date.parse(p.recordedAt) ||
+          Date.parse(p.recordedAt) > received ||
+          fills.some((f) => f.orderId === order.id) ||
+          events.some((e) => e.payload.clientOrderId === order.clientId) ||
+          variants.some((v) => v.payload.clientOrderId === order.clientId) ||
+          history.orders.orders.some((o) => o.clientOrderId === order.clientId)
+        )
+          return reject("DEMO_TERMINAL_LOCAL_UNSENT_PROOF_INVALID");
+        continue;
+      }
       const rawOrders = history.orders.orders.filter(
         (o) => String(o.orderId) === order.brokerId,
       );

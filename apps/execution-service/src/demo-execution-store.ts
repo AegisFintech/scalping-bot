@@ -1,3 +1,4 @@
+import { observedFullManualClose } from "./manual-close-evidence.js";
 import { readTerminalGroup } from "./terminal-history-attestor.js";
 import { terminalSnapshotHash } from "./terminal-group-proof.js";
 import { randomUUID } from "node:crypto";
@@ -180,13 +181,15 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                  AND terminal.reason_codes='["DEMO_BROKER_EVENT_KEY_CONFLICT"]'::jsonb))
              AND terminal.execution_type IN (3, 11)
              AND (terminal.broker_order_type = 4 OR
-               (terminal.broker_order_type = 1 AND EXISTS (
+               (terminal.broker_order_type = 1 AND (NOT EXISTS (
+                 SELECT 1 FROM position_protection claimed WHERE claimed.position_id=p.id AND claimed.close_requested_at IS NOT NULL
+               ) OR EXISTS (
                  SELECT 1 FROM position_protection pp WHERE pp.position_id=p.id
                    AND pp.close_requested_at <= terminal.occurred_at
                    AND terminal.occurred_at <= pp.close_requested_at + interval '120 seconds'
                    AND (pp.broker_close_order_id IS NULL OR pp.broker_close_order_id=terminal.broker_order_id)
                    AND pp.close_volume=(terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric
-               )))
+               ))))
              AND terminal.closing_order = true
              AND terminal.broker_fill_id IS NOT NULL
              AND terminal.normalized_payload -> 'fill' <> 'null'::jsonb
@@ -223,6 +226,20 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                     AND peer_order.state IN ('CANCELLED','EXPIRED','REJECTED')) =
                  2 - (SELECT count(*) FROM positions gp
                       WHERE gp.order_group_id = og.id)
+             AND NOT EXISTS (
+               SELECT 1 FROM orders unproven WHERE unproven.order_group_id=og.id
+                 AND unproven.broker_order_id IS NULL AND NOT EXISTS (
+                   SELECT 1 FROM local_unsent_entry_proofs u
+                   WHERE u.order_id=unproven.id AND u.order_group_id=og.id
+                     AND u.account_id=$1 AND u.symbol_id=$2
+                     AND u.client_order_id=unproven.client_order_id
+                     AND unproven.state='REJECTED' AND unproven.filled_volume=0
+                     AND unproven.submitted_at IS NULL AND unproven.strategy_owned
+                     AND NOT EXISTS(SELECT 1 FROM fills f WHERE f.order_id=unproven.id)
+                     AND NOT EXISTS(SELECT 1 FROM broker_execution_events e WHERE e.order_id=unproven.id OR e.client_order_id=unproven.client_order_id)
+                     AND NOT EXISTS(SELECT 1 FROM broker_execution_event_variants v WHERE v.normalized_payload->>'clientOrderId'=unproven.client_order_id)
+                 )
+             )
              AND NOT EXISTS (
                SELECT 1 FROM orders active_order
                WHERE active_order.order_group_id = og.id
@@ -643,10 +660,19 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           occurredAt: event.occurredAt,
           closedVolume: event.closeDetail?.closedVolume ?? null,
         }));
+      const manualClose =
+        !authorizedMarketClose &&
+        (await observedFullManualClose(
+          client,
+          event,
+          this.#options.accountId,
+          this.#options.symbolId,
+        ));
       if (
         event.closingOrder &&
         event.brokerOrderType !== 4 &&
-        !authorizedMarketClose
+        !authorizedMarketClose &&
+        !manualClose
       ) {
         await this.#insertEvent(client, event, order, position, "UNMATCHED", [
           "DEMO_POSITION_CLOSE_NOT_AUTHORIZED",
@@ -669,7 +695,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           throw new Error("POSITION_PROTECTION_CLOSE_ACK_CONFLICT");
       }
       const brokerGeneratedClosingOrder =
-        (event.brokerOrderType === 4 || authorizedMarketClose) &&
+        (event.brokerOrderType === 4 || authorizedMarketClose || manualClose) &&
         event.closingOrder &&
         event.brokerPositionId !== null &&
         position !== null;
@@ -968,7 +994,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
       if (
         event.position?.state === "CLOSED" &&
         event.closeDetail !== null &&
-        (event.brokerOrderType === 4 || authorizedMarketClose) &&
+        (event.brokerOrderType === 4 || authorizedMarketClose || manualClose) &&
         event.closingOrder &&
         event.brokerOrderId !== null
       ) {

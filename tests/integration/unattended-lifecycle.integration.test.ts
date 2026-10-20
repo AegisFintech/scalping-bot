@@ -243,6 +243,83 @@ suite(
       return { ...s, history, now, calls, broker, attestor, snapshot };
     }
 
+    it("attests a truly locally unsent peer with complete filled-leg history across restart", async () => {
+      const s = await attestationFixture();
+      // Construct the alternative synthetic scenario; no broker peer ever existed.
+      await pool.query(
+        "DELETE FROM broker_execution_events WHERE order_group_id=$1 AND client_order_id=$2",
+        [s.groupId, s.sellClient],
+      );
+      await pool.query(
+        "UPDATE orders SET broker_order_id=NULL,broker_updated_at=NULL,submitted_at=NULL,state='REJECTED',filled_volume=0 WHERE client_order_id=$1",
+        [s.sellClient],
+      );
+      s.history.orders.orders = s.history.orders.orders.filter(
+        (o) => o.clientOrderId !== s.sellClient,
+      );
+      await pool.query(
+        `INSERT INTO local_unsent_entry_proofs(order_id,order_group_id,account_id,symbol_id,client_order_id,reason_code,source_updated_at,recorded_at)
+        SELECT id,order_group_id,account_id,$2,client_order_id,'DEMO_PEER_WITHHELD_BEFORE_DISPATCH',$3,$3 FROM orders WHERE client_order_id=$1`,
+        [s.sellClient, s.symbolId, s.events.closed.occurredAt],
+      );
+      const snapshot = await s.snapshot();
+      expect(
+        proveTerminalGroup(snapshot, s.history, "7", s.now).reason,
+      ).toBeNull();
+      const missing = structuredClone(snapshot);
+      const peer = missing.orders.find((o) => o.clientId === s.sellClient)!;
+      delete (peer as { localUnsent?: unknown }).localUnsent;
+      expect(
+        proveTerminalGroup(missing, s.history, "7", s.now).reason,
+      ).not.toBeNull();
+      const contradict = structuredClone(s.history);
+      contradict.orders.orders.push(s.rawEvents.peerCancelled.order!);
+      expect(proveTerminalGroup(snapshot, contradict, "7", s.now).reason).toBe(
+        "DEMO_TERMINAL_LOCAL_UNSENT_PROOF_INVALID",
+      );
+      await s.attestor().run();
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: true,
+        terminalOrderGroupId: s.groupId,
+      });
+      expect(
+        (await s.restart().reconcileTerminalEvidence()).terminalOrders,
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            brokerOrderId: null,
+            state: "REJECTED",
+            filledVolume: "0",
+          }),
+        ]),
+      );
+      await pool.query(
+        "UPDATE orders SET submitted_at=now() WHERE client_order_id=$1",
+        [s.sellClient],
+      );
+      expect(
+        proveTerminalGroup(await s.snapshot(), s.history, "7", s.now).reason,
+      ).not.toBeNull();
+    });
+
+    it("reconciles an exact full manual market close but preserves missing outcome blocks", async () => {
+      const s = await setup();
+      await s.restart().persist(s.events.peerCancelled);
+      const closed = structuredClone(s.rawEvents.closed);
+      closed.order!.orderType = 1;
+      await s.restart().persist(s.normalize(closed));
+      expect(await s.restart().reconcileTerminalEvidence()).toMatchObject({
+        certain: true,
+        terminalOrderGroupId: s.groupId,
+      });
+      const uncertain = await setup();
+      await uncertain.restart().persist(uncertain.events.accepted);
+      await uncertain.restart().persist(uncertain.events.peerCancelled);
+      expect(
+        (await uncertain.restart().reconcileTerminalEvidence()).certain,
+      ).toBe(false);
+    });
+
     it("attests the complete group serially and resolves a retained context-only conflict across restarts", async () => {
       const s = await attestationFixture();
       expect(

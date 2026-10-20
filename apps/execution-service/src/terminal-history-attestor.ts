@@ -18,7 +18,20 @@ export async function readTerminalGroup(
       'group', jsonb_build_object('id',og.id,'accountId',ar.account_id,'symbolId',ar.symbol_id,'mode',og.mode,'state',og.state),
       'orders', COALESCE((SELECT jsonb_agg(x.data ORDER BY x.id) FROM (
         SELECT id, jsonb_build_object('id',id,'accountId',account_id,'clientId',client_order_id,'brokerId',broker_order_id,
-          'side',side,'state',state,'owned',strategy_owned,'volume',normalized_volume::text,'filled',filled_volume::text,'updatedAt',broker_updated_at) AS data
+          'side',side,'state',state,'owned',strategy_owned,'volume',normalized_volume::text,'filled',filled_volume::text,'updatedAt',broker_updated_at) || COALESCE((
+            SELECT jsonb_build_object('localUnsent',jsonb_build_object(
+              'orderId',u.order_id,'groupId',u.order_group_id,'accountId',u.account_id,
+              'symbolId',u.symbol_id,'clientId',u.client_order_id,'reason',u.reason_code,
+              'sourceUpdatedAt',u.source_updated_at,'recordedAt',u.recorded_at))
+            FROM local_unsent_entry_proofs u WHERE u.order_id=orders.id
+              AND u.order_group_id=og.id AND u.account_id=orders.account_id
+              AND u.symbol_id=ar.symbol_id AND u.client_order_id=orders.client_order_id
+              AND orders.state='REJECTED' AND orders.filled_volume=0 AND orders.strategy_owned
+              AND orders.broker_order_id IS NULL AND orders.submitted_at IS NULL
+              AND NOT EXISTS(SELECT 1 FROM fills f WHERE f.order_id=orders.id)
+              AND NOT EXISTS(SELECT 1 FROM broker_execution_events e WHERE e.order_id=orders.id OR e.client_order_id=orders.client_order_id)
+              AND NOT EXISTS(SELECT 1 FROM broker_execution_event_variants v WHERE v.normalized_payload->>'clientOrderId'=orders.client_order_id)
+          ),'{}'::jsonb) AS data
         FROM orders WHERE order_group_id=og.id ORDER BY id LIMIT 3) x),'[]'::jsonb),
       'positions', COALESCE((SELECT jsonb_agg(x.data ORDER BY x.id) FROM (
         SELECT id, jsonb_build_object('id',id,'accountId',account_id,'symbolId',symbol_id,'brokerId',broker_position_id,
