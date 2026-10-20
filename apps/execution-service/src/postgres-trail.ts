@@ -839,6 +839,46 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
         if (updated.rowCount !== 1)
           throw new Error("TRAIL_PLACEMENT_EVIDENCE_CONFLICT");
+        if (local) {
+          await client.query(
+            `INSERT INTO local_unsent_entry_proofs
+             (order_id,order_group_id,account_id,symbol_id,client_order_id,reason_code,source_updated_at)
+             SELECT o.id,o.order_group_id,o.account_id,ar.symbol_id,o.client_order_id,$2,$3
+             FROM orders o JOIN order_groups g ON g.id=o.order_group_id
+             JOIN analysis_runs ar ON ar.id=g.analysis_id
+             WHERE o.client_order_id=$1 AND o.account_id=$4 AND ar.account_id=$4
+               AND ar.symbol_id=$5 AND g.id=$6 AND g.mode='demo' AND o.strategy_owned
+               AND o.broker_order_id IS NULL AND o.submitted_at IS NULL
+               AND o.state='REJECTED' AND o.filled_volume=0
+               AND NOT EXISTS(SELECT 1 FROM fills f WHERE f.order_id=o.id)
+               AND NOT EXISTS(SELECT 1 FROM broker_execution_events e
+                 WHERE e.order_id=o.id OR e.client_order_id=o.client_order_id)
+             ON CONFLICT (order_id) DO NOTHING`,
+            [
+              order.clientOrderId,
+              order.reasonCode,
+              order.updatedAt,
+              this.#options.accountId,
+              this.#options.symbolId,
+              result.orderGroupId,
+            ],
+          );
+          const proof = await client.query(
+            `SELECT 1 FROM local_unsent_entry_proofs WHERE client_order_id=$1
+             AND account_id=$2 AND symbol_id=$3 AND order_group_id=$4
+             AND reason_code=$5 AND source_updated_at=$6`,
+            [
+              order.clientOrderId,
+              this.#options.accountId,
+              this.#options.symbolId,
+              result.orderGroupId,
+              order.reasonCode,
+              order.updatedAt,
+            ],
+          );
+          if (proof.rowCount !== 1)
+            throw new Error("TRAIL_LOCAL_UNSENT_PROOF_CONFLICT");
+        }
       }
       const sessionTerminal =
         result.orders.some(locallyRejectedBySession) &&

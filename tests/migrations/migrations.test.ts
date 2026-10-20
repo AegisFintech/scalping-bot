@@ -37,6 +37,7 @@ const requiredTables = [
   "broker_execution_events",
   "automatic_analysis_intervals",
   "analysis_chart_artifacts",
+  "local_unsent_entry_proofs",
 ];
 const directory = path.resolve("migrations");
 
@@ -91,6 +92,7 @@ describe("migrations", () => {
       "0027_execution_conflict_evidence.sql",
       "0028_terminal_history_attestation.sql",
       "0029_codex_context_model.sql",
+      "0030_local_unsent_entry_proofs.sql",
     ]);
     const sql = (
       await Promise.all(

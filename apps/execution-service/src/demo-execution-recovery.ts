@@ -1,3 +1,4 @@
+import { observedFullManualClose } from "./manual-close-evidence.js";
 import { Decimal } from "decimal.js";
 import { protectiveCloseAuthorized } from "./protective-close-evidence.js";
 import type pg from "pg";
@@ -380,14 +381,6 @@ export async function recoverDemoExecutions(
             "closedVolume",
           ) ?? null,
       }));
-    if (
-      (optionalNumberField(closingOrder, "orderType") !== 4 &&
-        !authorizedMarketClose) ||
-      closingOrder.closingOrder !== true
-    ) {
-      reasons.add("DEMO_RECOVERY_CLOSING_ORDER_INVALID");
-      continue;
-    }
     const reconstructed = reconstructPosition(
       localPosition,
       options.normalizer.symbolId,
@@ -399,17 +392,36 @@ export async function recoverDemoExecutions(
       reasons.add("DEMO_RECOVERY_POSITION_ENTRY_PRICE_MISSING");
       continue;
     }
-    await persistRaw(
-      {
-        executionType: executionTypeForDeal(deal, closingOrder),
-        order: closingOrder,
-        position: reconstructed,
-        deal,
-        errorCode: null,
-        receivedAt: deals.receivedAt,
-      },
-      true,
+    const reconstructedEvent: BrokerExecution = {
+      executionType: executionTypeForDeal(deal, closingOrder),
+      order: closingOrder,
+      position: reconstructed,
+      deal,
+      errorCode: null,
+      receivedAt: deals.receivedAt,
+    };
+    const normalized = normalizeDemoExecution(
+      reconstructedEvent,
+      options.normalizer,
     );
+    const manualClose =
+      normalized !== null &&
+      (await observedFullManualClose(
+        options.pool,
+        normalized,
+        options.accountId,
+        options.symbolId,
+      ));
+    if (
+      (optionalNumberField(closingOrder, "orderType") !== 4 &&
+        !authorizedMarketClose &&
+        !manualClose) ||
+      closingOrder.closingOrder !== true
+    ) {
+      reasons.add("DEMO_RECOVERY_CLOSING_ORDER_INVALID");
+      continue;
+    }
+    await persistRaw(reconstructedEvent, true);
   }
   return { certain: reasons.size === 0, reasonCodes: [...reasons].sort() };
 }

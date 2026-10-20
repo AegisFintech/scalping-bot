@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Local unsent entry proof 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "orderId",
+    "groupId",
+    "accountId",
+    "symbolId",
+    "clientId",
+    "reason",
+    "sourceUpdatedAt",
+    "recordedAt"
+  ],
+  "properties": {
+    "orderId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "groupId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "accountId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "symbolId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "clientId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "reason": {
+      "enum": [
+        "MARKET_SESSION_CLOSED",
+        "MARKET_SESSION_UNAVAILABLE",
+        "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+        "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD"
+      ]
+    },
+    "sourceUpdatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

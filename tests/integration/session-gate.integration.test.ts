@@ -193,6 +193,22 @@ suite("session-denied order intents (isolated PostgreSQL)", () => {
         )
       ).rows[0]?.state,
     ).toBe("ACTIVE");
+    const proofs = await pool.query(
+      "SELECT client_order_id,reason_code FROM local_unsent_entry_proofs WHERE order_group_id=$1",
+      [x.groupId],
+    );
+    expect(proofs.rows).toEqual([
+      {
+        client_order_id: x.orders[1].clientOrderId,
+        reason_code: "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+      },
+    ]);
+    await expect(
+      pool.query(
+        "UPDATE local_unsent_entry_proofs SET reason_code='MARKET_SESSION_CLOSED' WHERE order_group_id=$1",
+        [x.groupId],
+      ),
+    ).rejects.toThrow("LOCAL_UNSENT_PROOF_IMMUTABLE");
     x.orders[1] = { ...x.orders[1], brokerOrderId: "102" };
     await expect(
       x.trail.placement(x.analysisId, {

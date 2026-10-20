@@ -247,6 +247,7 @@ describe("PostgreSQL migrations integration", () => {
         "0027",
         "0028",
         "0029",
+        "0030",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -1742,7 +1743,7 @@ describe("PostgreSQL migrations integration", () => {
         reasonCodes: [],
       });
       await isolated.query(
-        `UPDATE orders SET state = 'CANCELLED', updated_at = now()
+        `UPDATE orders SET state = 'CANCELLED', broker_order_id='502', updated_at = now()
          WHERE account_id = $1 AND client_order_id = $2`,
         [demoAccountId, "cas-sell-22222222222222222222222"],
       );

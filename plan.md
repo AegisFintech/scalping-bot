@@ -94,9 +94,11 @@
 ### ISSUE-323 — Filled entry with a locally unsent peer
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/323.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/336.
 - Dependencies: #318 local rejection provenance; existing strict terminal group/account/protection proof.
 - Acceptance: durable exact local-unsent evidence plus complete filled-leg close proof; restart/failure/contradiction tests and unattended qualification without fabricated broker events or latch resets.
-- Status: identified qualification gap; execution fixes merged but rollout deferred. Existing terminal proof requires broker identities for both entry orders. No production bypass.
+- Status: implemented atomic immutable local-unsent proofs and strict full manual-close observation; full qualification passed at `/tmp/scalper-qualification-FVTtuE/checks` (932 Node / 94 PostgreSQL / 376 Python, all gates and audits). Final-head hosted checks required before merge. Deployment remains #334.
+- Report: [local-unsent terminal recovery](docs/local-unsent-terminal-report.md).
 
 ### ISSUE-303 — Codex production provider integration
 
