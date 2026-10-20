@@ -14,6 +14,7 @@
 ### ISSUE-329 — Preserve breakout entries
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/329.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/333.
 - Dependencies: #321 exact manual specification, #318/#323 execution lifecycle.
 - Acceptance: versioned STOP_LIMIT/GTC candidate preserves original breakout levels, rejects crossed/stale/invalid geometry, never clamps/switches sides, explicit non-authority and tests before release review.
 - Status: implemented as an isolated research candidate; 10 focused tests pass. Full qualification passed at `/tmp/scalper-qualification-9wBPUf/checks` (915 Node / 92 PostgreSQL / 376 Python, all gates/audits); final-head hosted checks required before merge. No production activation or profitability claim.
