@@ -437,6 +437,8 @@ async function main(): Promise<void> {
     if (config.tradingMode === "demo") {
       demoGateway = new CTraderDemoGateway({
         marketSession: () => sessionGate.check(),
+        placementReadiness: () =>
+          demoExecutionRecorder?.flush() ?? Promise.resolve({ certain: false }),
         client: brokerClient,
         symbolId: localMetadata.symbolId,
         symbolName: localMetadata.symbolName,

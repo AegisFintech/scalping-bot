@@ -713,6 +713,7 @@ describe("broker session at each demo order submission", () => {
     const check = vi
       .fn<() => Promise<ReturnType<typeof sessionStatus>>>()
       .mockResolvedValueOnce(sessionStatus("OPEN"))
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
       .mockResolvedValue(sessionStatus("CLOSED"));
     const gateway = sessionGateway(client, check);
     const result = await gateway.placeOco([command("BUY"), command("SELL")]);
@@ -728,6 +729,7 @@ describe("broker session at each demo order submission", () => {
     vi.spyOn(client, "cancelOrder").mockRejectedValue(new Error("unavailable"));
     const check = vi
       .fn<() => Promise<ReturnType<typeof sessionStatus>>>()
+      .mockResolvedValueOnce(sessionStatus("OPEN"))
       .mockResolvedValueOnce(sessionStatus("OPEN"))
       .mockResolvedValue(sessionStatus("CLOSED"));
     const gateway = sessionGateway(client, check);
@@ -745,7 +747,7 @@ describe("broker session at each demo order submission", () => {
     check.mockResolvedValue(sessionStatus("CLOSED"));
     await gateway.cancelStrategyOrder("client-BUY", "TEST_EMERGENCY");
     expect(client.cancelled).toContain("101");
-    expect(check).toHaveBeenCalledTimes(2);
+    expect(check).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -842,11 +844,11 @@ describe("ISSUE-318 OCO dispatch races and directional slippage", () => {
       let checks = 0;
       if (during === "reconcile")
         vi.spyOn(client, "reconcileRaw").mockImplementation(() => {
-          if (++checks === 2) client.fill("client-BUY", 2001);
+          if (++checks === 3) client.fill("client-BUY", 2001);
           return original();
         });
       const g = gateway(client, () => {
-        if (during === "session" && ++checks === 2)
+        if (during === "session" && ++checks === 3)
           client.fill("client-BUY", 2001);
         return Promise.resolve(sessionStatus("OPEN"));
       });
@@ -871,7 +873,7 @@ describe("ISSUE-318 OCO dispatch races and directional slippage", () => {
       const original = client.reconcileRaw.bind(client);
       let reads = 0;
       vi.spyOn(client, "reconcileRaw").mockImplementation(() => {
-        if (++reads === 2) {
+        if (++reads === 3) {
           const e = event(
             command("BUY"),
             kind === "cancelled" ? 5 : kind === "unknown" ? 99 : 2,
@@ -942,5 +944,116 @@ describe("ISSUE-318 OCO dispatch races and directional slippage", () => {
       filledVolume: "100",
     });
     expect(client.orders).toHaveLength(1);
+  });
+});
+
+describe("ISSUE-331 final pair reconciliation", () => {
+  function gateway(
+    client: MockClient,
+    readiness: () => Promise<{ certain: boolean }>,
+  ) {
+    return new CTraderDemoGateway({
+      client,
+      placementReadiness: readiness,
+      marketSession: () => Promise.resolve(sessionStatus("OPEN")),
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+  }
+
+  it.each(["uncertain", "unavailable"])(
+    "withholds both legs when durable proof is %s despite a flat broker",
+    async (state) => {
+      const client = new MockClient();
+      const readiness = vi.fn(() => {
+        if (state === "unavailable")
+          return Promise.reject(new Error("private dependency detail"));
+        return Promise.resolve({ certain: false });
+      });
+      const g = gateway(client, readiness);
+      const result = await g.placeOco([command("BUY"), command("SELL")]);
+      expect(client.orders).toHaveLength(0);
+      expect(readiness).toHaveBeenCalledTimes(1);
+      expect(result.orders).toHaveLength(2);
+      for (const order of result.orders)
+        expect(order).toMatchObject({
+          state: "REJECTED",
+          brokerOrderId: null,
+          filledVolume: "0",
+          reasonCode: "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD",
+        });
+      expect(
+        (await g.placeOco([command("BUY"), command("SELL")])).idempotentReplay,
+      ).toBe(true);
+      expect(client.orders).toHaveLength(0);
+    },
+  );
+
+  it("withholds a pair when external exposure appears after initial reconciliation", async () => {
+    const client = new MockClient();
+    const original = client.reconcileRaw.bind(client);
+    let reads = 0;
+    vi.spyOn(client, "reconcileRaw").mockImplementation(async () => {
+      if (++reads === 2)
+        return {
+          receivedAt: new Date().toISOString(),
+          positions: [{ tradeData: { symbolId: "7", label: "manual" } }],
+          orders: [],
+        };
+      return original();
+    });
+    const result = await gateway(client, () =>
+      Promise.resolve({
+        certain: true,
+      }),
+    ).placeOco([command("BUY"), command("SELL")]);
+    expect(result.orders.every((o) => o.state === "REJECTED")).toBe(true);
+    expect(client.orders).toHaveLength(0);
+  });
+
+  it("withholds both entries when the session closes during final preflight", async () => {
+    const client = new MockClient();
+    let open = true;
+    const g = new CTraderDemoGateway({
+      client,
+      placementReadiness: () => {
+        open = false;
+        return Promise.resolve({ certain: true });
+      },
+      marketSession: () =>
+        Promise.resolve(sessionStatus(open ? "OPEN" : "CLOSED")),
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+    });
+    const result = await g.placeOco([command("BUY"), command("SELL")]);
+    expect(client.orders).toHaveLength(0);
+    expect(
+      result.orders.every(
+        (o) =>
+          o.reasonCode === "MARKET_SESSION_CLOSED" && o.brokerOrderId === null,
+      ),
+    ).toBe(true);
+  });
+
+  it("submits once after fresh exposure and durable proof both pass", async () => {
+    const client = new MockClient();
+    const readiness = vi.fn(() => Promise.resolve({ certain: true }));
+    const g = gateway(client, readiness);
+    await g.placeOco([command("BUY"), command("SELL")]);
+    expect(readiness).toHaveBeenCalledTimes(1);
+    expect(client.orders).toHaveLength(2);
+    await g.placeOco([command("BUY"), command("SELL")]);
+    expect(client.orders).toHaveLength(2);
+    expect(readiness).toHaveBeenCalledTimes(1);
   });
 });

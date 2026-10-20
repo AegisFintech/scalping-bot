@@ -45,6 +45,8 @@ export interface CTraderTradingClient {
 }
 
 export interface CTraderDemoGatewayOptions {
+  /** Durable journal certainty; production must supply the scoped store read. */
+  readonly placementReadiness?: () => Promise<{ readonly certain: boolean }>;
   readonly marketSession?: () => Promise<MarketSessionStatus>;
   readonly client: CTraderTradingClient;
   readonly symbolId: string;
@@ -156,10 +158,11 @@ export class CTraderDemoGateway implements ExecutionGateway {
   readonly #options: Required<
     Omit<
       CTraderDemoGatewayOptions,
-      "client" | "acknowledgement" | "marketSession"
+      "client" | "acknowledgement" | "marketSession" | "placementReadiness"
     >
   > & {
     readonly marketSession: CTraderDemoGatewayOptions["marketSession"];
+    readonly placementReadiness: CTraderDemoGatewayOptions["placementReadiness"];
     readonly client: CTraderTradingClient;
     readonly acknowledgement: string;
   };
@@ -173,6 +176,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     this.#options = {
       client: options.client,
       marketSession: options.marketSession,
+      placementReadiness: options.placementReadiness,
       symbolId: options.symbolId,
       symbolName: options.symbolName,
       placementEnabled: options.placementEnabled ?? false,
@@ -248,6 +252,37 @@ export class CTraderDemoGateway implements ExecutionGateway {
       this.#orders.set(item.command.clientOrderId, item);
 
     if (await this.#rejectClosedSession(tracked)) {
+      return {
+        orderGroupId: group.orderGroupId,
+        idempotentReplay: false,
+        orders: tracked.map(external),
+      };
+    }
+    // Session IO can admit new callbacks or external/manual account changes.
+    // A fresh flat snapshot alone is never proof of a completed prior lifecycle.
+    try {
+      this.#assertNoRelevantState(await this.#options.client.reconcileRaw());
+      if (
+        this.#options.placementReadiness !== undefined &&
+        (await this.#options.placementReadiness()).certain !== true
+      )
+        throw new Error("DEMO_DURABLE_RECONCILIATION_UNCERTAIN");
+      if (await this.#rejectClosedSession(tracked)) {
+        return {
+          orderGroupId: group.orderGroupId,
+          idempotentReplay: false,
+          orders: tracked.map(external),
+        };
+      }
+      // Recheck callback latches, authority and submission lifetime after awaits.
+      this.#assertPlacementEnabled(commands);
+      validatePair(commands);
+    } catch {
+      for (const order of tracked) {
+        order.state = "REJECTED";
+        order.updatedAt = new Date().toISOString();
+        order.reasonCode = "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD";
+      }
       return {
         orderGroupId: group.orderGroupId,
         idempotentReplay: false,
