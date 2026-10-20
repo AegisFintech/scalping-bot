@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -232,10 +233,15 @@ def test_rendered_dashboard_withholds_unavailable_data_and_rejects_unauthorized_
 
     monkeypatch.setattr(httpx, "get", unavailable)
     monkeypatch.setattr(httpx, "post", forbidden)
+    from apps.dashboard.landscape import landscape_component
+
+    landscape_component.clear()
     app = AppTest.from_file(Path("apps/dashboard/app.py").resolve(), default_timeout=15).run()
     assert not app.exception
-    assert len(app.metric) == 4
-    assert all(metric.value == "Unavailable" for metric in app.metric)
+    component = app.get("bidi_component")[0]
+    payload = json.loads(component.proto.json)
+    assert payload["available"] is False
+    assert all(v["text"] == "Unavailable" for v in payload["values"].values())
     app.button[1].click().run()
     assert not app.exception
     assert any("authorization are required" in error.value for error in app.error)
@@ -342,24 +348,29 @@ def test_rendered_provider_outage_is_a_warning_and_labels_local_checks(monkeypat
     from apps.dashboard import background
 
     snapshot = {
+        "captured_at": datetime.now(UTC),
         "status": {
             "mode": "demo",
             "startupChecksPassed": True,
             "automaticAnalysisEnabled": True,
             "scenarioContext": {"state": "FAILED", "reason": "AI_PROVIDER_TIMEOUT"},
             "lastCycle": {"outcome": "DEFERRED", "reasonCodes": ["SCENARIO_REFRESH_STARTED"]},
-        }
+        },
     }
     monkeypatch.setattr(
         background.BackgroundReader,
         "poll",
         lambda self: background.PollResult(snapshot, "ready", 1),
     )
+    from apps.dashboard.landscape import landscape_component
+
+    landscape_component.clear()
     app = AppTest.from_file(Path("apps/dashboard/app.py").resolve(), default_timeout=15).run()
     assert not app.exception
-    assert any("Entries blocked · model unavailable" in warning.value for warning in app.warning)
-    assert any("Latest execution check" in text.value for text in app.markdown)
-    assert all("Last completed analysis" not in text.value for text in app.markdown)
+    payload = json.loads(app.get("bidi_component")[0].proto.json)
+    assert payload["title"] == "Entries blocked · model unavailable"
+    assert "Latest execution check: DEFERRED" in payload["detail"]
+    assert "Last completed analysis" not in payload["detail"]
 
 
 def test_gtc_pending_and_position_lifecycle_labels() -> None:

@@ -218,10 +218,11 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "direct-entry-v1",
                 "market-stop-v1",
                 "market-stop-v2",
+                "0.4.0-breakout-scalp.1",
             ):
                 return result
             demo_development = False
-            if policy["version"] == "market-stop-v2":
+            if policy["version"] in {"market-stop-v2", "0.4.0-breakout-scalp.1"}:
                 enforced = policy.get("lossLimitsEnforced")
                 mode = policy.get("mode")
                 if (

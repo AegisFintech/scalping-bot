@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-20T08:00:49.684226+00:00",
+  "dashboardHealth": 200,
+  "executionReadiness": "ready",
+  "fourTradingProcessesPreserved": true,
+  "registrationPreserved": true,
+  "credentialsChanged": false,
+  "analysisPaused": false,
+  "emergencyStopped": false,
+  "operationalFault": null,
+  "strategyVersion": "0.4.0-breakout-scalp.1-codex.1",
+  "controlsSubmitted": false,
+  "databaseMigrationsRun": false,
+  "artifactCommit": "f7bf7f5e126c4da5303b30a605594a5ffdb518c7",
+  "sourceSha256": "aaf57c684c80ee45ae98da760b62c6fa08a34db61c44995d8b292dde9aa17261",
+  "artifactVerified": true,
+  "deployedBrowser": {
+    "nativeComponentStateRetainedAcrossTicks": true,
+    "1920x1080": true,
+    "1440x900": true,
+    "1280x720": true,
+    "390x844": true,
+    "unsubmittedControlsRetained": true,
+    "emergencyControlContrast": true,
+    "navigation": true,
+    "pageErrors": 0,
+    "htmlInjectionBlocked": true,
+    "duplicatePollsDoNotCreateEvents": true,
+    "lateEventsSorted": true,
+    "independentClientFreshness": true,
+    "disconnectedClientFailsClosed": true,
+    "partialPayloadFailsClosed": true,
+    "eventRetentionBounded": true,
+    "reducedMotion": true,
+    "fullscreen": true,
+    "harnessPageErrors": 0,
+    "harnessExternalRequests": 0
+  },
+  "preDeploymentHostedQualification": [
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/39389851585",
+    "https://github.com/AegisFintech/scalping-bot/actions/runs/39389806816"
+  ]
+}

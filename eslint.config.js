@@ -29,4 +29,8 @@ export default tseslint.config(
       "@typescript-eslint/no-misused-promises": "error",
     },
   },
+  {
+    ...tseslint.configs.disableTypeChecked,
+    files: ["apps/dashboard/assets/*.mjs"],
+  },
 );

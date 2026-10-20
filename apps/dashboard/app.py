@@ -11,7 +11,8 @@ import plotly.express as px
 import streamlit as st
 
 from apps.dashboard.background import BackgroundReader
-from apps.dashboard.command_centre import STYLES, render_command_centre
+from apps.dashboard.command_centre import STYLES
+from apps.dashboard.landscape import render_landscape
 from apps.dashboard.overview import operating_state
 from apps.dashboard.snapshot import api_url, load_snapshot
 from apps.dashboard.time_display import dataframe_for_display, format_gmt8_timestamp
@@ -74,8 +75,17 @@ def controls() -> None:
 
 
 controls()
-st.caption("SCALPER / OPERATIONS")
-st.caption("Demo and simulated outcomes are distinct from live results. All times: GMT+8.")
+st.html("""<style>
+.block-container{max-width:none;padding:0 12px 0!important}
+[data-testid="stMainBlockContainer"]>[data-testid="stVerticalBlock"]{gap:0}
+header[data-testid="stHeader"]{height:32px!important;min-height:32px!important;background:transparent!important;pointer-events:none}
+[data-testid="stToolbar"]{height:32px!important;min-height:32px!important}
+[data-testid="stAppDeployButton"],[data-testid="stMainMenu"]{display:none}
+[data-testid="stHeader"] button{pointer-events:auto}
+[data-testid="stRadio"]{margin:2px 0 0 38px;position:relative;z-index:999999}
+[data-testid="stRadio"] label{font-size:12px}
+[data-testid="stElementContainer"]:has(>.stMarkdown){margin:0}
+</style>""")
 view = st.radio(
     "View",
     ["Overview", "Trade history", "Diagnostics"],
@@ -87,7 +97,9 @@ view = st.radio(
 
 @st.cache_resource(show_spinner=False)
 def reader(selected_view: str) -> BackgroundReader[dict[str, Any]]:
-    return BackgroundReader(lambda: load_snapshot(selected_view))
+    return BackgroundReader(
+        lambda: load_snapshot(selected_view), interval=2 if selected_view == "Overview" else 10
+    )
 
 
 def render_status(model: dict[str, Any]) -> None:
@@ -145,7 +157,7 @@ if view == "Diagnostics":
     # Historical inspection is intentionally stable; only its small recovery probe polls.
     runpy.run_path(str(Path(__file__).with_name("diagnostics.py")))
 else:
-    names = ["command", "updated"] if view == "Overview" else ["status", "history", "updated"]
+    names = ["command"] if view == "Overview" else ["status", "history", "updated"]
     regions = {name: st.empty() for name in names}
 
     def update_region(name: str, model: dict[str, Any], draw: Any) -> None:
@@ -171,7 +183,7 @@ else:
             update_region(
                 "command",
                 {"snapshot": snapshot, "poll_state": polled.state},
-                lambda model: render_command_centre(model["snapshot"], model["poll_state"]),
+                lambda model: render_landscape(model["snapshot"], model["poll_state"]),
             )
         else:
             update_region(
@@ -193,17 +205,18 @@ else:
                 {"available": "trades" in snapshot, "trades": snapshot.get("trades", [])},
                 render_history,
             )
-        update_region(
-            "updated",
-            {"captured": snapshot.get("captured_at"), "state": polled.state},
-            lambda model: st.caption(
-                "Background updates · "
-                + (
-                    f"Last observation: {format_gmt8_timestamp(model['captured'])}"
-                    if model["captured"]
-                    else "Waiting for current data"
-                )
-            ),
-        )
+        if view != "Overview":
+            update_region(
+                "updated",
+                {"captured": snapshot.get("captured_at"), "state": polled.state},
+                lambda model: st.caption(
+                    "Background updates · "
+                    + (
+                        f"Last observation: {format_gmt8_timestamp(model['captured'])}"
+                        if model["captured"]
+                        else "Waiting for current data"
+                    )
+                ),
+            )
 
     update_live_sections()
