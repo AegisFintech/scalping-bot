@@ -12,6 +12,7 @@ from psycopg.rows import dict_row
 
 from apps.dashboard.command_data import command_data
 from apps.dashboard.decision_inspector import DecisionViewError, open_position_monitor_view
+from apps.dashboard.landscape_data import landscape_events
 
 
 def api_url() -> str:
@@ -91,7 +92,8 @@ def load_snapshot(view: str) -> dict[str, Any]:
             data: dict[str, Any] = {"currency": identity["currency"]}
             if view == "Overview":
                 daily = rows(
-                    "SELECT current_equity, baseline_equity, loss_percent, realized_pnl, "
+                    "SELECT trading_day, current_equity, baseline_equity, loss_percent, "
+                    "realized_pnl, "
                     "unrealized_pnl, locked_out, reconciled_at FROM daily_risk_state "
                     "WHERE account_id=%s "
                     "ORDER BY trading_day DESC LIMIT 1",
@@ -150,6 +152,7 @@ def load_snapshot(view: str) -> dict[str, Any]:
                     scope,
                 )
                 data.update(command_data(rows, scope))
+                data["events"] = landscape_events(rows, scope)
             else:
                 data["trades"] = rows(
                     """SELECT t.closed_at, t.direction, t.realized_pnl AS net_pnl,

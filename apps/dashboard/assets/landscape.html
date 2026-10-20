@@ -1,0 +1,330 @@
+<div class="desk" id="desk">
+  <header class="masthead">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">◈</div>
+      <div>
+        <h1>SCALPER<span class="violet"> / </span>DESK</h1>
+        <small>EXECUTION INTELLIGENCE</small>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span class="preview-label" id="mode">UNKNOWN</span
+      ><span class="tag" id="session">SESSION UNAVAILABLE</span
+      ><button id="motion" aria-pressed="true">Motion on</button
+      ><button id="fullscreen" aria-label="Enter fullscreen" title="Fullscreen">
+        ⛶
+      </button>
+    </div>
+    <div class="clock mono" id="clock">—</div>
+  </header>
+  <div class="preview-strip">
+    <span id="identity">Connecting to read-only evidence</span
+    ><span class="snapshot-line" id="snapshot-time"
+      >Current state unavailable</span
+    >
+  </div>
+  <section class="stats" aria-label="Account and trading overview">
+    <article class="stat">
+      <label id="equity-label">ACCOUNT EQUITY</label
+      ><strong class="mono" id="equity">Unavailable</strong
+      ><small>Reconciled current equity</small>
+    </article>
+    <article class="stat">
+      <label>REALIZED NET · UTC DAY</label
+      ><strong class="mono" id="day-net">Unavailable</strong
+      ><small>Closed outcomes · fees included</small>
+    </article>
+    <article class="stat">
+      <label>OPEN P/L · BROKER</label
+      ><strong class="mono" id="open-net">Unavailable</strong
+      ><small>Unrealized · future costs unknown</small>
+    </article>
+    <article class="stat">
+      <label id="budget-label">SHARED SETUP BUDGET</label
+      ><strong class="mono" id="ceiling">Unavailable</strong
+      ><small>At most 1% equity · both OCO legs</small>
+    </article>
+    <article class="stat">
+      <label>CURRENT ACTION</label
+      ><strong id="top-action" class="violet">Connecting</strong
+      ><small id="top-detail">Loading read-only observations</small>
+    </article>
+  </section>
+  <nav class="flow" aria-label="Observed workflow" id="flow"></nav>
+  <main class="workspace">
+    <div class="column">
+      <section class="panel market" aria-labelledby="market-title">
+        <div class="panel-head">
+          <h2 id="market-title">Market structure</h2>
+          <div class="tabs" role="tablist" aria-label="Chart timeframe">
+            <button
+              role="tab"
+              aria-selected="true"
+              aria-controls="price-chart"
+              id="tab-M1"
+              tabindex="0"
+              data-frame="M1"
+            >
+              M1</button
+            ><button
+              role="tab"
+              aria-selected="false"
+              aria-controls="price-chart"
+              id="tab-M5"
+              tabindex="-1"
+              data-frame="M5"
+            >
+              M5</button
+            ><button
+              role="tab"
+              aria-selected="false"
+              aria-controls="price-chart"
+              id="tab-M15"
+              tabindex="-1"
+              data-frame="M15"
+            >
+              M15
+            </button>
+          </div>
+        </div>
+        <div class="market-body">
+          <div class="quote-row">
+            <div>
+              <small id="quote-symbol">BID</small>
+              <div class="quote mono" id="quote">Unavailable</div>
+            </div>
+            <small
+              >ASK <span class="mono" id="ask">Unavailable</span><br /><span
+                class="violet"
+                >Fresh broker quote</span
+              ></small
+            >
+          </div>
+          <div
+            class="chart-wrap"
+            id="price-chart"
+            role="tabpanel"
+            aria-labelledby="tab-M1"
+            tabindex="0"
+          ></div>
+          <div class="chart-caption" id="level-key">
+            No recorded levels available
+          </div>
+          <div class="chart-source" id="chart-source">
+            No recorded completed candles
+          </div>
+        </div>
+      </section>
+      <section class="panel facts" aria-labelledby="factors-title">
+        <div class="panel-head">
+          <h2 id="factors-title">Decision factors</h2>
+          <span class="tag">RECORDED CONTEXT</span>
+        </div>
+        <div class="fact-list" id="factors"></div>
+        <div class="fact-note">
+          Indicators are recorded context, not extra gates. Codex returns two
+          prices; narrative reasoning/confidence, news and consolidated order
+          flow are unavailable. Modeled leg allocation is not actual stop risk.
+        </div>
+      </section>
+    </div>
+    <div class="column">
+      <section class="panel reactor" aria-labelledby="reactor-title">
+        <div class="panel-head">
+          <h2 id="reactor-title">The engine</h2>
+          <span class="tag" id="engine-badge">CONNECTING</span>
+        </div>
+        <div class="reactor-visual">
+          <div class="reactor-title">ONE BOT. SIX WORKFLOW STAGES.</div>
+          <div class="reactor-note">Decorative motion</div>
+          <svg
+            class="reactor-svg"
+            viewBox="0 0 600 330"
+            role="img"
+            aria-label="Decorative execution engine with six workflow stages"
+          >
+            <defs>
+              <radialGradient id="sphere" cx="35%" cy="25%" r="80%">
+                <stop offset="0" stop-color="#eee9ff" />
+                <stop offset=".4" stop-color="#bcb0e7" />
+                <stop offset=".8" stop-color="#736591" />
+                <stop offset="1" stop-color="#403851" />
+              </radialGradient>
+              <radialGradient id="halo">
+                <stop offset="0" stop-color="#bc9eff" stop-opacity=".4" />
+                <stop offset="1" stop-color="#bc9eff" stop-opacity="0" />
+              </radialGradient>
+              <linearGradient id="core-line">
+                <stop stop-color="#ddcaff" />
+                <stop offset="1" stop-color="#84729e" />
+              </linearGradient>
+            </defs>
+            <ellipse
+              cx="300"
+              cy="280"
+              rx="120"
+              ry="12"
+              fill="#b49bdc"
+              opacity=".07"
+            />
+            <circle
+              class="core-halo"
+              cx="300"
+              cy="166"
+              r="130"
+              fill="url(#halo)"
+            />
+            <g id="filaments" class="orbit"></g>
+            <g id="filaments-reverse" class="orbit reverse"></g>
+            <ellipse
+              cx="300"
+              cy="166"
+              rx="104"
+              ry="81"
+              fill="none"
+              stroke="#b7a0ff"
+              stroke-opacity=".16"
+              stroke-dasharray="2 7"
+            />
+            <ellipse
+              cx="300"
+              cy="227"
+              rx="71"
+              ry="13"
+              fill="#ae97e0"
+              opacity=".12"
+            />
+            <circle
+              cx="300"
+              cy="166"
+              r="58"
+              fill="url(#sphere)"
+              stroke="#d0b9ff"
+              stroke-opacity=".5"
+            />
+            <path
+              d="M244 175 Q300 203 356 175"
+              fill="none"
+              stroke="url(#core-line)"
+              stroke-width="1.2"
+              opacity=".6"
+            />
+            <g class="core-eyes" fill="#171324">
+              <rect
+                x="281"
+                y="148"
+                width="10"
+                height="29"
+                rx="5"
+                transform="rotate(-12 286 162)"
+              />
+              <rect
+                x="308"
+                y="148"
+                width="10"
+                height="29"
+                rx="5"
+                transform="rotate(12 313 162)"
+              />
+            </g>
+            <circle cx="325" cy="128" r="7" fill="#fff" opacity=".12" />
+          </svg>
+          <div id="reactor-nodes"></div>
+          <div class="core-label">DETERMINISTIC EXECUTION</div>
+        </div>
+        <div class="action-block">
+          <div class="eyebrow" id="action-eyebrow">OBSERVED CURRENT ACTION</div>
+          <h3 id="action-title">Connecting</h3>
+          <p id="action-detail">
+            Loading account information in the background.
+          </p>
+          <div class="status-note" id="reasons"></div>
+          <div class="next">
+            <span>NEXT</span
+            ><span
+              id="next-action"
+              style="font-size: 10px; letter-spacing: 0; color: inherit"
+              >Wait for fresh evidence.</span
+            >
+          </div>
+        </div>
+      </section>
+      <section class="panel log-panel" aria-labelledby="log-title">
+        <div class="panel-head">
+          <h2 id="log-title">Decision tape</h2>
+          <div class="log-tools">
+            <span class="log-count" id="log-count">RECORDED EVENTS</span
+            ><button id="follow" aria-pressed="true">Following ↓</button>
+          </div>
+        </div>
+        <div
+          class="log mono"
+          id="log"
+          role="log"
+          aria-label="Recorded decision and broker events"
+          aria-live="off"
+          tabindex="0"
+        ></div>
+        <div class="log-footer" id="event-window">
+          Bounded journal window · past events, not model reasoning
+        </div>
+      </section>
+    </div>
+    <div class="column">
+      <section class="panel position" aria-labelledby="position-title">
+        <div class="panel-head">
+          <h2 id="position-title">Position &amp; protection</h2>
+          <span class="tag" id="position-badge">UNKNOWN</span>
+        </div>
+        <div class="position-body">
+          <div class="position-heading">
+            <strong id="position-side">Exposure unavailable</strong
+            ><span class="tag" id="position-state">UNKNOWN</span>
+          </div>
+          <div class="big-pnl mono" id="position-pnl">Unavailable</div>
+          <div class="pnl-caption" id="position-caption">
+            Broker net unrealized · not closing proceeds
+          </div>
+          <div class="pnl-caption" id="pnl-detail">
+            Gross / signed commission unavailable
+          </div>
+          <div class="position-info" id="positions"></div>
+          <div class="position-info" id="orders"></div>
+          <div class="pnl-caption">Future closing fees / swap: Unavailable</div>
+        </div>
+      </section>
+      <section class="panel right-bottom" aria-labelledby="net-title">
+        <div class="panel-head">
+          <h2 id="net-title">Closed net</h2>
+          <small id="curve-unit">Unavailable currency</small>
+        </div>
+        <div class="net-summary">
+          <strong class="net-number mono" id="closed-net">Unavailable</strong
+          ><small id="curve-summary">No verified outcomes</small>
+        </div>
+        <div
+          class="net-chart"
+          id="net-chart"
+          role="img"
+          aria-label="Recorded cumulative closed net, not account equity"
+        ></div>
+        <div class="net-foot">
+          <span>All scoped releases · fees included</span
+          ><span>Not an equity curve</span>
+        </div>
+        <div class="feed-health">
+          <span>Status <b id="status-health">Unknown</b></span
+          ><span>Quotes <b id="quote-health">Unavailable</b></span
+          ><span>Research <b class="muted">Read-only</b></span
+          ><span>News <b class="muted">Unavailable</b></span>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="foot">
+    <span
+      ><strong><span class="dot"></span>OBSERVATION DESK</strong> · Decorative
+      motion is not activity telemetry</span
+    ><span id="strategy">Strategy unavailable</span>
+  </footer>
+</div>

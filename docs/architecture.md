@@ -44,6 +44,18 @@ execution and independent maintenance. The original directional replay remains
 research-only; its confirmation/structural-close rules are distinct from OCO price
 triggers. See [the integration report](reusable-scenario-report.md).
 
+## Animated observation desk (ISSUE-344)
+
+The approved landscape Overview uses a stable Streamlit v2 component, updated by
+bounded read-only snapshots. Native navigation and authenticated controls remain
+outside fragments. Recorded lifecycle events are deduplicated with bounded
+retention; current money, quotes, session and verified protection have independent
+server/client deadlines. The model supplies entry prices, not narrative reasoning.
+Animations are decorative except for the observed-state highlight. Runtime
+HTML/CSS/JS are included in qualification/release integrity. See the
+[live panel report](live-landscape-report.md) for evidence limits and dashboard-only
+rollout; no trading or research authority is added.
+
 ## Broker-session admission (ISSUE-098)
 
 The quote-independent `/v1/session` endpoint exposes fresh broker metadata,

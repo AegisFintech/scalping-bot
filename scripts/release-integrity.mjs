@@ -60,7 +60,7 @@ export async function sourceFingerprint(root) {
     if (file.startsWith("docs/") || file === "AGENTS.md" || file === "plan.md")
       continue;
     if (
-      !/\.(?:ts|mts|cts|js|mjs|cjs|json|ya?ml|py|sql|lock|in|sh|toml)$/.test(
+      !/\.(?:ts|mts|cts|js|mjs|cjs|css|html|json|ya?ml|py|sql|lock|in|sh|toml)$/.test(
         file,
       ) &&
       !file.startsWith("prompts/") &&

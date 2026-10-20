@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-344 — Deploy the approved animated landscape dashboard
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/344.
+- Acceptance: approved full-screen design connected to real scoped evidence and bounded deduplicated journal events, stable animation/chart/log state, fresh/unknown money and protection, safe text, native navigation/authenticated controls, behavior/browser/full gates and verified dashboard-only rollout.
+- Dependencies: #340 / #341 data and #342 / #343 approved prototype.
+- Status: implemented; focused behavior/browser tests pass, including four viewports, stable native component/controls, text injection, bounded deduplication and independent/disconnected freshness. Full qualification is running. No runtime changes yet.
+- Rollback: recreate the previous dashboard only; preserve current database, trading services and frozen research.
+
 ### ISSUE-342 — Animated landscape design prototype
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/342.

@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
 import {
+  sourceFingerprint,
   treeFingerprint,
   copyReleaseTree,
   validateQualification,
@@ -207,5 +208,29 @@ it("copies relative dependency links into the release without binding the old ch
     );
   } finally {
     rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it("binds dashboard HTML and CSS to qualification while leaving documentation excluded", async () => {
+  const root = mkdtempSync(path.join(tmpdir(), "dashboard-source-"));
+  try {
+    expect(spawnSync("git", ["init", "-q", root]).status).toBe(0);
+    mkdirSync(path.join(root, "apps/dashboard/assets"), { recursive: true });
+    mkdirSync(path.join(root, "docs"));
+    const css = path.join(root, "apps/dashboard/assets/desk.css");
+    const html = path.join(root, "apps/dashboard/assets/desk.html");
+    writeFileSync(css, ".desk{color:white}");
+    writeFileSync(html, "<div>Desk</div>");
+    const before = await sourceFingerprint(root);
+    writeFileSync(css, ".desk{color:red}");
+    const styled = await sourceFingerprint(root);
+    expect(styled).not.toBe(before);
+    writeFileSync(html, "<div>Changed desk</div>");
+    const changed = await sourceFingerprint(root);
+    expect(changed).not.toBe(styled);
+    writeFileSync(path.join(root, "docs/prototype.html"), "review only");
+    expect(await sourceFingerprint(root)).toBe(changed);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
