@@ -2,6 +2,7 @@
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
 PR: https://github.com/AegisFintech/scalping-bot/pull/337.
+Rollout receipt: https://github.com/AegisFintech/scalping-bot/pull/339.
 Status: implemented, fully qualified, merged in PR #337 and deployed to demo.
 First natural pair accepted; completed cycle observation remains in progress.
 
@@ -161,3 +162,8 @@ were broker accepted. Original model prices equal effective entry prices on both
 legs. Pending orders block another paid request. A pending pair is not a completed
 cycle, a win or proof of better entry precision. No order or fill was forced.
 [Sanitized rollout receipt](evidence/breakout-scalp-rollout.json).
+
+At `2026-10-20T05:47:52.498Z`, the first SELL breakout was filled, its BUY peer
+was cancelled, and the open position had freshly broker-verified SL and TP with
+zero repair attempts. This proves the observed entry/OCO/protection sequence, not
+a completed profitable trade. Closure remains pending at this receipt snapshot.

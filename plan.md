@@ -5,10 +5,10 @@
 ### ISSUE-334 — Reviewed breakout / small-TP demo release
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/334.
-- PR: https://github.com/AegisFintech/scalping-bot/pull/337.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/337; rollout receipt https://github.com/AegisFintech/scalping-bot/pull/339.
 - Dependencies: #321 manual zone/confirmation specification, #323 terminal proof, #289 measurement and #329/#330/#331.
 - Acceptance: separately registered causal breakout evidence, reviewed release constants and prompt/identity, final exact-volume risk/protection validation, manual/partial-close and restart proof, qualified artifact/rollback and reconciled demo transition; preserve original frozen studies and shared 1% risk.
-- Status: implementing the explicitly authorized first-crossing breakout demo trial. Operator clarified no candle-close, holding or retest wait. Prompt v5, expanded completed context, STOP_LIMIT/GTC/OCO and native smaller TP are integrated; recovery #323 merged in PR #336. Full qualification passed (942 Node / 94 PostgreSQL / 381 Python plus all required gates/audits); both final-head hosted checks passed and PR #337 merged. Verified immutable artifact and matching worker deployed; migration 0030 applied, accounting/credentials preserved and demo resumed. First natural STOP_LIMIT/GTC pair broker accepted with unchanged model entries; complete cycle observation remains pending. Read-only observer is running. Screenshot timing gaps remain evidence limitations, not entry-rule ambiguity.
+- Status: deployed the explicitly authorized first-crossing breakout demo trial. Operator clarified no candle-close, holding or retest wait. Prompt v5, expanded completed context, STOP_LIMIT/GTC/OCO and native smaller TP are integrated; recovery #323 merged in PR #336. Full qualification passed (942 Node / 94 PostgreSQL / 381 Python plus all required gates/audits); both final-head hosted checks passed and PR #337 merged. Verified immutable artifact and matching worker deployed; migration 0030 applied, accounting/credentials preserved and demo resumed. First natural STOP_LIMIT/GTC pair broker accepted with unchanged model entries; SELL filled, BUY peer cancelled and broker SL/TP verified with zero repairs. Complete cycle observation remains pending. Read-only observer is running. Screenshot timing gaps remain evidence limitations, not entry-rule ambiguity.
 - Report: [release implementation and rollout](docs/breakout-scalp-release-report.md).
 
 ### ISSUE-338 — Review frozen breakout demo observations

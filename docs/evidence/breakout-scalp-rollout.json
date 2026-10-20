@@ -74,5 +74,29 @@
     "PM2 restart retained old cwd; retries stopped and all process definitions recreated; final paths verified",
     "Operational acceptance is not a completed trade or economic qualification",
     "Future economic review is issue 338; no automatic promotion"
-  ]
+  ],
+  "firstNaturalFill": {
+    "at": "2026-10-20T05:47:52.498Z",
+    "positions": [
+      {
+        "state": "OPEN",
+        "protection": "VERIFIED",
+        "has_sl": true,
+        "has_tp": true,
+        "observed_at": "2026-10-20T05:47:51.549Z",
+        "repair_attempts": 0
+      }
+    ],
+    "orders": [
+      {
+        "side": "BUY",
+        "state": "CANCELLED"
+      },
+      {
+        "side": "SELL",
+        "state": "FILLED"
+      }
+    ]
+  },
+  "rolloutReceiptPr": "https://github.com/AegisFintech/scalping-bot/pull/339"
 }
