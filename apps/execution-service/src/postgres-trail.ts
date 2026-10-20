@@ -63,6 +63,7 @@ function locallyRejectedBySession(order: GatewayOrder): boolean {
       "MARKET_SESSION_CLOSED",
       "MARKET_SESSION_UNAVAILABLE",
       "DEMO_PEER_WITHHELD_BEFORE_DISPATCH",
+      "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD",
     ].includes(order.reasonCode ?? "")
   )
     return false;

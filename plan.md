@@ -2,6 +2,28 @@
 
 ## Scope
 
+### ISSUE-331 — Final pair reconciliation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/331.
+- Dependencies: existing account/capital and session gates; #323 remains separate.
+- Acceptance: fresh broker and durable journal proof before first dispatch, fail-closed local-unsent provenance, manual/external exposure and dependency failure tests, full qualification and pushed PR.
+- Status: implemented; full qualification passed at `/tmp/scalper-qualification-5AEQc5/checks` (905 Node / 92 PostgreSQL / 376 Python; all required gates and audits). No runtime deployment or lifecycle reset. Hosted final-head checks required before merge.
+- Report: [pair preflight](docs/pair-preflight-reconciliation-report.md).
+
+### ISSUE-329 — Preserve breakout entries
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/329.
+- Dependencies: #321 exact manual specification, #318/#323 execution lifecycle.
+- Acceptance: versioned STOP_LIMIT/GTC candidate preserves original breakout levels, rejects crossed/stale/invalid geometry, never clamps/switches sides, explicit non-authority and tests before release review.
+- Status: candidate implementation prepared separately; no production activation or profitability claim.
+
+### ISSUE-330 — Cost-covered smaller broker TP
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/330.
+- Dependencies: #329/#289 and separate economic evaluation; frozen #319 remains unchanged.
+- Acceptance: fixed versioned small target with exact-volume commission coverage and adverse reserves, retained ATR stop, cost/affordability/precision failure tests, no local quote-close dispatch or automatic promotion.
+- Status: candidate implementation prepared separately; no production activation.
+
 ### ISSUE-324 — Read-only trade evidence brief
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/324.

@@ -92,67 +92,72 @@ suite("session-denied order intents (isolated PostgreSQL)", () => {
       opts,
     };
   }
-  it("persists unsent rejections as terminal with no submission or fabricated broker event across restart", async () => {
-    const x = await setup();
-    const result = {
-      orderGroupId: x.groupId,
-      idempotentReplay: false,
-      orders: x.orders,
-    };
-    await x.trail.placement(x.analysisId, result);
-    await new PostgresDecisionTrail(x.opts).placement(x.analysisId, {
-      ...result,
-      idempotentReplay: true,
-    });
-    const rows = await pool.query<{
-      state: string;
-      submitted_at: Date | null;
-      broker_order_id: string | null;
-    }>(
-      "SELECT state,submitted_at,broker_order_id FROM orders WHERE order_group_id=$1",
-      [x.groupId],
-    );
-    expect(
-      rows.rows.every(
-        (row) =>
-          row.state === "REJECTED" &&
-          row.submitted_at === null &&
-          row.broker_order_id === null,
-      ),
-    ).toBe(true);
-    expect(
-      (
-        await pool.query<{ state: string }>(
-          "SELECT state FROM order_groups WHERE id=$1",
-          [x.groupId],
-        )
-      ).rows[0]?.state,
-    ).toBe("FAILED");
-    expect(
-      (
-        await pool.query<{ n: number }>(
-          "SELECT count(*)::int AS n FROM broker_execution_events WHERE account_id=$1",
-          [x.opts.accountId],
-        )
-      ).rows[0]?.n,
-    ).toBe(0);
-    const audit = await pool.query<{
-      outcome: string;
-      reason_code: string;
-      details: { orders: { locally_unsent: boolean }[] };
-    }>(
-      "SELECT outcome,reason_code,details FROM audit_events WHERE analysis_id=$1 AND event_name='oco_placement_completed'",
-      [x.analysisId],
-    );
-    expect(
-      audit.rows.every(
-        (row) =>
-          row.outcome === "rejected" &&
-          row.reason_code === "MARKET_SESSION_CLOSED" &&
-          row.details.orders.every((o) => o.locally_unsent),
-      ),
-    ).toBe(true);
-  });
+  it.each(["MARKET_SESSION_CLOSED", "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD"])(
+    "persists %s unsent rejections with no submission or fabricated event across restart",
+    async (reason) => {
+      const x = await setup();
+      for (const order of x.orders)
+        Object.assign(order, { reasonCode: reason });
+      const result = {
+        orderGroupId: x.groupId,
+        idempotentReplay: false,
+        orders: x.orders,
+      };
+      await x.trail.placement(x.analysisId, result);
+      await new PostgresDecisionTrail(x.opts).placement(x.analysisId, {
+        ...result,
+        idempotentReplay: true,
+      });
+      const rows = await pool.query<{
+        state: string;
+        submitted_at: Date | null;
+        broker_order_id: string | null;
+      }>(
+        "SELECT state,submitted_at,broker_order_id FROM orders WHERE order_group_id=$1",
+        [x.groupId],
+      );
+      expect(
+        rows.rows.every(
+          (row) =>
+            row.state === "REJECTED" &&
+            row.submitted_at === null &&
+            row.broker_order_id === null,
+        ),
+      ).toBe(true);
+      expect(
+        (
+          await pool.query<{ state: string }>(
+            "SELECT state FROM order_groups WHERE id=$1",
+            [x.groupId],
+          )
+        ).rows[0]?.state,
+      ).toBe("FAILED");
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            "SELECT count(*)::int AS n FROM broker_execution_events WHERE account_id=$1",
+            [x.opts.accountId],
+          )
+        ).rows[0]?.n,
+      ).toBe(0);
+      const audit = await pool.query<{
+        outcome: string;
+        reason_code: string;
+        details: { orders: { locally_unsent: boolean }[] };
+      }>(
+        "SELECT outcome,reason_code,details FROM audit_events WHERE analysis_id=$1 AND event_name='oco_placement_completed'",
+        [x.analysisId],
+      );
+      expect(
+        audit.rows.every(
+          (row) =>
+            row.outcome === "rejected" &&
+            row.reason_code === reason &&
+            row.details.orders.every((o) => o.locally_unsent),
+        ),
+      ).toBe(true);
+    },
+  );
   it("journals a fill with an unsent race-withheld peer without fabricating submission", async () => {
     const x = await setup();
     x.orders[0] = {
