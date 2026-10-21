@@ -15,10 +15,14 @@ It compares frozen observed demo opportunities, checks archived quote integrity,
 and reports missing paths and unknown economics explicitly. It does not change
 trading, claim exact counterfactual net returns, or automatically promote a strategy.
 
-The current source policy is `0.4.0-breakout-scalp.1`, prompt `entry-pair-v5`,
-with subscription Codex proposing two breakout prices. Deterministic code preserves
-those prices and owns STOP_LIMIT/GTC/OCO, native quick TP, ATR protection and
-shared dynamic 1% setup sizing. See [current release](docs/breakout-scalp-release-report.md).
+The current controlled **DEMO trial** is `0.4.2-compression-scalp.1-codex.1`,
+policy `0.4.2-compression-scalp.1`, prompt `entry-pair-v6`. Completed M1/M5/M15
+candles and available broker DOM feed local analysis. A qualified compression
+pair must exist before Codex inference and again afterward; Codex prices must
+agree with the structure. Deterministic code owns STOP_LIMIT/GTC/OCO, structural
+SL, at least 1:1 intended gross reward and shared dynamic 1% setup sizing.
+No qualified pair means wait. This trial is unqualified and may trade infrequently.
+See [current release and monitoring](docs/compression-demo-release-report.md).
 The bot operates continuously during the broker session, waiting safely when
 orders/positions, cooldowns, stale data, unavailable sessions, reconciliation,
 protection or affordability prevent a new setup. Demo records daily/high-water
@@ -109,19 +113,21 @@ Production proposals use subscription-authenticated Codex, requested `gpt-6.1-so
 through an isolated worker. No API-key fallback is used; returned backend identity,
 usage and cost remain unknown. See [Codex integration](docs/codex-production-report.md).
 
-The active scenario input contains up to 120 M1, 72 M5 and 48 M15 completed
-OHLCV bars as numeric data. Codex receives no image; charts
-remain verified and archived locally. New prompt `scenario-v3` uses the larger
-history to distinguish nearby structure from distant levels without selecting
-SL, TP or size. The bounded production tail is a latency safeguard; more history
-does not establish better analysis or profitability.
+Local analysis uses **720 M1 / 576 M5 / 480 M15 completed bars**, causal
+BOS/MSS/order-block/FVG/sweep evidence and available broker depth. The compact
+Codex input includes recent candle rows plus derived multi-timeframe context,
+source timing and DOM limitations; it is not a consolidated exchange order book.
+Codex receives numeric data, not screenshots. Prompt `entry-pair-v6` requests only
+two entry prices; deterministic code owns SL, TP, sizing and execution. More
+history or indicators do not establish better accuracy or profitability.
 Every response crosses
 strict schema, identity, tick-precision and fixed-validity checks. Requests have a
 90-second background deadline, no automatic retry, bounded bodies and a circuit breaker.
 
 A durable database claim prevents duplicate provider requests. Failure/unknown
 dispatch retries retain a five-minute backoff; a fully reconciled position close
-permits one fresh request immediately. Pending orders/open positions suppress requests. A proven local circuit block is rechecked after
+can authorize a fresh context, subject to every current gate including the
+60-minute loss cooldown. No refresh bypasses an active group or cooldown. Pending orders/open positions suppress requests. A proven local circuit block is rechecked after
 one minute without bypassing earlier requests or making a paid retry. Local
 execution can evaluate every five seconds (with a
 five-second candle-rollover reserve), without waiting for inference. A map can
@@ -213,3 +219,28 @@ Run the complete gates described in [testing](docs/testing.md), including Node
 and Python checks, PostgreSQL migration/integration tests, schema/fail-closed
 checks, secret scanning and dependency audits. Repository delivery rules are in
 [AGENTS.md](AGENTS.md) and bounded work is tracked in [plan.md](plan.md).
+
+## Repository upkeep and server footprint
+
+Use `/root/scalping-bot-terminal` for development. Running services use immutable
+releases under `/opt/ctrader-ai-scalper/releases`; editing this checkout does not
+deploy changes. The original `/root/scalping-bot` and older worktrees retain frozen
+research/source history. Preserve their records and registrations.
+
+Run `npm run hooks:install` once in a development clone. Before each branch push,
+the tracked `.githooks/pre-push` requires **README.md and AGENTS.md updates in each
+new non-merge commit**, a clean tracked working tree and successful
+`graphify update .`. Graphify runs locally with AST extraction; its ignored outputs
+are navigation aids, not trading authority. Install Graphify separately before
+pushing, and fetch `origin/main` before the first branch push. Existing custom
+hooks are never overwritten. Local Git hooks are opt-in, not a remote enforcement
+boundary; qualification and required GitHub review/checks still apply. Tags and
+branch deletions do not rebuild the graph. Never use a hook to delete files,
+rewrite commits, push changes or restart trading services.
+
+The [cleanup inventory and receipt](docs/server-cleanup-report.md) records retired
+unregistered research schedules, removed Claude/OpenCode tooling and reproducible
+caches. Active bot/Codex/monitor/storage services, registered research, accepted
+GTC orders, current data and immutable deployment artifacts remain protected.
+Review unused files/dependencies as part of each update and record the result.
+Server cleanup is an explicit reviewed operation, never an automatic push action.

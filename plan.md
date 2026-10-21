@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-360 — Lean server, repository dependencies and per-push maintenance
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/360.
+- Dependencies: #358 active trial; #255/#319/#334/#351 immutable registered evidence.
+- Acceptance: audit dependencies/processes/services and disk use; remove Claude/OpenCode, unused development caches and inactive Codex versions with a fallback; retire only obsolete unregistered schedules. Preserve demo/Codex/observers/storage, all records/registrations/deployment artifacts and credentials. Remove verified unused project dependencies. Update README/AGENTS and add tested opt-in per-push documentation/Graphify gate. Full qualification, secret scan, pushed PR and successful hosted checks before merge.
+- Status: cleanup complete: 6.76 GiB reclaimed, disk 89% → 75%; Claude/OpenCode removed, four obsolete research schedules/completed observer retired, protected files and running bot unchanged. Unused dependency removed; local per-push docs/Graphify gate installed. All 1,500 tests/full gates passed; commit/push and final-head hosted checks/PR merge follow. No trading restart or economic change.
+- Report: [inventory and validation](docs/server-cleanup-report.md).
+
 ### ISSUE-358 — Compression scalp demo deployment and new observation cohort
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/358.
