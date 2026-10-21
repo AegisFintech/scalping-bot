@@ -2,14 +2,9 @@
 
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from html import escape
 from typing import Any
 
-from apps.dashboard.overview import fresh, money, operating_state
-
-
-def safe(value: object) -> str:
-    return escape(str(value), quote=True)
+from apps.dashboard.overview import fresh, operating_state
 
 
 def number(value: object) -> Decimal | None:
@@ -81,21 +76,6 @@ def action(status: dict[str, Any], now: datetime) -> dict[str, Any]:
         "reasons": status.get("reasonCodes", []),
         "positions": positions,
         "pending": pending,
-    }
-
-
-def open_money(status: dict[str, Any], now: datetime) -> dict[str, str]:
-    monitor = status.get("openPositionMonitor") or {}
-    available = monitor.get("status") == "AVAILABLE" and all(
-        fresh(monitor.get(key), now, 10)
-        for key in ("pnlCapturedAt", "quoteSourceTime", "quoteReceivedAt")
-    )
-    return {
-        "net": money(monitor.get("netUnrealizedPnl")) if available else "Unavailable",
-        "gross": money(monitor.get("grossUnrealizedPnl")) if available else "Unavailable",
-        "commission": money(monitor.get("recordedCommission")) if available else "Unavailable",
-        "closing_cost": "Unavailable",
-        "tone": direction(monitor.get("netUnrealizedPnl")) if available else "neutral",
     }
 
 

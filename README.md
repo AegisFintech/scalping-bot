@@ -15,28 +15,21 @@ It compares frozen observed demo opportunities, checks archived quote integrity,
 and reports missing paths and unknown economics explicitly. It does not change
 trading, claim exact counterfactual net returns, or automatically promote a strategy.
 
-The current source policy is `0.3.0-fade-limit.3`, with provider prompt
-`entry-pair-v4`. The bot is intended to operate continuously whenever the broker
-session is open: it keeps evaluating fresh opportunities and resumes after
-normal temporary failures or scheduled closures.
+The current source policy is `0.4.0-breakout-scalp.1`, prompt `entry-pair-v5`,
+with subscription Codex proposing two breakout prices. Deterministic code preserves
+those prices and owns STOP_LIMIT/GTC/OCO, native quick TP, ATR protection and
+shared dynamic 1% setup sizing. See [current release](docs/breakout-scalp-release-report.md).
+The bot operates continuously during the broker session, waiting safely when
+orders/positions, cooldowns, stale data, unavailable sessions, reconciliation,
+protection or affordability prevent a new setup. Demo records daily/high-water
+losses without applying loss locks to admission; other modes retain them.
 
-Continuous operation does not mean forced trading. Active orders/positions,
-provider cooldowns, stale data, unavailable sessions, reconciliation or
-protection faults, affordability, and other safety gates must cause the bot to
-wait. Accepted GTC orders and protective maintenance continue during those
-waits. No AI response can choose risk, volume, broker precision, or live
-authority.
+The dashboard is a single read-only, full-window animated landscape desk. It has
+no sidebar, top navigation or separate history/diagnostics screens. Recorded
+decisions, current action, scoped closed net and independently verified broker
+P/L/protection remain visible. Backend authenticated operational controls are
+retained. See [lean dashboard and configuration](docs/lean-dashboard-report.md).
 
-Demo development retains the shared 1% current-equity setup ceiling, while daily
-and high-water losses remain recorded without blocking demo admission. Other
-modes retain their loss limits. [Current policy](docs/demo-development-risk-report.md).
-EPRToken returns only buy/sell entry prices using `entry-pair-v4`, prioritizing
-nearby M1 support/resistance and candle-based order blocks. See the
-[entry guidance report](docs/nearby-order-block-report.md). The script
-binds identity/time locally and calculates fee-buffered TP, double SL and position
-size. Spread, ATR distance, model target-room and daily order-count filters are
-removed; broker, risk, data-integrity and lifecycle requirements remain.
-See [the change and retained constraints](docs/direct-entry-report.md).
 Accepted strategy-owned pending orders are **good till cancelled (GTC)**, without
 timer expiry. The loop is analyze → pending entry pair → fill/cancel peer →
 SL/TP close → fresh analysis. No paid refresh runs while orders or a position
@@ -63,17 +56,14 @@ is a synthetic software check, not evidence of strategy performance.
 
 ![Dashboard overview](docs/images/persistent-order-loop.png)
 
-The Streamlit dashboard has **Overview**, **Trade history**, and **Diagnostics**.
-Overview shows operating state and reasons, fresh equity and net P&L, drawdown,
-remaining budget, active exposure and the latest decision/execution. Read-only
-snapshots refresh in a background worker every ten seconds; small live sections
-update independently while navigation and control inputs stay in place.
-Light and dark themes retain readable contrast. Financial observations older
-than 30 seconds are withheld.
-The overview screenshots show the current fixed-risk policy. Money values use
-the policy reported by execution; missing policy data is shown as unavailable.
-Prompts, analytics, provider details and infrastructure live in diagnostics.
-Authenticated pause and emergency controls remain available in the sidebar.
+The dashboard is one full-window landscape page: recorded decisions, observed
+current action, completed charts, reconciled equity and separate realized/open net
+P/L. Browser polling shares one bounded background reader; stale or unavailable
+evidence is withheld. The animated DOM persists across updates. No sidebar,
+settings forms, top navigation or separate history/diagnostics pages remain.
+Authenticated operational controls remain on the execution API.
+The screenshots below document earlier releases; current behavior and validation
+are in the [lean desk report](docs/lean-dashboard-report.md).
 
 [Trade history screenshot](docs/images/equity-sizing-history-light.png)
 
@@ -149,15 +139,15 @@ with a polling decision loop, not institutional HFT. `DEFERRED` means waiting;
 
 ## Configuration and migration
 
-The normal [.env.sample](.env.sample) has **19 settings**.
+The normal [.env.sample](.env.sample) has **16 settings**.
 It contains deployment identity, credentials/endpoints and explicit trading authorization. Stable internals are fixed in a typed policy, not another
 operator tuning file. Conflicting legacy overrides produce errors naming keys
 without printing values. Broker symbol/contract metadata remains authoritative.
-`AI_MODEL=gpt-6.1-sol` is explicit; other AI and strategy tuning is fixed in
-code. The authorized local migration reduced the populated `.env` from **176 to
+The exact Codex model, AI and strategy policy are fixed in reviewed code. Optional
+observability is deployment-only configuration. The authorized local migration reduced the populated `.env` from **176 to
 24** entries after removing the obsolete fixed-dollar notional setting, preserving all other values. Its
 four additional entries preserve deployment credentials. See the
-[current migration and rollout evidence](docs/equity-sizing-recovery-report.md).
+[historical migration evidence](docs/equity-sizing-recovery-report.md).
 
 For an existing installation, **do not overwrite `.env`**. Read the
 [configuration inventory and migration instructions](docs/configuration.md), then:

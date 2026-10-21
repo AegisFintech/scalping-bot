@@ -32,5 +32,15 @@ export default tseslint.config(
   {
     ...tseslint.configs.disableTypeChecked,
     files: ["apps/dashboard/assets/*.mjs"],
+    languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions,
+      globals: {
+        document: "readonly",
+        window: "readonly",
+        fetch: "readonly",
+        AbortSignal: "readonly",
+        setTimeout: "readonly",
+      },
+    },
   },
 );

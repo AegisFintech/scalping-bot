@@ -1,3 +1,14 @@
+# ISSUE-346 — Landscape-only dashboard and lean configuration
+
+The operator explicitly removed the sidebar, top navigation, Trade history and
+Diagnostics pages. The landscape desk is the only dashboard view and is read-only;
+authenticated backend emergency/pause controls remain available operationally.
+This supersedes the older three-view/native control-form presentation requirement.
+The desk now runs directly on the existing FastAPI/Uvicorn stack; Streamlit and its unused UI dependencies are removed. Keep bounded shared polling, verified scoped data, separate modes and explicit stale or unavailable values. The normal template has 16 identity/credential/authorization assignments;
+model/risk/strategy policy is versioned code, optional monitoring is deployment
+configuration. Read `docs/lean-dashboard-report.md`. Preserve active records,
+research tools/registrations, migrations and deployment/rollback artifacts.
+
 # ISSUE-303 — October 19 Codex production authorization
 
 The operator explicitly requested “use codex instead”. Production entry proposals

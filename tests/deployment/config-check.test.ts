@@ -30,11 +30,12 @@ function check(content: string, args: readonly string[] = []) {
 }
 
 describe("concise environment and read-only preflight", () => {
-  it("keeps the template concise, stopped and explicit about the exact model", () => {
+  it("keeps the template concise and stopped with the exact model fixed in code", () => {
     const template = parse(readFileSync(".env.sample"));
     expect(Object.keys(template).sort()).toEqual([...OPERATOR_KEYS].sort());
-    expect(Object.keys(template)).toHaveLength(19);
-    expect(template.AI_MODEL).toBe("gpt-6.1-sol");
+    expect(Object.keys(template)).toHaveLength(16);
+    expect(template.AI_MODEL).toBeUndefined();
+    expect(resolveRuntimeEnvironment(template).AI_MODEL).toBe("gpt-6.1-sol");
     expect(template).toMatchObject({
       TRADING_MODE: "paper",
       EMERGENCY_STOP: "true",
@@ -56,7 +57,7 @@ describe("concise environment and read-only preflight", () => {
     expect(JSON.parse(result.output)).toMatchObject({
       valid: true,
       scope: "execution_configuration",
-      normalSettings: 19,
+      normalSettings: 16,
       fileSettings: 3,
       requestedModel: "gpt-6.1-sol",
     });

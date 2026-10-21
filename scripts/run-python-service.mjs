@@ -8,8 +8,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const service = process.argv[2];
 const definitions = {
   analytics: {
-    executable: path.join(root, ".venv/bin/uvicorn"),
+    executable: path.join(root, ".venv/bin/python"),
     arguments: [
+      "-m",
+      "uvicorn",
       "python.analytics.api:app",
       "--host",
       "127.0.0.1",
@@ -18,18 +20,16 @@ const definitions = {
     ],
   },
   dashboard: {
-    executable: path.join(root, ".venv/bin/streamlit"),
+    executable: path.join(root, ".venv/bin/python"),
     arguments: [
-      "run",
-      "apps/dashboard/app.py",
-      "--server.headless",
-      "true",
-      "--server.address",
+      "-m",
+      "uvicorn",
+      "apps.dashboard.app:app",
+      "--no-access-log",
+      "--host",
       "127.0.0.1",
-      "--server.port",
+      "--port",
       process.env.DASHBOARD_PORT ?? "8501",
-      "--browser.gatherUsageStats",
-      "false",
     ],
   },
 };

@@ -1,0 +1,143 @@
+{
+  "issue": 346,
+  "qualificationDirectory": "/tmp/scalper-qualification-DsSgG9/checks",
+  "qualified": true,
+  "sourceSha256": "d7ca4417ed2091e3a8c7d49085e9bf5be44a74ad622325bbda5b04a206ee6904",
+  "tests": {
+    "node": 943,
+    "postgresql": 94,
+    "python": 339,
+    "total": 1376
+  },
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "previewBrowser": {
+    "deskStateRetainedAcrossTicks": true,
+    "1920x1080": true,
+    "1440x900": true,
+    "1280x720": true,
+    "390x844": true,
+    "readOnlyWithoutNavigationOrSidebar": true,
+    "lightSchemeCompatible": true,
+    "transportFailureWithdrawsEvidence": true,
+    "transportAutomaticallyRecovers": true,
+    "pageErrors": 0,
+    "htmlInjectionBlocked": true,
+    "duplicatePollsDoNotCreateEvents": true,
+    "lateEventsSorted": true,
+    "independentClientFreshness": true,
+    "disconnectedClientFailsClosed": true,
+    "partialPayloadFailsClosed": true,
+    "eventRetentionBounded": true,
+    "reducedMotion": true,
+    "fullscreen": true,
+    "harnessPageErrors": 0,
+    "harnessExternalRequests": 0
+  },
+  "continuousAnimationAcrossPolls": true,
+  "assetFormatting": true,
+  "dependencySetMatchesLock": true,
+  "pipCheck": true,
+  "templateSettings": 16,
+  "environment": {
+    "beforeKeys": 26,
+    "afterKeys": 19,
+    "removed": [
+      "AI_MODEL",
+      "AI_BASE_URL",
+      "AI_API_KEY",
+      "GH_USER",
+      "GH_REPO",
+      "GH_PAT",
+      "BETTERSTACK_HEARTBEAT_URL"
+    ],
+    "retainedValuesUnchanged": true,
+    "effectiveExecutionConfigurationEqual": true,
+    "modelDefaultEqual": true,
+    "mode0600": true,
+    "applied": true
+  },
+  "protectedEnvironmentPolicyAndStartupChecks": true,
+  "graphifyAstUpdated": true,
+  "tradingMutationSubmitted": false
+}

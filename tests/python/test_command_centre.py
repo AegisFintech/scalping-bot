@@ -10,8 +10,6 @@ from apps.dashboard.command_model import (
     direction,
     levels,
     number,
-    open_money,
-    safe,
 )
 
 NOW = datetime(2026, 10, 20, 8, tzinfo=UTC)
@@ -48,29 +46,6 @@ def test_pending_and_inference_are_observed_never_synthesized() -> None:
     assert a["active"] == "orders" and "broker trigger" in a["next"]
 
 
-def test_open_pnl_requires_current_independent_broker_evidence() -> None:
-    monitor = {
-        "status": "AVAILABLE",
-        "netUnrealizedPnl": "-2.3",
-        "grossUnrealizedPnl": "1",
-        "recordedCommission": "-3.3",
-        **{key: NOW.isoformat() for key in ["pnlCapturedAt", "quoteSourceTime", "quoteReceivedAt"]},
-    }
-    value = open_money({"openPositionMonitor": monitor}, NOW)
-    assert value == {
-        "net": "-2.30",
-        "gross": "1.00",
-        "commission": "-3.30",
-        "closing_cost": "Unavailable",
-        "tone": "negative",
-    }
-    for key in ["pnlCapturedAt", "quoteSourceTime", "quoteReceivedAt"]:
-        for delta in [-11, 1]:
-            bad = {**monitor, key: (NOW + timedelta(seconds=delta)).isoformat()}
-            assert open_money({"openPositionMonitor": bad}, NOW)["net"] == "Unavailable"
-    assert open_money({}, NOW)["commission"] == "Unavailable"
-
-
 def test_proposed_intended_and_verified_levels_remain_distinct() -> None:
     s = {
         "evidence": {"plan": {"buy_stop": "4010", "sell_stop": "4000"}},
@@ -90,17 +65,15 @@ def test_proposed_intended_and_verified_levels_remain_distinct() -> None:
     assert not any("broker" in v["label"] for v in levels(s, NOW + timedelta(seconds=11)))
 
 
-def test_nonfinite_numbers_and_html_are_not_trusted() -> None:
+def test_nonfinite_numbers_are_not_trusted() -> None:
     assert number("NaN") is None and number("Infinity") is None
     assert direction("-1") == "negative" and direction(None) == "neutral"
-    assert "<script>" not in safe('<script>alert("x")</script>')
 
 
 def test_command_reads_keep_scope_and_opaque_ids_internal() -> None:
     read = Mock(
         side_effect=[
             [{"analysis_id": "internal-a", "candle_snapshot_id": "internal-c"}],
-            [],
             [],
             [],
             [],

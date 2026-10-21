@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-from apps.dashboard.storage_status import local_storage_status
 from python.operations.storage import (
     copy_verified,
     database_identity,
@@ -231,29 +230,6 @@ def test_historical_restore_cannot_activate_cleanup(tmp_path: Path) -> None:
     environment = pg_environment(url + "?sslmode=require")
     assert environment["PGSSLMODE"] == "verify-full"
     assert environment["PGPASSWORD"] == "private"
-
-
-def test_local_health_is_bounded_redacted_and_expires(tmp_path: Path) -> None:
-    now = datetime.now(UTC)
-    durable_json(
-        tmp_path / "database-status.json",
-        {
-            "version": 1,
-            "observedAt": now.isoformat(),
-            "state": "waiting",
-            "reason": "DATABASE_COMPUTE_QUOTA",
-            "private": "never display",
-        },
-    )
-    value = local_storage_status(tmp_path, now)
-    assert value["database"]["reason"] == "DATABASE_COMPUTE_QUOTA"
-    assert "private" not in json.dumps(value)
-    assert value["storage"]["state"] == "unavailable"
-    assert (
-        local_storage_status(tmp_path, now + timedelta(seconds=91))["database"]["state"] == "stale"
-    )
-    (tmp_path / "database-status.json").write_text("x" * 17000)
-    assert local_storage_status(tmp_path, now)["database"]["state"] == "unavailable"
 
 
 def test_export_rejects_existing_destination_before_encryption(tmp_path: Path) -> None:

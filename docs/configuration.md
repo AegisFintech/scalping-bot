@@ -1,7 +1,7 @@
 # Configuration and migration
 
 Current release `0.4.0-breakout-scalp.1` uses the reviewed breakout STOP_LIMIT policy in
-`packages/config/src/policy.ts`. The normal template has 19 assignments (Codex local token replaces the API endpoint/key), previously 176. These include secrets and deployment identity;
+`packages/config/src/policy.ts`. The normal template has 16 assignments, previously 176. The model is already fixed in reviewed code; optional monitoring belongs to advanced deployment configuration. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration
 reduced the populated environment from 176 to 24 entries: the 20 normal keys plus
 four retained deployment credentials/identifiers. No credentials were changed.
@@ -55,13 +55,22 @@ remain enforced. See [rollout and rollback](demo-development-risk-report.md).
 
 ## Normal choices
 
-| Purpose                                       | Keys                                                                                                                   |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Instance and account identity                 | `INSTANCE_ID`, `ACCOUNT_ID`, `ACCOUNT_KEY`, `TRADING_SYMBOL`                                                           |
-| Explicit operation                            | `TRADING_MODE`, `EMERGENCY_STOP`, `AUTOMATIC_ANALYSIS_ENABLED`, `DEMO_TRADING_ENABLED`, `DEMO_TRADING_ACKNOWLEDGEMENT` |
-| cTrader credentials                           | `CTRADER_CLIENT_ID`, `CTRADER_CLIENT_SECRET`, `CTRADER_ACCESS_TOKEN`, `CTRADER_REFRESH_TOKEN`                          |
-| Codex subscription transport                  | `CODEX_ENTRY_LOCAL_TOKEN`, `AI_MODEL`                                                                                  |
-| Persistence, controls, optional observability | `DATABASE_URL`, `DASHBOARD_CONTROL_TOKEN`, `BETTERSTACK_SOURCE_TOKEN`, `BETTERSTACK_INGESTING_HOST`                    |
+ISSUE-346 removes presentation-only settings and redundant model assignment.
+The dashboard is now a single read-only desk; `DASHBOARD_CONTROL_TOKEN` remains
+necessary for authenticated execution-service operational controls, even though
+there is no browser control form. Optional `BETTERSTACK_SOURCE_TOKEN` and
+`BETTERSTACK_INGESTING_HOST` remain supported deployment keys and populated
+monitoring is retained. Do not hard-code secrets, broker/account identity or
+trading authorization. Existing credentials never authorize live execution.
+See [cleanup inventory and environment-equivalence proof](lean-dashboard-report.md).
+
+| Purpose                                         | Keys                                                                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Instance and account identity                   | `INSTANCE_ID`, `ACCOUNT_ID`, `ACCOUNT_KEY`, `TRADING_SYMBOL`                                                           |
+| Explicit operation                              | `TRADING_MODE`, `EMERGENCY_STOP`, `AUTOMATIC_ANALYSIS_ENABLED`, `DEMO_TRADING_ENABLED`, `DEMO_TRADING_ACKNOWLEDGEMENT` |
+| cTrader credentials                             | `CTRADER_CLIENT_ID`, `CTRADER_CLIENT_SECRET`, `CTRADER_ACCESS_TOKEN`, `CTRADER_REFRESH_TOKEN`                          |
+| Codex subscription transport                    | `CODEX_ENTRY_LOCAL_TOKEN`                                                                                              |
+| Persistence and execution-control authorization | `DATABASE_URL`, `DASHBOARD_CONTROL_TOKEN`                                                                              |
 
 Blank cTrader host/port use the official selected demo/live connection host and
 port 5036. Host, port, connection environment and optional access-token expiry
@@ -73,14 +82,14 @@ No setting can make this build submit live orders. Shadow uses a separately
 specified connection environment without submission authority. An API key or
 broker token is not an authorization to trade.
 
-The model pin is `AI_MODEL=gpt-6.1-sol`; other nonempty values fail policy checks.
+The model pin `gpt-6.1-sol` is supplied by versioned `FIXED_DEFAULTS`; no `AI_MODEL` assignment is needed. A retained matching legacy value is compatible; other nonempty values fail policy checks.
 Production uses the isolated subscription Codex worker, not retained API credentials.
 Apply additive migration `0029_codex_context_model.sql` before matching AI/execution
 builds; preserve all old rows/cooldowns. Returned identity/usage/cost stay null when
 unattested. See [provider integration and deployment](codex-production-report.md).
 The production scenario
 uses structured numeric history (up to 120 M1 / 144 M5 / 288 M15 completed bars),
-production prompt `entry-pair-v4` and low reasoning within the existing
+production prompt `entry-pair-v5` and low reasoning within the existing
 90-second deadline. The worker accepts at most 8,192 bytes of response text;
 actual token usage is unavailable. Historical charts remain validated local audit artifacts;
 new numeric analyses generate display charts only on demand. Request bounds,

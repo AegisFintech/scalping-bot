@@ -15,17 +15,13 @@ const definitions = {
   ],
   dashboard: [
     "-m",
-    "streamlit",
-    "run",
-    path.join(root, "apps/dashboard/app.py"),
-    "--server.headless",
-    "true",
-    "--server.address",
+    "uvicorn",
+    "apps.dashboard.app:app",
+    "--no-access-log",
+    "--host",
     "127.0.0.1",
-    "--server.port",
+    "--port",
     process.env.DASHBOARD_PORT ?? "8501",
-    "--browser.gatherUsageStats",
-    "false",
   ],
 };
 if (!Object.hasOwn(definitions, service))

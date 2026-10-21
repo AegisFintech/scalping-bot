@@ -1,4 +1,4 @@
-"""Bounded read-only polling. Workers never call Streamlit or mutate broker state."""
+"""Bounded read-only polling. Workers never mutate broker state."""
 
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor

@@ -76,13 +76,6 @@ def command_data(
            ORDER BY t.closed_at DESC,t.id DESC LIMIT 300) t ORDER BY closed_at""",
         scope,
     )
-    data["activity"] = rows(
-        """SELECT analysis_time,state,rejection_reasons,
-          to_jsonb(ar)->>'deferral_reason' AS deferral_reason
-          FROM analysis_runs ar WHERE account_id=%s AND symbol_id=%s AND mode=%s
-          ORDER BY analysis_time DESC LIMIT 8""",
-        scope,
-    )
     data["market"] = rows(
         """SELECT bid,ask,spread,source_time,complete,discontinuity,imbalance_top5
         FROM order_book_snapshots WHERE symbol_id=%s ORDER BY source_time DESC LIMIT 1""",
