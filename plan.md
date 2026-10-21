@@ -2,6 +2,28 @@
 
 ## Scope
 
+### ISSUE-354 — Isolated fast-scalping candidate scanner
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/354.
+- Dependencies: #348/#351 causal context; #349 comparison boundary.
+- Acceptance: causal expanded-history pullback/reclaim/compression candidates, Decimal/tick geometry, explicit modeled cost rejection, independently qualified same-family BUY/SELL pair only, versioned schemas and private bounded CLI; positive/failure/causality tests, full qualification, pushed PR. No running strategy, risk, GTC or historical changes.
+- Status: implemented; full qualification passed (974 Node / 94 isolated PostgreSQL / 404 Python, all quality/security gates). Bounded synthetic and saved-broker-snapshot failure smoke passed; source fingerprint and exact commands/results recorded in the report. Commit/push and hosted PR checks follow. Research only, always HOLD; no profitability or second-long fill claim.
+- Report: [definitions and limitations](docs/fast-scalping-candidate-report.md).
+
+### ISSUE-355 — Registered fast-scalping comparison
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/355.
+- Dependencies: #354 and #349; strict future registration and frozen code before outcomes.
+- Acceptance: extend causal paired research for these entry types, record all snapshots/nonfills/open/gaps/OCO ambiguity, prove timing and cost provenance, stress latency/spread and report frequency/net expectancy only where evidence supports it. Preserve null unknown economics and no promotion authority.
+- Status: planned; no new observation window or candidate inference/collection activated.
+
+### ISSUE-356 — Structural exits and scalp profit protection
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/356.
+- Dependencies: #354 and prospective executable path coverage.
+- Acceptance: separate frozen exit comparisons, executable MFE/MAE, complete censoring and safe unknown close-command behavior; reviewed economic release required before demo integration. Keep shared dynamic 1% ceiling and native protection.
+- Status: planned; no exit behavior changed.
+
 ### ISSUE-351 — Operator-authorized SMC / DOM demo activation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/351.

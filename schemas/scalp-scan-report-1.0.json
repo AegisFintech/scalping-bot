@@ -1,0 +1,180 @@
+{
+  "$defs": {
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "setup": {
+          "enum": ["TREND_PULLBACK", "SWEEP_RECLAIM", "COMPRESSION_BREAKOUT"],
+          "title": "Setup",
+          "type": "string"
+        },
+        "side": {
+          "enum": ["BUY", "SELL"],
+          "title": "Side",
+          "type": "string"
+        },
+        "order_type": {
+          "enum": ["LIMIT", "STOP_LIMIT"],
+          "title": "Order Type",
+          "type": "string"
+        },
+        "entry": {
+          "title": "Entry",
+          "type": "string"
+        },
+        "invalidation": {
+          "title": "Invalidation",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "gross_reward_to_stop": {
+          "title": "Gross Reward To Stop",
+          "type": "string"
+        },
+        "modeled_net_reward_to_cost": {
+          "title": "Modeled Net Reward To Cost",
+          "type": "string"
+        },
+        "source_available_at": {
+          "title": "Source Available At",
+          "type": "string"
+        },
+        "admission_until": {
+          "title": "Admission Until",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "setup",
+        "side",
+        "order_type",
+        "entry",
+        "invalidation",
+        "target",
+        "gross_reward_to_stop",
+        "modeled_net_reward_to_cost",
+        "source_available_at",
+        "admission_until",
+        "reasons"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "scalp-scan-report-1.0",
+      "default": "scalp-scan-report-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "definitions_version": {
+      "const": "scalp-candidates-1.0",
+      "default": "scalp-candidates-1.0",
+      "title": "Definitions Version",
+      "type": "string"
+    },
+    "execution_authority": {
+      "const": false,
+      "default": false,
+      "title": "Execution Authority",
+      "type": "boolean"
+    },
+    "promotion": {
+      "const": "HOLD",
+      "default": "HOLD",
+      "title": "Promotion",
+      "type": "string"
+    },
+    "input_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Input Sha256",
+      "type": "string"
+    },
+    "observed_at": {
+      "title": "Observed At",
+      "type": "string"
+    },
+    "status": {
+      "enum": ["OCO_CANDIDATE", "NO_PAIR", "REJECTED"],
+      "title": "Status",
+      "type": "string"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/Candidate"
+      },
+      "maxItems": 6,
+      "title": "Candidates",
+      "type": "array"
+    },
+    "pair": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pair"
+    },
+    "counterfactual_net_pnl": {
+      "default": null,
+      "title": "Counterfactual Net Pnl",
+      "type": "null"
+    },
+    "limitations": {
+      "default": [
+        "RESEARCH_ONLY_NOT_EXECUTABLE",
+        "MODELED_COSTS_NOT_EXACT_VOLUME_BROKER_EVIDENCE",
+        "BROKER_DEPTH_NOT_CONSOLIDATED_ORDER_FLOW",
+        "NO_FILLS_OR_PROFITABILITY_INFERRED",
+        "ADMISSION_EXPIRY_DOES_NOT_CANCEL_ACCEPTED_GTC"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "input_sha256",
+    "observed_at",
+    "status",
+    "reasons",
+    "candidates",
+    "pair"
+  ],
+  "title": "ScanReport",
+  "type": "object"
+}
