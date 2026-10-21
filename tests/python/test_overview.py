@@ -1,5 +1,4 @@
 import importlib.util
-import json
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -215,40 +214,6 @@ def test_demo_budget_uses_current_equity_without_erasing_recorded_locks() -> Non
     )
 
 
-def test_rendered_dashboard_withholds_unavailable_data_and_rejects_unauthorized_control(
-    monkeypatch,
-) -> None:  # type: ignore[no-untyped-def]
-    import httpx
-    from streamlit.testing.v1 import AppTest
-
-    monkeypatch.syspath_prepend(str(Path("apps/dashboard").resolve()))
-    monkeypatch.setenv("ACCOUNT_KEY", "unconfigured")
-    monkeypatch.delenv("DASHBOARD_CONTROL_TOKEN", raising=False)
-
-    def unavailable(*args, **kwargs):  # type: ignore[no-untyped-def]
-        raise httpx.ConnectError("fixture unavailable")
-
-    def forbidden(*args, **kwargs):  # type: ignore[no-untyped-def]
-        raise AssertionError("unauthorized control reached transport")
-
-    monkeypatch.setattr(httpx, "get", unavailable)
-    monkeypatch.setattr(httpx, "post", forbidden)
-    from apps.dashboard.landscape import landscape_component
-
-    landscape_component.clear()
-    app = AppTest.from_file(Path("apps/dashboard/app.py").resolve(), default_timeout=15).run()
-    assert not app.exception
-    component = app.get("bidi_component")[0]
-    payload = json.loads(component.proto.json)
-    assert payload["available"] is False
-    assert all(v["text"] == "Unavailable" for v in payload["values"].values())
-    app.button[1].click().run()
-    assert not app.exception
-    assert any("authorization are required" in error.value for error in app.error)
-    app.radio[0].set_value("Trade history").run()
-    assert not app.exception
-
-
 def test_operational_storage_failure_is_blocked_even_after_successful_startup() -> None:
     state, detail = overview.operating_state(
         {
@@ -339,38 +304,6 @@ def test_missing_expired_consumed_and_overdue_maps_do_not_show_monitoring() -> N
         )[0]
         == "Monitoring"
     )
-
-
-def test_rendered_provider_outage_is_a_warning_and_labels_local_checks(monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    from streamlit.testing.v1 import AppTest
-
-    monkeypatch.syspath_prepend(str(Path("apps/dashboard").resolve()))
-    from apps.dashboard import background
-
-    snapshot = {
-        "captured_at": datetime.now(UTC),
-        "status": {
-            "mode": "demo",
-            "startupChecksPassed": True,
-            "automaticAnalysisEnabled": True,
-            "scenarioContext": {"state": "FAILED", "reason": "AI_PROVIDER_TIMEOUT"},
-            "lastCycle": {"outcome": "DEFERRED", "reasonCodes": ["SCENARIO_REFRESH_STARTED"]},
-        },
-    }
-    monkeypatch.setattr(
-        background.BackgroundReader,
-        "poll",
-        lambda self: background.PollResult(snapshot, "ready", 1),
-    )
-    from apps.dashboard.landscape import landscape_component
-
-    landscape_component.clear()
-    app = AppTest.from_file(Path("apps/dashboard/app.py").resolve(), default_timeout=15).run()
-    assert not app.exception
-    payload = json.loads(app.get("bidi_component")[0].proto.json)
-    assert payload["title"] == "Entries blocked · model unavailable"
-    assert "Latest execution check: DEFERRED" in payload["detail"]
-    assert "Last completed analysis" not in payload["detail"]
 
 
 def test_gtc_pending_and_position_lifecycle_labels() -> None:

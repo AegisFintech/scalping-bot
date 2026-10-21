@@ -13,10 +13,6 @@ warn_unreachable = true
 packages = ["python"]
 plugins = ["pydantic.mypy"]
 
-[[tool.mypy.overrides]]
-module = ["pandas", "plotly", "plotly.*"]
-ignore_missing_imports = true
-
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
 addopts = "-ra --strict-markers"

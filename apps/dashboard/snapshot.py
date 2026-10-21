@@ -11,8 +11,8 @@ import psycopg
 from psycopg.rows import dict_row
 
 from apps.dashboard.command_data import command_data
-from apps.dashboard.decision_inspector import DecisionViewError, open_position_monitor_view
 from apps.dashboard.landscape_data import landscape_events
+from apps.dashboard.position_monitor import DecisionViewError, open_position_monitor_view
 
 
 def api_url() -> str:
@@ -37,14 +37,14 @@ def api(path: str) -> dict[str, Any]:
     return value
 
 
-def load_snapshot(view: str) -> dict[str, Any]:
+def load_snapshot() -> dict[str, Any]:
     result: dict[str, Any] = {"captured_at": datetime.now(UTC), "warnings": []}
     try:
         status = api("/v1/status")
     except (httpx.HTTPError, ValueError):
         status = {"unavailable": True}
     result["status"] = status
-    if view == "Overview" and not status.get("unavailable"):
+    if not status.get("unavailable"):
         try:
             result["monitor"] = open_position_monitor_view(api("/v1/open-position-monitor"))
         except (httpx.HTTPError, ValueError, DecisionViewError):
@@ -90,96 +90,54 @@ def load_snapshot(view: str) -> dict[str, Any]:
             scope = (identity["account_id"], identity["symbol_id"], mode)
             # IDs are only bind parameters; presentation receives currency, not account IDs.
             data: dict[str, Any] = {"currency": identity["currency"]}
-            if view == "Overview":
-                daily = rows(
-                    "SELECT trading_day, current_equity, baseline_equity, loss_percent, "
-                    "realized_pnl, "
-                    "unrealized_pnl, locked_out, reconciled_at FROM daily_risk_state "
-                    "WHERE account_id=%s "
-                    "ORDER BY trading_day DESC LIMIT 1",
+            daily = rows(
+                "SELECT trading_day, current_equity, baseline_equity, loss_percent, "
+                "realized_pnl, "
+                "unrealized_pnl, locked_out, reconciled_at FROM daily_risk_state "
+                "WHERE account_id=%s "
+                "ORDER BY trading_day DESC LIMIT 1",
+                (scope[0],),
+            )
+            data["daily"] = daily[0] if daily else {}
+            data["capital"] = {}
+            if rows("SELECT to_regclass('capital_risk_state') AS present")[0]["present"]:
+                capital = rows(
+                    "SELECT risk_multiplier, drawdown_percent, updated_at "
+                    "FROM capital_risk_state WHERE account_id=%s",
                     (scope[0],),
                 )
-                data["daily"] = daily[0] if daily else {}
-                data["capital"] = {}
-                if rows("SELECT to_regclass('capital_risk_state') AS present")[0]["present"]:
-                    capital = rows(
-                        "SELECT risk_multiplier, drawdown_percent, updated_at "
-                        "FROM capital_risk_state WHERE account_id=%s",
-                        (scope[0],),
-                    )
-                    data["capital"] = capital[0] if capital else {}
-                    data["capital"]["risk_policy"] = status.get("riskPolicy", {})
-                    if "remainingCapitalRiskPercent" in status:
-                        data["capital"]["risk_cap_percent"] = status["remainingCapitalRiskPercent"]
-                data["positions"] = rows(
-                    """SELECT p.side, p.state, p.volume, p.entry_price,
-                        CASE WHEN og.mode='paper' THEN p.stop_loss
-                          ELSE pp.stop_loss END AS stop_loss,
-                        CASE WHEN og.mode='paper' THEN p.take_profit
-                          ELSE pp.take_profit END AS take_profit,
-                        CASE WHEN og.mode='paper' THEN 'SIMULATED'
-                          ELSE pp.status END AS protection_status,
-                        pp.observed_at AS protection_observed_at, p.updated_at
-                    FROM positions p JOIN order_groups og ON og.id=p.order_group_id
-                    LEFT JOIN position_protection pp ON pp.position_id=p.id
-                    WHERE p.account_id=%s AND p.symbol_id=%s AND og.mode=%s AND p.state <> 'CLOSED'
-                    ORDER BY p.updated_at DESC LIMIT 20""",
-                    scope,
-                )
-                data["orders"] = rows(
-                    """SELECT o.side, o.state, o.entry_price, o.stop_loss,
-                        o.take_profit, o.normalized_volume AS volume, o.time_in_force, o.expires_at
-                    FROM orders o JOIN order_groups og ON og.id=o.order_group_id
-                    JOIN analysis_runs ar ON ar.id=og.analysis_id
-                    WHERE ar.account_id=%s AND ar.symbol_id=%s AND og.mode=%s
-                    AND o.state IN
-                    ('INTENT','SUBMITTING','PENDING','PARTIALLY_FILLED','CANCEL_PENDING','UNKNOWN')
-                    ORDER BY o.updated_at DESC LIMIT 20""",
-                    scope,
-                )
-                data["latest"] = rows(
-                    """SELECT ar.analysis_time, ar.state AS analysis,
-                        CASE WHEN ar.state='DEFERRED'
-                          THEN jsonb_build_array(to_jsonb(ar)->>'deferral_reason')
-                          ELSE ar.rejection_reasons END AS reasons, og.state AS order_group,
-                    (SELECT count(*) FROM fills f JOIN orders o ON o.id=f.order_id
-                        WHERE o.order_group_id=og.id) AS fills,
-                    (SELECT sum(t.realized_pnl) FROM trades t
-                        WHERE t.order_group_id=og.id) AS closed_net_pnl
-                    FROM analysis_runs ar LEFT JOIN order_groups og ON og.analysis_id=ar.id
-                    WHERE ar.account_id=%s AND ar.symbol_id=%s AND ar.mode=%s
-                    ORDER BY ar.analysis_time DESC LIMIT 1""",
-                    scope,
-                )
-                data.update(command_data(rows, scope))
-                data["events"] = landscape_events(rows, scope)
-            else:
-                data["trades"] = rows(
-                    """SELECT t.closed_at, t.direction, t.realized_pnl AS net_pnl,
-                        t.fees, t.strategy_version,
-                        COALESCE((
-                          SELECT o.execution_order_type FROM orders o
-                          WHERE o.order_group_id = og.id AND o.state = 'FILLED'
-                          LIMIT 1
-                        ), 'STOP') AS execution_order_type,
-                        COALESCE((
-                          SELECT ef.price - o.entry_price
-                          FROM fills ef JOIN orders o ON o.id = ef.order_id
-                          WHERE o.order_group_id = og.id
-                          ORDER BY ef.occurred_at ASC LIMIT 1
-                        ), 0)::numeric AS entry_slip,
-                        COALESCE((
-                          SELECT xf.price - o.stop_loss
-                          FROM fills xf JOIN orders o ON o.id = xf.order_id
-                          WHERE o.order_group_id = og.id AND o.state = 'FILLED'
-                          ORDER BY xf.occurred_at DESC LIMIT 1
-                        ), 0)::numeric AS stop_overshoot
-                    FROM trades t JOIN order_groups og ON og.id=t.order_group_id
-                    JOIN analysis_runs ar ON ar.id=og.analysis_id
-                    WHERE ar.account_id=%s AND ar.symbol_id=%s AND t.mode=%s
-                    ORDER BY t.closed_at DESC LIMIT 1000""",
-                    scope,
-                )
+                data["capital"] = capital[0] if capital else {}
+                data["capital"]["risk_policy"] = status.get("riskPolicy", {})
+                if "remainingCapitalRiskPercent" in status:
+                    data["capital"]["risk_cap_percent"] = status["remainingCapitalRiskPercent"]
+            data["positions"] = rows(
+                """SELECT p.side, p.state, p.volume, p.entry_price,
+                    CASE WHEN og.mode='paper' THEN p.stop_loss
+                      ELSE pp.stop_loss END AS stop_loss,
+                    CASE WHEN og.mode='paper' THEN p.take_profit
+                      ELSE pp.take_profit END AS take_profit,
+                    CASE WHEN og.mode='paper' THEN 'SIMULATED'
+                      ELSE pp.status END AS protection_status,
+                    pp.observed_at AS protection_observed_at, p.updated_at
+                FROM positions p JOIN order_groups og ON og.id=p.order_group_id
+                LEFT JOIN position_protection pp ON pp.position_id=p.id
+                WHERE p.account_id=%s AND p.symbol_id=%s AND og.mode=%s AND p.state <> 'CLOSED'
+                ORDER BY p.updated_at DESC LIMIT 20""",
+                scope,
+            )
+            data["orders"] = rows(
+                """SELECT o.side, o.state, o.entry_price, o.stop_loss,
+                    o.take_profit, o.normalized_volume AS volume, o.time_in_force, o.expires_at
+                FROM orders o JOIN order_groups og ON og.id=o.order_group_id
+                JOIN analysis_runs ar ON ar.id=og.analysis_id
+                WHERE ar.account_id=%s AND ar.symbol_id=%s AND og.mode=%s
+                AND o.state IN
+                ('INTENT','SUBMITTING','PENDING','PARTIALLY_FILLED','CANCEL_PENDING','UNKNOWN')
+                ORDER BY o.updated_at DESC LIMIT 20""",
+                scope,
+            )
+            data.update(command_data(rows, scope))
+            data["events"] = landscape_events(rows, scope)
             result.update(data)
     except (psycopg.Error, ValueError):
         result["warnings"].append(

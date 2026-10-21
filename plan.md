@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-346 — Lean landscape-only panel and configuration cleanup
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/346.
+- Acceptance: remove sidebar/topbar/history/diagnostics and unreachable presentation code; edge-to-edge direct HTTP desk, stable polling/state/fail-closed values, remove exclusive dependencies, 16-key template and reviewed protected-file cleanup with effective configuration equivalence; full gates/browser evidence, pushed PR and dashboard-only rollout.
+- Dependencies: merged #345 and current breakout runtime. Preserve research registrations, ledger, migrations, credentials/identity/explicit authorization and backend controls.
+- Status: implemented and qualified: 943 Node / 94 PostgreSQL / 339 Python tests, all required gates/audits, real-browser/state/transport-failure checks and 26→19 protected-file cleanup with unchanged effective execution configuration. Source removes 5,614 dashboard lines and 21 unused Python packages; standard template is 16 keys. Dashboard-only artifact/hosted checks/rollout pending. Trading processes, records and research stay unchanged.
+- Report: [cleanup inventory, checks and rollback](docs/lean-dashboard-report.md).
+
 ### ISSUE-344 — Deploy the approved animated landscape dashboard
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/344.

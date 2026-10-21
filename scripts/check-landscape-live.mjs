@@ -74,7 +74,7 @@ try {
     "false",
   );
   assert.equal(await page.locator("#flow .stage").count(), 6);
-  results.nativeComponentStateRetainedAcrossTicks = true;
+  results.deskStateRetainedAcrossTicks = true;
   for (const [width, height] of [
     [1920, 1080],
     [1440, 900],
@@ -114,53 +114,45 @@ try {
     results[`${width}x${height}`] = true;
   }
   await page.setViewportSize({ width: 1440, height: 900 });
-  const toggle = page.getByTestId("stExpandSidebarButton");
-  if (await toggle.isVisible()) await toggle.click();
-  await page
-    .getByRole("textbox", { name: "Identity", exact: true })
-    .fill("UI verification");
-  await page
-    .getByRole("textbox", { name: "Reason", exact: true })
-    .fill("Unsubmitted browser verification");
-  await page.waitForTimeout(4300);
+  assert.equal(await page.getByRole("radio").count(), 0);
+  assert.equal(await page.getByRole("textbox").count(), 0);
+  assert.equal(await page.getByTestId("stSidebar").count(), 0);
+  assert.equal(await page.getByTestId("stHeader").count(), 0);
+  const edge = await page.locator("#desk").boundingBox();
+  assert.ok(
+    Math.abs(edge.x) <= 1 && Math.abs(edge.y) <= 1,
+    "desk not edge to edge",
+  );
+  assert.equal(await page.getByTestId("stException").count(), 0);
+  results.readOnlyWithoutNavigationOrSidebar = true;
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.waitForTimeout(2300);
   assert.equal(
     await page
-      .getByRole("textbox", { name: "Identity", exact: true })
-      .inputValue(),
-    "UI verification",
+      .locator("#desk")
+      .evaluate(
+        (el) => getComputedStyle(el.ownerDocument.body).backgroundColor,
+      ),
+    "rgb(9, 11, 18)",
   );
+  results.lightSchemeCompatible = true;
+  await page.route("**/api/desk", (route) => route.abort());
+  await page.waitForFunction(
+    () =>
+      document.getElementById("status-health")?.textContent === "Unavailable",
+  );
+  assert.equal(await page.locator("#equity").textContent(), "Unavailable");
   assert.equal(
-    await page
-      .getByRole("textbox", { name: "Reason", exact: true })
-      .inputValue(),
-    "Unsubmitted browser verification",
+    await page.locator("#action-title").textContent(),
+    "Data unavailable",
   );
-  const stop = page.getByRole("button", {
-    name: "Emergency stop",
-    exact: true,
-  });
-  const contrast = await stop.evaluate((el) => ({
-    bg: getComputedStyle(el).backgroundColor,
-    color: getComputedStyle(el).color,
-  }));
-  assert.equal(contrast.bg, "rgb(180, 35, 24)");
-  assert.equal(contrast.color, "rgb(255, 255, 255)");
-  results.unsubmittedControlsRetained = true;
-  results.emergencyControlContrast = true;
-  const collapse = page.getByTestId("stSidebarCollapseButton");
-  if (await collapse.isVisible()) await collapse.click();
-  await page.getByText("Trade history", { exact: true }).click();
-  await page.getByText("Closed trades", { exact: true }).waitFor();
-  assert.equal(await page.getByTestId("stException").count(), 0);
-  await page.getByText("Diagnostics", { exact: true }).click();
-  await page.waitForTimeout(1800);
-  assert.equal(await page.getByTestId("stException").count(), 0);
-  await page.getByText("Overview", { exact: true }).click();
-  await page.locator("#desk").waitFor();
-  await page.waitForTimeout(2200);
-  assert.equal(await page.getByTestId("stException").count(), 0);
+  results.transportFailureWithdrawsEvidence = true;
+  await page.unroute("**/api/desk");
+  await page.waitForFunction(
+    () => document.getElementById("status-health")?.textContent === "Observed",
+  );
+  results.transportAutomaticallyRecovers = true;
   assert.deepEqual(errors, []);
-  results.navigation = true;
   results.pageErrors = 0;
   await page.close();
   // Isolated frontend harness: only synthetic, clearly test-scoped data. No server.

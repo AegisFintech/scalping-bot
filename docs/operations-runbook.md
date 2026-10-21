@@ -1,5 +1,7 @@
 # Current release operations
 
+ISSUE-346: the current panel is a single read-only FastAPI/Uvicorn landscape desk, with no Streamlit/sidebar/history/diagnostic screens. Health: `GET /health` (legacy `/_stcore/health` also works); sanitized evidence: `GET /api/desk`. Execution readiness/status and authenticated operational controls remain on the separate execution API. Historical UI procedures below describe earlier releases and must not be used as current navigation instructions. See [current panel, configuration and rollback](lean-dashboard-report.md).
+
 For `0.2.5-market-stop.8`, use the [unattended recovery qualification](unattended-recovery-report.md).
 Recovery runs automatically; never reset a journal marker or restart merely to
 clear it. A fully closed group can resolve a protective child's exact full fill

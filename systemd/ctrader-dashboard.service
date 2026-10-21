@@ -1,5 +1,5 @@
 [Unit]
-Description=cTrader AI Scalper Streamlit dashboard
+Description=cTrader AI Scalper read-only landscape desk
 After=network-online.target ctrader-execution.service
 Wants=network-online.target ctrader-execution.service
 
@@ -9,7 +9,7 @@ User=ctrader-scalper
 Group=ctrader-scalper
 WorkingDirectory=/opt/ctrader-ai-scalper/current
 EnvironmentFile=/etc/ctrader-ai-scalper/ctrader-ai-scalper.env
-ExecStart=/opt/ctrader-ai-scalper/current/.venv/bin/streamlit run apps/dashboard/app.py --server.headless true --server.address 127.0.0.1 --server.port 8501 --browser.gatherUsageStats false
+ExecStart=/opt/ctrader-ai-scalper/current/.venv/bin/python -m uvicorn apps.dashboard.app:app --no-access-log --host 127.0.0.1 --port 8501
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=30s

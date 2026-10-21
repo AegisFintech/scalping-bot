@@ -44,11 +44,9 @@ execution and independent maintenance. The original directional replay remains
 research-only; its confirmation/structural-close rules are distinct from OCO price
 triggers. See [the integration report](reusable-scenario-report.md).
 
-## Animated observation desk (ISSUE-344)
+## Animated observation desk (ISSUE-344 / ISSUE-346)
 
-The approved landscape Overview uses a stable Streamlit v2 component, updated by
-bounded read-only snapshots. Native navigation and authenticated controls remain
-outside fragments. Recorded lifecycle events are deduplicated with bounded
+The approved landscape desk is the only dashboard view, using a persistent browser controller and same-origin read-only snapshot polling on FastAPI/Uvicorn. ISSUE-346 removes the sidebar, native top bar, history/diagnostic pages and obsolete renderers. Authenticated operational controls remain on the execution API; the browser cannot mutate broker state. Recorded lifecycle events are deduplicated with bounded
 retention; current money, quotes, session and verified protection have independent
 server/client deadlines. The model supplies entry prices, not narrative reasoning.
 Animations are decorative except for the observed-state highlight. Runtime
@@ -112,8 +110,8 @@ flowchart LR
   Coordinator --> DB[(PostgreSQL audit and state)]
   Broker --> Journal[Execution journal and recovery]
   Journal --> DB
-  DB --> UI[Streamlit]
-  UI --> Controls[Authenticated local controls]
+  DB --> UI[Read-only landscape HTTP desk]
+  Operator[Authorized local operator] --> Controls[Authenticated execution API controls]
 ```
 
 Node owns broker connectivity, stateful coordination and risk. Python owns
@@ -236,18 +234,16 @@ call has no trusted returned-model/usage record. Pricing is unverified and stays
 unavailable. Prompts/charts and legacy evidence remain auditable even when the
 new structured input profile omits the chart from the provider request.
 
-The dashboard exposes a compact overview and mode/account/symbol-scoped history.
-Diagnostics lazily render selected detailed views. Financial freshness is explicit;
-missing capital-policy telemetry on an older deployment is not inferred. Pause
-and emergency actions require a separate token and durable audit.
-
-Overview/history snapshots are read by a cached worker per view, with one in-flight
-read and ten-second admission intervals. Rendering polls completion without waiting
-on network/database work. Two-second fragments emit stable keyed live sections;
-the title, navigation and control form remain outside the timer. Observation age
-starts before IO and values older than 30 seconds are withheld. Failed reads clear
-the previous display value. The workers never call Streamlit, execute orders or
-send controls. Diagnostics retain the user's selected snapshot during recovery.
+The dashboard is a single read-only landscape page. Authenticated pause and
+emergency actions stay on the separate execution API with durable audit; the UI
+has no mutation routes. One shared background reader admits a bounded read every
+two seconds, with one in-flight load and observation age starting before IO.
+Browser fetches return the sanitized model without waiting for network/database
+work; multiple clients do not multiply loads. Failed/old evidence is withheld and
+individual money/quote/protection deadlines remain independently checked. The
+existing DOM/controller is retained; no framework rerender or provider dispatch is
+part of an HTTP UI poll. Historical diagnostic data remains in the journal/CLI
+review paths, while removed presentation pages are preserved in Git history.
 
 ## Modes and remaining limits
 

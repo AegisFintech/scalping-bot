@@ -1,3 +1,12 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg, #090b12);
+  color: var(--ink, #f0f1fa);
+}
+:root,
 :host {
   color-scheme: dark;
   --bg: #090b12;
@@ -22,6 +31,7 @@
 * {
   box-sizing: border-box;
 }
+:root,
 :host {
   margin: 0;
   background: var(--bg);
@@ -895,6 +905,7 @@ small,
   }
 }
 @media (min-width: 1700px) {
+  :root,
   :host {
     font-size: 14px;
   }
@@ -1280,9 +1291,10 @@ small,
   }
 }
 
+:root,
 :host {
   display: block;
-  --desk-height: calc(100dvh - 56px);
+  --desk-height: 100dvh;
   color: var(--ink);
 }
 .desk {
@@ -1447,6 +1459,7 @@ small,
   }
 }
 
+:root,
 :host {
   line-height: 1.3;
 }
