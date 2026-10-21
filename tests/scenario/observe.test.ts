@@ -87,7 +87,7 @@ describe("automatic scenario capture", () => {
     await observeScenario(p, "XAUUSD");
     expect(p.market.snapshot).toHaveBeenCalledWith(
       "XAUUSD",
-      { M1: 600, M5: 500, M15: 300 },
+      { M1: 720, M5: 576, M15: 480 },
       4,
     );
     expect(p.analytics.analyze).toHaveBeenCalledWith(

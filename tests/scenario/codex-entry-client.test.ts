@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-pair-v5.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-pair-v6.md", "utf8").trim();
 function fixture() {
   const request = {
     analysisId: randomUUID(),

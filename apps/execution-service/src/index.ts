@@ -1,3 +1,5 @@
+import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
+import { technicalContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -504,6 +506,19 @@ async function main(): Promise<void> {
       maxQuoteAgeMs: config.maxQuoteAgeMs,
       maxMetadataAgeMs: config.maxMetadataAgeMs,
       minimumPoints: optionalDecimal(environment.MIN_STOP_DISTANCE_POINTS),
+    },
+    async (snapshot, analysisId) => {
+      const prepared = technicalContextRequest(snapshot);
+      const result = await new TechnicalContextHttpClient(
+        environment.ANALYTICS_BASE_URL ??
+          `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
+      ).prepare({
+        ...prepared,
+        request: { ...prepared.request, analysisId, requestId: analysisId },
+      });
+      if (!result.acceptable || result.evidence === null)
+        throw new Error("SCENARIO_TECHNICAL_CONTEXT_UNAVAILABLE");
+      return { evidence: result.evidence, inputSha256: result.inputSha256 };
     },
   );
   let capitalMultiplier = "0";

@@ -1,0 +1,118 @@
+{
+  "issue": 351,
+  "mode": "demo",
+  "promptVersion": "entry-pair-v6",
+  "transportVersion": "codex-entry-request-1.2",
+  "completedHistoryCounts": {
+    "M1": 720,
+    "M5": 576,
+    "M15": 480
+  },
+  "providerTailCounts": {
+    "M15": 12,
+    "M5": 12,
+    "M1": 12
+  },
+  "requestBytes": 23137,
+  "nodePayloadAcceptedByPythonWorker": true,
+  "providerCalls": 0,
+  "brokerOrderCommands": 0,
+  "credentialsChanged": false,
+  "realMoneyLiveEnabled": false,
+  "qualification": {
+    "command": "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+    "qualified": true,
+    "sourceSha256": "7a844386754a17054bfcd2d3e07cb56e29828705e96b69f79caa9913aeb36961",
+    "nodeTests": 973,
+    "postgresqlTests": 94,
+    "pythonTests": 375,
+    "checks": [
+      {
+        "name": "postgres-bindir",
+        "code": 0
+      },
+      {
+        "name": "test-certificate",
+        "code": 0
+      },
+      {
+        "name": "postgres-uid",
+        "code": 0
+      },
+      {
+        "name": "postgres-gid",
+        "code": 0
+      },
+      {
+        "name": "database-init",
+        "code": 0
+      },
+      {
+        "name": "database-start",
+        "code": 0
+      },
+      {
+        "name": "format",
+        "code": 0
+      },
+      {
+        "name": "lint",
+        "code": 0
+      },
+      {
+        "name": "types",
+        "code": 0
+      },
+      {
+        "name": "build",
+        "code": 0
+      },
+      {
+        "name": "node-tests",
+        "code": 0
+      },
+      {
+        "name": "python-format",
+        "code": 0
+      },
+      {
+        "name": "python-lint",
+        "code": 0
+      },
+      {
+        "name": "python-types",
+        "code": 0
+      },
+      {
+        "name": "secrets",
+        "code": 0
+      },
+      {
+        "name": "npm-audit",
+        "code": 0
+      },
+      {
+        "name": "python-audit",
+        "code": 0
+      },
+      {
+        "name": "database-lifecycle",
+        "code": 0
+      },
+      {
+        "name": "python-tests",
+        "code": 0
+      },
+      {
+        "name": "database-stop",
+        "code": 0
+      }
+    ]
+  },
+  "configurationChecks": {
+    "protectedFilePolicy": true,
+    "protectedFileStartup": true,
+    "sampleStartup": true,
+    "credentialsFileChanged": false
+  }
+}

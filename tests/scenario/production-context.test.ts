@@ -1,3 +1,4 @@
+import type { EntryPlannerInput } from "../../packages/scenario-engine/src/entry-planner.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
@@ -149,7 +150,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-pair-v5",
+          promptVersion: "entry-pair-v6",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),
@@ -743,4 +744,65 @@ describe("zero-fill terminal request lifecycle", () => {
       expect(claim).not.toHaveBeenCalled();
     },
   );
+});
+
+it("journals exact local SMC/DOM context before dispatch and preserves it on failure", async () => {
+  const store = memory();
+  const claim = vi.spyOn(store, "claim");
+  const generate = vi.fn().mockRejectedValue(new Error("AI_PROVIDER_TIMEOUT"));
+  const context = {
+    evidence: {
+      definitions_version: "causal-smc-1.0",
+      depth: { bid_levels: 4 },
+    },
+    inputSha256: "a".repeat(64),
+  };
+  const prepareContext = vi.fn().mockResolvedValue(context);
+  const model = new ReusableScenarioModel(
+    store,
+    { generate },
+    () => base,
+    () => {},
+    true,
+    undefined,
+    prepareContext,
+  );
+  const i = input();
+  await model.prepare({ ...i, chart: null });
+  await model.settled();
+  const submitted = generate.mock.calls[0]?.[0] as EntryPlannerInput;
+  expect(submitted.technicalContext).toEqual(context);
+  const evidence = claim.mock.calls[0]?.[0].providerEvidence;
+  expect(JSON.parse(evidence?.requestText ?? "{}")).toMatchObject({
+    technical_context: context.evidence,
+    context_input_sha256: context.inputSha256,
+  });
+  expect(prepareContext.mock.invocationCallOrder[0]).toBeLessThan(
+    claim.mock.invocationCallOrder[0]!,
+  );
+  expect(claim.mock.invocationCallOrder[0]).toBeLessThan(
+    generate.mock.invocationCallOrder[0]!,
+  );
+  expect(store.row?.state).toBe("FAILED");
+});
+
+it("does not claim or call the provider when local context preparation fails", async () => {
+  const store = memory();
+  const claim = vi.spyOn(store, "claim");
+  const generate = vi.fn();
+  const model = new ReusableScenarioModel(
+    store,
+    { generate },
+    () => base,
+    () => {},
+    true,
+    undefined,
+    () => Promise.reject(new Error("SCENARIO_TECHNICAL_CONTEXT_UNAVAILABLE")),
+  );
+  await expect(model.prepare({ ...input(), chart: null })).rejects.toThrow(
+    "TECHNICAL_CONTEXT_UNAVAILABLE",
+  );
+  expect(claim).not.toHaveBeenCalled();
+  expect(generate).not.toHaveBeenCalled();
+  expect(store.row).toBeNull();
 });

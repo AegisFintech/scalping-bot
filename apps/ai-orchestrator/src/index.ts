@@ -173,7 +173,12 @@ export function createProductionAiOptions(
     ...(fetchImpl === undefined ? {} : { fetchImpl }),
   });
   return {
-    entryPairPlanner: new EntryPairPlanner({ client, baseUrl: "", apiKey: "" }),
+    entryPairPlanner: new EntryPairPlanner({
+      client,
+      baseUrl: "",
+      apiKey: "",
+      requireTechnicalContext: true,
+    }),
   };
 }
 

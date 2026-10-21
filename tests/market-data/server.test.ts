@@ -533,3 +533,66 @@ describe("independent readiness", () => {
     }
   });
 });
+
+it("uses cached SMC history with fresh quote/book and rejects reconnect during collection", async () => {
+  const current = new Date(
+    Math.floor(Date.now() / 900000) * 900000,
+  ).toISOString();
+  const quote = {
+    bid: "4500",
+    ask: "4500.2",
+    sourceTime: current,
+    receivedAt: new Date().toISOString(),
+  };
+  const book = {
+    ...orderBook,
+    sourceTime: current,
+    receivedAt: new Date().toISOString(),
+    complete: true,
+    reconnectSequence: 0,
+  };
+  const source = adapter(quote, book, current);
+  const history = vi
+    .spyOn(source, "getCompletedCandles")
+    .mockImplementation((_id, tf, n, to) => {
+      const step = { M1: 60000, M5: 300000, M15: 900000 }[tf];
+      const upper = to ?? Date.parse(current);
+      return Promise.resolve(
+        Array.from({ length: n }, (_, i) => ({
+          ...candle,
+          startTime: new Date(upper - (n - i) * step).toISOString(),
+          endTime: new Date(upper - (n - i - 1) * step).toISOString(),
+        })),
+      );
+    });
+  const app = createMarketDataServer({
+    adapter: source,
+    maxQuoteAgeMs: 3000,
+    maxOrderBookAgeMs: 3000,
+    maxSnapshotSkewMs: 3000,
+  });
+  const request = {
+    method: "POST" as const,
+    url: "/v1/snapshot",
+    payload: {
+      symbol: "XAUUSD",
+      counts: { M1: 720, M5: 576, M15: 480 },
+      depth: 4,
+    },
+  };
+  try {
+    expect((await app.inject(request)).statusCode).toBe(200);
+    expect((await app.inject(request)).statusCode).toBe(200);
+    expect(history).toHaveBeenCalledTimes(11);
+    vi.spyOn(source, "getOrderBookSnapshot")
+      .mockResolvedValueOnce({ ...book, reconnectSequence: 1 })
+      .mockResolvedValueOnce({ ...book, reconnectSequence: 2 });
+    const failed = await app.inject(request);
+    expect(failed.statusCode).toBe(503);
+    expect(failed.json()).toMatchObject({
+      reason: "MARKET_SNAPSHOT_RECONNECTED_DURING_HISTORY",
+    });
+  } finally {
+    await app.close();
+  }
+});

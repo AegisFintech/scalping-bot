@@ -1,3 +1,11 @@
+# Current ISSUE-351 demo source
+
+The operator explicitly authorized activation of SMC/DOM context. New source uses
+`entry-pair-v6` / transport 1.2 / `0.4.1-smc-breakout.1-codex.1` with unchanged
+STOP_LIMIT/GTC/OCO and dynamic shared 1% risk. See [integration and rollout](smc-demo-release-report.md).
+The earlier v5 behavior below remains historical; actual runtime activation is
+recorded separately and never inferred from this source update.
+
 # Architecture
 
 Production proposals use subscription Codex; legacy API routes are disabled. See

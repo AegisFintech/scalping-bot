@@ -29,9 +29,9 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses v5 major-box and first-crossing guidance without changing the two-price contract", () => {
+  it("uses v6 SMC major-box and first-crossing guidance without changing the two-price contract", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v5");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v6");
     expect(prompt.replace(/\s+/g, " ")).toContain(
       "overlapping/choppy structure",
     );
@@ -181,6 +181,10 @@ describe("direct entries (synthetic, no broker authority)", () => {
       },
       quote: { bid: "4404.95", ask: "4405.15", sourceTime: at, receivedAt: at },
       minimumStopDistance: "0.01",
+      technicalContext: {
+        evidence: { fixture: true },
+        inputSha256: "a".repeat(64),
+      },
     };
     const rawResponse = '{"buy_stop":"4410","sell_stop":"4400"}';
     const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
@@ -242,7 +246,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.1");
+      expect(providerBody.version).toBe("codex-entry-request-1.2");
       expect(fetchImpl.mock.calls[0]?.[0]).toBe(
         "http://127.0.0.1:8084/v1/entry-proposals",
       );
@@ -266,7 +270,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v5",
+        version: "entry-pair-v6",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

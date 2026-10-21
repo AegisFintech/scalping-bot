@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { executionRiskPolicy } from "../../packages/config/src/policy.js";
 
 const validate = new Ajv2020({ strict: true }).compile(
-  JSON.parse(readFileSync("schemas/risk-policy-1.0.json", "utf8")) as AnySchema,
+  JSON.parse(readFileSync("schemas/risk-policy-1.1.json", "utf8")) as AnySchema,
 );
 
 it("reports explicit demo loss-policy authority while preserving historical contracts", () => {
@@ -47,4 +47,13 @@ it("rejects missing demo authority, unknown policy, changed percentages and extr
     { override: true },
   ])
     expect(validate({ ...policy, ...patch })).toBe(false);
+});
+
+it("leaves the original risk schema incompatible with new policy identity", () => {
+  const historical = new Ajv2020({ strict: true }).compile(
+    JSON.parse(
+      readFileSync("schemas/risk-policy-1.0.json", "utf8"),
+    ) as AnySchema,
+  );
+  expect(historical(executionRiskPolicy("demo"))).toBe(false);
 });

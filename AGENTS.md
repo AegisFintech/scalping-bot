@@ -1,3 +1,17 @@
+# ISSUE-351 — Explicit SMC / DOM demo activation
+
+The operator requested "live it" after #348. This authorizes a separately versioned
+controlled DEMO trial, not real-money/live mode or an increase in risk. Current
+source becomes entry-pair-v6 / Codex transport 1.2 / 0.4.1-smc-breakout.1-codex.1.
+Use expanded completed history and causal-smc-1.0 context in the exact durable
+provider input. Missing/stale/mismatched context blocks dispatch; no old prompt
+reuse or fallback. Two-price replies, STOP_LIMIT/GTC/OCO, broker protection,
+small TP economics and shared dynamic 1% ceiling remain. Preserve older worker
+schemas/prompts, accepted groups and immutable #334/#338 registrations. Freeze
+new future observation before activation. #349 comparisons remain unqualified;
+operator activation is an explicit demo experiment, not automatic promotion or
+profitability evidence. Read docs/smc-demo-release-report.md.
+
 # ISSUE-346 — Landscape-only dashboard and lean configuration
 
 The operator explicitly removed the sidebar, top navigation, Trade history and

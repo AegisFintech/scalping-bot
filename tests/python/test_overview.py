@@ -346,3 +346,31 @@ def test_broker_session_status_preserves_controls_and_orders_precedence() -> Non
     assert overview.operating_state(status, now)[0] == "Orders pending"
     status["emergencyStopped"] = True
     assert overview.operating_state(status, now)[0] == "Stopped"
+
+
+def test_smc_demo_policy_is_displayed_without_relaxing_unknown_policy() -> None:
+    now = datetime(2026, 10, 21, tzinfo=UTC)
+    daily = {
+        "reconciled_at": now,
+        "current_equity": "10000",
+        "baseline_equity": "10000",
+        "loss_percent": "0",
+        "locked_out": False,
+    }
+    policy = {
+        "version": "0.4.1-smc-breakout.1",
+        "mode": "demo",
+        "lossLimitsEnforced": False,
+        "setupRiskPercent": "1",
+        "dailyLossLimitPercent": "5",
+    }
+    capital = {
+        "updated_at": now,
+        "drawdown_percent": "0",
+        "risk_cap_percent": "1",
+        "risk_multiplier": "1",
+        "risk_policy": policy,
+    }
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "100.00"
+    policy["version"] = "unknown"
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "Unavailable"

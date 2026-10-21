@@ -330,3 +330,90 @@ def test_expanded_context_is_v11_only(frame: str, count: int) -> None:
     series["rows"].insert(0, series["rows"][0])
     with pytest.raises(ValueError):
         s.RequestV11.model_validate(body)
+
+
+def smc_request() -> s.RequestV12:
+    body = request(version="codex-entry-request-1.1", promptVersion="entry-pair-v5").model_dump()
+    evidence = json.loads(Path("tests/fixtures/technical-context/response.json").read_text())[
+        "evidence"
+    ]
+    evidence["history_targets_met"] = True
+    for frame in evidence["frames"]:
+        frame["candle_count"] = {"M1": 720, "M5": 576, "M15": 480}[frame["timeframe"]]
+        frame["latest_completed_at"] = NOW.isoformat()
+    evidence["depth"]["source_at"] = NOW.isoformat()
+    evidence["depth"]["received_at"] = NOW.isoformat()
+    body.update(version="codex-entry-request-1.2", promptVersion="entry-pair-v6")
+    body["payload"].update(technical_context=evidence, context_input_sha256="a" * 64)
+    return s.RequestV12.model_validate(body)
+
+
+def test_smc_transport_preserves_context_and_exact_claim(tmp_path: Path) -> None:
+    req = smc_request()
+    assert s.parse_request(req.model_dump_json().encode()) == req
+
+    def call(prompt: str, _job: Path) -> bytes:
+        assert (
+            '"technical_context"' in prompt and '"definitions_version":"causal-smc-1.0"' in prompt
+        )
+        assert '"history_targets_met":true' in prompt and '"depth"' in prompt
+        return output()
+
+    result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=call)
+    assert result["entries"] == {"buy_stop": "4002", "sell_stop": "3999"}
+    assert (
+        json.loads((tmp_path / req.analysisId / "request.json").read_text())["payload"][
+            "technical_context"
+        ]
+        == req.payload.technical_context.model_dump()
+    )
+    with pytest.raises(ValueError, match="ALREADY_CLAIMED"):
+        s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=lambda *_: pytest.fail("no redispatch"))
+
+
+@pytest.mark.parametrize(
+    "fault", ["missing", "history", "future", "stale_dom", "mismatch", "old_version"]
+)
+def test_smc_corruption_rejects_before_provider(fault: str) -> None:
+    body = smc_request().model_dump()
+    if fault == "missing":
+        del body["payload"]["technical_context"]
+    elif fault == "history":
+        body["payload"]["technical_context"]["history_targets_met"] = False
+    elif fault == "future":
+        body["payload"]["technical_context"]["frames"][0]["events"] = [
+            {
+                "kind": "MSS",
+                "direction": "BULLISH",
+                "level": "4000",
+                "pivot_at": NOW.isoformat(),
+                "available_at": (NOW + timedelta(minutes=1)).isoformat(),
+                "displacement": True,
+            }
+        ]
+    elif fault == "stale_dom":
+        body["payload"]["technical_context"]["depth"]["source_at"] = (
+            NOW - timedelta(seconds=4)
+        ).isoformat()
+    elif fault == "mismatch":
+        body["payload"]["technical_context"]["frames"][0]["latest_completed_at"] = (
+            NOW - timedelta(hours=1)
+        ).isoformat()
+    else:
+        body["version"] = "codex-entry-request-1.1"
+    with pytest.raises(ValueError):
+        s.parse_request(json.dumps(body).encode())
+
+
+def test_smc_http_version_gate_never_claims_legacy_input(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path, PROMPT, "x" * 32, prompt_version="entry-pair-v6"))
+    rejected = client.post(
+        "/v1/entry-proposals",
+        headers={"authorization": "Bearer " + "x" * 32},
+        json=request().model_dump(),
+    )
+    assert rejected.status_code == 422 and not list(tmp_path.iterdir())
+    assert (
+        json.loads(Path("schemas/codex-entry-request-1.2.json").read_text())
+        == s.RequestV12.model_json_schema()
+    )
