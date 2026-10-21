@@ -277,6 +277,20 @@ export interface CoordinatorOptions {
   readonly trendFilterBars?: number;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly breakoutScalp?: boolean;
+  readonly compressionPreflight?: (
+    snapshot: MarketSnapshot,
+    atr: string,
+  ) => Promise<{
+    eligible: boolean;
+    reasonCodes: readonly string[];
+    details: Readonly<Record<string, unknown>>;
+  }>;
+  readonly compressionScalp?: (
+    snapshot: MarketSnapshot,
+    response: ModelResponse,
+    atr: string,
+    maximumStopDistance: string,
+  ) => Promise<ReturnType<typeof applyBreakoutScalpExitPolicy>>;
   readonly fadeLimitSlAtr?: string;
   readonly fadeLimitTpAtr?: string;
   readonly numericAnalytics?: boolean;
@@ -809,7 +823,11 @@ export class AnalysisCoordinator {
       ) {
         return await reject(proposalRiskConstraints.reasonCodes);
       }
-      const minimumProposalRiskRewardRatio = this.#options.minRiskRewardRatio;
+      // Two-price model scaffolding is not the adopted exit policy.
+      const minimumProposalRiskRewardRatio =
+        this.#options.compressionScalp === undefined
+          ? this.#options.minRiskRewardRatio
+          : "0.1";
       if (
         minimumStopDistance.gt(
           Decimal.min(
@@ -1041,6 +1059,20 @@ export class AnalysisCoordinator {
           return await reject([
             providerSession.reasonCode ?? "MARKET_SESSION_UNAVAILABLE",
           ]);
+      }
+      if (this.#options.compressionPreflight !== undefined) {
+        const scanned = await this.#options.compressionPreflight(
+          preModelSnapshot,
+          atr,
+        );
+        await this.#options.trail.validation(
+          analysisId,
+          "SEMANTIC",
+          scanned.eligible,
+          scanned.reasonCodes,
+          { validation_scope: "COMPRESSION_PRE_PROVIDER", ...scanned.details },
+        );
+        if (!scanned.eligible) return await reject(scanned.reasonCodes);
       }
       if (this.#options.model.prepare !== undefined) {
         const waiting = await this.#options.model.prepare({
@@ -1304,30 +1336,38 @@ export class AnalysisCoordinator {
           decimal(currentRiskConstraints.maxStopDistance),
         ),
       );
-      const transformed = fadeLimitActive
-        ? applyFadeLimitExitPolicy({
-            response: model.response,
-            metadata: decisionSnapshot.metadata,
-            atr,
-            slAtr: this.#options.fadeLimitSlAtr ?? "2.5",
-            tpAtr: this.#options.fadeLimitTpAtr ?? "1.0",
-            maximumStopDistance: maximumEffectiveStopDistance,
-            quote: decisionSnapshot.quote,
-          })
-        : this.#options.breakoutScalp
-          ? applyBreakoutScalpExitPolicy({
-              response: model.response,
-              metadata: decisionSnapshot.metadata,
-              atr,
-              maximumStopDistance: maximumEffectiveStopDistance,
-            })
-          : applyCommissionAwareExitPolicy(
+      const transformed =
+        this.#options.compressionScalp !== undefined
+          ? await this.#options.compressionScalp(
+              decisionSnapshot,
               model.response,
-              decisionSnapshot.metadata,
-              canonical(minimumStopDistance),
+              atr,
               maximumEffectiveStopDistance,
-              this.#options.minimumExpectedNetToFeesRatio,
-            );
+            )
+          : fadeLimitActive
+            ? applyFadeLimitExitPolicy({
+                response: model.response,
+                metadata: decisionSnapshot.metadata,
+                atr,
+                slAtr: this.#options.fadeLimitSlAtr ?? "2.5",
+                tpAtr: this.#options.fadeLimitTpAtr ?? "1.0",
+                maximumStopDistance: maximumEffectiveStopDistance,
+                quote: decisionSnapshot.quote,
+              })
+            : this.#options.breakoutScalp
+              ? applyBreakoutScalpExitPolicy({
+                  response: model.response,
+                  metadata: decisionSnapshot.metadata,
+                  atr,
+                  maximumStopDistance: maximumEffectiveStopDistance,
+                })
+              : applyCommissionAwareExitPolicy(
+                  model.response,
+                  decisionSnapshot.metadata,
+                  canonical(minimumStopDistance),
+                  maximumEffectiveStopDistance,
+                  this.#options.minimumExpectedNetToFeesRatio,
+                );
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",

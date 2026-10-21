@@ -1,3 +1,20 @@
+# ISSUE-358 — Explicit compression scalp DEMO trial
+
+The operator requested deployment and fresh monitoring after #354. This authorizes
+`0.4.2-compression-scalp.1-codex.1` / policy `0.4.2-compression-scalp.1` as an
+unqualified controlled DEMO experiment, not real-money activation or a reset.
+Keep Codex v6/two-price transport unchanged. Require the frozen scanner's
+independently qualified compression pair before provider preparation and again
+on the fresh post-model snapshot; preserve Codex entry prices and require outward
+structural agreement. Deterministic structural protection and at least 1:1 gross
+reward replace the previous quick-TP/2.5-ATR geometry only for the new release.
+Directional LIMIT candidates remain research observations, never forced OCO legs.
+Shared dynamic 1% risk, exact-volume costs/margin, STOP_LIMIT/GTC/OCO, protection,
+session/reconciliation/ownership and all account-wide cooldowns remain. No
+qualified pair means wait, not fallback or forced trading. Preserve original
+journals and registrations; "afresh" means a new prospective cohort only. Read
+`docs/compression-demo-release-report.md`. #355/#356 remain unqualified research.
+
 # ISSUE-351 — Explicit SMC / DOM demo activation
 
 The operator requested "live it" after #348. This authorizes a separately versioned

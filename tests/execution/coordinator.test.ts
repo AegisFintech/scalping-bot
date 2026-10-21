@@ -20,6 +20,7 @@ import type {
   PendingOrderCommand,
 } from "../../packages/contracts/src/index.js";
 import { analysisChart } from "../helpers/analysis-chart.js";
+import { compressionDemoTransform } from "../../packages/strategy-candidates/src/compression-demo.js";
 
 function safety(): SafetyGateInput {
   return {
@@ -1776,6 +1777,125 @@ describe("broker session admission", () => {
 });
 
 describe("breakout scalp release integration", () => {
+  it("carries preserved Codex entries and scanner structural protection through risk and placement", async () => {
+    const o = options({
+      entryPairMode: true,
+      executionOrderType: "STOP_LIMIT",
+      minRiskRewardRatio: "1",
+      compressionPreflight: async () =>
+        await Promise.resolve({
+          eligible: true,
+          reasonCodes: [],
+          details: {},
+        }),
+      compressionScalp: async (snapshot, response, atr, maximumStopDistance) =>
+        await Promise.resolve(
+          compressionDemoTransform({
+            snapshot,
+            response,
+            atr,
+            maximumStopDistance,
+            modeledCost: "0.01",
+            report: {
+              schemaVersion: "scalp-scan-report-1.0",
+              execution_authority: false,
+              promotion: "HOLD",
+              input_sha256: "a".repeat(64),
+              observed_at: snapshot.capturedAt,
+              status: "OCO_CANDIDATE",
+              reasons: [],
+              pair: [0, 1],
+              candidates: [
+                {
+                  setup: "COMPRESSION_BREAKOUT",
+                  side: "BUY",
+                  order_type: "STOP_LIMIT",
+                  entry: "2001",
+                  invalidation: "1999.5",
+                  target: "2002.5",
+                  source_available_at: new Date(
+                    Date.parse(snapshot.capturedAt) - 30000,
+                  ).toISOString(),
+                  admission_until: new Date(
+                    Date.parse(snapshot.capturedAt) + 30000,
+                  ).toISOString(),
+                },
+                {
+                  setup: "COMPRESSION_BREAKOUT",
+                  side: "SELL",
+                  order_type: "STOP_LIMIT",
+                  entry: "1999",
+                  invalidation: "2000.5",
+                  target: "1997.5",
+                  source_available_at: new Date(
+                    Date.parse(snapshot.capturedAt) - 30000,
+                  ).toISOString(),
+                  admission_until: new Date(
+                    Date.parse(snapshot.capturedAt) + 30000,
+                  ).toISOString(),
+                },
+              ],
+            },
+          }),
+        ),
+    });
+    o.risk.proposalConstraints = () => proposalRiskConstraints("20");
+    const risk = vi.spyOn(o.risk, "evaluate"),
+      place = vi.spyOn(o.gateway, "placeOco");
+    expect(await new AnalysisCoordinator(o).runOnce()).toMatchObject({
+      outcome: "PLACED",
+      reasonCodes: [],
+    });
+    expect(place).toHaveBeenCalledTimes(1);
+    expect(risk.mock.calls[0]![0].response.buy_stop).toMatchObject({
+      entry_price: "2001",
+      stop_loss: "1999.5",
+      take_profit: "2002.5",
+    });
+  });
+  it("withholds Codex dispatch and orders when compression preflight has no pair", async () => {
+    const o = options({
+      entryPairMode: true,
+      compressionPreflight: async () =>
+        await Promise.resolve({
+          eligible: false,
+          reasonCodes: ["SCALP_NO_QUALIFIED_PAIR"],
+          details: {},
+        }),
+    });
+    const ai = vi.spyOn(o.model, "analyze");
+    const place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toContain(
+      "SCALP_NO_QUALIFIED_PAIR",
+    );
+    expect(ai).not.toHaveBeenCalled();
+    expect(place).not.toHaveBeenCalled();
+  });
+  it("withholds orders when the final compression check fails after inference", async () => {
+    const o = options({
+      entryPairMode: true,
+      compressionPreflight: async () =>
+        await Promise.resolve({
+          eligible: true,
+          reasonCodes: [],
+          details: {},
+        }),
+      compressionScalp: async () =>
+        await Promise.resolve({
+          accepted: false,
+          response: null,
+          reasonCodes: ["SCALP_CODEX_STRUCTURE_MISMATCH"],
+          details: null,
+        }),
+    });
+    const ai = vi.spyOn(o.model, "analyze");
+    const place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toContain(
+      "SCALP_CODEX_STRUCTURE_MISMATCH",
+    );
+    expect(ai).toHaveBeenCalledTimes(1);
+    expect(place).not.toHaveBeenCalled();
+  });
   it("passes unchanged breakout entries and quick broker targets through final risk checks", async () => {
     const o = options({
       entryPairMode: true,

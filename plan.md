@@ -2,6 +2,14 @@
 
 ## Scope
 
+### ISSUE-358 — Compression scalp demo deployment and new observation cohort
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/358.
+- Dependencies: #354/#357 scanner; operator explicitly authorized demo deployment; #355/#356 economic research remains separate.
+- Acceptance: typed bounded scanner HTTP with exact request provenance, pre-provider and fresh post-model pair checks, preserved Codex entries/structural confluence, structural exits and 1:1 gross reward, same shared 1% dynamic risk/gates; full tests/qualification/hosted checks, immutable artifact and audited same-DB rollout with exact existing GTC preservation/reconciliation, future cohort/independent monitor and natural readiness evidence. Never reset history or force a trade.
+- Status: integration implemented; full qualification passed (992 Node / 94 isolated PostgreSQL / 405 Python, all required quality/security gates). Protected/sample startup and typed actual-snapshot smoke passed. Delivery/hosted checks and safe rollout in progress; hold preserves existing GTC/protection/reconciliation.
+- Report: [trial and activation receipt](docs/compression-demo-release-report.md).
+
 ### ISSUE-354 — Isolated fast-scalping candidate scanner
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/354.

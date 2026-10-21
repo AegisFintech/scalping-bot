@@ -9,8 +9,10 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+from python.analytics.api import app
 from python.analytics.models import AnalyticsRequest
 from python.research.scalp_candidates import ScanReport, ScanRequest, scan, scan_evidence
 from python.technical.models import ContextRequestV11, StructureEvent, Zone
@@ -236,6 +238,20 @@ def test_schema_parity() -> None:
     for name, model in (("request", ScanRequest), ("report", ScanReport)):
         schema = json.loads(Path(f"schemas/scalp-scan-{name}-1.0.json").read_text())
         assert schema == model.model_json_schema(by_alias=True)
+
+
+def test_http_scanner_binds_exact_request_and_rejects_malformed_input() -> None:
+    import hashlib
+
+    client = TestClient(app)
+    raw = request().model_dump_json(by_alias=True)
+    response = client.post(
+        "/v1/scalp-scan", content=raw, headers={"content-type": "application/json"}
+    )
+    assert response.status_code == 200
+    assert response.headers["x-scalp-request-sha256"] == hashlib.sha256(raw.encode()).hexdigest()
+    assert response.json() == scan(request()).model_dump(mode="json", by_alias=True)
+    assert client.post("/v1/scalp-scan", json={}).status_code == 422
 
 
 def test_directional_bias_and_wide_spread_do_not_create_compression_pairs() -> None:
