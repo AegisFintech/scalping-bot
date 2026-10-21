@@ -208,5 +208,79 @@
         "code": 0
       }
     ]
+  },
+  "rollout": {
+    "held": {
+      "issue": 351,
+      "heldAt": "2026-10-21T05:13:32.524126+00:00",
+      "artifact": "/opt/ctrader-ai-scalper/releases/smc351-clockfix-qualified",
+      "artifactCommit": "ed686d8f5df36102264c551ca108ad21ea846caa",
+      "sourceSha256": "a0dc3210ef2c7c05f216c121648bfb5f6ab40df274d3f2ac51271737b194349c",
+      "workerArtifact": "/opt/scalper-codex-entry-351-r2",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "matchedWorkerHealth": 200,
+      "workerUnauthenticatedPost": 401,
+      "operationalReady": true,
+      "pauseNewAnalyses": true,
+      "fiveProcessPathsVerified": true,
+      "noCachedDatabaseCredential": true,
+      "credentialsFileUnchanged": true,
+      "accountingValuesPreserved": true,
+      "migrationsRun": false,
+      "existingMigrationChecksumsVerified": 30,
+      "oldRegistrationUnchanged": true,
+      "newRegistrationSha256": "335009492db4df47afff8601d47de1666a969509417a89205c556a05b9cf2c4f",
+      "registeredAt": "2026-10-21T05:13:05.887338+00:00",
+      "observationFrom": "2026-10-21T05:14:05.887338+00:00",
+      "observationUntil": "2026-11-20T05:14:05.887338+00:00",
+      "futureCutoffs": 31,
+      "observerStarted": true,
+      "providerCallsForced": 0,
+      "brokerOrderCommandsForced": 0,
+      "oldPauseState": false,
+      "hostedChecks": [
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39547955747/job/119050314367",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39547952064/job/119050302121",
+          "conclusion": "SUCCESS"
+        }
+      ]
+    },
+    "resume": {
+      "issue": 351,
+      "resumedAt": "2026-10-21T05:14:17.801425+00:00",
+      "strategyVersion": "0.4.1-smc-breakout.1-codex.2",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "operationalReady": true,
+      "automaticAnalysisEnabled": true,
+      "pauseNewAnalyses": false,
+      "exactDeployedNodeInputValidatedByIsolatedWorker": true,
+      "workerAuthenticatedInvalidInput": 422,
+      "credentialsUnchanged": true,
+      "providerCallsForced": 0,
+      "brokerCommandsForced": 0,
+      "newRegistrationSha256": "335009492db4df47afff8601d47de1666a969509417a89205c556a05b9cf2c4f",
+      "oldRegistrationsPreserved": true,
+      "lossCooldownReset": false
+    },
+    "deployedReadOnlySmoke": {
+      "completedCounts": {
+        "M1": 720,
+        "M5": 576,
+        "M15": 480
+      },
+      "providerRowsPerFrame": 12,
+      "requestBytes": 23643,
+      "independentWorkerValidation": true,
+      "providerCalls": 0,
+      "brokerCommands": 0
+    },
+    "atResumeAdmission": "LOSS_STREAK_PAUSE_ACTIVE",
+    "lossCooldownUntil": "2026-10-21T05:23:54.458Z"
   }
 }

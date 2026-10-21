@@ -8,7 +8,7 @@
 - PR: https://github.com/AegisFintech/scalping-bot/pull/352.
 - Dependencies: #348/#350 local context; #349 comparison remains separate; preserve #334/#338.
 - Acceptance: prompt v6 / transport 1.2 / distinct demo release, exact pre-dispatch SMC/DOM journaling, bounded cached expanded OHLC, fail-closed context and old-schema compatibility; full checks and hosted PR, immutable artifact/worker, new future registration, audited same-DB rollout preserving active GTC/protection/risk/accounting and observed natural lifecycle.
-- Status: clock-corrected `.codex.2` fully qualified: 974 Node / 94 PostgreSQL / 381 Python tests (1,449), all required gates/audits. Fresh exact Node input passes independent worker validation without inference. First deployed artifact stays held; no new-version provider request/order. Both prior registrations/history/accounting preserved. Matching second artifact/worker and separate future registration follow hosted checks.
+- Status: completed implementation and verified DEMO activation at 2026-10-21 05:14:17 UTC. Clock-corrected `.codex.2` passed 974 Node / 94 PostgreSQL / 381 Python tests (1,449), all gates/audits and both hosted checks. Matching immutable artifact/worker and all five process paths verified; exact deployed-data input passes isolated worker validation. Separate future registration and observer active. Original analysis state restored; existing loss cooldown preserved. No forced provider/order, real-money activation, reset, overwritten registration or economic qualification. Final receipt-head hosted checks/auto-merge pending.
 - Report: [release and rollout](docs/smc-demo-release-report.md).
 
 ### ISSUE-348 — Causal SMC / DOM context for Codex research

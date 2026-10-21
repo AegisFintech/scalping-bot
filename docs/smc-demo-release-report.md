@@ -1,7 +1,8 @@
 # ISSUE-351 — Operator-authorized SMC / DOM demo release
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/351.
-Status: integration fully qualified; hosted checks and verified rollout pending.
+Status: qualified, hosted checks passed, deployed and resumed in DEMO at
+2026-10-21 05:14:17 UTC. Economic qualification remains unproven.
 
 The operator explicitly requested activation after the candidate-preparation
 handoff. This authorizes a separately versioned controlled DEMO experiment, not
@@ -144,3 +145,45 @@ secret-scan and dependency-audit gates at
 input (23,374 bytes) passes the independent Python worker validator without
 inference. Protected-file policy/startup and sample startup checks pass unchanged.
 AST-only graph update completed; existing pyproject/community-label warnings only.
+
+## Verified runtime activation
+
+Both clock-corrected implementation-head hosted runs passed:
+[push qualification](https://github.com/AegisFintech/scalping-bot/actions/runs/39547952064)
+and [PR qualification](https://github.com/AegisFintech/scalping-bot/actions/runs/39547955747).
+Immutable artifact `/opt/ctrader-ai-scalper/releases/smc351-clockfix-qualified`
+uses commit `ed686d8f5df36102264c551ca108ad21ea846caa`; isolated worker
+`/opt/scalper-codex-entry-351-r2` uses the same qualified source/Python. All five
+PM2 working directories and the worker were verified. No database credential is
+cached in PM2; protected deployment-file SHA and daily/capital financial values
+match the pre-rollout evidence. Thirty migration checksums match; no SQL migration
+or accounting reset was performed. Old artifact/worker rollback copies remain.
+
+Fresh deployed market → analytics → exact Node provider-input smoke obtained all
+720/576/480 bars and twelve compact rows per frame (23,643 bytes). The dedicated
+worker user's Python validator independently accepted that input. Worker health
+is 200, unauthenticated POST is 401, authenticated invalid input is 422; no test
+inference or broker order was sent. Reconciliation is operationally ready.
+
+The second exclusive mode-0400 registration was frozen at 05:13:05.887338 UTC,
+with future collection from 05:14:05.887338 UTC through November 20 at the same
+time, thirty UTC daily boundaries plus final partial cutoff. Registration SHA:
+`335009492db4df47afff8601d47de1666a969509417a89205c556a05b9cf2c4f`.
+Its source/protocol/prompt are pinned to the corrected artifact. Both earlier
+registrations remain unchanged, including the first held attempt with no
+new-version requests/orders. Independent 24-hour/15-second read-only observer
+`scalper-smc-observer-351-r2.service` is active. The earlier observers retain their
+original identities and can record version mismatch after cutover.
+
+Original pause=false was restored via the authenticated audited control at
+05:14:17.801425 UTC (13:14:17 Singapore), after the future window opened and
+deployed validation passed. Automatic analysis is enabled, emergency stop false,
+mode demo; real-money live remains disabled. At resume the account-wide historical
+loss-streak wait still blocks new risk until 05:23:54.458 UTC. It was not reset.
+No cycle, provider call or broker command was manually forced. Subsequent natural
+requests/orders/outcomes belong to their actual journal clocks, not the rollout
+smoke. No profitability or successful provider receipt is inferred from validation.
+
+Final receipt-only diff receives formatting, staged review, secret scanning and
+both hosted qualification checks before auto-merge; source qualification remains
+`a0dc3210ef2c7c05f216c121648bfb5f6ab40df274d3f2ac51271737b194349c`.
