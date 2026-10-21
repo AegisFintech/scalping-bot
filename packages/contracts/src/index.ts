@@ -17,7 +17,8 @@ export interface RiskPolicy {
     | "0.3.0-fade-limit.2"
     | "0.3.0-fade-limit.3"
     | "0.4.0-breakout-scalp.1"
-    | "0.4.1-smc-breakout.1";
+    | "0.4.1-smc-breakout.1"
+    | "0.4.2-compression-scalp.1";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;

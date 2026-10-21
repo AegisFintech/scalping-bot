@@ -1,5 +1,9 @@
 import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
 import { technicalContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
+import {
+  CompressionDemoClient,
+  compressionDemoTransform,
+} from "../../../packages/strategy-candidates/src/compression-demo.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -1246,8 +1250,64 @@ async function main(): Promise<void> {
     schemaVersion: "2.1",
     strategyVersion,
     breakoutScalp: breakoutScalpActive,
+    ...(breakoutScalpActive
+      ? {
+          compressionPreflight: async (snapshot, atr) => {
+            try {
+              const scanned = await new CompressionDemoClient(
+                environment.ANALYTICS_BASE_URL ??
+                  `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
+              ).scan(snapshot, atr);
+              const eligible =
+                scanned.report.status === "OCO_CANDIDATE" &&
+                scanned.report.pair !== null;
+              return {
+                eligible,
+                reasonCodes: eligible ? [] : ["SCALP_NO_QUALIFIED_PAIR"],
+                details: {
+                  scanner: scanned.report,
+                  modeled_cost_price: scanned.modeledCost,
+                },
+              };
+            } catch {
+              return {
+                eligible: false,
+                reasonCodes: ["SCALP_SCAN_UNAVAILABLE"],
+                details: {},
+              };
+            }
+          },
+          compressionScalp: async (
+            snapshot,
+            response,
+            atr,
+            maximumStopDistance,
+          ) => {
+            try {
+              const scanned = await new CompressionDemoClient(
+                environment.ANALYTICS_BASE_URL ??
+                  `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
+              ).scan(snapshot, atr);
+              return compressionDemoTransform({
+                snapshot,
+                response,
+                atr,
+                maximumStopDistance,
+                ...scanned,
+              });
+            } catch {
+              return {
+                accepted: false,
+                response: null,
+                reasonCodes: ["SCALP_SCAN_UNAVAILABLE"],
+                details: null,
+              };
+            }
+          },
+        }
+      : {}),
     minRiskRewardRatio: breakoutScalpActive
-      ? BREAKOUT_SCALP_RELEASE.minRiskRewardRatio
+      ? "1"
       : fadeLimitActive
         ? fadeExecutionPolicy.minRiskRewardRatio
         : config.minRiskRewardRatio,

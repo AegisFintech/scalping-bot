@@ -1,3 +1,10 @@
+# ISSUE-358 compression scalp demo source
+
+Current source is `0.4.2-compression-scalp.1-codex.1`; see
+[explicit trial, qualification and rollout](compression-demo-release-report.md).
+The previous release and research contracts below remain historical. No account
+reset, increased risk, real-money activation or profitability qualification.
+
 # Configuration and migration
 
 ISSUE-351 source uses `0.4.1-smc-breakout.1` / `.codex.3` with SMC/DOM
