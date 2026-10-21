@@ -85,7 +85,10 @@ export class CompressionDemoClient {
         .mul(2)
         .div(perPrice)
         .plus(tick.mul(95))
-        .plus(decimal(atr).mul("1.5").mul(conversion).div(100)),
+        .plus(decimal(atr).mul("1.5").mul(conversion).div(100))
+        // Service boundaries permit ten decimals. Round the reserve upward,
+        // never truncate a repeating/long commission distance optimistically.
+        .toDecimalPlaces(10, Decimal.ROUND_UP),
     );
     const request: ScalpScanRequest = {
       schemaVersion: "scalp-scan-request-1.0",

@@ -124,7 +124,7 @@ missing/expired/future/wrong-side/wrong-family/unaligned/unaffordable evidence,
 loopback enforcement and HTTP request/clock binding, and strict HTTP body
 validation. Full qualification and rollout results are appended after execution.
 
-## Completed source qualification
+## Initial source qualification before broker precision correction
 
 `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed on source
 `d30ebcba778e172b8bbf8d56bb05cd1623c7a35006813762abefc011cb3c16d8`:
@@ -148,3 +148,26 @@ unchanged; new risk-policy 1.2 is separate. No SQL migration was required.
 Final tracked/staged review, secret scan, clean coherent commit/push and hosted
 head qualification precede rollout. Operational activation/monitoring receipts
 are appended separately; this source qualification does not assert deployment.
+
+## Final pre-deployment precision correction
+
+Initial immutable artifact `compression358-qualified` was never activated. The
+fresh broker-data smoke reached the Python endpoint but rejected a modeled cost
+with more than ten fractional digits, generated from fractional ATR/commission
+arithmetic. Integer-ATR fixtures had not exposed it. No provider call, order,
+registration, risk reset or new-release execution occurred. The original running
+demo remains held with its two accepted GTC orders maintained normally.
+
+The client now rounds modeled reserve distance UP to ten decimals before the
+service boundary; it never truncates costs optimistically. A fractional-ATR
+regression asserts canonical service precision. Fresh actual data with M1 ATR
+1.1078126236 passed the complete request-bound HTTP path using modeled cost
+1.1975296063 and returned NO_PAIR, not an invented trade. This is a validation
+receipt, not an economic outcome or latency/frequency claim.
+
+Final `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed on source
+`3c71f48c4f68c7961e8479ae0a7f9514e2d26682fb321d80cf544dfb53c780eb`: 993 Node / 94 isolated PostgreSQL /
+405 Python = 1,492 tests, all quality/security gates and both dependency audits
+passed. Receipt: `/tmp/scalper-qualification-6xBqsJ/checks/results.json`.
+Only documentation receipts follow this qualification. A separate corrected
+immutable artifact is required; do not modify or activate the first artifact.

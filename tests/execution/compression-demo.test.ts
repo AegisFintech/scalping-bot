@@ -135,6 +135,29 @@ describe("explicit compression demo adoption", () => {
       ),
     ).rejects.toThrow("SCALP_HTTP_PROVENANCE_INVALID");
   });
+  it("rounds fractional-ATR commission reserves upward to the service precision", async () => {
+    let cost = "";
+    const fetch: typeof globalThis.fetch = vi.fn(
+      (
+        _url: Parameters<typeof globalThis.fetch>[0],
+        init?: Parameters<typeof globalThis.fetch>[1],
+      ) => {
+        const body = JSON.parse(
+          typeof init?.body === "string" ? init.body : "{}",
+        ) as { round_trip_cost_price: string };
+        cost = body.round_trip_cost_price;
+        return Promise.resolve(Response.json(report()));
+      },
+    );
+    await expect(
+      new CompressionDemoClient("http://127.0.0.1:8090", fetch).scan(
+        snapshot(),
+        "4.1234567891",
+      ),
+    ).rejects.toThrow("SCALP_HTTP_PROVENANCE_INVALID");
+    expect(cost).toMatch(/^(0|[1-9][0-9]*)(\.[0-9]{1,10})?$/);
+    expect(Number(cost)).toBeGreaterThan(0);
+  });
   it("rejects mismatched clocks even with a matching HTTP request digest", async () => {
     const fetch: typeof globalThis.fetch = vi.fn(
       (
