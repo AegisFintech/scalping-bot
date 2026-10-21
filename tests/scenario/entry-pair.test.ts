@@ -6,6 +6,7 @@ import {
   bindEntryPrices,
   validateEntryPlan,
 } from "../../packages/scenario-engine/src/entry-plan.js";
+import { validateScenarioMarket } from "../../packages/scenario-engine/src/planner.js";
 import { ENTRY_PAIR_PROMPT } from "../../packages/scenario-engine/src/entry-planner.js";
 import { EntryPairHttpPlanner } from "../../packages/scenario-engine/src/entry-http-planner.js";
 import { scenarioOco } from "../../packages/scenario-engine/src/oco.js";
@@ -29,9 +30,9 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses v5 major-box and first-crossing guidance without changing the two-price contract", () => {
+  it("uses v6 SMC major-box and first-crossing guidance without changing the two-price contract", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v5");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v6");
     expect(prompt.replace(/\s+/g, " ")).toContain(
       "overlapping/choppy structure",
     );
@@ -154,19 +155,23 @@ describe("direct entries (synthetic, no broker authority)", () => {
         const period = { M1: 60_000, M5: 300_000, M15: 900_000 }[frame];
         return {
           timeframe: frame,
-          candles: [
-            {
-              startTime: new Date(now - period).toISOString(),
-              endTime: at,
-              open: "4405",
-              high: "4406",
-              low: "4404",
-              close: "4405",
-              volume: null,
-              complete: true,
-              qualityFlags: [],
+          candles: Array.from(
+            { length: { M1: 720, M5: 576, M15: 480 }[frame] },
+            (_, index) => {
+              const remaining = { M1: 720, M5: 576, M15: 480 }[frame] - index;
+              return {
+                startTime: new Date(now - period * remaining).toISOString(),
+                endTime: new Date(now - period * (remaining - 1)).toISOString(),
+                open: "4405",
+                high: "4406",
+                low: "4404",
+                close: "4405",
+                volume: null,
+                complete: true,
+                qualityFlags: [],
+              };
             },
-          ],
+          ),
         };
       },
     );
@@ -181,6 +186,11 @@ describe("direct entries (synthetic, no broker authority)", () => {
       },
       quote: { bid: "4404.95", ask: "4405.15", sourceTime: at, receivedAt: at },
       minimumStopDistance: "0.01",
+      technicalContext: {
+        evidence: { fixture: true },
+        inputSha256: "a".repeat(64),
+        marketCapturedAt: at,
+      },
     };
     const rawResponse = '{"buy_stop":"4410","sell_stop":"4400"}';
     const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
@@ -242,7 +252,12 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.1");
+      expect(providerBody.version).toBe("codex-entry-request-1.2");
+      expect(providerBody.payload).toMatchObject({ market_captured_at: at });
+      const compact = (
+        providerBody.payload as { candles: { rows: unknown[] }[] }
+      ).candles;
+      expect(compact.map((s) => s.rows.length)).toEqual([12, 12, 12]);
       expect(fetchImpl.mock.calls[0]?.[0]).toBe(
         "http://127.0.0.1:8084/v1/entry-proposals",
       );
@@ -266,7 +281,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v5",
+        version: "entry-pair-v6",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });
@@ -319,6 +334,27 @@ describe("direct entries (synthetic, no broker authority)", () => {
       await expect(
         http.generate({ ...input, chart: null, schemaVersion: "2.0" }),
       ).rejects.toThrow("AI_ANALYSIS_FAILED");
+      // Only the explicitly required-context path admits the expanded recipe.
+      expect(() =>
+        validateScenarioMarket({ ...input, chart: null }, () => now, false),
+      ).toThrow("SCENARIO_TIMEFRAMES_INVALID");
+      const oversized = await server.inject({
+        method: "POST",
+        url: "/v2/entry-pair",
+        payload: {
+          ...input,
+          chart: null,
+          schemaVersion: "2.0",
+          candles: input.candles.map((series) => ({
+            ...series,
+            candles: [series.candles[0], ...series.candles],
+          })),
+        },
+      });
+      expect(oversized.statusCode).toBe(503);
+      expect(oversized.json()).toMatchObject({
+        reason: "SCENARIO_TIMEFRAMES_INVALID",
+      });
       expect(fetchImpl).toHaveBeenCalledTimes(3);
     } finally {
       await server.close();

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type {
   TechnicalContextRequest,
+  TechnicalContextRequestV11,
   TechnicalContextResponse,
 } from "../../contracts/src/technical-context.js";
 import { ModelResponseValidator } from "../../risk-engine/src/model-validator.js";
@@ -9,6 +10,9 @@ import { boundedResponseText } from "../../ai-client/src/telemetry.js";
 
 const input = new ModelResponseValidator<TechnicalContextRequest>(
   "schemas/technical-context-request-1.0.json",
+);
+const inputV11 = new ModelResponseValidator<TechnicalContextRequestV11>(
+  "schemas/technical-context-request-1.1.json",
 );
 const output = new ModelResponseValidator<TechnicalContextResponse>(
   "schemas/technical-context-response-1.0.json",
@@ -30,13 +34,18 @@ export class TechnicalContextHttpClient {
       throw new Error("TECHNICAL_CONTEXT_LOOPBACK_REQUIRED");
   }
   async prepare(
-    request: TechnicalContextRequest,
+    request: TechnicalContextRequest | TechnicalContextRequestV11,
   ): Promise<TechnicalContextResponse> {
     const raw = JSON.stringify(request);
-    if (!input.parse(raw).accepted)
+    const localClock =
+      request.schemaVersion === "technical-context-request-1.1";
+    if (!(localClock ? inputV11 : input).parse(raw).accepted)
       throw new Error("TECHNICAL_CONTEXT_INPUT_INVALID");
     const response = await this.fetchImpl(
-      new URL("/v1/technical-context", this.baseUrl),
+      new URL(
+        localClock ? "/v2/technical-context" : "/v1/technical-context",
+        this.baseUrl,
+      ),
       {
         method: "POST",
         headers: { "content-type": "application/json" },

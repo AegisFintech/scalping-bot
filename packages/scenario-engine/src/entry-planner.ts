@@ -1,3 +1,4 @@
+import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
 import { HISTORICAL_API_MODEL } from "../../config/src/policy.js";
 import {
@@ -15,8 +16,8 @@ import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-pair-v5" as const,
-  path: "prompts/entry-pair-v5.md",
+  version: "entry-pair-v6" as const,
+  path: "prompts/entry-pair-v6.md",
 });
 
 const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
@@ -30,6 +31,11 @@ export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
   readonly schemaVersion?: "2.0";
   readonly quote?: Quote;
   readonly minimumStopDistance?: string;
+  readonly technicalContext?: {
+    readonly evidence: Readonly<Record<string, unknown>>;
+    readonly inputSha256: string;
+    readonly marketCapturedAt?: string;
+  };
 };
 
 /** Shared byte-for-byte input construction for pre-dispatch journal and provider. */
@@ -49,6 +55,13 @@ export function entryProviderPayload(
     quote: input.quote,
     minimum_entry_distance: boundaries.minimum_entry_distance,
     entry_boundaries: boundaries,
+    ...(input.technicalContext === undefined
+      ? {}
+      : {
+          technical_context: input.technicalContext.evidence,
+          context_input_sha256: input.technicalContext.inputSha256,
+          market_captured_at: input.technicalContext.marketCapturedAt,
+        }),
     candles: input.candles.map((s) => ({
       timeframe: s.timeframe,
       columns: [
@@ -63,8 +76,12 @@ export function entryProviderPayload(
         "qualityFlags",
       ],
       rows: s.candles
-        .slice(-ENTRY_PAIR_REQUEST_POLICY.candleLimits[s.timeframe])
-        .map((b) => [
+        .slice(
+          -(input.technicalContext === undefined
+            ? ENTRY_PAIR_REQUEST_POLICY.candleLimits[s.timeframe]
+            : 12),
+        )
+        .map((b, index) => [
           b.startTime,
           b.endTime,
           b.open,
@@ -73,7 +90,9 @@ export function entryProviderPayload(
           b.close,
           b.volume,
           b.complete,
-          b.qualityFlags,
+          index === 0
+            ? b.qualityFlags.filter((f) => f !== "BROKER_SESSION_GAP_BEFORE")
+            : b.qualityFlags,
         ]),
     })),
   };
@@ -85,6 +104,7 @@ export class EntryPairPlanner {
     "analyze" | "circuitOpen"
   >;
   private readonly now: () => number;
+  private readonly requireTechnicalContext: boolean;
   constructor(options: {
     client?: Pick<
       OpenAiCompatibleClient<EntryPairPlan>,
@@ -95,8 +115,10 @@ export class EntryPairPlanner {
     fetchImpl?: typeof fetch;
     beforeDispatch?: (symbol: string) => Promise<void>;
     now?: () => number;
+    requireTechnicalContext?: boolean;
   }) {
     this.now = options.now ?? Date.now;
+    this.requireTechnicalContext = options.requireTechnicalContext ?? false;
     this.client =
       options.client ??
       new OpenAiCompatibleClient<EntryPairPlan>({
@@ -129,9 +151,16 @@ export class EntryPairPlanner {
   async generate(
     input: EntryPlannerInput,
   ): Promise<AiAnalysisResult<EntryPairPlan>> {
+    if (this.requireTechnicalContext && input.technicalContext === undefined)
+      throw new Error("SCENARIO_TECHNICAL_CONTEXT_REQUIRED");
     if (input.chart === null && input.schemaVersion !== "2.0")
       throw new Error("SCENARIO_NUMERIC_CONTRACT_REQUIRED");
-    validateScenarioMarket(input, this.now, input.schemaVersion !== "2.0");
+    validateScenarioMarket(
+      input,
+      this.now,
+      input.schemaVersion !== "2.0",
+      this.requireTechnicalContext ? TECHNICAL_HISTORY_COUNTS : undefined,
+    );
     if (input.quote === undefined || input.minimumStopDistance === undefined)
       throw new Error("SCENARIO_ENTRY_QUOTE_MISSING");
     const result = await this.client.analyze({

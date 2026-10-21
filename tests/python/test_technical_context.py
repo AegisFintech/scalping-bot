@@ -309,3 +309,66 @@ def test_equal_highs_require_two_confirmed_pivots() -> None:
     assert pool.confirmed_touches == 2 and pool.tolerance == "0.02"
     assert pool.available_at == series(prices).candles[23].end_time.isoformat()
     assert pool.scope == "HISTORICAL_PIVOT_CLUSTER_NOT_RESTING_ORDERS"
+
+
+def test_local_capture_clock_accepts_receipt_after_broker_and_preserves_both() -> None:
+    from python.technical.models import ContextRequestV11
+
+    s = source()
+    broker = s.request.server_time
+    local = broker + timedelta(milliseconds=800)
+    book = s.request.order_book.model_copy(
+        update={"received_at": broker + timedelta(milliseconds=500)}
+    )
+    quote = s.quote.model_copy(update={"received_at": broker + timedelta(milliseconds=200)})
+    request = s.request.model_copy(update={"order_book": book})
+    current = ContextRequestV11(
+        schema_version="technical-context-request-1.1",
+        request=request,
+        quote=quote,
+        tick_size=s.tick_size,
+        minimum_entry_distance=s.minimum_entry_distance,
+        snapshot_time=local,
+    )
+    result = prepare_context(current)
+    assert result.acceptable and result.evidence is not None
+    assert result.captured_at == broker
+    assert result.evidence.depth.received_at == (broker + timedelta(milliseconds=500)).isoformat()
+    assert (
+        result.codex_payload is not None
+        and result.codex_payload["snapshot_time"] == local.isoformat()
+    )
+    assert not prepare_context(s.model_copy(update={"request": request, "quote": quote})).acceptable
+    assert json.loads(
+        Path("schemas/technical-context-request-1.1.json").read_text()
+    ) == ContextRequestV11.model_json_schema(by_alias=True)
+
+
+@pytest.mark.parametrize(
+    "fault", ["future_receipt", "future_capture", "old_capture", "stale_source"]
+)
+def test_separate_clocks_do_not_allow_stale_or_future_evidence(fault: str) -> None:
+    from python.technical.models import ContextRequestV11
+
+    s = source()
+    broker = s.request.server_time
+    local = broker + timedelta(milliseconds=800)
+    book = s.request.order_book
+    if fault == "future_receipt":
+        book = book.model_copy(update={"received_at": broker + timedelta(seconds=1)})
+    elif fault == "future_capture":
+        local = broker + timedelta(seconds=4)
+    elif fault == "old_capture":
+        local = broker - timedelta(milliseconds=1)
+    else:
+        book = book.model_copy(update={"source_time": broker - timedelta(seconds=3)})
+    current = ContextRequestV11(
+        schema_version="technical-context-request-1.1",
+        request=s.request.model_copy(update={"order_book": book}),
+        quote=s.quote,
+        tick_size=s.tick_size,
+        minimum_entry_distance=s.minimum_entry_distance,
+        snapshot_time=local,
+    )
+    result = prepare_context(current)
+    assert not result.acceptable and result.codex_payload is None

@@ -1,0 +1,501 @@
+{
+  "issue": 351,
+  "mode": "demo",
+  "promptVersion": "entry-pair-v6",
+  "transportVersion": "codex-entry-request-1.2",
+  "completedHistoryCounts": {
+    "M1": 720,
+    "M5": 576,
+    "M15": 480
+  },
+  "providerTailCounts": {
+    "M15": 12,
+    "M5": 12,
+    "M1": 12
+  },
+  "requestBytes": 23137,
+  "nodePayloadAcceptedByPythonWorker": true,
+  "providerCalls": 0,
+  "brokerOrderCommands": 0,
+  "credentialsChanged": false,
+  "realMoneyLiveEnabled": false,
+  "qualification": {
+    "command": "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+    "qualified": true,
+    "sourceSha256": "7a844386754a17054bfcd2d3e07cb56e29828705e96b69f79caa9913aeb36961",
+    "nodeTests": 973,
+    "postgresqlTests": 94,
+    "pythonTests": 375,
+    "checks": [
+      {
+        "name": "postgres-bindir",
+        "code": 0
+      },
+      {
+        "name": "test-certificate",
+        "code": 0
+      },
+      {
+        "name": "postgres-uid",
+        "code": 0
+      },
+      {
+        "name": "postgres-gid",
+        "code": 0
+      },
+      {
+        "name": "database-init",
+        "code": 0
+      },
+      {
+        "name": "database-start",
+        "code": 0
+      },
+      {
+        "name": "format",
+        "code": 0
+      },
+      {
+        "name": "lint",
+        "code": 0
+      },
+      {
+        "name": "types",
+        "code": 0
+      },
+      {
+        "name": "build",
+        "code": 0
+      },
+      {
+        "name": "node-tests",
+        "code": 0
+      },
+      {
+        "name": "python-format",
+        "code": 0
+      },
+      {
+        "name": "python-lint",
+        "code": 0
+      },
+      {
+        "name": "python-types",
+        "code": 0
+      },
+      {
+        "name": "secrets",
+        "code": 0
+      },
+      {
+        "name": "npm-audit",
+        "code": 0
+      },
+      {
+        "name": "python-audit",
+        "code": 0
+      },
+      {
+        "name": "database-lifecycle",
+        "code": 0
+      },
+      {
+        "name": "python-tests",
+        "code": 0
+      },
+      {
+        "name": "database-stop",
+        "code": 0
+      }
+    ]
+  },
+  "configurationChecks": {
+    "protectedFilePolicy": true,
+    "protectedFileStartup": true,
+    "sampleStartup": true,
+    "credentialsFileChanged": false
+  },
+  "clockCorrection": {
+    "strategyVersion": "0.4.1-smc-breakout.1-codex.2",
+    "technicalContextRequest": "1.1",
+    "requestBytes": 23374,
+    "nodePayloadAcceptedByPythonWorker": true,
+    "providerCalls": 0,
+    "qualified": true,
+    "sourceSha256": "a0dc3210ef2c7c05f216c121648bfb5f6ab40df274d3f2ac51271737b194349c",
+    "nodeTests": 974,
+    "postgresqlTests": 94,
+    "pythonTests": 381,
+    "checks": [
+      {
+        "name": "postgres-bindir",
+        "code": 0
+      },
+      {
+        "name": "test-certificate",
+        "code": 0
+      },
+      {
+        "name": "postgres-uid",
+        "code": 0
+      },
+      {
+        "name": "postgres-gid",
+        "code": 0
+      },
+      {
+        "name": "database-init",
+        "code": 0
+      },
+      {
+        "name": "database-start",
+        "code": 0
+      },
+      {
+        "name": "format",
+        "code": 0
+      },
+      {
+        "name": "lint",
+        "code": 0
+      },
+      {
+        "name": "types",
+        "code": 0
+      },
+      {
+        "name": "build",
+        "code": 0
+      },
+      {
+        "name": "node-tests",
+        "code": 0
+      },
+      {
+        "name": "python-format",
+        "code": 0
+      },
+      {
+        "name": "python-lint",
+        "code": 0
+      },
+      {
+        "name": "python-types",
+        "code": 0
+      },
+      {
+        "name": "secrets",
+        "code": 0
+      },
+      {
+        "name": "npm-audit",
+        "code": 0
+      },
+      {
+        "name": "python-audit",
+        "code": 0
+      },
+      {
+        "name": "database-lifecycle",
+        "code": 0
+      },
+      {
+        "name": "python-tests",
+        "code": 0
+      },
+      {
+        "name": "database-stop",
+        "code": 0
+      }
+    ]
+  },
+  "rollout": {
+    "held": {
+      "issue": 351,
+      "heldAt": "2026-10-21T05:13:32.524126+00:00",
+      "artifact": "/opt/ctrader-ai-scalper/releases/smc351-clockfix-qualified",
+      "artifactCommit": "ed686d8f5df36102264c551ca108ad21ea846caa",
+      "sourceSha256": "a0dc3210ef2c7c05f216c121648bfb5f6ab40df274d3f2ac51271737b194349c",
+      "workerArtifact": "/opt/scalper-codex-entry-351-r2",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "matchedWorkerHealth": 200,
+      "workerUnauthenticatedPost": 401,
+      "operationalReady": true,
+      "pauseNewAnalyses": true,
+      "fiveProcessPathsVerified": true,
+      "noCachedDatabaseCredential": true,
+      "credentialsFileUnchanged": true,
+      "accountingValuesPreserved": true,
+      "migrationsRun": false,
+      "existingMigrationChecksumsVerified": 30,
+      "oldRegistrationUnchanged": true,
+      "newRegistrationSha256": "335009492db4df47afff8601d47de1666a969509417a89205c556a05b9cf2c4f",
+      "registeredAt": "2026-10-21T05:13:05.887338+00:00",
+      "observationFrom": "2026-10-21T05:14:05.887338+00:00",
+      "observationUntil": "2026-11-20T05:14:05.887338+00:00",
+      "futureCutoffs": 31,
+      "observerStarted": true,
+      "providerCallsForced": 0,
+      "brokerOrderCommandsForced": 0,
+      "oldPauseState": false,
+      "hostedChecks": [
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39547955747/job/119050314367",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39547952064/job/119050302121",
+          "conclusion": "SUCCESS"
+        }
+      ]
+    },
+    "resume": {
+      "issue": 351,
+      "resumedAt": "2026-10-21T05:14:17.801425+00:00",
+      "strategyVersion": "0.4.1-smc-breakout.1-codex.2",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "operationalReady": true,
+      "automaticAnalysisEnabled": true,
+      "pauseNewAnalyses": false,
+      "exactDeployedNodeInputValidatedByIsolatedWorker": true,
+      "workerAuthenticatedInvalidInput": 422,
+      "credentialsUnchanged": true,
+      "providerCallsForced": 0,
+      "brokerCommandsForced": 0,
+      "newRegistrationSha256": "335009492db4df47afff8601d47de1666a969509417a89205c556a05b9cf2c4f",
+      "oldRegistrationsPreserved": true,
+      "lossCooldownReset": false
+    },
+    "deployedReadOnlySmoke": {
+      "completedCounts": {
+        "M1": 720,
+        "M5": 576,
+        "M15": 480
+      },
+      "providerRowsPerFrame": 12,
+      "requestBytes": 23643,
+      "independentWorkerValidation": true,
+      "providerCalls": 0,
+      "brokerCommands": 0
+    },
+    "atResumeAdmission": "LOSS_STREAK_PAUSE_ACTIVE",
+    "lossCooldownUntil": "2026-10-21T05:23:54.458Z"
+  },
+  "plannerCorrection": {
+    "strategyVersion": "0.4.1-smc-breakout.1-codex.3",
+    "firstNaturalClockfixAttempt": {
+      "requestedAt": "2026-10-21T05:24:07.080929Z",
+      "completedAt": "2026-10-21T05:24:07.118981Z",
+      "state": "FAILED",
+      "reason": "SCENARIO_TIMEFRAMES_INVALID",
+      "contextAndLocalCaptureJournaled": true,
+      "providerReceipt": false,
+      "orders": 0,
+      "preserved": true
+    },
+    "realDataFullHttpRouteWithSimulatedWorkerReceipt": true,
+    "exactBodyAcceptedByPythonWorker": true,
+    "requestBytes": 24123,
+    "providerCallsForced": 0,
+    "brokerCommandsForced": 0,
+    "qualified": true,
+    "sourceSha256": "82992377aaf301977c8fd5276e86f5412dd12eb49a13ac958fa51933142722f3",
+    "nodeTests": 974,
+    "postgresqlTests": 94,
+    "pythonTests": 381,
+    "checks": [
+      {
+        "name": "postgres-bindir",
+        "code": 0
+      },
+      {
+        "name": "test-certificate",
+        "code": 0
+      },
+      {
+        "name": "postgres-uid",
+        "code": 0
+      },
+      {
+        "name": "postgres-gid",
+        "code": 0
+      },
+      {
+        "name": "database-init",
+        "code": 0
+      },
+      {
+        "name": "database-start",
+        "code": 0
+      },
+      {
+        "name": "format",
+        "code": 0
+      },
+      {
+        "name": "lint",
+        "code": 0
+      },
+      {
+        "name": "types",
+        "code": 0
+      },
+      {
+        "name": "build",
+        "code": 0
+      },
+      {
+        "name": "node-tests",
+        "code": 0
+      },
+      {
+        "name": "python-format",
+        "code": 0
+      },
+      {
+        "name": "python-lint",
+        "code": 0
+      },
+      {
+        "name": "python-types",
+        "code": 0
+      },
+      {
+        "name": "secrets",
+        "code": 0
+      },
+      {
+        "name": "npm-audit",
+        "code": 0
+      },
+      {
+        "name": "python-audit",
+        "code": 0
+      },
+      {
+        "name": "database-lifecycle",
+        "code": 0
+      },
+      {
+        "name": "python-tests",
+        "code": 0
+      },
+      {
+        "name": "database-stop",
+        "code": 0
+      }
+    ]
+  },
+  "finalRollout": {
+    "held": {
+      "issue": 351,
+      "heldAt": "2026-10-21T05:34:32.730323+00:00",
+      "artifact": "/opt/ctrader-ai-scalper/releases/smc351-plannerfix-qualified",
+      "artifactCommit": "2bbbfc6fa16eeda15dd014a81be929d0c0536bde",
+      "sourceSha256": "82992377aaf301977c8fd5276e86f5412dd12eb49a13ac958fa51933142722f3",
+      "workerArtifact": "/opt/scalper-codex-entry-351-r3",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "matchedWorkerHealth": 200,
+      "workerUnauthenticatedPost": 401,
+      "operationalReady": true,
+      "pauseNewAnalyses": true,
+      "fiveProcessPathsVerified": true,
+      "noCachedDatabaseCredential": true,
+      "credentialsFileUnchanged": true,
+      "accountingValuesPreserved": true,
+      "migrationsRun": false,
+      "existingMigrationChecksumsVerified": 30,
+      "oldRegistrationUnchanged": true,
+      "newRegistrationSha256": "d67c05c322eca5e45ff08499c70c4990802b10a2725eeb793ac5efb30c2aaf4a",
+      "registeredAt": "2026-10-21T05:34:05.873556+00:00",
+      "observationFrom": "2026-10-21T05:35:05.873556+00:00",
+      "observationUntil": "2026-11-20T05:35:05.873556+00:00",
+      "futureCutoffs": 31,
+      "observerStarted": true,
+      "providerCallsForced": 0,
+      "brokerOrderCommandsForced": 0,
+      "oldPauseState": false,
+      "hostedChecks": [
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39549966676/job/119056663110",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39549963349/job/119056651908",
+          "conclusion": "SUCCESS"
+        }
+      ]
+    },
+    "resume": {
+      "issue": 351,
+      "resumedAt": "2026-10-21T05:35:19.853467+00:00",
+      "strategyVersion": "0.4.1-smc-breakout.1-codex.3",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "operationalReady": true,
+      "automaticAnalysisEnabled": true,
+      "pauseNewAnalyses": false,
+      "exactDeployedNodeInputValidatedByIsolatedWorker": true,
+      "workerAuthenticatedInvalidInput": 422,
+      "credentialsUnchanged": true,
+      "providerCallsForced": 0,
+      "brokerCommandsForced": 0,
+      "newRegistrationSha256": "d67c05c322eca5e45ff08499c70c4990802b10a2725eeb793ac5efb30c2aaf4a",
+      "oldRegistrationsPreserved": true,
+      "lossCooldownReset": false
+    },
+    "naturalLifecycle": {
+      "issue": 351,
+      "observedAt": "2026-10-21T05:37:46.505884+00:00",
+      "strategyVersion": "0.4.1-smc-breakout.1-codex.3",
+      "mode": "demo",
+      "providerState": "READY",
+      "providerRequestedAt": "2026-10-21 05:35:23.527972+00:00",
+      "providerAvailableAt": "2026-10-21 05:35:35.036835+00:00",
+      "exactWorkerPayloadMatchesDurableJournal": true,
+      "promptShaMatchesJournal": true,
+      "completedHistoryCounts": {
+        "M15": 480,
+        "M5": 576,
+        "M1": 720
+      },
+      "compactRows": {
+        "M15": 12,
+        "M5": 12,
+        "M1": 12
+      },
+      "brokerDomLevels": {
+        "bid": 4,
+        "ask": 4
+      },
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "CANCELLED",
+          "execution_order_type": "STOP_LIMIT",
+          "time_in_force": "GTC",
+          "broker_updated_at": "2026-10-21 05:37:02.479000+00:00",
+          "broker_acknowledged": true
+        },
+        {
+          "side": "SELL",
+          "state": "FILLED",
+          "execution_order_type": "STOP_LIMIT",
+          "time_in_force": "GTC",
+          "broker_updated_at": "2026-10-21 05:37:02.219000+00:00",
+          "broker_acknowledged": true
+        }
+      ],
+      "mappedBrokerEvents": 8,
+      "firstBrokerEventAt": "2026-10-21 05:35:39.581000+00:00",
+      "counterfactualCosts": null,
+      "forcedProviderCalls": 0,
+      "forcedBrokerCommands": 0
+    },
+    "freshDeployedFullChainMockRequestBytes": 24706,
+    "realMoneyLiveEnabled": false
+  }
+}

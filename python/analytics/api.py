@@ -10,7 +10,7 @@ from python.analytics.models import (
 )
 from python.analytics.service import analyze, analyze_numeric
 from python.analytics.statistics import summarize
-from python.technical.models import ContextRequest, ContextResponse
+from python.technical.models import ContextRequest, ContextRequestV11, ContextResponse
 from python.technical.service import prepare_context
 
 app = FastAPI(
@@ -50,4 +50,9 @@ def performance_request(request: PerformanceRequest) -> PerformanceResponse:
 
 @app.post("/v1/technical-context", response_model=ContextResponse, response_model_by_alias=True)
 def technical_context_request(request: ContextRequest) -> ContextResponse:
+    return prepare_context(request)
+
+
+@app.post("/v2/technical-context", response_model=ContextResponse, response_model_by_alias=True)
+def technical_context_v11_request(request: ContextRequestV11) -> ContextResponse:
     return prepare_context(request)

@@ -147,6 +147,11 @@ export function validateScenarioMarket(
   input: Omit<ScenarioInput, "chart"> & { chart: AnalysisChartArtifact | null },
   now: () => number,
   requireChart: boolean,
+  maximumCandles: Readonly<Record<"M1" | "M5" | "M15", number>> = {
+    M1: 600,
+    M5: 600,
+    M15: 600,
+  },
 ): void {
   const capture = time(input.capturedAt);
   if (now() < capture || now() - capture > 3000)
@@ -166,7 +171,7 @@ export function validateScenarioMarket(
     if (
       series.length !== 1 ||
       !series[0]?.candles.length ||
-      series[0].candles.length > 600
+      series[0].candles.length > maximumCandles[frame]
     )
       throw new Error("SCENARIO_TIMEFRAMES_INVALID");
     let previous: number | null = null;

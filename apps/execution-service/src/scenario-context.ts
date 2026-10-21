@@ -363,6 +363,10 @@ export class ReusableScenarioModel implements ModelProvider {
       maxMetadataAgeMs: number;
       minimumPoints: string | null;
     },
+    private readonly technicalContext?: (
+      snapshot: MarketSnapshot,
+      analysisId: string,
+    ) => Promise<NonNullable<EntryPlannerInput["technicalContext"]>>,
   ) {
     this.providerPrompt = entryOnly
       ? readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim()
@@ -594,6 +598,11 @@ export class ReusableScenarioModel implements ModelProvider {
         input.snapshot.metadata,
         this.priceCheckOptions.minimumPoints,
       ),
+      ...(this.technicalContext === undefined
+        ? {}
+        : {
+            technicalContext: await this.technicalContext(input.snapshot, id),
+          }),
       ...(this.entryOnly && input.chart === null
         ? { schemaVersion: "2.0" as const }
         : {}),

@@ -18,6 +18,7 @@ from uuid import UUID
 from pydantic import Field, model_validator
 
 from python.research.codex_loop import StrictModel, encoded, publish, read_bounded, timestamp
+from python.technical.models import ContextEvidence
 
 MODEL = "gpt-6.1-sol"
 MAX_BYTES = 128_000
@@ -167,6 +168,98 @@ class RequestV11(Request):
     promptVersion: Literal["entry-pair-v5"]
 
 
+class PayloadV12(Payload):
+    market_captured_at: str
+    technical_context: ContextEvidence
+    context_input_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+
+    @model_validator(mode="after")
+    def context_matches_capture(self) -> PayloadV12:
+        captured = timestamp(self.captured_at)
+        market_captured = timestamp(self.market_captured_at)
+        if not timedelta(0) <= market_captured - captured <= timedelta(seconds=3):
+            raise ValueError("CODEX_SNAPSHOT_CLOCK_SKEW_INVALID")
+        context = self.technical_context
+        if not context.history_targets_met or {f.timeframe for f in context.frames} != {
+            "M1",
+            "M5",
+            "M15",
+        }:
+            raise ValueError("CODEX_CONTEXT_HISTORY_INVALID")
+        for frame in context.frames:
+            series = next(s for s in self.candles if s.timeframe == frame.timeframe)
+            if len(series.rows) > 12 or timestamp(frame.latest_completed_at) != timestamp(
+                series.rows[-1][1]
+            ):
+                raise ValueError("CODEX_CONTEXT_CANDLES_MISMATCH")
+            if frame.candle_count < {"M1": 720, "M5": 576, "M15": 480}[frame.timeframe]:
+                raise ValueError("CODEX_CONTEXT_HISTORY_INVALID")
+            references = [p.available_at for p in frame.pivots] + [
+                e.available_at for e in frame.events
+            ]
+            references += [
+                z.available_at for z in frame.nearest_active_zones + frame.recent_resolved_zones
+            ]
+            references += [p.available_at for p in frame.liquidity_pools]
+            if any(timestamp(at) > captured for at in references):
+                raise ValueError("CODEX_CONTEXT_LOOKAHEAD")
+            for pivot in frame.pivots:
+                if timestamp(pivot.candle_at) > timestamp(pivot.available_at):
+                    raise ValueError("CODEX_CONTEXT_PROVENANCE_INVALID")
+            for event in frame.events:
+                if timestamp(event.pivot_at) > timestamp(event.available_at):
+                    raise ValueError("CODEX_CONTEXT_PROVENANCE_INVALID")
+            for zone in frame.nearest_active_zones + frame.recent_resolved_zones:
+                available = timestamp(zone.available_at)
+                if timestamp(zone.origin_at) > available:
+                    raise ValueError("CODEX_CONTEXT_PROVENANCE_INVALID")
+                lower, upper = Decimal(zone.lower), Decimal(zone.upper)
+                if not lower.is_finite() or not upper.is_finite() or not 0 < lower <= upper:
+                    raise ValueError("CODEX_CONTEXT_ZONE_INVALID")
+                for changed_at in (zone.first_touched_at, zone.resolved_at):
+                    if changed_at is not None and not available < timestamp(changed_at) <= captured:
+                        raise ValueError("CODEX_CONTEXT_PROVENANCE_INVALID")
+                if zone.status == "FRESH" and (
+                    zone.first_touched_at is not None or zone.resolved_at is not None
+                ):
+                    raise ValueError("CODEX_CONTEXT_ZONE_INVALID")
+                if zone.status in {"FILLED", "INVALIDATED"} and zone.resolved_at is None:
+                    raise ValueError("CODEX_CONTEXT_ZONE_INVALID")
+            for value in (frame.atr, frame.ema_fast, frame.ema_slow):
+                if not Decimal(value).is_finite() or Decimal(value) <= 0:
+                    raise ValueError("CODEX_CONTEXT_INDICATOR_INVALID")
+
+        depth = context.depth
+        sourced, received = timestamp(depth.source_at), timestamp(depth.received_at)
+        if not sourced <= received <= market_captured or market_captured - sourced > timedelta(
+            seconds=3
+        ):
+            raise ValueError("CODEX_CONTEXT_DEPTH_STALE")
+        return self
+
+
+class RequestV12(StrictModel):
+    version: Literal["codex-entry-request-1.2"]
+    analysisId: str
+    symbol: Literal["XAUUSD"]
+    promptVersion: Literal["entry-pair-v6"]
+    promptSha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    payload: PayloadV12
+
+    @model_validator(mode="after")
+    def identifier(self) -> RequestV12:
+        if str(UUID(self.analysisId)) != self.analysisId:
+            raise ValueError("CODEX_ANALYSIS_ID_INVALID")
+        return self
+
+
+def parse_request(raw: bytes) -> Request | RequestV12:
+    value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.2":
+        return RequestV12.model_validate_json(raw)
+    return Request.model_validate_json(raw)
+
+
 class Entries(StrictModel):
     buy_stop: Price
     sell_stop: Price
@@ -244,7 +337,7 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request,
+    request: Request | RequestV12,
     root: Path,
     system_prompt: str,
     *,

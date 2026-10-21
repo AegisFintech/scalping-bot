@@ -54,7 +54,7 @@ function fixture() {
 describe("candidate collection", () => {
   it("reads history serially before fresh quotes/book and reuses only history", async () => {
     const { reader, calls } = fixture();
-    const collector = new TechnicalContextCollector(reader);
+    const collector = new TechnicalContextCollector(reader, () => now);
     const a = await collector.collect(),
       b = await collector.collect();
     expect(a.request.candles.map((f) => f.candles.length)).toEqual([
@@ -70,7 +70,7 @@ describe("candidate collection", () => {
   });
   it("does not emit a request after reset during a quote read", async () => {
     const { reader } = fixture();
-    const collector = new TechnicalContextCollector(reader);
+    const collector = new TechnicalContextCollector(reader, () => now);
     reader.getQuote.mockImplementationOnce(() => {
       collector.reset();
       return Promise.resolve(req.quote);
@@ -80,7 +80,7 @@ describe("candidate collection", () => {
   });
   it("withholds output on dependency failure and reacquires history", async () => {
     const { reader } = fixture();
-    const collector = new TechnicalContextCollector(reader);
+    const collector = new TechnicalContextCollector(reader, () => now);
     reader.getQuote.mockRejectedValueOnce(new Error("unavailable"));
     await expect(collector.collect()).rejects.toThrow("unavailable");
     await collector.collect();

@@ -1,3 +1,7 @@
+import {
+  CandidateHistoryCache,
+  TECHNICAL_HISTORY_COUNTS,
+} from "../../../packages/market-data-client/src/candidate-history.js";
 import "dotenv/config";
 import { SessionRecovery } from "./session-recovery.js";
 import { resolveRuntimeEnvironment } from "../../../packages/config/src/policy.js";
@@ -86,6 +90,8 @@ export function createMarketDataServer(
     quote: "UNKNOWN",
     snapshot: "UNKNOWN",
   };
+  let smcCache: CandidateHistoryCache | null = null;
+  let smcCacheIdentity = "";
   const versions = { session: 0, quote: 0, snapshot: 0 };
   const finish = (
     component: keyof typeof components,
@@ -216,17 +222,76 @@ export function createMarketDataServer(
     try {
       const { symbol, counts, depth } = request.body;
       const metadata = await dataMetadata(symbol);
-      const quote = await options.adapter.getQuote(metadata.symbolId);
-      const [m1, m5, m15, orderBook] = await Promise.all([
-        options.adapter.getCompletedCandles(metadata.symbolId, "M1", counts.M1),
-        options.adapter.getCompletedCandles(metadata.symbolId, "M5", counts.M5),
-        options.adapter.getCompletedCandles(
+      const smc =
+        symbol === "XAUUSD" &&
+        (["M1", "M5", "M15"] as const).every(
+          (tf) => counts[tf] === TECHNICAL_HISTORY_COUNTS[tf],
+        );
+      let candles;
+      let initialSequence: number | null = null;
+      if (smc) {
+        const book = await options.adapter.getOrderBookSnapshot(
+          metadata.symbolId,
+          depth,
+        );
+        initialSequence = book.reconnectSequence;
+        const identity = `${metadata.symbolId}:${initialSequence}`;
+        if (identity !== smcCacheIdentity || smcCache === null) {
+          smcCache?.reset();
+          smcCacheIdentity = identity;
+          smcCache = new CandidateHistoryCache((tf, n, to) =>
+            options.adapter.getCompletedCandles(
+              metadata.symbolId,
+              tf,
+              n,
+              to,
+              7 * 86400_000,
+            ),
+          );
+        }
+        try {
+          candles = await smcCache.read(
+            await options.adapter.getServerTime(),
+            await options.adapter.getTradingSchedule(metadata.symbolId),
+          );
+        } catch (error) {
+          smcCache.reset();
+          throw error;
+        }
+      } else {
+        const m1 = await options.adapter.getCompletedCandles(
+          metadata.symbolId,
+          "M1",
+          counts.M1,
+        );
+        const m5 = await options.adapter.getCompletedCandles(
+          metadata.symbolId,
+          "M5",
+          counts.M5,
+        );
+        const m15 = await options.adapter.getCompletedCandles(
           metadata.symbolId,
           "M15",
           counts.M15,
-        ),
-        options.adapter.getOrderBookSnapshot(metadata.symbolId, depth),
-      ]);
+        );
+        candles = [
+          { timeframe: "M15" as const, candles: m15 },
+          { timeframe: "M5" as const, candles: m5 },
+          { timeframe: "M1" as const, candles: m1 },
+        ];
+      }
+      const quote = await options.adapter.getQuote(metadata.symbolId);
+      const orderBook = await options.adapter.getOrderBookSnapshot(
+        metadata.symbolId,
+        depth,
+      );
+      if (
+        initialSequence !== null &&
+        orderBook.reconnectSequence !== initialSequence
+      ) {
+        smcCache?.reset();
+        throw new Error("MARKET_SNAPSHOT_RECONNECTED_DURING_HISTORY");
+      }
       // Capture the authoritative broker clock after all components so source
       // timestamps cannot appear to be from the future merely due to ordering.
       const serverTime = await options.adapter.getServerTime();
@@ -265,11 +330,7 @@ export function createMarketDataServer(
         observedSkewMs: skew,
         metadata,
         quote,
-        candles: [
-          { timeframe: "M15", candles: m15 },
-          { timeframe: "M5", candles: m5 },
-          { timeframe: "M1", candles: m1 },
-        ],
+        candles,
         orderBook,
       });
     } catch (error) {

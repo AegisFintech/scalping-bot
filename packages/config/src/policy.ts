@@ -3,7 +3,8 @@ import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
 export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
 export const HISTORICAL_API_MODEL = "grok-4.5";
-export const CODEX_STRATEGY_VERSION = "0.4.0-breakout-scalp.1-codex.1";
+export const HISTORICAL_BREAKOUT_VERSION = "0.4.0-breakout-scalp.1-codex.1";
+export const CODEX_STRATEGY_VERSION = "0.4.1-smc-breakout.1-codex.3";
 export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {
@@ -12,7 +13,7 @@ export function usesFadeV3(version: string): boolean {
     version === HISTORICAL_CODEX_FADE_VERSION
   );
 }
-export const POLICY_VERSION = "0.4.0-breakout-scalp.1";
+export const POLICY_VERSION = "0.4.1-smc-breakout.1";
 /** Operator-authorized immediate range breakout / native quick-TP demo trial. */
 export const BREAKOUT_SCALP_RELEASE = {
   strategyVersion: CODEX_STRATEGY_VERSION,
@@ -101,14 +102,14 @@ export const FIXED_DEFAULTS = {
   CTRADER_RECONNECT_MAX_MS: "30000",
   CTRADER_REQUEST_TIMEOUT_MS: "10000",
   DEMO_EXECUTION_RECOVERY_INTERVAL_SECONDS: "15",
-  BARS_15M: "300",
-  BARS_5M: "500",
-  BARS_1M: "600",
+  BARS_15M: "480",
+  BARS_5M: "576",
+  BARS_1M: "720",
   USE_COMPLETED_CANDLES_ONLY: "true",
   MODEL_PAYLOAD_MODE: "compact",
-  MODEL_FULL_CANDLE_LIMIT_15M: "300",
-  MODEL_FULL_CANDLE_LIMIT_5M: "500",
-  MODEL_FULL_CANDLE_LIMIT_1M: "600",
+  MODEL_FULL_CANDLE_LIMIT_15M: "480",
+  MODEL_FULL_CANDLE_LIMIT_5M: "576",
+  MODEL_FULL_CANDLE_LIMIT_1M: "720",
   MODEL_COMPACT_RAW_TAIL_15M: "12",
   MODEL_COMPACT_RAW_TAIL_5M: "18",
   MODEL_COMPACT_RAW_TAIL_1M: "30",
@@ -187,7 +188,7 @@ export const FIXED_DEFAULTS = {
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
   STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
-  CODE_VERSION: "0.4.0-breakout-scalp.1",
+  CODE_VERSION: "0.4.1-smc-breakout.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

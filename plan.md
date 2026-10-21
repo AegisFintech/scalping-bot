@@ -2,6 +2,22 @@
 
 ## Scope
 
+### ISSUE-351 — Operator-authorized SMC / DOM demo activation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/351.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/352.
+- Dependencies: #348/#350 local context; #349 comparison remains separate; preserve #334/#338.
+- Acceptance: prompt v6 / transport 1.2 / distinct demo release, exact pre-dispatch SMC/DOM journaling, bounded cached expanded OHLC, fail-closed context and old-schema compatibility; full checks and hosted PR, immutable artifact/worker, new future registration, audited same-DB rollout preserving active GTC/protection/risk/accounting and observed natural lifecycle.
+- Status: completed corrected `.codex.3` DEMO rollout and natural lifecycle. All 1,449 tests/gates/audits and both source-head hosted checks pass. Third immutable registration/observer active; exact actual worker input equals journal. Resumed 05:35:19 UTC; Codex response available 05:35:35, broker pair acknowledged, sell filled/buy peer cancelled at 05:37:02. No operational fault, forced call/order, risk reset or real-money activation. Earlier failed attempt/registrations preserved; #353 separately tracks cooldown watchdog reporting. Final receipt-head checks/auto-merge pending.
+- Report: [release and rollout](docs/smc-demo-release-report.md).
+
+### ISSUE-353 — Loss-cooldown watchdog reporting
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/353.
+- Dependencies: #351 observation; separate monitoring-only follow-up.
+- Acceptance: distinguish a freshly verified expected loss cooldown from unexplained inactivity; preserve unknown evidence and genuine post-expiry stall detection, execution admission, accounting and cooldown duration. Add cooldown/missing/expiry/genuine-stall tests and qualify contracts if changed.
+- Status: planned. The observational watchdog lacks cooldown input and can report `AUTOMATIC_ANALYSIS_STALLED` during the valid one-hour wait. The scheduler does not consume this warning; no execution gate was changed or bypassed.
+
 ### ISSUE-348 — Causal SMC / DOM context for Codex research
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/348.

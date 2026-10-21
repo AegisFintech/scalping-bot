@@ -1,5 +1,10 @@
 # Configuration and migration
 
+ISSUE-351 source uses `0.4.1-smc-breakout.1` / `.codex.3` with SMC/DOM
+input and unchanged ISSUE-334 execution/risk constants. See
+[release and actual rollout](smc-demo-release-report.md). Historical release names
+below describe earlier behavior; runtime activation is recorded separately.
+
 Current release `0.4.0-breakout-scalp.1` uses the reviewed breakout STOP_LIMIT policy in
 `packages/config/src/policy.ts`. The normal template has 16 assignments, previously 176. The model is already fixed in reviewed code; optional monitoring belongs to advanced deployment configuration. These include secrets and deployment identity;
 there are no strategy tuning controls. The actual authorized local migration

@@ -3,7 +3,7 @@ import type {
   MarketDataAdapter,
   MarketSnapshot,
 } from "../../contracts/src/index.js";
-import type { TechnicalContextRequest } from "../../contracts/src/technical-context.js";
+import type { TechnicalContextRequestV11 } from "../../contracts/src/technical-context.js";
 import {
   CandidateHistoryCache,
   TECHNICAL_HISTORY_COUNTS,
@@ -12,9 +12,10 @@ import {
 /** Fixed candidate recipe; never a replacement for production execution configuration. */
 export function technicalContextRequest(
   snapshot: MarketSnapshot,
-): TechnicalContextRequest {
+): TechnicalContextRequestV11 {
   return {
-    schemaVersion: "technical-context-request-1.0",
+    schemaVersion: "technical-context-request-1.1",
+    snapshotTime: snapshot.capturedAt,
     request: {
       schemaVersion: "1.0",
       requestId: randomUUID(),
@@ -62,14 +63,17 @@ export class TechnicalContextCollector {
   #symbolId: string | null = null;
   #tail: Promise<unknown> = Promise.resolve();
   #generation = 0;
-  constructor(private readonly reader: Reader) {}
+  constructor(
+    private readonly reader: Reader,
+    private readonly now: () => number = Date.now,
+  ) {}
   reset(): void {
     this.#generation++;
     this.#history?.reset();
     this.#history = null;
     this.#symbolId = null;
   }
-  collect(): Promise<TechnicalContextRequest> {
+  collect(): Promise<TechnicalContextRequestV11> {
     const generation = this.#generation;
     const verifyGeneration = (): void => {
       if (generation !== this.#generation)
@@ -121,7 +125,7 @@ export class TechnicalContextCollector {
           return technicalContextRequest({
             metadata,
             serverTime: latestTime,
-            capturedAt: latestTime,
+            capturedAt: new Date(this.now()).toISOString(),
             observedSkewMs: Math.abs(
               Date.parse(quote.receivedAt) - Date.parse(orderBook.receivedAt),
             ),
