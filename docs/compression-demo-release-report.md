@@ -171,3 +171,58 @@ Final `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed on source
 passed. Receipt: `/tmp/scalper-qualification-6xBqsJ/checks/results.json`.
 Only documentation receipts follow this qualification. A separate corrected
 immutable artifact is required; do not modify or activate the first artifact.
+
+## Verified deployment and fresh observation
+
+Both corrected source-head hosted qualifications passed before rollout:
+[push](https://github.com/AegisFintech/scalping-bot/actions/runs/39574309728) and
+[PR](https://github.com/AegisFintech/scalping-bot/actions/runs/39574316606).
+Immutable artifact `/opt/ctrader-ai-scalper/releases/compression358-precision-qualified`
+pins commit `e9693eed528f3841851de4b329c8bea9197703fd` and final source
+`3c71f48c4f68c7961e8479ae0a7f9514e2d26682fb321d80cf544dfb53c780eb`.
+The first artifact remains preserved and was never activated.
+
+At 09:10:51 UTC (17:10:51 Singapore), all five PM2 paths/health checks and new
+execution reconciliation were verified under the audited hold. The exact two
+old-version accepted, zero-fill GTC orders retained their original broker/local
+identities, entries, SL/TP, quantities, states and null expiries. Account/symbol
+recovery and active-group exclusion span releases. They remain in the old cohort;
+new economics do not amend them or change attribution of their eventual outcomes.
+Native protection, OCO cleanup and reconciliation remain independent of inference.
+
+Daily/capital financial values, protected credentials and five prior registration
+digests were verified unchanged. All thirty migration checksums match; no SQL
+migration, baseline/cooldown/history reset, manual cancellation or broker order
+command was performed. PM2 has no cached database credential. Existing isolated
+worker `/opt/scalper-codex-entry-351-r3` remains unchanged: its pinned prompt,
+request code/schema/dependencies match the new artifact, and health passes.
+Original subscription authentication and non-root worker setup were retained.
+
+An exclusive mode-0400 future registration was frozen before activation at
+`.runtime/compression-study-358/registration.json`. Its SHA-256 is
+`b43ac27de5b92ac574218985c44ad26a2d985c679c33b5a3b46c91dec366091b`;
+collection starts October 21 09:11:29.043339 UTC and ends November 20 at that
+same UTC time, with daily/final cutoffs and all censoring/unknown-cost limits.
+No old registration was overwritten. The independent read-only systemd service
+`scalper-compression-observer-358.service` is active for 168 hours, writing bounded
+status evidence under `.runtime/issue-358-observer/`. Operational status sampling
+includes the brief held startup; economic cohort bounds remain the frozen times.
+
+Fresh deployed Node -> actual broker history (720/576/480) -> deployed Python
+scanner -> request-bound response passed at 09:11:29.062 UTC and correctly returned
+NO_PAIR. No inference or order was forced. The original automatic-analysis state
+was restored at **09:11:46.037685 UTC / 17:11:46 Singapore** after registration
+opened. Status is demo, new release, operationally ready, automatic analysis on,
+unpaused and no operational fault. A transient session-unavailable observation
+at resume cleared on the next status poll without intervention. The existing
+pending pair still blocks fresh risk normally; a new-release fill is not verified.
+
+This snapshot's ATR/cost relationship does not support the frozen compression
+thresholds. Waiting may substantially reduce trade frequency; no threshold was
+relaxed to manufacture trades. Review all new-release rejections/opportunities
+and eventual broker outcomes, including the old pending cycle separately.
+New observation is not new account equity or a claim of profitability.
+
+[Sanitized qualification and activation receipt](evidence/compression-demo-validation.json).
+Final receipt-only changes receive formatting, staged review, secret scanning,
+push and hosted checks; they do not alter the qualified executable source.
