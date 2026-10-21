@@ -282,5 +282,110 @@
     },
     "atResumeAdmission": "LOSS_STREAK_PAUSE_ACTIVE",
     "lossCooldownUntil": "2026-10-21T05:23:54.458Z"
+  },
+  "plannerCorrection": {
+    "strategyVersion": "0.4.1-smc-breakout.1-codex.3",
+    "firstNaturalClockfixAttempt": {
+      "requestedAt": "2026-10-21T05:24:07.080929Z",
+      "completedAt": "2026-10-21T05:24:07.118981Z",
+      "state": "FAILED",
+      "reason": "SCENARIO_TIMEFRAMES_INVALID",
+      "contextAndLocalCaptureJournaled": true,
+      "providerReceipt": false,
+      "orders": 0,
+      "preserved": true
+    },
+    "realDataFullHttpRouteWithSimulatedWorkerReceipt": true,
+    "exactBodyAcceptedByPythonWorker": true,
+    "requestBytes": 24123,
+    "providerCallsForced": 0,
+    "brokerCommandsForced": 0,
+    "qualified": true,
+    "sourceSha256": "82992377aaf301977c8fd5276e86f5412dd12eb49a13ac958fa51933142722f3",
+    "nodeTests": 974,
+    "postgresqlTests": 94,
+    "pythonTests": 381,
+    "checks": [
+      {
+        "name": "postgres-bindir",
+        "code": 0
+      },
+      {
+        "name": "test-certificate",
+        "code": 0
+      },
+      {
+        "name": "postgres-uid",
+        "code": 0
+      },
+      {
+        "name": "postgres-gid",
+        "code": 0
+      },
+      {
+        "name": "database-init",
+        "code": 0
+      },
+      {
+        "name": "database-start",
+        "code": 0
+      },
+      {
+        "name": "format",
+        "code": 0
+      },
+      {
+        "name": "lint",
+        "code": 0
+      },
+      {
+        "name": "types",
+        "code": 0
+      },
+      {
+        "name": "build",
+        "code": 0
+      },
+      {
+        "name": "node-tests",
+        "code": 0
+      },
+      {
+        "name": "python-format",
+        "code": 0
+      },
+      {
+        "name": "python-lint",
+        "code": 0
+      },
+      {
+        "name": "python-types",
+        "code": 0
+      },
+      {
+        "name": "secrets",
+        "code": 0
+      },
+      {
+        "name": "npm-audit",
+        "code": 0
+      },
+      {
+        "name": "python-audit",
+        "code": 0
+      },
+      {
+        "name": "database-lifecycle",
+        "code": 0
+      },
+      {
+        "name": "python-tests",
+        "code": 0
+      },
+      {
+        "name": "database-stop",
+        "code": 0
+      }
+    ]
   }
 }

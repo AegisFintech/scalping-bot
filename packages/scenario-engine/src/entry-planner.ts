@@ -1,3 +1,4 @@
+import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
 import { HISTORICAL_API_MODEL } from "../../config/src/policy.js";
 import {
@@ -154,7 +155,12 @@ export class EntryPairPlanner {
       throw new Error("SCENARIO_TECHNICAL_CONTEXT_REQUIRED");
     if (input.chart === null && input.schemaVersion !== "2.0")
       throw new Error("SCENARIO_NUMERIC_CONTRACT_REQUIRED");
-    validateScenarioMarket(input, this.now, input.schemaVersion !== "2.0");
+    validateScenarioMarket(
+      input,
+      this.now,
+      input.schemaVersion !== "2.0",
+      this.requireTechnicalContext ? TECHNICAL_HISTORY_COUNTS : undefined,
+    );
     if (input.quote === undefined || input.minimumStopDistance === undefined)
       throw new Error("SCENARIO_ENTRY_QUOTE_MISSING");
     const result = await this.client.analyze({

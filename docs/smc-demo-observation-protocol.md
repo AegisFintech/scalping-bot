@@ -1,6 +1,6 @@
 # ISSUE-351 — Frozen SMC / DOM demo observation
 
-This is the operator-authorized demo trial of `0.4.1-smc-breakout.1-codex.2`,
+This is the operator-authorized demo trial of `0.4.1-smc-breakout.1-codex.3`,
 provider prompt `entry-pair-v6`, worker transport `codex-entry-request-1.2`, and
 technical definitions `causal-smc-1.0`. It is not an economically qualified
 promotion or authority for a real-money account. #349 comparisons remain separate.

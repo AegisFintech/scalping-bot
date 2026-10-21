@@ -1,6 +1,6 @@
 # Deterministic risk model
 
-ISSUE-351 source uses `0.4.1-smc-breakout.1` / `.codex.2` with SMC/DOM
+ISSUE-351 source uses `0.4.1-smc-breakout.1` / `.codex.3` with SMC/DOM
 input and unchanged ISSUE-334 execution/risk constants. See
 [release and actual rollout](smc-demo-release-report.md). Historical release names
 below describe earlier behavior; runtime activation is recorded separately.

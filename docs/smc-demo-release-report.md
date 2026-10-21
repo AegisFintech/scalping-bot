@@ -1,8 +1,9 @@
 # ISSUE-351 — Operator-authorized SMC / DOM demo release
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/351.
-Status: qualified, hosted checks passed, deployed and resumed in DEMO at
-2026-10-21 05:14:17 UTC. Economic qualification remains unproven.
+Status: clock-corrected revision .2 resumed at 05:14:17 UTC; first automatic
+request rejected locally at 05:24:07 UTC. Held again pending qualified .3 planner
+compatibility fix. Economic qualification remains unproven.
 
 The operator explicitly requested activation after the candidate-preparation
 handoff. This authorizes a separately versioned controlled DEMO experiment, not
@@ -12,7 +13,7 @@ of better accuracy, positive expectancy or profitable seconds-to-exit is made.
 
 ## Current source and input
 
-New strategy `0.4.1-smc-breakout.1-codex.2`, policy `0.4.1-smc-breakout.1`, provider
+New strategy `0.4.1-smc-breakout.1-codex.3`, policy `0.4.1-smc-breakout.1`, provider
 prompt `entry-pair-v6`, additive Codex transport 1.2 and reported-risk schema 1.1.
 Legacy prompt files, worker request schemas 1.0/1.1, risk schema 1.0, SQL migrations
 and journals are unchanged. No SQL migration is necessary for new source/prompt
@@ -194,3 +195,31 @@ one-hour gate can produce an inactivity warning after five minutes. Scheduler
 admission does not consume that warning. [#353](https://github.com/AegisFintech/scalping-bot/issues/353)
 tracks the separate reporting correction; this activation does not alter a
 watchdog threshold, reset the loss wait or fabricate progress.
+
+## First natural request and bounded planner correction
+
+The account-wide loss cooldown expired naturally; the scheduler resumed and
+claimed a context at 05:24:07.080929 UTC. Exact SMC/DOM and local capture were
+already durably journaled. Planner validation failed at 05:24:07.118981 UTC with
+`SCENARIO_TIMEFRAMES_INVALID`, before worker inference or any order. The shared
+legacy planner had a 600-bar cap; M1 now legitimately contains 720. The five-minute
+failed-request cooldown, failed row and entire second registration stay unchanged.
+An audited rollout hold was restored. This rejected attempt remains part of the
+cohort; it must not be removed or replaced by a selected successful path.
+
+Revision `.codex.3` passes the existing fixed 720/576/480 recipe to numeric
+production entry validation only when technical context is required. Historical
+scenario/legacy callers retain their 600-bar caps. Candle chronology, source time,
+quality, twelve-row compact provider input, two-price result and every execution/
+risk gate remain. The existing full orchestrator HTTP/transport test now uses all
+expanded histories rather than one candle per frame, and asserts compact output,
+legacy rejection and oversized-input rejection before any mocked provider call.
+A third separate future registration is required; neither earlier attempt may
+be overwritten. Full qualification passed at
+`/tmp/scalper-qualification-QsZq9g/checks/results.json`: 974 Node / 94 PostgreSQL /
+381 Python tests, all required gates/audits. Source SHA-256:
+`82992377aaf301977c8fd5276e86f5412dd12eb49a13ac958fa51933142722f3`. Fresh actual history passed
+the corrected planner plus the full in-memory HTTP orchestrator route and Python
+worker schema with a simulated worker receipt (24,123-byte actual input, no real
+inference/order). Protected startup check passes unchanged. Corrected immutable
+artifact/worker and third registration await hosted checks.
