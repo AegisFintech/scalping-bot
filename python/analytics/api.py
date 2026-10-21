@@ -10,6 +10,8 @@ from python.analytics.models import (
 )
 from python.analytics.service import analyze, analyze_numeric
 from python.analytics.statistics import summarize
+from python.technical.models import ContextRequest, ContextResponse
+from python.technical.service import prepare_context
 
 app = FastAPI(
     title="cTrader AI Scalper Analytics",
@@ -44,3 +46,8 @@ def analyze_numeric_request(request: NumericAnalyticsRequest) -> NumericAnalytic
 @app.post("/v1/performance", response_model=PerformanceResponse, response_model_by_alias=True)
 def performance_request(request: PerformanceRequest) -> PerformanceResponse:
     return PerformanceResponse(request_id=request.request_id, summary=summarize(request.outcomes))
+
+
+@app.post("/v1/technical-context", response_model=ContextResponse, response_model_by_alias=True)
+def technical_context_request(request: ContextRequest) -> ContextResponse:
+    return prepare_context(request)

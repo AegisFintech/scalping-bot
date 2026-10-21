@@ -1,0 +1,643 @@
+{
+  "schemaVersion": "technical-context-response-1.0",
+  "requestId": "11111111-1111-4111-8111-111111111111",
+  "analysisId": "22222222-2222-4222-8222-222222222222",
+  "inputSha256": "2e4835784ff3908e282c790fdc2d3d3bb23e83735137413a9b4bfa46242cdf70",
+  "capturedAt": "2026-01-02T12:00:00Z",
+  "executionAuthority": false,
+  "acceptable": true,
+  "reasons": [],
+  "evidence": {
+    "definitions_version": "causal-smc-1.0",
+    "frames": [
+      {
+        "timeframe": "M15",
+        "candle_count": 60,
+        "latest_completed_at": "2026-01-02T12:00:00+00:00",
+        "segment_candle_count": 60,
+        "bias": "UNKNOWN",
+        "atr": "3",
+        "ema_fast": "2058",
+        "ema_slow": "2051.0179701029",
+        "rsi": "100",
+        "adx": "100",
+        "pivots": [],
+        "events": [],
+        "nearest_active_zones": [],
+        "recent_resolved_zones": [],
+        "liquidity_pools": [],
+        "active_zone_count": 0,
+        "resolved_zone_count": 0,
+        "previous_utc_day": {
+          "utc_date": "2026-01-01",
+          "status": "PARTIAL_OR_UNAVAILABLE",
+          "high": null,
+          "low": null
+        }
+      },
+      {
+        "timeframe": "M5",
+        "candle_count": 60,
+        "latest_completed_at": "2026-01-02T12:00:00+00:00",
+        "segment_candle_count": 60,
+        "bias": "UNKNOWN",
+        "atr": "3",
+        "ema_fast": "2058",
+        "ema_slow": "2051.0179701029",
+        "rsi": "100",
+        "adx": "100",
+        "pivots": [],
+        "events": [],
+        "nearest_active_zones": [],
+        "recent_resolved_zones": [],
+        "liquidity_pools": [],
+        "active_zone_count": 0,
+        "resolved_zone_count": 0,
+        "previous_utc_day": {
+          "utc_date": "2026-01-01",
+          "status": "PARTIAL_OR_UNAVAILABLE",
+          "high": null,
+          "low": null
+        }
+      },
+      {
+        "timeframe": "M1",
+        "candle_count": 60,
+        "latest_completed_at": "2026-01-02T12:00:00+00:00",
+        "segment_candle_count": 60,
+        "bias": "UNKNOWN",
+        "atr": "3",
+        "ema_fast": "2058",
+        "ema_slow": "2051.0179701029",
+        "rsi": "100",
+        "adx": "100",
+        "pivots": [],
+        "events": [],
+        "nearest_active_zones": [],
+        "recent_resolved_zones": [],
+        "liquidity_pools": [],
+        "active_zone_count": 0,
+        "resolved_zone_count": 0,
+        "previous_utc_day": {
+          "utc_date": "2026-01-01",
+          "status": "PARTIAL_OR_UNAVAILABLE",
+          "high": null,
+          "low": null
+        }
+      }
+    ],
+    "depth": {
+      "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+      "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+      "source_at": "2026-01-02T12:00:00+00:00",
+      "received_at": "2026-01-02T12:00:00+00:00",
+      "bid_levels": 20,
+      "ask_levels": 20,
+      "symmetric_sizes": false,
+      "spread": "0.2",
+      "imbalance": "-0.0487804878",
+      "microprice_bias": "-0.0909090909",
+      "bid_liquidity_change_60s": "0",
+      "ask_liquidity_change_60s": "0",
+      "rolling_sample_count_60s": 1,
+      "warnings": ["SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW"]
+    },
+    "spread_to_m1_atr": "0.0666666666",
+    "history_targets_met": false,
+    "news": "NOT_COLLECTED",
+    "harmonics": "NOT_IMPLEMENTED",
+    "counterfactual_costs": null
+  },
+  "codexPayload": {
+    "version": "entry-context-candidate-1.0",
+    "execution_authority": false,
+    "input_sha256": "2e4835784ff3908e282c790fdc2d3d3bb23e83735137413a9b4bfa46242cdf70",
+    "prompt_sha256": "13022b77c711b44c9df608d54d8e040c156078086e612badd2467e8ac2e8cb8c",
+    "captured_at": "2026-01-02T12:00:00+00:00",
+    "quote": {
+      "bid": "2040",
+      "ask": "2040.2",
+      "sourceTime": "2026-01-02T12:00:00Z",
+      "receivedAt": "2026-01-02T12:00:00Z"
+    },
+    "tick_size": "0.01",
+    "entry_boundaries": {
+      "buy_stop_minimum": "2040.23",
+      "sell_stop_maximum": "2039.97"
+    },
+    "technical_context": {
+      "definitions_version": "causal-smc-1.0",
+      "frames": [
+        {
+          "timeframe": "M15",
+          "candle_count": 60,
+          "latest_completed_at": "2026-01-02T12:00:00+00:00",
+          "segment_candle_count": 60,
+          "bias": "UNKNOWN",
+          "atr": "3",
+          "ema_fast": "2058",
+          "ema_slow": "2051.0179701029",
+          "rsi": "100",
+          "adx": "100",
+          "pivots": [],
+          "events": [],
+          "nearest_active_zones": [],
+          "recent_resolved_zones": [],
+          "liquidity_pools": [],
+          "active_zone_count": 0,
+          "resolved_zone_count": 0,
+          "previous_utc_day": {
+            "utc_date": "2026-01-01",
+            "status": "PARTIAL_OR_UNAVAILABLE",
+            "high": null,
+            "low": null
+          }
+        },
+        {
+          "timeframe": "M5",
+          "candle_count": 60,
+          "latest_completed_at": "2026-01-02T12:00:00+00:00",
+          "segment_candle_count": 60,
+          "bias": "UNKNOWN",
+          "atr": "3",
+          "ema_fast": "2058",
+          "ema_slow": "2051.0179701029",
+          "rsi": "100",
+          "adx": "100",
+          "pivots": [],
+          "events": [],
+          "nearest_active_zones": [],
+          "recent_resolved_zones": [],
+          "liquidity_pools": [],
+          "active_zone_count": 0,
+          "resolved_zone_count": 0,
+          "previous_utc_day": {
+            "utc_date": "2026-01-01",
+            "status": "PARTIAL_OR_UNAVAILABLE",
+            "high": null,
+            "low": null
+          }
+        },
+        {
+          "timeframe": "M1",
+          "candle_count": 60,
+          "latest_completed_at": "2026-01-02T12:00:00+00:00",
+          "segment_candle_count": 60,
+          "bias": "UNKNOWN",
+          "atr": "3",
+          "ema_fast": "2058",
+          "ema_slow": "2051.0179701029",
+          "rsi": "100",
+          "adx": "100",
+          "pivots": [],
+          "events": [],
+          "nearest_active_zones": [],
+          "recent_resolved_zones": [],
+          "liquidity_pools": [],
+          "active_zone_count": 0,
+          "resolved_zone_count": 0,
+          "previous_utc_day": {
+            "utc_date": "2026-01-01",
+            "status": "PARTIAL_OR_UNAVAILABLE",
+            "high": null,
+            "low": null
+          }
+        }
+      ],
+      "depth": {
+        "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+        "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+        "source_at": "2026-01-02T12:00:00+00:00",
+        "received_at": "2026-01-02T12:00:00+00:00",
+        "bid_levels": 20,
+        "ask_levels": 20,
+        "symmetric_sizes": false,
+        "spread": "0.2",
+        "imbalance": "-0.0487804878",
+        "microprice_bias": "-0.0909090909",
+        "bid_liquidity_change_60s": "0",
+        "ask_liquidity_change_60s": "0",
+        "rolling_sample_count_60s": 1,
+        "warnings": ["SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW"]
+      },
+      "spread_to_m1_atr": "0.0666666666",
+      "history_targets_met": false,
+      "news": "NOT_COLLECTED",
+      "harmonics": "NOT_IMPLEMENTED",
+      "counterfactual_costs": null
+    },
+    "recent_candles": [
+      {
+        "timeframe": "M1",
+        "candles": [
+          {
+            "startTime": "2026-01-02T11:48:00Z",
+            "endTime": "2026-01-02T11:49:00Z",
+            "open": "2048.00",
+            "high": "2050.00",
+            "low": "2047.00",
+            "close": "2049.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:49:00Z",
+            "endTime": "2026-01-02T11:50:00Z",
+            "open": "2049.00",
+            "high": "2051.00",
+            "low": "2048.00",
+            "close": "2050.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:50:00Z",
+            "endTime": "2026-01-02T11:51:00Z",
+            "open": "2050.00",
+            "high": "2052.00",
+            "low": "2049.00",
+            "close": "2051.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:51:00Z",
+            "endTime": "2026-01-02T11:52:00Z",
+            "open": "2051.00",
+            "high": "2053.00",
+            "low": "2050.00",
+            "close": "2052.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:52:00Z",
+            "endTime": "2026-01-02T11:53:00Z",
+            "open": "2052.00",
+            "high": "2054.00",
+            "low": "2051.00",
+            "close": "2053.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:53:00Z",
+            "endTime": "2026-01-02T11:54:00Z",
+            "open": "2053.00",
+            "high": "2055.00",
+            "low": "2052.00",
+            "close": "2054.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:54:00Z",
+            "endTime": "2026-01-02T11:55:00Z",
+            "open": "2054.00",
+            "high": "2056.00",
+            "low": "2053.00",
+            "close": "2055.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:55:00Z",
+            "endTime": "2026-01-02T11:56:00Z",
+            "open": "2055.00",
+            "high": "2057.00",
+            "low": "2054.00",
+            "close": "2056.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:56:00Z",
+            "endTime": "2026-01-02T11:57:00Z",
+            "open": "2056.00",
+            "high": "2058.00",
+            "low": "2055.00",
+            "close": "2057.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:57:00Z",
+            "endTime": "2026-01-02T11:58:00Z",
+            "open": "2057.00",
+            "high": "2059.00",
+            "low": "2056.00",
+            "close": "2058.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:58:00Z",
+            "endTime": "2026-01-02T11:59:00Z",
+            "open": "2058.00",
+            "high": "2060.00",
+            "low": "2057.00",
+            "close": "2059.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:59:00Z",
+            "endTime": "2026-01-02T12:00:00Z",
+            "open": "2059.00",
+            "high": "2061.00",
+            "low": "2058.00",
+            "close": "2060.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          }
+        ]
+      },
+      {
+        "timeframe": "M5",
+        "candles": [
+          {
+            "startTime": "2026-01-02T11:00:00Z",
+            "endTime": "2026-01-02T11:05:00Z",
+            "open": "2048.00",
+            "high": "2050.00",
+            "low": "2047.00",
+            "close": "2049.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:05:00Z",
+            "endTime": "2026-01-02T11:10:00Z",
+            "open": "2049.00",
+            "high": "2051.00",
+            "low": "2048.00",
+            "close": "2050.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:10:00Z",
+            "endTime": "2026-01-02T11:15:00Z",
+            "open": "2050.00",
+            "high": "2052.00",
+            "low": "2049.00",
+            "close": "2051.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:15:00Z",
+            "endTime": "2026-01-02T11:20:00Z",
+            "open": "2051.00",
+            "high": "2053.00",
+            "low": "2050.00",
+            "close": "2052.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:20:00Z",
+            "endTime": "2026-01-02T11:25:00Z",
+            "open": "2052.00",
+            "high": "2054.00",
+            "low": "2051.00",
+            "close": "2053.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:25:00Z",
+            "endTime": "2026-01-02T11:30:00Z",
+            "open": "2053.00",
+            "high": "2055.00",
+            "low": "2052.00",
+            "close": "2054.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:30:00Z",
+            "endTime": "2026-01-02T11:35:00Z",
+            "open": "2054.00",
+            "high": "2056.00",
+            "low": "2053.00",
+            "close": "2055.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:35:00Z",
+            "endTime": "2026-01-02T11:40:00Z",
+            "open": "2055.00",
+            "high": "2057.00",
+            "low": "2054.00",
+            "close": "2056.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:40:00Z",
+            "endTime": "2026-01-02T11:45:00Z",
+            "open": "2056.00",
+            "high": "2058.00",
+            "low": "2055.00",
+            "close": "2057.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:45:00Z",
+            "endTime": "2026-01-02T11:50:00Z",
+            "open": "2057.00",
+            "high": "2059.00",
+            "low": "2056.00",
+            "close": "2058.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:50:00Z",
+            "endTime": "2026-01-02T11:55:00Z",
+            "open": "2058.00",
+            "high": "2060.00",
+            "low": "2057.00",
+            "close": "2059.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:55:00Z",
+            "endTime": "2026-01-02T12:00:00Z",
+            "open": "2059.00",
+            "high": "2061.00",
+            "low": "2058.00",
+            "close": "2060.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          }
+        ]
+      },
+      {
+        "timeframe": "M15",
+        "candles": [
+          {
+            "startTime": "2026-01-02T09:00:00Z",
+            "endTime": "2026-01-02T09:15:00Z",
+            "open": "2048.00",
+            "high": "2050.00",
+            "low": "2047.00",
+            "close": "2049.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:15:00Z",
+            "endTime": "2026-01-02T09:30:00Z",
+            "open": "2049.00",
+            "high": "2051.00",
+            "low": "2048.00",
+            "close": "2050.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:30:00Z",
+            "endTime": "2026-01-02T09:45:00Z",
+            "open": "2050.00",
+            "high": "2052.00",
+            "low": "2049.00",
+            "close": "2051.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:45:00Z",
+            "endTime": "2026-01-02T10:00:00Z",
+            "open": "2051.00",
+            "high": "2053.00",
+            "low": "2050.00",
+            "close": "2052.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:00:00Z",
+            "endTime": "2026-01-02T10:15:00Z",
+            "open": "2052.00",
+            "high": "2054.00",
+            "low": "2051.00",
+            "close": "2053.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:15:00Z",
+            "endTime": "2026-01-02T10:30:00Z",
+            "open": "2053.00",
+            "high": "2055.00",
+            "low": "2052.00",
+            "close": "2054.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:30:00Z",
+            "endTime": "2026-01-02T10:45:00Z",
+            "open": "2054.00",
+            "high": "2056.00",
+            "low": "2053.00",
+            "close": "2055.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:45:00Z",
+            "endTime": "2026-01-02T11:00:00Z",
+            "open": "2055.00",
+            "high": "2057.00",
+            "low": "2054.00",
+            "close": "2056.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:00:00Z",
+            "endTime": "2026-01-02T11:15:00Z",
+            "open": "2056.00",
+            "high": "2058.00",
+            "low": "2055.00",
+            "close": "2057.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:15:00Z",
+            "endTime": "2026-01-02T11:30:00Z",
+            "open": "2057.00",
+            "high": "2059.00",
+            "low": "2056.00",
+            "close": "2058.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:30:00Z",
+            "endTime": "2026-01-02T11:45:00Z",
+            "open": "2058.00",
+            "high": "2060.00",
+            "low": "2057.00",
+            "close": "2059.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:45:00Z",
+            "endTime": "2026-01-02T12:00:00Z",
+            "open": "2059.00",
+            "high": "2061.00",
+            "low": "2058.00",
+            "close": "2060.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          }
+        ]
+      }
+    ]
+  }
+}

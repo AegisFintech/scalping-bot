@@ -1015,6 +1015,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     timeframe: Timeframe,
     count: number,
     toTimestampMs?: number,
+    candidateLookbackMs?: number,
   ): Promise<readonly Candle[]> {
     if (!Number.isSafeInteger(count) || count < 1 || count > 5_000)
       throw new Error("CTRADER_CANDLE_COUNT_INVALID");
@@ -1023,6 +1024,13 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       (!Number.isSafeInteger(toTimestampMs) || toTimestampMs < 1)
     )
       throw new Error("CTRADER_CANDLE_TO_TIMESTAMP_INVALID");
+    if (
+      candidateLookbackMs !== undefined &&
+      (!Number.isSafeInteger(candidateLookbackMs) ||
+        candidateLookbackMs < 1 ||
+        candidateLookbackMs > 7 * 86400_000)
+    )
+      throw new Error("CTRADER_CANDIDATE_LOOKBACK_INVALID");
     const server = new Date(await this.getServerTime()).getTime();
     const period = PERIOD[timeframe];
     const upperBound =
@@ -1038,7 +1046,8 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
         ),
         fromTimestamp: Math.max(
           0,
-          completedBoundary - count * period.milliseconds * 3,
+          completedBoundary -
+            Math.max(count * period.milliseconds * 3, candidateLookbackMs ?? 0),
         ),
         toTimestamp: completedBoundary - 1,
         period: period.code,

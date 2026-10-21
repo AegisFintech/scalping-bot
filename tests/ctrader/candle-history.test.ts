@@ -187,3 +187,19 @@ describe("paginated completed candle history", () => {
     );
   });
 });
+
+it("allows a bounded explicit candidate lookback without changing ordinary requests", async () => {
+  const { client, request } = await buildClient();
+  await client.getCompletedCandles("77", "M1", 3, undefined, 7 * 86400_000);
+  const body = request.mock.calls.find(
+    (c) => c[0] === CTraderPayload.GET_TRENDBARS_REQ,
+  )?.[1] as Record<string, unknown>;
+  expect(body.fromTimestamp).toBe(NOW_MS - 7 * 86400_000);
+  for (const bad of [0, -1, 1.5, Number.NaN, 8 * 86400_000])
+    await expect(
+      client.getCompletedCandles("77", "M1", 3, undefined, bad),
+    ).rejects.toThrow("CTRADER_CANDIDATE_LOOKBACK_INVALID");
+  expect(
+    request.mock.calls.filter((c) => c[0] === CTraderPayload.GET_TRENDBARS_REQ),
+  ).toHaveLength(1);
+});
