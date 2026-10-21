@@ -1,3 +1,33 @@
+# ISSUE-360 — Lean server and maintenance on every push
+
+Use `/root/scalping-bot-terminal` for development; the original checkout and
+immutable deployment/research artifacts are not disposable unused source.
+Read `docs/server-cleanup-report.md` before further disk/service cleanup.
+Claude and OpenCode were explicitly removed by the operator. Do not reinstall
+them or delete Codex auth, active versions, current records or another project's
+files. Keep the current Codex version, one fallback and every in-use version.
+Reproducible caches may be removed after checking service/process references;
+Python venv scripts can retain absolute interpreter paths into older worktrees.
+No automatic package autoremove, database pruning, journal/report deletion,
+research registration editing or removal of immutable deployments is authorized.
+
+Before each repository update, review newly unused files, dependencies and
+service references; remove only confirmed unused items and record retained
+evidence/deployment dependencies in the issue report.
+For every new non-merge commit pushed, update README.md with the user-facing
+change/validation and AGENTS.md with the corresponding maintenance contract or
+reviewed checkpoint. Keep these meaningful and concise. Run `npm run hooks:install`
+once; the tracked pre-push gate checks every outgoing commit, clean tracked state
+and `graphify update .` (local AST only). Keep Graphify outputs ignored. Do not
+bypass a failed gate, overwrite existing hooks or auto-generate commits. Hooks
+are local opt-in checks, not a substitute for full qualification, secret scanning,
+reviewed issue branches and passing hosted checks before merge. Pure tag pushes
+and branch deletions are exempt. New branches require fetched `origin/main`.
+Cleanup itself never runs automatically on commit/push and must not restart the
+bot, change risk/strategy, reset history or terminate registered observers.
+Retired unregistered feed/research/intake schedules can be restored only after
+reviewing source/epoch compatibility; their private outputs remain intact.
+
 # ISSUE-358 — Explicit compression scalp DEMO trial
 
 The operator requested deployment and fresh monitoring after #354. This authorizes
