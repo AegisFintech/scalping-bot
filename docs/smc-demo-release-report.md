@@ -187,3 +187,10 @@ smoke. No profitability or successful provider receipt is inferred from validati
 Final receipt-only diff receives formatting, staged review, secret scanning and
 both hosted qualification checks before auto-merge; source qualification remains
 `a0dc3210ef2c7c05f216c121648bfb5f6ab40df274d3f2ac51271737b194349c`.
+
+At 05:19:52 UTC the existing observational watchdog also reported
+`AUTOMATIC_ANALYSIS_STALLED`: its input has no loss-cooldown field, so the valid
+one-hour gate can produce an inactivity warning after five minutes. Scheduler
+admission does not consume that warning. [#353](https://github.com/AegisFintech/scalping-bot/issues/353)
+tracks the separate reporting correction; this activation does not alter a
+watchdog threshold, reset the loss wait or fabricate progress.

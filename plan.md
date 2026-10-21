@@ -11,6 +11,13 @@
 - Status: completed implementation and verified DEMO activation at 2026-10-21 05:14:17 UTC. Clock-corrected `.codex.2` passed 974 Node / 94 PostgreSQL / 381 Python tests (1,449), all gates/audits and both hosted checks. Matching immutable artifact/worker and all five process paths verified; exact deployed-data input passes isolated worker validation. Separate future registration and observer active. Original analysis state restored; existing loss cooldown preserved. No forced provider/order, real-money activation, reset, overwritten registration or economic qualification. Final receipt-head hosted checks/auto-merge pending.
 - Report: [release and rollout](docs/smc-demo-release-report.md).
 
+### ISSUE-353 — Loss-cooldown watchdog reporting
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/353.
+- Dependencies: #351 observation; separate monitoring-only follow-up.
+- Acceptance: distinguish a freshly verified expected loss cooldown from unexplained inactivity; preserve unknown evidence and genuine post-expiry stall detection, execution admission, accounting and cooldown duration. Add cooldown/missing/expiry/genuine-stall tests and qualify contracts if changed.
+- Status: planned. The observational watchdog lacks cooldown input and can report `AUTOMATIC_ANALYSIS_STALLED` during the valid one-hour wait. The scheduler does not consume this warning; no execution gate was changed or bypassed.
+
 ### ISSUE-348 — Causal SMC / DOM context for Codex research
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/348.
