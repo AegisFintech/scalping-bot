@@ -387,5 +387,115 @@
         "code": 0
       }
     ]
+  },
+  "finalRollout": {
+    "held": {
+      "issue": 351,
+      "heldAt": "2026-10-21T05:34:32.730323+00:00",
+      "artifact": "/opt/ctrader-ai-scalper/releases/smc351-plannerfix-qualified",
+      "artifactCommit": "2bbbfc6fa16eeda15dd014a81be929d0c0536bde",
+      "sourceSha256": "82992377aaf301977c8fd5276e86f5412dd12eb49a13ac958fa51933142722f3",
+      "workerArtifact": "/opt/scalper-codex-entry-351-r3",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "matchedWorkerHealth": 200,
+      "workerUnauthenticatedPost": 401,
+      "operationalReady": true,
+      "pauseNewAnalyses": true,
+      "fiveProcessPathsVerified": true,
+      "noCachedDatabaseCredential": true,
+      "credentialsFileUnchanged": true,
+      "accountingValuesPreserved": true,
+      "migrationsRun": false,
+      "existingMigrationChecksumsVerified": 30,
+      "oldRegistrationUnchanged": true,
+      "newRegistrationSha256": "d67c05c322eca5e45ff08499c70c4990802b10a2725eeb793ac5efb30c2aaf4a",
+      "registeredAt": "2026-10-21T05:34:05.873556+00:00",
+      "observationFrom": "2026-10-21T05:35:05.873556+00:00",
+      "observationUntil": "2026-11-20T05:35:05.873556+00:00",
+      "futureCutoffs": 31,
+      "observerStarted": true,
+      "providerCallsForced": 0,
+      "brokerOrderCommandsForced": 0,
+      "oldPauseState": false,
+      "hostedChecks": [
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39549966676/job/119056663110",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39549963349/job/119056651908",
+          "conclusion": "SUCCESS"
+        }
+      ]
+    },
+    "resume": {
+      "issue": 351,
+      "resumedAt": "2026-10-21T05:35:19.853467+00:00",
+      "strategyVersion": "0.4.1-smc-breakout.1-codex.3",
+      "mode": "demo",
+      "realMoneyLiveEnabled": false,
+      "operationalReady": true,
+      "automaticAnalysisEnabled": true,
+      "pauseNewAnalyses": false,
+      "exactDeployedNodeInputValidatedByIsolatedWorker": true,
+      "workerAuthenticatedInvalidInput": 422,
+      "credentialsUnchanged": true,
+      "providerCallsForced": 0,
+      "brokerCommandsForced": 0,
+      "newRegistrationSha256": "d67c05c322eca5e45ff08499c70c4990802b10a2725eeb793ac5efb30c2aaf4a",
+      "oldRegistrationsPreserved": true,
+      "lossCooldownReset": false
+    },
+    "naturalLifecycle": {
+      "issue": 351,
+      "observedAt": "2026-10-21T05:37:46.505884+00:00",
+      "strategyVersion": "0.4.1-smc-breakout.1-codex.3",
+      "mode": "demo",
+      "providerState": "READY",
+      "providerRequestedAt": "2026-10-21 05:35:23.527972+00:00",
+      "providerAvailableAt": "2026-10-21 05:35:35.036835+00:00",
+      "exactWorkerPayloadMatchesDurableJournal": true,
+      "promptShaMatchesJournal": true,
+      "completedHistoryCounts": {
+        "M15": 480,
+        "M5": 576,
+        "M1": 720
+      },
+      "compactRows": {
+        "M15": 12,
+        "M5": 12,
+        "M1": 12
+      },
+      "brokerDomLevels": {
+        "bid": 4,
+        "ask": 4
+      },
+      "orders": [
+        {
+          "side": "BUY",
+          "state": "CANCELLED",
+          "execution_order_type": "STOP_LIMIT",
+          "time_in_force": "GTC",
+          "broker_updated_at": "2026-10-21 05:37:02.479000+00:00",
+          "broker_acknowledged": true
+        },
+        {
+          "side": "SELL",
+          "state": "FILLED",
+          "execution_order_type": "STOP_LIMIT",
+          "time_in_force": "GTC",
+          "broker_updated_at": "2026-10-21 05:37:02.219000+00:00",
+          "broker_acknowledged": true
+        }
+      ],
+      "mappedBrokerEvents": 8,
+      "firstBrokerEventAt": "2026-10-21 05:35:39.581000+00:00",
+      "counterfactualCosts": null,
+      "forcedProviderCalls": 0,
+      "forcedBrokerCommands": 0
+    },
+    "freshDeployedFullChainMockRequestBytes": 24706,
+    "realMoneyLiveEnabled": false
   }
 }

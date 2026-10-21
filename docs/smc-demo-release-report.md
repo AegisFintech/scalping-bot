@@ -1,9 +1,9 @@
 # ISSUE-351 — Operator-authorized SMC / DOM demo release
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/351.
-Status: clock-corrected revision .2 resumed at 05:14:17 UTC; first automatic
-request rejected locally at 05:24:07 UTC. Held again pending qualified .3 planner
-compatibility fix. Economic qualification remains unproven.
+Status: corrected revision .3 deployed and resumed in DEMO at 05:35:19 UTC;
+natural Codex response, broker acknowledgements, fill and OCO peer cancellation
+verified. Economic qualification remains unproven.
 
 The operator explicitly requested activation after the candidate-preparation
 handoff. This authorizes a separately versioned controlled DEMO experiment, not
@@ -223,3 +223,51 @@ the corrected planner plus the full in-memory HTTP orchestrator route and Python
 worker schema with a simulated worker receipt (24,123-byte actual input, no real
 inference/order). Protected startup check passes unchanged. Corrected immutable
 artifact/worker and third registration await hosted checks.
+
+## Final corrected activation and natural lifecycle
+
+Both `.codex.3` source-head hosted checks passed:
+[push](https://github.com/AegisFintech/scalping-bot/actions/runs/39549963349) /
+[PR](https://github.com/AegisFintech/scalping-bot/actions/runs/39549966676).
+Artifact `/opt/ctrader-ai-scalper/releases/smc351-plannerfix-qualified` pins commit
+`2bbbfc6fa16eeda15dd014a81be929d0c0536bde` and qualified source
+`82992377aaf301977c8fd5276e86f5412dd12eb49a13ac958fa51933142722f3`.
+Worker `/opt/scalper-codex-entry-351-r3` matches that source and qualified Python.
+Actual service PID is non-root with the expected worker PYTHONPATH/v6 prompt
+and original isolated HOME/auth. All five PM2 paths, environment hash, original
+daily/capital financial values and thirty existing migration checksums were
+verified again; no migration, reset, manual cancellation or replay occurred.
+Fresh deployed data passed the full in-memory orchestrator/mock-receipt path
+and isolated worker validator (24,706-byte input), without test inference/order.
+
+The third exclusive mode-0400 future registration was frozen at
+05:34:05.873556 UTC, collecting from 05:35:05.873556 UTC through November 20 at
+the same time, with all daily/final cutoffs and prior-registration links. SHA:
+`d67c05c322eca5e45ff08499c70c4990802b10a2725eeb793ac5efb30c2aaf4a`.
+Both earlier SMC registrations and #334 remain unchanged. The failed .2 request
+and entire cohort remain available. Independent read-only observer
+`scalper-smc-observer-351-r3.service` is active with its own output; older observer
+identities are preserved. Original pause=false was restored via audited control
+at 05:35:19.853467 UTC (13:35:19 Singapore), after registration started.
+The loss and failed-request cooldowns had elapsed naturally; none was cleared.
+
+The scheduler naturally claimed the first .3 request at 05:35:23.527972 UTC.
+A valid response became available at 05:35:35.036835 UTC. The dedicated worker's
+actual request payload equals the durable provider journal exactly, and prompt
+SHA matches. It includes all 720/576/480 completed bars in local calculations,
+twelve compact rows per frame, causal structure/zone/indicator findings and
+four broker DOM levels on each side. DOM remains broker-scoped, not global order
+flow. Returned model identity, usage/cost and counterfactual economics are not
+inferred. This response verifies transport, not profitability.
+
+Broker events begin at 05:35:39.581 UTC for the new STOP_LIMIT/GTC pair. Read-only
+verification at 05:37:46 UTC found the sell FILLED (broker time 05:37:02.219) and
+buy peer CANCELLED (05:37:02.479), both broker-acknowledged, with eight mapped
+events. Current status remained reconciled/operationally ready, unpaused, no
+operational fault, waiting on the active position as required. No provider call
+or broker command was forced for the rollout. Subsequent trade outcomes remain
+in the broker journal; no exit cause or profitability is inferred here.
+
+Final delivery includes these sanitized receipts, staged review, formatting and
+secret scanning. Both final-head hosted qualification runs must pass before
+auto-merge; docs-only receipts do not change the qualified source fingerprint.
