@@ -226,7 +226,7 @@ describe("fixed percentage policy, synthetic risk evidence only", () => {
 });
 
 it("pins the reviewed breakout release while preserving historical fade identities", () => {
-  expect(FIXED_DEFAULTS.STRATEGY_VERSION).toBe("0.4.1-smc-breakout.1-codex.1");
+  expect(FIXED_DEFAULTS.STRATEGY_VERSION).toBe("0.4.1-smc-breakout.1-codex.2");
   expect(FIXED_DEFAULTS.CODE_VERSION).toBe("0.4.1-smc-breakout.1");
   expect(usesFadeV3(FIXED_DEFAULTS.STRATEGY_VERSION)).toBe(false);
   expect(usesFadeV3("0.3.0-fade-limit.3")).toBe(true);

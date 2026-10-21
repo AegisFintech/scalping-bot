@@ -21,3 +21,12 @@ export interface TechnicalContextResponse {
   readonly evidence: Readonly<Record<string, unknown>> | null;
   readonly codexPayload: Readonly<Record<string, unknown>> | null;
 }
+
+/** Broker source time and local receive/capture time are distinct clocks. */
+export interface TechnicalContextRequestV11 extends Omit<
+  TechnicalContextRequest,
+  "schemaVersion"
+> {
+  readonly schemaVersion: "technical-context-request-1.1";
+  readonly snapshotTime: string;
+}

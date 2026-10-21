@@ -344,7 +344,11 @@ def smc_request() -> s.RequestV12:
     evidence["depth"]["source_at"] = NOW.isoformat()
     evidence["depth"]["received_at"] = NOW.isoformat()
     body.update(version="codex-entry-request-1.2", promptVersion="entry-pair-v6")
-    body["payload"].update(technical_context=evidence, context_input_sha256="a" * 64)
+    body["payload"].update(
+        technical_context=evidence,
+        context_input_sha256="a" * 64,
+        market_captured_at=NOW.isoformat(),
+    )
     return s.RequestV12.model_validate(body)
 
 
@@ -417,3 +421,23 @@ def test_smc_http_version_gate_never_claims_legacy_input(tmp_path: Path) -> None
         json.loads(Path("schemas/codex-entry-request-1.2.json").read_text())
         == s.RequestV12.model_json_schema()
     )
+
+
+def test_worker_distinguishes_broker_clock_from_recorded_local_capture() -> None:
+    body = smc_request().model_dump()
+    body["payload"]["market_captured_at"] = (NOW + timedelta(milliseconds=800)).isoformat()
+    body["payload"]["technical_context"]["depth"]["received_at"] = (
+        NOW + timedelta(milliseconds=500)
+    ).isoformat()
+    assert (
+        s.RequestV12.model_validate(body).payload.technical_context.depth.received_at
+        == (NOW + timedelta(milliseconds=500)).isoformat()
+    )
+    body["payload"]["technical_context"]["depth"]["received_at"] = (
+        NOW + timedelta(seconds=1)
+    ).isoformat()
+    with pytest.raises(ValueError, match="DEPTH_STALE"):
+        s.RequestV12.model_validate(body)
+    body["payload"]["market_captured_at"] = (NOW + timedelta(seconds=4)).isoformat()
+    with pytest.raises(ValueError, match="CLOCK_SKEW"):
+        s.RequestV12.model_validate(body)

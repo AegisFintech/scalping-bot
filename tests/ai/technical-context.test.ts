@@ -116,3 +116,22 @@ describe("technical candidate HTTP boundary", () => {
     await expect(client.prepare(request)).rejects.toThrow("RESPONSE_INVALID");
   });
 });
+
+it("routes explicit local snapshot time separately without changing legacy requests", async () => {
+  const fetchImpl = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(Response.json(response));
+  const client = new TechnicalContextHttpClient(
+    "http://127.0.0.1:8091",
+    fetchImpl,
+  );
+  const current = {
+    ...request,
+    schemaVersion: "technical-context-request-1.1" as const,
+    snapshotTime: request.request.serverTime,
+  };
+  expect((await client.prepare(current)).executionAuthority).toBe(false);
+  expect((fetchImpl.mock.calls[0]?.[0] as URL).pathname).toBe(
+    "/v2/technical-context",
+  );
+});

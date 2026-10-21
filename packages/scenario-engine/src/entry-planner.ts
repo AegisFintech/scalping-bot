@@ -33,6 +33,7 @@ export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
   readonly technicalContext?: {
     readonly evidence: Readonly<Record<string, unknown>>;
     readonly inputSha256: string;
+    readonly marketCapturedAt?: string;
   };
 };
 
@@ -58,6 +59,7 @@ export function entryProviderPayload(
       : {
           technical_context: input.technicalContext.evidence,
           context_input_sha256: input.technicalContext.inputSha256,
+          market_captured_at: input.technicalContext.marketCapturedAt,
         }),
     candles: input.candles.map((s) => ({
       timeframe: s.timeframe,

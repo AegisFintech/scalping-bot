@@ -502,6 +502,10 @@
           "title": "Candles",
           "type": "array"
         },
+        "market_captured_at": {
+          "title": "Market Captured At",
+          "type": "string"
+        },
         "technical_context": {
           "$ref": "#/$defs/ContextEvidence"
         },
@@ -518,6 +522,7 @@
         "minimum_entry_distance",
         "entry_boundaries",
         "candles",
+        "market_captured_at",
         "technical_context",
         "context_input_sha256"
       ],

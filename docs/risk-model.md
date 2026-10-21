@@ -1,5 +1,10 @@
 # Deterministic risk model
 
+ISSUE-351 source uses `0.4.1-smc-breakout.1` / `.codex.2` with SMC/DOM
+input and unchanged ISSUE-334 execution/risk constants. See
+[release and actual rollout](smc-demo-release-report.md). Historical release names
+below describe earlier behavior; runtime activation is recorded separately.
+
 Current ISSUE-334 policy is the separately authorized
 `0.4.0-breakout-scalp.1` demo experiment. Provider breakout entries are preserved;
 STOP_LIMIT/GTC/OCO and native smaller TP replace the historical fade path.

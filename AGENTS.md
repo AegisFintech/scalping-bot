@@ -2,7 +2,7 @@
 
 The operator requested "live it" after #348. This authorizes a separately versioned
 controlled DEMO trial, not real-money/live mode or an increase in risk. Current
-source becomes entry-pair-v6 / Codex transport 1.2 / 0.4.1-smc-breakout.1-codex.1.
+source becomes entry-pair-v6 / Codex transport 1.2 / 0.4.1-smc-breakout.1-codex.2.
 Use expanded completed history and causal-smc-1.0 context in the exact durable
 provider input. Missing/stale/mismatched context blocks dispatch; no old prompt
 reuse or fallback. Two-price replies, STOP_LIMIT/GTC/OCO, broker protection,

@@ -9,6 +9,7 @@ from python.analytics.service import TIMEFRAME_SECONDS, quality_reasons
 from python.technical.models import (
     ContextEvidence,
     ContextRequest,
+    ContextRequestV11,
     ContextResponse,
     DepthContext,
 )
@@ -17,13 +18,18 @@ from python.technical.structure import TARGET_COUNTS, frame_context, text
 PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts/research/entry-context-v1.md"
 
 
-def context_reasons(source: ContextRequest) -> list[str]:
+def context_reasons(source: ContextRequest | ContextRequestV11) -> list[str]:
     request = source.request
     book = request.order_book
+    snapshot_time = (
+        source.snapshot_time if isinstance(source, ContextRequestV11) else request.server_time
+    )
     reasons: list[str] = []
     if book.source_time.tzinfo is None or book.received_at.tzinfo is None:
         return ["DEPTH_TIMEZONE_MISSING"]
     reasons.extend(quality_reasons(request))
+    if not 0 <= (snapshot_time - request.server_time).total_seconds() <= 3:
+        reasons.append("SNAPSHOT_BROKER_CLOCK_SKEW_INVALID")
     if request.symbol != "XAUUSD":
         reasons.append("SYMBOL_UNSUPPORTED")
     if not 0 <= (request.server_time - request.analysis_time).total_seconds() <= 3:
@@ -32,9 +38,9 @@ def context_reasons(source: ContextRequest) -> list[str]:
         ("QUOTE", source.quote.source_time, source.quote.received_at),
         ("DEPTH", book.source_time, book.received_at),
     ):
-        if not sourced <= received <= request.server_time:
+        if not sourced <= received <= snapshot_time:
             reasons.append(f"{name}_TIME_ORDER_INVALID")
-        if not 0 <= (request.server_time - sourced).total_seconds() <= 3:
+        if not 0 <= (snapshot_time - sourced).total_seconds() <= 3:
             reasons.append(f"{name}_STALE_AT_SNAPSHOT")
     if Decimal(source.quote.bid) >= Decimal(source.quote.ask):
         reasons.append("QUOTE_CROSSED")
@@ -51,7 +57,7 @@ def context_reasons(source: ContextRequest) -> list[str]:
     return sorted(set(reasons))
 
 
-def prepare_context(source: ContextRequest) -> ContextResponse:
+def prepare_context(source: ContextRequest | ContextRequestV11) -> ContextResponse:
     request = source.request
     raw = json.dumps(source.model_dump(mode="json", by_alias=True), sort_keys=True)
     digest = hashlib.sha256(raw.encode()).hexdigest()
@@ -160,6 +166,11 @@ def prepare_context(source: ContextRequest) -> ContextResponse:
             "sell_stop_maximum": text(sell_max),
         },
         "technical_context": evidence.model_dump(mode="json"),
+        **(
+            {"snapshot_time": source.snapshot_time.isoformat()}
+            if isinstance(source, ContextRequestV11)
+            else {}
+        ),
         "recent_candles": [
             {
                 "timeframe": s.timeframe,

@@ -5,9 +5,10 @@
 ### ISSUE-351 — Operator-authorized SMC / DOM demo activation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/351.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/352.
 - Dependencies: #348/#350 local context; #349 comparison remains separate; preserve #334/#338.
 - Acceptance: prompt v6 / transport 1.2 / distinct demo release, exact pre-dispatch SMC/DOM journaling, bounded cached expanded OHLC, fail-closed context and old-schema compatibility; full checks and hosted PR, immutable artifact/worker, new future registration, audited same-DB rollout preserving active GTC/protection/risk/accounting and observed natural lifecycle.
-- Status: integrated and fully qualified (973 Node / 94 PostgreSQL / 375 Python; all gates). Real Node-generated SMC input independently validated by Python worker with no inference. Protected-file/sample startup checks pass; environment and current cycle unchanged pending hosted checks and audited rollout. No real-money/live authorization or economic qualification.
+- Status: clock-corrected `.codex.2` fully qualified: 974 Node / 94 PostgreSQL / 381 Python tests (1,449), all required gates/audits. Fresh exact Node input passes independent worker validation without inference. First deployed artifact stays held; no new-version provider request/order. Both prior registrations/history/accounting preserved. Matching second artifact/worker and separate future registration follow hosted checks.
 - Report: [release and rollout](docs/smc-demo-release-report.md).
 
 ### ISSUE-348 — Causal SMC / DOM context for Codex research

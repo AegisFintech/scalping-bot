@@ -1,7 +1,10 @@
 import { readFile, writeFile, stat } from "node:fs/promises";
 import { TechnicalContextHttpClient } from "../packages/analytics-client/src/technical-context.js";
 import { ModelResponseValidator } from "../packages/risk-engine/src/model-validator.js";
-import type { TechnicalContextRequest } from "../packages/contracts/src/technical-context.js";
+import type {
+  TechnicalContextRequest,
+  TechnicalContextRequestV11,
+} from "../packages/contracts/src/technical-context.js";
 
 // Existing saved request -> typed local HTTP -> exclusive private candidate file.
 // No credential loading, collection loop, model call, order dispatch or promotion.
@@ -16,9 +19,20 @@ try {
     throw new Error("TECHNICAL_CONTEXT_USAGE");
   if ((await stat(source)).size > 1_048_576)
     throw new Error("TECHNICAL_CONTEXT_INPUT_TOO_LARGE");
-  const validated = new ModelResponseValidator<TechnicalContextRequest>(
-    "schemas/technical-context-request-1.0.json",
-  ).parse(await readFile(source, "utf8"));
+  const raw = await readFile(source, "utf8");
+  const document: unknown = JSON.parse(raw);
+  const localClock =
+    document !== null &&
+    typeof document === "object" &&
+    "schemaVersion" in document &&
+    document.schemaVersion === "technical-context-request-1.1";
+  const validated = new ModelResponseValidator<
+    TechnicalContextRequest | TechnicalContextRequestV11
+  >(
+    localClock
+      ? "schemas/technical-context-request-1.1.json"
+      : "schemas/technical-context-request-1.0.json",
+  ).parse(raw);
   if (!validated.accepted || validated.response === null)
     throw new Error("TECHNICAL_CONTEXT_INPUT_INVALID");
   const result = await new TechnicalContextHttpClient(baseUrl).prepare(

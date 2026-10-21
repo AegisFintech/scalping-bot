@@ -176,3 +176,33 @@ class ContextResponse(ApiModel):
         if not self.acceptable and (self.evidence is not None or self.codex_payload is not None):
             raise ValueError("rejected context must withhold evidence")
         return self
+
+
+class ContextRequestV11(ApiModel):
+    """Separate broker analysis time from recorded local snapshot availability."""
+
+    schema_version: Literal["technical-context-request-1.1"] = Field(alias="schemaVersion")
+    request: AnalyticsRequest
+    quote: ContextQuote
+    tick_size: str = Field(alias="tickSize")
+    minimum_entry_distance: str = Field(alias="minimumEntryDistance")
+    snapshot_time: datetime = Field(alias="snapshotTime")
+
+    @field_validator("tick_size", "minimum_entry_distance")
+    @classmethod
+    def decimal(cls, value: str) -> str:
+        parse_decimal_string(value)
+        return value
+
+    @field_validator("snapshot_time")
+    @classmethod
+    def aware(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError("aware time required")
+        return value
+
+    @model_validator(mode="after")
+    def positive_tick(self) -> ContextRequestV11:
+        if parse_decimal_string(self.tick_size) <= 0:
+            raise ValueError("tick must be positive")
+        return self

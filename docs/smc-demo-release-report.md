@@ -11,7 +11,7 @@ of better accuracy, positive expectancy or profitable seconds-to-exit is made.
 
 ## Current source and input
 
-New strategy `0.4.1-smc-breakout.1-codex.1`, policy `0.4.1-smc-breakout.1`, provider
+New strategy `0.4.1-smc-breakout.1-codex.2`, policy `0.4.1-smc-breakout.1`, provider
 prompt `entry-pair-v6`, additive Codex transport 1.2 and reported-risk schema 1.1.
 Legacy prompt files, worker request schemas 1.0/1.1, risk schema 1.0, SQL migrations
 and journals are unchanged. No SQL migration is necessary for new source/prompt
@@ -120,3 +120,27 @@ new journals/claims/protection and reconcile any new-release group under its
 original recorded ownership/geometry. Keep new identities and all observation
 registrations. Never restore an old database or replay old dispatches. Existing
 risk locks/unknown outcomes still govern rollback admission.
+
+## Held rollout and clock correction
+
+The first qualified artifact passed both hosted checks and was deployed under an
+audited analysis hold. Fresh deployed-data verification exposed valid local quote
+and depth receipt times later than the broker source clock. No new-release
+provider request or order was dispatched. The first artifact and its exclusive
+registration remain unchanged.
+
+Revision `.codex.2` adds technical-context request 1.1 at `/v2/technical-context`
+with the actual local snapshot capture time, and binds that time into worker 1.2
+input. Source/receipt/capture ordering and the three-second freshness bound are
+checked against the appropriate clocks. Completed-candle causality remains tied
+to broker analysis time. Legacy technical-context 1.0 remains unchanged. A second
+future registration is required before resuming; neither prior registration may
+be overwritten. Clock regression tests cover legitimate receipt delay, future
+receipt, stale source and local/broker disagreement. Full requalification passed: 974 Node / 94 PostgreSQL / 381 Python tests
+(1,449 total), all required format/lint/types/build/schema/migration/fail-closed,
+secret-scan and dependency-audit gates at
+`/tmp/scalper-qualification-mzKhgT/checks/results.json`. Qualified source SHA-256:
+`a0dc3210ef2c7c05f216c121648bfb5f6ab40df274d3f2ac51271737b194349c`. The exact fresh Node
+input (23,374 bytes) passes the independent Python worker validator without
+inference. Protected-file policy/startup and sample startup checks pass unchanged.
+AST-only graph update completed; existing pyproject/community-label warnings only.

@@ -518,7 +518,11 @@ async function main(): Promise<void> {
       });
       if (!result.acceptable || result.evidence === null)
         throw new Error("SCENARIO_TECHNICAL_CONTEXT_UNAVAILABLE");
-      return { evidence: result.evidence, inputSha256: result.inputSha256 };
+      return {
+        evidence: result.evidence,
+        inputSha256: result.inputSha256,
+        marketCapturedAt: snapshot.capturedAt,
+      };
     },
   );
   let capitalMultiplier = "0";

@@ -169,12 +169,16 @@ class RequestV11(Request):
 
 
 class PayloadV12(Payload):
+    market_captured_at: str
     technical_context: ContextEvidence
     context_input_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
     @model_validator(mode="after")
     def context_matches_capture(self) -> PayloadV12:
         captured = timestamp(self.captured_at)
+        market_captured = timestamp(self.market_captured_at)
+        if not timedelta(0) <= market_captured - captured <= timedelta(seconds=3):
+            raise ValueError("CODEX_SNAPSHOT_CLOCK_SKEW_INVALID")
         context = self.technical_context
         if not context.history_targets_met or {f.timeframe for f in context.frames} != {
             "M1",
@@ -227,7 +231,9 @@ class PayloadV12(Payload):
 
         depth = context.depth
         sourced, received = timestamp(depth.source_at), timestamp(depth.received_at)
-        if not sourced <= received <= captured or captured - sourced > timedelta(seconds=3):
+        if not sourced <= received <= market_captured or market_captured - sourced > timedelta(
+            seconds=3
+        ):
             raise ValueError("CODEX_CONTEXT_DEPTH_STALE")
         return self
 
