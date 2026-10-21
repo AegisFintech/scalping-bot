@@ -5,9 +5,10 @@
 ### ISSUE-346 — Lean landscape-only panel and configuration cleanup
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/346.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/347.
 - Acceptance: remove sidebar/topbar/history/diagnostics and unreachable presentation code; edge-to-edge direct HTTP desk, stable polling/state/fail-closed values, remove exclusive dependencies, 16-key template and reviewed protected-file cleanup with effective configuration equivalence; full gates/browser evidence, pushed PR and dashboard-only rollout.
 - Dependencies: merged #345 and current breakout runtime. Preserve research registrations, ledger, migrations, credentials/identity/explicit authorization and backend controls.
-- Status: implemented and qualified: 943 Node / 94 PostgreSQL / 339 Python tests, all required gates/audits, real-browser/state/transport-failure checks and 26→19 protected-file cleanup with unchanged effective execution configuration. Source removes 5,614 dashboard lines and 21 unused Python packages; standard template is 16 keys. Dashboard-only artifact/hosted checks/rollout pending. Trading processes, records and research stay unchanged.
+- Status: implemented and qualified: 943 Node / 94 PostgreSQL / 339 Python tests, all required gates/audits, real-browser/state/transport-failure checks and 26→19 protected-file cleanup with unchanged effective execution configuration. Source removes 5,614 dashboard lines and 21 unused Python packages; standard template is 16 keys. Both implementation-head hosted checks passed. Verified dashboard346 (407 MiB versus 872 MiB) deployed; deployed browser/transport-failure checks and artifact verification passed. Trading PIDs/artifacts, current records and research registration/worker preserved. Final receipt-head checks/merge pending.
 - Report: [cleanup inventory, checks and rollback](docs/lean-dashboard-report.md).
 
 ### ISSUE-344 — Deploy the approved animated landscape dashboard
@@ -16,7 +17,7 @@
 - PR: https://github.com/AegisFintech/scalping-bot/pull/345.
 - Acceptance: approved full-screen design connected to real scoped evidence and bounded deduplicated journal events, stable animation/chart/log state, fresh/unknown money and protection, safe text, native navigation/authenticated controls, behavior/browser/full gates and verified dashboard-only rollout.
 - Dependencies: #340 / #341 data and #342 / #343 approved prototype.
-- Status: deployed and verified. Full qualification passed (943 Node / 94 PostgreSQL / 405 Python plus all required gates/audits); both source-head hosted checks passed before deployment. Real preview/light-base/deployed browser checks pass at four viewports, including stable state, safe text, bounded events, stale/disconnected values, navigation and unsubmitted controls. Only the dashboard process changed; four trading processes, credentials, database and prospective registration are preserved. Final receipt checks/merge pending.
+- Status: deployed and verified. Full qualification passed (943 Node / 94 PostgreSQL / 405 Python plus all required gates/audits); both source-head hosted checks passed before deployment. Real preview/light-base/deployed browser checks pass at four viewports, including stable state, safe text, bounded events, stale/disconnected values, navigation and unsubmitted controls. Only the dashboard process changed; four trading processes, credentials, database and prospective registration are preserved. Final receipt checks passed; PR #345 merged.
 - Report: [implementation, qualification and rollout](docs/live-landscape-report.md).
 - Rollback: recreate the previous dashboard only; preserve current database, trading services and frozen research.
 

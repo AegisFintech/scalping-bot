@@ -113,9 +113,31 @@ is published. Trading processes retain their original environment/artifact;
 only the new dashboard will read the trimmed file.
 [Sanitized validation](evidence/lean-dashboard-validation.json).
 
-Immutable artifact verification, hosted checks and dashboard-only deployment are
-pending. Four trading PIDs/source, worker/observer and registration must remain
-unchanged.
+Both exact implementation-head hosted qualification checks passed before rollout.
+At `2026-10-21T01:31:33.590524Z`, only `scalper-dashboard` was recreated and PM2
+state saved. The selected verified artifact is
+`/opt/ctrader-ai-scalper/releases/dashboard346`, commit
+`edd87a74215be6f2f7f0117fa0ef04e59292b15c`, with the qualified source SHA above.
+Its complete size is 407 MiB versus 872 MiB for dashboard344. Unused regenerable
+host caches were removed separately for disk headroom; no release artifact,
+ledger, qualification report, broker evidence or frozen research was deleted.
+
+The deployed direct browser passed all four viewports, retained DOM/chart/log/motion,
+no sidebar/navigation, light OS preference, actual failed-fetch evidence withdrawal
+and automatic recovery, and synthetic failure/XSS/event/fullscreen checks, with
+zero page exceptions. Artifact verification passed again afterward. Health is 200,
+execution readiness `ready`, operational readiness true and fault null. New-risk
+admission was false at the observation; process readiness is not trade admission.
+Mode/strategy remain demo / `0.4.0-breakout-scalp.1-codex.1`, pause and emergency
+stop false. All four trading PIDs/artifact paths, the frozen registration and
+active Codex worker/observer remain unchanged. No database migration, control
+submission, strategy/prompt/risk or accounting transition occurred.
+[Sanitized deployment receipt](evidence/lean-dashboard-rollout.json).
+
+The implementation is pushed in [PR #347](https://github.com/AegisFintech/scalping-bot/pull/347).
+Final documentation-head hosted checks and normal automatic merge follow this
+recorded deployment. Existing open Streamlit pages need one refresh to load the
+new standalone HTML. Temporary previews are stopped after verification.
 
 Rollback recreates only the previous dashboard344 artifact against current state.
 If the trimmed environment must be reverted, restore its protected original bytes;

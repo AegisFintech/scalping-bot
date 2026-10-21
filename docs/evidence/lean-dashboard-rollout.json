@@ -1,0 +1,60 @@
+{
+  "issue": 346,
+  "checkedAt": "2026-10-21T01:31:33.590524+00:00",
+  "artifact": "/opt/ctrader-ai-scalper/releases/dashboard346",
+  "artifactCommit": "edd87a74215be6f2f7f0117fa0ef04e59292b15c",
+  "sourceSha256": "d7ca4417ed2091e3a8c7d49085e9bf5be44a74ad622325bbda5b04a206ee6904",
+  "dashboardHealth": 200,
+  "executionReady": "ready",
+  "tradingAllowedObservation": false,
+  "mode": "demo",
+  "strategyVersion": "0.4.0-breakout-scalp.1-codex.1",
+  "operationalReady": true,
+  "operationalFault": null,
+  "analysisPause": false,
+  "emergencyStop": false,
+  "fourTradingPidsAndArtifactsUnchanged": true,
+  "registrationUnchanged": true,
+  "codexWorkerAndObserverActive": true,
+  "onlyDashboardRecreated": true,
+  "environmentKeys": 19,
+  "normalTemplateKeys": 16,
+  "tradingControlSubmitted": false,
+  "databaseMigrationRun": false,
+  "hostedSourceHeadChecks": [
+    {
+      "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39527480026/job/118985429619",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "url": "https://github.com/AegisFintech/scalping-bot/actions/runs/39527428774/job/118985265963",
+      "conclusion": "SUCCESS"
+    }
+  ],
+  "browser": {
+    "deskStateRetainedAcrossTicks": true,
+    "1920x1080": true,
+    "1440x900": true,
+    "1280x720": true,
+    "390x844": true,
+    "readOnlyWithoutNavigationOrSidebar": true,
+    "lightSchemeCompatible": true,
+    "transportFailureWithdrawsEvidence": true,
+    "transportAutomaticallyRecovers": true,
+    "pageErrors": 0,
+    "htmlInjectionBlocked": true,
+    "duplicatePollsDoNotCreateEvents": true,
+    "lateEventsSorted": true,
+    "independentClientFreshness": true,
+    "disconnectedClientFailsClosed": true,
+    "partialPayloadFailsClosed": true,
+    "eventRetentionBounded": true,
+    "reducedMotion": true,
+    "fullscreen": true,
+    "harnessPageErrors": 0,
+    "harnessExternalRequests": 0
+  },
+  "artifactVerificationAfterBrowser": true,
+  "artifactMiB": 407,
+  "previousArtifactMiB": 872
+}
