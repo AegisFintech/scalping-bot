@@ -1,6 +1,7 @@
 # ISSUE-348 — Causal technical context for Codex candidates
 
 Issue: https://github.com/AegisFintech/scalping-bot/issues/348.
+PR: https://github.com/AegisFintech/scalping-bot/pull/350.
 
 This batch implements and tests candidate input preparation, not a trading release
 or a profitability claim. The operator approved local Python analysis and more
@@ -182,3 +183,8 @@ preparation files as order authority.
 Rollback: stop invoking candidate preparation and stop the isolated review
 process. No active services, configuration, orders, journals, research checkpoints
 or migration ledger need rollback.
+
+Source delivery: implementation `e58e08d` committed and pushed on
+`issue-348-technical-context`; final hosted checks and merge are pending at this
+receipt. No trading deployment. The GitHub completion comment records final
+check/merge status without changing these historical qualification receipts.

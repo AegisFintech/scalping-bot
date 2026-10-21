@@ -5,9 +5,10 @@
 ### ISSUE-348 — Causal SMC / DOM context for Codex research
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/348.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/350.
 - Dependencies: #324/#327 context, #334/#338 frozen breakout trial.
 - Acceptance: bounded serialized paginated/cache history (720 M1 / 576 M5 / 480 M15), causal Python BOS/MSS/OB/FVG/sweeps/POIs and explicit DOM limitations; typed HTTP, schemas and compact research prompt/payload; failure/causality/performance tests, full checks and pushed PR.
-- Status: implemented candidate preparation; full qualification passed (969 Node / 94 PostgreSQL / 366 Python, all quality/security gates). Broker returned all target counts; final Python median 187 ms under concurrent checks, 27,227-byte payload and typed HTTP parity verified. Active trading processes/source and frozen registration unchanged; temporary review process stopped. No candidate inference, order authority or automatic promotion. Hosted checks and PR delivery pending; #349 tracks registered comparison. Harmonics remain separate future research.
+- Status: implemented candidate preparation; full qualification passed (969 Node / 94 PostgreSQL / 366 Python, all quality/security gates). Broker returned all target counts; final Python median 187 ms under concurrent checks, 27,227-byte payload and typed HTTP parity verified. Active trading processes/source and frozen registration unchanged; temporary review process stopped. No candidate inference, order authority or automatic promotion. Implementation committed/pushed in PR #350; final hosted checks/merge pending. #349 tracks registered comparison. Harmonics remain separate future research.
 - Report: [definitions, evidence and activation boundary](docs/technical-context-report.md).
 
 ### ISSUE-349 — Registered SMC / DOM inference comparison
