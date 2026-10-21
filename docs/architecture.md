@@ -395,3 +395,12 @@ epoch, following explicit operator reset authorization. Historical recovery stay
 separate from current execution. The existing per-setup dynamic risk engine and
 durable reduction/lock behavior are unchanged. See
 [the activation evidence](fresh-local-demo-report.md).
+
+## Isolated technical-context candidate (ISSUE-348)
+
+`/v1/technical-context` prepares causal Python structure/zone/DOM findings and a
+bounded research Codex payload through a separate typed HTTP client. An isolated
+read-only collector caches expanded completed history (720 M1 / 576 M5 / 480 M15);
+this is not the active trading collector or provider input. Candidate/NO_SETUP
+research output cannot authorize execution. See [definitions and boundaries](technical-context-report.md);
+registered inference comparison is #349. Current v5 workers/studies remain unchanged.

@@ -1,0 +1,2237 @@
+{
+  "schemaVersion": "technical-context-request-1.0",
+  "request": {
+    "schemaVersion": "1.0",
+    "requestId": "11111111-1111-4111-8111-111111111111",
+    "analysisId": "22222222-2222-4222-8222-222222222222",
+    "symbol": "XAUUSD",
+    "analysisTime": "2026-01-02T12:00:00Z",
+    "serverTime": "2026-01-02T12:00:00Z",
+    "candles": [
+      {
+        "timeframe": "M1",
+        "candles": [
+          {
+            "startTime": "2026-01-02T11:00:00Z",
+            "endTime": "2026-01-02T11:01:00Z",
+            "open": "2000.00",
+            "high": "2002.00",
+            "low": "1999.00",
+            "close": "2001.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:01:00Z",
+            "endTime": "2026-01-02T11:02:00Z",
+            "open": "2001.00",
+            "high": "2003.00",
+            "low": "2000.00",
+            "close": "2002.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:02:00Z",
+            "endTime": "2026-01-02T11:03:00Z",
+            "open": "2002.00",
+            "high": "2004.00",
+            "low": "2001.00",
+            "close": "2003.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:03:00Z",
+            "endTime": "2026-01-02T11:04:00Z",
+            "open": "2003.00",
+            "high": "2005.00",
+            "low": "2002.00",
+            "close": "2004.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:04:00Z",
+            "endTime": "2026-01-02T11:05:00Z",
+            "open": "2004.00",
+            "high": "2006.00",
+            "low": "2003.00",
+            "close": "2005.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:05:00Z",
+            "endTime": "2026-01-02T11:06:00Z",
+            "open": "2005.00",
+            "high": "2007.00",
+            "low": "2004.00",
+            "close": "2006.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:06:00Z",
+            "endTime": "2026-01-02T11:07:00Z",
+            "open": "2006.00",
+            "high": "2008.00",
+            "low": "2005.00",
+            "close": "2007.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:07:00Z",
+            "endTime": "2026-01-02T11:08:00Z",
+            "open": "2007.00",
+            "high": "2009.00",
+            "low": "2006.00",
+            "close": "2008.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:08:00Z",
+            "endTime": "2026-01-02T11:09:00Z",
+            "open": "2008.00",
+            "high": "2010.00",
+            "low": "2007.00",
+            "close": "2009.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:09:00Z",
+            "endTime": "2026-01-02T11:10:00Z",
+            "open": "2009.00",
+            "high": "2011.00",
+            "low": "2008.00",
+            "close": "2010.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:10:00Z",
+            "endTime": "2026-01-02T11:11:00Z",
+            "open": "2010.00",
+            "high": "2012.00",
+            "low": "2009.00",
+            "close": "2011.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:11:00Z",
+            "endTime": "2026-01-02T11:12:00Z",
+            "open": "2011.00",
+            "high": "2013.00",
+            "low": "2010.00",
+            "close": "2012.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:12:00Z",
+            "endTime": "2026-01-02T11:13:00Z",
+            "open": "2012.00",
+            "high": "2014.00",
+            "low": "2011.00",
+            "close": "2013.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:13:00Z",
+            "endTime": "2026-01-02T11:14:00Z",
+            "open": "2013.00",
+            "high": "2015.00",
+            "low": "2012.00",
+            "close": "2014.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:14:00Z",
+            "endTime": "2026-01-02T11:15:00Z",
+            "open": "2014.00",
+            "high": "2016.00",
+            "low": "2013.00",
+            "close": "2015.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:15:00Z",
+            "endTime": "2026-01-02T11:16:00Z",
+            "open": "2015.00",
+            "high": "2017.00",
+            "low": "2014.00",
+            "close": "2016.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:16:00Z",
+            "endTime": "2026-01-02T11:17:00Z",
+            "open": "2016.00",
+            "high": "2018.00",
+            "low": "2015.00",
+            "close": "2017.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:17:00Z",
+            "endTime": "2026-01-02T11:18:00Z",
+            "open": "2017.00",
+            "high": "2019.00",
+            "low": "2016.00",
+            "close": "2018.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:18:00Z",
+            "endTime": "2026-01-02T11:19:00Z",
+            "open": "2018.00",
+            "high": "2020.00",
+            "low": "2017.00",
+            "close": "2019.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:19:00Z",
+            "endTime": "2026-01-02T11:20:00Z",
+            "open": "2019.00",
+            "high": "2021.00",
+            "low": "2018.00",
+            "close": "2020.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:20:00Z",
+            "endTime": "2026-01-02T11:21:00Z",
+            "open": "2020.00",
+            "high": "2022.00",
+            "low": "2019.00",
+            "close": "2021.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:21:00Z",
+            "endTime": "2026-01-02T11:22:00Z",
+            "open": "2021.00",
+            "high": "2023.00",
+            "low": "2020.00",
+            "close": "2022.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:22:00Z",
+            "endTime": "2026-01-02T11:23:00Z",
+            "open": "2022.00",
+            "high": "2024.00",
+            "low": "2021.00",
+            "close": "2023.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:23:00Z",
+            "endTime": "2026-01-02T11:24:00Z",
+            "open": "2023.00",
+            "high": "2025.00",
+            "low": "2022.00",
+            "close": "2024.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:24:00Z",
+            "endTime": "2026-01-02T11:25:00Z",
+            "open": "2024.00",
+            "high": "2026.00",
+            "low": "2023.00",
+            "close": "2025.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:25:00Z",
+            "endTime": "2026-01-02T11:26:00Z",
+            "open": "2025.00",
+            "high": "2027.00",
+            "low": "2024.00",
+            "close": "2026.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:26:00Z",
+            "endTime": "2026-01-02T11:27:00Z",
+            "open": "2026.00",
+            "high": "2028.00",
+            "low": "2025.00",
+            "close": "2027.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:27:00Z",
+            "endTime": "2026-01-02T11:28:00Z",
+            "open": "2027.00",
+            "high": "2029.00",
+            "low": "2026.00",
+            "close": "2028.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:28:00Z",
+            "endTime": "2026-01-02T11:29:00Z",
+            "open": "2028.00",
+            "high": "2030.00",
+            "low": "2027.00",
+            "close": "2029.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:29:00Z",
+            "endTime": "2026-01-02T11:30:00Z",
+            "open": "2029.00",
+            "high": "2031.00",
+            "low": "2028.00",
+            "close": "2030.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:30:00Z",
+            "endTime": "2026-01-02T11:31:00Z",
+            "open": "2030.00",
+            "high": "2032.00",
+            "low": "2029.00",
+            "close": "2031.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:31:00Z",
+            "endTime": "2026-01-02T11:32:00Z",
+            "open": "2031.00",
+            "high": "2033.00",
+            "low": "2030.00",
+            "close": "2032.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:32:00Z",
+            "endTime": "2026-01-02T11:33:00Z",
+            "open": "2032.00",
+            "high": "2034.00",
+            "low": "2031.00",
+            "close": "2033.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:33:00Z",
+            "endTime": "2026-01-02T11:34:00Z",
+            "open": "2033.00",
+            "high": "2035.00",
+            "low": "2032.00",
+            "close": "2034.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:34:00Z",
+            "endTime": "2026-01-02T11:35:00Z",
+            "open": "2034.00",
+            "high": "2036.00",
+            "low": "2033.00",
+            "close": "2035.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:35:00Z",
+            "endTime": "2026-01-02T11:36:00Z",
+            "open": "2035.00",
+            "high": "2037.00",
+            "low": "2034.00",
+            "close": "2036.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:36:00Z",
+            "endTime": "2026-01-02T11:37:00Z",
+            "open": "2036.00",
+            "high": "2038.00",
+            "low": "2035.00",
+            "close": "2037.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:37:00Z",
+            "endTime": "2026-01-02T11:38:00Z",
+            "open": "2037.00",
+            "high": "2039.00",
+            "low": "2036.00",
+            "close": "2038.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:38:00Z",
+            "endTime": "2026-01-02T11:39:00Z",
+            "open": "2038.00",
+            "high": "2040.00",
+            "low": "2037.00",
+            "close": "2039.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:39:00Z",
+            "endTime": "2026-01-02T11:40:00Z",
+            "open": "2039.00",
+            "high": "2041.00",
+            "low": "2038.00",
+            "close": "2040.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:40:00Z",
+            "endTime": "2026-01-02T11:41:00Z",
+            "open": "2040.00",
+            "high": "2042.00",
+            "low": "2039.00",
+            "close": "2041.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:41:00Z",
+            "endTime": "2026-01-02T11:42:00Z",
+            "open": "2041.00",
+            "high": "2043.00",
+            "low": "2040.00",
+            "close": "2042.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:42:00Z",
+            "endTime": "2026-01-02T11:43:00Z",
+            "open": "2042.00",
+            "high": "2044.00",
+            "low": "2041.00",
+            "close": "2043.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:43:00Z",
+            "endTime": "2026-01-02T11:44:00Z",
+            "open": "2043.00",
+            "high": "2045.00",
+            "low": "2042.00",
+            "close": "2044.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:44:00Z",
+            "endTime": "2026-01-02T11:45:00Z",
+            "open": "2044.00",
+            "high": "2046.00",
+            "low": "2043.00",
+            "close": "2045.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:45:00Z",
+            "endTime": "2026-01-02T11:46:00Z",
+            "open": "2045.00",
+            "high": "2047.00",
+            "low": "2044.00",
+            "close": "2046.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:46:00Z",
+            "endTime": "2026-01-02T11:47:00Z",
+            "open": "2046.00",
+            "high": "2048.00",
+            "low": "2045.00",
+            "close": "2047.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:47:00Z",
+            "endTime": "2026-01-02T11:48:00Z",
+            "open": "2047.00",
+            "high": "2049.00",
+            "low": "2046.00",
+            "close": "2048.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:48:00Z",
+            "endTime": "2026-01-02T11:49:00Z",
+            "open": "2048.00",
+            "high": "2050.00",
+            "low": "2047.00",
+            "close": "2049.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:49:00Z",
+            "endTime": "2026-01-02T11:50:00Z",
+            "open": "2049.00",
+            "high": "2051.00",
+            "low": "2048.00",
+            "close": "2050.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:50:00Z",
+            "endTime": "2026-01-02T11:51:00Z",
+            "open": "2050.00",
+            "high": "2052.00",
+            "low": "2049.00",
+            "close": "2051.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:51:00Z",
+            "endTime": "2026-01-02T11:52:00Z",
+            "open": "2051.00",
+            "high": "2053.00",
+            "low": "2050.00",
+            "close": "2052.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:52:00Z",
+            "endTime": "2026-01-02T11:53:00Z",
+            "open": "2052.00",
+            "high": "2054.00",
+            "low": "2051.00",
+            "close": "2053.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:53:00Z",
+            "endTime": "2026-01-02T11:54:00Z",
+            "open": "2053.00",
+            "high": "2055.00",
+            "low": "2052.00",
+            "close": "2054.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:54:00Z",
+            "endTime": "2026-01-02T11:55:00Z",
+            "open": "2054.00",
+            "high": "2056.00",
+            "low": "2053.00",
+            "close": "2055.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:55:00Z",
+            "endTime": "2026-01-02T11:56:00Z",
+            "open": "2055.00",
+            "high": "2057.00",
+            "low": "2054.00",
+            "close": "2056.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:56:00Z",
+            "endTime": "2026-01-02T11:57:00Z",
+            "open": "2056.00",
+            "high": "2058.00",
+            "low": "2055.00",
+            "close": "2057.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:57:00Z",
+            "endTime": "2026-01-02T11:58:00Z",
+            "open": "2057.00",
+            "high": "2059.00",
+            "low": "2056.00",
+            "close": "2058.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:58:00Z",
+            "endTime": "2026-01-02T11:59:00Z",
+            "open": "2058.00",
+            "high": "2060.00",
+            "low": "2057.00",
+            "close": "2059.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:59:00Z",
+            "endTime": "2026-01-02T12:00:00Z",
+            "open": "2059.00",
+            "high": "2061.00",
+            "low": "2058.00",
+            "close": "2060.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          }
+        ]
+      },
+      {
+        "timeframe": "M5",
+        "candles": [
+          {
+            "startTime": "2026-01-02T07:00:00Z",
+            "endTime": "2026-01-02T07:05:00Z",
+            "open": "2000.00",
+            "high": "2002.00",
+            "low": "1999.00",
+            "close": "2001.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:05:00Z",
+            "endTime": "2026-01-02T07:10:00Z",
+            "open": "2001.00",
+            "high": "2003.00",
+            "low": "2000.00",
+            "close": "2002.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:10:00Z",
+            "endTime": "2026-01-02T07:15:00Z",
+            "open": "2002.00",
+            "high": "2004.00",
+            "low": "2001.00",
+            "close": "2003.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:15:00Z",
+            "endTime": "2026-01-02T07:20:00Z",
+            "open": "2003.00",
+            "high": "2005.00",
+            "low": "2002.00",
+            "close": "2004.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:20:00Z",
+            "endTime": "2026-01-02T07:25:00Z",
+            "open": "2004.00",
+            "high": "2006.00",
+            "low": "2003.00",
+            "close": "2005.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:25:00Z",
+            "endTime": "2026-01-02T07:30:00Z",
+            "open": "2005.00",
+            "high": "2007.00",
+            "low": "2004.00",
+            "close": "2006.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:30:00Z",
+            "endTime": "2026-01-02T07:35:00Z",
+            "open": "2006.00",
+            "high": "2008.00",
+            "low": "2005.00",
+            "close": "2007.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:35:00Z",
+            "endTime": "2026-01-02T07:40:00Z",
+            "open": "2007.00",
+            "high": "2009.00",
+            "low": "2006.00",
+            "close": "2008.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:40:00Z",
+            "endTime": "2026-01-02T07:45:00Z",
+            "open": "2008.00",
+            "high": "2010.00",
+            "low": "2007.00",
+            "close": "2009.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:45:00Z",
+            "endTime": "2026-01-02T07:50:00Z",
+            "open": "2009.00",
+            "high": "2011.00",
+            "low": "2008.00",
+            "close": "2010.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:50:00Z",
+            "endTime": "2026-01-02T07:55:00Z",
+            "open": "2010.00",
+            "high": "2012.00",
+            "low": "2009.00",
+            "close": "2011.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:55:00Z",
+            "endTime": "2026-01-02T08:00:00Z",
+            "open": "2011.00",
+            "high": "2013.00",
+            "low": "2010.00",
+            "close": "2012.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:00:00Z",
+            "endTime": "2026-01-02T08:05:00Z",
+            "open": "2012.00",
+            "high": "2014.00",
+            "low": "2011.00",
+            "close": "2013.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:05:00Z",
+            "endTime": "2026-01-02T08:10:00Z",
+            "open": "2013.00",
+            "high": "2015.00",
+            "low": "2012.00",
+            "close": "2014.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:10:00Z",
+            "endTime": "2026-01-02T08:15:00Z",
+            "open": "2014.00",
+            "high": "2016.00",
+            "low": "2013.00",
+            "close": "2015.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:15:00Z",
+            "endTime": "2026-01-02T08:20:00Z",
+            "open": "2015.00",
+            "high": "2017.00",
+            "low": "2014.00",
+            "close": "2016.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:20:00Z",
+            "endTime": "2026-01-02T08:25:00Z",
+            "open": "2016.00",
+            "high": "2018.00",
+            "low": "2015.00",
+            "close": "2017.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:25:00Z",
+            "endTime": "2026-01-02T08:30:00Z",
+            "open": "2017.00",
+            "high": "2019.00",
+            "low": "2016.00",
+            "close": "2018.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:30:00Z",
+            "endTime": "2026-01-02T08:35:00Z",
+            "open": "2018.00",
+            "high": "2020.00",
+            "low": "2017.00",
+            "close": "2019.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:35:00Z",
+            "endTime": "2026-01-02T08:40:00Z",
+            "open": "2019.00",
+            "high": "2021.00",
+            "low": "2018.00",
+            "close": "2020.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:40:00Z",
+            "endTime": "2026-01-02T08:45:00Z",
+            "open": "2020.00",
+            "high": "2022.00",
+            "low": "2019.00",
+            "close": "2021.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:45:00Z",
+            "endTime": "2026-01-02T08:50:00Z",
+            "open": "2021.00",
+            "high": "2023.00",
+            "low": "2020.00",
+            "close": "2022.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:50:00Z",
+            "endTime": "2026-01-02T08:55:00Z",
+            "open": "2022.00",
+            "high": "2024.00",
+            "low": "2021.00",
+            "close": "2023.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:55:00Z",
+            "endTime": "2026-01-02T09:00:00Z",
+            "open": "2023.00",
+            "high": "2025.00",
+            "low": "2022.00",
+            "close": "2024.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:00:00Z",
+            "endTime": "2026-01-02T09:05:00Z",
+            "open": "2024.00",
+            "high": "2026.00",
+            "low": "2023.00",
+            "close": "2025.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:05:00Z",
+            "endTime": "2026-01-02T09:10:00Z",
+            "open": "2025.00",
+            "high": "2027.00",
+            "low": "2024.00",
+            "close": "2026.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:10:00Z",
+            "endTime": "2026-01-02T09:15:00Z",
+            "open": "2026.00",
+            "high": "2028.00",
+            "low": "2025.00",
+            "close": "2027.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:15:00Z",
+            "endTime": "2026-01-02T09:20:00Z",
+            "open": "2027.00",
+            "high": "2029.00",
+            "low": "2026.00",
+            "close": "2028.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:20:00Z",
+            "endTime": "2026-01-02T09:25:00Z",
+            "open": "2028.00",
+            "high": "2030.00",
+            "low": "2027.00",
+            "close": "2029.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:25:00Z",
+            "endTime": "2026-01-02T09:30:00Z",
+            "open": "2029.00",
+            "high": "2031.00",
+            "low": "2028.00",
+            "close": "2030.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:30:00Z",
+            "endTime": "2026-01-02T09:35:00Z",
+            "open": "2030.00",
+            "high": "2032.00",
+            "low": "2029.00",
+            "close": "2031.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:35:00Z",
+            "endTime": "2026-01-02T09:40:00Z",
+            "open": "2031.00",
+            "high": "2033.00",
+            "low": "2030.00",
+            "close": "2032.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:40:00Z",
+            "endTime": "2026-01-02T09:45:00Z",
+            "open": "2032.00",
+            "high": "2034.00",
+            "low": "2031.00",
+            "close": "2033.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:45:00Z",
+            "endTime": "2026-01-02T09:50:00Z",
+            "open": "2033.00",
+            "high": "2035.00",
+            "low": "2032.00",
+            "close": "2034.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:50:00Z",
+            "endTime": "2026-01-02T09:55:00Z",
+            "open": "2034.00",
+            "high": "2036.00",
+            "low": "2033.00",
+            "close": "2035.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:55:00Z",
+            "endTime": "2026-01-02T10:00:00Z",
+            "open": "2035.00",
+            "high": "2037.00",
+            "low": "2034.00",
+            "close": "2036.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:00:00Z",
+            "endTime": "2026-01-02T10:05:00Z",
+            "open": "2036.00",
+            "high": "2038.00",
+            "low": "2035.00",
+            "close": "2037.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:05:00Z",
+            "endTime": "2026-01-02T10:10:00Z",
+            "open": "2037.00",
+            "high": "2039.00",
+            "low": "2036.00",
+            "close": "2038.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:10:00Z",
+            "endTime": "2026-01-02T10:15:00Z",
+            "open": "2038.00",
+            "high": "2040.00",
+            "low": "2037.00",
+            "close": "2039.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:15:00Z",
+            "endTime": "2026-01-02T10:20:00Z",
+            "open": "2039.00",
+            "high": "2041.00",
+            "low": "2038.00",
+            "close": "2040.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:20:00Z",
+            "endTime": "2026-01-02T10:25:00Z",
+            "open": "2040.00",
+            "high": "2042.00",
+            "low": "2039.00",
+            "close": "2041.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:25:00Z",
+            "endTime": "2026-01-02T10:30:00Z",
+            "open": "2041.00",
+            "high": "2043.00",
+            "low": "2040.00",
+            "close": "2042.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:30:00Z",
+            "endTime": "2026-01-02T10:35:00Z",
+            "open": "2042.00",
+            "high": "2044.00",
+            "low": "2041.00",
+            "close": "2043.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:35:00Z",
+            "endTime": "2026-01-02T10:40:00Z",
+            "open": "2043.00",
+            "high": "2045.00",
+            "low": "2042.00",
+            "close": "2044.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:40:00Z",
+            "endTime": "2026-01-02T10:45:00Z",
+            "open": "2044.00",
+            "high": "2046.00",
+            "low": "2043.00",
+            "close": "2045.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:45:00Z",
+            "endTime": "2026-01-02T10:50:00Z",
+            "open": "2045.00",
+            "high": "2047.00",
+            "low": "2044.00",
+            "close": "2046.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:50:00Z",
+            "endTime": "2026-01-02T10:55:00Z",
+            "open": "2046.00",
+            "high": "2048.00",
+            "low": "2045.00",
+            "close": "2047.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:55:00Z",
+            "endTime": "2026-01-02T11:00:00Z",
+            "open": "2047.00",
+            "high": "2049.00",
+            "low": "2046.00",
+            "close": "2048.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:00:00Z",
+            "endTime": "2026-01-02T11:05:00Z",
+            "open": "2048.00",
+            "high": "2050.00",
+            "low": "2047.00",
+            "close": "2049.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:05:00Z",
+            "endTime": "2026-01-02T11:10:00Z",
+            "open": "2049.00",
+            "high": "2051.00",
+            "low": "2048.00",
+            "close": "2050.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:10:00Z",
+            "endTime": "2026-01-02T11:15:00Z",
+            "open": "2050.00",
+            "high": "2052.00",
+            "low": "2049.00",
+            "close": "2051.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:15:00Z",
+            "endTime": "2026-01-02T11:20:00Z",
+            "open": "2051.00",
+            "high": "2053.00",
+            "low": "2050.00",
+            "close": "2052.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:20:00Z",
+            "endTime": "2026-01-02T11:25:00Z",
+            "open": "2052.00",
+            "high": "2054.00",
+            "low": "2051.00",
+            "close": "2053.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:25:00Z",
+            "endTime": "2026-01-02T11:30:00Z",
+            "open": "2053.00",
+            "high": "2055.00",
+            "low": "2052.00",
+            "close": "2054.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:30:00Z",
+            "endTime": "2026-01-02T11:35:00Z",
+            "open": "2054.00",
+            "high": "2056.00",
+            "low": "2053.00",
+            "close": "2055.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:35:00Z",
+            "endTime": "2026-01-02T11:40:00Z",
+            "open": "2055.00",
+            "high": "2057.00",
+            "low": "2054.00",
+            "close": "2056.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:40:00Z",
+            "endTime": "2026-01-02T11:45:00Z",
+            "open": "2056.00",
+            "high": "2058.00",
+            "low": "2055.00",
+            "close": "2057.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:45:00Z",
+            "endTime": "2026-01-02T11:50:00Z",
+            "open": "2057.00",
+            "high": "2059.00",
+            "low": "2056.00",
+            "close": "2058.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:50:00Z",
+            "endTime": "2026-01-02T11:55:00Z",
+            "open": "2058.00",
+            "high": "2060.00",
+            "low": "2057.00",
+            "close": "2059.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:55:00Z",
+            "endTime": "2026-01-02T12:00:00Z",
+            "open": "2059.00",
+            "high": "2061.00",
+            "low": "2058.00",
+            "close": "2060.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          }
+        ]
+      },
+      {
+        "timeframe": "M15",
+        "candles": [
+          {
+            "startTime": "2026-01-01T21:00:00Z",
+            "endTime": "2026-01-01T21:15:00Z",
+            "open": "2000.00",
+            "high": "2002.00",
+            "low": "1999.00",
+            "close": "2001.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T21:15:00Z",
+            "endTime": "2026-01-01T21:30:00Z",
+            "open": "2001.00",
+            "high": "2003.00",
+            "low": "2000.00",
+            "close": "2002.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T21:30:00Z",
+            "endTime": "2026-01-01T21:45:00Z",
+            "open": "2002.00",
+            "high": "2004.00",
+            "low": "2001.00",
+            "close": "2003.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T21:45:00Z",
+            "endTime": "2026-01-01T22:00:00Z",
+            "open": "2003.00",
+            "high": "2005.00",
+            "low": "2002.00",
+            "close": "2004.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T22:00:00Z",
+            "endTime": "2026-01-01T22:15:00Z",
+            "open": "2004.00",
+            "high": "2006.00",
+            "low": "2003.00",
+            "close": "2005.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T22:15:00Z",
+            "endTime": "2026-01-01T22:30:00Z",
+            "open": "2005.00",
+            "high": "2007.00",
+            "low": "2004.00",
+            "close": "2006.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T22:30:00Z",
+            "endTime": "2026-01-01T22:45:00Z",
+            "open": "2006.00",
+            "high": "2008.00",
+            "low": "2005.00",
+            "close": "2007.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T22:45:00Z",
+            "endTime": "2026-01-01T23:00:00Z",
+            "open": "2007.00",
+            "high": "2009.00",
+            "low": "2006.00",
+            "close": "2008.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T23:00:00Z",
+            "endTime": "2026-01-01T23:15:00Z",
+            "open": "2008.00",
+            "high": "2010.00",
+            "low": "2007.00",
+            "close": "2009.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T23:15:00Z",
+            "endTime": "2026-01-01T23:30:00Z",
+            "open": "2009.00",
+            "high": "2011.00",
+            "low": "2008.00",
+            "close": "2010.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T23:30:00Z",
+            "endTime": "2026-01-01T23:45:00Z",
+            "open": "2010.00",
+            "high": "2012.00",
+            "low": "2009.00",
+            "close": "2011.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-01T23:45:00Z",
+            "endTime": "2026-01-02T00:00:00Z",
+            "open": "2011.00",
+            "high": "2013.00",
+            "low": "2010.00",
+            "close": "2012.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T00:00:00Z",
+            "endTime": "2026-01-02T00:15:00Z",
+            "open": "2012.00",
+            "high": "2014.00",
+            "low": "2011.00",
+            "close": "2013.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T00:15:00Z",
+            "endTime": "2026-01-02T00:30:00Z",
+            "open": "2013.00",
+            "high": "2015.00",
+            "low": "2012.00",
+            "close": "2014.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T00:30:00Z",
+            "endTime": "2026-01-02T00:45:00Z",
+            "open": "2014.00",
+            "high": "2016.00",
+            "low": "2013.00",
+            "close": "2015.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T00:45:00Z",
+            "endTime": "2026-01-02T01:00:00Z",
+            "open": "2015.00",
+            "high": "2017.00",
+            "low": "2014.00",
+            "close": "2016.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T01:00:00Z",
+            "endTime": "2026-01-02T01:15:00Z",
+            "open": "2016.00",
+            "high": "2018.00",
+            "low": "2015.00",
+            "close": "2017.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T01:15:00Z",
+            "endTime": "2026-01-02T01:30:00Z",
+            "open": "2017.00",
+            "high": "2019.00",
+            "low": "2016.00",
+            "close": "2018.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T01:30:00Z",
+            "endTime": "2026-01-02T01:45:00Z",
+            "open": "2018.00",
+            "high": "2020.00",
+            "low": "2017.00",
+            "close": "2019.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T01:45:00Z",
+            "endTime": "2026-01-02T02:00:00Z",
+            "open": "2019.00",
+            "high": "2021.00",
+            "low": "2018.00",
+            "close": "2020.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T02:00:00Z",
+            "endTime": "2026-01-02T02:15:00Z",
+            "open": "2020.00",
+            "high": "2022.00",
+            "low": "2019.00",
+            "close": "2021.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T02:15:00Z",
+            "endTime": "2026-01-02T02:30:00Z",
+            "open": "2021.00",
+            "high": "2023.00",
+            "low": "2020.00",
+            "close": "2022.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T02:30:00Z",
+            "endTime": "2026-01-02T02:45:00Z",
+            "open": "2022.00",
+            "high": "2024.00",
+            "low": "2021.00",
+            "close": "2023.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T02:45:00Z",
+            "endTime": "2026-01-02T03:00:00Z",
+            "open": "2023.00",
+            "high": "2025.00",
+            "low": "2022.00",
+            "close": "2024.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T03:00:00Z",
+            "endTime": "2026-01-02T03:15:00Z",
+            "open": "2024.00",
+            "high": "2026.00",
+            "low": "2023.00",
+            "close": "2025.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T03:15:00Z",
+            "endTime": "2026-01-02T03:30:00Z",
+            "open": "2025.00",
+            "high": "2027.00",
+            "low": "2024.00",
+            "close": "2026.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T03:30:00Z",
+            "endTime": "2026-01-02T03:45:00Z",
+            "open": "2026.00",
+            "high": "2028.00",
+            "low": "2025.00",
+            "close": "2027.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T03:45:00Z",
+            "endTime": "2026-01-02T04:00:00Z",
+            "open": "2027.00",
+            "high": "2029.00",
+            "low": "2026.00",
+            "close": "2028.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T04:00:00Z",
+            "endTime": "2026-01-02T04:15:00Z",
+            "open": "2028.00",
+            "high": "2030.00",
+            "low": "2027.00",
+            "close": "2029.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T04:15:00Z",
+            "endTime": "2026-01-02T04:30:00Z",
+            "open": "2029.00",
+            "high": "2031.00",
+            "low": "2028.00",
+            "close": "2030.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T04:30:00Z",
+            "endTime": "2026-01-02T04:45:00Z",
+            "open": "2030.00",
+            "high": "2032.00",
+            "low": "2029.00",
+            "close": "2031.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T04:45:00Z",
+            "endTime": "2026-01-02T05:00:00Z",
+            "open": "2031.00",
+            "high": "2033.00",
+            "low": "2030.00",
+            "close": "2032.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T05:00:00Z",
+            "endTime": "2026-01-02T05:15:00Z",
+            "open": "2032.00",
+            "high": "2034.00",
+            "low": "2031.00",
+            "close": "2033.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T05:15:00Z",
+            "endTime": "2026-01-02T05:30:00Z",
+            "open": "2033.00",
+            "high": "2035.00",
+            "low": "2032.00",
+            "close": "2034.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T05:30:00Z",
+            "endTime": "2026-01-02T05:45:00Z",
+            "open": "2034.00",
+            "high": "2036.00",
+            "low": "2033.00",
+            "close": "2035.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T05:45:00Z",
+            "endTime": "2026-01-02T06:00:00Z",
+            "open": "2035.00",
+            "high": "2037.00",
+            "low": "2034.00",
+            "close": "2036.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T06:00:00Z",
+            "endTime": "2026-01-02T06:15:00Z",
+            "open": "2036.00",
+            "high": "2038.00",
+            "low": "2035.00",
+            "close": "2037.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T06:15:00Z",
+            "endTime": "2026-01-02T06:30:00Z",
+            "open": "2037.00",
+            "high": "2039.00",
+            "low": "2036.00",
+            "close": "2038.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T06:30:00Z",
+            "endTime": "2026-01-02T06:45:00Z",
+            "open": "2038.00",
+            "high": "2040.00",
+            "low": "2037.00",
+            "close": "2039.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T06:45:00Z",
+            "endTime": "2026-01-02T07:00:00Z",
+            "open": "2039.00",
+            "high": "2041.00",
+            "low": "2038.00",
+            "close": "2040.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:00:00Z",
+            "endTime": "2026-01-02T07:15:00Z",
+            "open": "2040.00",
+            "high": "2042.00",
+            "low": "2039.00",
+            "close": "2041.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:15:00Z",
+            "endTime": "2026-01-02T07:30:00Z",
+            "open": "2041.00",
+            "high": "2043.00",
+            "low": "2040.00",
+            "close": "2042.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:30:00Z",
+            "endTime": "2026-01-02T07:45:00Z",
+            "open": "2042.00",
+            "high": "2044.00",
+            "low": "2041.00",
+            "close": "2043.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T07:45:00Z",
+            "endTime": "2026-01-02T08:00:00Z",
+            "open": "2043.00",
+            "high": "2045.00",
+            "low": "2042.00",
+            "close": "2044.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:00:00Z",
+            "endTime": "2026-01-02T08:15:00Z",
+            "open": "2044.00",
+            "high": "2046.00",
+            "low": "2043.00",
+            "close": "2045.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:15:00Z",
+            "endTime": "2026-01-02T08:30:00Z",
+            "open": "2045.00",
+            "high": "2047.00",
+            "low": "2044.00",
+            "close": "2046.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:30:00Z",
+            "endTime": "2026-01-02T08:45:00Z",
+            "open": "2046.00",
+            "high": "2048.00",
+            "low": "2045.00",
+            "close": "2047.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T08:45:00Z",
+            "endTime": "2026-01-02T09:00:00Z",
+            "open": "2047.00",
+            "high": "2049.00",
+            "low": "2046.00",
+            "close": "2048.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:00:00Z",
+            "endTime": "2026-01-02T09:15:00Z",
+            "open": "2048.00",
+            "high": "2050.00",
+            "low": "2047.00",
+            "close": "2049.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:15:00Z",
+            "endTime": "2026-01-02T09:30:00Z",
+            "open": "2049.00",
+            "high": "2051.00",
+            "low": "2048.00",
+            "close": "2050.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:30:00Z",
+            "endTime": "2026-01-02T09:45:00Z",
+            "open": "2050.00",
+            "high": "2052.00",
+            "low": "2049.00",
+            "close": "2051.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T09:45:00Z",
+            "endTime": "2026-01-02T10:00:00Z",
+            "open": "2051.00",
+            "high": "2053.00",
+            "low": "2050.00",
+            "close": "2052.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:00:00Z",
+            "endTime": "2026-01-02T10:15:00Z",
+            "open": "2052.00",
+            "high": "2054.00",
+            "low": "2051.00",
+            "close": "2053.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:15:00Z",
+            "endTime": "2026-01-02T10:30:00Z",
+            "open": "2053.00",
+            "high": "2055.00",
+            "low": "2052.00",
+            "close": "2054.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:30:00Z",
+            "endTime": "2026-01-02T10:45:00Z",
+            "open": "2054.00",
+            "high": "2056.00",
+            "low": "2053.00",
+            "close": "2055.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T10:45:00Z",
+            "endTime": "2026-01-02T11:00:00Z",
+            "open": "2055.00",
+            "high": "2057.00",
+            "low": "2054.00",
+            "close": "2056.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:00:00Z",
+            "endTime": "2026-01-02T11:15:00Z",
+            "open": "2056.00",
+            "high": "2058.00",
+            "low": "2055.00",
+            "close": "2057.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:15:00Z",
+            "endTime": "2026-01-02T11:30:00Z",
+            "open": "2057.00",
+            "high": "2059.00",
+            "low": "2056.00",
+            "close": "2058.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:30:00Z",
+            "endTime": "2026-01-02T11:45:00Z",
+            "open": "2058.00",
+            "high": "2060.00",
+            "low": "2057.00",
+            "close": "2059.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          },
+          {
+            "startTime": "2026-01-02T11:45:00Z",
+            "endTime": "2026-01-02T12:00:00Z",
+            "open": "2059.00",
+            "high": "2061.00",
+            "low": "2058.00",
+            "close": "2060.00",
+            "volume": "100.00",
+            "complete": true,
+            "qualityFlags": []
+          }
+        ]
+      }
+    ],
+    "orderBook": {
+      "sourceTime": "2026-01-02T12:00:00Z",
+      "receivedAt": "2026-01-02T12:00:00Z",
+      "bids": [
+        {
+          "price": "2040.00",
+          "size": "10.00"
+        },
+        {
+          "price": "2039.90",
+          "size": "11.00"
+        },
+        {
+          "price": "2039.80",
+          "size": "12.00"
+        },
+        {
+          "price": "2039.70",
+          "size": "13.00"
+        },
+        {
+          "price": "2039.60",
+          "size": "14.00"
+        },
+        {
+          "price": "2039.50",
+          "size": "15.00"
+        },
+        {
+          "price": "2039.40",
+          "size": "16.00"
+        },
+        {
+          "price": "2039.30",
+          "size": "17.00"
+        },
+        {
+          "price": "2039.20",
+          "size": "18.00"
+        },
+        {
+          "price": "2039.10",
+          "size": "19.00"
+        },
+        {
+          "price": "2039.00",
+          "size": "20.00"
+        },
+        {
+          "price": "2038.90",
+          "size": "21.00"
+        },
+        {
+          "price": "2038.80",
+          "size": "22.00"
+        },
+        {
+          "price": "2038.70",
+          "size": "23.00"
+        },
+        {
+          "price": "2038.60",
+          "size": "24.00"
+        },
+        {
+          "price": "2038.50",
+          "size": "25.00"
+        },
+        {
+          "price": "2038.40",
+          "size": "26.00"
+        },
+        {
+          "price": "2038.30",
+          "size": "27.00"
+        },
+        {
+          "price": "2038.20",
+          "size": "28.00"
+        },
+        {
+          "price": "2038.10",
+          "size": "29.00"
+        }
+      ],
+      "asks": [
+        {
+          "price": "2040.20",
+          "size": "12.00"
+        },
+        {
+          "price": "2040.30",
+          "size": "13.00"
+        },
+        {
+          "price": "2040.40",
+          "size": "14.00"
+        },
+        {
+          "price": "2040.50",
+          "size": "15.00"
+        },
+        {
+          "price": "2040.60",
+          "size": "16.00"
+        },
+        {
+          "price": "2040.70",
+          "size": "17.00"
+        },
+        {
+          "price": "2040.80",
+          "size": "18.00"
+        },
+        {
+          "price": "2040.90",
+          "size": "19.00"
+        },
+        {
+          "price": "2041.00",
+          "size": "20.00"
+        },
+        {
+          "price": "2041.10",
+          "size": "21.00"
+        },
+        {
+          "price": "2041.20",
+          "size": "22.00"
+        },
+        {
+          "price": "2041.30",
+          "size": "23.00"
+        },
+        {
+          "price": "2041.40",
+          "size": "24.00"
+        },
+        {
+          "price": "2041.50",
+          "size": "25.00"
+        },
+        {
+          "price": "2041.60",
+          "size": "26.00"
+        },
+        {
+          "price": "2041.70",
+          "size": "27.00"
+        },
+        {
+          "price": "2041.80",
+          "size": "28.00"
+        },
+        {
+          "price": "2041.90",
+          "size": "29.00"
+        },
+        {
+          "price": "2042.00",
+          "size": "30.00"
+        },
+        {
+          "price": "2042.10",
+          "size": "31.00"
+        }
+      ],
+      "complete": true,
+      "discontinuity": false,
+      "reconnectSequence": 0,
+      "aggregates": [
+        {
+          "windowMs": 60000,
+          "sampleCount": 1,
+          "bidLiquidityChange": "0",
+          "askLiquidityChange": "0",
+          "additions": 0,
+          "removals": 0
+        },
+        {
+          "windowMs": 300000,
+          "sampleCount": 1,
+          "bidLiquidityChange": "0",
+          "askLiquidityChange": "0",
+          "additions": 0,
+          "removals": 0
+        },
+        {
+          "windowMs": 900000,
+          "sampleCount": 1,
+          "bidLiquidityChange": "0",
+          "askLiquidityChange": "0",
+          "additions": 0,
+          "removals": 0
+        }
+      ]
+    },
+    "config": {
+      "atrPeriod": 15,
+      "emaFastPeriod": 5,
+      "emaSlowPeriod": 19,
+      "adxEnabled": true,
+      "adxPeriod": 14,
+      "rsiEnabled": true,
+      "rsiPeriod": 14,
+      "bollingerEnabled": false,
+      "bollingerPeriod": 20,
+      "bollingerStddev": "2",
+      "swingPivotLeft": 3,
+      "swingPivotRight": 3,
+      "compactTail": {
+        "M1": 10,
+        "M5": 10,
+        "M15": 10
+      },
+      "expectedCounts": {
+        "M1": 60,
+        "M5": 60,
+        "M15": 60
+      }
+    }
+  },
+  "quote": {
+    "bid": "2040",
+    "ask": "2040.2",
+    "sourceTime": "2026-01-02T12:00:00Z",
+    "receivedAt": "2026-01-02T12:00:00Z"
+  },
+  "tickSize": "0.01",
+  "minimumEntryDistance": "0.03"
+}

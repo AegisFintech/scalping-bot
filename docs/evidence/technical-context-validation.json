@@ -1,0 +1,125 @@
+{
+  "label": "SINGLE_SNAPSHOT_IMPLEMENTATION_CHECK_NOT_ECONOMIC_VALIDATION",
+  "broker_snapshot_at": "2026-10-21T03:36:20.209Z",
+  "completed_counts": {
+    "M15": 480,
+    "M5": 576,
+    "M1": 720
+  },
+  "bid_depth": 4,
+  "ask_depth": 4,
+  "acceptable_at_recorded_snapshot": true,
+  "execution_authority": false,
+  "python_runs": 5,
+  "python_median_ms": 187.0,
+  "python_max_ms": 359.32,
+  "candidate_payload_bytes": 27227,
+  "typed_http_matches_pure_output": true,
+  "active_trading_processes_preserved": {
+    "analytics": true,
+    "market-data": true,
+    "ai": true,
+    "execution": true
+  },
+  "frozen_registration_unchanged": true,
+  "provider_calls": 0,
+  "broker_order_commands": 0,
+  "persistent_services_changed": false,
+  "qualification": {
+    "command": "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+    "qualified": true,
+    "source_sha256": "6ef80f77de5d818f7648cd99e4b759b21beddfa456cdd8313b7a58de69ccc5b2",
+    "node_tests": 969,
+    "postgresql_tests": 94,
+    "python_tests": 366,
+    "checks": [
+      {
+        "name": "postgres-bindir",
+        "exit_code": 0
+      },
+      {
+        "name": "test-certificate",
+        "exit_code": 0
+      },
+      {
+        "name": "postgres-uid",
+        "exit_code": 0
+      },
+      {
+        "name": "postgres-gid",
+        "exit_code": 0
+      },
+      {
+        "name": "database-init",
+        "exit_code": 0
+      },
+      {
+        "name": "database-start",
+        "exit_code": 0
+      },
+      {
+        "name": "format",
+        "exit_code": 0
+      },
+      {
+        "name": "lint",
+        "exit_code": 0
+      },
+      {
+        "name": "types",
+        "exit_code": 0
+      },
+      {
+        "name": "build",
+        "exit_code": 0
+      },
+      {
+        "name": "node-tests",
+        "exit_code": 0
+      },
+      {
+        "name": "python-format",
+        "exit_code": 0
+      },
+      {
+        "name": "python-lint",
+        "exit_code": 0
+      },
+      {
+        "name": "python-types",
+        "exit_code": 0
+      },
+      {
+        "name": "secrets",
+        "exit_code": 0
+      },
+      {
+        "name": "npm-audit",
+        "exit_code": 0
+      },
+      {
+        "name": "python-audit",
+        "exit_code": 0
+      },
+      {
+        "name": "database-lifecycle",
+        "exit_code": 0
+      },
+      {
+        "name": "python-tests",
+        "exit_code": 0
+      },
+      {
+        "name": "database-stop",
+        "exit_code": 0
+      }
+    ]
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "mode": "AST_ONLY_NO_API_COST",
+    "nodes": 6524,
+    "edges": 12258,
+    "known_warning": "pyproject.toml produces no AST nodes; community names refreshed by hub fallback"
+  }
+}
