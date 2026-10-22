@@ -1,7 +1,9 @@
 # ISSUE-362 — Evidence-first Codex decisions and daily memory
 
 Issue: <https://github.com/AegisFintech/scalping-bot/issues/362>.
-Status: implementation and local qualification complete; GitHub delivery follows. Running demo unchanged.
+Status: source implementation and qualification completed and merged in #363.
+This report records source delivery before activation; the subsequent
+[ISSUE-364 deployment receipt](evidence-demo-rollout-report.md) records the active demo.
 
 The operator approved replacing the compression-first strategy admission with
 fresh evidence supplied to Codex. New source uses `entry-pair-v7`, request 1.3,

@@ -1,4 +1,17 @@
-# Evidence-first Codex source — ISSUE-362
+# Active evidence-first Codex DEMO — ISSUE-364
+
+Activated **22 October 2026, 15:50 Singapore**: `0.4.3-evidence-scalp.1-codex.1`,
+Codex v7 and isolated worker transport 1.3. Indicators/DOM/costs inform Codex;
+the compression scanner no longer blocks inference. Codex proposes OCO or WAIT;
+WAIT reviews require 60 seconds and a newer completed M1. Daily persistent
+threads and compaction retain context, while fresh evidence and deterministic
+shared 1% risk remain authoritative. The first natural call returned WAIT after
+a bearish structure break; no new-release fill is claimed. All 1,547 source tests
+and both source-head hosted checks passed. Same history/database, additive WAIT
+migration only; no reset or real-money activation. See the
+[deployment receipt and monitoring limits](docs/evidence-demo-rollout-report.md).
+
+# Historical source delivery — ISSUE-362
 
 The new demo source sends completed M1/M5/M15 technical, structure, broker DOM,
 spread/cost context and up to eight reconciled recent outcomes to Codex without

@@ -1,11 +1,19 @@
+### ISSUE-364 — Activate evidence-first Codex DEMO
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/364.
+- Dependencies: merged #362/#363; unchanged qualified source `38faf0316c1e1f91a5a3fd79c229cc4d137247b322833c5f38328677274a3ba0` and 1,547 source tests / two successful exact-head hosted runs.
+- Acceptance: immutable matching v7/1.3 main/worker artifacts; audited hold, no active cycle/in-flight request, preserved financial/credential/history state and existing gates; transactional migration 0031 with old checksums retained; real-data contract smoke; future prospective cohort, bounded observer, resumed original automation and natural decision/retry evidence. Commit/push reviewed operational documentation with successful hosted checks.
+- Status: activated DEMO at 07:50:08 UTC / 15:50 Singapore; ready, unpaused, six prior registrations/financial values retained, first natural Codex decision WAIT. Automatic retry verified after 66.593698 seconds with a newer M1, unique WAIT successor and same native daily thread. Operational validation complete; remote receipt delivery follows.
+- Report: [rollout and validation](docs/evidence-demo-rollout-report.md). No risk/history reset, forced order, real-money activation or profitability claim.
+
 ### ISSUE-362 — Evidence-first Codex decisions and daily memory
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/362.
-- Status: implementation and full local qualification complete; GitHub delivery follows; not deployed.
+- Status: implemented, qualified and merged in https://github.com/AegisFintech/scalping-bot/pull/363. Subsequent DEMO activation is recorded separately under ISSUE-364.
 - Validation: 1,023 Node + 103 isolated PostgreSQL + 421 Python tests (1,547 total), all qualification gates/audits/secret scan passed. Synthetic subscription resume/compaction passed. Source hash and limits: [report](docs/evidence-first-codex-report.md).
 - Dependencies: #351 technical/DOM context and isolated subscription worker; #358 native protection and dynamic shared risk. Existing #253/#255 registrations remain immutable.
 - Acceptance: indicator/scanner evidence informs Codex without strategy admission; explicit durable WAIT rechecks only after 60 seconds from completion and a newer completed M1; unknown/failure cooldowns remain. Daily pinned persistent threads, bounded compaction, exact request/turn provenance, fresh context and verified recent outcomes. Shared 1% risk, broker-native SL/TP, STOP_LIMIT/GTC/OCO and all operational/reconciliation controls stay authoritative. Versioned contracts, tests, qualification, docs/Graphify, dedicated PR, push and exact-head hosted checks required.
-- Runtime: current compression demo remains unchanged pending separately recorded rollout; no resets or research promotion.
+- Runtime: this source delivery did not activate the release; subsequent activation is recorded under ISSUE-364. No resets or automatic research promotion.
 
 # Implementation Plan
 
