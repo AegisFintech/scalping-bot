@@ -1,3 +1,13 @@
+# ISSUE-362 evidence-first source
+
+No normal environment keys are added. Prompt v7 / worker request 1.3 and response
+1.1 must deploy together in separately qualified immutable artifacts. Persistent
+daily thread state stays in the isolated worker's private job root; compaction
+is fixed at eight completed turns and is not an environment tuning knob. Preserve
+all populated credentials and financial/request history. Source delivery leaves
+the running v6 compression deployment unchanged. See
+[rollout, rollback and validation](evidence-first-codex-report.md).
+
 # ISSUE-358 compression scalp demo source
 
 Current source is `0.4.2-compression-scalp.1-codex.1`; see

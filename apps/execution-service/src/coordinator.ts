@@ -285,6 +285,12 @@ export interface CoordinatorOptions {
     reasonCodes: readonly string[];
     details: Readonly<Record<string, unknown>>;
   }>;
+  readonly evidenceScalp?: (
+    snapshot: MarketSnapshot,
+    response: ModelResponse,
+    atr: string,
+    maximumStopDistance: string,
+  ) => Promise<ReturnType<typeof applyBreakoutScalpExitPolicy>>;
   readonly compressionScalp?: (
     snapshot: MarketSnapshot,
     response: ModelResponse,
@@ -825,7 +831,8 @@ export class AnalysisCoordinator {
       }
       // Two-price model scaffolding is not the adopted exit policy.
       const minimumProposalRiskRewardRatio =
-        this.#options.compressionScalp === undefined
+        this.#options.compressionScalp === undefined &&
+        this.#options.evidenceScalp === undefined
           ? this.#options.minRiskRewardRatio
           : "0.1";
       if (
@@ -1337,37 +1344,44 @@ export class AnalysisCoordinator {
         ),
       );
       const transformed =
-        this.#options.compressionScalp !== undefined
-          ? await this.#options.compressionScalp(
+        this.#options.evidenceScalp !== undefined
+          ? await this.#options.evidenceScalp(
               decisionSnapshot,
               model.response,
               atr,
               maximumEffectiveStopDistance,
             )
-          : fadeLimitActive
-            ? applyFadeLimitExitPolicy({
-                response: model.response,
-                metadata: decisionSnapshot.metadata,
+          : this.#options.compressionScalp !== undefined
+            ? await this.#options.compressionScalp(
+                decisionSnapshot,
+                model.response,
                 atr,
-                slAtr: this.#options.fadeLimitSlAtr ?? "2.5",
-                tpAtr: this.#options.fadeLimitTpAtr ?? "1.0",
-                maximumStopDistance: maximumEffectiveStopDistance,
-                quote: decisionSnapshot.quote,
-              })
-            : this.#options.breakoutScalp
-              ? applyBreakoutScalpExitPolicy({
+                maximumEffectiveStopDistance,
+              )
+            : fadeLimitActive
+              ? applyFadeLimitExitPolicy({
                   response: model.response,
                   metadata: decisionSnapshot.metadata,
                   atr,
+                  slAtr: this.#options.fadeLimitSlAtr ?? "2.5",
+                  tpAtr: this.#options.fadeLimitTpAtr ?? "1.0",
                   maximumStopDistance: maximumEffectiveStopDistance,
+                  quote: decisionSnapshot.quote,
                 })
-              : applyCommissionAwareExitPolicy(
-                  model.response,
-                  decisionSnapshot.metadata,
-                  canonical(minimumStopDistance),
-                  maximumEffectiveStopDistance,
-                  this.#options.minimumExpectedNetToFeesRatio,
-                );
+              : this.#options.breakoutScalp
+                ? applyBreakoutScalpExitPolicy({
+                    response: model.response,
+                    metadata: decisionSnapshot.metadata,
+                    atr,
+                    maximumStopDistance: maximumEffectiveStopDistance,
+                  })
+                : applyCommissionAwareExitPolicy(
+                    model.response,
+                    decisionSnapshot.metadata,
+                    canonical(minimumStopDistance),
+                    maximumEffectiveStopDistance,
+                    this.#options.minimumExpectedNetToFeesRatio,
+                  );
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",

@@ -244,3 +244,20 @@ def test_fresh_monitor_quote_is_distinct_from_missing_order_book_and_stale_quote
     s["monitor"]["quoteSourceTime"] = NOW
     s["monitor"]["ask"] = "3999"
     assert landscape_model(s, "ready", NOW)["values"]["ask"]["text"] == "Unavailable"
+
+
+def test_wait_observation_is_not_labelled_as_available_entry_prices() -> None:
+    row = {
+        "id": "wait1",
+        "kind": "context",
+        "state": "READY",
+        "requested_at": NOW - timedelta(seconds=20),
+        "available_at": NOW - timedelta(seconds=10),
+        "plan_schema": "entry-wait-1.0",
+        "wait_reason": "Opposing structure, no clear box",
+    }
+    events = event_tape([row], NOW)
+    assert any(
+        e["title"] == "Codex chose WAIT" and e["detail"] == row["wait_reason"] for e in events
+    )
+    assert not any(e["title"] == "Entry prices available" for e in events)

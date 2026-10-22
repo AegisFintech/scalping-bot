@@ -1,3 +1,7 @@
+import {
+  validateEntryDecision,
+  type EntryDecisionPlan,
+} from "./entry-decision.js";
 import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
 import { HISTORICAL_API_MODEL } from "../../config/src/policy.js";
@@ -5,19 +9,15 @@ import {
   OpenAiCompatibleClient,
   type AiAnalysisResult,
 } from "../../ai-client/src/client.js";
-import {
-  bindEntryPrices,
-  validateEntryPlan,
-  type EntryPairPlan,
-} from "./entry-plan.js";
+import { bindEntryPrices } from "./entry-plan.js";
 import { validateScenarioMarket, type ScenarioInput } from "./planner.js";
 import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-pair-v6" as const,
-  path: "prompts/entry-pair-v6.md",
+  version: "entry-pair-v7" as const,
+  path: "prompts/entry-pair-v7.md",
 });
 
 const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
@@ -35,6 +35,7 @@ export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
     readonly evidence: Readonly<Record<string, unknown>>;
     readonly inputSha256: string;
     readonly marketCapturedAt?: string;
+    readonly executionContext?: Readonly<Record<string, unknown>>;
   };
 };
 
@@ -61,6 +62,7 @@ export function entryProviderPayload(
           technical_context: input.technicalContext.evidence,
           context_input_sha256: input.technicalContext.inputSha256,
           market_captured_at: input.technicalContext.marketCapturedAt,
+          execution_context: input.technicalContext.executionContext,
         }),
     candles: input.candles.map((s) => ({
       timeframe: s.timeframe,
@@ -100,14 +102,14 @@ export function entryProviderPayload(
 
 export class EntryPairPlanner {
   readonly client: Pick<
-    OpenAiCompatibleClient<EntryPairPlan>,
+    OpenAiCompatibleClient<EntryDecisionPlan>,
     "analyze" | "circuitOpen"
   >;
   private readonly now: () => number;
   private readonly requireTechnicalContext: boolean;
   constructor(options: {
     client?: Pick<
-      OpenAiCompatibleClient<EntryPairPlan>,
+      OpenAiCompatibleClient<EntryDecisionPlan>,
       "analyze" | "circuitOpen"
     >;
     baseUrl: string;
@@ -121,7 +123,7 @@ export class EntryPairPlanner {
     this.requireTechnicalContext = options.requireTechnicalContext ?? false;
     this.client =
       options.client ??
-      new OpenAiCompatibleClient<EntryPairPlan>({
+      new OpenAiCompatibleClient<EntryDecisionPlan>({
         ...options,
         model: HISTORICAL_API_MODEL,
         // EPRToken's Grok route supports the OpenAI-compatible chat contract;
@@ -150,7 +152,7 @@ export class EntryPairPlanner {
   }
   async generate(
     input: EntryPlannerInput,
-  ): Promise<AiAnalysisResult<EntryPairPlan>> {
+  ): Promise<AiAnalysisResult<EntryDecisionPlan>> {
     if (this.requireTechnicalContext && input.technicalContext === undefined)
       throw new Error("SCENARIO_TECHNICAL_CONTEXT_REQUIRED");
     if (input.chart === null && input.schemaVersion !== "2.0")
@@ -169,7 +171,7 @@ export class EntryPairPlanner {
       chart: input.chart,
       payload: entryProviderPayload(input),
     });
-    validateEntryPlan(JSON.stringify(result.response), {
+    validateEntryDecision(JSON.stringify(result.response), {
       ...input,
       availableAt: new Date(this.now()).toISOString(),
     });

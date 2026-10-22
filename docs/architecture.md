@@ -1,3 +1,12 @@
+# ISSUE-362 evidence-first source
+
+New source uses Codex v7 / transport 1.3 with OCO or WAIT, fresh technical/DOM/cost
+context and isolated daily persistent threads with bounded compaction. The runtime
+composition has no compression/ATR strategy admission. Deterministic broker/native
+protection, shared dynamic 1% risk, reconciliation and request cooldowns remain
+authoritative. Source delivery does not activate the demo. See
+[evidence-first contract and checks](evidence-first-codex-report.md).
+
 # ISSUE-358 compression scalp demo source
 
 Current source is `0.4.2-compression-scalp.1-codex.1`; see

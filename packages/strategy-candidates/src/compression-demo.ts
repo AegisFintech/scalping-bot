@@ -48,6 +48,35 @@ const responseSchema = new ModelResponseValidator<ScalpScanReport>(
   "schemas/scalp-scan-report-1.0.json",
 );
 
+export function modeledScalpCost(
+  snapshot: MarketSnapshot,
+  atr: string,
+): string {
+  const m = snapshot.metadata;
+  const volume = decimal(m.minVolume),
+    tick = decimal(m.tickSize);
+  const perPrice = decimal(m.tickValue).mul(volume).div(tick);
+  const conversion = decimal(m.commission.pnlConversionFeeRate);
+  if (perPrice.lte(0) || conversion.gte(100))
+    throw new Error("SCALP_COSTS_UNAVAILABLE");
+  // Minimum-volume commission floors over-reserve per-unit costs at larger
+  // quantities. Final exact-volume fee/risk checks remain independent.
+  return canonical(
+    oneWayCommission(
+      m,
+      decimal(snapshot.quote.ask).plus(decimal(atr).mul(3)),
+      volume,
+    )
+      .mul(2)
+      .div(perPrice)
+      .plus(tick.mul(95))
+      .plus(decimal(atr).mul("1.5").mul(conversion).div(100))
+      // Service boundaries permit ten decimals. Round the reserve upward,
+      // never truncate a repeating/long commission distance optimistically.
+      .toDecimalPlaces(10, Decimal.ROUND_UP),
+  );
+}
+
 /** Bounded loopback computation; never a broker/provider request. */
 export class CompressionDemoClient {
   constructor(
@@ -67,29 +96,7 @@ export class CompressionDemoClient {
     snapshot: MarketSnapshot,
     atr: string,
   ): Promise<{ report: ScalpScanReport; modeledCost: string }> {
-    const m = snapshot.metadata;
-    const volume = decimal(m.minVolume),
-      tick = decimal(m.tickSize);
-    const perPrice = decimal(m.tickValue).mul(volume).div(tick);
-    const conversion = decimal(m.commission.pnlConversionFeeRate);
-    if (perPrice.lte(0) || conversion.gte(100))
-      throw new Error("SCALP_COSTS_UNAVAILABLE");
-    // Minimum-volume commission floors over-reserve per-unit costs at larger
-    // quantities. Final exact-volume fee/risk checks remain independent.
-    const modeledCost = canonical(
-      oneWayCommission(
-        m,
-        decimal(snapshot.quote.ask).plus(decimal(atr).mul(3)),
-        volume,
-      )
-        .mul(2)
-        .div(perPrice)
-        .plus(tick.mul(95))
-        .plus(decimal(atr).mul("1.5").mul(conversion).div(100))
-        // Service boundaries permit ten decimals. Round the reserve upward,
-        // never truncate a repeating/long commission distance optimistically.
-        .toDecimalPlaces(10, Decimal.ROUND_UP),
-    );
+    const modeledCost = modeledScalpCost(snapshot, atr);
     const request: ScalpScanRequest = {
       schemaVersion: "scalp-scan-request-1.0",
       source: technicalContextRequest(snapshot),

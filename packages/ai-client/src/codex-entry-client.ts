@@ -4,26 +4,31 @@ import { z } from "zod";
 import type { AiAnalysisRequest, AiAnalysisResult } from "./client.js";
 import { boundedResponseText } from "./telemetry.js";
 import {
-  bindEntryPrices,
-  type EntryPairPlan,
-} from "../../scenario-engine/src/entry-plan.js";
+  bindEntryDecision,
+  entryDecisionSchema,
+  type EntryDecisionPlan,
+} from "../../scenario-engine/src/entry-decision.js";
 
 import { CODEX_ENTRY_MODEL } from "../../config/src/policy.js";
 export { CODEX_ENTRY_MODEL };
-const price = z
-  .string()
-  .regex(/^(0|[1-9][0-9]{0,12})(\.[0-9]{1,10})?$/)
-  .max(24);
 const receipt = z
   .object({
-    version: z.literal("codex-entry-response-1.0"),
+    version: z.literal("codex-entry-response-1.1"),
     analysisId: z.string().uuid(),
     requestedModel: z.literal(CODEX_ENTRY_MODEL),
     returnedModel: z.null(),
     promptSha256: z.string().regex(/^[0-9a-f]{64}$/),
     capturedAt: z.string().datetime({ offset: true }),
     receivedAt: z.string().datetime({ offset: true }),
-    entries: z.object({ buy_stop: price, sell_stop: price }).strict(),
+    entries: entryDecisionSchema,
+    memory: z
+      .object({
+        day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        threadId: z.string().min(1).max(128),
+        turnId: z.string().min(1).max(128),
+        compacted: z.boolean(),
+      })
+      .strict(),
     rawResponse: z.string().max(8192),
     inputTokens: z.null(),
     outputTokens: z.null(),
@@ -54,14 +59,14 @@ export class CodexEntryClient {
   ) {
     if (options.localToken.length < 32)
       throw new Error("CODEX_LOCAL_AUTH_REQUIRED");
-    this.#prompt = readFileSync("prompts/entry-pair-v6.md", "utf8").trim();
+    this.#prompt = readFileSync("prompts/entry-pair-v7.md", "utf8").trim();
     this.#sha = createHash("sha256").update(this.#prompt).digest("hex");
     this.#fetch = options.fetchImpl ?? fetch;
     this.#now = options.now ?? Date.now;
   }
   async analyze(
     request: AiAnalysisRequest,
-  ): Promise<AiAnalysisResult<EntryPairPlan>> {
+  ): Promise<AiAnalysisResult<EntryDecisionPlan>> {
     if (this.circuitOpen) throw new Error("AI_CIRCUIT_OPEN");
     if (this.#busy) throw new Error("CODEX_REQUEST_IN_FLIGHT");
     if (
@@ -71,10 +76,10 @@ export class CodexEntryClient {
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
     const body = JSON.stringify({
-      version: "codex-entry-request-1.2",
+      version: "codex-entry-request-1.3",
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-pair-v6",
+      promptVersion: "entry-pair-v7",
       promptSha256: this.#sha,
       payload: request.payload,
     });
@@ -109,13 +114,23 @@ export class CodexEntryClient {
         value.analysisId !== request.analysisId ||
         value.promptSha256 !== this.#sha ||
         value.capturedAt !== request.payload.captured_at ||
+        value.memory.day !== value.capturedAt.slice(0, 10) ||
         ended < started ||
         ended - started > 95_000 ||
         Date.parse(value.receivedAt) < started ||
         Date.parse(value.receivedAt) > ended
       )
         throw new Error("CODEX_RECEIPT_MISMATCH_OR_STALE");
-      const parsed = bindEntryPrices(value.rawResponse, {
+      const candles = request.payload.candles as {
+        timeframe: string;
+        rows: unknown[][];
+      }[];
+      const observed = candles
+        .find((s) => s.timeframe === "M1")
+        ?.rows.at(-1)?.[1];
+      if (typeof observed !== "string") throw new Error("CODEX_M1_REQUIRED");
+      const parsed = bindEntryDecision(value.rawResponse, {
+        observedM1End: observed,
         analysisId: request.analysisId,
         symbol: request.symbol,
         capturedAt: value.capturedAt,
@@ -123,12 +138,8 @@ export class CodexEntryClient {
       });
       const strictEntries = JSON.parse(value.rawResponse) as unknown;
       if (
-        JSON.stringify(
-          z
-            .object({ buy_stop: price, sell_stop: price })
-            .strict()
-            .parse(strictEntries),
-        ) !== JSON.stringify(value.entries)
+        JSON.stringify(entryDecisionSchema.parse(strictEntries)) !==
+        JSON.stringify(value.entries)
       )
         throw new Error("CODEX_RECEIPT_ENTRIES_MISMATCH");
       this.#failures = 0;
@@ -139,7 +150,7 @@ export class CodexEntryClient {
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
         promptArtifact: {
-          version: "entry-pair-v6",
+          version: "entry-pair-v7",
           sha256: this.#sha,
           content: this.#prompt,
         },

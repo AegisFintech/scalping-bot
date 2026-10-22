@@ -8,10 +8,10 @@ import {
 } from "../../ai-client/src/telemetry.js";
 import type { AiAnalysisResult } from "../../ai-client/src/client.js";
 import {
-  bindEntryPrices,
-  validateEntryPlan,
-  type EntryPairPlan,
-} from "./entry-plan.js";
+  bindEntryDecision,
+  validateEntryDecision,
+  type EntryDecisionPlan,
+} from "./entry-decision.js";
 import { ENTRY_PAIR_PROMPT, type EntryPlannerInput } from "./entry-planner.js";
 import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 
@@ -22,7 +22,7 @@ export class EntryPairHttpPlanner {
   ) {}
   async generate(
     input: EntryPlannerInput,
-  ): Promise<AiAnalysisResult<EntryPairPlan>> {
+  ): Promise<AiAnalysisResult<EntryDecisionPlan>> {
     let response: Response;
     try {
       response = await this.fetchImpl(
@@ -95,8 +95,15 @@ export class EntryPairHttpPlanner {
       telemetry.inputProfile !== "structured"
     )
       throw new Error("SCENARIO_PROVIDER_IDENTITY_MISMATCH");
-    const plan = bindEntryPrices(envelope.rawResponse, input);
-    validateEntryPlan(JSON.stringify(plan), {
+    const observedM1End = input.candles
+      .find((s) => s.timeframe === "M1")
+      ?.candles.at(-1)?.endTime;
+    if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
+    const plan = bindEntryDecision(envelope.rawResponse, {
+      ...input,
+      observedM1End,
+    });
+    validateEntryDecision(JSON.stringify(plan), {
       ...input,
       availableAt: new Date().toISOString(),
     });

@@ -1,3 +1,11 @@
+# ISSUE-362 current source amendment
+
+The latest source is the explicitly approved evidence-first Codex proposal flow,
+with WAIT and daily persistent memory; previous source summaries below are
+historical. See [the complete amendment](evidence-first-codex-report.md). No
+deployment, financial reset, risk increase or profitability qualification follows
+source delivery.
+
 # ISSUE-069 implementation and evidence
 
 Later storage work is tracked in [ISSUE-090](local-storage-report.md); its local

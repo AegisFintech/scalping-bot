@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "entry-decision-provider-1.0",
+  "additionalProperties": false,
+  "properties": {
+    "decision": {
+      "enum": ["OCO", "WAIT"],
+      "title": "Decision",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "buy_stop": {
+      "anyOf": [
+        {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Buy Stop"
+    },
+    "sell_stop": {
+      "anyOf": [
+        {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Sell Stop"
+    }
+  },
+  "required": ["decision", "reason", "buy_stop", "sell_stop"],
+  "title": "Decision",
+  "type": "object"
+}

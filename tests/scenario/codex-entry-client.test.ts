@@ -4,24 +4,40 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-pair-v6.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-pair-v7.md", "utf8").trim();
 function fixture() {
   const request = {
     analysisId: randomUUID(),
     symbol: "XAUUSD",
     chart: null,
-    payload: { captured_at: at, tick_size: "0.01" },
+    payload: {
+      captured_at: at,
+      tick_size: "0.01",
+      candles: [{ timeframe: "M1", rows: [[at, at]] }],
+    },
   };
   const value = {
-    version: "codex-entry-response-1.0",
+    version: "codex-entry-response-1.1",
     analysisId: request.analysisId,
     requestedModel: "gpt-6.1-sol",
     returnedModel: null,
     promptSha256: createHash("sha256").update(prompt).digest("hex"),
     capturedAt: at,
     receivedAt: at,
-    entries: { buy_stop: "4002", sell_stop: "3999" },
-    rawResponse: '{"buy_stop":"4002","sell_stop":"3999"}',
+    entries: {
+      decision: "OCO",
+      reason: "Box",
+      buy_stop: "4002",
+      sell_stop: "3999",
+    },
+    memory: {
+      day: "2026-10-19",
+      threadId: "thread1",
+      turnId: "turn1",
+      compacted: false,
+    },
+    rawResponse:
+      '{"decision":"OCO","reason":"Box","buy_stop":"4002","sell_stop":"3999"}',
     inputTokens: null,
     outputTokens: null,
     costAmount: null,

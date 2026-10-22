@@ -253,8 +253,50 @@ class RequestV12(StrictModel):
         return self
 
 
-def parse_request(raw: bytes) -> Request | RequestV12:
+class ClosedOutcome(StrictModel):
+    closed_at: str
+    direction: Literal["LONG", "SHORT"]
+    realized_net: Annotated[str, Field(pattern=r"^-?(0|[1-9][0-9]*)(\.[0-9]{1,10})?$")]
+    strategy_version: Annotated[str, Field(min_length=1, max_length=128)]
+
+
+class ExecutionContext(StrictModel):
+    spread_price: Price
+    modeled_round_trip_cost_price: Price
+    cost_basis: Literal["CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD"]
+    shared_setup_risk_percent: Literal["1"]
+    recent_closed_outcomes: Annotated[list[ClosedOutcome], Field(max_length=8)]
+
+
+class PayloadV13(PayloadV12):
+    execution_context: ExecutionContext
+
+    @model_validator(mode="after")
+    def outcomes(self) -> PayloadV13:
+        at = timestamp(self.captured_at)
+        previous = at
+        for outcome in self.execution_context.recent_closed_outcomes:
+            closed = timestamp(outcome.closed_at)
+            if closed > previous or at - closed > timedelta(days=1):
+                raise ValueError("CODEX_OUTCOME_PROVENANCE_INVALID")
+            previous = closed
+        if Decimal(self.execution_context.spread_price) != Decimal(self.quote.ask) - Decimal(
+            self.quote.bid
+        ):
+            raise ValueError("CODEX_SPREAD_CONTEXT_MISMATCH")
+        return self
+
+
+class RequestV13(RequestV12):
+    version: Literal["codex-entry-request-1.3"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-pair-v7"]  # type: ignore[assignment]
+    payload: PayloadV13
+
+
+def parse_request(raw: bytes) -> Request | RequestV12 | RequestV13:
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.3":
+        return RequestV13.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.2":
         return RequestV12.model_validate_json(raw)
     return Request.model_validate_json(raw)
@@ -285,6 +327,39 @@ class Response(StrictModel):
     outputTokens: None
     costAmount: None
     executionAuthority: Literal[False]
+
+
+class Decision(StrictModel):
+    decision: Literal["OCO", "WAIT"]
+    reason: Annotated[str, Field(min_length=1, max_length=1200)]
+    buy_stop: Price | None
+    sell_stop: Price | None
+
+    @model_validator(mode="after")
+    def consistent(self) -> Decision:
+        if self.decision == "WAIT":
+            if self.buy_stop is not None or self.sell_stop is not None:
+                raise ValueError("CODEX_WAIT_HAS_ENTRIES")
+        elif (
+            self.buy_stop is None
+            or self.sell_stop is None
+            or min(Decimal(self.buy_stop), Decimal(self.sell_stop)) <= 0
+        ):
+            raise ValueError("CODEX_OCO_ENTRIES_REQUIRED")
+        return self
+
+
+class MemoryReceipt(StrictModel):
+    day: Annotated[str, Field(pattern=r"^\d{4}-\d{2}-\d{2}$")]
+    threadId: Annotated[str, Field(min_length=1, max_length=128)]
+    turnId: Annotated[str, Field(min_length=1, max_length=128)]
+    compacted: bool
+
+
+class ResponseV11(Response):
+    version: Literal["codex-entry-response-1.1"]  # type: ignore[assignment]
+    entries: Decision  # type: ignore[assignment]
+    memory: MemoryReceipt
 
 
 def invoke(prompt: str, job: Path) -> bytes:
@@ -337,7 +412,7 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request | RequestV12,
+    request: Request | RequestV12 | RequestV13,
     root: Path,
     system_prompt: str,
     *,
@@ -370,7 +445,13 @@ def run(
         job.mkdir(mode=0o700)
         prompt = (
             system_prompt
-            + "\nDo not use tools, execute commands or read files. Propose prices only.\nINPUT:\n"
+            + "\nDo not use tools, execute commands or read files. "
+            + (
+                "Return OCO or WAIT only."
+                if isinstance(request, RequestV13)
+                else "Propose prices only."
+            )
+            + "\nINPUT:\n"
             + json.dumps(request.payload.model_dump(), separators=(",", ":"))
         )
         publish(job / "request.json", request.model_dump())
@@ -392,12 +473,19 @@ def run(
             finally:
                 os.close(descriptor)
         try:
-            result = call(prompt, job)
+            if isinstance(request, RequestV13) and call is invoke:
+                from python.codex_entry.memory import invoke_daily
+
+                result = invoke_daily(prompt, job, schema=Decision.model_json_schema(), model=MODEL)
+            else:
+                result = call(prompt, job)
             if len(result) > 8192:
                 raise ValueError("CODEX_OUTPUT_OVERSIZED")
             # Preserve available response text even when validation fails.
             publish(job / "response-text.json", {"text": result.decode("utf-8")})
-            entries = Entries.model_validate_json(result)
+            entries = (
+                Decision if isinstance(request, RequestV13) else Entries
+            ).model_validate_json(result)
             ended = now()
             if ended < started or ended - started > timedelta(seconds=TIMEOUT):
                 raise ValueError("CODEX_RESULT_STALE")
@@ -416,7 +504,12 @@ def run(
                 "costAmount": None,
                 "executionAuthority": False,
             }
-            response = Response.model_validate(response).model_dump()
+            if isinstance(request, RequestV13):
+                response["version"] = "codex-entry-response-1.1"
+                response["memory"] = json.loads(read_bounded(job / "memory-result.json"))
+                response = ResponseV11.model_validate(response).model_dump()
+            else:
+                response = Response.model_validate(response).model_dump()
             publish(job / "result.json", response)
             return response
         except Exception:
