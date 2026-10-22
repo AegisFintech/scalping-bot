@@ -1,3 +1,22 @@
+# ISSUE-364 — Active evidence-first DEMO
+
+The operator's no-trade report prompted activation of the already approved and
+qualified #362/#363 source. Read `docs/evidence-demo-rollout-report.md`.
+Runtime is `0.4.3-evidence-scalp.1-codex.1`, immutable `evidence364-qualified`,
+worker `/opt/scalper-codex-entry-364`, matching v7 / transport 1.3. Preserve the
+same database/runtime and every financial/request journal. Migration 0031 was
+applied transactionally through the local PostgreSQL administrator; do not grant
+the application CREATE/DDL privileges to make migration commands run. Keep the
+WAIT order interlock, unique successor claims, 60-second/new-M1 retries and
+failed/unknown cooldowns. Never force orders merely because frequency is low.
+The new 30-day prospective registration and seven-day read-only observer are
+separate from older frozen cohorts. Retain every old registration/observer and
+all daily/open/gap/OCO censoring; source drift limits research only. A natural
+WAIT proves proposal transport, not trading profitability or an actual fill.
+The first natural WAIT successor used a new completed M1 after 66.593698 seconds
+and the same daily thread. Native production compaction remains unobserved at
+this checkpoint; retain the separate synthetic compaction qualification.
+
 # ISSUE-362 — Evidence-first source and bounded daily Codex context
 
 Read `docs/evidence-first-codex-report.md`. This source supersedes #358's scanner
