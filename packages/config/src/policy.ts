@@ -4,7 +4,7 @@ import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
 export const HISTORICAL_API_MODEL = "grok-4.5";
 export const HISTORICAL_BREAKOUT_VERSION = "0.4.0-breakout-scalp.1-codex.1";
-export const CODEX_STRATEGY_VERSION = "0.4.3-evidence-scalp.1-codex.1";
+export const CODEX_STRATEGY_VERSION = "0.4.3-evidence-scalp.1-codex.2";
 export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {

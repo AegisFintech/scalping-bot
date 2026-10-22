@@ -1,0 +1,836 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "codex-entry-request-1.4",
+  "$defs": {
+    "Bounds": {
+      "additionalProperties": false,
+      "properties": {
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "buy_stop_minimum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Buy Stop Minimum",
+          "type": "string"
+        },
+        "sell_stop_maximum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Sell Stop Maximum",
+          "type": "string"
+        },
+        "movement_buffer": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Movement Buffer",
+          "type": "string"
+        },
+        "preferred_buy_stop_minimum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Preferred Buy Stop Minimum",
+          "type": "string"
+        },
+        "preferred_sell_stop_maximum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Preferred Sell Stop Maximum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum_entry_distance",
+        "buy_stop_minimum",
+        "sell_stop_maximum",
+        "movement_buffer",
+        "preferred_buy_stop_minimum",
+        "preferred_sell_stop_maximum"
+      ],
+      "title": "Bounds",
+      "type": "object"
+    },
+    "Candles": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "maxItems": 288,
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": ["timeframe", "columns", "rows"],
+      "title": "Candles",
+      "type": "object"
+    },
+    "ClosedOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "closed_at": {
+          "title": "Closed At",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["LONG", "SHORT"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "realized_net": {
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,10})?$",
+          "title": "Realized Net",
+          "type": "string"
+        },
+        "strategy_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Strategy Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "closed_at",
+        "direction",
+        "realized_net",
+        "strategy_version"
+      ],
+      "title": "ClosedOutcome",
+      "type": "object"
+    },
+    "ContextEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "definitions_version": {
+          "const": "causal-smc-1.0",
+          "default": "causal-smc-1.0",
+          "title": "Definitions Version",
+          "type": "string"
+        },
+        "frames": {
+          "items": {
+            "$ref": "#/$defs/FrameContext"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Frames",
+          "type": "array"
+        },
+        "depth": {
+          "$ref": "#/$defs/DepthContext"
+        },
+        "spread_to_m1_atr": {
+          "title": "Spread To M1 Atr",
+          "type": "string"
+        },
+        "history_targets_met": {
+          "title": "History Targets Met",
+          "type": "boolean"
+        },
+        "news": {
+          "const": "NOT_COLLECTED",
+          "default": "NOT_COLLECTED",
+          "title": "News",
+          "type": "string"
+        },
+        "harmonics": {
+          "const": "NOT_IMPLEMENTED",
+          "default": "NOT_IMPLEMENTED",
+          "title": "Harmonics",
+          "type": "string"
+        },
+        "counterfactual_costs": {
+          "default": null,
+          "title": "Counterfactual Costs",
+          "type": "null"
+        }
+      },
+      "required": [
+        "frames",
+        "depth",
+        "spread_to_m1_atr",
+        "history_targets_met"
+      ],
+      "title": "ContextEvidence",
+      "type": "object"
+    },
+    "DayRange": {
+      "additionalProperties": false,
+      "properties": {
+        "utc_date": {
+          "title": "Utc Date",
+          "type": "string"
+        },
+        "status": {
+          "enum": ["COMPLETE_UTC_DAY", "PARTIAL_OR_UNAVAILABLE"],
+          "title": "Status",
+          "type": "string"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "High"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Low"
+        }
+      },
+      "required": ["utc_date", "status", "high", "low"],
+      "title": "DayRange",
+      "type": "object"
+    },
+    "DepthContext": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "const": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "default": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "title": "Scope",
+          "type": "string"
+        },
+        "timestamp_basis": {
+          "const": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "default": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "title": "Timestamp Basis",
+          "type": "string"
+        },
+        "source_at": {
+          "title": "Source At",
+          "type": "string"
+        },
+        "received_at": {
+          "title": "Received At",
+          "type": "string"
+        },
+        "bid_levels": {
+          "title": "Bid Levels",
+          "type": "integer"
+        },
+        "ask_levels": {
+          "title": "Ask Levels",
+          "type": "integer"
+        },
+        "symmetric_sizes": {
+          "title": "Symmetric Sizes",
+          "type": "boolean"
+        },
+        "spread": {
+          "title": "Spread",
+          "type": "string"
+        },
+        "imbalance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Imbalance"
+        },
+        "microprice_bias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Microprice Bias"
+        },
+        "bid_liquidity_change_60s": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Bid Liquidity Change 60S"
+        },
+        "ask_liquidity_change_60s": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ask Liquidity Change 60S"
+        },
+        "rolling_sample_count_60s": {
+          "title": "Rolling Sample Count 60S",
+          "type": "integer"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_at",
+        "received_at",
+        "bid_levels",
+        "ask_levels",
+        "symmetric_sizes",
+        "spread",
+        "imbalance",
+        "microprice_bias",
+        "bid_liquidity_change_60s",
+        "ask_liquidity_change_60s",
+        "rolling_sample_count_60s",
+        "warnings"
+      ],
+      "title": "DepthContext",
+      "type": "object"
+    },
+    "ExecutionContext": {
+      "additionalProperties": false,
+      "properties": {
+        "spread_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Spread Price",
+          "type": "string"
+        },
+        "modeled_round_trip_cost_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Modeled Round Trip Cost Price",
+          "type": "string"
+        },
+        "cost_basis": {
+          "const": "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
+          "title": "Cost Basis",
+          "type": "string"
+        },
+        "shared_setup_risk_percent": {
+          "const": "1",
+          "title": "Shared Setup Risk Percent",
+          "type": "string"
+        },
+        "recent_closed_outcomes": {
+          "items": {
+            "$ref": "#/$defs/ClosedOutcome"
+          },
+          "maxItems": 8,
+          "title": "Recent Closed Outcomes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "spread_price",
+        "modeled_round_trip_cost_price",
+        "cost_basis",
+        "shared_setup_risk_percent",
+        "recent_closed_outcomes"
+      ],
+      "title": "ExecutionContext",
+      "type": "object"
+    },
+    "FrameContext": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "candle_count": {
+          "title": "Candle Count",
+          "type": "integer"
+        },
+        "latest_completed_at": {
+          "title": "Latest Completed At",
+          "type": "string"
+        },
+        "segment_candle_count": {
+          "title": "Segment Candle Count",
+          "type": "integer"
+        },
+        "bias": {
+          "enum": ["UNKNOWN", "BULLISH", "BEARISH"],
+          "title": "Bias",
+          "type": "string"
+        },
+        "atr": {
+          "title": "Atr",
+          "type": "string"
+        },
+        "ema_fast": {
+          "title": "Ema Fast",
+          "type": "string"
+        },
+        "ema_slow": {
+          "title": "Ema Slow",
+          "type": "string"
+        },
+        "rsi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rsi"
+        },
+        "adx": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Adx"
+        },
+        "pivots": {
+          "items": {
+            "$ref": "#/$defs/Pivot"
+          },
+          "maxItems": 12,
+          "title": "Pivots",
+          "type": "array"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/StructureEvent"
+          },
+          "maxItems": 12,
+          "title": "Events",
+          "type": "array"
+        },
+        "nearest_active_zones": {
+          "items": {
+            "$ref": "#/$defs/Zone"
+          },
+          "maxItems": 8,
+          "title": "Nearest Active Zones",
+          "type": "array"
+        },
+        "recent_resolved_zones": {
+          "items": {
+            "$ref": "#/$defs/Zone"
+          },
+          "maxItems": 4,
+          "title": "Recent Resolved Zones",
+          "type": "array"
+        },
+        "liquidity_pools": {
+          "items": {
+            "$ref": "#/$defs/LiquidityPool"
+          },
+          "maxItems": 6,
+          "title": "Liquidity Pools",
+          "type": "array"
+        },
+        "active_zone_count": {
+          "title": "Active Zone Count",
+          "type": "integer"
+        },
+        "resolved_zone_count": {
+          "title": "Resolved Zone Count",
+          "type": "integer"
+        },
+        "previous_utc_day": {
+          "$ref": "#/$defs/DayRange"
+        }
+      },
+      "required": [
+        "timeframe",
+        "candle_count",
+        "latest_completed_at",
+        "segment_candle_count",
+        "bias",
+        "atr",
+        "ema_fast",
+        "ema_slow",
+        "rsi",
+        "adx",
+        "pivots",
+        "events",
+        "nearest_active_zones",
+        "recent_resolved_zones",
+        "liquidity_pools",
+        "active_zone_count",
+        "resolved_zone_count",
+        "previous_utc_day"
+      ],
+      "title": "FrameContext",
+      "type": "object"
+    },
+    "LiquidityPool": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "const": "HISTORICAL_PIVOT_CLUSTER_NOT_RESTING_ORDERS",
+          "default": "HISTORICAL_PIVOT_CLUSTER_NOT_RESTING_ORDERS",
+          "title": "Scope",
+          "type": "string"
+        },
+        "kind": {
+          "enum": ["EQUAL_HIGHS", "EQUAL_LOWS"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "tolerance": {
+          "title": "Tolerance",
+          "type": "string"
+        },
+        "confirmed_touches": {
+          "title": "Confirmed Touches",
+          "type": "integer"
+        },
+        "first_pivot_at": {
+          "title": "First Pivot At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "level",
+        "tolerance",
+        "confirmed_touches",
+        "first_pivot_at",
+        "available_at"
+      ],
+      "title": "LiquidityPool",
+      "type": "object"
+    },
+    "PayloadV13": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "title": "Captured At",
+          "type": "string"
+        },
+        "tick_size": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Tick Size",
+          "type": "string"
+        },
+        "quote": {
+          "$ref": "#/$defs/Quote"
+        },
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "entry_boundaries": {
+          "$ref": "#/$defs/Bounds"
+        },
+        "candles": {
+          "items": {
+            "$ref": "#/$defs/Candles"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Candles",
+          "type": "array"
+        },
+        "market_captured_at": {
+          "title": "Market Captured At",
+          "type": "string"
+        },
+        "technical_context": {
+          "$ref": "#/$defs/ContextEvidence"
+        },
+        "context_input_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Context Input Sha256",
+          "type": "string"
+        },
+        "execution_context": {
+          "$ref": "#/$defs/ExecutionContext"
+        }
+      },
+      "required": [
+        "captured_at",
+        "tick_size",
+        "quote",
+        "minimum_entry_distance",
+        "entry_boundaries",
+        "candles",
+        "market_captured_at",
+        "technical_context",
+        "context_input_sha256",
+        "execution_context"
+      ],
+      "title": "PayloadV13",
+      "type": "object"
+    },
+    "Pivot": {
+      "additionalProperties": false,
+      "properties": {
+        "side": {
+          "enum": ["HIGH", "LOW"],
+          "title": "Side",
+          "type": "string"
+        },
+        "price": {
+          "title": "Price",
+          "type": "string"
+        },
+        "candle_at": {
+          "title": "Candle At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        }
+      },
+      "required": ["side", "price", "candle_at", "available_at"],
+      "title": "Pivot",
+      "type": "object"
+    },
+    "Quote": {
+      "additionalProperties": false,
+      "properties": {
+        "bid": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Bid",
+          "type": "string"
+        },
+        "ask": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Ask",
+          "type": "string"
+        },
+        "sourceTime": {
+          "title": "Sourcetime",
+          "type": "string"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        }
+      },
+      "required": ["bid", "ask", "sourceTime", "receivedAt"],
+      "title": "Quote",
+      "type": "object"
+    },
+    "StructureEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": ["INITIAL_BREAK", "BOS", "MSS", "SWEEP"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["BULLISH", "BEARISH"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "pivot_at": {
+          "title": "Pivot At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        },
+        "displacement": {
+          "title": "Displacement",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "level",
+        "pivot_at",
+        "available_at",
+        "displacement"
+      ],
+      "title": "StructureEvent",
+      "type": "object"
+    },
+    "Zone": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": ["ORDER_BLOCK", "FVG"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["BULLISH", "BEARISH"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "lower": {
+          "title": "Lower",
+          "type": "string"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "string"
+        },
+        "origin_at": {
+          "title": "Origin At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        },
+        "status": {
+          "enum": ["FRESH", "TOUCHED", "FILLED", "INVALIDATED"],
+          "title": "Status",
+          "type": "string"
+        },
+        "first_touched_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Touched At"
+        },
+        "resolved_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resolved At"
+        },
+        "age_bars": {
+          "title": "Age Bars",
+          "type": "integer"
+        },
+        "distance_from_quote": {
+          "title": "Distance From Quote",
+          "type": "string"
+        },
+        "overlap_count": {
+          "default": 0,
+          "title": "Overlap Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "lower",
+        "upper",
+        "origin_at",
+        "available_at",
+        "status",
+        "first_touched_at",
+        "resolved_at",
+        "age_bars",
+        "distance_from_quote"
+      ],
+      "title": "Zone",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "codex-entry-request-1.4",
+      "title": "Version",
+      "type": "string"
+    },
+    "analysisId": {
+      "title": "Analysisid",
+      "type": "string"
+    },
+    "symbol": {
+      "const": "XAUUSD",
+      "title": "Symbol",
+      "type": "string"
+    },
+    "promptVersion": {
+      "const": "entry-pair-v8",
+      "title": "Promptversion",
+      "type": "string"
+    },
+    "promptSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Promptsha256",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/PayloadV13"
+    }
+  },
+  "required": [
+    "version",
+    "analysisId",
+    "symbol",
+    "promptVersion",
+    "promptSha256",
+    "payload"
+  ],
+  "title": "RequestV14",
+  "type": "object"
+}

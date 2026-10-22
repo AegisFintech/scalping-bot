@@ -1,3 +1,11 @@
+# ISSUE-366 — M1-first source
+
+Completed M1 defines the immediate range; M5/M15/SMC/FVG/DOM remain context.
+V8/request 1.4 retains the existing strict OCO/WAIT response, daily prompt-pinned
+Codex memory and deterministic broker execution. No extra active trading bot.
+See [release, qualification and main deployment](m1-range-release-report.md).
+Earlier source/runtime checkpoints below are historical.
+
 # ISSUE-362 evidence-first source
 
 New source uses Codex v7 / transport 1.3 with OCO or WAIT, fresh technical/DOM/cost

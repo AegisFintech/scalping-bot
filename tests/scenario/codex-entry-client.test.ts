@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-pair-v7.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-pair-v8.md", "utf8").trim();
 function fixture() {
   const request = {
     analysisId: randomUUID(),
@@ -64,6 +64,15 @@ describe("isolated Codex transport", () => {
       returnedModel: null,
       costAmount: null,
     });
+    const rawBody = s.fetchImpl.mock.calls[0]?.[1]?.body;
+    if (typeof rawBody !== "string") throw new Error("EXPECTED_JSON_REQUEST");
+    const body = JSON.parse(rawBody) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      version: "codex-entry-request-1.4",
+      promptVersion: "entry-pair-v8",
+      promptSha256: s.value.promptSha256,
+    });
+    expect(result.promptArtifact?.version).toBe("entry-pair-v8");
     expect(result.retryCount).toBe(0);
     expect(s.gate).toHaveBeenCalledOnce();
     expect(s.fetchImpl).toHaveBeenCalledOnce();

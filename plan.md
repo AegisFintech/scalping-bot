@@ -1,3 +1,11 @@
+### ISSUE-366 — Nearby M1 Codex range and same-demo deployment
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/366.
+- Dependencies: merged/active #362/#364, existing completed technical/DOM context and migration 0031.
+- Acceptance: versioned v8 / request 1.4, M1 primary with higher-frame/zone context; preserve OCO/WAIT, native equal-gross-TP economics, shared dynamic 1% risk and every operational/unknown-request gate. Historical contracts immutable. Success and mismatch/failure tests; full qualification, secret/audits/Graphify, passing PR/merge main, matching artifacts deployed to one existing demo, financial/history preservation, future cohort and natural decision evidence.
+- Status: source implemented; all 1,551 tests / full quality/security gates and both configuration checks passed on frozen source. Dedicated PR/hosted checks, main merge and same-demo deployment follow; operational receipt will be appended to issue #366 before handoff.
+- Report: [M1 range release](docs/m1-range-release-report.md).
+
 ### ISSUE-364 — Activate evidence-first Codex DEMO
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/364.

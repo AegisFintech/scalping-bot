@@ -1,3 +1,11 @@
+# ISSUE-366 — M1-first source
+
+Policy `0.4.3-evidence-scalp.1` is unchanged: opposite-box native stop, equal
+gross TP and dynamic shared 1% ceiling. V8 changes entry guidance, not TP, sizing,
+margin, protection, accounting or execution gates. WAIT has no order authority.
+See [release, qualification and main deployment](m1-range-release-report.md).
+Earlier source/runtime checkpoints below are historical.
+
 # ISSUE-362 evidence-first source
 
 Policy `0.4.3-evidence-scalp.1` derives native stop distance from the unchanged

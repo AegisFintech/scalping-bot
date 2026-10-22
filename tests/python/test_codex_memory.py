@@ -359,3 +359,64 @@ def test_stdio_write_backpressure_has_the_same_deadline() -> None:
     finally:
         rpc.close()
     assert process.poll() is not None
+
+
+def test_v14_keeps_v13_immutable_and_pins_m1_prompt(tmp_path: Path) -> None:
+    from fastapi.testclient import TestClient
+
+    from python.codex_entry.api import create_app
+
+    legacy = current_request()
+    body = legacy.model_dump()
+    body.update(version="codex-entry-request-1.4", promptVersion="entry-pair-v8")
+    req = s.parse_request(json.dumps(body).encode())
+    assert isinstance(req, s.RequestV14)
+    assert isinstance(s.parse_request(legacy.model_dump_json().encode()), s.RequestV13)
+    schema = json.loads(Path("schemas/codex-entry-request-1.4.json").read_text())
+    schema.pop("$schema")
+    schema.pop("$id")
+    assert schema == s.RequestV14.model_json_schema()
+    bad = {**body, "promptVersion": "entry-pair-v7"}
+    with pytest.raises(ValueError):
+        s.parse_request(json.dumps(bad).encode())
+    # Old worker refuses new contract before any provider claim; new worker also
+    # refuses a legacy prompt. No old prompt can silently authorize v8 trading.
+    for expected, payload in [("entry-pair-v7", body), ("entry-pair-v8", legacy.model_dump())]:
+        client = TestClient(create_app(tmp_path, PROMPT, "x" * 32, prompt_version=expected))
+        response = client.post(
+            "/v1/entry-proposals", json=payload, headers={"authorization": "Bearer " + "x" * 32}
+        )
+        assert response.status_code == 422
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize("decision", ["WAIT", "OCO"])
+def test_v14_persistent_decision_receipt(tmp_path: Path, decision: str) -> None:
+    body = current_request().model_dump()
+    body.update(version="codex-entry-request-1.4", promptVersion="entry-pair-v8")
+    req = s.RequestV14.model_validate(body)
+
+    def call(prompt: str, job: Path) -> bytes:
+        assert "Return OCO or WAIT only." in prompt
+        publish(
+            job / "memory-result.json",
+            {
+                "day": NOW.date().isoformat(),
+                "threadId": "thread-v8",
+                "turnId": "turn-v8",
+                "compacted": False,
+            },
+        )
+        return json.dumps(
+            {
+                "decision": decision,
+                "reason": "Visible M1 range" if decision == "OCO" else "No usable M1 range",
+                "buy_stop": "4002" if decision == "OCO" else None,
+                "sell_stop": "3999" if decision == "OCO" else None,
+            }
+        ).encode()
+
+    result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=call)
+    assert result["entries"]["decision"] == decision
+    assert result["version"] == "codex-entry-response-1.1"
+    assert result["executionAuthority"] is False

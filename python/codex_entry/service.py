@@ -293,8 +293,15 @@ class RequestV13(RequestV12):
     payload: PayloadV13
 
 
-def parse_request(raw: bytes) -> Request | RequestV12 | RequestV13:
+class RequestV14(RequestV13):
+    version: Literal["codex-entry-request-1.4"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-pair-v8"]  # type: ignore[assignment]
+
+
+def parse_request(raw: bytes) -> Request | RequestV12 | RequestV13 | RequestV14:
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.4":
+        return RequestV14.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.3":
         return RequestV13.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.2":
@@ -412,7 +419,7 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request | RequestV12 | RequestV13,
+    request: Request | RequestV12 | RequestV13 | RequestV14,
     root: Path,
     system_prompt: str,
     *,

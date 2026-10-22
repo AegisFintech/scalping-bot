@@ -256,6 +256,7 @@ export interface ModelPromptArtifact {
     | "entry-pair-v5"
     | "entry-pair-v6"
     | "entry-pair-v7"
+    | "entry-pair-v8"
     | "entry-pair-execution-v1"
     | "scenario-v2"
     | "scenario-v3"

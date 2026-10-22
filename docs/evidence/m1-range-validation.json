@@ -1,0 +1,122 @@
+{
+  "issue": 366,
+  "sourceSha256": "20db57f3302a33e047ba5896aa12639be703c96097aa55a6b8d6f2fc8067e512",
+  "nodeVersion": "v22.23.2",
+  "qualificationPath": "/tmp/scalper-qualification-ePnAsL/checks/results.json",
+  "command": "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0,
+      "elapsedMs": 24
+    },
+    {
+      "label": "test-certificate",
+      "code": 0,
+      "elapsedMs": 73
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0,
+      "elapsedMs": 8
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0,
+      "elapsedMs": 15
+    },
+    {
+      "label": "database-init",
+      "code": 0,
+      "elapsedMs": 800
+    },
+    {
+      "label": "database-start",
+      "code": 0,
+      "elapsedMs": 126
+    },
+    {
+      "label": "format",
+      "code": 0,
+      "elapsedMs": 34514
+    },
+    {
+      "label": "lint",
+      "code": 0,
+      "elapsedMs": 42758
+    },
+    {
+      "label": "types",
+      "code": 0,
+      "elapsedMs": 15406
+    },
+    {
+      "label": "build",
+      "code": 0,
+      "elapsedMs": 11164
+    },
+    {
+      "label": "node-tests",
+      "code": 0,
+      "elapsedMs": 76404
+    },
+    {
+      "label": "python-format",
+      "code": 0,
+      "elapsedMs": 40
+    },
+    {
+      "label": "python-lint",
+      "code": 0,
+      "elapsedMs": 44
+    },
+    {
+      "label": "python-types",
+      "code": 0,
+      "elapsedMs": 3460
+    },
+    {
+      "label": "secrets",
+      "code": 0,
+      "elapsedMs": 247
+    },
+    {
+      "label": "npm-audit",
+      "code": 0,
+      "elapsedMs": 1021
+    },
+    {
+      "label": "python-audit",
+      "code": 0,
+      "elapsedMs": 11682
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0,
+      "elapsedMs": 25883
+    },
+    {
+      "label": "python-tests",
+      "code": 0,
+      "elapsedMs": 10613
+    },
+    {
+      "label": "database-stop",
+      "code": 0,
+      "elapsedMs": 109
+    }
+  ],
+  "tests": {
+    "node": 1024,
+    "postgresql": 103,
+    "python": 424,
+    "total": 1551
+  },
+  "configurationChecks": [
+    "npm run config:check -- .env.sample",
+    "npm run config:check -- .env.sample --startup"
+  ],
+  "graphify": "Local AST only; documentation semantics not freshly extracted. 7881 nodes / 14023 edges / 630 communities at pre-push checkpoint.",
+  "runtimeActivation": "Pending at source checkpoint; append operational receipt to issue 366 after merge/main deployment.",
+  "profitabilityEstablished": false
+}

@@ -30,13 +30,11 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses v7 SMC guidance with explicit WAIT and descriptive indicators", () => {
+  it("uses M1-first v8 guidance without mandatory higher-timeframe confluence", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v7");
-    expect(prompt.replace(/\s+/g, " ")).toContain(
-      "overlapping/choppy structure",
-    );
-    expect(prompt.replace(/\s+/g, " ")).toContain("cleaner continuation");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v8");
+    expect(prompt.replace(/\s+/g, " ")).toContain("Read completed M1 first");
+    expect(prompt.replace(/\s+/g, " ")).toContain("not prerequisites");
     expect(prompt.replace(/\s+/g, " ")).toContain("broker session gap");
     expect(prompt.replace(/\s+/g, " ")).toContain('"decision":"WAIT"');
   });
@@ -262,7 +260,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.3");
+      expect(providerBody.version).toBe("codex-entry-request-1.4");
       expect(providerBody.payload).toMatchObject({ market_captured_at: at });
       const compact = (
         providerBody.payload as { candles: { rows: unknown[] }[] }
@@ -291,7 +289,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v7",
+        version: "entry-pair-v8",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });
