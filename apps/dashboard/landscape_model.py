@@ -80,8 +80,17 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                     row,
                     row.get("available_at"),
                     "codex",
-                    "Entry prices available",
-                    "Recorded provider result; deterministic validation still owns execution.",
+                    "Codex chose WAIT"
+                    if row.get("plan_schema") == "entry-wait-1.0"
+                    else "Entry prices available",
+                    (
+                        str(row.get("wait_reason") or "No setup proposed.")[:1200]
+                        if row.get("plan_schema") == "entry-wait-1.0"
+                        else (
+                            "Recorded provider result; deterministic validation "
+                            "still owns execution."
+                        )
+                    ),
                 )
             elif row.get("state") == "FAILED":
                 emit(

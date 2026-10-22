@@ -1,3 +1,12 @@
+### ISSUE-362 — Evidence-first Codex decisions and daily memory
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/362.
+- Status: implementation and full local qualification complete; GitHub delivery follows; not deployed.
+- Validation: 1,023 Node + 103 isolated PostgreSQL + 421 Python tests (1,547 total), all qualification gates/audits/secret scan passed. Synthetic subscription resume/compaction passed. Source hash and limits: [report](docs/evidence-first-codex-report.md).
+- Dependencies: #351 technical/DOM context and isolated subscription worker; #358 native protection and dynamic shared risk. Existing #253/#255 registrations remain immutable.
+- Acceptance: indicator/scanner evidence informs Codex without strategy admission; explicit durable WAIT rechecks only after 60 seconds from completion and a newer completed M1; unknown/failure cooldowns remain. Daily pinned persistent threads, bounded compaction, exact request/turn provenance, fresh context and verified recent outcomes. Shared 1% risk, broker-native SL/TP, STOP_LIMIT/GTC/OCO and all operational/reconciliation controls stay authoritative. Versioned contracts, tests, qualification, docs/Graphify, dedicated PR, push and exact-head hosted checks required.
+- Runtime: current compression demo remains unchanged pending separately recorded rollout; no resets or research promotion.
+
 # Implementation Plan
 
 ## Scope

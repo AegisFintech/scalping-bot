@@ -93,6 +93,7 @@ describe("migrations", () => {
       "0028_terminal_history_attestation.sql",
       "0029_codex_context_model.sql",
       "0030_local_unsent_entry_proofs.sql",
+      "0031_wait_context_execution_interlock.sql",
     ]);
     const sql = (
       await Promise.all(

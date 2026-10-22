@@ -1,3 +1,13 @@
+# ISSUE-362 evidence-first source
+
+Policy `0.4.3-evidence-scalp.1` derives native stop distance from the unchanged
+Codex box's opposite boundary, rounded inward to broker pips, and equal gross TP.
+ATR is context, not a width/stop strategy filter. Actual net reward differs after
+costs and fills. Exact costs, affordability, broker margin/precision, shared 1%
+current-equity risk and all reconciliation gates remain. WAIT cannot create an
+order intent. This is unqualified demo source, not runtime activation. See
+[economic change and safeguards](evidence-first-codex-report.md).
+
 # ISSUE-358 compression scalp demo source
 
 Current source is `0.4.2-compression-scalp.1-codex.1`; see

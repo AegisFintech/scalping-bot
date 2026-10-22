@@ -30,17 +30,15 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses v6 SMC major-box and first-crossing guidance without changing the two-price contract", () => {
+  it("uses v7 SMC guidance with explicit WAIT and descriptive indicators", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v6");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v7");
     expect(prompt.replace(/\s+/g, " ")).toContain(
       "overlapping/choppy structure",
     );
     expect(prompt.replace(/\s+/g, " ")).toContain("cleaner continuation");
     expect(prompt.replace(/\s+/g, " ")).toContain("broker session gap");
-    expect(prompt.replace(/\s+/g, " ")).toContain(
-      'Return only {"buy_stop":"<entry price>","sell_stop":"<entry price>"}',
-    );
+    expect(prompt.replace(/\s+/g, " ")).toContain('"decision":"WAIT"');
   });
 
   it("removes all spread strategy gates even without ATR, while rejecting crossed quotes", () => {
@@ -192,17 +190,29 @@ describe("direct entries (synthetic, no broker authority)", () => {
         marketCapturedAt: at,
       },
     };
-    const rawResponse = '{"buy_stop":"4410","sell_stop":"4400"}';
+    const rawResponse =
+      '{"decision":"OCO","reason":"Box","buy_stop":"4410","sell_stop":"4400"}';
     const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
     const receipt = {
-      version: "codex-entry-response-1.0",
+      version: "codex-entry-response-1.1",
       analysisId: input.analysisId,
       requestedModel: "gpt-6.1-sol",
       returnedModel: null,
       promptSha256: createHash("sha256").update(promptText).digest("hex"),
       capturedAt: at,
       receivedAt: at,
-      entries: { buy_stop: "4410", sell_stop: "4400" },
+      entries: {
+        decision: "OCO",
+        reason: "Box",
+        buy_stop: "4410",
+        sell_stop: "4400",
+      },
+      memory: {
+        day: at.slice(0, 10),
+        threadId: "thread1",
+        turnId: "turn1",
+        compacted: false,
+      },
       rawResponse,
       inputTokens: null,
       outputTokens: null,
@@ -252,7 +262,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.2");
+      expect(providerBody.version).toBe("codex-entry-request-1.3");
       expect(providerBody.payload).toMatchObject({ market_captured_at: at });
       const compact = (
         providerBody.payload as { candles: { rows: unknown[] }[] }
@@ -281,7 +291,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v6",
+        version: "entry-pair-v7",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

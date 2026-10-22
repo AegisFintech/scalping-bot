@@ -1,9 +1,8 @@
 import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
 import { technicalContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
-import {
-  CompressionDemoClient,
-  compressionDemoTransform,
-} from "../../../packages/strategy-candidates/src/compression-demo.js";
+import { canonical } from "../../../packages/risk-engine/src/decimal.js";
+import { modeledScalpCost } from "../../../packages/strategy-candidates/src/compression-demo.js";
+import { evidenceDemoTransform } from "../../../packages/strategy-candidates/src/evidence-demo.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -526,6 +525,47 @@ async function main(): Promise<void> {
         evidence: result.evidence,
         inputSha256: result.inputSha256,
         marketCapturedAt: snapshot.capturedAt,
+        executionContext: {
+          spread_price: canonical(
+            decimal(snapshot.quote.ask).minus(decimal(snapshot.quote.bid)),
+          ),
+          modeled_round_trip_cost_price: modeledScalpCost(
+            snapshot,
+            String(
+              (
+                result.evidence.frames as { timeframe: string; atr: string }[]
+              ).find((f) => f.timeframe === "M1")!.atr,
+            ),
+          ),
+          cost_basis: "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
+          shared_setup_risk_percent: "1",
+          recent_closed_outcomes: (
+            await pool.query(
+              `SELECT t.closed_at, t.direction, t.realized_pnl::text AS realized_net,
+                    t.strategy_version
+             FROM trades t JOIN order_groups g ON g.id=t.order_group_id
+             JOIN analysis_runs a ON a.id=g.analysis_id
+             WHERE a.account_id=$1 AND a.symbol_id=$2 AND t.mode=$3 AND g.state='CLOSED'
+               AND t.closed_at<=$4::timestamptz AND t.closed_at>$4::timestamptz-interval '1 day'
+               AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state<>'CLOSED')
+               AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))
+             ORDER BY t.closed_at DESC,t.id DESC LIMIT 8`,
+              [
+                identity.accountId,
+                identity.symbolId,
+                config.tradingMode,
+                snapshot.serverTime,
+              ],
+            )
+          ).rows.map(
+            (row: {
+              closed_at: Date;
+              direction: string;
+              realized_net: string;
+              strategy_version: string;
+            }) => ({ ...row, closed_at: row.closed_at.toISOString() }),
+          ),
+        },
       };
     },
   );
@@ -1252,58 +1292,14 @@ async function main(): Promise<void> {
     breakoutScalp: breakoutScalpActive,
     ...(breakoutScalpActive
       ? {
-          compressionPreflight: async (snapshot, atr) => {
-            try {
-              const scanned = await new CompressionDemoClient(
-                environment.ANALYTICS_BASE_URL ??
-                  `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
-              ).scan(snapshot, atr);
-              const eligible =
-                scanned.report.status === "OCO_CANDIDATE" &&
-                scanned.report.pair !== null;
-              return {
-                eligible,
-                reasonCodes: eligible ? [] : ["SCALP_NO_QUALIFIED_PAIR"],
-                details: {
-                  scanner: scanned.report,
-                  modeled_cost_price: scanned.modeledCost,
-                },
-              };
-            } catch {
-              return {
-                eligible: false,
-                reasonCodes: ["SCALP_SCAN_UNAVAILABLE"],
-                details: {},
-              };
-            }
-          },
-          compressionScalp: async (
-            snapshot,
-            response,
-            atr,
-            maximumStopDistance,
-          ) => {
-            try {
-              const scanned = await new CompressionDemoClient(
-                environment.ANALYTICS_BASE_URL ??
-                  `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
-              ).scan(snapshot, atr);
-              return compressionDemoTransform({
+          evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+            Promise.resolve(
+              evidenceDemoTransform({
                 snapshot,
                 response,
-                atr,
                 maximumStopDistance,
-                ...scanned,
-              });
-            } catch {
-              return {
-                accepted: false,
-                response: null,
-                reasonCodes: ["SCALP_SCAN_UNAVAILABLE"],
-                details: null,
-              };
-            }
-          },
+              }),
+            ),
         }
       : {}),
     minRiskRewardRatio: breakoutScalpActive

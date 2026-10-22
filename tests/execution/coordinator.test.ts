@@ -1,3 +1,4 @@
+import { evidenceDemoTransform } from "../../packages/strategy-candidates/src/evidence-demo.js";
 import { sessionStatus } from "../helpers/market-session.js";
 import { createHash } from "node:crypto";
 
@@ -1925,6 +1926,50 @@ describe("breakout scalp release integration", () => {
     const place = vi.spyOn(o.gateway, "placeOco");
     const result = await new AnalysisCoordinator(o).runOnce();
     expect(result.reasonCodes).toContain("BREAKOUT_SCALP_STOP_UNAFFORDABLE");
+    expect(place).not.toHaveBeenCalled();
+  });
+});
+
+describe("evidence-first Codex execution integration", () => {
+  it("passes Codex entries through native 1:1 protection and final deterministic risk", async () => {
+    const o = options({
+      entryPairMode: true,
+      executionOrderType: "STOP_LIMIT",
+      minRiskRewardRatio: "1",
+      evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+        Promise.resolve(
+          evidenceDemoTransform({ snapshot, response, maximumStopDistance }),
+        ),
+    });
+    o.risk.proposalConstraints = () => proposalRiskConstraints("20");
+    const ai = vi.spyOn(o.model, "analyze"),
+      risk = vi.spyOn(o.risk, "evaluate"),
+      place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe("PLACED");
+    expect(ai).toHaveBeenCalledOnce();
+    expect(place).toHaveBeenCalledOnce();
+    expect(risk.mock.calls[0]![0].response).toMatchObject({
+      buy_stop: { entry_price: "2001", risk_reward_ratio: "1" },
+      sell_stop: { entry_price: "1999", risk_reward_ratio: "1" },
+    });
+  });
+  it("withholds unsafe protection after inference without dispatching orders", async () => {
+    const o = options({
+      entryPairMode: true,
+      evidenceScalp: () =>
+        Promise.resolve({
+          accepted: false,
+          response: null,
+          reasonCodes: ["EVIDENCE_PROTECTION_UNAFFORDABLE"],
+          details: null,
+        }),
+    });
+    const ai = vi.spyOn(o.model, "analyze"),
+      place = vi.spyOn(o.gateway, "placeOco");
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toContain(
+      "EVIDENCE_PROTECTION_UNAFFORDABLE",
+    );
+    expect(ai).toHaveBeenCalledOnce();
     expect(place).not.toHaveBeenCalled();
   });
 });

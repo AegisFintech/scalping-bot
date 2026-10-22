@@ -1,3 +1,7 @@
+import {
+  validateEntryDecision,
+  type EntryWaitPlan,
+} from "../../../packages/scenario-engine/src/entry-decision.js";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { redactString } from "../../../packages/logging/src/index.js";
@@ -37,7 +41,7 @@ import {
   validateEntryPlan,
   type EntryPairPlan,
 } from "../../../packages/scenario-engine/src/entry-plan.js";
-type ContextPlan = ScenarioPlan | EntryPairPlan;
+type ContextPlan = ScenarioPlan | EntryPairPlan | EntryWaitPlan;
 type Planner = {
   generate(input: EntryPlannerInput): Promise<AiAnalysisResult<ContextPlan>>;
 };
@@ -100,6 +104,8 @@ export interface ContextStore {
     tickSize: string;
     afterContextId?: string;
     afterEntryContextId?: string;
+    completedM1End?: string | undefined;
+    afterWaitContextId?: string;
     providerEvidence?: {
       requestText: string;
       promptContent: string;
@@ -206,6 +212,8 @@ export class PostgresContextStore implements ContextStore {
     tickSize: string;
     afterContextId?: string;
     afterEntryContextId?: string;
+    completedM1End?: string | undefined;
+    afterWaitContextId?: string;
     providerEvidence?: {
       requestText: string;
       promptContent: string;
@@ -222,17 +230,17 @@ export class PostgresContextStore implements ContextStore {
       );
       const result = await client.query(
         `INSERT INTO scenario_contexts
-        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id,refresh_after_context_id,refresh_after_entry_context_id)
-        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7,$9::uuid,$10::uuid
+        (id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id,refresh_after_context_id,refresh_after_entry_context_id,refresh_after_wait_context_id)
+        SELECT $1,$2,$3,$4,clock_timestamp(),$5::timestamptz,$5::timestamptz+interval '5 minutes','REQUESTING',$8,$6,$7,$9::uuid,$10::uuid,$13::uuid
         WHERE NOT EXISTS(SELECT 1 FROM order_groups g JOIN analysis_runs a ON a.id=g.analysis_id
           WHERE a.account_id=$2 AND a.symbol_id=$3 AND g.mode=$4
           AND g.state NOT IN ('CLOSED','EXPIRED','FAILED'))
-        AND (($9::uuid IS NULL AND $10::uuid IS NULL AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
+        AND (($13::uuid IS NULL AND $9::uuid IS NULL AND $10::uuid IS NULL AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
           AND requested_at > clock_timestamp()-interval '5 minutes'
           AND NOT (state='FAILED' AND reason IS NOT DISTINCT FROM 'AI_CIRCUIT_OPEN'))
         AND NOT EXISTS(SELECT 1 FROM scenario_contexts WHERE account_id=$2 AND symbol_id=$3 AND mode=$4
           AND requested_at > clock_timestamp()-interval '1 minute'))
-        OR ($9::uuid IS NOT NULL AND $10::uuid IS NULL AND EXISTS(
+        OR ($13::uuid IS NULL AND $9::uuid IS NOT NULL AND $10::uuid IS NULL AND EXISTS(
           SELECT 1 FROM scenario_contexts c JOIN order_groups g ON g.context_plan_id=c.id
           WHERE c.id=$9 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
             AND c.state='READY'
@@ -244,10 +252,28 @@ export class PostgresContextStore implements ContextStore {
             AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND (p.state<>'CLOSED' OR NOT EXISTS(SELECT 1 FROM trades t WHERE t.position_id=p.id AND t.order_group_id=g.id)))
             AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED')))
             OR (${zeroFillTerminalProof}))
-        )) OR ($9::uuid IS NULL AND $10::uuid IS NOT NULL AND EXISTS(
+        )) OR ($13::uuid IS NULL AND $9::uuid IS NULL AND $10::uuid IS NOT NULL AND EXISTS(
           SELECT 1 FROM scenario_contexts c WHERE c.id=$10 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
             AND ${entryReplacementProof}
-        ))) RETURNING id`,
+        )) OR ($13::uuid IS NOT NULL AND $9::uuid IS NULL AND $10::uuid IS NULL
+          AND EXISTS(SELECT 1 FROM scenario_contexts c JOIN context_provider_evidence e ON e.context_id=c.id
+            WHERE c.id=$13 AND c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
+            AND c.state='READY' AND c.plan->>'schema_version'='entry-wait-1.0'
+            AND c.available_at<=clock_timestamp()-interval '60 seconds'
+            AND c.requested_model=$8 AND e.prompt_sha256=$12
+            AND $11::timestamptz>(c.plan->>'observed_m1_end')::timestamptz
+            AND $11::timestamptz<=$5::timestamptz
+            AND $11::timestamptz>$5::timestamptz-interval '90 seconds'
+            AND NOT EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id)
+            AND NOT EXISTS(SELECT 1 FROM scenario_contexts newer WHERE newer.account_id=$2
+              AND newer.symbol_id=$3 AND newer.mode=$4 AND newer.requested_at>c.requested_at)
+            AND NOT EXISTS(SELECT 1 FROM scenario_contexts used WHERE used.refresh_after_wait_context_id=c.id))
+          AND NOT EXISTS(SELECT 1 FROM scenario_contexts c WHERE c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
+            AND c.requested_at>clock_timestamp()-interval '5 minutes' AND c.state IN ('REQUESTING','FAILED')
+            AND NOT(c.state='FAILED' AND c.reason IS NOT DISTINCT FROM 'AI_CIRCUIT_OPEN'))
+          AND NOT EXISTS(SELECT 1 FROM scenario_contexts c WHERE c.account_id=$2 AND c.symbol_id=$3 AND c.mode=$4
+            AND c.requested_at>clock_timestamp()-interval '1 minute')
+        )) RETURNING id`,
         [
           input.id,
           this.scope.accountId,
@@ -259,6 +285,13 @@ export class PostgresContextStore implements ContextStore {
           FIXED_DEFAULTS.AI_MODEL,
           input.afterContextId ?? null,
           input.afterEntryContextId ?? null,
+          input.completedM1End ?? null,
+          input.providerEvidence === undefined
+            ? null
+            : createHash("sha256")
+                .update(input.providerEvidence.promptContent)
+                .digest("hex"),
+          input.afterWaitContextId ?? null,
         ],
       );
       if (result.rowCount === 1 && input.providerEvidence !== undefined) {
@@ -542,6 +575,37 @@ export class ReusableScenarioModel implements ModelProvider {
         return error.message;
       }
     }
+    let waitDue: number | null = null;
+    if (
+      this.entryOnly &&
+      existing?.state === "READY" &&
+      !existing.consumed &&
+      existing.plan?.schema_version === "entry-wait-1.0" &&
+      this.currentProviderPrompt(existing) &&
+      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL
+    ) {
+      if (existing.availableAt === null)
+        throw new Error("SCENARIO_WAIT_CONTEXT_INVALID");
+      const wait = validateEntryDecision(JSON.stringify(existing.plan), {
+        analysisId: existing.id,
+        symbol: input.snapshot.metadata.symbolName,
+        capturedAt: existing.capturedAt,
+        availableAt: existing.availableAt,
+        tickSize: existing.tickSize,
+      }) as EntryWaitPlan;
+      const latest = input.snapshot.candles
+        .find((s) => s.timeframe === "M1")
+        ?.candles.at(-1)?.endTime;
+      waitDue = time(existing.availableAt) + 60_000;
+      if (
+        latest === undefined ||
+        time(latest) <= time(wait.observed_m1_end) ||
+        now < waitDue
+      ) {
+        this.nextEvaluationAt = Math.max(now + 5_000, waitDue);
+        return "SCENARIO_CODEX_WAIT";
+      }
+    }
     const afterTerminal =
       existing?.state === "READY" &&
       existing.consumed &&
@@ -560,14 +624,16 @@ export class ReusableScenarioModel implements ModelProvider {
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
       this.currentProviderPrompt(existing);
     const due =
-      afterTerminal || afterEntry
-        ? 0
-        : existing === null
+      waitDue !== null
+        ? waitDue
+        : afterTerminal || afterEntry
           ? 0
-          : time(existing.requestedAt) +
-            (isLocalCircuitRejection(existing.state, existing.reason)
-              ? SCENARIO_REQUEST_POLICY.localCircuitRecheckMs
-              : SCENARIO_REQUEST_POLICY.dispatchCooldownMs);
+          : existing === null
+            ? 0
+            : time(existing.requestedAt) +
+              (isLocalCircuitRejection(existing.state, existing.reason)
+                ? SCENARIO_REQUEST_POLICY.localCircuitRecheckMs
+                : SCENARIO_REQUEST_POLICY.dispatchCooldownMs);
     if (now < due || this.task !== null) {
       // Poll consumed setup evidence locally so a newly completed setup does
       // not remain hidden behind a cached five-minute provider cooldown.
@@ -615,6 +681,13 @@ export class ReusableScenarioModel implements ModelProvider {
         tickSize: input.snapshot.metadata.tickSize,
         ...(this.entryOnly
           ? {
+              completedM1End: input.snapshot.candles
+                .find((s) => s.timeframe === "M1")
+                ?.candles.at(-1)?.endTime,
+            }
+          : {}),
+        ...(this.entryOnly
+          ? {
               providerEvidence: {
                 requestText: JSON.stringify(entryProviderPayload(plannerInput)),
                 promptContent: this.providerPrompt!,
@@ -622,11 +695,13 @@ export class ReusableScenarioModel implements ModelProvider {
               },
             }
           : {}),
-        ...(afterTerminal && existing !== null
-          ? { afterContextId: existing.id }
-          : afterEntry && existing !== null
-            ? { afterEntryContextId: existing.id }
-            : {}),
+        ...(waitDue !== null && existing !== null
+          ? { afterWaitContextId: existing.id }
+          : afterTerminal && existing !== null
+            ? { afterContextId: existing.id }
+            : afterEntry && existing !== null
+              ? { afterEntryContextId: existing.id }
+              : {}),
       }))
     ) {
       this.nextEvaluationAt = now + 10_000;
@@ -637,7 +712,7 @@ export class ReusableScenarioModel implements ModelProvider {
       .generate(plannerInput)
       .then(async (result) => {
         // Validate again at the trust boundary before granting local execution access.
-        const plan = (this.entryOnly ? validateEntryPlan : validatePlan)(
+        const plan = (this.entryOnly ? validateEntryDecision : validatePlan)(
           this.entryOnly ? JSON.stringify(result.response) : result.rawResponse,
           {
             analysisId: id,
@@ -684,9 +759,11 @@ export class ReusableScenarioModel implements ModelProvider {
       .finally(() => {
         this.task = null;
       });
-    return afterEntry
-      ? "SCENARIO_ENTRY_REFRESH_STARTED"
-      : "SCENARIO_REFRESH_STARTED";
+    return waitDue !== null
+      ? "SCENARIO_WAIT_REFRESH_STARTED"
+      : afterEntry
+        ? "SCENARIO_ENTRY_REFRESH_STARTED"
+        : "SCENARIO_REFRESH_STARTED";
   }
   analyze(
     request: Parameters<ModelProvider["analyze"]>[0],

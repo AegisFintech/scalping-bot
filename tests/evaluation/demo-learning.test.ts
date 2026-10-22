@@ -175,8 +175,8 @@ describe("observational demo learning", () => {
       "prompts/research/entry-guidance-candidate-v1.md",
       "utf8",
     );
-    expect(ENTRY_PAIR_PROMPT.path).toBe("prompts/entry-pair-v6.md");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v6");
+    expect(ENTRY_PAIR_PROMPT.path).toBe("prompts/entry-pair-v7.md");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v7");
     expect(readFileSync(ENTRY_PAIR_PROMPT.path, "utf8")).not.toBe(candidate);
     expect(candidate).toContain("Do not omit either price");
     expect(candidate).toContain("completed candles");

@@ -1,3 +1,21 @@
+# ISSUE-362 — Evidence-first source and bounded daily Codex context
+
+Read `docs/evidence-first-codex-report.md`. This source supersedes #358's scanner
+admission only for the new `0.4.3-evidence-scalp.1-codex.1` demo policy. ATR/trend/
+compression readings are context, not pre-inference strategy filters. Keep all
+operational/data/session/risk/ownership/reconciliation gates. Codex v7 / transport
+1.3 proposes OCO or WAIT; a WAIT has no entry authority, including at the database
+boundary. Retry a completed WAIT only after 60 seconds from availability and a
+new completed M1; unknown/failed dispatches retain the full durable cooldown.
+Daily threads are isolated and pinned to model/prompt, with serialized durable
+claims and bounded compaction. Memory never replaces fresh evidence or changes
+risk, and compressed summaries never replace the immutable journal. Do not
+silently create a replacement thread after corrupt state or resume failure.
+Source delivery does not itself deploy, reset history or edit frozen research.
+The qualified source has 1,547 passing tests; see the report for exact receipt and
+source hash. Any runtime change requires a matching worker/orchestrator rollout
+and new prospective cohort; preserve the additive WAIT interlock and all history.
+
 # ISSUE-360 — Lean server and maintenance on every push
 
 Use `/root/scalping-bot-terminal` for development; the original checkout and

@@ -1,0 +1,143 @@
+{
+  "issue": 362,
+  "sourceSha256": "38faf0316c1e1f91a5a3fd79c229cc4d137247b322833c5f38328677274a3ba0",
+  "qualified": true,
+  "nodeVersion": "v22.23.2",
+  "runtimeActivated": false,
+  "tests": {
+    "node": 1023,
+    "postgresql": 103,
+    "python": 421,
+    "total": 1547
+  },
+  "qualificationChecks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0,
+      "elapsedMs": 20
+    },
+    {
+      "label": "test-certificate",
+      "code": 0,
+      "elapsedMs": 221
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0,
+      "elapsedMs": 11
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0,
+      "elapsedMs": 17
+    },
+    {
+      "label": "database-init",
+      "code": 0,
+      "elapsedMs": 751
+    },
+    {
+      "label": "database-start",
+      "code": 0,
+      "elapsedMs": 133
+    },
+    {
+      "label": "format",
+      "code": 0,
+      "elapsedMs": 27664
+    },
+    {
+      "label": "lint",
+      "code": 0,
+      "elapsedMs": 33213
+    },
+    {
+      "label": "types",
+      "code": 0,
+      "elapsedMs": 13090
+    },
+    {
+      "label": "build",
+      "code": 0,
+      "elapsedMs": 11104
+    },
+    {
+      "label": "node-tests",
+      "code": 0,
+      "elapsedMs": 74013
+    },
+    {
+      "label": "python-format",
+      "code": 0,
+      "elapsedMs": 63
+    },
+    {
+      "label": "python-lint",
+      "code": 0,
+      "elapsedMs": 49
+    },
+    {
+      "label": "python-types",
+      "code": 0,
+      "elapsedMs": 1573
+    },
+    {
+      "label": "secrets",
+      "code": 0,
+      "elapsedMs": 266
+    },
+    {
+      "label": "npm-audit",
+      "code": 0,
+      "elapsedMs": 1204
+    },
+    {
+      "label": "python-audit",
+      "code": 0,
+      "elapsedMs": 11931
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0,
+      "elapsedMs": 28317
+    },
+    {
+      "label": "python-tests",
+      "code": 0,
+      "elapsedMs": 11945
+    },
+    {
+      "label": "database-stop",
+      "code": 0,
+      "elapsedMs": 112
+    }
+  ],
+  "additionalChecks": {
+    "samplePolicyConfiguration": "PASS",
+    "sampleStartupConfiguration": "PASS",
+    "graphifyAstUpdate": "PASS"
+  },
+  "graphify": {
+    "nodes": 7414,
+    "edges": 13517,
+    "communities": 588,
+    "semanticDocsRefreshed": false,
+    "warnings": [
+      "pyproject.toml produced zero nodes",
+      "Community labels are not a new semantic documentation extraction"
+    ]
+  },
+  "subscriptionSmoke": {
+    "syntheticOnly": true,
+    "brokerCommands": false,
+    "completedCalls": 3,
+    "sameThread": true,
+    "markerRetainedAfterResume": true,
+    "markerRetainedAfterExplicitCompaction": true,
+    "harnessCompactionEvery": 2,
+    "productionCompactionEvery": 8,
+    "returnedBackendIdentity": null,
+    "usage": null,
+    "cost": null
+  }
+}

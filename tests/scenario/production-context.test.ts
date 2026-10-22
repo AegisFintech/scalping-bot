@@ -150,7 +150,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-pair-v6",
+          promptVersion: "entry-pair-v7",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),
@@ -805,4 +805,113 @@ it("does not claim or call the provider when local context preparation fails", a
   expect(claim).not.toHaveBeenCalled();
   expect(generate).not.toHaveBeenCalled();
   expect(store.row).toBeNull();
+});
+
+describe("restart-safe explicit WAIT scheduling", () => {
+  it("waits 60 seconds after completion and for a new completed M1", async () => {
+    let now = base + 80_000;
+    const row: StoredContext = {
+      ...stored(),
+      capturedAt: at(0),
+      availableAt: at(40),
+      plan: {
+        schema_version: "entry-wait-1.0",
+        analysis_id: fixture.plan.analysis_id,
+        symbol: "XAUUSD",
+        captured_at: at(0),
+        valid_until: at(300),
+        observed_m1_end: new Date(
+          Math.floor(base / 60000) * 60000,
+        ).toISOString(),
+        reason: "Conflicting levels",
+      },
+    };
+    const store = {
+      latest: () => Promise.resolve(row),
+      claim: vi.fn(() => Promise.resolve(false)),
+      finish: vi.fn(async () => {}),
+    };
+    const planner = { generate: vi.fn() };
+    const model = new ReusableScenarioModel(
+      store,
+      planner,
+      () => now,
+      () => {},
+      true,
+    );
+    const next = input(80);
+    next.snapshot = {
+      ...next.snapshot,
+      candles: [
+        {
+          timeframe: "M1",
+          candles: [
+            {
+              startTime: at(0),
+              endTime: at(60),
+              open: "4405",
+              high: "4406",
+              low: "4404",
+              close: "4405",
+              volume: null,
+              complete: true,
+              qualityFlags: [],
+            },
+          ],
+        },
+      ],
+    };
+    expect(await model.prepare(next)).toBe("SCENARIO_CODEX_WAIT");
+    expect(store.claim).not.toHaveBeenCalled();
+    now = base + 100_000;
+    const restarted = new ReusableScenarioModel(
+      store,
+      planner,
+      () => now,
+      () => {},
+      true,
+    );
+    next.snapshot = { ...next.snapshot, serverTime: at(100) };
+    expect(await restarted.prepare(next)).toBe(
+      "SCENARIO_REFRESH_ALREADY_CLAIMED",
+    );
+    expect(store.claim).toHaveBeenCalledOnce();
+    expect(planner.generate).not.toHaveBeenCalled();
+  });
+  it("does not reuse WAIT as an executable plan", async () => {
+    let now = base + 120_000;
+    const row: StoredContext = {
+      ...stored(),
+      availableAt: at(90),
+      plan: {
+        schema_version: "entry-wait-1.0",
+        analysis_id: fixture.plan.analysis_id,
+        symbol: "XAUUSD",
+        captured_at: at(0),
+        valid_until: at(300),
+        observed_m1_end: new Date(
+          Math.floor(base / 60000) * 60000,
+        ).toISOString(),
+        reason: "Wait",
+      },
+    };
+    const store = {
+      latest: () => Promise.resolve(row),
+      claim: vi.fn(() => Promise.resolve(false)),
+      finish: vi.fn(async () => {}),
+    };
+    const model = new ReusableScenarioModel(
+      store,
+      { generate: vi.fn() },
+      () => now,
+      () => {},
+      true,
+    );
+    const next = input(120);
+    next.snapshot = { ...next.snapshot, candles: [] };
+    expect(await model.prepare(next)).toBe("SCENARIO_CODEX_WAIT");
+    now += 60_000;
+    expect(await model.prepare(next)).toBe("SCENARIO_CODEX_WAIT");
+    expect(store.claim).not.toHaveBeenCalled();
+  });
 });

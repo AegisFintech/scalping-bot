@@ -1,3 +1,16 @@
+# Evidence-first Codex source — ISSUE-362
+
+The new demo source sends completed M1/M5/M15 technical, structure, broker DOM,
+spread/cost context and up to eight reconciled recent outcomes to Codex without
+compression/ATR strategy admission. Codex proposes an OCO box or explicit WAIT.
+Successful WAIT reconsideration needs 60 seconds and a newer completed M1;
+failed/unknown requests retain the five-minute cooldown. Daily persistent Codex
+threads retain context and compact after eight completed turns. Fresh evidence
+and deterministic shared 1% risk, broker protection and reconciliation remain
+authoritative. Source implementation is not runtime activation or evidence of
+profitability. Qualification passed 1,547 tests plus all required checks; synthetic
+subscription thread reuse/compaction passed. See [implementation and checks](docs/evidence-first-codex-report.md).
+
 # cTrader scalper
 
 For scheduled prospective comparison alongside demo trading, see the
