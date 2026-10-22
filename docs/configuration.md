@@ -1,3 +1,11 @@
+# ISSUE-366 — M1-first source
+
+No environment keys or migrations are added. Deploy v8/request 1.4 with matching
+worker/orchestrator prompt hashes. Keep old contracts and journals immutable.
+A new prompt pin uses isolated daily memory without deleting the prior thread.
+See [release, qualification and main deployment](m1-range-release-report.md).
+Earlier source/runtime checkpoints below are historical.
+
 # ISSUE-362 evidence-first source
 
 No normal environment keys are added. Prompt v7 / worker request 1.3 and response

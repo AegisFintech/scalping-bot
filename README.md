@@ -1,4 +1,15 @@
-# Active evidence-first Codex DEMO — ISSUE-364
+# M1-first Codex range — ISSUE-366
+
+The operator authorized nearby M1 range selection after 42/42 v7 responses were
+WAIT during the first 57 minutes. The new v8 guidance accepts observable brief
+M1 consolidations; higher-timeframe/FVG conflicts are context rather than automatic
+vetoes. TP/risk/execution gates are unchanged. Delivery includes testing, merging
+`main`, deploying and verifying the one existing demo bot; retained artifacts are
+history/rollback, not a second trading system. All 1,551 tests and local quality/security
+gates passed; hosted checks and activation follow. Status and evidence:
+[M1 range release](docs/m1-range-release-report.md).
+
+# Historical evidence-first activation — ISSUE-364
 
 Activated **22 October 2026, 15:50 Singapore**: `0.4.3-evidence-scalp.1-codex.1`,
 Codex v7 and isolated worker transport 1.3. Indicators/DOM/costs inform Codex;
@@ -41,14 +52,13 @@ It compares frozen observed demo opportunities, checks archived quote integrity,
 and reports missing paths and unknown economics explicitly. It does not change
 trading, claim exact counterfactual net returns, or automatically promote a strategy.
 
-The current controlled **DEMO trial** is `0.4.2-compression-scalp.1-codex.1`,
-policy `0.4.2-compression-scalp.1`, prompt `entry-pair-v6`. Completed M1/M5/M15
-candles and available broker DOM feed local analysis. A qualified compression
-pair must exist before Codex inference and again afterward; Codex prices must
-agree with the structure. Deterministic code owns STOP_LIMIT/GTC/OCO, structural
-SL, at least 1:1 intended gross reward and shared dynamic 1% setup sizing.
-No qualified pair means wait. This trial is unqualified and may trade infrequently.
-See [current release and monitoring](docs/compression-demo-release-report.md).
+The current source uses `0.4.3-evidence-scalp.1-codex.2`, policy
+`0.4.3-evidence-scalp.1`, prompt `entry-pair-v8`. Codex selects a nearby completed-M1
+range; M5/M15, SMC/FVG/DOM and costs inform its judgment without mandatory trend
+alignment or a mature higher-timeframe box. It may return OCO or WAIT. Code owns
+dual STOP_LIMIT/GTC/OCO, opposite-box native SL, equal gross TP and shared dynamic
+1% setup sizing. No trade quota or profitability claim is implied.
+See [M1 range change and delivery status](docs/m1-range-release-report.md).
 The bot operates continuously during the broker session, waiting safely when
 orders/positions, cooldowns, stale data, unavailable sessions, reconciliation,
 protection or affordability prevent a new setup. Demo records daily/high-water

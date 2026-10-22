@@ -59,7 +59,7 @@ export class CodexEntryClient {
   ) {
     if (options.localToken.length < 32)
       throw new Error("CODEX_LOCAL_AUTH_REQUIRED");
-    this.#prompt = readFileSync("prompts/entry-pair-v7.md", "utf8").trim();
+    this.#prompt = readFileSync("prompts/entry-pair-v8.md", "utf8").trim();
     this.#sha = createHash("sha256").update(this.#prompt).digest("hex");
     this.#fetch = options.fetchImpl ?? fetch;
     this.#now = options.now ?? Date.now;
@@ -76,10 +76,10 @@ export class CodexEntryClient {
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
     const body = JSON.stringify({
-      version: "codex-entry-request-1.3",
+      version: "codex-entry-request-1.4",
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-pair-v7",
+      promptVersion: "entry-pair-v8",
       promptSha256: this.#sha,
       payload: request.payload,
     });
@@ -150,7 +150,7 @@ export class CodexEntryClient {
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
         promptArtifact: {
-          version: "entry-pair-v7",
+          version: "entry-pair-v8",
           sha256: this.#sha,
           content: this.#prompt,
         },

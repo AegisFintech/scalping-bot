@@ -1,3 +1,19 @@
+# ISSUE-366 — One main deployment, M1-first entry guidance
+
+The operator approved immediate implementation and deployment on the existing
+controlled demo after discussing v7's all-WAIT observation. Read
+`docs/m1-range-release-report.md`. V8 / request 1.4 makes completed M1 primary,
+permits visible brief consolidations, and treats M5/M15/FVG conflicts as context;
+no invented levels, trade quota or risk bypass. TP economics are unchanged.
+Keep v7/1.3 and all historical schemas/journals immutable. New prompt/hash/day
+pins legitimately use a new daily thread; do not delete or resume an old prompt's
+thread as current authority. Preserve WAIT successor/cooldown/storage interlocks.
+The canonical system is tested `main` deployed to one existing demo account.
+Repository delivery includes matching worker/orchestrator rollout and runtime
+verification, respecting PR checks/protections. Rollback artifacts and read-only
+registered observers are evidence, never additional trading bots. No reset,
+forced orders, silent economic promotion or real-money activation is authorized.
+
 # ISSUE-364 — Active evidence-first DEMO
 
 The operator's no-trade report prompted activation of the already approved and
@@ -185,14 +201,13 @@ maintenance remain active during waiting periods. No prompt, timer or operator
 request may bypass these gates, manufacture a trade, or increase risk to maintain
 frequency.
 
-The current source contract uses `entry-pair-v5` and the separately authorized
-`0.4.0-breakout-scalp.1` policy / `0.4.0-breakout-scalp.1-codex.1` strategy.
-Read `docs/breakout-scalp-release-report.md`. Preserve provider breakout prices,
-first executable crossing, STOP_LIMIT/GTC/OCO and native cost-buffered quick TP.
-There is no candle-close/holding/retest confirmation or sampled-quote profit close.
-Reuse/entry-retirement requires durable current provider-prompt SHA; the same model
-pin alone never permits an older prompt context. Preserve scope-wide cooldowns.
-Historical fade transforms remain historical; frozen research is never promoted. Historical prompt/release names in
+The current source contract is `entry-pair-v8` / worker request 1.4, strategy
+`0.4.3-evidence-scalp.1-codex.2`, policy `0.4.3-evidence-scalp.1`.
+Read `docs/m1-range-release-report.md`. M1 defines the nearby box; M5/M15 and
+SMC/FVG/DOM inform judgment without compulsory confluence. Preserve Codex prices,
+STOP_LIMIT/GTC/OCO and existing opposite-box stop/equal gross TP. WAIT has no
+execution authority. Keep prompt-hash reuse isolation and scope-wide cooldowns.
+Historical prompt/release names in
 older issue sections and archived evidence describe immutable past behavior and
 must not be treated as current authority. The shared setup ceiling remains 1%
 of reconciled current equity, both OCO/fade legs share that budget, and the
