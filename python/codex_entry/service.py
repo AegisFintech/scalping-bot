@@ -298,8 +298,15 @@ class RequestV14(RequestV13):
     promptVersion: Literal["entry-pair-v8"]  # type: ignore[assignment]
 
 
-def parse_request(raw: bytes) -> Request | RequestV12 | RequestV13 | RequestV14:
+class RequestV15(RequestV14):
+    version: Literal["codex-entry-request-1.5"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-direction-v1"]  # type: ignore[assignment]
+
+
+def parse_request(raw: bytes) -> Request | RequestV12 | RequestV13 | RequestV14 | RequestV15:
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.5":
+        return RequestV15.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.4":
         return RequestV14.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.3":
@@ -363,10 +370,35 @@ class MemoryReceipt(StrictModel):
     compacted: bool
 
 
+class DirectionalDecision(StrictModel):
+    decision: Literal["BUY", "SELL", "WAIT"]
+    reason: Annotated[str, Field(min_length=1, max_length=1200)]
+    upper_breakout: Price | None
+    lower_breakout: Price | None
+
+    @model_validator(mode="after")
+    def consistent(self) -> DirectionalDecision:
+        if self.decision == "WAIT":
+            if self.upper_breakout is not None or self.lower_breakout is not None:
+                raise ValueError("CODEX_DIRECTION_INVALID")
+        elif (
+            self.upper_breakout is None
+            or self.lower_breakout is None
+            or not Decimal(self.upper_breakout) > Decimal(self.lower_breakout) > 0
+        ):
+            raise ValueError("CODEX_DIRECTION_INVALID")
+        return self
+
+
 class ResponseV11(Response):
     version: Literal["codex-entry-response-1.1"]  # type: ignore[assignment]
     entries: Decision  # type: ignore[assignment]
     memory: MemoryReceipt
+
+
+class ResponseV12(ResponseV11):
+    version: Literal["codex-entry-response-1.2"]  # type: ignore[assignment]
+    entries: DirectionalDecision  # type: ignore[assignment]
 
 
 def invoke(prompt: str, job: Path) -> bytes:
@@ -419,7 +451,7 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request | RequestV12 | RequestV13 | RequestV14,
+    request: Request | RequestV12 | RequestV13 | RequestV14 | RequestV15,
     root: Path,
     system_prompt: str,
     *,
@@ -454,7 +486,9 @@ def run(
             system_prompt
             + "\nDo not use tools, execute commands or read files. "
             + (
-                "Return OCO or WAIT only."
+                "Return BUY, SELL or WAIT only."
+                if isinstance(request, RequestV15)
+                else "Return OCO or WAIT only."
                 if isinstance(request, RequestV13)
                 else "Propose prices only."
             )
@@ -483,7 +517,14 @@ def run(
             if isinstance(request, RequestV13) and call is invoke:
                 from python.codex_entry.memory import invoke_daily
 
-                result = invoke_daily(prompt, job, schema=Decision.model_json_schema(), model=MODEL)
+                result = invoke_daily(
+                    prompt,
+                    job,
+                    schema=(
+                        DirectionalDecision if isinstance(request, RequestV15) else Decision
+                    ).model_json_schema(),
+                    model=MODEL,
+                )
             else:
                 result = call(prompt, job)
             if len(result) > 8192:
@@ -491,7 +532,11 @@ def run(
             # Preserve available response text even when validation fails.
             publish(job / "response-text.json", {"text": result.decode("utf-8")})
             entries = (
-                Decision if isinstance(request, RequestV13) else Entries
+                DirectionalDecision
+                if isinstance(request, RequestV15)
+                else Decision
+                if isinstance(request, RequestV13)
+                else Entries
             ).model_validate_json(result)
             ended = now()
             if ended < started or ended - started > timedelta(seconds=TIMEOUT):
@@ -512,9 +557,17 @@ def run(
                 "executionAuthority": False,
             }
             if isinstance(request, RequestV13):
-                response["version"] = "codex-entry-response-1.1"
+                response["version"] = (
+                    "codex-entry-response-1.2"
+                    if isinstance(request, RequestV15)
+                    else "codex-entry-response-1.1"
+                )
                 response["memory"] = json.loads(read_bounded(job / "memory-result.json"))
-                response = ResponseV11.model_validate(response).model_dump()
+                response = (
+                    (ResponseV12 if isinstance(request, RequestV15) else ResponseV11)
+                    .model_validate(response)
+                    .model_dump()
+                )
             else:
                 response = Response.model_validate(response).model_dump()
             publish(job / "result.json", response)

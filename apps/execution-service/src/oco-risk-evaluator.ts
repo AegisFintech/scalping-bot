@@ -15,6 +15,8 @@ import {
   decimal,
   maximumAffordableStopDistance,
   sizeOcoPair,
+  sizePosition,
+  type PositionRiskDecision,
   type OcoRiskDecision,
   type PositionRiskInput,
 } from "../../../packages/risk-engine/src/index.js";
@@ -43,6 +45,8 @@ export interface OcoRiskEvaluatorOptions {
 }
 
 export interface OcoEvaluation {
+  readonly directionalCommand?: PendingOrderCommand;
+  readonly directionalRisk?: PositionRiskDecision;
   readonly approved: boolean;
   readonly reasonCodes: readonly string[];
   readonly risk: OcoRiskDecision | null;
@@ -147,6 +151,7 @@ export class OcoRiskEvaluator {
     readonly metadata: SymbolMetadata;
     readonly quote: Quote;
     readonly trend?: -1 | 0 | 1;
+    readonly selectedSide?: "BUY" | "SELL";
   }): Promise<OcoEvaluation> {
     if (!input.account.certain) return this.#reject("RISK_ACCOUNT_UNCERTAIN");
     if (
@@ -156,6 +161,8 @@ export class OcoRiskEvaluator {
       input.account.hasCancellationPending
     )
       return this.#reject("RISK_EXISTING_EXPOSURE");
+    if (input.selectedSide !== undefined)
+      return this.#directional(input, input.selectedSide);
     const trend = input.trend ?? 0;
     const trendActive =
       this.#options.executionOrderType === "LIMIT" && trend === 0;
@@ -380,6 +387,140 @@ export class OcoRiskEvaluator {
           ? error.message
           : "RISK_EVALUATION_FAILED",
       );
+    }
+  }
+
+  async #directional(
+    input: {
+      response: ModelResponse;
+      account: AccountState;
+      metadata: SymbolMetadata;
+      quote: Quote;
+    },
+    side: "BUY" | "SELL",
+  ): Promise<OcoEvaluation> {
+    try {
+      if (side !== "BUY" && side !== "SELL")
+        return this.#reject("DIRECTIONAL_SIDE_INVALID");
+      if (
+        this.#options.executionOrderType !== "STOP_LIMIT" ||
+        this.#options.timeInForce !== "GTC"
+      )
+        return this.#reject("DIRECTIONAL_EXECUTION_POLICY_INVALID");
+      const proposal =
+        side === "BUY" ? input.response.buy_stop : input.response.sell_stop;
+      // Keep the former OCO leg allocation; deleting the peer never doubles size.
+      const percent = canonical(decimal(this.#effectiveRisk()).div(2));
+      const free = Decimal.max(
+        0,
+        decimal(input.account.availableMargin).minus(
+          decimal(input.account.equity)
+            .mul(this.#effectiveRisk())
+            .div(100)
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
+        ),
+      );
+      const current = Decimal.max(
+        0,
+        decimal(input.account.equity).minus(input.account.availableMargin),
+      );
+      const minimum = input.metadata.minVolume;
+      const minMargin = decimal(
+        await this.#options.marginEstimator.estimate(
+          input.metadata.symbolId,
+          side,
+          minimum,
+        ),
+      );
+      let perVolume = minMargin
+        .div(minimum)
+        .toDecimalPlaces(10, Decimal.ROUND_UP);
+      let risk: PositionRiskDecision | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        risk = sizePosition({
+          equity: input.account.equity,
+          availableMargin: canonical(free),
+          baseRiskPercent: percent,
+          maxRiskPercent: this.#options.maxRiskPercent,
+          entryPrice: proposal.entry_price,
+          stopLoss: proposal.stop_loss,
+          estimatedMarginPerVolume: canonical(perVolume),
+          currentMargin: canonical(current),
+          maxMarginUsagePercent: this.#options.maxMarginUsagePercent,
+          maxPositionNotional: this.#options.maxPositionNotional,
+          metadata: input.metadata,
+          adverseSlippagePoints: this.#options.adverseSlippagePoints ?? "10",
+          executionOrderType: "STOP_LIMIT",
+        });
+        if (!risk.approved || risk.normalizedVolume === null)
+          return this.#reject(risk.reasonCodes[0] ?? "RISK_EVALUATION_FAILED");
+        const exact = decimal(
+          await this.#options.marginEstimator.estimate(
+            input.metadata.symbolId,
+            side,
+            risk.normalizedVolume,
+          ),
+        );
+        if (exact.lte(0)) return this.#reject("RISK_MARGIN_INVALID");
+        if (
+          exact.lte(free) &&
+          current
+            .plus(exact)
+            .lte(
+              decimal(input.account.equity)
+                .mul(this.#options.maxMarginUsagePercent)
+                .div(100),
+            )
+        ) {
+          const identity = [
+            this.#options.strategyVersion,
+            input.response.analysis_id,
+            input.response.symbol,
+            side,
+            input.response.schema_version,
+            "SINGLE",
+          ].join(":");
+          const digest = createHash("sha256").update(identity).digest("hex");
+          return {
+            approved: true,
+            reasonCodes: [],
+            risk: null,
+            commands: null,
+            equity: input.account.equity,
+            perLegRiskPercent: percent,
+            directionalRisk: { ...risk, estimatedMargin: canonical(exact) },
+            directionalCommand: {
+              executionOrderType: "STOP_LIMIT",
+              timeInForce: "GTC",
+              idempotencyKey: digest,
+              analysisId: input.response.analysis_id,
+              orderGroupId: randomUUID(),
+              clientOrderId: `cas-${side.toLowerCase()}-${digest.slice(0, 24)}`,
+              symbol: input.response.symbol,
+              side,
+              volume: risk.normalizedVolume,
+              entryPrice: proposal.entry_price,
+              stopLoss: proposal.stop_loss,
+              takeProfit: proposal.take_profit,
+              expiresAt: proposal.expires_at,
+              strategyLabel:
+                `${this.#options.strategyLabelPrefix ?? "ctrader-ai-scalper"}:${this.#options.strategyVersion}`.slice(
+                  0,
+                  100,
+                ),
+            },
+          };
+        }
+        perVolume = Decimal.max(
+          perVolume,
+          exact
+            .div(risk.normalizedVolume)
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
+        );
+      }
+      return this.#reject("DIRECTIONAL_MARGIN_INSUFFICIENT");
+    } catch {
+      return this.#reject("DIRECTIONAL_RISK_EVALUATION_FAILED");
     }
   }
 

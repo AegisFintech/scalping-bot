@@ -1263,6 +1263,7 @@ async function main(): Promise<void> {
   const coordinator = new AnalysisCoordinator({
     marketSession: () => sessionGate.check(),
     entryPairMode: true,
+    directionalEntryOnly: true,
     numericAnalytics: true,
     symbol: config.symbol,
     mode: config.tradingMode as "paper" | "demo" | "shadow" | "live",

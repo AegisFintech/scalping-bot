@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "codex-entry-response-1.2",
+  "$defs": {
+    "DirectionalDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": ["BUY", "SELL", "WAIT"],
+          "title": "Decision",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "upper_breakout": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Upper Breakout"
+        },
+        "lower_breakout": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lower Breakout"
+        }
+      },
+      "required": ["decision", "reason", "upper_breakout", "lower_breakout"],
+      "title": "DirectionalDecision",
+      "type": "object"
+    },
+    "MemoryReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "day": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "title": "Day",
+          "type": "string"
+        },
+        "threadId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Threadid",
+          "type": "string"
+        },
+        "turnId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Turnid",
+          "type": "string"
+        },
+        "compacted": {
+          "title": "Compacted",
+          "type": "boolean"
+        }
+      },
+      "required": ["day", "threadId", "turnId", "compacted"],
+      "title": "MemoryReceipt",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "codex-entry-response-1.2",
+      "title": "Version",
+      "type": "string"
+    },
+    "analysisId": {
+      "title": "Analysisid",
+      "type": "string"
+    },
+    "requestedModel": {
+      "const": "gpt-6.1-sol",
+      "title": "Requestedmodel",
+      "type": "string"
+    },
+    "returnedModel": {
+      "title": "Returnedmodel",
+      "type": "null"
+    },
+    "promptSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Promptsha256",
+      "type": "string"
+    },
+    "capturedAt": {
+      "title": "Capturedat",
+      "type": "string"
+    },
+    "receivedAt": {
+      "title": "Receivedat",
+      "type": "string"
+    },
+    "entries": {
+      "$ref": "#/$defs/DirectionalDecision"
+    },
+    "rawResponse": {
+      "maxLength": 8192,
+      "title": "Rawresponse",
+      "type": "string"
+    },
+    "inputTokens": {
+      "title": "Inputtokens",
+      "type": "null"
+    },
+    "outputTokens": {
+      "title": "Outputtokens",
+      "type": "null"
+    },
+    "costAmount": {
+      "title": "Costamount",
+      "type": "null"
+    },
+    "executionAuthority": {
+      "const": false,
+      "title": "Executionauthority",
+      "type": "boolean"
+    },
+    "memory": {
+      "$ref": "#/$defs/MemoryReceipt"
+    }
+  },
+  "required": [
+    "version",
+    "analysisId",
+    "requestedModel",
+    "returnedModel",
+    "promptSha256",
+    "capturedAt",
+    "receivedAt",
+    "entries",
+    "rawResponse",
+    "inputTokens",
+    "outputTokens",
+    "costAmount",
+    "executionAuthority",
+    "memory"
+  ],
+  "title": "ResponseV12",
+  "type": "object"
+}

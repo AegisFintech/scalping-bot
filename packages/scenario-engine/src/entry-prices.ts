@@ -10,6 +10,7 @@ import {
   decimal,
   isTickAligned,
 } from "../../risk-engine/src/decimal.js";
+import type { DirectionalEntryPlan } from "./directional-entry.js";
 import type { EntryPairPlan } from "./entry-plan.js";
 
 export function entryMinimumDistance(
@@ -59,7 +60,7 @@ export function entryPriceBounds(
 
 /** Only proven price-side failures qualify for retirement. Bad data throws instead. */
 export function checkEntryPrices(
-  plan: EntryPairPlan,
+  plan: EntryPairPlan | DirectionalEntryPlan,
   snapshot: Pick<MarketSnapshot, "quote" | "metadata" | "serverTime">,
   phase: EntryRetirementEvidence["phase"],
   now: number,
@@ -105,7 +106,16 @@ export function checkEntryPrices(
     reasonCodes.push("BUY_ENTRY_TOO_CLOSE");
   if (decimal(plan.sell_stop).gt(bounds.sell_stop_maximum))
     reasonCodes.push("SELL_ENTRY_TOO_CLOSE");
-  if (reasonCodes.length === 0) return null;
+  if (
+    reasonCodes.length === 0 ||
+    (plan.schema_version === "entry-direction-1.0" &&
+      !reasonCodes.includes(
+        plan.entry_side === "BUY"
+          ? "BUY_ENTRY_TOO_CLOSE"
+          : "SELL_ENTRY_TOO_CLOSE",
+      ))
+  )
+    return null;
   return {
     schemaVersion: "1.0",
     phase,

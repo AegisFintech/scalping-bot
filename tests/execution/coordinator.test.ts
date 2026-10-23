@@ -1973,3 +1973,114 @@ describe("evidence-first Codex execution integration", () => {
     expect(place).not.toHaveBeenCalled();
   });
 });
+
+describe("directional provider selection reaches one entry only", () => {
+  function directional(side: "BUY" | "SELL") {
+    const o = options({
+      entryPairMode: true,
+      directionalEntryOnly: true,
+      executionOrderType: "STOP_LIMIT",
+      minRiskRewardRatio: "1",
+      evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+        Promise.resolve(
+          evidenceDemoTransform({ snapshot, response, maximumStopDistance }),
+        ),
+    });
+    o.risk.proposalConstraints = () => proposalRiskConstraints("20");
+    const analyze = o.model.analyze.bind(o.model);
+    o.model.analyze = async (request) => ({
+      ...(await analyze(request)),
+      entrySide: side,
+    });
+    const evaluate = o.risk.evaluate.bind(o.risk);
+    o.risk.evaluate = async (input) => {
+      const base = await evaluate(input);
+      const selected = base.commands![side === "BUY" ? 0 : 1];
+      return {
+        ...base,
+        risk: null,
+        commands: null,
+        directionalCommand: selected,
+        directionalRisk: {
+          approved: true,
+          reasonCodes: [],
+          riskBudget: "50",
+          rawVolume: selected.volume,
+          normalizedVolume: selected.volume,
+          maximumLoss: "50",
+          estimatedMargin: "1",
+        },
+      };
+    };
+    o.gateway.placeDirectional = vi.fn((command: PendingOrderCommand) =>
+      Promise.resolve({
+        orderGroupId: command.orderGroupId,
+        idempotentReplay: false,
+        orders: [
+          {
+            clientOrderId: command.clientOrderId,
+            brokerOrderId: null,
+            state: "PENDING" as const,
+            filledVolume: "0",
+            updatedAt: new Date().toISOString(),
+            reasonCode: null,
+          },
+        ],
+      }),
+    );
+    return o;
+  }
+  it.each(["BUY", "SELL"] as const)(
+    "submits only model-selected %s through final fee/freshness gates",
+    async (side) => {
+      const o = directional(side);
+      const pair = vi.spyOn(o.gateway, "placeOco"),
+        risk = vi.spyOn(o.risk, "evaluate");
+      const single = vi.spyOn(o.gateway, "placeDirectional");
+      expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+        "PLACED",
+      );
+      expect(pair).not.toHaveBeenCalled();
+      expect(single).toHaveBeenCalledOnce();
+      expect(risk.mock.calls[0]?.[0].selectedSide).toBe(side);
+    },
+  );
+  it("withholds a directional intent if the current half-setup allocation shrinks", async () => {
+    const o = directional("BUY"),
+      single = vi.spyOn(o.gateway, "placeDirectional");
+    o.risk.currentSetupRiskPercent = () => "0.5";
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toContain(
+      "CAPITAL_RISK_CHANGED_BEFORE_PLACEMENT",
+    );
+    expect(single).not.toHaveBeenCalled();
+  });
+  it("rejects absent direction and a risk command for the opposite side", async () => {
+    const o = directional("BUY");
+    const single = vi.spyOn(o.gateway, "placeDirectional");
+    const analyze = o.model.analyze.bind(o.model);
+    o.model.analyze = async (request) => {
+      const value = await analyze(request);
+      const { entrySide: _side, ...rest } = value;
+      void _side;
+      return rest;
+    };
+    expect((await new AnalysisCoordinator(o).runOnce()).reasonCodes).toContain(
+      "DIRECTIONAL_ENTRY_REQUIRED",
+    );
+    expect(single).not.toHaveBeenCalled();
+    const x = directional("BUY");
+    const wrong = vi.spyOn(x.gateway, "placeDirectional");
+    const evaluate = x.risk.evaluate.bind(x.risk);
+    x.risk.evaluate = async (input) => {
+      const value = await evaluate(input);
+      return {
+        ...value,
+        directionalCommand: { ...value.directionalCommand!, side: "SELL" },
+      };
+    };
+    expect((await new AnalysisCoordinator(x).runOnce()).reasonCodes).toContain(
+      "DIRECTIONAL_SIDE_MISMATCH",
+    );
+    expect(wrong).not.toHaveBeenCalled();
+  });
+});

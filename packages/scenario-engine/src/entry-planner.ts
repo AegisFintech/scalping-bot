@@ -16,8 +16,8 @@ import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-pair-v8" as const,
-  path: "prompts/entry-pair-v8.md",
+  version: "entry-direction-v1" as const,
+  path: "prompts/entry-direction-v1.md",
 });
 
 const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({

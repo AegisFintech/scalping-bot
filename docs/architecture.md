@@ -1,3 +1,13 @@
+# ISSUE-368 — Directional entry source
+
+Codex selects BUY/SELL/WAIT and two structural range references; only the selected
+side reaches single-entry sizing and gateway dispatch. Durable entry_side explicitly
+distinguishes new one-order groups from historical two-order OCO groups. Native
+protection and maintenance stay independent of inference. No directional live-money
+submission is added; only the authorized demo gateway supports the new method.
+See [release, qualification and operational receipt](directional-entry-report.md).
+Earlier source and activation checkpoints below remain historical.
+
 # ISSUE-366 — M1-first source
 
 Completed M1 defines the immediate range; M5/M15/SMC/FVG/DOM remain context.

@@ -66,7 +66,11 @@ suite(
       }
     });
 
-    async function setup(side: "BUY" | "SELL" = "BUY") {
+    async function setup(
+      side: "BUY" | "SELL" = "BUY",
+      directional = false,
+      persistEntry = true,
+    ) {
       const accountId = randomUUID();
       const symbolId = randomUUID();
       const strategyId = randomUUID();
@@ -106,22 +110,68 @@ suite(
        VALUES ($1::uuid,$2,'COMPLETED','{"confidence":{"overall":50},"setup_tags":[],"market_regime":"UNCERTAIN"}',now())`,
         [randomUUID(), requestId],
       );
-      await pool.query(
-        `INSERT INTO order_groups (id,analysis_id,idempotency_key,mode,state,expires_at)
-       VALUES ($1::uuid,$2,$1::text,'demo','ACTIVE',now()+interval '1 hour')`,
-        [groupId, analysisId],
-      );
-      for (const [orderSide, clientId, brokerId] of [
-        [side, buyClient, "501"],
-        [side === "BUY" ? "SELL" : "BUY", sellClient, "502"],
-      ]) {
-        await pool.query(
-          `INSERT INTO orders (id,account_id,order_group_id,side,order_type,state,client_order_id,
-          broker_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,
-          requested_volume,normalized_volume,expires_at)
-         VALUES ($1::uuid,$2,$3,$4,'STOP','PENDING',$5,$6,true,'ctrader-ai-scalper:fixture',$1::text,2001,1999,2005,100,100,now()+interval '1 hour')`,
-          [randomUUID(), accountId, groupId, orderSide, clientId, brokerId],
+      const tx = directional ? await pool.connect() : null;
+      const writer = tx ?? pool;
+      const contextId = directional ? randomUUID() : null;
+      try {
+        if (tx) {
+          await tx.query("BEGIN");
+          const plan = {
+            schema_version: "entry-direction-1.0",
+            entry_side: side,
+            buy_stop: side === "BUY" ? "2001" : "2003",
+            sell_stop: side === "BUY" ? "1999" : "2001",
+            reason: "synthetic",
+            analysis_id: contextId,
+            symbol: "XAUUSD",
+            captured_at: new Date().toISOString(),
+            valid_until: new Date(Date.now() + 300000).toISOString(),
+          };
+          await tx.query(
+            "INSERT INTO scenario_contexts(id,account_id,symbol_id,source_analysis_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,plan,available_at) VALUES($1,$2,$3,$4,'demo',now(),now(),now()+interval '5 minutes','READY','gpt-6.1-sol','0.01',$5::jsonb,now())",
+            [contextId, accountId, symbolId, analysisId, JSON.stringify(plan)],
+          );
+        }
+        await writer.query(
+          `INSERT INTO order_groups (id,analysis_id,idempotency_key,mode,state,expires_at,time_in_force,submission_valid_until,context_plan_id,entry_side)
+       VALUES ($1::uuid,$2,$1::text,'demo','ACTIVE',CASE WHEN $3::boolean THEN NULL ELSE now()+interval '1 hour' END,CASE WHEN $3::boolean THEN 'GTC' ELSE 'GTD' END,now()+interval '1 hour',$4,$5)`,
+          [
+            groupId,
+            analysisId,
+            directional,
+            contextId,
+            directional ? side : null,
+          ],
         );
+        const entries = directional
+          ? [[side, buyClient, "501"]]
+          : [
+              [side, buyClient, "501"],
+              [side === "BUY" ? "SELL" : "BUY", sellClient, "502"],
+            ];
+        for (const [orderSide, clientId, brokerId] of entries) {
+          await writer.query(
+            `INSERT INTO orders (id,account_id,order_group_id,side,order_type,state,client_order_id,
+          broker_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,
+          requested_volume,normalized_volume,expires_at,time_in_force,submission_valid_until,execution_order_type)
+         VALUES ($1::uuid,$2,$3,$4,'STOP','PENDING',$5,$6,true,'ctrader-ai-scalper:fixture',$1::text,2001,1999,2005,100,100,CASE WHEN $7::boolean THEN NULL ELSE now()+interval '1 hour' END,CASE WHEN $7::boolean THEN 'GTC' ELSE 'GTD' END,now()+interval '1 hour',CASE WHEN $7::boolean THEN 'STOP_LIMIT' ELSE NULL END)`,
+            [
+              randomUUID(),
+              accountId,
+              groupId,
+              orderSide,
+              clientId,
+              brokerId,
+              directional,
+            ],
+          );
+        }
+        if (tx) await tx.query("COMMIT");
+      } catch (error) {
+        if (tx) await tx.query("ROLLBACK");
+        throw error;
+      } finally {
+        tx?.release();
       }
       const restart = () =>
         new PostgresDemoExecutionStore({ pool, accountId, symbolId });
@@ -171,11 +221,13 @@ suite(
       };
       const normalize = (raw: BrokerExecution) =>
         normalizeDemoExecution(raw, { symbolId: "7" })!;
-      await restart().persist(normalize(entry));
+      if (persistEntry) await restart().persist(normalize(entry));
       return {
         accountId,
         symbolId,
         groupId,
+        analysisId,
+        contextId,
         restart,
         normalize,
         rawEvents,
@@ -186,6 +238,87 @@ suite(
         ) as Record<Step, ReturnType<typeof normalize>>,
       };
     }
+
+    it.each(["BUY", "SELL"] as const)(
+      "recovers a true single %s group with exact terminal evidence and no manufactured peer",
+      async (side) => {
+        for (const sequence of permutations<Step>([
+          "accepted",
+          "amended",
+          "closed",
+        ])) {
+          const s = await setup(side, true);
+          for (const step of sequence)
+            await s.restart().persist(s.events[step]);
+          const evidence = await s.restart().reconcileTerminalEvidence();
+          expect(evidence.certain).toBe(true);
+          expect(evidence.terminalOrders).toHaveLength(1);
+          const snapshot = await readTerminalGroup(pool, s.groupId);
+          const now = new Date(Date.parse(s.events.closed.occurredAt) + 10000),
+            receivedAt = now.toISOString();
+          const history = {
+            orders: {
+              orders: [s.entry.order!, s.rawEvents.closed.order!],
+              hasMore: false,
+              receivedAt,
+            },
+            deals: {
+              deals: [s.entry.deal!, s.rawEvents.closed.deal!],
+              hasMore: false,
+              receivedAt,
+            },
+            reconciliation: { orders: [], positions: [], receivedAt },
+          };
+          expect(
+            proveTerminalGroup(snapshot, history, "7", now).reason,
+          ).toBeNull();
+          expect(
+            proveTerminalGroup(
+              { ...snapshot, group: { ...snapshot.group, entrySide: null } },
+              history,
+              "7",
+              now,
+            ).reason,
+          ).not.toBeNull();
+          expect(
+            proveTerminalGroup(
+              { ...snapshot, orders: [...snapshot.orders, ...snapshot.orders] },
+              history,
+              "7",
+              now,
+            ).reason,
+          ).not.toBeNull();
+          expect((await s.restart().reconcileTerminalEvidence()).certain).toBe(
+            true,
+          );
+        }
+      },
+    );
+    it("directional authority cannot add a peer, change sides/levels, omit its one order or erase the marker", async () => {
+      const s = await setup("BUY", true, false);
+      for (const sql of [
+        "UPDATE orders SET side='SELL' WHERE order_group_id=$1",
+        "UPDATE orders SET entry_price=entry_price+1 WHERE order_group_id=$1",
+        "UPDATE order_groups SET entry_side=NULL WHERE id=$1",
+        "DELETE FROM orders WHERE order_group_id=$1",
+      ]) {
+        await expect(pool.query(sql, [s.groupId])).rejects.toThrow();
+      }
+      await expect(
+        pool.query(
+          "INSERT INTO orders(id,account_id,order_group_id,side,order_type,state,client_order_id,broker_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,requested_volume,normalized_volume,expires_at,time_in_force,submission_valid_until,execution_order_type) SELECT gen_random_uuid(),account_id,order_group_id,'SELL','STOP','INTENT',client_order_id||'-peer',NULL,true,strategy_label,idempotency_key||'-peer',1999,2001,1997,100,100,NULL,'GTC',submission_valid_until,'STOP_LIMIT' FROM orders WHERE order_group_id=$1",
+          [s.groupId],
+        ),
+      ).rejects.toThrow("DIRECTIONAL_ORDER_SIDE_OR_LEVEL_INVALID");
+      expect(
+        (
+          await pool.query(
+            "SELECT count(*)::integer AS n FROM orders WHERE order_group_id=$1",
+            [s.groupId],
+          )
+        ).rows[0],
+      ).toMatchObject({ n: 1 });
+    });
 
     async function attestationFixture() {
       const s = await setup();

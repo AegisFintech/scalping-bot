@@ -41,7 +41,7 @@ function controller(root) {
     ["download", "⇣", "Market data", "Completed OHLC", "#83dbe3"],
     ["process", "⌁", "Process", "Indicators & risk", "#8abfff"],
     ["ai", "✦", "Codex", "Entry proposals", "#d49eea"],
-    ["orders", "⇄", "Place orders", "STOP_LIMIT / OCO", "#f1c47c"],
+    ["orders", "⇄", "Place entry", "STOP_LIMIT / GTC", "#f1c47c"],
     ["position", "◎", "Manage trade", "Broker SL / TP", "#64e5ba"],
   ];
   stages.forEach(([key, icon, name, detail, tone], index) => {
@@ -218,8 +218,12 @@ function controller(root) {
         ),
       );
     }
-    const buy = overlays.find((v) => v.label === "Codex BUY breakout"),
-      sell = overlays.find((v) => v.label === "Codex SELL breakout");
+    const buy = overlays.find(
+        (v) => v.role === "range_upper" || v.label === "Codex BUY breakout",
+      ),
+      sell = overlays.find(
+        (v) => v.role === "range_lower" || v.label === "Codex SELL breakout",
+      );
     if (buy && sell && Number(buy.price) > Number(sell.price))
       chart.append(
         svg("rect", {

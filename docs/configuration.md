@@ -1,3 +1,13 @@
+# ISSUE-368 — Directional entry source
+
+No environment keys or credential migrations are added. Deploy matching
+entry-direction-v1 / worker request 1.5 / response 1.2 with additive migration
+0032 through the audited local administrator; retain app-role privileges and all
+31 previous migration checksums. Same database/runtime, accepted GTC and financial
+history remain. Bounded credential-free sampling is separate read-only research.
+See [release, qualification and operational receipt](directional-entry-report.md).
+Earlier source and activation checkpoints below remain historical.
+
 # ISSUE-366 — M1-first source
 
 No environment keys or migrations are added. Deploy v8/request 1.4 with matching

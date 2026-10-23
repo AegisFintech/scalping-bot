@@ -1,3 +1,7 @@
+import {
+  validateDirectionalPlan,
+  type DirectionalEntryPlan,
+} from "./directional-entry.js";
 import { z } from "zod";
 import { decimal } from "../../risk-engine/src/decimal.js";
 import { hasDuplicateObjectKeys } from "../../risk-engine/src/model-validator.js";
@@ -41,7 +45,8 @@ export interface EntryWaitPlan {
   readonly observed_m1_end: string;
   readonly reason: string;
 }
-export type EntryDecisionPlan = EntryPairPlan | EntryWaitPlan;
+export type EntryDecisionPlan =
+  EntryPairPlan | DirectionalEntryPlan | EntryWaitPlan;
 export function bindEntryDecision(
   raw: string,
   context: {
@@ -86,6 +91,8 @@ export function validateEntryDecision(
   },
 ): EntryDecisionPlan {
   const value = JSON.parse(raw) as Record<string, unknown>;
+  if (value.schema_version === "entry-direction-1.0")
+    return validateDirectionalPlan(raw, context);
   if (value.schema_version !== "entry-wait-1.0")
     return validateEntryPlan(raw, context);
   const wait = z

@@ -73,7 +73,7 @@ interface TrackedOrder {
 interface TrackedGroup {
   readonly key: string;
   readonly orderGroupId: string;
-  readonly orders: [TrackedOrder, TrackedOrder];
+  readonly orders: readonly TrackedOrder[];
 }
 
 function orderTradeData(
@@ -200,6 +200,84 @@ export class CTraderDemoGateway implements ExecutionGateway {
     options.client.onExecution((execution) => this.#handleExecution(execution));
   }
 
+  async placeDirectional(
+    command: PendingOrderCommand,
+  ): Promise<OcoPlacementResult> {
+    if (
+      pendingOrderType(command) !== "STOP_LIMIT" ||
+      orderTimeInForce(command) !== "GTC" ||
+      !["BUY", "SELL"].includes(command.side) ||
+      decimal(command.volume).lte(0) ||
+      !decimal(command.volume).isInteger()
+    )
+      throw new Error("DEMO_DIRECTIONAL_COMMAND_INVALID");
+    validateSubmissionDeadline(command);
+    if (Date.parse(command.expiresAt) <= Date.now())
+      throw new Error("DEMO_ORDER_EXPIRED");
+    this.#assertPlacementEnabled([command]);
+    const key = command.idempotencyKey;
+    const known = this.#groups.get(key);
+    if (known) {
+      if (
+        known.orders.length !== 1 ||
+        JSON.stringify(known.orders[0]!.command) !== JSON.stringify(command)
+      )
+        throw new Error("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
+      return {
+        orderGroupId: known.orderGroupId,
+        idempotentReplay: true,
+        orders: known.orders.map(external),
+      };
+    }
+    const raw = await this.#options.client.reconcileRaw();
+    const recovered = this.#recoverIdempotent([command], raw, key);
+    if (recovered) return recovered;
+    this.#assertNoRelevantState(raw);
+    const tracked: TrackedOrder = {
+      command,
+      brokerOrderId: null,
+      state: "UNKNOWN",
+      filledVolume: "0",
+      updatedAt: new Date().toISOString(),
+      reasonCode: "DEMO_PLACEMENT_PENDING",
+    };
+    const group: TrackedGroup = {
+      key,
+      orderGroupId: command.orderGroupId,
+      orders: [tracked],
+    };
+    this.#groups.set(key, group);
+    this.#orders.set(command.clientOrderId, tracked);
+    const result = () => ({
+      orderGroupId: group.orderGroupId,
+      idempotentReplay: false,
+      orders: [external(tracked)],
+    });
+    if (await this.#rejectClosedSession([tracked])) return result();
+    try {
+      this.#assertNoRelevantState(await this.#options.client.reconcileRaw());
+      if (
+        this.#options.placementReadiness &&
+        (await this.#options.placementReadiness()).certain !== true
+      )
+        throw new Error("DEMO_DURABLE_RECONCILIATION_UNCERTAIN");
+      if (await this.#rejectClosedSession([tracked])) return result();
+      this.#assertPlacementEnabled([command]);
+      validateSubmissionDeadline(command);
+      if (Date.parse(command.expiresAt) <= Date.now())
+        throw new Error("DEMO_ORDER_EXPIRED");
+    } catch {
+      tracked.state = "REJECTED";
+      tracked.reasonCode = "DEMO_PREFLIGHT_RECONCILIATION_WITHHELD";
+      tracked.updatedAt = new Date().toISOString();
+      return result();
+    }
+    // An unknown dispatch remains durably claimed; never resend the command.
+    const execution = await this.#placePendingEntry(command);
+    this.#applyExecution(execution);
+    await this.#options.client.reconcileRaw();
+    return result();
+  }
   async placeOco(
     commands: readonly [PendingOrderCommand, PendingOrderCommand],
   ): Promise<OcoPlacementResult> {
@@ -551,8 +629,9 @@ export class CTraderDemoGateway implements ExecutionGateway {
     );
     if (
       group === undefined ||
-      input.orders.length !== 2 ||
-      new Set(input.orders.map((order) => order.clientOrderId)).size !== 2 ||
+      input.orders.length !== group.orders.length ||
+      new Set(input.orders.map((order) => order.clientOrderId)).size !==
+        group.orders.length ||
       group.orders.some(
         (order) =>
           !input.orders.some(
@@ -611,7 +690,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
   }
 
   #recoverIdempotent(
-    commands: readonly [PendingOrderCommand, PendingOrderCommand],
+    commands: readonly PendingOrderCommand[],
     raw: RawReconciliation,
     key: string,
   ): OcoPlacementResult | null {
@@ -634,6 +713,16 @@ export class CTraderDemoGateway implements ExecutionGateway {
         brokerOrderTypeNumber(pendingOrderType(command))
       )
         throw new Error("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
+      if (commands.length === 1) {
+        const data = orderTradeData(match);
+        if (
+          stringField(data, "symbolId") !== this.#options.symbolId ||
+          optionalStringField(data, "label") !== command.strategyLabel ||
+          numberField(data, "tradeSide") !== (command.side === "BUY" ? 1 : 2) ||
+          !decimal(stringField(data, "volume")).eq(command.volume)
+        )
+          throw new Error("DEMO_DIRECTIONAL_RECOVERY_OWNERSHIP_MISMATCH");
+      }
       return {
         command,
         brokerOrderId: stringField(match, "orderId"),
@@ -645,7 +734,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     }) as [TrackedOrder, TrackedOrder];
     const group: TrackedGroup = {
       key,
-      orderGroupId: commands[0].orderGroupId,
+      orderGroupId: commands[0]!.orderGroupId,
       orders: tracked,
     };
     this.#groups.set(key, group);

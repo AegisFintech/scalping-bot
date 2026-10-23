@@ -21,6 +21,7 @@ export interface TerminalGroupSnapshot {
     readonly symbolId: string;
     readonly mode: string;
     readonly state: string;
+    readonly entrySide?: "BUY" | "SELL" | null;
   };
   readonly orders: readonly {
     readonly id: string;
@@ -154,17 +155,22 @@ function checkGroup(
   try {
     const { group, orders, positions, fills, trades, events, variants } =
       snapshot;
+    if (group.entrySide != null && !["BUY", "SELL"].includes(group.entrySide))
+      return reject("DEMO_TERMINAL_GROUP_INCOMPLETE");
+    const expected = group.entrySide == null ? 2 : 1;
     if (
       group.mode !== "demo" ||
       group.state !== "CLOSED" ||
-      orders.length !== 2 ||
+      orders.length !== expected ||
       positions.length < 1 ||
-      positions.length > 2 ||
+      positions.length > expected ||
       trades.length !== positions.length ||
       fills.length > 16 ||
       events.length > 128 ||
       variants.length > 64 ||
-      new Set(orders.map((o) => o.side)).size !== 2 ||
+      new Set(orders.map((o) => o.side)).size !== expected ||
+      (group.entrySide != null &&
+        orders.some((o) => o.side !== group.entrySide)) ||
       orders.some(
         (o) =>
           !o.owned ||

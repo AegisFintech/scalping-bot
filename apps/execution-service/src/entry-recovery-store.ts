@@ -63,9 +63,10 @@ export async function retireEntryContext(
     const context = await client.query(
       `SELECT id FROM scenario_contexts WHERE id=$1 AND account_id=$2 AND symbol_id=$3 AND mode=$4
       AND state='READY' AND requested_model=$5 AND available_at<=$6::timestamptz AND captured_at<=$6::timestamptz
-      AND valid_until>$6::timestamptz AND plan->>'schema_version'='entry-pair-1.0'
+      AND valid_until>$6::timestamptz AND plan->>'schema_version' IN ('entry-pair-1.0','entry-direction-1.0')
       AND (plan->>'buy_stop')::numeric=$7::numeric AND (plan->>'sell_stop')::numeric=$8::numeric
-      AND tick_size::numeric=$9::numeric FOR UPDATE`,
+      AND tick_size::numeric=$9::numeric
+      AND (plan->>'schema_version'<>'entry-direction-1.0' OR $10::jsonb ? ((plan->>'entry_side') || '_ENTRY_TOO_CLOSE')) FOR UPDATE`,
       [
         id,
         scope.accountId,
@@ -76,6 +77,7 @@ export async function retireEntryContext(
         evidence.buyStop,
         evidence.sellStop,
         evidence.tickSize,
+        JSON.stringify(evidence.reasonCodes),
       ],
     );
     if (context.rowCount !== 1) {
@@ -108,7 +110,7 @@ export async function retireEntryContext(
 
 /** A replacement cannot parent another replacement. Unknown earlier calls still block. */
 export const entryReplacementProof = `
-  c.state='READY' AND c.requested_model=$8 AND c.plan->>'schema_version'='entry-pair-1.0'
+  c.state='READY' AND c.requested_model=$8 AND c.plan->>'schema_version' IN ('entry-pair-1.0','entry-direction-1.0')
   AND c.refresh_after_entry_context_id IS NULL AND c.available_at<=clock_timestamp()
   AND c.requested_at>clock_timestamp()-interval '5 minutes'
   AND EXISTS(SELECT 1 FROM context_entry_retirements r WHERE r.context_id=c.id)

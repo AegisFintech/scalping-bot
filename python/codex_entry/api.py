@@ -11,7 +11,14 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi import Request as HttpRequest
 from starlette.concurrency import run_in_threadpool
 
-from python.codex_entry.service import MAX_BYTES, Response, ResponseV11, parse_request, run
+from python.codex_entry.service import (
+    MAX_BYTES,
+    Response,
+    ResponseV11,
+    ResponseV12,
+    parse_request,
+    run,
+)
 
 
 def create_app(
@@ -25,7 +32,7 @@ def create_app(
     def live() -> dict[str, str]:
         return {"status": "alive"}
 
-    @app.post("/v1/entry-proposals", response_model=Response | ResponseV11)
+    @app.post("/v1/entry-proposals", response_model=Response | ResponseV11 | ResponseV12)
     async def propose(
         request: HttpRequest, authorization: Annotated[str | None, Header()] = None
     ) -> dict[str, object]:
@@ -67,6 +74,7 @@ def main() -> None:
         "entry-pair-v6",
         "entry-pair-v7",
         "entry-pair-v8",
+        "entry-direction-v1",
     }:
         raise ValueError("CODEX_PROMPT_VERSION_INVALID")
     app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"], prompt_version=expected)

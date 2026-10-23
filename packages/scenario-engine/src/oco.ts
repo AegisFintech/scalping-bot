@@ -3,6 +3,7 @@ import type {
   ModelResponse,
   SymbolMetadata,
 } from "../../contracts/src/index.js";
+import { isEntryPlan, type DirectionalEntryPlan } from "./directional-entry.js";
 import type { EntryPairPlan } from "./entry-plan.js";
 import { minimumFeeBufferedTarget } from "../../risk-engine/src/commission.js";
 import { canonical, decimal } from "../../risk-engine/src/decimal.js";
@@ -13,7 +14,7 @@ const validator = new ModelResponseValidator("schemas/model-response-2.1.json");
 
 /** Pure candidate construction. Account sizing and every placement gate stay downstream. */
 export function scenarioOco(
-  plan: ScenarioPlan | EntryPairPlan,
+  plan: ScenarioPlan | EntryPairPlan | DirectionalEntryPlan,
   payload: Readonly<Record<string, unknown>>,
   metadata?: SymbolMetadata,
 ): ModelResponse {
@@ -43,7 +44,7 @@ export function scenarioOco(
   const expires = new Date(expiry).toISOString();
   const tick = price("tick_size");
   // Thresholds are immutable; a crossed map waits for the next bounded refresh.
-  const entries = plan.schema_version === "entry-pair-1.0";
+  const entries = isEntryPlan(plan);
   if (
     !entries &&
     (price("current_ask").gte(plan.recovery_above) ||
@@ -170,7 +171,13 @@ export function scenarioOco(
       original_buy: 0,
       original_sell: 0,
     },
-    setup_tags: [entries ? "DIRECT_ENTRY_PAIR_OCO" : "REUSABLE_SCENARIO_OCO"],
+    setup_tags: [
+      plan.schema_version === "entry-direction-1.0"
+        ? `DIRECTIONAL_${plan.entry_side}_BREAKOUT`
+        : entries
+          ? "DIRECT_ENTRY_PAIR_OCO"
+          : "REUSABLE_SCENARIO_OCO",
+    ],
     evidence_codes: ["DETERMINISTIC_PLAN_DERIVATION"],
     risk_flags: [],
     // Analytics also carries sample size/decay diagnostics. Project only the

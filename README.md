@@ -1,4 +1,21 @@
-# M1-first Codex range — ISSUE-366
+# Directional Codex breakout — ISSUE-368
+
+The approved source uses Codex BUY / SELL / WAIT, M15/M5 trend context and a nearby
+completed-M1 range. Only the selected side can submit one protected STOP_LIMIT/GTC
+entry. The other range edge is a structural reference, never a peer order.
+The entry keeps its former half-setup allocation (at most 0.5% current equity)
+inside the unchanged 1% setup ceiling; native opposite-box stop/equal gross TP
+and all execution/reconciliation gates remain. No reversal, martingale, chase,
+local profit-close or automatic strategy promotion. Matching main/worker rollout
+and natural evidence are recorded in [issue #368](https://github.com/AegisFintech/scalping-bot/issues/368).
+
+The frozen baseline review has 33 closed demo trades / 13 wins / 20 losses,
+net −$3,208.32 with fees included. This is not proof that reversing wins. A bounded
+read-only sampled-path observer supports a separate exit proposal; it cannot
+trade and is not another trading bot. See [release, evidence and rollback](docs/directional-entry-report.md), and
+[the exact exit proposal for review](docs/directional-exit-proposal.md).
+
+# Historical M1-first activation — ISSUE-366
 
 The operator authorized nearby M1 range selection after 42/42 v7 responses were
 WAIT during the first 57 minutes. The new v8 guidance accepts observable brief
@@ -52,13 +69,12 @@ It compares frozen observed demo opportunities, checks archived quote integrity,
 and reports missing paths and unknown economics explicitly. It does not change
 trading, claim exact counterfactual net returns, or automatically promote a strategy.
 
-The current source uses `0.4.3-evidence-scalp.1-codex.2`, policy
-`0.4.3-evidence-scalp.1`, prompt `entry-pair-v8`. Codex selects a nearby completed-M1
-range; M5/M15, SMC/FVG/DOM and costs inform its judgment without mandatory trend
-alignment or a mature higher-timeframe box. It may return OCO or WAIT. Code owns
-dual STOP_LIMIT/GTC/OCO, opposite-box native SL, equal gross TP and shared dynamic
-1% setup sizing. No trade quota or profitability claim is implied.
-See [M1 range change and delivery status](docs/m1-range-release-report.md).
+Current source: strategy `0.5.0-directional-scalp.1-codex.1`, policy
+`0.5.0-directional-scalp.1`, provider prompt `entry-direction-v1`, request 1.5 /
+response 1.2. Codex selects a trend-continuation side or WAIT. Indicators and DOM
+inform its judgment without a deterministic scanner/trend/ATR strategy filter.
+Only demo implements the new single-entry submission; other adapters fail closed.
+Accepted historical OCO groups retain their original two-entry lifecycle.
 The bot operates continuously during the broker session, waiting safely when
 orders/positions, cooldowns, stale data, unavailable sessions, reconciliation,
 protection or affordability prevent a new setup. Demo records daily/high-water

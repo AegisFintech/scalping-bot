@@ -1,3 +1,11 @@
+### ISSUE-368 — Directional Codex trend-continuation entry
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/368.
+- Dependencies: #366 authorized M1 source, #356 separate unqualified exit research, current demo/history and native maintenance.
+- Acceptance: full-cohort trade review with explicit unknown excursions; versioned BUY/SELL/WAIT and exactly one selected-side STOP_LIMIT/GTC order; preserve native exit formula, former half-setup allocation inside 1% cap, fresh data/session/account/ownership and all durable cooldown/recovery controls. Add immutable side/cardinality migration, legacy pair compatibility and failure/race/terminal tests. Frozen bounded prospective path observer has no execution/promotion authority. Full qualification, pushed issue PR, green hosted checks, merged main and matching existing-demo deployment preserving active orders/protection/history and verified natural operation. Exact exit changes require a later proposal/review, not this release.
+- Status: implemented; frozen full qualification passed all gates and 1,592 tests (1,052 Node, 106 PostgreSQL, 434 Python), including all 32 migrations. Both configuration checks pass. Exact-head hosted delivery and matching main operational rollout follow; receipt will be appended to #368.
+- Evidence: [directional release and baseline](docs/directional-entry-report.md).
+
 ### ISSUE-366 — Nearby M1 Codex range and same-demo deployment
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/366.

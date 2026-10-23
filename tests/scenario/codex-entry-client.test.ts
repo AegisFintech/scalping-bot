@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-pair-v8.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-direction-v1.md", "utf8").trim();
 function fixture() {
   const request = {
     analysisId: randomUUID(),
@@ -17,7 +17,7 @@ function fixture() {
     },
   };
   const value = {
-    version: "codex-entry-response-1.1",
+    version: "codex-entry-response-1.2",
     analysisId: request.analysisId,
     requestedModel: "gpt-6.1-sol",
     returnedModel: null,
@@ -25,10 +25,10 @@ function fixture() {
     capturedAt: at,
     receivedAt: at,
     entries: {
-      decision: "OCO",
+      decision: "BUY",
       reason: "Box",
-      buy_stop: "4002",
-      sell_stop: "3999",
+      upper_breakout: "4002",
+      lower_breakout: "3999",
     },
     memory: {
       day: "2026-10-19",
@@ -37,7 +37,7 @@ function fixture() {
       compacted: false,
     },
     rawResponse:
-      '{"decision":"OCO","reason":"Box","buy_stop":"4002","sell_stop":"3999"}',
+      '{"decision":"BUY","reason":"Box","upper_breakout":"4002","lower_breakout":"3999"}',
     inputTokens: null,
     outputTokens: null,
     costAmount: null,
@@ -68,11 +68,11 @@ describe("isolated Codex transport", () => {
     if (typeof rawBody !== "string") throw new Error("EXPECTED_JSON_REQUEST");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body).toMatchObject({
-      version: "codex-entry-request-1.4",
-      promptVersion: "entry-pair-v8",
+      version: "codex-entry-request-1.5",
+      promptVersion: "entry-direction-v1",
       promptSha256: s.value.promptSha256,
     });
-    expect(result.promptArtifact?.version).toBe("entry-pair-v8");
+    expect(result.promptArtifact?.version).toBe("entry-direction-v1");
     expect(result.retryCount).toBe(0);
     expect(s.gate).toHaveBeenCalledOnce();
     expect(s.fetchImpl).toHaveBeenCalledOnce();
@@ -96,7 +96,7 @@ describe("isolated Codex transport", () => {
       if (fault === "model") bad.requestedModel = "other";
       if (fault === "stale") bad.receivedAt = new Date(now - 1).toISOString();
       if (fault === "entries")
-        bad.entries = { buy_stop: "4003", sell_stop: "3999" };
+        bad.entries = { buy_stop: "4003", lower_breakout: "3999" };
       if (fault === "authority") bad.executionAuthority = true;
       s.fetchImpl.mockResolvedValueOnce(Response.json(bad));
       await expect(s.client.analyze(s.request)).rejects.toThrow(

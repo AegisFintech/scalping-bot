@@ -1057,3 +1057,127 @@ describe("ISSUE-331 final pair reconciliation", () => {
     expect(readiness).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("one protected directional entry", () => {
+  function single(
+    client: MockClient,
+    session = () => Promise.resolve(sessionStatus("OPEN")),
+  ) {
+    return new CTraderDemoGateway({
+      client,
+      symbolId: "7",
+      symbolName: "XAUUSD",
+      tickSize: "0.01",
+      maxSlippagePoints: "5",
+      maxSlippageBps: "2",
+      placementEnabled: true,
+      acknowledgement: DEMO_ACKNOWLEDGEMENT,
+      marketSession: session,
+      placementReadiness: () => Promise.resolve({ certain: true }),
+    });
+  }
+  const request = (side: "BUY" | "SELL") => ({
+    ...command(side),
+    executionOrderType: "STOP_LIMIT" as const,
+    timeInForce: "GTC" as const,
+  });
+  it.each(["BUY", "SELL"] as const)(
+    "places only %s and replays its receipt after fill without peer cancellation",
+    async (side) => {
+      const client = new MockClient(),
+        gateway = single(client),
+        cmd = request(side);
+      const first = await gateway.placeDirectional(cmd);
+      expect(first.orders).toHaveLength(1);
+      expect(client.orders).toHaveLength(1);
+      client.fill(cmd.clientOrderId, side === "BUY" ? 2001.01 : 1998.99);
+      const again = await gateway.placeDirectional(cmd);
+      expect(again.idempotentReplay).toBe(true);
+      expect(again.orders[0]?.state).toBe("FILLED");
+      expect(client.cancelled).toHaveLength(0);
+      expect(client.orders).toHaveLength(1);
+      gateway.acknowledgeCertainTerminalRecovery({
+        orderGroupId: cmd.orderGroupId,
+        terminalProofKey: "terminal:" + "a".repeat(64),
+        certain: true,
+        orders: [
+          { ...again.orders[0]!, state: "FILLED", filledVolume: cmd.volume },
+        ],
+      });
+      expect((await gateway.placeDirectional(cmd)).idempotentReplay).toBe(true);
+      expect(client.orders).toHaveLength(1);
+    },
+  );
+  it("withholds when session closes and never calls broker placement", async () => {
+    const client = new MockClient(),
+      gateway = single(client, () => Promise.resolve(sessionStatus("CLOSED")));
+    expect(
+      (await gateway.placeDirectional(request("BUY"))).orders[0]?.state,
+    ).toBe("REJECTED");
+    expect(client.orders).toHaveLength(0);
+  });
+  it("does not resend an unknown placement after a retry", async () => {
+    const client = new MockClient();
+    const placement = vi
+      .spyOn(client, "placeStopLimit")
+      .mockRejectedValue(Error("unknown"));
+    const gateway = single(client),
+      cmd = request("BUY");
+    await expect(gateway.placeDirectional(cmd)).rejects.toThrow();
+    expect((await gateway.placeDirectional(cmd)).orders[0]?.state).toBe(
+      "UNKNOWN",
+    );
+    expect(placement).toHaveBeenCalledOnce();
+  });
+  it("refuses a recovered single entry with a mismatched ownership label", async () => {
+    const client = new MockClient(),
+      cmd = request("BUY");
+    const raw = event(cmd, 1).order!;
+    (raw.tradeData as Record<string, unknown>).label = "manual";
+    client.orders.push(raw);
+    await expect(single(client).placeDirectional(cmd)).rejects.toThrow(
+      "DEMO_DIRECTIONAL_RECOVERY_OWNERSHIP_MISMATCH",
+    );
+    expect(client.cancelled).toHaveLength(0);
+    expect(client.orders).toHaveLength(1);
+  });
+  it("retains an early fill when its placement acknowledgement arrives later", async () => {
+    const client = new MockClient(),
+      cmd = request("BUY"),
+      place = client.placeStopLimit.bind(client);
+    client.placeStopLimit = async (command, slippage) => {
+      const accepted = await place(command, slippage);
+      client.fill(command.clientOrderId, 2001.01);
+      return accepted;
+    };
+    const result = await single(client).placeDirectional(cmd);
+    expect(result.orders[0]?.state).toBe("FILLED");
+    expect(client.cancelled).toHaveLength(0);
+  });
+  it("recovers an accepted GTC entry after restart without placing another", async () => {
+    const client = new MockClient(),
+      cmd = request("BUY");
+    await single(client).placeDirectional(cmd);
+    expect((await single(client).placeDirectional(cmd)).idempotentReplay).toBe(
+      true,
+    );
+    expect(client.orders).toHaveLength(1);
+  });
+  it("rejects invalid execution type and expired fresh authority", async () => {
+    const client = new MockClient(),
+      gateway = single(client);
+    await expect(
+      gateway.placeDirectional({
+        ...request("BUY"),
+        executionOrderType: "LIMIT",
+      }),
+    ).rejects.toThrow();
+    await expect(
+      gateway.placeDirectional({
+        ...request("BUY"),
+        expiresAt: "2020-01-01T00:00:00Z",
+      }),
+    ).rejects.toThrow();
+    expect(client.orders).toHaveLength(0);
+  });
+});

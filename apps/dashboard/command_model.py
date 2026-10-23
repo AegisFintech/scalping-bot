@@ -86,7 +86,20 @@ def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
         proposed = plan.get(key)
         proposed = proposed.get("entry_price") if isinstance(proposed, dict) else proposed
         if number(proposed) is not None:
-            result.append({"label": f"Codex {side} breakout", "price": str(proposed), "side": side})
+            label = f"Codex {side} breakout"
+            if (
+                plan.get("schema_version") == "entry-direction-1.0"
+                and plan.get("entry_side") != side
+            ):
+                label = "Codex range reference"
+            result.append(
+                {
+                    "label": label,
+                    "price": str(proposed),
+                    "side": side,
+                    "role": "range_upper" if side == "BUY" else "range_lower",
+                }
+            )
     for order in snapshot.get("orders", []):
         for field, label in (
             ("entry_price", "entry"),

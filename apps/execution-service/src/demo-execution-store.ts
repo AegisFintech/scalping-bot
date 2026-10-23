@@ -213,9 +213,9 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
                      (terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric
              )
              AND (SELECT count(*) FROM positions gp
-                  WHERE gp.order_group_id = og.id) BETWEEN 1 AND 2
+                  WHERE gp.order_group_id = og.id) BETWEEN 1 AND CASE WHEN og.entry_side IS NULL THEN 2 ELSE 1 END
              AND (SELECT count(*) FROM orders goi
-                  WHERE goi.order_group_id = og.id) = 2
+                  WHERE goi.order_group_id = og.id) = CASE WHEN og.entry_side IS NULL THEN 2 ELSE 1 END
              AND (SELECT count(*) FROM orders filled_order
                   WHERE filled_order.order_group_id = og.id
                     AND filled_order.state = 'FILLED') =
@@ -224,7 +224,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
              AND (SELECT count(*) FROM orders peer_order
                   WHERE peer_order.order_group_id = og.id
                     AND peer_order.state IN ('CANCELLED','EXPIRED','REJECTED')) =
-                 2 - (SELECT count(*) FROM positions gp
+                 (CASE WHEN og.entry_side IS NULL THEN 2 ELSE 1 END) - (SELECT count(*) FROM positions gp
                       WHERE gp.order_group_id = og.id)
              AND NOT EXISTS (
                SELECT 1 FROM orders unproven WHERE unproven.order_group_id=og.id
@@ -434,7 +434,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           [terminalOrderGroupId, this.#options.accountId],
         );
         if (
-          orders.rows.length !== 2 ||
+          (orders.rows.length !== 1 && orders.rows.length !== 2) ||
           orders.rows.some(
             (order) =>
               !["FILLED", "CANCELLED", "EXPIRED", "REJECTED"].includes(
@@ -931,7 +931,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
          cancellation_reason = CASE
            WHEN og.cancellation_reason IS NULL
             AND (SELECT count(*) FROM orders o
-                 WHERE o.order_group_id = og.id) = 2
+                 WHERE o.order_group_id = og.id) = CASE WHEN og.entry_side IS NULL THEN 2 ELSE 1 END
             AND NOT EXISTS (
               SELECT 1 FROM orders o
               WHERE o.order_group_id = og.id
