@@ -1,3 +1,10 @@
+# ISSUE-372 — Fixed trend-direction STOP_LIMIT
+
+New setups use SINGLE_STOP_LIMIT only; historical mode/protection/recovery stays
+immutable. Dashboard has no mode mutation controls. TP, sizing, prompt and worker
+are unchanged. [Current scope and validation](fixed-stop-limit-report.md).
+Earlier release descriptions below remain historical.
+
 # ISSUE-370 — Four operator-selected entry profiles
 
 One existing demo deployment supports OCO/single × STOP_LIMIT/LIMIT, selected by

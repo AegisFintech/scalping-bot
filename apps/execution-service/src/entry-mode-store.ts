@@ -17,7 +17,7 @@ export class EntryModeStore {
   async initialize(): Promise<void> {
     if (this.scope.mode !== "demo") throw new Error("ENTRY_MODES_DEMO_ONLY");
     await this.pool.query(
-      `INSERT INTO entry_mode_settings(account_id,symbol_id,environment,entry_mode,revision,actor,reason) VALUES($1,$2,$3,'SINGLE_LIMIT',$4,'operator-release','Operator authorized four entry modes and same-level LIMIT flip') ON CONFLICT(account_id,symbol_id,environment) DO NOTHING`,
+      `INSERT INTO entry_mode_settings(account_id,symbol_id,environment,entry_mode,revision,actor,reason) VALUES($1,$2,$3,'SINGLE_STOP_LIMIT',$4,'operator-release','Operator authorized fixed Codex trend-direction STOP_LIMIT only') ON CONFLICT(account_id,symbol_id,environment) DO NOTHING`,
       [
         this.scope.accountId,
         this.scope.symbolId,
@@ -35,6 +35,13 @@ export class EntryModeStore {
     if (r.rowCount !== 1 || !row || !isEntryMode(row.entry_mode))
       throw new Error("ENTRY_MODE_UNAVAILABLE");
     return { mode: row.entry_mode, revision: row.revision };
+  }
+  /** New admission only. Historical groups retain their recorded mode. */
+  async readForAdmission(): Promise<EntryModeSelection> {
+    const selection = await this.read();
+    if (selection.mode !== "SINGLE_STOP_LIMIT")
+      throw new Error("FIXED_STOP_LIMIT_MODE_REQUIRED");
+    return selection;
   }
   async select(input: {
     mode: EntryMode;

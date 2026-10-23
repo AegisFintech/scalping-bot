@@ -1,3 +1,12 @@
+# Fixed trend-direction entry — ISSUE-372
+
+New setups use **one STOP_LIMIT in Codex's original BUY/SELL direction**, or WAIT.
+The four mode buttons and control-token dialog are removed; dashboard polling is
+read-only. Existing groups finish with their original immutable mode/protection.
+TP and dynamic half-leg sizing are unchanged; no 1:10 payoff or larger lots are
+activated. [Contract and verification](docs/fixed-stop-limit-report.md).
+Earlier four-mode and release descriptions below are historical.
+
 # Four entry modes — ISSUE-370
 
 The same demo bot now supports operator-selected **OCO stop-limit, OCO limit,
