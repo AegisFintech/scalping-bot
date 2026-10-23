@@ -204,7 +204,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     command: PendingOrderCommand,
   ): Promise<OcoPlacementResult> {
     if (
-      pendingOrderType(command) !== "STOP_LIMIT" ||
+      !["STOP_LIMIT", "LIMIT"].includes(pendingOrderType(command)) ||
       orderTimeInForce(command) !== "GTC" ||
       !["BUY", "SELL"].includes(command.side) ||
       decimal(command.volume).lte(0) ||

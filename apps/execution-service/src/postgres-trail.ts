@@ -771,9 +771,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
       }
       await client.query(
-        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, time_in_force, submission_valid_until, context_plan_id, entry_side)
+        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, time_in_force, submission_valid_until, context_plan_id, entry_side, execution_mode, mode_revision)
          VALUES ($1, $2, $3, $4, 'INTENT_RECORDED', $5, $6, $7,
-           (SELECT context_plan_id FROM model_requests WHERE analysis_id=$2 ORDER BY completed_at DESC LIMIT 1), $8)`,
+           (SELECT context_plan_id FROM model_requests WHERE analysis_id=$2 ORDER BY completed_at DESC LIMIT 1), $8, $9, $10)`,
         [
           firstCommand.orderGroupId,
           analysisId,
@@ -783,6 +783,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
           orderTimeInForce(firstCommand),
           firstCommand.expiresAt,
           evaluation.directionalCommand?.side ?? null,
+          evaluation.entryMode?.mode ?? null,
+          evaluation.entryMode?.revision ?? null,
         ],
       );
       for (const command of commands) {
@@ -825,6 +827,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
     await this.#audit(analysisId, "risk_intent_persisted", "accepted", null, {
       order_group_id: firstCommand.orderGroupId,
       per_leg_risk_percent: evaluation.perLegRiskPercent,
+      execution_mode: evaluation.entryMode?.mode ?? null,
+      mode_revision: evaluation.entryMode?.revision ?? null,
       commands: commands.map((command) => ({
         execution_order_type: pendingOrderType(command),
         side: command.side,

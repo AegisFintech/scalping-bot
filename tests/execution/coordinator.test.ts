@@ -1,3 +1,10 @@
+import {
+  ENTRY_MODES,
+  entryModeProfile,
+  type EntryMode,
+} from "../../packages/contracts/src/entry-mode.js";
+import { entryModeModel } from "../../apps/execution-service/src/entry-mode-coordinator.js";
+import { randomUUID } from "node:crypto";
 import { evidenceDemoTransform } from "../../packages/strategy-candidates/src/evidence-demo.js";
 import { sessionStatus } from "../helpers/market-session.js";
 import { createHash } from "node:crypto";
@@ -2083,4 +2090,128 @@ describe("directional provider selection reaches one entry only", () => {
     );
     expect(wrong).not.toHaveBeenCalled();
   });
+});
+
+describe("four operator profile execution through the full coordinator", () => {
+  function profileOptions(mode: EntryMode) {
+    const profile = entryModeProfile(mode);
+    const o = options({
+      entryPairMode: true,
+      directionalEntryOnly: profile.single,
+      validateLimitSemantics: true,
+      executionOrderType: profile.orderType,
+      entryBrackets: profile.limit ? "LIMIT" : "STOP",
+      preModelStabilityCheck: false,
+      minRiskRewardRatio: "1",
+      evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+        Promise.resolve(
+          evidenceDemoTransform({
+            snapshot,
+            response,
+            maximumStopDistance,
+            reverseLimit: profile.limit,
+            singleEntry: profile.single,
+          }),
+        ),
+    });
+    o.risk.proposalConstraints = () => proposalRiskConstraints("20");
+    const analyze = o.model.analyze.bind(o.model);
+    o.model.analyze = async (request) => ({
+      ...(await analyze(request)),
+      entrySide: "BUY",
+    });
+    Object.assign(o, {
+      model: entryModeModel(o.model, { mode, revision: randomUUID() }),
+    });
+    const evaluate = o.risk.evaluate.bind(o.risk);
+    o.risk.evaluate = async (input) => {
+      const base = await evaluate(input),
+        commands = base.commands!.map((c) => ({
+          ...c,
+          executionOrderType: profile.orderType,
+          timeInForce: "GTC" as const,
+        })) as [PendingOrderCommand, PendingOrderCommand];
+      if (!profile.single) return { ...base, commands };
+      const selected = commands[input.selectedSide === "BUY" ? 0 : 1];
+      return {
+        ...base,
+        commands: null,
+        risk: null,
+        directionalCommand: selected,
+        directionalRisk: {
+          approved: true,
+          reasonCodes: [],
+          riskBudget: "50",
+          rawVolume: selected.volume,
+          normalizedVolume: selected.volume,
+          maximumLoss: "50",
+          estimatedMargin: "1",
+        },
+      };
+    };
+    o.gateway.placeDirectional = vi.fn((command: PendingOrderCommand) =>
+      Promise.resolve({
+        orderGroupId: command.orderGroupId,
+        idempotentReplay: false,
+        orders: [
+          {
+            clientOrderId: command.clientOrderId,
+            brokerOrderId: null,
+            state: "PENDING" as const,
+            filledVolume: "0",
+            updatedAt: new Date().toISOString(),
+            reasonCode: null,
+          },
+        ],
+      }),
+    );
+    return o;
+  }
+  it.each(ENTRY_MODES)(
+    "places only the authorized %s command count/type/prices",
+    async (mode) => {
+      const o = profileOptions(mode),
+        profile = entryModeProfile(mode),
+        risk = vi.spyOn(o.risk, "evaluate"),
+        pair = vi.spyOn(o.gateway, "placeOco"),
+        single = vi.spyOn(o.gateway, "placeDirectional");
+      expect((await new AnalysisCoordinator(o).runOnce()).outcome).toBe(
+        "PLACED",
+      );
+      expect(risk.mock.calls[0]?.[0].response.buy_stop.entry_price).toBe(
+        profile.limit ? "1999" : "2001",
+      );
+      expect(risk.mock.calls[0]?.[0].selectedSide).toBe(
+        profile.single ? (profile.limit ? "SELL" : "BUY") : undefined,
+      );
+      expect(pair).toHaveBeenCalledTimes(profile.single ? 0 : 1);
+      expect(single).toHaveBeenCalledTimes(profile.single ? 1 : 0);
+    },
+  );
+  it.each(["OCO_LIMIT", "SINGLE_LIMIT"] as const)(
+    "rechecks a crossed %s level immediately before placement",
+    async (mode) => {
+      const o = profileOptions(mode),
+        stable = snapshot();
+      let reads = 0;
+      vi.spyOn(o.market, "snapshot").mockImplementation(() => {
+        reads++;
+        return Promise.resolve(
+          reads >= 3
+            ? {
+                ...stable,
+                quote: { ...stable.quote, bid: "2001.3", ask: "2001.5" },
+              }
+            : stable,
+        );
+      });
+      const pair = vi.spyOn(o.gateway, "placeOco"),
+        single = vi.spyOn(o.gateway, "placeDirectional");
+      expect(
+        (await new AnalysisCoordinator(o).runOnce()).reasonCodes,
+      ).toContain("SELL_LIMIT_BELOW_ASK");
+      expect(pair).not.toHaveBeenCalled();
+      expect(single).not.toHaveBeenCalled();
+    },
+  );
 });

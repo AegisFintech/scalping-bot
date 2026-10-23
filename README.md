@@ -1,4 +1,17 @@
-# Directional Codex breakout — ISSUE-368
+# Four entry modes — ISSUE-370
+
+The same demo bot now supports operator-selected **OCO stop-limit, OCO limit,
+single stop-limit and single limit**. LIMIT uses BUY at the lower range / SELL at
+the upper; single LIMIT reverses Codex at the SAME original trigger. WAIT remains
+WAIT. Initial selection is single limit, per the operator request. Dashboard
+buttons require the existing control token and persist selection across restarts.
+Accepted orders retain their original mode and protection. Each leg keeps its
+half-setup allocation inside the shared 1% cap; native equal-distance SL/TP and all
+safety gates remain. No guaranteed reversal profit or automatic promotion.
+See [contracts, controls, tests and rollout](docs/entry-modes-report.md) and
+[delivery receipts](https://github.com/AegisFintech/scalping-bot/issues/370).
+
+# Historical directional source — ISSUE-368
 
 The approved source uses Codex BUY / SELL / WAIT, M15/M5 trend context and a nearby
 completed-M1 range. Only the selected side can submit one protected STOP_LIMIT/GTC

@@ -1,3 +1,4 @@
+import type { EntryMode } from "../../../packages/contracts/src/entry-mode.js";
 import type pg from "pg";
 import type { PositionProtection } from "../../../packages/contracts/src/position-protection.js";
 
@@ -35,6 +36,7 @@ export interface ManagedTradeOverview {
 }
 
 export interface ManagedSetupOverview {
+  readonly executionMode?: EntryMode | null;
   readonly status: "ACTIVE" | "LATEST_TERMINAL" | "NONE" | "UNAVAILABLE";
   readonly groupState: string | null;
   readonly groupExpiresAt: string | null;
@@ -48,6 +50,7 @@ export interface ManagedSetupOverview {
 }
 
 interface GroupRow {
+  readonly execution_mode?: EntryMode | null;
   readonly id: string;
   readonly state: string;
   readonly expires_at: Date | null;
@@ -138,7 +141,7 @@ export class PostgresManagedSetupOverview {
       await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
       const groups = await client.query<GroupRow>(
         `SELECT og.id, og.state, og.expires_at, og.time_in_force, og.updated_at,
-                og.cancellation_reason
+                og.cancellation_reason,og.execution_mode
          FROM order_groups og
          JOIN analysis_runs ar ON ar.id = og.analysis_id
          WHERE ar.account_id = $1 AND ar.symbol_id = $2
@@ -286,6 +289,9 @@ export class PostgresManagedSetupOverview {
         )!,
       }));
       const overview: ManagedSetupOverview = {
+        ...(group.execution_mode === undefined
+          ? {}
+          : { executionMode: group.execution_mode }),
         status: TERMINAL_GROUP_STATES.has(group.state)
           ? "LATEST_TERMINAL"
           : "ACTIVE",

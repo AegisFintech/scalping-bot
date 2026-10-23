@@ -10,6 +10,7 @@ import {
   decimal,
   isTickAligned,
 } from "../../risk-engine/src/decimal.js";
+import type { ModeEntryPlan } from "./mode-entry.js";
 import type { DirectionalEntryPlan } from "./directional-entry.js";
 import type { EntryPairPlan } from "./entry-plan.js";
 
@@ -60,7 +61,7 @@ export function entryPriceBounds(
 
 /** Only proven price-side failures qualify for retirement. Bad data throws instead. */
 export function checkEntryPrices(
-  plan: EntryPairPlan | DirectionalEntryPlan,
+  plan: EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan,
   snapshot: Pick<MarketSnapshot, "quote" | "metadata" | "serverTime">,
   phase: EntryRetirementEvidence["phase"],
   now: number,
@@ -101,6 +102,7 @@ export function checkEntryPrices(
     options.minimumPoints,
   );
   const bounds = entryPriceBounds(snapshot.quote, canonical(tick), minimum);
+  if (plan.schema_version === "entry-modes-1.0") return null; // Freshness/grid validated above; executable side/type is selected per cycle.
   const reasonCodes: EntryRetirementEvidence["reasonCodes"][number][] = [];
   if (decimal(plan.buy_stop).lt(bounds.buy_stop_minimum))
     reasonCodes.push("BUY_ENTRY_TOO_CLOSE");

@@ -1,3 +1,4 @@
+import type { ModeEntryPlan } from "../../../packages/scenario-engine/src/mode-entry.js";
 import {
   isEntryPlan,
   type DirectionalEntryPlan,
@@ -43,7 +44,11 @@ import {
 } from "../../../packages/scenario-engine/src/entry-planner.js";
 import { type EntryPairPlan } from "../../../packages/scenario-engine/src/entry-plan.js";
 type ContextPlan =
-  ScenarioPlan | EntryPairPlan | DirectionalEntryPlan | EntryWaitPlan;
+  | ModeEntryPlan
+  | ScenarioPlan
+  | EntryPairPlan
+  | DirectionalEntryPlan
+  | EntryWaitPlan;
 type Planner = {
   generate(input: EntryPlannerInput): Promise<AiAnalysisResult<ContextPlan>>;
 };
@@ -409,13 +414,13 @@ export class ReusableScenarioModel implements ModelProvider {
       : null;
     const content = readFileSync(
       entryOnly
-        ? "prompts/entry-direction-execution-v1.md"
+        ? "prompts/entry-modes-execution-v1.md"
         : "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
       version: entryOnly
-        ? ("entry-direction-execution-v1" as const)
+        ? ("entry-modes-execution-v1" as const)
         : ("scenario-execution-v2" as const),
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
@@ -570,7 +575,8 @@ export class ReusableScenarioModel implements ModelProvider {
           id: existing.id,
           analysisId: response.analysis_id,
           response,
-          ...(plan.schema_version === "entry-direction-1.0"
+          ...(plan.schema_version === "entry-direction-1.0" ||
+          plan.schema_version === "entry-modes-1.0"
             ? { entrySide: plan.entry_side }
             : {}),
         };

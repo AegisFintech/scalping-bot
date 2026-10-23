@@ -87,6 +87,8 @@ def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
         proposed = proposed.get("entry_price") if isinstance(proposed, dict) else proposed
         if number(proposed) is not None:
             label = f"Codex {side} breakout"
+            if plan.get("schema_version") == "entry-modes-1.0":
+                label = "Codex upper range" if side == "BUY" else "Codex lower range"
             if (
                 plan.get("schema_version") == "entry-direction-1.0"
                 and plan.get("entry_side") != side

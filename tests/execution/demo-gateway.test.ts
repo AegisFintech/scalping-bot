@@ -1163,13 +1163,27 @@ describe("one protected directional entry", () => {
     );
     expect(client.orders).toHaveLength(1);
   });
+  it.each(["BUY", "SELL"] as const)(
+    "places one native %s LIMIT and recovers it without replay",
+    async (side) => {
+      const client = new MockClient(),
+        cmd = { ...request(side), executionOrderType: "LIMIT" as const };
+      const result = await single(client).placeDirectional(cmd);
+      expect(result.orders).toHaveLength(1);
+      expect(client.limitOrders).toEqual([cmd.clientOrderId]);
+      expect(
+        (await single(client).placeDirectional(cmd)).idempotentReplay,
+      ).toBe(true);
+      expect(client.orders).toHaveLength(1);
+    },
+  );
   it("rejects invalid execution type and expired fresh authority", async () => {
     const client = new MockClient(),
       gateway = single(client);
     await expect(
       gateway.placeDirectional({
         ...request("BUY"),
-        executionOrderType: "LIMIT",
+        executionOrderType: "STOP",
       }),
     ).rejects.toThrow();
     await expect(

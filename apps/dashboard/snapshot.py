@@ -127,7 +127,8 @@ def load_snapshot() -> dict[str, Any]:
             )
             data["orders"] = rows(
                 """SELECT o.side, o.state, o.entry_price, o.stop_loss,
-                    o.take_profit, o.normalized_volume AS volume, o.time_in_force, o.expires_at
+                    o.take_profit, o.normalized_volume AS volume, o.time_in_force, o.expires_at,
+                    o.execution_order_type
                 FROM orders o JOIN order_groups og ON og.id=o.order_group_id
                 JOIN analysis_runs ar ON ar.id=og.analysis_id
                 WHERE ar.account_id=%s AND ar.symbol_id=%s AND og.mode=%s

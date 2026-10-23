@@ -1,3 +1,12 @@
+# ISSUE-370 — Four operator-selected entry profiles
+
+One existing demo deployment supports OCO/single × STOP_LIMIT/LIMIT, selected by
+scoped durable authenticated revision. LIMIT inverts the original range sides;
+accepted groups keep immutable original mode, native protection and proof count.
+No new environment keys, credentials, risk increase or automatic mode selection.
+See [current authority, qualification and rollout](entry-modes-report.md).
+Earlier source/runtime checkpoints below remain historical.
+
 # ISSUE-368 — Directional entry source
 
 Codex selects BUY/SELL/WAIT and two structural range references; only the selected

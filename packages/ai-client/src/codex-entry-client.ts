@@ -5,10 +5,8 @@ import type { AiAnalysisRequest, AiAnalysisResult } from "./client.js";
 import { boundedResponseText } from "./telemetry.js";
 import { type EntryDecisionPlan } from "../../scenario-engine/src/entry-decision.js";
 
-import {
-  bindDirectionalDecision,
-  directionalDecisionSchema,
-} from "../../scenario-engine/src/directional-entry.js";
+import { directionalDecisionSchema } from "../../scenario-engine/src/directional-entry.js";
+import { bindModeDecision } from "../../scenario-engine/src/mode-entry.js";
 import { CODEX_ENTRY_MODEL } from "../../config/src/policy.js";
 export { CODEX_ENTRY_MODEL };
 const receipt = z
@@ -59,7 +57,7 @@ export class CodexEntryClient {
   ) {
     if (options.localToken.length < 32)
       throw new Error("CODEX_LOCAL_AUTH_REQUIRED");
-    this.#prompt = readFileSync("prompts/entry-direction-v1.md", "utf8").trim();
+    this.#prompt = readFileSync("prompts/entry-modes-v1.md", "utf8").trim();
     this.#sha = createHash("sha256").update(this.#prompt).digest("hex");
     this.#fetch = options.fetchImpl ?? fetch;
     this.#now = options.now ?? Date.now;
@@ -76,10 +74,10 @@ export class CodexEntryClient {
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
     const body = JSON.stringify({
-      version: "codex-entry-request-1.5",
+      version: "codex-entry-request-1.6",
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-direction-v1",
+      promptVersion: "entry-modes-v1",
       promptSha256: this.#sha,
       payload: request.payload,
     });
@@ -129,7 +127,7 @@ export class CodexEntryClient {
         .find((s) => s.timeframe === "M1")
         ?.rows.at(-1)?.[1];
       if (typeof observed !== "string") throw new Error("CODEX_M1_REQUIRED");
-      const parsed = bindDirectionalDecision(value.rawResponse, {
+      const parsed = bindModeDecision(value.rawResponse, {
         observedM1End: observed,
         analysisId: request.analysisId,
         symbol: request.symbol,
@@ -150,7 +148,7 @@ export class CodexEntryClient {
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
         promptArtifact: {
-          version: "entry-direction-v1",
+          version: "entry-modes-v1",
           sha256: this.#sha,
           content: this.#prompt,
         },

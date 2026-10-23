@@ -75,6 +75,7 @@ def main() -> None:
         "entry-pair-v7",
         "entry-pair-v8",
         "entry-direction-v1",
+        "entry-modes-v1",
     }:
         raise ValueError("CODEX_PROMPT_VERSION_INVALID")
     app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"], prompt_version=expected)

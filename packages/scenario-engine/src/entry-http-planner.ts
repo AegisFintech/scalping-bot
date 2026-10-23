@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { bindModeDecision } from "./mode-entry.js";
 import { bindDirectionalDecision } from "./directional-entry.js";
 import { FIXED_DEFAULTS } from "../../config/src/policy.js";
 import {
@@ -101,9 +102,11 @@ export class EntryPairHttpPlanner {
       ?.candles.at(-1)?.endTime;
     if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
     const plan = (
-      ENTRY_PAIR_PROMPT.version === "entry-direction-v1"
-        ? bindDirectionalDecision
-        : bindEntryDecision
+      ENTRY_PAIR_PROMPT.version === "entry-modes-v1"
+        ? bindModeDecision
+        : ENTRY_PAIR_PROMPT.version === "entry-direction-v1"
+          ? bindDirectionalDecision
+          : bindEntryDecision
     )(envelope.rawResponse, {
       ...input,
       observedM1End,

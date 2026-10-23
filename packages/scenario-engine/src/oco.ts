@@ -1,3 +1,4 @@
+import type { ModeEntryPlan } from "./mode-entry.js";
 import { Decimal } from "decimal.js";
 import type {
   ModelResponse,
@@ -14,7 +15,7 @@ const validator = new ModelResponseValidator("schemas/model-response-2.1.json");
 
 /** Pure candidate construction. Account sizing and every placement gate stay downstream. */
 export function scenarioOco(
-  plan: ScenarioPlan | EntryPairPlan | DirectionalEntryPlan,
+  plan: ScenarioPlan | EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan,
   payload: Readonly<Record<string, unknown>>,
   metadata?: SymbolMetadata,
 ): ModelResponse {
@@ -172,11 +173,13 @@ export function scenarioOco(
       original_sell: 0,
     },
     setup_tags: [
-      plan.schema_version === "entry-direction-1.0"
-        ? `DIRECTIONAL_${plan.entry_side}_BREAKOUT`
-        : entries
-          ? "DIRECT_ENTRY_PAIR_OCO"
-          : "REUSABLE_SCENARIO_OCO",
+      plan.schema_version === "entry-modes-1.0"
+        ? `MODE_RANGE_${plan.entry_side}`
+        : plan.schema_version === "entry-direction-1.0"
+          ? `DIRECTIONAL_${plan.entry_side}_BREAKOUT`
+          : entries
+            ? "DIRECT_ENTRY_PAIR_OCO"
+            : "REUSABLE_SCENARIO_OCO",
     ],
     evidence_codes: ["DETERMINISTIC_PLAN_DERIVATION"],
     risk_flags: [],

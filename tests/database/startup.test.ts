@@ -27,3 +27,18 @@ it("does not authorize startup when interrupted during a failed database probe",
   } as unknown as pg.Pool;
   expect(await databaseStartup(pool)).toBe(false);
 });
+
+it("initializes durable mode state only after a healthy database probe", async () => {
+  const pool = { query: vi.fn().mockResolvedValue({}) } as unknown as pg.Pool;
+  const initialize = vi.fn(() => Promise.resolve());
+  expect(await databaseStartup(pool, initialize)).toBe(true);
+  expect(initialize).toHaveBeenCalledOnce();
+});
+it("does not authorize a failed/interrupted mode initialization", async () => {
+  const pool = { query: vi.fn().mockResolvedValue({}) } as unknown as pg.Pool;
+  const initialize = () => {
+    process.emit("SIGINT");
+    return Promise.reject(new Error("temporary initialization failure"));
+  };
+  expect(await databaseStartup(pool, initialize)).toBe(false);
+});

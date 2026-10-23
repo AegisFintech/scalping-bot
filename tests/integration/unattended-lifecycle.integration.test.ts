@@ -1,3 +1,9 @@
+import { EntryModeStore } from "../../apps/execution-service/src/entry-mode-store.js";
+import {
+  ENTRY_MODES,
+  entryModeProfile,
+  type EntryMode,
+} from "../../packages/contracts/src/entry-mode.js";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -70,6 +76,7 @@ suite(
       side: "BUY" | "SELL" = "BUY",
       directional = false,
       persistEntry = true,
+      entryProfile?: EntryMode,
     ) {
       const accountId = randomUUID();
       const symbolId = randomUUID();
@@ -110,17 +117,42 @@ suite(
        VALUES ($1::uuid,$2,'COMPLETED','{"confidence":{"overall":50},"setup_tags":[],"market_regime":"UNCERTAIN"}',now())`,
         [randomUUID(), requestId],
       );
-      const tx = directional ? await pool.connect() : null;
+      const entryModes = new EntryModeStore(pool, {
+        accountId,
+        symbolId,
+        mode: "demo",
+      });
+      let selection;
+      if (entryProfile) {
+        await entryModes.initialize();
+        const current = await entryModes.read();
+        selection = await entryModes.select({
+          mode: entryProfile,
+          expectedRevision: current.revision,
+          actor: "fixture",
+          reason: "four-mode test",
+        });
+      }
+      const hasContext = directional || entryProfile !== undefined;
+      const limitMode = entryProfile
+        ? entryModeProfile(entryProfile).limit
+        : false;
+      const modelSide = limitMode ? (side === "BUY" ? "SELL" : "BUY") : side;
+      const upper = modelSide === "BUY" ? "2001" : "2003",
+        lower = modelSide === "BUY" ? "1999" : "2001";
+      const tx = hasContext ? await pool.connect() : null;
       const writer = tx ?? pool;
-      const contextId = directional ? randomUUID() : null;
+      const contextId = hasContext ? randomUUID() : null;
       try {
         if (tx) {
           await tx.query("BEGIN");
           const plan = {
-            schema_version: "entry-direction-1.0",
-            entry_side: side,
-            buy_stop: side === "BUY" ? "2001" : "2003",
-            sell_stop: side === "BUY" ? "1999" : "2001",
+            schema_version: entryProfile
+              ? "entry-modes-1.0"
+              : "entry-direction-1.0",
+            entry_side: modelSide,
+            buy_stop: upper,
+            sell_stop: lower,
             reason: "synthetic",
             analysis_id: contextId,
             symbol: "XAUUSD",
@@ -133,14 +165,16 @@ suite(
           );
         }
         await writer.query(
-          `INSERT INTO order_groups (id,analysis_id,idempotency_key,mode,state,expires_at,time_in_force,submission_valid_until,context_plan_id,entry_side)
-       VALUES ($1::uuid,$2,$1::text,'demo','ACTIVE',CASE WHEN $3::boolean THEN NULL ELSE now()+interval '1 hour' END,CASE WHEN $3::boolean THEN 'GTC' ELSE 'GTD' END,now()+interval '1 hour',$4,$5)`,
+          `INSERT INTO order_groups (id,analysis_id,idempotency_key,mode,state,expires_at,time_in_force,submission_valid_until,context_plan_id,entry_side,execution_mode,mode_revision)
+       VALUES ($1::uuid,$2,$1::text,'demo','ACTIVE',CASE WHEN $3::boolean THEN NULL ELSE now()+interval '1 hour' END,CASE WHEN $3::boolean THEN 'GTC' ELSE 'GTD' END,now()+interval '1 hour',$4,$5,$6,$7)`,
           [
             groupId,
             analysisId,
-            directional,
+            hasContext,
             contextId,
             directional ? side : null,
+            entryProfile ?? null,
+            selection?.revision ?? null,
           ],
         );
         const entries = directional
@@ -154,7 +188,7 @@ suite(
             `INSERT INTO orders (id,account_id,order_group_id,side,order_type,state,client_order_id,
           broker_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,
           requested_volume,normalized_volume,expires_at,time_in_force,submission_valid_until,execution_order_type)
-         VALUES ($1::uuid,$2,$3,$4,'STOP','PENDING',$5,$6,true,'ctrader-ai-scalper:fixture',$1::text,2001,1999,2005,100,100,CASE WHEN $7::boolean THEN NULL ELSE now()+interval '1 hour' END,CASE WHEN $7::boolean THEN 'GTC' ELSE 'GTD' END,now()+interval '1 hour',CASE WHEN $7::boolean THEN 'STOP_LIMIT' ELSE NULL END)`,
+         VALUES ($1::uuid,$2,$3,$4,'STOP','PENDING',$5,$6,true,'ctrader-ai-scalper:fixture',$1::text,$9,1999,2005,100,100,CASE WHEN $7::boolean THEN NULL ELSE now()+interval '1 hour' END,CASE WHEN $7::boolean THEN 'GTC' ELSE 'GTD' END,now()+interval '1 hour',CASE WHEN $7::boolean THEN $8 ELSE NULL END)`,
             [
               randomUUID(),
               accountId,
@@ -162,7 +196,13 @@ suite(
               orderSide,
               clientId,
               brokerId,
-              directional,
+              hasContext,
+              limitMode ? "LIMIT" : "STOP_LIMIT",
+              entryProfile
+                ? (orderSide === "BUY") !== limitMode
+                  ? upper
+                  : lower
+                : "2001",
             ],
           );
         }
@@ -177,6 +217,7 @@ suite(
         new PostgresDemoExecutionStore({ pool, accountId, symbolId });
       const entry = await fixture("demo-order-filled-v1.json");
       entry.order!.clientOrderId = buyClient;
+      if (entryProfile) entry.order!.orderType = limitMode ? 2 : 6;
       entry.deal!.volume = "100";
       entry.deal!.filledVolume = "100";
       const close = await fixture("demo-position-closed-v1.json");
@@ -225,6 +266,8 @@ suite(
       return {
         accountId,
         symbolId,
+        entryModes,
+        selection,
         groupId,
         analysisId,
         contextId,
@@ -239,15 +282,114 @@ suite(
       };
     }
 
-    it.each(["BUY", "SELL"] as const)(
-      "recovers a true single %s group with exact terminal evidence and no manufactured peer",
-      async (side) => {
+    it.each(ENTRY_MODES)(
+      "persists exact %s authority and preserves it across selection changes",
+      async (mode) => {
+        const single = entryModeProfile(mode).single;
+        const f = await setup("BUY", single, false, mode);
+        const rows = await pool.query(
+          "SELECT side,entry_price::text,execution_order_type FROM orders WHERE order_group_id=$1 ORDER BY side",
+          [f.groupId],
+        );
+        expect(rows.rowCount).toBe(single ? 1 : 2);
+        expect(
+          rows.rows.every(
+            (x: { execution_order_type: string }) =>
+              x.execution_order_type === entryModeProfile(mode).orderType,
+          ),
+        ).toBe(true);
+        const current = await f.entryModes.read();
+        const next = await f.entryModes.select({
+          mode: mode === "OCO_LIMIT" ? "SINGLE_STOP_LIMIT" : "OCO_LIMIT",
+          expectedRevision: current.revision,
+          actor: "fixture",
+          reason: "next setup only",
+        });
+        expect(next.revision).not.toBe(current.revision);
+        await pool.query(
+          "UPDATE order_groups SET updated_at=now() WHERE id=$1",
+          [f.groupId],
+        );
+        expect(
+          (
+            await pool.query(
+              "SELECT execution_mode,mode_revision FROM order_groups WHERE id=$1",
+              [f.groupId],
+            )
+          ).rows[0],
+        ).toMatchObject({
+          execution_mode: mode,
+          mode_revision: current.revision,
+        });
+        await expect(
+          f.entryModes.select({
+            mode,
+            expectedRevision: current.revision,
+            actor: "fixture",
+            reason: "stale browser",
+          }),
+        ).rejects.toThrow("ENTRY_MODE_CHANGED_REFRESH");
+        await expect(
+          pool.query(
+            "UPDATE orders SET entry_price=entry_price+1 WHERE order_group_id=$1",
+            [f.groupId],
+          ),
+        ).rejects.toThrow("ENTRY_MODE_ORDER_INVALID");
+        await expect(
+          pool.query("DELETE FROM orders WHERE order_group_id=$1", [f.groupId]),
+        ).rejects.toThrow("ENTRY_MODE_CARDINALITY_INVALID");
+
+        await expect(
+          pool.query(
+            "UPDATE order_groups SET execution_mode=CASE WHEN execution_mode='SINGLE_LIMIT' THEN 'OCO_LIMIT' ELSE 'SINGLE_LIMIT' END WHERE id=$1",
+            [f.groupId],
+          ),
+        ).rejects.toThrow();
+        await expect(
+          pool.query("DELETE FROM entry_mode_settings WHERE account_id=$1", [
+            f.accountId,
+          ]),
+        ).rejects.toThrow("ENTRY_MODE_DELETE_FORBIDDEN");
+        await expect(
+          pool.query(
+            "UPDATE entry_mode_changes SET actor='rewrite' WHERE revision=$1",
+            [current.revision],
+          ),
+        ).rejects.toThrow("ENTRY_MODE_HISTORY_IMMUTABLE");
+      },
+    );
+    it("rejects stale mode authority at the transactional intent boundary", async () => {
+      const f = await setup("BUY", true, false, "SINGLE_STOP_LIMIT");
+      const current = await f.entryModes.read();
+      await f.entryModes.select({
+        mode: "OCO_LIMIT",
+        expectedRevision: current.revision,
+        actor: "fixture",
+        reason: "changed during evaluation",
+      });
+      await expect(
+        pool.query(
+          `INSERT INTO order_groups(id,analysis_id,idempotency_key,mode,state,time_in_force,submission_valid_until,context_plan_id,entry_side,execution_mode,mode_revision) VALUES($1::uuid,$2,$1::text,'demo','INTENT_RECORDED','GTC',now()+interval '1 minute',$3,'BUY','SINGLE_STOP_LIMIT',$4)`,
+          [randomUUID(), f.analysisId, f.contextId, current.revision],
+        ),
+      ).rejects.toThrow("ENTRY_MODE_CHANGED_REFRESH");
+    });
+    it.each([
+      { side: "BUY", profile: undefined },
+      { side: "SELL", profile: undefined },
+      { side: "BUY", profile: "SINGLE_STOP_LIMIT" },
+      { side: "SELL", profile: "SINGLE_STOP_LIMIT" },
+      { side: "BUY", profile: "SINGLE_LIMIT" },
+      { side: "SELL", profile: "SINGLE_LIMIT" },
+    ] as const)(
+      "recovers a true single $side $profile group with exact terminal evidence and no manufactured peer",
+      async ({ side, profile }) => {
         for (const sequence of permutations<Step>([
           "accepted",
           "amended",
           "closed",
         ])) {
-          const s = await setup(side, true);
+          const s = await setup(side, true, true, profile);
           for (const step of sequence)
             await s.restart().persist(s.events[step]);
           const evidence = await s.restart().reconcileTerminalEvidence();
