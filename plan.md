@@ -1,3 +1,11 @@
+### ISSUE-372 — Fixed trend-direction STOP_LIMIT, no mode controls
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/372.
+- Dependencies: #370 historical mode/recovery contracts; #356 separate exit evidence.
+- Acceptance: fixed single STOP_LIMIT in Codex direction; remove mode buttons/unlock/proxy/backend selection route; initial and late fixed-profile admission, fresh-scope default; preserve existing groups, native protection, dynamic risk and immutable history. Success/failure tests, full qualification, docs/Graphify, pushed reviewed PR with green checks, matching same-demo main deployment.
+- Status: implemented; operator-authorized current selection was changed through authenticated CAS to SINGLE_STOP_LIMIT before removing the route. Full qualification passed all gates and 1,633 tests (1,080 Node, 115 PostgreSQL, 438 Python), both configuration checks and AST Graphify. PR/checks/main deployment receipt is recorded on #372; no exit/lot/risk/reset change.
+- Evidence: [fixed-profile report](docs/fixed-stop-limit-report.md).
+
 ### ISSUE-370 — Four operator-selectable entry modes
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/370.

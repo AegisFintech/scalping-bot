@@ -1282,7 +1282,8 @@ async function main(): Promise<void> {
   ) {
     throw new Error("CONFIG_ORDER_EXPIRY_RANGE_INVALID");
   }
-  const coordinator = new EntryModeCoordinator(entryModes, (selection) => {
+  const admissionModes = { read: () => entryModes.readForAdmission() };
+  const coordinator = new EntryModeCoordinator(admissionModes, (selection) => {
     const profile = entryModeProfile(selection.mode);
     const selectedRisk = createRisk(profile.orderType);
     return new AnalysisCoordinator({
@@ -1413,7 +1414,7 @@ async function main(): Promise<void> {
             accountKey: config.accountKey,
             configHash,
           }),
-          entryModes.read(),
+          entryModes.readForAdmission(),
         ]);
         return {
           filesystemControlsCertain: filesystem.certain,
@@ -1709,7 +1710,6 @@ async function main(): Promise<void> {
   };
   const app = createExecutionServer({
     coordinator,
-    entryModes,
     maintenance,
     controls,
     controlToken: environment.DASHBOARD_CONTROL_TOKEN ?? "",

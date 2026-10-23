@@ -1,5 +1,3 @@
-import type { EntryModeStore } from "../../apps/execution-service/src/entry-mode-store.js";
-import { randomUUID } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
 import type { RuntimeControlStore } from "../../packages/database/src/runtime-controls.js";
@@ -13,11 +11,9 @@ function server(
   initialize: () => Promise<{ tradingDay: string; timezone: string }>,
   openPositionMonitor?: () => Promise<OpenPositionMonitor>,
   operationalReady = true,
-  entryModes?: Pick<EntryModeStore, "read" | "select">,
 ) {
   return createExecutionServer({
     coordinator: {} as AnalysisCoordinator,
-    ...(entryModes ? { entryModes } : {}),
     maintenance: {} as OrderMaintenance,
     controls: {} as RuntimeControlStore,
     controlToken: "x".repeat(32),
@@ -236,67 +232,16 @@ describe("open position monitor route", () => {
   });
 });
 
-it("authenticates and compare-and-swaps four demo-only modes", async () => {
-  const revision = randomUUID(),
-    selected = { mode: "SINGLE_LIMIT" as const, revision: randomUUID() };
-  const store = {
-    read: () => Promise.resolve(selected),
-    select: () => Promise.resolve(selected),
-  };
-  const app = server(
-    "demo",
-    () => Promise.reject(new Error("unused")),
-    undefined,
-    true,
-    store,
-  );
-  const body = {
-    mode: "SINGLE_LIMIT",
-    expectedRevision: revision,
-    actor: "fixture",
-    reason: "operator choice",
-  };
-  expect(
-    (
-      await app.inject({
-        method: "POST",
-        url: "/v1/controls/entry-mode",
-        payload: body,
-      })
-    ).statusCode,
-  ).toBe(401);
-  const call = (payload: Record<string, unknown>) =>
-    app.inject({
+it("removes the mode mutation endpoint, including authenticated callers", async () => {
+  const app = server("demo", () => Promise.reject(new Error("unused")));
+  for (const headers of [{}, { "x-control-token": "x".repeat(32) }]) {
+    const response = await app.inject({
       method: "POST",
       url: "/v1/controls/entry-mode",
-      headers: { "x-control-token": "x".repeat(32) },
-      payload,
+      headers,
+      payload: { mode: "OCO_LIMIT", expectedRevision: "a".repeat(36) },
     });
-  expect((await call({ ...body, mode: "UNKNOWN" })).statusCode).toBe(400);
-  expect((await call({ ...body, volume: "999" })).statusCode).toBe(400);
-  expect((await call(body)).json()).toEqual({
-    accepted: true,
-    entryMode: selected,
-  });
-  store.select = () => Promise.reject(new Error("ENTRY_MODE_CHANGED_REFRESH"));
-  expect((await call(body)).statusCode).toBe(409);
+    expect(response.statusCode).toBe(404);
+  }
   await app.close();
-  const live = server(
-    "live",
-    () => Promise.reject(new Error("unused")),
-    undefined,
-    true,
-    store,
-  );
-  expect(
-    (
-      await live.inject({
-        method: "POST",
-        url: "/v1/controls/entry-mode",
-        headers: { "x-control-token": "x".repeat(32) },
-        payload: body,
-      })
-    ).statusCode,
-  ).toBe(409);
-  await live.close();
 });

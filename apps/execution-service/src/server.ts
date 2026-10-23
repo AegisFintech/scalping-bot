@@ -1,8 +1,4 @@
-import {
-  isEntryMode,
-  type EntryModeStatus,
-} from "../../../packages/contracts/src/entry-mode.js";
-import type { EntryModeStore } from "./entry-mode-store.js";
+import { type EntryModeStatus } from "../../../packages/contracts/src/entry-mode.js";
 import { timingSafeEqual } from "node:crypto";
 
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
@@ -78,7 +74,6 @@ export interface ExecutionStatus {
 
 export interface ExecutionServerOptions {
   readonly coordinator: Pick<AnalysisCoordinator, "runOnce">;
-  readonly entryModes?: Pick<EntryModeStore, "read" | "select">;
   readonly maintenance: OrderMaintenance;
   readonly controls: RuntimeControlStore;
   readonly controlToken: string;
@@ -226,45 +221,6 @@ export function createExecutionServer(
     },
   );
 
-  app.post<{
-    Body: {
-      mode?: unknown;
-      expectedRevision?: unknown;
-      actor?: unknown;
-      reason?: unknown;
-    };
-  }>("/v1/controls/entry-mode", async (request, reply) => {
-    if (!authorized(request, options.controlToken))
-      return reply.code(401).send({ error: "UNAUTHORIZED" });
-    if (options.mode !== "demo" || !options.entryModes)
-      return reply.code(409).send({ error: "ENTRY_MODES_DEMO_ONLY" });
-    const body = request.body;
-    if (
-      !body ||
-      Object.keys(body).some(
-        (key) => !["mode", "expectedRevision", "actor", "reason"].includes(key),
-      ) ||
-      !isEntryMode(body.mode) ||
-      typeof body.expectedRevision !== "string" ||
-      !/^[0-9a-f-]{36}$/.test(body.expectedRevision)
-    )
-      return reply.code(400).send({ error: "ENTRY_MODE_INVALID" });
-    const audit = auditFields(body);
-    try {
-      return reply.send({
-        accepted: true,
-        entryMode: await options.entryModes.select({
-          mode: body.mode,
-          expectedRevision: body.expectedRevision,
-          ...audit,
-        }),
-      });
-    } catch {
-      return reply
-        .code(409)
-        .send({ error: "ENTRY_MODE_CHANGED_OR_UNAVAILABLE" });
-    }
-  });
   app.post<{ Body: { actor?: unknown; reason?: unknown } }>(
     "/v1/controls/daily-risk-baseline",
     async (request, reply) => {

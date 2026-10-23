@@ -1,3 +1,20 @@
+# ISSUE-372 — Fixed trend-direction STOP_LIMIT
+
+The operator removed all four mode choices and approved single STOP_LIMIT only,
+in Codex's original trend-continuation BUY/SELL direction. Read
+`docs/fixed-stop-limit-report.md`. This supersedes ISSUE-370 selection authority
+for NEW setups. Current source `0.6.0-entry-modes.1-codex.2`; policy, prompt and
+worker contracts remain unchanged. WAIT has no order authority. New scopes start
+SINGLE_STOP_LIMIT; persisted alternatives fail closed at initial/late admission.
+The public selection endpoint, dashboard proxy/buttons/unlock/token UI are removed.
+Historical mode schemas/store/mappings and migration 0033 remain necessary for
+immutable audit, legacy recovery and lifecycle tests, not operator mode selection.
+Preserve active groups/native protection, revision/intent interlocks, all cooldowns,
+financial/history/registration state and half-leg dynamic sizing within shared 1%.
+No smaller TP, larger lots, 1:10 payoff or profit-close change is included; these
+remain separate evidence/review work. Model direction is not verified trend truth
+or a profitability claim. Deploy qualified main to the ONE existing demo.
+
 # ISSUE-370 — Explicit four-mode operator authority
 
 The operator requested four dashboard choices, superseding single-direction-only

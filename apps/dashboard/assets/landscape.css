@@ -1545,46 +1545,11 @@ small,
   font-size: clamp(22px, 2.3vw, 36px);
 }
 
-.entry-picker {
-  display: flex;
-  gap: 5px;
-  flex-shrink: 0;
-}
-.entry-picker button {
-  font-size: 11px;
-  padding: 5px 8px;
-  white-space: nowrap;
-}
 .mode-identity {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-}
-#entry-mode-status {
-  min-width: 100px;
-}
-#entry-unlock-dialog {
-  background: var(--panel);
-  color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  max-width: 420px;
-  padding: 24px;
-}
-#entry-unlock-dialog::backdrop {
-  background: #000b;
-}
-#entry-unlock-form {
-  display: grid;
-  gap: 16px;
-}
-#entry-token {
-  padding: 10px;
-  background: var(--bg);
-  color: var(--ink);
-  border: 1px solid var(--line);
-  width: 100%;
 }
 @media (max-width: 1100px) {
   .preview-strip {

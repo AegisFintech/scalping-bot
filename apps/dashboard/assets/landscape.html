@@ -18,26 +18,6 @@
     <div class="clock mono" id="clock">—</div>
   </header>
   <div class="preview-strip">
-    <div
-      class="entry-picker"
-      role="group"
-      aria-label="Entry mode for new setups"
-    >
-      <button data-entry-mode="OCO_STOP_LIMIT" disabled>OCO stop-limit</button>
-      <button data-entry-mode="OCO_LIMIT" disabled>OCO limit</button>
-      <button data-entry-mode="SINGLE_STOP_LIMIT" disabled>
-        Single stop-limit
-      </button>
-      <button data-entry-mode="SINGLE_LIMIT" disabled>Single limit</button>
-      <button
-        id="entry-unlock"
-        title="Unlock with existing operator control token"
-      >
-        Unlock
-      </button>
-    </div>
-    <small id="entry-mode-status" role="status">Mode unavailable</small>
-
     <span class="mode-identity" id="identity"
       >Connecting to read-only evidence</span
     ><span class="snapshot-line" id="snapshot-time"
@@ -350,26 +330,3 @@
     ><span id="strategy">Strategy unavailable</span>
   </footer>
 </div>
-
-<dialog id="entry-unlock-dialog">
-  <form method="dialog" id="entry-unlock-form">
-    <h2>Operator controls</h2>
-    <p>
-      Enter your existing control token. New setups only; accepted orders stay
-      unchanged.
-    </p>
-    <input
-      id="entry-token"
-      type="password"
-      autocomplete="off"
-      aria-label="Existing operator control token"
-      minlength="24"
-      maxlength="512"
-      required
-    />
-    <div>
-      <button type="submit">Unlock</button
-      ><button type="button" id="entry-unlock-cancel">Cancel</button>
-    </div>
-  </form>
-</dialog>
