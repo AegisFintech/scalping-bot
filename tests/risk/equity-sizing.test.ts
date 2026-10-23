@@ -418,3 +418,89 @@ it("ordinary STOP reserves more slippage and reduces both volumes without changi
   ).toBe(true);
   expect((await run("-1")).approved).toBe(false);
 });
+
+describe("directional allocation keeps the old leg budget", () => {
+  it.each(["BUY", "SELL"] as const)(
+    "sizes only the selected %s side from current equity",
+    async (side) => {
+      const estimate = vi.fn(
+        (_symbol: string, _side: "BUY" | "SELL", volume: string) =>
+          Promise.resolve(new Decimal(volume).mul("0.0442").toFixed()),
+      );
+      const risk = new OcoRiskEvaluator({
+        marginEstimator: { estimate },
+        baseRiskPercent: "1",
+        maxRiskPercent: "1",
+        maxMarginUsagePercent: "100",
+        maxPositionNotional: null,
+        strategyVersion: "direction-test",
+        executionOrderType: "STOP_LIMIT",
+        timeInForce: "GTC",
+        adverseSlippagePoints: "30",
+      });
+      const first = await risk.evaluate({
+        account,
+        response,
+        metadata: leg.metadata,
+        quote: {} as Quote,
+        selectedSide: side,
+      });
+      expect(first.approved).toBe(true);
+      expect(first.commands).toBeNull();
+      expect(first.directionalCommand?.side).toBe(side);
+      expect(first.perLegRiskPercent).toBe("0.5");
+      expect(estimate.mock.calls.every((c) => c[1] === side)).toBe(true);
+      const second = await risk.evaluate({
+        account: { ...account, equity: "400000", availableMargin: "400000" },
+        response,
+        metadata: leg.metadata,
+        quote: {} as Quote,
+        selectedSide: side,
+      });
+      expect(
+        new Decimal(second.directionalCommand!.volume).lt(
+          first.directionalCommand!.volume,
+        ),
+      ).toBe(true);
+      expect(
+        new Decimal(first.directionalRisk!.maximumLoss!).lte(
+          new Decimal(account.equity).mul("0.005"),
+        ),
+      ).toBe(true);
+    },
+  );
+  it("rejects uncertain account and insufficient margin without an order", async () => {
+    const risk = new OcoRiskEvaluator({
+      marginEstimator: { estimate: () => Promise.resolve("999999999") },
+      baseRiskPercent: "1",
+      maxRiskPercent: "1",
+      maxMarginUsagePercent: "100",
+      maxPositionNotional: null,
+      strategyVersion: "fixture",
+      executionOrderType: "STOP_LIMIT",
+      timeInForce: "GTC",
+    });
+    expect(
+      (
+        await risk.evaluate({
+          account: { ...account, certain: false },
+          response,
+          metadata: leg.metadata,
+          quote: {} as Quote,
+          selectedSide: "BUY",
+        })
+      ).approved,
+    ).toBe(false);
+    expect(
+      (
+        await risk.evaluate({
+          account,
+          response,
+          metadata: leg.metadata,
+          quote: {} as Quote,
+          selectedSide: "BUY",
+        })
+      ).approved,
+    ).toBe(false);
+  });
+});

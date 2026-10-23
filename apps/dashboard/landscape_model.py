@@ -82,10 +82,13 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                     "codex",
                     "Codex chose WAIT"
                     if row.get("plan_schema") == "entry-wait-1.0"
+                    else f"Codex chose {row.get('entry_side')} breakout"
+                    if row.get("plan_schema") == "entry-direction-1.0"
+                    and row.get("entry_side") in {"BUY", "SELL"}
                     else "Entry prices available",
                     (
                         str(row.get("wait_reason") or "No setup proposed.")[:1200]
-                        if row.get("plan_schema") == "entry-wait-1.0"
+                        if row.get("plan_schema") in {"entry-wait-1.0", "entry-direction-1.0"}
                         else (
                             "Recorded provider result; deterministic validation "
                             "still owns execution."

@@ -160,6 +160,7 @@ function formatError(error: ErrorObject): string {
 }
 
 export interface SemanticContext {
+  readonly selectedSide?: "BUY" | "SELL";
   readonly enforceStrategyLimits?: boolean;
   readonly entryBrackets?: "STOP" | "LIMIT";
   readonly analysisId: string;
@@ -494,8 +495,10 @@ export function validateSemantics(
       if (!effectiveSellTarget.eq(downside[0]!))
         reasons.push("SELL_PRIMARY_TARGET_MISMATCH");
     }
-    checkLeg("BUY", response.buy_stop, context, reasons);
-    checkLeg("SELL", response.sell_stop, context, reasons);
+    if (context.selectedSide !== "SELL")
+      checkLeg("BUY", response.buy_stop, context, reasons);
+    if (context.selectedSide !== "BUY")
+      checkLeg("SELL", response.sell_stop, context, reasons);
   } catch {
     reasons.push("SEMANTIC_DECIMAL_INVALID");
   }

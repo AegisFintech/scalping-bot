@@ -10,6 +10,11 @@ const wait = {
 describe("versioned evidence-first wire schemas", () => {
   it.each([
     "codex-entry-request-1.3",
+    "codex-entry-request-1.5",
+    "codex-entry-response-1.2",
+    "entry-direction-provider-1.0",
+    "entry-direction-context-1.0",
+    "sampled-trade-path-1.0",
     "codex-entry-request-1.4",
     "codex-entry-response-1.1",
     "entry-decision-provider-1.0",

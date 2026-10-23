@@ -1,0 +1,37 @@
+{
+  "from": "2026-10-22T09:11:34Z",
+  "until": "2026-10-23T01:47:19.841168+00:00",
+  "mode": "demo",
+  "release": "0.4.3-evidence-scalp.1-codex.2",
+  "closedTrades": 33,
+  "net": "-3208.3200000000",
+  "signedFees": "-785.5500000000",
+  "directions": {
+    "LONG": {
+      "trades": 16,
+      "net": "-3079.7400000000"
+    },
+    "SHORT": {
+      "trades": 17,
+      "net": "-128.5800000000"
+    }
+  },
+  "providerLatency": {
+    "calls": 246,
+    "failed": 2,
+    "median_seconds": 8.4074365,
+    "max_seconds": "70.564750"
+  },
+  "pricePathTables": [],
+  "selectedSubsetEconomicConclusion": false,
+  "grossPnl": "-2422.7700000000",
+  "wins": 13,
+  "losses": 20,
+  "medianHoldingSeconds": "405.967000",
+  "holdingSecondsRange": ["60.699000", "1245.542000"],
+  "meanWin": "299.4261538462",
+  "meanLoss": "-355.0430000000",
+  "pathExcursions": "Unavailable: no retained broker quote tape or matching price-path table located for this cohort. Do not reconstruct early-close wins from completed OHLC.",
+  "openAndPending": "Excluded from this closed-outcome statistic, not assumed flat or absent. Not an account/equity return.",
+  "maxAdverseEntryPriceDisplacement": "0.2800000000"
+}

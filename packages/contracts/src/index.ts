@@ -19,7 +19,8 @@ export interface RiskPolicy {
     | "0.4.0-breakout-scalp.1"
     | "0.4.1-smc-breakout.1"
     | "0.4.2-compression-scalp.1"
-    | "0.4.3-evidence-scalp.1";
+    | "0.4.3-evidence-scalp.1"
+    | "0.5.0-directional-scalp.1";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
@@ -257,7 +258,9 @@ export interface ModelPromptArtifact {
     | "entry-pair-v6"
     | "entry-pair-v7"
     | "entry-pair-v8"
+    | "entry-direction-v1"
     | "entry-pair-execution-v1"
+    | "entry-direction-execution-v1"
     | "scenario-v2"
     | "scenario-v3"
     | "scenario-research-v2"
@@ -409,6 +412,7 @@ export interface ReconciliationSnapshot {
 export interface ExecutionGateway {
   readonly kind: GatewayKind;
   readonly canSubmitToBroker: boolean;
+  placeDirectional?(command: PendingOrderCommand): Promise<OcoPlacementResult>;
   placeOco(
     commands: readonly [PendingOrderCommand, PendingOrderCommand],
   ): Promise<OcoPlacementResult>;

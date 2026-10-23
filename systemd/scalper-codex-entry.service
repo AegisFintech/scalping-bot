@@ -13,7 +13,7 @@ WorkingDirectory=/var/lib/scalper-research
 Environment=HOME=/var/lib/scalper-research
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-codex-entry
-Environment=CODEX_ENTRY_PROMPT_FILE=/opt/scalper-codex-entry/prompts/entry-pair-v8.md
+Environment=CODEX_ENTRY_PROMPT_FILE=/opt/scalper-codex-entry/prompts/entry-direction-v1.md
 EnvironmentFile=/etc/scalper-codex-entry/environment
 ExecStart=/opt/scalper-codex-entry/.venv/bin/python -m python.codex_entry.api
 Restart=on-failure

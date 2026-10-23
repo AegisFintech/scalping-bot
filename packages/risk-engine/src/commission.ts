@@ -308,7 +308,7 @@ export function minimumFeeBufferedTarget(input: {
 }
 
 export function validateCommandFeeBuffer(
-  commands: readonly [PendingOrderCommand, PendingOrderCommand],
+  commands: readonly PendingOrderCommand[],
   metadata: SymbolMetadata,
   minimumExpectedNetToFeesRatio: string,
 ): {
@@ -316,6 +316,12 @@ export function validateCommandFeeBuffer(
   readonly reasonCodes: readonly string[];
   readonly evidence: readonly CommissionCoverageEvidence[];
 } {
+  if (commands.length !== 1 && commands.length !== 2)
+    return {
+      approved: false,
+      reasonCodes: ["FEE_COMMAND_COUNT_INVALID"],
+      evidence: [],
+    };
   const results = commands.map((command) =>
     evaluateCommissionCoverage({
       side: command.side,

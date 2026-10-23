@@ -15,7 +15,7 @@ export async function readTerminalGroup(
 ): Promise<TerminalGroupSnapshot> {
   const result = await client.query<{ snapshot: TerminalGroupSnapshot }>(
     `SELECT jsonb_build_object(
-      'group', jsonb_build_object('id',og.id,'accountId',ar.account_id,'symbolId',ar.symbol_id,'mode',og.mode,'state',og.state),
+      'group', jsonb_build_object('id',og.id,'accountId',ar.account_id,'symbolId',ar.symbol_id,'mode',og.mode,'state',og.state,'entrySide',og.entry_side),
       'orders', COALESCE((SELECT jsonb_agg(x.data ORDER BY x.id) FROM (
         SELECT id, jsonb_build_object('id',id,'accountId',account_id,'clientId',client_order_id,'brokerId',broker_order_id,
           'side',side,'state',state,'owned',strategy_owned,'volume',normalized_volume::text,'filled',filled_volume::text,'updatedAt',broker_updated_at) || COALESCE((

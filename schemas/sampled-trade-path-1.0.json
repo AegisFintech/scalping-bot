@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sampled-trade-path-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "sampled-trade-path-1.0"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "quote": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bid": {
+              "type": "string"
+            },
+            "ask": {
+              "type": "string"
+            },
+            "sourceTime": {
+              "type": "string"
+            },
+            "receivedAt": {
+              "type": "string"
+            }
+          },
+          "required": ["bid", "ask", "sourceTime", "receivedAt"]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "position": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "side": {
+              "enum": ["BUY", "SELL"]
+            },
+            "openedAt": {
+              "type": ["string", "null"]
+            },
+            "entryPrice": {
+              "type": ["string", "null"]
+            },
+            "volume": {
+              "type": ["string", "null"]
+            }
+          },
+          "required": ["side", "openedAt", "entryPrice", "volume"]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "pnl": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "side": {
+              "type": ["string", "null"]
+            },
+            "accountCurrency": {
+              "type": ["string", "null"]
+            },
+            "grossUnrealizedPnl": {
+              "type": ["string", "null"]
+            },
+            "netUnrealizedPnl": {
+              "type": ["string", "null"]
+            },
+            "recordedCommission": {
+              "type": ["string", "null"]
+            },
+            "pnlCapturedAt": {
+              "type": ["string", "null"]
+            },
+            "quoteSourceTime": {
+              "type": ["string", "null"]
+            },
+            "quoteReceivedAt": {
+              "type": ["string", "null"]
+            }
+          },
+          "required": [
+            "side",
+            "accountCurrency",
+            "grossUnrealizedPnl",
+            "netUnrealizedPnl",
+            "recordedCommission",
+            "pnlCapturedAt",
+            "quoteSourceTime",
+            "quoteReceivedAt"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "brokerAuthority": {
+      "const": false
+    },
+    "completeTickTape": {
+      "const": false
+    },
+    "future_closing_costs": {
+      "type": "null"
+    },
+    "counterfactual_net": {
+      "type": "null"
+    },
+    "runtime_release": {
+      "type": "string"
+    },
+    "position_origin_release": {
+      "type": "null"
+    },
+    "operational_ready": {
+      "type": "boolean"
+    },
+    "quote_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "enum": ["SAMPLED", "GAP", "SOURCE_HALT"]
+    },
+    "pnl_reason": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "previous_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "version",
+    "captured_at",
+    "quote",
+    "position",
+    "pnl",
+    "brokerAuthority",
+    "completeTickTape",
+    "future_closing_costs",
+    "counterfactual_net",
+    "state"
+  ]
+}

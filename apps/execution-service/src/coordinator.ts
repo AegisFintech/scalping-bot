@@ -92,6 +92,7 @@ export interface ModelProvider {
     readonly timeoutMs: number;
   }): Promise<{
     readonly response: ModelResponse;
+    readonly entrySide?: "BUY" | "SELL";
     readonly rawResponse: string;
     readonly promptArtifact: ModelPromptArtifact;
     readonly latencyMs?: number;
@@ -158,6 +159,7 @@ export interface OcoRiskProvider {
     readonly metadata: SymbolMetadata;
     readonly quote: Quote;
     readonly trend?: -1 | 0 | 1;
+    readonly selectedSide?: "BUY" | "SELL";
   }): Promise<OcoEvaluation>;
 }
 
@@ -273,6 +275,7 @@ export interface CoordinatorOptions {
   readonly marketSession?: () => Promise<MarketSessionStatus>;
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
+  readonly directionalEntryOnly?: boolean;
   readonly entryBrackets?: "STOP" | "LIMIT";
   readonly trendFilterBars?: number;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
@@ -386,6 +389,7 @@ function ceilToTick(value: Decimal, tickSize: Decimal): Decimal {
 
 export function deriveModelExecutionBounds(input: {
   readonly entryPairMode?: boolean;
+  readonly directionalEntryOnly?: boolean;
   readonly currentBid: string;
   readonly currentAsk: string;
   readonly tickSize: string;
@@ -1251,7 +1255,16 @@ export class AnalysisCoordinator {
       }
 
       const now = new Date();
+      if (
+        this.#options.directionalEntryOnly &&
+        model.entrySide !== "BUY" &&
+        model.entrySide !== "SELL"
+      )
+        return await reject(["DIRECTIONAL_ENTRY_REQUIRED"]);
       const semanticContext = {
+        ...(model.entrySide === undefined
+          ? {}
+          : { selectedSide: model.entrySide }),
         enforceStrategyLimits: !this.#options.entryPairMode,
         entryBrackets: this.#options.entryBrackets ?? "STOP",
         analysisId,
@@ -1422,6 +1435,9 @@ export class AnalysisCoordinator {
         metadata: decisionSnapshot.metadata,
         quote: decisionSnapshot.quote,
         trend: trendDirection,
+        ...(model.entrySide === undefined
+          ? {}
+          : { selectedSide: model.entrySide }),
       });
       await this.#options.trail.validation(
         analysisId,
@@ -1429,11 +1445,20 @@ export class AnalysisCoordinator {
         risk.approved,
         risk.reasonCodes,
       );
-      if (!risk.approved || risk.commands === null)
+      const executableCommands = risk.directionalCommand
+        ? [risk.directionalCommand]
+        : risk.commands;
+      if (!risk.approved || executableCommands === null)
         return await reject(risk.reasonCodes);
+      if (
+        model.entrySide !== undefined &&
+        (executableCommands.length !== 1 ||
+          executableCommands[0]?.side !== model.entrySide)
+      )
+        return await reject(["DIRECTIONAL_SIDE_MISMATCH"]);
 
       const commissionCoverage = validateCommandFeeBuffer(
-        risk.commands,
+        executableCommands,
         decisionSnapshot.metadata,
         this.#options.minimumExpectedNetToFeesRatio,
       );
@@ -1720,8 +1745,15 @@ export class AnalysisCoordinator {
             placementSession.reasonCode ?? "MARKET_SESSION_UNAVAILABLE",
           ]);
       }
+      if (
+        risk.directionalCommand &&
+        this.#options.gateway.placeDirectional === undefined
+      )
+        return await reject(["DIRECTIONAL_GATEWAY_UNAVAILABLE"]);
       await this.#options.trail.intent(analysisId, risk);
-      const placement = await this.#options.gateway.placeOco(risk.commands);
+      const placement = risk.directionalCommand
+        ? await this.#options.gateway.placeDirectional!(risk.directionalCommand)
+        : await this.#options.gateway.placeOco(risk.commands!);
       await this.#options.trail.placement(analysisId, placement);
       await this.#options.flushExecutionEvents?.();
       const sessionRejections = placement.orders.flatMap((order) =>

@@ -1,4 +1,8 @@
 import {
+  isEntryPlan,
+  type DirectionalEntryPlan,
+} from "../../../packages/scenario-engine/src/directional-entry.js";
+import {
   validateEntryDecision,
   type EntryWaitPlan,
 } from "../../../packages/scenario-engine/src/entry-decision.js";
@@ -37,11 +41,9 @@ import {
   entryProviderPayload,
   type EntryPlannerInput,
 } from "../../../packages/scenario-engine/src/entry-planner.js";
-import {
-  validateEntryPlan,
-  type EntryPairPlan,
-} from "../../../packages/scenario-engine/src/entry-plan.js";
-type ContextPlan = ScenarioPlan | EntryPairPlan | EntryWaitPlan;
+import { type EntryPairPlan } from "../../../packages/scenario-engine/src/entry-plan.js";
+type ContextPlan =
+  ScenarioPlan | EntryPairPlan | DirectionalEntryPlan | EntryWaitPlan;
 type Planner = {
   generate(input: EntryPlannerInput): Promise<AiAnalysisResult<ContextPlan>>;
 };
@@ -55,7 +57,7 @@ const zeroFillTerminalProof = `
   g.state='FAILED' AND g.cancellation_reason IN ('OCO_PEER_UNFILLED_TERMINAL','DEMO_BROKER_ZERO_FILL_CANCELLED')
   AND g.updated_at<=clock_timestamp() AND g.mode=c.mode
   AND EXISTS(SELECT 1 FROM analysis_runs a WHERE a.id=g.analysis_id AND a.account_id=c.account_id AND a.symbol_id=c.symbol_id)
-  AND (SELECT count(*) FROM orders o WHERE o.order_group_id=g.id)=2
+  AND (SELECT count(*) FROM orders o WHERE o.order_group_id=g.id)=CASE WHEN g.entry_side IS NULL THEN 2 ELSE 1 END
   AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND (
     o.account_id<>c.account_id OR NOT o.strategy_owned OR o.broker_order_id IS NULL
     OR o.state NOT IN ('CANCELLED','EXPIRED','REJECTED') OR o.filled_volume<>0
@@ -381,6 +383,7 @@ export class ReusableScenarioModel implements ModelProvider {
     id: string;
     analysisId: string;
     response: ReturnType<typeof scenarioOco>;
+    entrySide?: "BUY" | "SELL";
   } | null = null;
   private readonly artifact;
   private readonly providerPrompt: string | null;
@@ -406,13 +409,13 @@ export class ReusableScenarioModel implements ModelProvider {
       : null;
     const content = readFileSync(
       entryOnly
-        ? "prompts/entry-pair-execution-v1.md"
+        ? "prompts/entry-direction-execution-v1.md"
         : "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
       version: entryOnly
-        ? ("entry-pair-execution-v1" as const)
+        ? ("entry-direction-execution-v1" as const)
         : ("scenario-execution-v2" as const),
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
@@ -446,7 +449,7 @@ export class ReusableScenarioModel implements ModelProvider {
       row.state !== "READY" ||
       !this.currentProviderPrompt(row) ||
       row.consumed ||
-      row.plan?.schema_version !== "entry-pair-1.0"
+      !isEntryPlan(row.plan)
     )
       return false;
     if (row.retiredAt != null) return true;
@@ -456,13 +459,14 @@ export class ReusableScenarioModel implements ModelProvider {
       time(row.availableAt) > this.now()
     )
       throw new Error("SCENARIO_CONTEXT_METADATA_CHANGED");
-    const plan = validateEntryPlan(JSON.stringify(row.plan), {
+    const plan = validateEntryDecision(JSON.stringify(row.plan), {
       analysisId: row.id,
       symbol: snapshot.metadata.symbolName,
       capturedAt: row.capturedAt,
       availableAt: row.availableAt,
       tickSize: row.tickSize,
     });
+    if (!isEntryPlan(plan)) throw new Error("SCENARIO_ENTRY_CONTEXT_INVALID");
     const evidence = checkEntryPrices(
       plan,
       snapshot,
@@ -496,7 +500,7 @@ export class ReusableScenarioModel implements ModelProvider {
       existing.retiredAt == null &&
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
       this.currentProviderPrompt(existing) &&
-      existing.plan?.schema_version === "entry-pair-1.0" &&
+      isEntryPlan(existing.plan) &&
       time(existing.validUntil) >= now + 65_000
     ) {
       if (
@@ -504,13 +508,14 @@ export class ReusableScenarioModel implements ModelProvider {
         existing.availableAt === null
       )
         throw new Error("SCENARIO_CONTEXT_METADATA_CHANGED");
-      const plan = validateEntryPlan(JSON.stringify(existing.plan), {
+      const plan = validateEntryDecision(JSON.stringify(existing.plan), {
         analysisId: existing.id,
         symbol: input.snapshot.metadata.symbolName,
         capturedAt: existing.capturedAt,
         availableAt: existing.availableAt,
         tickSize: existing.tickSize,
       });
+      if (!isEntryPlan(plan)) throw new Error("SCENARIO_ENTRY_CONTEXT_INVALID");
       const evidence = checkEntryPrices(
         plan,
         input.snapshot,
@@ -533,7 +538,7 @@ export class ReusableScenarioModel implements ModelProvider {
       this.currentProviderPrompt(existing) &&
       !existing.consumed &&
       existing.retiredAt == null &&
-      (!this.entryOnly || existing.plan?.schema_version === "entry-pair-1.0") &&
+      (!this.entryOnly || isEntryPlan(existing.plan)) &&
       time(existing.validUntil) >= now + 65_000
     ) {
       if (
@@ -541,7 +546,7 @@ export class ReusableScenarioModel implements ModelProvider {
         existing.tickSize !== input.snapshot.metadata.tickSize
       )
         throw new Error("SCENARIO_CONTEXT_METADATA_CHANGED");
-      const plan = (this.entryOnly ? validateEntryPlan : validatePlan)(
+      const plan = (this.entryOnly ? validateEntryDecision : validatePlan)(
         JSON.stringify(existing.plan),
         {
           analysisId: existing.id,
@@ -554,6 +559,8 @@ export class ReusableScenarioModel implements ModelProvider {
       if (time(existing.availableAt) > now)
         throw new Error("SCENARIO_CONTEXT_TIME_REGRESSION");
       try {
+        if (plan.schema_version === "entry-wait-1.0")
+          throw new Error("SCENARIO_ENTRY_CONTEXT_INVALID");
         const response = scenarioOco(
           plan,
           input.payload,
@@ -563,6 +570,9 @@ export class ReusableScenarioModel implements ModelProvider {
           id: existing.id,
           analysisId: response.analysis_id,
           response,
+          ...(plan.schema_version === "entry-direction-1.0"
+            ? { entrySide: plan.entry_side }
+            : {}),
         };
         return null;
       } catch (error) {
@@ -783,6 +793,7 @@ export class ReusableScenarioModel implements ModelProvider {
       latencyMs: 0,
       retryCount: 0,
       contextPlanId: p.id,
+      ...(p.entrySide === undefined ? {} : { entrySide: p.entrySide }),
     });
   }
 }

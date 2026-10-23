@@ -68,7 +68,12 @@ export function evidenceDemoTransform(input: {
       downside_targets: [result.sell_stop.take_profit],
     });
     Object.assign(result, {
-      setup_tags: [...result.setup_tags, "EVIDENCE_CODEX_OCO"],
+      setup_tags: [
+        ...result.setup_tags,
+        result.setup_tags.some((t) => t.startsWith("DIRECTIONAL_"))
+          ? "EVIDENCE_CODEX_SINGLE"
+          : "EVIDENCE_CODEX_OCO",
+      ],
     });
     return {
       accepted: true,

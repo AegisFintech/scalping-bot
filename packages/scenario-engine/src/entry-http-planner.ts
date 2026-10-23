@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { bindDirectionalDecision } from "./directional-entry.js";
 import { FIXED_DEFAULTS } from "../../config/src/policy.js";
 import {
   boundedResponseText,
@@ -99,7 +100,11 @@ export class EntryPairHttpPlanner {
       .find((s) => s.timeframe === "M1")
       ?.candles.at(-1)?.endTime;
     if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
-    const plan = bindEntryDecision(envelope.rawResponse, {
+    const plan = (
+      ENTRY_PAIR_PROMPT.version === "entry-direction-v1"
+        ? bindDirectionalDecision
+        : bindEntryDecision
+    )(envelope.rawResponse, {
       ...input,
       observedM1End,
     });

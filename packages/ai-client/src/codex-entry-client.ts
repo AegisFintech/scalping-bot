@@ -3,24 +3,24 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import type { AiAnalysisRequest, AiAnalysisResult } from "./client.js";
 import { boundedResponseText } from "./telemetry.js";
-import {
-  bindEntryDecision,
-  entryDecisionSchema,
-  type EntryDecisionPlan,
-} from "../../scenario-engine/src/entry-decision.js";
+import { type EntryDecisionPlan } from "../../scenario-engine/src/entry-decision.js";
 
+import {
+  bindDirectionalDecision,
+  directionalDecisionSchema,
+} from "../../scenario-engine/src/directional-entry.js";
 import { CODEX_ENTRY_MODEL } from "../../config/src/policy.js";
 export { CODEX_ENTRY_MODEL };
 const receipt = z
   .object({
-    version: z.literal("codex-entry-response-1.1"),
+    version: z.literal("codex-entry-response-1.2"),
     analysisId: z.string().uuid(),
     requestedModel: z.literal(CODEX_ENTRY_MODEL),
     returnedModel: z.null(),
     promptSha256: z.string().regex(/^[0-9a-f]{64}$/),
     capturedAt: z.string().datetime({ offset: true }),
     receivedAt: z.string().datetime({ offset: true }),
-    entries: entryDecisionSchema,
+    entries: directionalDecisionSchema,
     memory: z
       .object({
         day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -59,7 +59,7 @@ export class CodexEntryClient {
   ) {
     if (options.localToken.length < 32)
       throw new Error("CODEX_LOCAL_AUTH_REQUIRED");
-    this.#prompt = readFileSync("prompts/entry-pair-v8.md", "utf8").trim();
+    this.#prompt = readFileSync("prompts/entry-direction-v1.md", "utf8").trim();
     this.#sha = createHash("sha256").update(this.#prompt).digest("hex");
     this.#fetch = options.fetchImpl ?? fetch;
     this.#now = options.now ?? Date.now;
@@ -76,10 +76,10 @@ export class CodexEntryClient {
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
     const body = JSON.stringify({
-      version: "codex-entry-request-1.4",
+      version: "codex-entry-request-1.5",
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-pair-v8",
+      promptVersion: "entry-direction-v1",
       promptSha256: this.#sha,
       payload: request.payload,
     });
@@ -129,7 +129,7 @@ export class CodexEntryClient {
         .find((s) => s.timeframe === "M1")
         ?.rows.at(-1)?.[1];
       if (typeof observed !== "string") throw new Error("CODEX_M1_REQUIRED");
-      const parsed = bindEntryDecision(value.rawResponse, {
+      const parsed = bindDirectionalDecision(value.rawResponse, {
         observedM1End: observed,
         analysisId: request.analysisId,
         symbol: request.symbol,
@@ -138,7 +138,7 @@ export class CodexEntryClient {
       });
       const strictEntries = JSON.parse(value.rawResponse) as unknown;
       if (
-        JSON.stringify(entryDecisionSchema.parse(strictEntries)) !==
+        JSON.stringify(directionalDecisionSchema.parse(strictEntries)) !==
         JSON.stringify(value.entries)
       )
         throw new Error("CODEX_RECEIPT_ENTRIES_MISMATCH");
@@ -150,7 +150,7 @@ export class CodexEntryClient {
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
         promptArtifact: {
-          version: "entry-pair-v8",
+          version: "entry-direction-v1",
           sha256: this.#sha,
           content: this.#prompt,
         },

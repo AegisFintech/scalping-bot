@@ -420,3 +420,74 @@ def test_v14_persistent_decision_receipt(tmp_path: Path, decision: str) -> None:
     assert result["entries"]["decision"] == decision
     assert result["version"] == "codex-entry-response-1.1"
     assert result["executionAuthority"] is False
+
+
+@pytest.mark.parametrize("decision", ["BUY", "SELL", "WAIT"])
+def test_directional_transport_is_strict_and_preserves_native_memory(
+    tmp_path: Path, decision: str
+) -> None:
+    from fastapi.testclient import TestClient
+
+    from python.codex_entry.api import create_app
+
+    body = current_request().model_dump()
+    body.update(version="codex-entry-request-1.5", promptVersion="entry-direction-v1")
+    req = s.parse_request(json.dumps(body).encode())
+    assert isinstance(req, s.RequestV15)
+
+    def call(prompt: str, job: Path) -> bytes:
+        assert "Return BUY, SELL or WAIT only." in prompt
+        assert "Return OCO or WAIT only." not in prompt
+        publish(
+            job / "memory-result.json",
+            {
+                "day": NOW.date().isoformat(),
+                "threadId": "direction-thread",
+                "turnId": "turn1",
+                "compacted": False,
+            },
+        )
+        return json.dumps(
+            {
+                "decision": decision,
+                "reason": "Trend and M1 range",
+                "upper_breakout": None if decision == "WAIT" else "4002",
+                "lower_breakout": None if decision == "WAIT" else "3999",
+            }
+        ).encode()
+
+    result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=call)
+    assert result["version"] == "codex-entry-response-1.2"
+    assert result["entries"]["decision"] == decision
+    assert result["executionAuthority"] is False
+    for name, model in [
+        ("codex-entry-request-1.5", s.RequestV15),
+        ("codex-entry-response-1.2", s.ResponseV12),
+        ("entry-direction-provider-1.0", s.DirectionalDecision),
+    ]:
+        schema = json.loads(Path("schemas", name + ".json").read_text())
+        schema.pop("$id")
+        schema.pop("$schema")
+        assert schema == model.model_json_schema()
+    legacy_worker = TestClient(
+        create_app(tmp_path, PROMPT, "x" * 32, prompt_version="entry-pair-v8")
+    )
+    assert (
+        legacy_worker.post(
+            "/v1/entry-proposals", json=body, headers={"authorization": "Bearer " + "x" * 32}
+        ).status_code
+        == 422
+    )
+
+
+@pytest.mark.parametrize("decision", ["OCO", "REVERSE", "BOTH"])
+def test_directional_transport_rejects_legacy_or_reversal_decisions(decision: str) -> None:
+    with pytest.raises(ValueError):
+        s.DirectionalDecision.model_validate(
+            {
+                "decision": decision,
+                "reason": "invalid",
+                "upper_breakout": "4002",
+                "lower_breakout": "3999",
+            }
+        )

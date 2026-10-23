@@ -693,21 +693,46 @@ export class PostgresDecisionTrail implements DecisionTrail {
   }
 
   async intent(analysisId: string, evaluation: OcoEvaluation): Promise<void> {
+    const commands = evaluation.directionalCommand
+      ? [evaluation.directionalCommand]
+      : evaluation.commands;
     if (
       !evaluation.approved ||
-      evaluation.commands === null ||
-      evaluation.risk === null
+      commands === null ||
+      (evaluation.risk === null && evaluation.directionalRisk === undefined)
     ) {
       throw new Error("TRAIL_UNAPPROVED_INTENT_FORBIDDEN");
     }
-    const [buyCommand, sellCommand] = evaluation.commands;
-    if (orderTimeInForce(buyCommand) !== orderTimeInForce(sellCommand))
+    const firstCommand = commands[0];
+    if (
+      commands.length === 1 &&
+      (!evaluation.directionalCommand || !evaluation.directionalRisk?.approved)
+    )
+      throw new Error("TRAIL_DIRECTIONAL_AUTHORITY_REQUIRED");
+    if (
+      commands.some(
+        (c) => orderTimeInForce(c) !== orderTimeInForce(firstCommand),
+      )
+    )
       throw new Error("TRAIL_LIFETIME_MISMATCH");
-    if (pendingOrderType(buyCommand) !== pendingOrderType(sellCommand))
+    if (
+      commands.some(
+        (c) => pendingOrderType(c) !== pendingOrderType(firstCommand),
+      )
+    )
       throw new Error("TRAIL_EXECUTION_TYPE_MISMATCH");
+    if (
+      commands.some(
+        (c) =>
+          c.orderGroupId !== firstCommand.orderGroupId ||
+          c.analysisId !== analysisId,
+      )
+    )
+      throw new Error("TRAIL_COMMAND_SCOPE_MISMATCH");
     const groupKey = createHash("sha256")
       .update(
-        [buyCommand.idempotencyKey, sellCommand.idempotencyKey]
+        commands
+          .map((c) => c.idempotencyKey)
           .sort()
           .join(":"),
       )
@@ -715,10 +740,11 @@ export class PostgresDecisionTrail implements DecisionTrail {
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
-      for (const [side, decision, command] of [
-        ["BUY", evaluation.risk.buy, buyCommand],
-        ["SELL", evaluation.risk.sell, sellCommand],
-      ] as const) {
+      for (const command of commands) {
+        const side = command.side;
+        const decision =
+          evaluation.directionalRisk ??
+          (side === "BUY" ? evaluation.risk!.buy : evaluation.risk!.sell);
         await client.query(
           `INSERT INTO risk_decisions
             (id, analysis_id, side, approved, equity, risk_percent, risk_budget, entry_price,
@@ -745,20 +771,21 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
       }
       await client.query(
-        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, time_in_force, submission_valid_until, context_plan_id)
+        `INSERT INTO order_groups (id, analysis_id, idempotency_key, mode, state, expires_at, time_in_force, submission_valid_until, context_plan_id, entry_side)
          VALUES ($1, $2, $3, $4, 'INTENT_RECORDED', $5, $6, $7,
-           (SELECT context_plan_id FROM model_requests WHERE analysis_id=$2 ORDER BY completed_at DESC LIMIT 1))`,
+           (SELECT context_plan_id FROM model_requests WHERE analysis_id=$2 ORDER BY completed_at DESC LIMIT 1), $8)`,
         [
-          buyCommand.orderGroupId,
+          firstCommand.orderGroupId,
           analysisId,
           groupKey,
           this.#options.mode,
-          pendingOrderExpiresAt(buyCommand),
-          orderTimeInForce(buyCommand),
-          buyCommand.expiresAt,
+          pendingOrderExpiresAt(firstCommand),
+          orderTimeInForce(firstCommand),
+          firstCommand.expiresAt,
+          evaluation.directionalCommand?.side ?? null,
         ],
       );
-      for (const command of evaluation.commands) {
+      for (const command of commands) {
         await client.query(
           `INSERT INTO orders
             (id, account_id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
@@ -796,9 +823,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
       client.release();
     }
     await this.#audit(analysisId, "risk_intent_persisted", "accepted", null, {
-      order_group_id: buyCommand.orderGroupId,
+      order_group_id: firstCommand.orderGroupId,
       per_leg_risk_percent: evaluation.perLegRiskPercent,
-      commands: evaluation.commands.map((command) => ({
+      commands: commands.map((command) => ({
         execution_order_type: pendingOrderType(command),
         side: command.side,
         entry_price: command.entryPrice,

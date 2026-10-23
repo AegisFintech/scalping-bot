@@ -1,3 +1,13 @@
+# ISSUE-368 — Directional entry source
+
+The unchanged 1% setup ceiling remains. The selected entry keeps the prior OCO
+leg allocation (at most 0.5% current equity), costs/slippage reserves, volume steps
+and exact broker margin. Unused peer budget is not reassigned. Opposite-box native
+stop/equal gross TP remain; a late cap reduction blocks placement. Model trend
+interpretation is not proof of alignment, maximum realized loss or profitability.
+See [release, qualification and operational receipt](directional-entry-report.md).
+Earlier source and activation checkpoints below remain historical.
+
 # ISSUE-366 — M1-first source
 
 Policy `0.4.3-evidence-scalp.1` is unchanged: opposite-box native stop, equal

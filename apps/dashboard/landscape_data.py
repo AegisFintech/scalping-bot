@@ -12,8 +12,8 @@ def landscape_events(
         (
             "context",
             """SELECT id,requested_at,available_at,completed_at,state,reason,
-              plan->>'schema_version' AS plan_schema,
-              CASE WHEN plan->>'schema_version'='entry-wait-1.0'
+              plan->>'schema_version' AS plan_schema, plan->>'entry_side' AS entry_side,
+              CASE WHEN plan->>'schema_version' IN ('entry-wait-1.0','entry-direction-1.0')
                 THEN left(plan->>'reason',1200) END AS wait_reason
             FROM scenario_contexts WHERE account_id=%s AND symbol_id=%s AND mode=%s
             ORDER BY requested_at DESC,id DESC LIMIT 12""",

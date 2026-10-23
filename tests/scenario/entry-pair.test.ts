@@ -30,11 +30,13 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses M1-first v8 guidance without mandatory higher-timeframe confluence", () => {
+  it("uses directional continuation guidance with strict WAIT", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-pair-v8");
-    expect(prompt.replace(/\s+/g, " ")).toContain("Read completed M1 first");
-    expect(prompt.replace(/\s+/g, " ")).toContain("not prerequisites");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-direction-v1");
+    expect(prompt.replace(/\s+/g, " ")).toContain("Use completed M1 first");
+    expect(prompt.replace(/\s+/g, " ")).toContain(
+      "not an anticipated reversal",
+    );
     expect(prompt.replace(/\s+/g, " ")).toContain("broker session gap");
     expect(prompt.replace(/\s+/g, " ")).toContain('"decision":"WAIT"');
   });
@@ -189,10 +191,10 @@ describe("direct entries (synthetic, no broker authority)", () => {
       },
     };
     const rawResponse =
-      '{"decision":"OCO","reason":"Box","buy_stop":"4410","sell_stop":"4400"}';
+      '{"decision":"BUY","reason":"Box","upper_breakout":"4410","lower_breakout":"4400"}';
     const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
     const receipt = {
-      version: "codex-entry-response-1.1",
+      version: "codex-entry-response-1.2",
       analysisId: input.analysisId,
       requestedModel: "gpt-6.1-sol",
       returnedModel: null,
@@ -200,10 +202,10 @@ describe("direct entries (synthetic, no broker authority)", () => {
       capturedAt: at,
       receivedAt: at,
       entries: {
-        decision: "OCO",
+        decision: "BUY",
         reason: "Box",
-        buy_stop: "4410",
-        sell_stop: "4400",
+        upper_breakout: "4410",
+        lower_breakout: "4400",
       },
       memory: {
         day: at.slice(0, 10),
@@ -260,7 +262,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.4");
+      expect(providerBody.version).toBe("codex-entry-request-1.5");
       expect(providerBody.payload).toMatchObject({ market_captured_at: at });
       const compact = (
         providerBody.payload as { candles: { rows: unknown[] }[] }
@@ -271,6 +273,8 @@ describe("direct entries (synthetic, no broker authority)", () => {
       );
       expect(beforeDispatch).toHaveBeenCalledOnce();
       expect(result.response).toMatchObject({
+        schema_version: "entry-direction-1.0",
+        entry_side: "BUY",
         buy_stop: "4410",
         sell_stop: "4400",
         analysis_id: input.analysisId,
@@ -284,12 +288,13 @@ describe("direct entries (synthetic, no broker authority)", () => {
         schemaVersion: "2.0",
       });
       expect(numeric.response).toMatchObject({
+        entry_side: "BUY",
         buy_stop: "4410",
         sell_stop: "4400",
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-pair-v8",
+        version: "entry-direction-v1",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

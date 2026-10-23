@@ -1,3 +1,31 @@
+# ISSUE-368 — Directional entry authority and separate exit review
+
+The operator approved one trend-continuation BUY/SELL entry or WAIT, not reversal,
+martingale, forced frequency or doubling lots after removing the OCO peer. Read
+`docs/directional-entry-report.md`. Current strategy is
+`0.5.0-directional-scalp.1-codex.1`, policy `0.5.0-directional-scalp.1`, prompt
+`entry-direction-v1`, worker request 1.5 / response 1.2. Only selected entry_side
+has authority; two price references describe box geometry. Persist the side and
+exactly one order with migration 0032. NULL side always means the historical
+TWO-entry group: a missing peer never becomes single-entry authority.
+Keep selected-side fresh quote/distance checks, immutable context/intent claims,
+exact scoped ownership, partial/unknown commands, native protection and terminal
+proofs. Single entry keeps the existing half-setup allocation, at most 0.5% current
+equity inside the 1% setup ceiling, exact costs/margin/steps and late cap re-read.
+Native opposite-box stop/equal gross TP and accepted GTC remain unchanged. No
+smaller TP, trailing or profit-close rule is approved yet; propose exact exit
+parameters separately for operator review. Old active OCO orders/protection and
+all financial/context/provider history remain immutable through rollout.
+Read-only sampled paths are prospective, bounded, credential-free observations:
+freeze future registration and code before collection, preserve gaps and open/
+daily cutoffs, null unknown future/counterfactual costs, and never promote from
+selected complete winners. Source/storage failures halt research only. The sole
+canonical trading system is qualified main on the existing demo; sampler and
+rollback artifacts are not additional trading bots. Rollback to older pair-only
+code requires every new single group fully terminal/proven first; never downgrade
+the database, reset accounting, reinterpret old groups or force/cancel orders to
+accelerate cutover. Historical schemas/prompts and migrations retain their bytes.
+
 # ISSUE-366 — One main deployment, M1-first entry guidance
 
 The operator approved immediate implementation and deployment on the existing
@@ -201,12 +229,13 @@ maintenance remain active during waiting periods. No prompt, timer or operator
 request may bypass these gates, manufacture a trade, or increase risk to maintain
 frequency.
 
-The current source contract is `entry-pair-v8` / worker request 1.4, strategy
-`0.4.3-evidence-scalp.1-codex.2`, policy `0.4.3-evidence-scalp.1`.
-Read `docs/m1-range-release-report.md`. M1 defines the nearby box; M5/M15 and
-SMC/FVG/DOM inform judgment without compulsory confluence. Preserve Codex prices,
-STOP_LIMIT/GTC/OCO and existing opposite-box stop/equal gross TP. WAIT has no
-execution authority. Keep prompt-hash reuse isolation and scope-wide cooldowns.
+The current source is `entry-direction-v1` / worker 1.5→1.2, strategy
+`0.5.0-directional-scalp.1-codex.1` / policy `0.5.0-directional-scalp.1`.
+Codex chooses one continuation side with M15/M5 context and completed-M1 range.
+Only its selected boundary is executable; the other is box geometry. Keep native
+STOP_LIMIT/GTC protection and the unchanged opposite-box stop/equal gross TP.
+WAIT has no order authority. Preserve prompt-hash isolation, scope cooldowns and
+full account risk/reconciliation. See `docs/directional-entry-report.md`.
 Historical prompt/release names in
 older issue sections and archived evidence describe immutable past behavior and
 must not be treated as current authority. The shared setup ceiling remains 1%
