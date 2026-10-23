@@ -66,6 +66,15 @@ import {
   evaluateAnalysisEligibility,
   evaluateAutomaticAnalysisEligibility,
 } from "./safety-gates.js";
+import { EntryModeStore } from "./entry-mode-store.js";
+import {
+  EntryModeCoordinator,
+  entryModeModel,
+} from "./entry-mode-coordinator.js";
+import {
+  entryModeProfile,
+  entryModeStatus,
+} from "../../../packages/contracts/src/entry-mode.js";
 import { AnalysisCoordinator, type CycleResult } from "./coordinator.js";
 import {
   alignedSchedulerDelayMs,
@@ -389,11 +398,22 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "entry-pair-execution-v1",
+    promptVersion: "entry-modes-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
 
+  const entryModes = new EntryModeStore(pool, {
+    accountId: identity.accountId,
+    symbolId: identity.symbolId,
+    mode: config.tradingMode,
+  });
+  if (!["demo"].includes(config.tradingMode))
+    throw new Error("ENTRY_MODES_DEMO_ONLY");
+  if (!(await databaseStartup(pool, () => entryModes.initialize()))) {
+    await pool.end();
+    return;
+  }
   let account: AccountAdapter;
   let gateway: ExecutionGateway;
   let margin: MarginEstimator;
@@ -572,19 +592,21 @@ async function main(): Promise<void> {
   let capitalMultiplier = "0";
   let capitalRiskCap = "0";
   const capitalRiskStore = new CapitalRiskStore(pool);
-  const risk = new OcoRiskEvaluator({
-    executionOrderType: activeExecutionPolicy.orderType,
-    adverseSlippagePoints: activeExecutionPolicy.adverseSlippagePoints,
-    timeInForce: ORDER_LIFECYCLE.timeInForce,
-    riskMultiplier: () => capitalMultiplier,
-    riskPercentCap: () => capitalRiskCap,
-    marginEstimator: margin,
-    baseRiskPercent: config.baseRiskPercent,
-    maxRiskPercent: config.maxRiskPercent,
-    maxMarginUsagePercent: environment.MAX_MARGIN_USAGE_PERCENT ?? "30",
-    maxPositionNotional: config.maxPositionNotional,
-    strategyVersion,
-  });
+  const createRisk = (executionOrderType: "STOP_LIMIT" | "LIMIT") =>
+    new OcoRiskEvaluator({
+      operatorEntryModes: true,
+      executionOrderType,
+      adverseSlippagePoints: activeExecutionPolicy.adverseSlippagePoints,
+      timeInForce: ORDER_LIFECYCLE.timeInForce,
+      riskMultiplier: () => capitalMultiplier,
+      riskPercentCap: () => capitalRiskCap,
+      marginEstimator: margin,
+      baseRiskPercent: config.baseRiskPercent,
+      maxRiskPercent: config.maxRiskPercent,
+      maxMarginUsagePercent: environment.MAX_MARGIN_USAGE_PERCENT ?? "30",
+      maxPositionNotional: config.maxPositionNotional,
+      strategyVersion,
+    });
   const trail = new PostgresDecisionTrail({
     pool,
     accountId: identity.accountId,
@@ -596,7 +618,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-pair-execution-v1",
+    promptVersion: "entry-modes-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1260,145 +1282,163 @@ async function main(): Promise<void> {
   ) {
     throw new Error("CONFIG_ORDER_EXPIRY_RANGE_INVALID");
   }
-  const coordinator = new AnalysisCoordinator({
-    marketSession: () => sessionGate.check(),
-    entryPairMode: true,
-    directionalEntryOnly: true,
-    numericAnalytics: true,
-    symbol: config.symbol,
-    mode: config.tradingMode as "paper" | "demo" | "shadow" | "live",
-    candleCounts,
-    orderBookDepth: integer(environment, "ORDER_BOOK_DEPTH", 20),
-    analyticsConfig: {
-      atrPeriod: integer(environment, "ATR_PERIOD", 15),
-      emaFastPeriod: integer(environment, "EMA_FAST_PERIOD", 5),
-      emaSlowPeriod: integer(environment, "EMA_SLOW_PERIOD", 19),
-      adxEnabled: environment.ADX_ENABLED !== "false",
-      adxPeriod: integer(environment, "ADX_PERIOD", 14),
-      rsiEnabled: environment.RSI_ENABLED !== "false",
-      rsiPeriod: integer(environment, "RSI_PERIOD", 14),
-      bollingerEnabled: environment.BOLLINGER_ENABLED === "true",
-      bollingerPeriod: integer(environment, "BOLLINGER_PERIOD", 20),
-      bollingerStddev: environment.BOLLINGER_STDDEV ?? "2",
-      swingPivotLeft: integer(environment, "SWING_PIVOT_LEFT", 3),
-      swingPivotRight: integer(environment, "SWING_PIVOT_RIGHT", 3),
-      compactTail: persistedCandleTails,
-      expectedCounts: candleCounts,
-    },
-    modelPayloadMode:
-      environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-    promptVersion: "entry-pair-execution-v1",
-    schemaVersion: "2.1",
-    strategyVersion,
-    breakoutScalp: breakoutScalpActive,
-    ...(breakoutScalpActive
-      ? {
-          evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
-            Promise.resolve(
-              evidenceDemoTransform({
-                snapshot,
-                response,
-                maximumStopDistance,
-              }),
-            ),
-        }
-      : {}),
-    minRiskRewardRatio: breakoutScalpActive
-      ? "1"
-      : fadeLimitActive
-        ? fadeExecutionPolicy.minRiskRewardRatio
-        : config.minRiskRewardRatio,
-    ...(fadeLimitActive
-      ? {
-          fadeLimitSlAtr: fadeExecutionPolicy.slAtr,
-          fadeLimitTpAtr: fadeExecutionPolicy.tpAtr,
-        }
-      : {}),
-    entryBrackets: fadeLimitActive ? "LIMIT" : "STOP",
-    executionOrderType: activeExecutionPolicy.orderType,
-    trendFilterBars: fadeLimitActive
-      ? Number(fadeExecutionPolicy.trendFilterBars)
-      : 0,
-    minimumExpectedNetToFeesRatio: breakoutScalpActive
-      ? BREAKOUT_SCALP_RELEASE.minimumNetToFees
-      : usesFadeV3(strategyVersion)
-        ? "1.5"
-        : config.minimumExpectedNetToFeesRatio,
-    minExpirySeconds: minimumOrderExpirySeconds,
-    maxExpirySeconds: maximumOrderExpirySeconds,
-    preferredExpirySeconds: preferredOrderExpirySeconds,
-    maxStopDistanceAtr: environment.MAX_STOP_DISTANCE_ATR ?? "3",
-    maxEntryDistanceAtr: config.maxEntryDistanceAtr,
-    entryLatencyBufferAtr: config.entryLatencyBufferAtr,
-    preferredMaxEntryDistanceAtr: config.preferredMaxEntryDistanceAtr,
-    minStopDistancePoints: optionalDecimal(
-      environment.MIN_STOP_DISTANCE_POINTS,
-    ),
-    maxQuoteAgeMs: config.maxQuoteAgeMs,
-    maxMetadataAgeMs: config.maxMetadataAgeMs,
-    maxOrderBookAgeMs: config.maxOrderBookAgeMs,
-    maxSpreadPoints: optionalDecimal(environment.MAX_SPREAD_POINTS),
-    maxSpreadAtrRatio: optionalDecimal(environment.MAX_SPREAD_ATR_RATIO),
-    maxSpreadPercentile: optionalDecimal(environment.MAX_SPREAD_PERCENTILE),
-    preModelStabilityCheck: true,
-    enforceModelDeadline: false,
-    minimumModelBudgetMs: boundedSecondsMs(
-      environment,
-      "MODEL_MINIMUM_CALL_BUDGET_SECONDS",
-      40,
-      1,
-      55,
-    ),
-    postModelReserveMs: boundedSecondsMs(
-      environment,
-      "MODEL_POST_RESPONSE_RESERVE_SECONDS",
-      5,
-      1,
-      30,
-    ),
-    spreadContext,
-    market,
-    analytics,
-    model,
-    account,
-    risk,
-    gateway,
-    trail,
-    safety,
-    placementControls: async () => {
-      const [filesystem, runtime] = await Promise.all([
-        readFilesystemControls({
-          emergencyStopFile: config.emergencyStopFile,
-          liveEnablementFile: config.liveEnablementFile,
-          instanceId: config.instanceId,
-          accountKey: config.accountKey,
+  const coordinator = new EntryModeCoordinator(entryModes, (selection) => {
+    const profile = entryModeProfile(selection.mode);
+    const selectedRisk = createRisk(profile.orderType);
+    return new AnalysisCoordinator({
+      marketSession: () => sessionGate.check(),
+      entryPairMode: true,
+      directionalEntryOnly: profile.single,
+      validateLimitSemantics: true,
+      numericAnalytics: true,
+      symbol: config.symbol,
+      mode: config.tradingMode as "paper" | "demo" | "shadow" | "live",
+      candleCounts,
+      orderBookDepth: integer(environment, "ORDER_BOOK_DEPTH", 20),
+      analyticsConfig: {
+        atrPeriod: integer(environment, "ATR_PERIOD", 15),
+        emaFastPeriod: integer(environment, "EMA_FAST_PERIOD", 5),
+        emaSlowPeriod: integer(environment, "EMA_SLOW_PERIOD", 19),
+        adxEnabled: environment.ADX_ENABLED !== "false",
+        adxPeriod: integer(environment, "ADX_PERIOD", 14),
+        rsiEnabled: environment.RSI_ENABLED !== "false",
+        rsiPeriod: integer(environment, "RSI_PERIOD", 14),
+        bollingerEnabled: environment.BOLLINGER_ENABLED === "true",
+        bollingerPeriod: integer(environment, "BOLLINGER_PERIOD", 20),
+        bollingerStddev: environment.BOLLINGER_STDDEV ?? "2",
+        swingPivotLeft: integer(environment, "SWING_PIVOT_LEFT", 3),
+        swingPivotRight: integer(environment, "SWING_PIVOT_RIGHT", 3),
+        compactTail: persistedCandleTails,
+        expectedCounts: candleCounts,
+      },
+      modelPayloadMode:
+        environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
+      promptVersion: "entry-modes-execution-v1",
+      schemaVersion: "2.1",
+      strategyVersion,
+      breakoutScalp: breakoutScalpActive,
+      ...(breakoutScalpActive
+        ? {
+            evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+              Promise.resolve(
+                evidenceDemoTransform({
+                  snapshot,
+                  response,
+                  maximumStopDistance,
+                  reverseLimit: profile.limit,
+                  singleEntry: profile.single,
+                }),
+              ),
+          }
+        : {}),
+      minRiskRewardRatio: breakoutScalpActive
+        ? "1"
+        : fadeLimitActive
+          ? fadeExecutionPolicy.minRiskRewardRatio
+          : config.minRiskRewardRatio,
+      ...(fadeLimitActive
+        ? {
+            fadeLimitSlAtr: fadeExecutionPolicy.slAtr,
+            fadeLimitTpAtr: fadeExecutionPolicy.tpAtr,
+          }
+        : {}),
+      entryBrackets: profile.limit ? "LIMIT" : "STOP",
+      executionOrderType: profile.orderType,
+      trendFilterBars: fadeLimitActive
+        ? Number(fadeExecutionPolicy.trendFilterBars)
+        : 0,
+      minimumExpectedNetToFeesRatio: breakoutScalpActive
+        ? BREAKOUT_SCALP_RELEASE.minimumNetToFees
+        : usesFadeV3(strategyVersion)
+          ? "1.5"
+          : config.minimumExpectedNetToFeesRatio,
+      minExpirySeconds: minimumOrderExpirySeconds,
+      maxExpirySeconds: maximumOrderExpirySeconds,
+      preferredExpirySeconds: preferredOrderExpirySeconds,
+      maxStopDistanceAtr: environment.MAX_STOP_DISTANCE_ATR ?? "3",
+      maxEntryDistanceAtr: config.maxEntryDistanceAtr,
+      entryLatencyBufferAtr: config.entryLatencyBufferAtr,
+      preferredMaxEntryDistanceAtr: config.preferredMaxEntryDistanceAtr,
+      minStopDistancePoints: optionalDecimal(
+        environment.MIN_STOP_DISTANCE_POINTS,
+      ),
+      maxQuoteAgeMs: config.maxQuoteAgeMs,
+      maxMetadataAgeMs: config.maxMetadataAgeMs,
+      maxOrderBookAgeMs: config.maxOrderBookAgeMs,
+      maxSpreadPoints: optionalDecimal(environment.MAX_SPREAD_POINTS),
+      maxSpreadAtrRatio: optionalDecimal(environment.MAX_SPREAD_ATR_RATIO),
+      maxSpreadPercentile: optionalDecimal(environment.MAX_SPREAD_PERCENTILE),
+      preModelStabilityCheck: true,
+      enforceModelDeadline: false,
+      minimumModelBudgetMs: boundedSecondsMs(
+        environment,
+        "MODEL_MINIMUM_CALL_BUDGET_SECONDS",
+        40,
+        1,
+        55,
+      ),
+      postModelReserveMs: boundedSecondsMs(
+        environment,
+        "MODEL_POST_RESPONSE_RESERVE_SECONDS",
+        5,
+        1,
+        30,
+      ),
+      spreadContext,
+      market,
+      analytics,
+      model: entryModeModel(model, selection),
+      account,
+      risk: {
+        currentSetupRiskPercent: () => selectedRisk.currentSetupRiskPercent(),
+        proposalConstraints: (input) => selectedRisk.proposalConstraints(input),
+        evaluate: async (input) => ({
+          ...(await selectedRisk.evaluate(input)),
+          entryMode: selection,
         }),
-        controls.snapshot(config.instanceId, {
-          instanceId: config.instanceId,
-          accountKey: config.accountKey,
-          configHash,
-        }),
-      ]);
-      return {
-        filesystemControlsCertain: filesystem.certain,
-        filesystemEmergencyStop: filesystem.emergencyStop,
-        liveEnablementFileValid: filesystem.liveEnablementValid,
-        runtimeControlsCertain: runtime.certain,
-        databaseEmergencyStop: runtime.emergencyStop,
-        dashboardAcknowledged: runtime.dashboardAcknowledged,
-        pauseNewAnalyses: config.pauseNewAnalyses || runtime.pauseNewAnalyses,
-        lossStreakPauseActive: false,
-      };
-    },
-    ...(demoExecutionRecorder === null
-      ? {}
-      : {
-          flushExecutionEvents: async () => {
-            await demoExecutionRecorder.flush();
-          },
-        }),
-    performance: (analyticsResponse) =>
-      performanceContext.build(analyticsResponse),
+      },
+      gateway,
+      trail,
+      safety,
+      placementControls: async () => {
+        const [filesystem, runtime, currentEntryMode] = await Promise.all([
+          readFilesystemControls({
+            emergencyStopFile: config.emergencyStopFile,
+            liveEnablementFile: config.liveEnablementFile,
+            instanceId: config.instanceId,
+            accountKey: config.accountKey,
+          }),
+          controls.snapshot(config.instanceId, {
+            instanceId: config.instanceId,
+            accountKey: config.accountKey,
+            configHash,
+          }),
+          entryModes.read(),
+        ]);
+        return {
+          filesystemControlsCertain: filesystem.certain,
+          filesystemEmergencyStop: filesystem.emergencyStop,
+          liveEnablementFileValid: filesystem.liveEnablementValid,
+          runtimeControlsCertain: runtime.certain,
+          databaseEmergencyStop: runtime.emergencyStop,
+          dashboardAcknowledged: runtime.dashboardAcknowledged,
+          pauseNewAnalyses:
+            config.pauseNewAnalyses ||
+            runtime.pauseNewAnalyses ||
+            currentEntryMode.revision !== selection.revision,
+          lossStreakPauseActive: false,
+        };
+      },
+      ...(demoExecutionRecorder === null
+        ? {}
+        : {
+            flushExecutionEvents: async () => {
+              await demoExecutionRecorder.flush();
+            },
+          }),
+      performance: (analyticsResponse) =>
+        performanceContext.build(analyticsResponse),
+    });
   });
 
   startupChecksPassed =
@@ -1500,6 +1540,16 @@ async function main(): Promise<void> {
     return {
       mode: config.tradingMode,
       symbol: config.symbol,
+      entryMode: await entryModes
+        .read()
+        .then((selection) =>
+          entryModeStatus(
+            selection,
+            managedSetup,
+            coordinator.runningSelection,
+          ),
+        )
+        .catch(() => null),
       policyVersion: POLICY_VERSION,
       riskPolicy: executionRiskPolicy(config.tradingMode),
       accountType: connectionMode,
@@ -1659,6 +1709,7 @@ async function main(): Promise<void> {
   };
   const app = createExecutionServer({
     coordinator,
+    entryModes,
     maintenance,
     controls,
     controlToken: environment.DASHBOARD_CONTROL_TOKEN ?? "",

@@ -14,6 +14,8 @@ export function evidenceDemoTransform(input: {
   snapshot: MarketSnapshot;
   response: ModelResponse;
   maximumStopDistance: string;
+  reverseLimit?: boolean;
+  singleEntry?: boolean;
 }) {
   const reject = (code: string) => ({
     accepted: false,
@@ -35,13 +37,13 @@ export function evidenceDemoTransform(input: {
     if (
       tick.lte(0) ||
       pip.lte(0) ||
-      buy.lte(sell) ||
+      (input.reverseLimit ? buy.gte(sell) : buy.lte(sell)) ||
       ![buy, sell].every((v) => v.gt(0) && isTickAligned(v, tick))
     )
       return reject("EVIDENCE_BOX_INVALID");
     // Opposite boundary plus one tick establishes structural invalidation.
     // Project inward to broker pip distances; never widen to satisfy fees.
-    const risk = buy.minus(sell).plus(tick).div(pip).floor().mul(pip);
+    const risk = buy.minus(sell).abs().plus(tick).div(pip).floor().mul(pip);
     if (risk.lt(minimum) || risk.gt(decimal(input.maximumStopDistance)))
       return reject("EVIDENCE_PROTECTION_UNAFFORDABLE");
     for (const [leg, entry, direction] of [
@@ -70,7 +72,8 @@ export function evidenceDemoTransform(input: {
     Object.assign(result, {
       setup_tags: [
         ...result.setup_tags,
-        result.setup_tags.some((t) => t.startsWith("DIRECTIONAL_"))
+        (input.singleEntry ??
+        result.setup_tags.some((t) => t.startsWith("DIRECTIONAL_")))
           ? "EVIDENCE_CODEX_SINGLE"
           : "EVIDENCE_CODEX_OCO",
       ],
@@ -82,6 +85,8 @@ export function evidenceDemoTransform(input: {
       details: {
         code: "EVIDENCE_BOX_NATIVE_ONE_TO_ONE",
         stop_distance: canonical(risk),
+        execution_order_type: input.reverseLimit ? "LIMIT" : "STOP_LIMIT",
+        single_entry: input.singleEntry ?? false,
       },
     };
   } catch {

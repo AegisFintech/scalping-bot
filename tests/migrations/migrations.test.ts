@@ -95,6 +95,7 @@ describe("migrations", () => {
       "0030_local_unsent_entry_proofs.sql",
       "0031_wait_context_execution_interlock.sql",
       "0032_directional_entry_groups.sql",
+      "0033_entry_mode_selection.sql",
     ]);
     const sql = (
       await Promise.all(

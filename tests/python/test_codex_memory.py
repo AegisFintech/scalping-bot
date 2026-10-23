@@ -491,3 +491,42 @@ def test_directional_transport_rejects_legacy_or_reversal_decisions(decision: st
                 "lower_breakout": "3999",
             }
         )
+
+
+@pytest.mark.parametrize("decision", ["BUY", "SELL", "WAIT"])
+def test_four_mode_worker_schema_and_native_receipt(tmp_path: Path, decision: str) -> None:
+    body = current_request().model_dump()
+    body.update(version="codex-entry-request-1.6", promptVersion="entry-modes-v1")
+    req = s.parse_request(json.dumps(body).encode())
+    assert isinstance(req, s.RequestV16)
+
+    def call(prompt: str, job: Path) -> bytes:
+        assert "Return BUY, SELL or WAIT only." in prompt
+        publish(
+            job / "memory-result.json",
+            {
+                "day": NOW.date().isoformat(),
+                "threadId": "mode-thread",
+                "turnId": "mode-turn",
+                "compacted": False,
+            },
+        )
+        return json.dumps(
+            {
+                "decision": decision,
+                "reason": "fixture",
+                "upper_breakout": None if decision == "WAIT" else "4002",
+                "lower_breakout": None if decision == "WAIT" else "3999",
+            }
+        ).encode()
+
+    result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=call)
+    assert result["version"] == "codex-entry-response-1.2"
+    assert result["entries"]["decision"] == decision
+    assert result["executionAuthority"] is False
+    schema = json.loads(Path("schemas/codex-entry-request-1.6.json").read_text())
+    schema.pop("$id")
+    schema.pop("$schema")
+    assert schema == s.RequestV16.model_json_schema()
+    with pytest.raises(ValueError):
+        s.RequestV15.model_validate(body)

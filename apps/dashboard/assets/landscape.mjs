@@ -41,7 +41,7 @@ function controller(root) {
     ["download", "⇣", "Market data", "Completed OHLC", "#83dbe3"],
     ["process", "⌁", "Process", "Indicators & risk", "#8abfff"],
     ["ai", "✦", "Codex", "Entry proposals", "#d49eea"],
-    ["orders", "⇄", "Place entry", "STOP_LIMIT / GTC", "#f1c47c"],
+    ["orders", "⇄", "Place entry", "Selected mode / GTC", "#f1c47c"],
     ["position", "◎", "Manage trade", "Broker SL / TP", "#64e5ba"],
   ];
   stages.forEach(([key, icon, name, detail, tone], index) => {
@@ -378,7 +378,11 @@ function controller(root) {
     for (const o of orders) {
       const row = node("div", "position-row", "");
       row.append(
-        node("b", "", `${o.side} · ${o.state} · ${o.tif}`),
+        node(
+          "b",
+          "",
+          `${o.side} · ${o.orderType || "Unknown type"} · ${o.state} · ${o.tif}`,
+        ),
         doc.createElement("br"),
         node(
           "span",

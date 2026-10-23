@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "entry-mode-selection-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "revision"],
+  "properties": {
+    "mode": {
+      "enum": [
+        "OCO_STOP_LIMIT",
+        "OCO_LIMIT",
+        "SINGLE_STOP_LIMIT",
+        "SINGLE_LIMIT"
+      ],
+      "type": "string"
+    },
+    "revision": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

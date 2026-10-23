@@ -1,4 +1,34 @@
-# ISSUE-368 — Directional entry authority and separate exit review
+# ISSUE-370 — Explicit four-mode operator authority
+
+The operator requested four dashboard choices, superseding single-direction-only
+and no-reversal restrictions below for NEW setups on the existing DEMO. Read
+`docs/entry-modes-report.md`. Current source: `0.6.0-entry-modes.1-codex.1`, policy
+`0.6.0-entry-modes.1`, prompt `entry-modes-v1`, worker 1.6/1.2, mode-neutral local
+`entry-modes-1.0`. STOP_LIMIT buys upper/sells lower; LIMIT buys lower/sells upper.
+Singles follow Codex for STOP_LIMIT and reverse it at the SAME level for LIMIT.
+WAIT has no entry authority. Initial selection is SINGLE_LIMIT; the operator can
+select any approved profile with existing authenticated controls. No risk/exit
+upgrade, forced trades, accounting reset or real-money authority is added.
+Preserve scoped durable mode/revision CAS, one runner, late revision checks and
+transactional mode/intent row lock. Every group retains immutable profile/revision,
+cardinality, original prices and native type. NULL historical markers retain
+legacy proof requirements. Mode changes never mutate accepted GTC/protection.
+New mode-neutral contexts use effective/late selected-side/type quote checks;
+STOP-only immediate replacement evidence cannot retire them. Ordinary expiry and
+all failed/unknown cooldowns remain; historical replacement contracts stay intact.
+Every leg keeps the prior half allocation, OCO shares at most 1% current equity,
+and native equal-distance SL/TP is mirrored for LIMIT. Do not restore legacy fade
+ATR/trend filters, quote clamping, automatic switching, martingale or loss chasing.
+Dashboard controls need explicit existing operator token in browser memory only,
+same-origin fixed-loopback proxy and backend auth. Never embed server credentials
+or persist tokens in URLs/cookies/browser storage. Research remains read-only;
+freeze new future cohorts, preserve old registrations/censoring/null costs and
+attribute outcomes by immutable group mode, never a selected winning subset.
+Qualify, push reviewed issue PR, green exact-head checks, merge main and deploy
+matching worker plus the ONE existing bot. Rollback must prove new groups terminal
+before older code; preserve additive migration 0033 and financial/request history.
+
+# Historical single-direction authority — ISSUE-368
 
 The operator approved one trend-continuation BUY/SELL entry or WAIT, not reversal,
 martingale, forced frequency or doubling lots after removing the OCO peer. Read

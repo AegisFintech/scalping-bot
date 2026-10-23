@@ -1,3 +1,4 @@
+import type { ModeEntryPlan } from "./mode-entry.js";
 import { z } from "zod";
 import { decimal } from "../../risk-engine/src/decimal.js";
 import { hasDuplicateObjectKeys } from "../../risk-engine/src/model-validator.js";
@@ -111,9 +112,10 @@ export function validateDirectionalPlan(
 }
 export function isEntryPlan(
   plan: { schema_version: string } | null | undefined,
-): plan is EntryPairPlan | DirectionalEntryPlan {
+): plan is EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan {
   return (
     plan?.schema_version === "entry-pair-1.0" ||
-    plan?.schema_version === "entry-direction-1.0"
+    plan?.schema_version === "entry-direction-1.0" ||
+    plan?.schema_version === "entry-modes-1.0"
   );
 }

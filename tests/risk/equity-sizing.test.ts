@@ -504,3 +504,37 @@ describe("directional allocation keeps the old leg budget", () => {
     ).toBe(false);
   });
 });
+
+it.each(["OCO_LIMIT", "SINGLE_LIMIT"])(
+  "operator %s uses native LIMIT risk without a legacy trend filter",
+  async (mode) => {
+    const risk = new OcoRiskEvaluator({
+      marginEstimator: {
+        estimate: (_symbol, _side, volume) =>
+          Promise.resolve(new Decimal(volume).mul("0.0442").toFixed()),
+      },
+      baseRiskPercent: "1",
+      maxRiskPercent: "1",
+      maxMarginUsagePercent: "100",
+      maxPositionNotional: null,
+      strategyVersion: "mode-test",
+      executionOrderType: "LIMIT",
+      timeInForce: "GTC",
+      operatorEntryModes: true,
+    });
+    const result = await risk.evaluate({
+      account,
+      response,
+      metadata: leg.metadata,
+      quote: {} as Quote,
+      ...(mode === "SINGLE_LIMIT" ? { selectedSide: "BUY" as const } : {}),
+    });
+    expect(result.approved).toBe(true);
+    const commands = result.directionalCommand
+      ? [result.directionalCommand]
+      : result.commands!;
+    expect(commands).toHaveLength(mode === "SINGLE_LIMIT" ? 1 : 2);
+    expect(commands.every((c) => c.executionOrderType === "LIMIT")).toBe(true);
+    expect(result.perLegRiskPercent).toBe("0.5");
+  },
+);

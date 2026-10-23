@@ -30,6 +30,7 @@ export interface MarginEstimator {
 }
 
 export interface OcoRiskEvaluatorOptions {
+  readonly operatorEntryModes?: boolean;
   readonly marginEstimator: MarginEstimator;
   readonly baseRiskPercent: string;
   readonly maxRiskPercent: string;
@@ -44,7 +45,9 @@ export interface OcoRiskEvaluatorOptions {
   readonly riskPercentCap?: () => string;
 }
 
+import type { EntryModeSelection } from "../../../packages/contracts/src/entry-mode.js";
 export interface OcoEvaluation {
+  readonly entryMode?: EntryModeSelection;
   readonly directionalCommand?: PendingOrderCommand;
   readonly directionalRisk?: PositionRiskDecision;
   readonly approved: boolean;
@@ -165,7 +168,9 @@ export class OcoRiskEvaluator {
       return this.#directional(input, input.selectedSide);
     const trend = input.trend ?? 0;
     const trendActive =
-      this.#options.executionOrderType === "LIMIT" && trend === 0;
+      !this.#options.operatorEntryModes &&
+      this.#options.executionOrderType === "LIMIT" &&
+      trend === 0;
     if (trendActive) return this.#reject("FADE_LIMIT_TREND_UNCLEAR");
     try {
       const minimum = input.metadata.minVolume;
@@ -403,7 +408,9 @@ export class OcoRiskEvaluator {
       if (side !== "BUY" && side !== "SELL")
         return this.#reject("DIRECTIONAL_SIDE_INVALID");
       if (
-        this.#options.executionOrderType !== "STOP_LIMIT" ||
+        !["STOP_LIMIT", "LIMIT"].includes(
+          this.#options.executionOrderType ?? "",
+        ) ||
         this.#options.timeInForce !== "GTC"
       )
         return this.#reject("DIRECTIONAL_EXECUTION_POLICY_INVALID");
@@ -450,7 +457,8 @@ export class OcoRiskEvaluator {
           maxPositionNotional: this.#options.maxPositionNotional,
           metadata: input.metadata,
           adverseSlippagePoints: this.#options.adverseSlippagePoints ?? "10",
-          executionOrderType: "STOP_LIMIT",
+          executionOrderType: this.#options.executionOrderType as
+            "STOP_LIMIT" | "LIMIT",
         });
         if (!risk.approved || risk.normalizedVolume === null)
           return this.#reject(risk.reasonCodes[0] ?? "RISK_EVALUATION_FAILED");
@@ -490,7 +498,8 @@ export class OcoRiskEvaluator {
             perLegRiskPercent: percent,
             directionalRisk: { ...risk, estimatedMargin: canonical(exact) },
             directionalCommand: {
-              executionOrderType: "STOP_LIMIT",
+              executionOrderType: this.#options.executionOrderType as
+                "STOP_LIMIT" | "LIMIT",
               timeInForce: "GTC",
               idempotencyKey: digest,
               analysisId: input.response.analysis_id,

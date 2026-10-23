@@ -1,3 +1,4 @@
+import { validateModePlan, type ModeEntryPlan } from "./mode-entry.js";
 import {
   validateDirectionalPlan,
   type DirectionalEntryPlan,
@@ -46,7 +47,7 @@ export interface EntryWaitPlan {
   readonly reason: string;
 }
 export type EntryDecisionPlan =
-  EntryPairPlan | DirectionalEntryPlan | EntryWaitPlan;
+  EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan | EntryWaitPlan;
 export function bindEntryDecision(
   raw: string,
   context: {
@@ -91,6 +92,8 @@ export function validateEntryDecision(
   },
 ): EntryDecisionPlan {
   const value = JSON.parse(raw) as Record<string, unknown>;
+  if (value.schema_version === "entry-modes-1.0")
+    return validateModePlan(raw, context);
   if (value.schema_version === "entry-direction-1.0")
     return validateDirectionalPlan(raw, context);
   if (value.schema_version !== "entry-wait-1.0")

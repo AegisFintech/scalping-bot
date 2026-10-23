@@ -199,14 +199,14 @@ def test_unmapped_broker_event_is_not_recovered_and_close_reason_is_not_inferred
 def test_lifecycle_reads_are_scoped_bounded_and_do_not_select_whole_payloads() -> None:
     read = Mock(return_value=[])
     assert landscape_events(read, ("account", "symbol", "demo")) == []
-    assert read.call_count == 4
+    assert read.call_count == 5
     for call in read.call_args_list:
         sql, bound = call.args
         assert bound == ("account", "symbol", "demo")
         assert "LIMIT" in sql and "ORDER BY" in sql
         assert "submitted_at" not in sql
         assert "SELECT *" not in sql
-    assert "be.account_id=%s AND be.symbol_id=%s AND og.mode=%s" in read.call_args_list[2].args[0]
+    assert "be.account_id=%s AND be.symbol_id=%s AND og.mode=%s" in read.call_args_list[3].args[0]
 
 
 def test_current_breakout_risk_display_keeps_shared_dynamic_budget_and_rejects_mode_mismatch() -> (

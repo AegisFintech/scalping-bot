@@ -2,14 +2,20 @@ import { mkdir, rename, writeFile } from "node:fs/promises";
 import { waitForDatabase } from "../../../packages/database/src/availability.js";
 import type pg from "pg";
 
-export async function databaseStartup(pool: pg.Pool): Promise<boolean> {
+export async function databaseStartup(
+  pool: pg.Pool,
+  initialize?: () => Promise<void>,
+): Promise<boolean> {
   const controller = new AbortController();
   const stop = () => controller.abort();
   process.once("SIGTERM", stop);
   process.once("SIGINT", stop);
   try {
     return await waitForDatabase({
-      probe: () => pool.query("SELECT 1"),
+      probe: async () => {
+        await pool.query("SELECT 1");
+        await initialize?.();
+      },
       signal: controller.signal,
       observe: async (status) => {
         try {

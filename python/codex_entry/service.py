@@ -303,8 +303,17 @@ class RequestV15(RequestV14):
     promptVersion: Literal["entry-direction-v1"]  # type: ignore[assignment]
 
 
-def parse_request(raw: bytes) -> Request | RequestV12 | RequestV13 | RequestV14 | RequestV15:
+class RequestV16(RequestV15):
+    version: Literal["codex-entry-request-1.6"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-modes-v1"]  # type: ignore[assignment]
+
+
+def parse_request(
+    raw: bytes,
+) -> Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16:
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.6":
+        return RequestV16.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.5":
         return RequestV15.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.4":
@@ -451,7 +460,7 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request | RequestV12 | RequestV13 | RequestV14 | RequestV15,
+    request: Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16,
     root: Path,
     system_prompt: str,
     *,

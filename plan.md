@@ -1,3 +1,11 @@
+### ISSUE-370 — Four operator-selectable entry modes
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/370.
+- Dependencies: #368 single lifecycle/main deployment, #356 separate unapproved quick exits, existing authenticated controls and demo history.
+- Acceptance: one bot with OCO STOP_LIMIT / OCO LIMIT / single STOP_LIMIT / single LIMIT buttons; exact original range, same-level single reversal, mirrored native equal-distance protection, WAIT and shared half-leg dynamic allocation. Durable scoped CAS/revision audit, late/transactional intent interlock, immutable mode/cardinality/type, legacy recovery and authenticated same-origin UI. Full positive/failure qualification, docs/Graphify, pushed PR, green hosted checks, merged main and matching same-demo activation with new frozen observations and no reset/forced trades.
+- Status: implemented; full frozen qualification passed all gates and 1627 tests (1074 Node, 115 PostgreSQL, 438 Python), both configuration checks and AST Graphify. Dedicated PR/hosted checks and matching main deployment follow; operational receipt will be appended to #370.
+- Evidence: [entry modes contract and rollout](docs/entry-modes-report.md).
+
 ### ISSUE-368 — Directional Codex trend-continuation entry
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/368.

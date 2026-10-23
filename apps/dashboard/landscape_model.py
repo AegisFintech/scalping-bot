@@ -67,6 +67,14 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
 
     for row in rows[:100]:
         kind = row.get("kind")
+        if kind == "mode":
+            emit(
+                row,
+                row.get("recorded_at"),
+                "engine",
+                f"Operator mode · {row.get('entry_mode')}",
+                "Applies to new setups only; accepted orders retain their recorded mode.",
+            )
         if kind == "context":
             emit(
                 row,
@@ -82,13 +90,14 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                     "codex",
                     "Codex chose WAIT"
                     if row.get("plan_schema") == "entry-wait-1.0"
-                    else f"Codex chose {row.get('entry_side')} breakout"
-                    if row.get("plan_schema") == "entry-direction-1.0"
+                    else f"Codex range · {row.get('entry_side')} trend judgment"
+                    if row.get("plan_schema") in {"entry-direction-1.0", "entry-modes-1.0"}
                     and row.get("entry_side") in {"BUY", "SELL"}
                     else "Entry prices available",
                     (
                         str(row.get("wait_reason") or "No setup proposed.")[:1200]
-                        if row.get("plan_schema") in {"entry-wait-1.0", "entry-direction-1.0"}
+                        if row.get("plan_schema")
+                        in {"entry-wait-1.0", "entry-direction-1.0", "entry-modes-1.0"}
                         else (
                             "Recorded provider result; deterministic validation "
                             "still owns execution."
@@ -441,6 +450,7 @@ def landscape_model(snapshot: dict[str, Any], poll_state: str, now: datetime) ->
                 "sl": price(o.get("stop_loss")),
                 "tp": price(o.get("take_profit")),
                 "tif": str(o.get("time_in_force")),
+                "orderType": str(o.get("execution_order_type") or "Unknown type"),
             }
             for o in snapshot.get("orders", [])[:20]
         ],
@@ -454,5 +464,6 @@ def landscape_model(snapshot: dict[str, Any], poll_state: str, now: datetime) ->
         "overlays": overlays,
         "curve": curve,
         "events": event_tape(snapshot.get("events", []), now),
+        "entryMode": status.get("entryMode") if available else None,
         "eventWindow": "Latest bounded journal window; not a complete event stream.",
     }

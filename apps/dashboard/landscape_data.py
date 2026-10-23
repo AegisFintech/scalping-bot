@@ -10,10 +10,17 @@ def landscape_events(
     output: list[dict[str, Any]] = []
     for kind, sql in [
         (
+            "mode",
+            """SELECT revision AS id,recorded_at,entry_mode FROM entry_mode_changes
+            WHERE account_id=%s AND symbol_id=%s AND environment=%s
+            ORDER BY recorded_at DESC,revision DESC LIMIT 12""",
+        ),
+        (
             "context",
             """SELECT id,requested_at,available_at,completed_at,state,reason,
               plan->>'schema_version' AS plan_schema, plan->>'entry_side' AS entry_side,
-              CASE WHEN plan->>'schema_version' IN ('entry-wait-1.0','entry-direction-1.0')
+              CASE WHEN plan->>'schema_version' IN
+                ('entry-wait-1.0','entry-direction-1.0','entry-modes-1.0')
                 THEN left(plan->>'reason',1200) END AS wait_reason
             FROM scenario_contexts WHERE account_id=%s AND symbol_id=%s AND mode=%s
             ORDER BY requested_at DESC,id DESC LIMIT 12""",

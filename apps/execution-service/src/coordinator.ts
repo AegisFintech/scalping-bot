@@ -276,6 +276,7 @@ export interface CoordinatorOptions {
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
   readonly directionalEntryOnly?: boolean;
+  readonly validateLimitSemantics?: boolean;
   readonly entryBrackets?: "STOP" | "LIMIT";
   readonly trendFilterBars?: number;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
@@ -314,7 +315,8 @@ export interface CoordinatorOptions {
     | "system-v16"
     | "scenario-execution-v1"
     | "scenario-execution-v2"
-    | "entry-pair-execution-v1";
+    | "entry-pair-execution-v1"
+    | "entry-modes-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly minRiskRewardRatio: string;
@@ -390,6 +392,7 @@ function ceilToTick(value: Decimal, tickSize: Decimal): Decimal {
 export function deriveModelExecutionBounds(input: {
   readonly entryPairMode?: boolean;
   readonly directionalEntryOnly?: boolean;
+  readonly validateLimitSemantics?: boolean;
   readonly currentBid: string;
   readonly currentAsk: string;
   readonly tickSize: string;
@@ -1407,14 +1410,15 @@ export class AnalysisCoordinator {
       );
       if (!transformed.accepted || transformed.response === null)
         return await reject(transformed.reasonCodes);
-      const effectiveSemantic = !fadeLimitActive
-        ? validateSemantics(transformed.response, {
-            ...semanticContext,
-            minRiskRewardRatio: this.#options.minRiskRewardRatio,
-            takeProfitDistanceDivisor: "1",
-            primaryTargetMode: "CONTAINS_EFFECTIVE",
-          })
-        : { accepted: true, reasonCodes: [] as readonly string[] };
+      const effectiveSemantic =
+        !fadeLimitActive || this.#options.validateLimitSemantics
+          ? validateSemantics(transformed.response, {
+              ...semanticContext,
+              minRiskRewardRatio: this.#options.minRiskRewardRatio,
+              takeProfitDistanceDivisor: "1",
+              primaryTargetMode: "CONTAINS_EFFECTIVE",
+            })
+          : { accepted: true, reasonCodes: [] as readonly string[] };
       await this.#options.trail.validation(
         analysisId,
         "SEMANTIC",
@@ -1627,15 +1631,16 @@ export class AnalysisCoordinator {
         return await reject(placementProposalSemantic.reasonCodes);
       }
 
-      const placementEffectiveSemantic = fadeLimitActive
-        ? { accepted: true, reasonCodes: [] as readonly string[] }
-        : validateSemantics(transformed.response, {
-            ...placementSemanticContext,
-            minRiskRewardRatio: this.#options.minRiskRewardRatio,
-            takeProfitDistanceDivisor: "1",
-            primaryTargetMode: "CONTAINS_EFFECTIVE",
-          });
-      if (!fadeLimitActive) {
+      const placementEffectiveSemantic =
+        fadeLimitActive && !this.#options.validateLimitSemantics
+          ? { accepted: true, reasonCodes: [] as readonly string[] }
+          : validateSemantics(transformed.response, {
+              ...placementSemanticContext,
+              minRiskRewardRatio: this.#options.minRiskRewardRatio,
+              takeProfitDistanceDivisor: "1",
+              primaryTargetMode: "CONTAINS_EFFECTIVE",
+            });
+      if (!fadeLimitActive || this.#options.validateLimitSemantics) {
         await this.#options.trail.validation(
           analysisId,
           "SEMANTIC",
