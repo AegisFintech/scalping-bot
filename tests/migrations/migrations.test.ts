@@ -96,6 +96,7 @@ describe("migrations", () => {
       "0031_wait_context_execution_interlock.sql",
       "0032_directional_entry_groups.sql",
       "0033_entry_mode_selection.sql",
+      "0034_storage_maintenance.sql",
     ]);
     const sql = (
       await Promise.all(

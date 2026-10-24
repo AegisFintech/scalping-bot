@@ -662,6 +662,44 @@ def maintain_metrics(
     )
 
 
+def receipt_retention_approved(runtime: Path, instance: str) -> bool:
+    marker = runtime / "delivered-receipt-retention-approval.json"
+    if not marker.exists():
+        return False
+    value = json.loads(marker.read_text())
+    if (
+        not instance
+        or value.get("policy") != "delivered-receipts-v1"
+        or value.get("instanceId") != instance
+        or value.get("retentionDays") != 7
+        or value.get("maximumRowsPerPass") != 1000
+        or value.get("approvedBy") != "operator"
+    ):
+        raise ValueError("STORAGE_RECEIPT_APPROVAL_INVALID")
+    return True
+
+
+def prune_delivered_receipts(
+    connection: psycopg.Connection[dict[str, Any]], instance: str, now: datetime
+) -> int:
+    """Only obsolete transport acknowledgements; the canonical event stays."""
+    if not instance or now.tzinfo is None:
+        raise ValueError("STORAGE_RECEIPT_SCOPE_INVALID")
+    result = connection.execute(
+        """WITH retired AS (
+          SELECT q.id FROM observability_outbox q
+          JOIN audit_events e ON e.id=q.audit_event_id
+          WHERE q.status='DELIVERED' AND q.delivered_at<%s
+            AND q.lease_expires_at IS NULL AND e.instance_id=%s
+          ORDER BY q.delivered_at,q.id FOR UPDATE OF q SKIP LOCKED LIMIT 1000
+        ) DELETE FROM observability_outbox q USING retired r
+          WHERE q.id=r.id AND q.status='DELIVERED'
+          RETURNING q.id""",
+        (now - timedelta(days=7), instance),
+    )
+    return result.rowcount
+
+
 def prune_routine_logs(
     directory: Path, now: datetime, budget: int = 200 * 1024 * 1024
 ) -> dict[str, int]:
@@ -720,10 +758,14 @@ def require_current_storage(database_url: str, runtime: Path) -> None:
 def maintenance(database_url: str, runtime: Path, logs: Path, instance: str) -> dict[str, Any]:
     require_current_storage(database_url, runtime)
     now = datetime.now(UTC)
+    receipt_retention = receipt_retention_approved(runtime, instance)
     with database_connection(database_url) as connection:
         connection.execute("SELECT pg_advisory_xact_lock(4287319090)")
         market = maintain_market(connection, runtime, now)
         maintain_metrics(connection, instance, now)
+        retired_receipts = (
+            prune_delivered_receipts(connection, instance, now) if receipt_retention else 0
+        )
     rotated = subprocess.run(
         [
             "/usr/sbin/logrotate",
@@ -762,6 +804,8 @@ def maintenance(database_url: str, runtime: Path, logs: Path, instance: str) -> 
         "diskFreeBytes": disk.free,
         "diskTotalBytes": disk.total,
         **market,
+        "retiredDeliveredReceipts": retired_receipts,
+        "receiptRetentionActive": receipt_retention,
         **log_result,
     }
 

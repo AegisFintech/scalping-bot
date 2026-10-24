@@ -37,3 +37,32 @@ describe("market session contract", () => {
     ).toBe(false);
   });
 });
+
+it.each(["2024-02-29T12:30Z", "2024-02-29T12:30:15.123+08:00"])(
+  "preserves the published timestamp parser for %s across dependency upgrades",
+  (metadataTime) => {
+    const value = marketSession();
+    expect(
+      marketSessionSchema.parse({
+        ...value,
+        metadata: { ...value.metadata, metadataTime },
+      }).metadata.metadataTime,
+    ).toBe(metadataTime);
+  },
+);
+it.each([
+  "2023-02-29T12:30:15Z",
+  "2024-02-30T12:30:15Z",
+  "2024-02-29T12:30:15",
+])(
+  "rejects invalid calendar or missing-offset timestamp %s",
+  (metadataTime) => {
+    const value = marketSession();
+    expect(() =>
+      marketSessionSchema.parse({
+        ...value,
+        metadata: { ...value.metadata, metadataTime },
+      }),
+    ).toThrow();
+  },
+);
