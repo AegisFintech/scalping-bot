@@ -152,7 +152,7 @@ export class StructuredLogger {
           target: "pino-roll",
           options: {
             file: options.logFile,
-            frequency: "daily",
+            frequency: 7 * 24 * 60 * 60 * 1000,
             size: "20m",
             mkdir: true,
           },

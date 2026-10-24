@@ -308,3 +308,24 @@ def test_log_cleanup_refuses_uncertain_process_inventory(
     with pytest.raises(ValueError, match="STORAGE_LOG_OPEN_FILES_UNCERTAIN"):
         prune_routine_logs(tmp_path, datetime.now(UTC), budget=0)
     assert active.read_bytes() == b"preserve"
+
+
+def test_receipt_retention_requires_exact_operator_scope(tmp_path: Path) -> None:
+    from python.operations.storage import receipt_retention_approved
+
+    assert not receipt_retention_approved(tmp_path, "fixture")
+    marker = tmp_path / "delivered-receipt-retention-approval.json"
+    value = {
+        "policy": "delivered-receipts-v1",
+        "instanceId": "fixture",
+        "retentionDays": 7,
+        "maximumRowsPerPass": 1000,
+        "approvedBy": "operator",
+    }
+    marker.write_text(json.dumps(value))
+    assert receipt_retention_approved(tmp_path, "fixture")
+    with pytest.raises(ValueError, match="STORAGE_RECEIPT_APPROVAL_INVALID"):
+        receipt_retention_approved(tmp_path, "other")
+    marker.write_text(json.dumps({**value, "retentionDays": 1}))
+    with pytest.raises(ValueError, match="STORAGE_RECEIPT_APPROVAL_INVALID"):
+        receipt_retention_approved(tmp_path, "fixture")

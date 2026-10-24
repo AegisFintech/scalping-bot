@@ -1,0 +1,310 @@
+{
+  "issue": 374,
+  "qualification": {
+    "qualificationVersion": "1.0",
+    "qualified": true,
+    "sourceSha256": "768967ef8d42dff403fe01979a5a0e5d8666cf8ada8e2ed1342f95d1603b840a",
+    "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+    "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+    "nodeVersion": "v22.23.2",
+    "results": [
+      {
+        "label": "postgres-bindir",
+        "executable": "pg_config",
+        "args": ["--bindir"],
+        "code": 0,
+        "elapsedMs": 25
+      },
+      {
+        "label": "test-certificate",
+        "executable": "openssl",
+        "args": [
+          "req",
+          "-x509",
+          "-newkey",
+          "rsa:2048",
+          "-nodes",
+          "-days",
+          "1",
+          "-subj",
+          "/CN=localhost",
+          "-addext",
+          "subjectAltName=DNS:localhost,IP:127.0.0.1",
+          "-keyout",
+          "/tmp/scalper-qualification-8cUEqo/server.key",
+          "-out",
+          "/tmp/scalper-qualification-8cUEqo/server.crt"
+        ],
+        "code": 0,
+        "elapsedMs": 282
+      },
+      {
+        "label": "postgres-uid",
+        "executable": "id",
+        "args": ["-u", "postgres"],
+        "code": 0,
+        "elapsedMs": 4
+      },
+      {
+        "label": "postgres-gid",
+        "executable": "id",
+        "args": ["-g", "postgres"],
+        "code": 0,
+        "elapsedMs": 5
+      },
+      {
+        "label": "database-init",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/initdb",
+          "-D",
+          "/tmp/scalper-qualification-8cUEqo/database",
+          "-U",
+          "scalper_qualification",
+          "--auth-local=trust",
+          "--auth-host=trust",
+          "--no-locale",
+          "--encoding=UTF8"
+        ],
+        "code": 0,
+        "elapsedMs": 695
+      },
+      {
+        "label": "database-start",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/pg_ctl",
+          "-D",
+          "/tmp/scalper-qualification-8cUEqo/database",
+          "-l",
+          "/tmp/scalper-qualification-8cUEqo/postgres.log",
+          "-o",
+          "-h 127.0.0.1 -p 46483 -k /tmp/scalper-qualification-8cUEqo -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-8cUEqo/server.crt -c ssl_key_file=/tmp/scalper-qualification-8cUEqo/server.key",
+          "-w",
+          "start"
+        ],
+        "code": 0,
+        "elapsedMs": 120
+      },
+      {
+        "label": "format",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "**/*.{ts,mjs,json,md,yml,yaml}"
+        ],
+        "code": 0,
+        "elapsedMs": 20986
+      },
+      {
+        "label": "lint",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": ["node_modules/eslint/bin/eslint.js", "."],
+        "code": 0,
+        "elapsedMs": 34132
+      },
+      {
+        "label": "types",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "tsconfig.json"
+        ],
+        "code": 0,
+        "elapsedMs": 13207
+      },
+      {
+        "label": "build",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.build.json",
+          "--outDir",
+          "/tmp/scalper-qualification-8cUEqo/build"
+        ],
+        "code": 0,
+        "elapsedMs": 10741
+      },
+      {
+        "label": "node-tests",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--exclude",
+          "**/*.integration.test.ts",
+          "--maxWorkers=1"
+        ],
+        "code": 0,
+        "elapsedMs": 83944
+      },
+      {
+        "label": "python-format",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": [
+          "-m",
+          "ruff",
+          "format",
+          "--check",
+          "python",
+          "apps/dashboard",
+          "tests/python"
+        ],
+        "code": 0,
+        "elapsedMs": 45
+      },
+      {
+        "label": "python-lint",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": [
+          "-m",
+          "ruff",
+          "check",
+          "python",
+          "apps/dashboard",
+          "tests/python"
+        ],
+        "code": 0,
+        "elapsedMs": 46
+      },
+      {
+        "label": "python-types",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "mypy", "python", "apps/dashboard"],
+        "code": 0,
+        "elapsedMs": 418
+      },
+      {
+        "label": "secrets",
+        "executable": "bash",
+        "args": ["scripts/secret-scan.sh"],
+        "code": 0,
+        "elapsedMs": 273
+      },
+      {
+        "label": "npm-audit",
+        "executable": "npm",
+        "args": ["audit", "--audit-level=high"],
+        "code": 0,
+        "elapsedMs": 914
+      },
+      {
+        "label": "python-audit",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+        "code": 0,
+        "elapsedMs": 10631
+      },
+      {
+        "label": "database-lifecycle",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/integration",
+          "--maxWorkers=1",
+          "--testTimeout=60000"
+        ],
+        "code": 0,
+        "elapsedMs": 33007
+      },
+      {
+        "label": "python-tests",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "pytest", "tests/python", "-q"],
+        "code": 0,
+        "elapsedMs": 12826
+      },
+      {
+        "label": "database-stop",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/pg_ctl",
+          "-D",
+          "/tmp/scalper-qualification-8cUEqo/database",
+          "-m",
+          "immediate",
+          "-w",
+          "stop"
+        ],
+        "code": 0,
+        "elapsedMs": 121
+      }
+    ]
+  },
+  "tests": {
+    "node": 1090,
+    "postgresql": 115,
+    "python": 441,
+    "total": 1646
+  },
+  "additionalCommands": [
+    "scripts/check-config.ts .env.sample",
+    "scripts/check-config.ts .env.sample --startup",
+    "node --check scripts/storage-service-config.mjs",
+    "node --check scripts/install-storage-timers.mjs",
+    "graphify update ."
+  ],
+  "configuration": "both PASS",
+  "javascriptSyntax": "PASS",
+  "graphify": "AST only, no API cost; document semantics not re-extracted",
+  "onlineVacuum": {
+    "before": [
+      {
+        "relname": "analysis_runs",
+        "n_dead_tup": 2451,
+        "bytes": 4161536
+      },
+      {
+        "relname": "observability_outbox",
+        "n_dead_tup": 10572,
+        "bytes": 39116800
+      },
+      {
+        "relname": "scenario_decision_intervals",
+        "n_dead_tup": 976,
+        "bytes": 4071424
+      }
+    ],
+    "after": [
+      {
+        "relname": "analysis_runs",
+        "n_dead_tup": 0,
+        "bytes": 4161536
+      },
+      {
+        "relname": "observability_outbox",
+        "n_dead_tup": 0,
+        "bytes": 39116800
+      },
+      {
+        "relname": "scenario_decision_intervals",
+        "n_dead_tup": 0,
+        "bytes": 4071424
+      }
+    ],
+    "canonicalRowsDeleted": 0,
+    "fullRewrite": false
+  },
+  "compressionSample": {
+    "rows": 500,
+    "pglzBytes": 1505988,
+    "lz4Bytes": 1779865,
+    "textBytes": 4195869
+  },
+  "receiptDeletionApproval": "REQUIRED_NOT_GRANTED",
+  "canonicalRowsDeleted": 0
+}

@@ -183,3 +183,63 @@ def test_compaction_preserves_exact_rows_and_rejects_changed_backup(
     # Documented reverse transition preserves every original candle identifier/value.
     database.execute("INSERT INTO candles SELECT * FROM decision_candles")
     assert storage.table_fingerprint(database, "candles") == before
+
+
+def test_receipt_retention_preserves_canonical_events_and_pending_delivery(
+    database: psycopg.Connection[dict[str, Any]],
+) -> None:
+    now = datetime.now(UTC)
+    cases = [
+        ("fixture", "DELIVERED", now - timedelta(days=8)),
+        ("fixture", "DELIVERED", now - timedelta(days=7)),
+        ("other", "DELIVERED", now - timedelta(days=8)),
+        ("fixture", "PENDING", now - timedelta(days=8)),
+        ("fixture", "RETRY", now - timedelta(days=8)),
+        ("fixture", "DELIVERING", now - timedelta(days=8)),
+    ]
+    for instance, status, when in cases:
+        event = str(uuid4())
+        database.execute(
+            """INSERT INTO audit_events
+            (id,occurred_at,severity,service,instance_id,environment,trading_mode,
+             trace_id,event_name,outcome,details)
+            VALUES(%s,%s,'info','fixture',%s,'test','paper','fixture','fixture','OK','{}')""",
+            (event, when, instance),
+        )
+        database.execute(
+            """UPDATE observability_outbox SET status=%s,delivered_at=%s,
+            lease_expires_at=%s WHERE audit_event_id=%s""",
+            (
+                status,
+                when if status == "DELIVERED" else None,
+                now + timedelta(minutes=1) if status == "DELIVERING" else None,
+                event,
+            ),
+        )
+    with pytest.raises(RuntimeError, match="rollback"), database.transaction():
+        assert storage.prune_delivered_receipts(database, "fixture", now) == 1
+        raise RuntimeError("rollback")
+    assert storage.prune_delivered_receipts(database, "fixture", now) == 1
+    assert storage.prune_delivered_receipts(database, "fixture", now) == 0
+    assert database.execute("SELECT count(*) n FROM audit_events").fetchone()["n"] == 6
+    assert database.execute("SELECT count(*) n FROM observability_outbox").fetchone()["n"] == 5
+    with pytest.raises(ValueError, match="STORAGE_RECEIPT_SCOPE_INVALID"):
+        storage.prune_delivered_receipts(database, "", now)
+
+
+def test_receipt_retention_is_bounded(database: psycopg.Connection[dict[str, Any]]) -> None:
+    now = datetime.now(UTC)
+    database.execute(
+        """INSERT INTO audit_events
+        (id,occurred_at,severity,service,instance_id,environment,trading_mode,event_name,outcome)
+        SELECT gen_random_uuid(),%s,'info','fixture','fixture','test','paper','fixture','OK'
+        FROM generate_series(1,1001)""",
+        (now - timedelta(days=8),),
+    )
+    database.execute(
+        "UPDATE observability_outbox SET status='DELIVERED',delivered_at=%s",
+        (now - timedelta(days=8),),
+    )
+    assert storage.prune_delivered_receipts(database, "fixture", now) == 1000
+    assert storage.prune_delivered_receipts(database, "fixture", now) == 1
+    assert database.execute("SELECT count(*) n FROM audit_events").fetchone()["n"] == 1001

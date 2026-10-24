@@ -1,3 +1,11 @@
+# Lean operational storage — ISSUE-374
+
+Weekly diagnostic log rotation retains seven days of closed logs with size caps.
+Canonical trading/learning/risk evidence remains intact. Bounded cleanup of old
+completed telemetry-delivery receipts requires reviewed activation; pending sends
+and original audit events remain. [Retention, inventory and rollback](docs/lean-storage-report.md).
+Maintenance uses explicit current deployment paths; no strategy or TP change.
+
 # Fixed trend-direction entry — ISSUE-372
 
 New setups use **one STOP_LIMIT in Codex's original BUY/SELL direction**, or WAIT.

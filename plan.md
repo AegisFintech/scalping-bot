@@ -1,3 +1,11 @@
+### ISSUE-374 — Lean storage and weekly log rotation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/374.
+- Dependencies: local-storage activation, current fixed STOP_LIMIT deployment and original audit authority.
+- Acceptance: inventory necessary/duplicate data; reviewed bounded seven-day delivered-only receipt cleanup preserving canonical/pending data, additive index/autovacuum migration and online maintenance; weekly log rotation with age/size/open-file bounds, explicit current job paths, positive/failure tests and full qualification. Docs/Graphify, pushed PR/green checks/main, protected-state preservation and same-demo operational verification. No history/risk reset or economic change.
+- Status: implemented; full frozen qualification passed 1,646 tests/all gates, both config checks, AST Graphify and clean dependency audits. Reviewed PR/main and matching deployment follow; completed-receipt deletion remains gated pending concrete operator review. Inventory and compression comparison complete; no canonical history removed.
+- Evidence: [lean-storage report](docs/lean-storage-report.md).
+
 ### ISSUE-372 — Fixed trend-direction STOP_LIMIT, no mode controls
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/372.

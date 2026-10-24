@@ -1,3 +1,20 @@
+# ISSUE-374 — Lean storage maintenance
+
+Maintenance source `0.6.0-entry-modes.1-codex.3` preserves the fixed single
+STOP_LIMIT policy/prompt/worker and native exits; older source labels below are
+historical. Receipt cleanup needs the exact scoped operator approval marker.
+
+Read `docs/lean-storage-report.md`. Preserve canonical trading, risk, provider,
+decision/WAIT/rejection and research evidence. Only reviewed DELIVERED telemetry
+receipts older than seven days may be pruned, scoped through canonical audit by
+instance, no lease, max 1000 per pass; never pending/retry/in-flight or audit rows.
+Migration 0034 adds index/autovacuum support, no row deletion. Cleanup activation
+requires concrete operator retention review. Retain PGLZ: sampled LZ4 was larger.
+Logs roll weekly with early size caps and seven-day closed-log retention; preserve
+open files and the combined cap. Install current env/runtime/log paths explicitly;
+never overwrite secrets or point maintenance at old recovery state. No economic,
+order/protection, accounting/reset or research-promotion authority is added.
+
 # ISSUE-372 — Fixed trend-direction STOP_LIMIT
 
 The operator removed all four mode choices and approved single STOP_LIMIT only,
