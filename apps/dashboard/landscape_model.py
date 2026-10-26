@@ -162,7 +162,9 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                 row,
                 row.get("received_at"),
                 "broker",
-                "Broker event received",
+                "External intervention detected"
+                if row.get("external_close")
+                else "Broker event received",
                 detail + " Broker time: " + format_gmt8_timestamp(row.get("occurred_at")),
             )
         elif kind == "close":
@@ -320,6 +322,19 @@ def landscape_model(snapshot: dict[str, Any], poll_state: str, now: datetime) ->
         )
         for f in ["M15", "M5", "M1"]
     ]
+    intervention = snapshot.get("intervention") or {}
+    if intervention:
+        label = (
+            f"Reconciled · net {signed(intervention.get('realized_net'))}"
+            if intervention.get("position_state") == "CLOSED"
+            and intervention.get("realized_net") is not None
+            else "Partial close recorded · remaining exposure; new setups wait"
+            if intervention.get("has_close_deal")
+            and intervention.get("mapping_state") == "MAPPED"
+            and intervention.get("position_state") == "OPEN"
+            else "Detected · reconciling broker evidence; new entries wait"
+        )
+        factors.append(("External intervention", label))
     factors += [
         (
             "Analytics quality",

@@ -286,6 +286,7 @@ function normalizePosition(
   position: Record<string, unknown>,
   receivedAt: string,
   terminalEntryPrice: string | null = null,
+  terminalCloseTime: string | null = null,
 ): DemoExecutionPosition {
   const data = tradeData(position);
   const status = numberField(position, "positionStatus");
@@ -325,10 +326,11 @@ function normalizePosition(
       optionalNumberField(data, "openTimestamp"),
       "CTRADER_POSITION_OPEN_TIMESTAMP_INVALID",
     ),
-    closedAt: optionalTimestamp(
-      optionalNumberField(data, "closeTimestamp"),
-      "CTRADER_POSITION_CLOSE_TIMESTAMP_INVALID",
-    ),
+    closedAt:
+      optionalTimestamp(
+        optionalNumberField(data, "closeTimestamp"),
+        "CTRADER_POSITION_CLOSE_TIMESTAMP_INVALID",
+      ) ?? (state === "CLOSED" ? terminalCloseTime : null),
     updatedAt: updatedAt ?? receivedAt,
   };
 }
@@ -506,7 +508,17 @@ export function normalizeDemoExecution(
   const normalizedPosition =
     position === null || ![3, 11].includes(execution.executionType)
       ? null
-      : normalizePosition(position, receivedAt, terminalEntryPrice);
+      : normalizePosition(
+          position,
+          receivedAt,
+          terminalEntryPrice,
+          closeDetail !== null && deal !== null
+            ? isoTimestamp(
+                numberField(deal, "executionTimestamp"),
+                "CTRADER_DEAL_TIMESTAMP_INVALID",
+              )
+            : null,
+        );
   const contextualBrokerPositionId =
     position === null ? null : stringField(position, "positionId");
   const brokerOrderId =
@@ -517,6 +529,18 @@ export function normalizeDemoExecution(
     (deal === null
       ? contextualBrokerPositionId
       : stringField(deal, "positionId"));
+  if (
+    closingOrder &&
+    closeDetail !== null &&
+    order !== null &&
+    normalizedPosition !== null
+  ) {
+    const declaredPosition = optionalStringField(order, "positionId");
+    if (declaredPosition !== undefined && declaredPosition !== brokerPositionId)
+      throw new Error("DEMO_EXECUTION_CLOSING_POSITION_MISMATCH");
+    if (side(tradeData(order)) === normalizedPosition.side)
+      throw new Error("DEMO_EXECUTION_CLOSING_SIDE_MISMATCH");
+  }
   let fill: DemoExecutionFill | null = null;
   let brokerFillId: string | null = null;
   let brokerDealId: string | null = null;

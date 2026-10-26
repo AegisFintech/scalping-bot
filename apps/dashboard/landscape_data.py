@@ -35,7 +35,9 @@ def landscape_events(
             "broker",
             """SELECT be.id,be.received_at,be.occurred_at,be.mapping_state,
               be.normalized_payload->'order'->>'state' AS order_state,
-              be.normalized_payload->'position'->>'state' AS position_state
+              be.normalized_payload->'position'->>'state' AS position_state,
+              (be.closing_order AND be.broker_order_type=1
+                AND COALESCE(be.client_order_id,'') NOT LIKE 'cas-%%') AS external_close
             FROM broker_execution_events be JOIN order_groups og ON og.id=be.order_group_id
             WHERE be.account_id=%s AND be.symbol_id=%s AND og.mode=%s
             ORDER BY be.received_at DESC,be.id DESC LIMIT 32""",

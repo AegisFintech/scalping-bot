@@ -1,3 +1,11 @@
+### ISSUE-378 — Manual intervention and fixed1.00 TP
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/378.
+- Dependencies: #376 qualified quick OCO/recorder, existing native protection/reconciliation and immutable #253/#255 observers.
+- Acceptance: exact broker full/partial manual-close/cancel support with normal gated continuation, immutable closing-deal outcomes, correct aggregate costs, missed-history/restart/idempotency and negative identity/volume/time cases; dashboard read-only intervention feedback. New fixed1.00 gross TP / exact7× native SL, remove duplicate entry reserve only from fill-relative profit economics, retain entry/risk/exit reserves and dynamic shared5% demo cap / other modes1%. Existing intents/history/protection immutable. Versioned prompt/request1.8 and schema, additive0035 and audited migration, tests/full qualification/config/security/audits/Graphify, coherent pushed reviewed PR/green hosted checks/main and one-demo activation. Verify original+66.72 outcome via broker-history recovery, no resets or forced orders/provider calls; preserve freezes/credentials/recordings/retention approval.
+- Status: implemented and fully qualified: 1,105 Node, 123 isolated PostgreSQL and 458 Python tests (1,686 total); all required gates, security/dependency audits, config, AST Graphify and browser checks pass. Reviewed pushed PR/green hosted checks/main and matching one-demo activation remain; receipt will be posted on #378. Exact results: `docs/evidence/manual-intervention-validation.json`.
+- Evidence: [manual intervention and fixed TP](docs/manual-intervention-report.md).
+
 ### ISSUE-376 — Quick-TP dual OCO, shared demo risk and flight recorder
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/376.

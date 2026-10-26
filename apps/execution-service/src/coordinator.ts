@@ -318,7 +318,8 @@ export interface CoordinatorOptions {
     | "scenario-execution-v2"
     | "entry-pair-execution-v1"
     | "entry-modes-execution-v1"
-    | "entry-quick-oco-execution-v1";
+    | "entry-quick-oco-execution-v1"
+    | "entry-quick-oco-execution-v2";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly commandFeeCheck?: (

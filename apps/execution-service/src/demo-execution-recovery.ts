@@ -1,4 +1,4 @@
-import { observedFullManualClose } from "./manual-close-evidence.js";
+import { observedManualClose } from "./manual-close-evidence.js";
 import { Decimal } from "decimal.js";
 import { protectiveCloseAuthorized } from "./protective-close-evidence.js";
 import type pg from "pg";
@@ -58,6 +58,9 @@ interface LocalPosition {
   readonly take_profit: string | null;
   readonly opened_at: Date | null;
   readonly created_at: Date;
+  readonly entry_volume?: string;
+  readonly closed_volume?: string;
+  readonly strategy_label?: string;
 }
 
 interface MappedFill {
@@ -158,12 +161,15 @@ export async function recoverDemoExecutions(
   const localPositions = await options.pool.query<LocalPosition>(
     `SELECT p.broker_position_id, p.side, p.volume::text, p.entry_price::text,
             p.stop_loss::text, p.take_profit::text,
-            p.opened_at, og.created_at
+            p.opened_at, og.created_at,
+            (SELECT sum(f.volume)::text FROM fills f WHERE f.position_id=p.id AND f.order_id IS NOT NULL) entry_volume,
+            COALESCE((SELECT sum(d.closed_volume)::text FROM position_close_deals d WHERE d.position_id=p.id),'0') closed_volume,
+            (SELECT min(o.strategy_label) FROM orders o WHERE o.order_group_id=og.id AND o.strategy_owned AND o.side=p.side) strategy_label
      FROM positions p
      JOIN order_groups og ON og.id = p.order_group_id
      JOIN analysis_runs ar ON ar.id = og.analysis_id
      WHERE p.account_id = $1 AND p.symbol_id = $2
-       AND p.broker_position_id IS NOT NULL
+       AND p.strategy_owned AND p.broker_position_id IS NOT NULL
        AND p.state IN ('OPEN','CLOSING','UNKNOWN','RECONCILIATION_PENDING')
        AND og.state NOT IN ('CLOSED','EXPIRED','FAILED')
      ORDER BY og.created_at ASC`,
@@ -197,10 +203,9 @@ export async function recoverDemoExecutions(
       reasonCodes: ["DEMO_RECOVERY_HISTORY_WINDOW_EXCEEDED"],
     };
   const from = new Date(Math.max(0, earliest.getTime() - 5 * 60_000));
-  const reconciliationPromise = options.client.reconcileRaw();
+  const reconciliation = await options.client.reconcileRaw();
   const orders = await options.client.orderHistoryRaw(from, now);
   const deals = await options.client.dealHistoryRaw(from, now, 1_000);
-  const reconciliation = await reconciliationPromise;
   if (orders.hasMore || deals.hasMore)
     return {
       certain: false,
@@ -212,12 +217,12 @@ export async function recoverDemoExecutions(
   const persistRaw = async (
     raw: BrokerExecution,
     completedOrder: boolean,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     try {
       const event = normalizeDemoExecution(raw, options.normalizer);
       if (event === null) {
         reasons.add("DEMO_RECOVERY_STRATEGY_OWNERSHIP_MISSING");
-        return;
+        return false;
       }
       const result = await options.store.persist(
         event,
@@ -233,10 +238,21 @@ export async function recoverDemoExecutions(
       }
       if (!result.certain && result.reasonCodes.length === 0)
         reasons.add("DEMO_RECOVERY_PERSISTENCE_UNCERTAIN");
+      return (
+        result.certain ||
+        (result.reasonCodes.length > 0 &&
+          result.reasonCodes.every((r) =>
+            [
+              "DEMO_PARTIAL_CLOSE_RECONCILIATION_REQUIRED",
+              "DEMO_PARTIAL_FILL_RECONCILIATION_REQUIRED",
+            ].includes(r),
+          ))
+      );
     } catch (error) {
       reasons.add(
         error instanceof Error ? error.message : "DEMO_RECOVERY_FAILED",
       );
+      return false;
     }
   };
   for (const localOrder of localOrders.rows) {
@@ -331,97 +347,142 @@ export async function recoverDemoExecutions(
     }
   }
   for (const localPosition of localPositions.rows) {
-    const closingDeals = deals.deals.filter(
-      (deal) =>
-        stringField(deal, "positionId") === localPosition.broker_position_id &&
-        deal.closePositionDetail !== undefined &&
-        !processedDealIds.has(stringField(deal, "dealId")),
-    );
-    if (closingDeals.length === 0) {
-      const stillOpen = reconciliation.positions.some(
-        (position) =>
-          stringField(position, "positionId") ===
-          localPosition.broker_position_id,
+    const closingDeals = deals.deals
+      .filter(
+        (d) =>
+          stringField(d, "positionId") === localPosition.broker_position_id &&
+          d.closePositionDetail !== undefined,
+      )
+      .sort(
+        (a, b) =>
+          numberField(a, "executionTimestamp") -
+            numberField(b, "executionTimestamp") ||
+          (BigInt(stringField(a, "dealId")) < BigInt(stringField(b, "dealId"))
+            ? -1
+            : 1),
       );
-      if (!stillOpen)
+    if (closingDeals.length === 0) {
+      if (
+        !reconciliation.positions.some(
+          (p) =>
+            stringField(p, "positionId") === localPosition.broker_position_id,
+        )
+      )
         reasons.add("DEMO_RECOVERY_POSITION_CLOSE_DEAL_NOT_FOUND");
       continue;
     }
-    if (closingDeals.length !== 1) {
-      reasons.add("DEMO_RECOVERY_MULTIPLE_CLOSING_DEALS_UNSUPPORTED");
-      continue;
-    }
-    const deal = closingDeals[0]!;
-    const brokerOrderId = stringField(deal, "orderId");
-    const closingOrders = historyOrders.filter(
-      (order) => stringField(order, "orderId") === brokerOrderId,
-    );
-    if (closingOrders.length !== 1) {
-      reasons.add(
-        closingOrders.length === 0
-          ? "DEMO_RECOVERY_CLOSING_ORDER_NOT_FOUND"
-          : "DEMO_RECOVERY_CLOSING_ORDER_AMBIGUOUS",
-      );
-      continue;
-    }
-    const closingOrder = closingOrders[0]!;
-    const authorizedMarketClose =
-      optionalNumberField(closingOrder, "orderType") === 1 &&
-      (await protectiveCloseAuthorized(options.pool, {
-        accountId: options.accountId,
-        symbolId: options.symbolId,
-        brokerPositionId: localPosition.broker_position_id,
-        brokerOrderId,
-        occurredAt: new Date(
-          numberField(deal, "executionTimestamp"),
-        ).toISOString(),
-        closedVolume:
-          optionalStringField(
-            record(deal.closePositionDetail),
-            "closedVolume",
-          ) ?? null,
-      }));
-    const reconstructed = reconstructPosition(
-      localPosition,
-      options.normalizer.symbolId,
-      optionalStringField(orderTradeData(closingOrder), "label") ?? "",
-      2,
-      numberField(deal, "executionTimestamp"),
-    );
-    if (reconstructed === null) {
-      reasons.add("DEMO_RECOVERY_POSITION_ENTRY_PRICE_MISSING");
-      continue;
-    }
-    const reconstructedEvent: BrokerExecution = {
-      executionType: executionTypeForDeal(deal, closingOrder),
-      order: closingOrder,
-      position: reconstructed,
-      deal,
-      errorCode: null,
-      receivedAt: deals.receivedAt,
-    };
-    const normalized = normalizeDemoExecution(
-      reconstructedEvent,
-      options.normalizer,
-    );
-    const manualClose =
-      normalized !== null &&
-      (await observedFullManualClose(
-        options.pool,
-        normalized,
-        options.accountId,
-        options.symbolId,
-      ));
     if (
-      (optionalNumberField(closingOrder, "orderType") !== 4 &&
-        !authorizedMarketClose &&
-        !manualClose) ||
-      closingOrder.closingOrder !== true
+      closingDeals.length > 8 ||
+      new Set(closingDeals.map((d) => stringField(d, "dealId"))).size !==
+        closingDeals.length
     ) {
-      reasons.add("DEMO_RECOVERY_CLOSING_ORDER_INVALID");
+      reasons.add("DEMO_RECOVERY_CLOSING_DEALS_AMBIGUOUS");
       continue;
     }
-    await persistRaw(reconstructedEvent, true);
+    const total = new Decimal(
+      localPosition.entry_volume ?? localPosition.volume,
+    );
+    const allClosed = closingDeals.reduce(
+      (v, d) =>
+        v.plus(stringField(record(d.closePositionDetail), "closedVolume")),
+      new Decimal(0),
+    );
+    const current = reconciliation.positions.filter(
+      (p) =>
+        stringField(p, "positionId") === localPosition.broker_position_id &&
+        numberField(p, "positionStatus") !== 2,
+    );
+    const remain = total.minus(allClosed);
+    if (
+      remain.lt(0) ||
+      current.length > 1 ||
+      (remain.eq(0)
+        ? current.length !== 0
+        : current.length !== 1 ||
+          !new Decimal(stringField(record(current[0]!.tradeData), "volume")).eq(
+            remain,
+          ))
+    ) {
+      reasons.add("DEMO_RECOVERY_REMAINING_VOLUME_UNCERTAIN");
+      continue;
+    }
+    let closed = new Decimal(localPosition.closed_volume ?? "0");
+    for (const deal of closingDeals) {
+      if (
+        mappedFillIds.has(stringField(deal, "dealId")) ||
+        processedDealIds.has(stringField(deal, "dealId"))
+      )
+        continue;
+      const brokerOrderId = stringField(deal, "orderId");
+      const matches = historyOrders.filter(
+        (o) => stringField(o, "orderId") === brokerOrderId,
+      );
+      if (matches.length !== 1) {
+        reasons.add(
+          matches.length === 0
+            ? "DEMO_RECOVERY_CLOSING_ORDER_NOT_FOUND"
+            : "DEMO_RECOVERY_CLOSING_ORDER_AMBIGUOUS",
+        );
+        break;
+      }
+      const order = matches[0]!,
+        detail = record(deal.closePositionDetail),
+        nextClosed = closed.plus(stringField(detail, "closedVolume")),
+        remaining = total.minus(nextClosed);
+      const authorized =
+        optionalNumberField(order, "orderType") === 1 &&
+        (await protectiveCloseAuthorized(options.pool, {
+          accountId: options.accountId,
+          symbolId: options.symbolId,
+          brokerPositionId: localPosition.broker_position_id,
+          brokerOrderId,
+          occurredAt: new Date(
+            numberField(deal, "executionTimestamp"),
+          ).toISOString(),
+          closedVolume: optionalStringField(detail, "closedVolume") ?? null,
+        }));
+      const reconstructed = reconstructPosition(
+        { ...localPosition, volume: remaining.toFixed() },
+        options.normalizer.symbolId,
+        localPosition.strategy_label ??
+          optionalStringField(orderTradeData(order), "label") ??
+          "",
+        remaining.eq(0) ? 2 : 1,
+        numberField(deal, "executionTimestamp"),
+      );
+      if (!reconstructed) {
+        reasons.add("DEMO_RECOVERY_POSITION_ENTRY_PRICE_MISSING");
+        break;
+      }
+      const raw: BrokerExecution = {
+        executionType: executionTypeForDeal(deal, order),
+        order,
+        position: reconstructed,
+        deal,
+        errorCode: null,
+        receivedAt: deals.receivedAt,
+      };
+      const normalized = normalizeDemoExecution(raw, options.normalizer);
+      const manual =
+        normalized !== null &&
+        (await observedManualClose(
+          options.pool,
+          normalized,
+          options.accountId,
+          options.symbolId,
+        ));
+      if (
+        (optionalNumberField(order, "orderType") !== 4 &&
+          !authorized &&
+          !manual) ||
+        order.closingOrder !== true
+      ) {
+        reasons.add("DEMO_RECOVERY_CLOSING_ORDER_INVALID");
+        break;
+      }
+      if (!(await persistRaw(raw, true))) break;
+      closed = nextClosed;
+    }
   }
   return { certain: reasons.size === 0, reasonCodes: [...reasons].sort() };
 }

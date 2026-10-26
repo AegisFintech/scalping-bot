@@ -1,3 +1,19 @@
+# Manual intervention and shorter demo TP — ISSUE-378
+
+New DEMO setups retain dual breakout STOP_LIMIT/GTC/OCO with **TP1.00 price unit**
+and **SL7× TP**, using dynamic shared5% equity sizing and verified costs/margin.
+The actual fill remains the native protection basis. Entry/risk slippage checks
+stay; TP no longer charges entry slippage twice. Existing accepted setups retain
+original protection. No guaranteed profit or real-money authority is added.
+External full/partial closes use exact broker evidence, immutable closing-deal
+records and canonical net fees counted once. Partial exposure and uncertain
+states block another setup; confirmed terminal reconciliation resumes normally.
+Read-only dashboard factors/logs show detected, reconciling and reconciled state.
+Provider promptv2 / request1.8 and additive migration0035 preserve old contracts,
+threads, financial history and recordings. See [contract, evidence and rollback](docs/manual-intervention-report.md)
+and [delivery](https://github.com/AegisFintech/scalping-bot/issues/378).
+Earlier release sections below are historical.
+
 # Quick-TP dual breakout OCO and setup flight recorder — ISSUE-376
 
 New DEMO setups use **two STOP_LIMIT/GTC OCO entries**, preserving Codex's upper

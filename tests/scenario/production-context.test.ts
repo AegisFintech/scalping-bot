@@ -150,7 +150,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-quick-oco-v1",
+          promptVersion: "entry-quick-oco-v2",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),
@@ -208,7 +208,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       chart: analysisChart(),
     });
     expect(result.response.buy_stop.entry_price).toBe("4420");
-    expect(result.promptArtifact.version).toBe("entry-quick-oco-execution-v1");
+    expect(result.promptArtifact.version).toBe("entry-quick-oco-execution-v2");
     store.row = { ...store.row, consumed: true };
     expect(await model.prepare(input(40))).toBe("SCENARIO_MAP_CONSUMED");
     expect(generate).not.toHaveBeenCalled();

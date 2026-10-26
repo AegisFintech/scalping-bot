@@ -100,27 +100,19 @@ export function quickOcoTransform(input: {
       [result.buy_stop, buy, 1],
       [result.sell_stop, sell, -1],
     ] as const) {
-      let low = Decimal.max(pip, tick.mul(5), decimal(m.minStopDistance))
+      const distance = decimal(QUICK_OCO.targetPriceDistance)
         .div(pip)
-        .ceil();
-      let high = maxStop.div(decimal(QUICK_OCO.stopToTarget).mul(pip)).floor();
-      if (high.lt(low) || high.gt("1000000000000"))
+        .ceil()
+        .mul(pip);
+      if (
+        distance.lt(
+          Decimal.max(pip, tick.mul(5), decimal(m.minStopDistance)),
+        ) ||
+        distance.mul(7).gt(maxStop)
+      )
         return reject("QUICK_OCO_PROTECTION_UNAFFORDABLE");
-      const targetAt = (pips: Decimal) =>
-        entry.plus(pips.mul(pip).mul(direction));
-      while (low.lt(high)) {
-        const mid = low.plus(high).div(2).floor(),
-          target = targetAt(mid);
-        if (
-          target.lte(0) ||
-          quickOcoCost(m, entry, target, volume).netPrice.gte(objective)
-        )
-          high = mid;
-        else low = mid.plus(1);
-      }
-      const distance = low.mul(pip),
-        target = targetAt(low),
-        stop = entry.minus(distance.mul(QUICK_OCO.stopToTarget).mul(direction));
+      const target = entry.plus(distance.mul(direction)),
+        stop = entry.minus(distance.mul(7).mul(direction));
       if (
         stop.lte(0) ||
         target.lte(0) ||
@@ -188,7 +180,9 @@ export function validateQuickOcoCommands(
         tick = decimal(metadata.tickSize);
       if (
         command.executionOrderType !== "STOP_LIMIT" ||
-        !tp.gt(0) ||
+        !tp.eq(
+          decimal(QUICK_OCO.targetPriceDistance).div(pip).ceil().mul(pip),
+        ) ||
         !tp.div(pip).isInteger() ||
         !sl.eq(tp.mul(7)) ||
         ![entry, target, stop].every(
@@ -217,4 +211,22 @@ export function validateQuickOcoCommands(
     reasonCodes.push("QUICK_OCO_COMMAND_COST_INVALID");
   }
   return { approved: reasonCodes.length === 0, reasonCodes, evidence };
+}
+
+/** Current provider cost context, excludes entry slippage already in the fill basis. */
+export function quickOcoModeledCost(snapshot: MarketSnapshot): string {
+  const entry = decimal(snapshot.quote.ask),
+    distance = decimal(QUICK_OCO.targetPriceDistance)
+      .div(snapshot.metadata.pipSize)
+      .ceil()
+      .mul(snapshot.metadata.pipSize);
+  const cost = quickOcoCost(
+    snapshot.metadata,
+    entry,
+    entry.plus(distance),
+    decimal(snapshot.metadata.minVolume),
+  );
+  return canonical(
+    distance.minus(cost.netPrice).toDecimalPlaces(10, Decimal.ROUND_UP),
+  );
 }

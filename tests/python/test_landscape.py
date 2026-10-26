@@ -287,3 +287,28 @@ def test_quick_oco_budget_is_demo_only_and_flight_withdraws_with_account_evidenc
     s["capital"]["risk_policy"]["mode"] = "live"
     assert landscape_model(s, "ready", NOW)["values"]["ceiling"]["text"] == "Unavailable"
     assert not landscape_model(s, "unavailable", NOW)["flight"]["available"]
+
+
+@pytest.mark.parametrize(
+    "state,net,expected",
+    [
+        ("OPEN", None, "reconciling"),
+        ("CLOSED", "66.72", "Reconciled"),
+    ],
+)
+def test_external_intervention_feedback_withholds_unverified_result(
+    state: str, net: str | None, expected: str
+) -> None:
+    value = snapshot()
+    value["intervention"] = {
+        "position_state": state,
+        "realized_net": net,
+        "mapping_state": "UNMATCHED",
+    }
+    model = landscape_model(value, "ready", NOW)
+    factor = dict(model["factors"])["External intervention"]
+    assert expected in factor
+    assert "66.72" not in factor if net is None else "66.72" in factor
+    assert "External intervention" not in dict(
+        landscape_model(value, "unavailable", NOW)["factors"]
+    )

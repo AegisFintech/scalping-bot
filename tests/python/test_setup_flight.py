@@ -219,3 +219,25 @@ def test_cached_partial_quote_side_requires_independent_freshness(tmp_path: Path
     f.quote({**quote(seconds=4), "askUpdated": False}, metadata(), NOW + timedelta(seconds=4))
     assert f.legs["BUY"]["samples"] == 1
     assert "QUOTE_SIDE_FRESHNESS_UNKNOWN" in f.path.read_text()
+
+
+def test_partial_close_remaining_volume_changes_only_after_observed_position_update(
+    tmp_path: Path,
+) -> None:
+    f = Flight(tmp_path, setup(), NOW)
+    f.quote(quote(), metadata(), NOW)
+    changed = setup()
+    changed["protection"] = [
+        {
+            "side": "BUY",
+            "state": "OPEN",
+            "volume": "5000",
+            "updated_at": NOW + timedelta(seconds=1),
+            "protection_status": "UNKNOWN",
+        }
+    ]
+    f.update(changed)
+    f.quote(quote(seconds=2), metadata(), NOW + timedelta(seconds=2))
+    assert Decimal(f.legs["BUY"]["volume"]) == 5000
+    assert f.legs["BUY"]["samples"] == 1
+    assert "POSITION_VOLUME_BASIS_CHANGED_PRIOR_METRICS_CENSORED" in f.path.read_text()

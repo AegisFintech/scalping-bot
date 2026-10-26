@@ -739,3 +739,14 @@ describe("durable demo execution recorder", () => {
     await expect(recorder.flush()).resolves.toEqual(store.result);
   });
 });
+
+it("keeps an unpriced OPEN closing context blocked for verified history recovery", async () => {
+  const raw = await fixture("demo-position-closed-v1.json");
+  const position = structuredClone(raw.position!);
+  position.positionStatus = 1;
+  position.price = 0;
+  (position.tradeData as Record<string, unknown>).volume = "60";
+  expect(() =>
+    normalizeDemoExecution({ ...raw, position }, { symbolId: "7" }),
+  ).toThrow("CTRADER_FIELD_INVALID:price");
+});

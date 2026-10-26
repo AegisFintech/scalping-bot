@@ -322,10 +322,26 @@ class RequestV17(RequestV16):
     payload: PayloadV17
 
 
+class RequestV18(RequestV17):
+    version: Literal["codex-entry-request-1.8"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-quick-oco-v2"]  # type: ignore[assignment]
+
+
 def parse_request(
     raw: bytes,
-) -> Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16 | RequestV17:
+) -> (
+    Request
+    | RequestV12
+    | RequestV13
+    | RequestV14
+    | RequestV15
+    | RequestV16
+    | RequestV17
+    | RequestV18
+):
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.8":
+        return RequestV18.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.7":
         return RequestV17.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.6":
@@ -476,7 +492,14 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16 | RequestV17,
+    request: Request
+    | RequestV12
+    | RequestV13
+    | RequestV14
+    | RequestV15
+    | RequestV16
+    | RequestV17
+    | RequestV18,
     root: Path,
     system_prompt: str,
     *,

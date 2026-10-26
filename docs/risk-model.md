@@ -1,3 +1,13 @@
+# ISSUE-378 — Current manual intervention and fixed1.00 TP
+
+Current DEMO source0.7.1-quick-oco.1-codex.1 fixes new gross TP1.00 price unit /
+SL7× TP with shared5% total risk, verified costs and independent native exits.
+Migration0035 stores immutable full/partial closing-deal evidence; external
+interventions reconcile before new exposure. New promptv2/request1.8 and local
+execution-v2 preserve historical contracts and accepted groups. No normal env
+keys, accounting reset or extra trading bot. See [current authority, constraints,
+validation and rollback](manual-intervention-report.md). Earlier sections are historical.
+
 # ISSUE-376 — Current quick-TP dual breakout OCO
 
 New explicit DEMO source `0.7.0-quick-oco.1-codex.1` fixes OCO STOP_LIMIT/GTC,

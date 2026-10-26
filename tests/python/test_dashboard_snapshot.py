@@ -22,6 +22,7 @@ def scoped(monkeypatch):  # type: ignore[no-untyped-def]
 def test_desk_requires_exact_account_symbol_mode(scoped, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     scoped.fetchall.side_effect = [
         [{"account_id": "fixture-account", "symbol_id": "fixture-symbol", "currency": "USD"}],
+        [],  # Scoped external-intervention read.
         [],
         [{"present": None}],
         [],
@@ -32,7 +33,10 @@ def test_desk_requires_exact_account_symbol_mode(scoped, monkeypatch) -> None:  
     monkeypatch.setattr(snapshot, "landscape_events", lambda rows, scope: [])
     value = snapshot.load_snapshot()
     assert value["positions"] == [] and value["orders"] == []
-    for call in scoped.execute.call_args_list[3:]:
+    intervention_sql, intervention_scope = scoped.execute.call_args_list[1].args
+    assert "be.account_id=%s" in intervention_sql and "be.symbol_id=%s" in intervention_sql
+    assert intervention_scope == ("fixture-account", "fixture-symbol", "demo")
+    for call in scoped.execute.call_args_list[4:]:
         sql, parameters = call.args
         assert "account_id=%s" in sql and "symbol_id=%s" in sql and "mode=%s" in sql
         assert parameters == ("fixture-account", "fixture-symbol", "demo")
@@ -51,6 +55,7 @@ def test_ambiguous_identity_never_queries_history(scoped, identities) -> None:  
 def test_partial_database_failure_does_not_publish_a_partial_snapshot(scoped) -> None:  # type: ignore[no-untyped-def]
     scoped.fetchall.side_effect = [
         [{"account_id": "fixture-account", "symbol_id": "fixture-symbol", "currency": "USD"}],
+        [],
         [{"current_equity": "100"}],
         psycopg.OperationalError("fixture-private-database"),
     ]
