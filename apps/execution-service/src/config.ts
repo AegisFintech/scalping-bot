@@ -5,6 +5,7 @@ import { Decimal } from "decimal.js";
 import type { TradingMode } from "../../../packages/contracts/src/index.js";
 import {
   MONEY_MANAGEMENT,
+  setupRiskPercentFor,
   BREAKOUT_SCALP_RELEASE,
   ORDER_LIFECYCLE,
   executionRiskPolicy,
@@ -274,12 +275,12 @@ export function loadExecutionConfig(
     accountKey: environment.ACCOUNT_KEY ?? "unconfigured",
     baseRiskPercent: policyPercent(
       environment.BASE_RISK_PERCENT,
-      MONEY_MANAGEMENT.setupRiskPercent,
+      setupRiskPercentFor(mode as TradingMode),
       "BASE_RISK_PERCENT",
     ),
     maxRiskPercent: policyPercent(
       environment.MAX_RISK_PERCENT,
-      MONEY_MANAGEMENT.setupRiskPercent,
+      setupRiskPercentFor(mode as TradingMode),
       "MAX_RISK_PERCENT",
     ),
     minRiskRewardRatio: boundedPositiveDecimal(

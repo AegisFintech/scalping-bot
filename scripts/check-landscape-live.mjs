@@ -256,6 +256,51 @@ try {
     ],
     curve: [],
   };
+  const flightFixture = {
+    ...fixture,
+    setupRiskPercent: "5",
+    flight: {
+      available: true,
+      state: "ACTIVE",
+      checkedAt: iso(0),
+      records: 8,
+      gaps: 1,
+      costBasis: "Synthetic modeled fees",
+      accountCurrency: "USD",
+      chart: [
+        { at: iso(-2000), bid: "4000", ask: "4000.1", gap: true },
+        { at: iso(-1000), bid: "4000.1", ask: "4000.2", gap: false },
+      ],
+      orders: [
+        {
+          side: "BUY",
+          state: "PENDING",
+          entry_price: "4001",
+          stop_loss: "3994",
+          take_profit: "4002",
+        },
+      ],
+      legs: [],
+      closedTrades: [],
+    },
+  };
+  await harness.evaluate((data) => window.applyDesk(data), flightFixture);
+  assert.equal(await harness.getByRole("tab").count(), 4);
+  assert.equal(
+    await harness
+      .getByRole("tab", { name: "Flight", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  assert.equal(await harness.locator("#price-chart svg").count(), 1);
+  assert.match(await harness.locator("#budget-policy").innerText(), /5%/);
+  await harness.clock.runFor(11000);
+  assert.match(
+    await harness.locator("#price-chart").innerText(),
+    /Waiting for fresh/,
+  );
+  results.flightPathFreshnessAndDynamicBudget = true;
+  await harness.clock.setSystemTime(time);
   await harness.evaluate((data) => window.applyDesk(data), fixture);
   assert.equal(await harness.locator("#action-title img").count(), 0);
   assert.equal(await harness.locator("#factors svg").count(), 0);

@@ -503,7 +503,7 @@ describe("PostgreSQL migrations integration", () => {
       expect(capitalAdmission({ ...admissionInput, mode: "demo" })).toEqual({
         lockedOut: false,
         riskMultiplier: "1",
-        riskPercentCap: "1",
+        riskPercentCap: "5",
       });
       expect(
         capitalAdmission({ ...admissionInput, mode: "live" }).lockedOut,

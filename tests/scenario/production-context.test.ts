@@ -208,7 +208,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       chart: analysisChart(),
     });
     expect(result.response.buy_stop.entry_price).toBe("4420");
-    expect(result.promptArtifact.version).toBe("entry-modes-execution-v1");
+    expect(result.promptArtifact.version).toBe("entry-quick-oco-execution-v1");
     store.row = { ...store.row, consumed: true };
     expect(await model.prepare(input(40))).toBe("SCENARIO_MAP_CONSUMED");
     expect(generate).not.toHaveBeenCalled();

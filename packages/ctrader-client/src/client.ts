@@ -1,3 +1,4 @@
+import type { FlightQuoteObservation } from "../../contracts/src/flight-quotes.js";
 import {
   brokerOrderTypeNumber,
   pendingOrderType,
@@ -518,6 +519,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
   readonly #schedules = new Map<string, WeeklyTradingSchedule>();
   readonly #subscribedSpots = new Set<string>();
   readonly #subscribedDepth = new Set<string>();
+  readonly #quoteObservers = new Set<(event: FlightQuoteObservation) => void>();
   readonly #executionHandlers = new Set<ExecutionHandler>();
   readonly #synchronizationHandlers = new Set<SynchronizationHandler>();
   #accountId: string | null = null;
@@ -543,6 +545,16 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     this.#transport.onMessage((message) => this.#handleMessage(message));
     this.#transport.setReconnectHandler(async () => {
       this.#authenticated = false;
+      this.#observeQuote({
+        kind: "RECONNECT",
+        symbolName: null,
+        bid: null,
+        ask: null,
+        sourceTime: null,
+        receivedAt: new Date().toISOString(),
+        bidUpdated: false,
+        askUpdated: false,
+      });
       for (const book of this.#books.values()) book.markReconnect();
       const spots = [...this.#subscribedSpots];
       const depths = [...this.#subscribedDepth];
@@ -671,6 +683,24 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       orders: recordsField(response.payload, "order"),
       hasMore: response.payload.hasMore,
     };
+  }
+
+  onQuoteObservation(
+    handler: (event: FlightQuoteObservation) => void,
+  ): () => void {
+    this.#quoteObservers.add(handler);
+    return () => {
+      this.#quoteObservers.delete(handler);
+    };
+  }
+  #observeQuote(event: FlightQuoteObservation): void {
+    for (const observer of this.#quoteObservers) {
+      try {
+        observer({ ...event });
+      } catch {
+        /* Observers cannot break broker execution/session handling. */
+      }
+    }
   }
 
   onExecution(handler: ExecutionHandler): () => void {
@@ -1421,11 +1451,22 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       const timestamp = optionalNumberField(message.payload, "timestamp");
       const source = timestamp === undefined ? undefined : unixDate(timestamp);
       if (source !== undefined) this.#lastServerTime = source;
+      const receivedAt = new Date().toISOString();
       this.#quotes.set(symbolId, {
         bid,
         ask,
         sourceTime: source?.toISOString() ?? current.sourceTime,
-        receivedAt: new Date().toISOString(),
+        receivedAt,
+      });
+      this.#observeQuote({
+        kind: "QUOTE",
+        symbolName: this.#metadata.get(symbolId)?.symbolName ?? null,
+        bid: bid ?? null,
+        ask: ask ?? null,
+        sourceTime: source?.toISOString() ?? null,
+        receivedAt,
+        bidUpdated: message.payload.bid !== undefined,
+        askUpdated: message.payload.ask !== undefined,
       });
     } else if (message.payloadType === CTraderPayload.DEPTH_EVENT) {
       const symbolId = stringField(message.payload, "symbolId");

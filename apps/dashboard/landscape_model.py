@@ -465,5 +465,11 @@ def landscape_model(snapshot: dict[str, Any], poll_state: str, now: datetime) ->
         "curve": curve,
         "events": event_tape(snapshot.get("events", []), now),
         "entryMode": status.get("entryMode") if available else None,
+        "flight": snapshot.get("flight", {"available": False})
+        if available
+        else {"available": False},
+        "setupRiskPercent": str(
+            (status.get("riskPolicy") or {}).get("setupRiskPercent", "Unavailable")
+        ),
         "eventWindow": "Latest bounded journal window; not a complete event stream.",
     }

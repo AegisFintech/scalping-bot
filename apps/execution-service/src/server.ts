@@ -73,6 +73,11 @@ export interface ExecutionStatus {
 }
 
 export interface ExecutionServerOptions {
+  readonly flightSource?: {
+    readonly mode: string;
+    readonly strategyVersion: string;
+    readonly policyVersion: string;
+  };
   readonly coordinator: Pick<AnalysisCoordinator, "runOnce">;
   readonly maintenance: OrderMaintenance;
   readonly controls: RuntimeControlStore;
@@ -133,6 +138,11 @@ export function createExecutionServer(
   options: ExecutionServerOptions,
 ): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 32_000, trustProxy: false });
+  app.get("/v1/flight-source", (_request, reply) =>
+    options.flightSource
+      ? { schemaVersion: "1.0", ...options.flightSource }
+      : reply.code(503).send({ reason: "FLIGHT_SOURCE_UNAVAILABLE" }),
+  );
   app.get("/health/live", () => ({ status: "alive" }));
   app.get("/health/ready", async (_request, reply) => {
     const status = await options.status();

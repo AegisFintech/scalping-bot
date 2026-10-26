@@ -1,3 +1,4 @@
+import { FlightQuoteBuffer } from "./flight-quote-buffer.js";
 import {
   CandidateHistoryCache,
   TECHNICAL_HISTORY_COUNTS,
@@ -25,6 +26,7 @@ import {
 } from "./local-market-recorder.js";
 
 export interface MarketDataServerOptions {
+  readonly flightQuotes?: FlightQuoteBuffer;
   readonly adapter: MarketDataAdapter;
   readonly maxQuoteAgeMs: number;
   readonly maxOrderBookAgeMs: number;
@@ -132,6 +134,28 @@ export function createMarketDataServer(
   app.get(
     "/v1/local-recorder",
     () => options.localRecorderStatus?.() ?? { enabled: false },
+  );
+  app.get<{ Querystring: { after?: string } }>(
+    "/v1/flight-quotes",
+    async (request, reply) => {
+      if (!options.flightQuotes)
+        return reply.code(503).send({ reason: "FLIGHT_QUOTES_UNAVAILABLE" });
+      const after = Number(request.query.after ?? "0");
+      if (
+        !Number.isSafeInteger(after) ||
+        after < 0 ||
+        Object.keys(request.query).some((k) => k !== "after")
+      )
+        return reply.code(400).send({ reason: "FLIGHT_QUOTE_CURSOR_INVALID" });
+      // Establish/retain the existing read-only spot subscription, never synthesize a quote event.
+      try {
+        const m = await dataMetadata(options.flightQuotes.symbol);
+        await options.adapter.getQuote(m.symbolId);
+      } catch {
+        /* gaps stay explicit */
+      }
+      return reply.send(options.flightQuotes.read(after));
+    },
   );
   app.post<{ Body: { symbol: string } }>(
     "/v1/session",
@@ -418,6 +442,10 @@ async function main(): Promise<void> {
     false,
     "LOCAL_MARKET_RECORDING_ENABLED",
   );
+  const flightQuotes = new FlightQuoteBuffer(
+    environment.TRADING_SYMBOL ?? "XAUUSD",
+  );
+  adapter.onQuoteObservation((event) => flightQuotes.observe(event));
   const recorder = localRecordingEnabled
     ? new LocalMarketRecorder({
         managedRetention: true,
@@ -485,6 +513,7 @@ async function main(): Promise<void> {
   }
   const app = createMarketDataServer({
     adapter,
+    flightQuotes,
     maxQuoteAgeMs: configuredNumber(
       environment.MAX_QUOTE_AGE_MS,
       3_000,

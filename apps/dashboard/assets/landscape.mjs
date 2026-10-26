@@ -6,7 +6,7 @@ function controller(root) {
   const desk = $("desk");
   const state = {
     model: {},
-    frame: "M1",
+    frame: "FLIGHT",
     follow: true,
     motion: !win.matchMedia("(prefers-reduced-motion: reduce)").matches,
     events: new Map(),
@@ -150,13 +150,163 @@ function controller(root) {
         e.key === "Home"
           ? 0
           : e.key === "End"
-            ? 2
-            : (i + (e.key === "ArrowRight" ? 1 : 2)) % 3;
+            ? tabs.length - 1
+            : (i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) %
+              tabs.length;
       state.frame = tabs[i].dataset.frame;
       tick();
       tabs[i].focus();
     };
   });
+  function drawFlight(m, isLive) {
+    const f = m.flight || {};
+    const freshFlight =
+      Number.isFinite(Date.parse(f.checkedAt)) &&
+      Date.now() >= Date.parse(f.checkedAt) &&
+      Date.now() - Date.parse(f.checkedAt) <= 10000;
+    const key = JSON.stringify(["FLIGHT", f, isLive, freshFlight]);
+    if (key === state.chartKey) return;
+    state.chartKey = key;
+    const host = $("price-chart");
+    host.replaceChildren();
+    if (!isLive || !f.available || !freshFlight) {
+      host.append(
+        node(
+          "p",
+          "muted",
+          `Flight recorder ${f.state || "unavailable"}. Waiting for fresh read-only evidence.`,
+        ),
+      );
+      text("level-key", "No current flight evidence");
+      text("chart-source", "Recorder has no execution authority.");
+      return;
+    }
+    const rows = f.chart || [],
+      levels = [];
+    for (const o of f.orders || []) {
+      levels.push({
+        price: Number(o.entry_price),
+        label: `${o.side} trigger · ${o.state}`,
+        color: "#b8a0ff",
+      });
+      if (!(f.legs || []).some((l) => l.side === o.side)) {
+        levels.push({
+          price: Number(o.take_profit),
+          label: `${o.side} intended TP`,
+          color: "#64e5ba",
+        });
+        levels.push({
+          price: Number(o.stop_loss),
+          label: `${o.side} intended SL`,
+          color: "#ff8d9e",
+        });
+      }
+    }
+    for (const leg of f.legs || []) {
+      levels.push({
+        price: Number(leg.target),
+        label: `${leg.side} TP (recorded)`,
+        color: "#64e5ba",
+      });
+      levels.push({
+        price: Number(leg.stop),
+        label: `${leg.side} SL (recorded)`,
+        color: "#ff8d9e",
+      });
+    }
+    const metrics = (f.legs || []).map(
+      (l) =>
+        `${l.side}: MFE ${l.mfePips ?? "?"} / MAE ${l.maePips ?? "?"} pip · closest TP ${l.closestTpPips ?? "?"} · best modeled net ${l.bestModeledNetPips ?? "?"} pip`,
+    );
+    const closed = (f.closedTrades || []).map(
+      (t) =>
+        `Closed net ${t.net} ${f.accountCurrency || ""} · signed fees ${t.signed_fees} already included`,
+    );
+    text(
+      "level-key",
+      [...metrics, ...closed].join(" | ") ||
+        "Pending setup · monitoring both trigger boundaries",
+    );
+    text(
+      "chart-source",
+      `${f.final ? "Recorded completed setup" : "Observed broker updates"} · ${f.records} records · ${f.gaps} gaps · ${f.costBasis}. Bounded chart; raw updates retained. Crossing is not a guaranteed fill.`,
+    );
+    if (!rows.length) {
+      host.append(
+        node("p", "muted", "No executable quote updates recorded yet."),
+      );
+      return;
+    }
+    const prices = rows
+      .flatMap((r) => [Number(r.bid), Number(r.ask)])
+      .concat(levels.map((l) => l.price));
+    if (prices.some((p) => !Number.isFinite(p) || p <= 0)) {
+      host.append(
+        node("p", "muted", "Flight chart withheld: invalid price evidence."),
+      );
+      return;
+    }
+    const top = Math.max(...prices),
+      bottom = Math.min(...prices),
+      pad = Math.max((top - bottom) * 0.08, 0.01);
+    const y = (v) => 12 + ((top + pad - v) / (top - bottom + 2 * pad)) * 200;
+    const from = Date.parse(rows[0].at),
+      to = Date.parse(rows.at(-1).at);
+    if (![from, to].every(Number.isFinite) || to < from) return;
+    const x = (r) =>
+      4 + ((Date.parse(r.at) - from) / Math.max(1, to - from)) * 330;
+    const chart = svg("svg", {
+      viewBox: "0 0 400 240",
+      role: "img",
+      "aria-label": "Recorded bid and ask path; gaps break the line",
+    });
+    for (const l of levels) {
+      chart.append(
+        svg("line", {
+          x1: 0,
+          x2: 340,
+          y1: y(l.price),
+          y2: y(l.price),
+          stroke: l.color,
+          "stroke-dasharray": "4 4",
+          opacity: 0.7,
+        }),
+      );
+      chart.append(
+        svg(
+          "text",
+          { x: 4, y: y(l.price) - 3, fill: l.color, "font-size": 8 },
+          `${l.label} ${l.price}`,
+        ),
+      );
+    }
+    for (const [field, color] of [
+      ["bid", "#83dbe3"],
+      ["ask", "#f1c47c"],
+    ]) {
+      let path = "";
+      rows.forEach((r, i) => {
+        if (Number.isFinite(Date.parse(r.at)))
+          path += `${i === 0 || r.gap ? "M" : "L"}${x(r)},${y(Number(r[field]))} `;
+      });
+      chart.append(
+        svg("path", {
+          d: path,
+          fill: "none",
+          stroke: color,
+          "stroke-width": 1.5,
+        }),
+      );
+    }
+    chart.append(
+      svg(
+        "text",
+        { x: 4, y: 234, fill: "#a3a8bb", "font-size": 9 },
+        `BID / ASK · ${f.state} · ${f.originRelease}`,
+      ),
+    );
+    host.append(chart);
+  }
   function drawChart(m, isLive) {
     root.querySelectorAll("[data-frame]").forEach((b) => {
       const selected = b.dataset.frame === state.frame;
@@ -164,6 +314,10 @@ function controller(root) {
       b.tabIndex = selected ? 0 : -1;
     });
     $("price-chart").setAttribute("aria-labelledby", `tab-${state.frame}`);
+    if (state.frame === "FLIGHT") {
+      drawFlight(m, isLive);
+      return;
+    }
     const rows = isLive ? m.charts?.[state.frame] || [] : [];
     const overlays = (m.overlays || []).filter(
       (v) => !v.until || valid(v.until),
@@ -466,6 +620,10 @@ function controller(root) {
   function tick() {
     const m = state.model,
       isLive = live();
+    text(
+      "budget-policy",
+      `At most ${m.setupRiskPercent || "Unavailable"}% shared setup · current-equity sizing`,
+    );
     if (!isLive && state.stale === false) state.gap = true;
     state.stale = !isLive;
     desk.classList.toggle("unavailable", !isLive);

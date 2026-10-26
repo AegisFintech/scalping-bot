@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 
 import type {
+  PendingOrderCommand,
   MarketSessionStatus,
   AccountAdapter,
   AccountState,
@@ -316,9 +317,18 @@ export interface CoordinatorOptions {
     | "scenario-execution-v1"
     | "scenario-execution-v2"
     | "entry-pair-execution-v1"
-    | "entry-modes-execution-v1";
+    | "entry-modes-execution-v1"
+    | "entry-quick-oco-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
+  readonly commandFeeCheck?: (
+    commands: readonly PendingOrderCommand[],
+    metadata: SymbolMetadata,
+  ) => {
+    approved: boolean;
+    reasonCodes: readonly string[];
+    evidence: readonly unknown[];
+  };
   readonly minRiskRewardRatio: string;
   readonly minimumExpectedNetToFeesRatio: string;
   readonly minExpirySeconds: number;
@@ -1461,11 +1471,16 @@ export class AnalysisCoordinator {
       )
         return await reject(["DIRECTIONAL_SIDE_MISMATCH"]);
 
-      const commissionCoverage = validateCommandFeeBuffer(
-        executableCommands,
-        decisionSnapshot.metadata,
-        this.#options.minimumExpectedNetToFeesRatio,
-      );
+      const commissionCoverage = this.#options.commandFeeCheck
+        ? this.#options.commandFeeCheck(
+            executableCommands,
+            decisionSnapshot.metadata,
+          )
+        : validateCommandFeeBuffer(
+            executableCommands,
+            decisionSnapshot.metadata,
+            this.#options.minimumExpectedNetToFeesRatio,
+          );
       await this.#options.trail.validation(
         analysisId,
         "RISK",
@@ -1473,8 +1488,9 @@ export class AnalysisCoordinator {
         commissionCoverage.reasonCodes,
         {
           validation_scope: "ACTUAL_VOLUME_FEE_BUFFER",
-          minimum_expected_net_to_fees_ratio:
-            this.#options.minimumExpectedNetToFeesRatio,
+          minimum_expected_net_to_fees_ratio: this.#options.commandFeeCheck
+            ? null
+            : this.#options.minimumExpectedNetToFeesRatio,
           fee_buffer_evidence: commissionCoverage.evidence,
         },
       );
@@ -1629,6 +1645,24 @@ export class AnalysisCoordinator {
           "PRE_PLACEMENT",
         );
         return await reject(placementProposalSemantic.reasonCodes);
+      }
+
+      if (this.#options.commandFeeCheck) {
+        const finalFees = this.#options.commandFeeCheck(
+          executableCommands,
+          placementSnapshot.metadata,
+        );
+        await this.#options.trail.validation(
+          analysisId,
+          "RISK",
+          finalFees.approved,
+          finalFees.reasonCodes,
+          {
+            validation_scope: "PRE_PLACEMENT_ACTUAL_VOLUME_FEES",
+            fee_buffer_evidence: finalFees.evidence,
+          },
+        );
+        if (!finalFees.approved) return await reject(finalFees.reasonCodes);
       }
 
       const placementEffectiveSemantic =

@@ -198,7 +198,7 @@ describe("unattended observer release selection", () => {
 });
 
 it("observes the exact Codex breakout identity and rejects a different release", () => {
-  const current = "0.6.0-entry-modes.1-codex.3";
+  const current = "0.7.0-quick-oco.1-codex.1";
   expect(
     parseObservationArguments([
       "--release",

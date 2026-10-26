@@ -2215,3 +2215,24 @@ describe("four operator profile execution through the full coordinator", () => {
     },
   );
 });
+
+describe("actual-volume target cost checks", () => {
+  it("rechecks costs after late metadata refresh and never places if cost objective fails", async () => {
+    const check = vi
+      .fn()
+      .mockReturnValueOnce({ approved: true, reasonCodes: [], evidence: [] })
+      .mockReturnValue({
+        approved: false,
+        reasonCodes: ["QUICK_OCO_NET_OBJECTIVE_UNAFFORDABLE"],
+        evidence: [],
+      });
+    const o = options({ commandFeeCheck: check });
+    const place = vi.spyOn(o.gateway, "placeOco");
+    const result = await new AnalysisCoordinator(o).runOnce();
+    expect(check).toHaveBeenCalledTimes(2);
+    expect(result.reasonCodes).toContain(
+      "QUICK_OCO_NET_OBJECTIVE_UNAFFORDABLE",
+    );
+    expect(place).not.toHaveBeenCalled();
+  });
+});
