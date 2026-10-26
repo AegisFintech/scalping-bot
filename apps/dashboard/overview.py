@@ -222,6 +222,9 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "0.4.1-smc-breakout.1",
                 "0.4.2-compression-scalp.1",
                 "0.4.3-evidence-scalp.1",
+                "0.5.0-directional-scalp.1",
+                "0.6.0-entry-modes.1",
+                "0.7.0-quick-oco.1",
             ):
                 return result
             demo_development = False
@@ -231,6 +234,9 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "0.4.1-smc-breakout.1",
                 "0.4.2-compression-scalp.1",
                 "0.4.3-evidence-scalp.1",
+                "0.5.0-directional-scalp.1",
+                "0.6.0-entry-modes.1",
+                "0.7.0-quick-oco.1",
             }:
                 enforced = policy.get("lossLimitsEnforced")
                 mode = policy.get("mode")
@@ -246,7 +252,13 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
             cap = Decimal(str(capital["risk_cap_percent"]))
             if (
                 not all(value.is_finite() for value in [setup_percent, daily_percent, cap])
-                or not Decimal(0) < setup_percent <= Decimal(1)
+                or not Decimal(0)
+                < setup_percent
+                <= (
+                    Decimal(5)
+                    if policy["version"] == "0.7.0-quick-oco.1" and policy.get("mode") == "demo"
+                    else Decimal(1)
+                )
                 or not Decimal(0) < daily_percent <= Decimal(5)
                 or cap < 0
                 or equity <= 0

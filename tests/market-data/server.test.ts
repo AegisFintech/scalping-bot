@@ -1,3 +1,4 @@
+import { FlightQuoteBuffer } from "../../apps/market-data-service/src/flight-quote-buffer.js";
 import { marketSession } from "../helpers/market-session.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -595,4 +596,47 @@ it("uses cached SMC history with fresh quote/book and rejects reconnect during c
   } finally {
     await app.close();
   }
+});
+
+it("exposes only observed buffered quotes and rejects invalid cursors without generating events", async () => {
+  const quotes = new FlightQuoteBuffer("XAUUSD");
+  const a = adapter(
+    {
+      bid: "4000",
+      ask: "4000.01",
+      sourceTime: metadata.metadataTime,
+      receivedAt: metadata.metadataTime,
+    },
+    orderBook,
+  );
+  const quoteRead = vi.spyOn(a, "getQuote"),
+    candleRead = vi.spyOn(a, "getCompletedCandles");
+  const o = {
+    adapter: a,
+    maxQuoteAgeMs: 3000,
+    maxOrderBookAgeMs: 3000,
+    maxSnapshotSkewMs: 5000,
+  };
+  const app = createMarketDataServer({ ...o, flightQuotes: quotes });
+  for (const url of [
+    "/v1/flight-quotes?after=-1",
+    "/v1/flight-quotes?after=1.1",
+    "/v1/flight-quotes?after=NaN",
+    "/v1/flight-quotes?other=0",
+  ])
+    expect((await app.inject({ method: "GET", url })).statusCode).toBe(400);
+  const result = await app.inject({
+    method: "GET",
+    url: "/v1/flight-quotes?after=0",
+  });
+  expect(result.json<{ events: unknown[] }>().events).toEqual([]);
+  expect(quoteRead).toHaveBeenCalledTimes(1);
+  expect(candleRead).not.toHaveBeenCalled();
+  await app.close();
+  const missing = createMarketDataServer(o);
+  expect(
+    (await missing.inject({ method: "GET", url: "/v1/flight-quotes" }))
+      .statusCode,
+  ).toBe(503);
+  await missing.close();
 });

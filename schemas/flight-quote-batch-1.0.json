@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "flight-quote-batch-1.0",
+  "title": "Bounded observed broker quote updates; not a complete tick tape",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "streamId",
+    "firstSequence",
+    "latestSequence",
+    "gap",
+    "events"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "streamId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "firstSequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "latestSequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gap": {
+      "type": "boolean"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 2048,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sequence",
+          "kind",
+          "bid",
+          "ask",
+          "sourceTime",
+          "receivedAt",
+          "bidUpdated",
+          "askUpdated"
+        ],
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "enum": ["QUOTE", "RECONNECT"]
+          },
+          "bid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ask": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,10})?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceTime": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bidUpdated": {
+            "type": "boolean"
+          },
+          "askUpdated": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

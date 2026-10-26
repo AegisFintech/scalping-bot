@@ -4,7 +4,7 @@ import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
 export const HISTORICAL_API_MODEL = "grok-4.5";
 export const HISTORICAL_BREAKOUT_VERSION = "0.4.0-breakout-scalp.1-codex.1";
-export const CODEX_STRATEGY_VERSION = "0.6.0-entry-modes.1-codex.3";
+export const CODEX_STRATEGY_VERSION = "0.7.0-quick-oco.1-codex.1";
 export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {
@@ -13,8 +13,20 @@ export function usesFadeV3(version: string): boolean {
     version === HISTORICAL_CODEX_FADE_VERSION
   );
 }
-export const POLICY_VERSION = "0.6.0-entry-modes.1";
-/** Evidence-first box breakout / native equal-distance protection demo policy. */
+export const POLICY_VERSION = "0.7.0-quick-oco.1";
+export const DEMO_SETUP_RISK_PERCENT = "5";
+export function setupRiskPercentFor(mode: TradingMode): string {
+  return mode === "demo"
+    ? DEMO_SETUP_RISK_PERCENT
+    : MONEY_MANAGEMENT.setupRiskPercent;
+}
+export const QUICK_OCO = {
+  netTargetPips: "0.08",
+  stopToTarget: "7",
+  entryReservePoints: "30",
+  exitReservePoints: "65",
+} as const;
+/** Current quick OCO demo composition; retained historical candidate knobs are not admission gates. */
 export const BREAKOUT_SCALP_RELEASE = {
   strategyVersion: CODEX_STRATEGY_VERSION,
   orderType: "STOP_LIMIT",
@@ -70,6 +82,7 @@ export function executionRiskPolicy(mode: TradingMode): RiskPolicy {
     mode,
     lossLimitsEnforced: enforcesLossLimits(mode),
     ...MONEY_MANAGEMENT,
+    setupRiskPercent: setupRiskPercentFor(mode),
   };
 }
 export const MONEY_MANAGEMENT = {
@@ -188,7 +201,7 @@ export const FIXED_DEFAULTS = {
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
   STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
-  CODE_VERSION: "0.6.0-entry-modes.1",
+  CODE_VERSION: "0.7.0-quick-oco.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
@@ -274,8 +287,17 @@ export const OBSOLETE_KEYS = [
 export function resolveRuntimeEnvironment(
   source: NodeJS.ProcessEnv,
 ): NodeJS.ProcessEnv {
+  const modeDefaults = {
+    ...FIXED_DEFAULTS,
+    ...(source.TRADING_MODE === "demo"
+      ? {
+          BASE_RISK_PERCENT: DEMO_SETUP_RISK_PERCENT,
+          MAX_RISK_PERCENT: DEMO_SETUP_RISK_PERCENT,
+        }
+      : {}),
+  };
   const conflicts: string[] = [];
-  for (const [key, value] of Object.entries(FIXED_DEFAULTS)) {
+  for (const [key, value] of Object.entries(modeDefaults)) {
     const legacy = source[key];
     if (legacy !== undefined && legacy !== "" && legacy !== value)
       conflicts.push(key);
@@ -301,7 +323,7 @@ export function resolveRuntimeEnvironment(
     throw new Error("CONFIG_BROKER_DATABASE_TLS_REQUIRED");
   const resolved: NodeJS.ProcessEnv = {
     ...source,
-    ...FIXED_DEFAULTS,
+    ...modeDefaults,
     CTRADER_API_HOST:
       source.CTRADER_API_HOST ||
       ((source.CTRADER_CONNECTION_MODE ||

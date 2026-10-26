@@ -1,3 +1,34 @@
+# ISSUE-376 — Current demo quick-TP dual breakout OCO authority
+
+Read `docs/quick-oco-flight-report.md` before changing this path. This explicit
+operator authorization supersedes older single-profile/1% DEMO/TP instructions
+below for NEW setups only. Source `0.7.0-quick-oco.1-codex.1`, policy
+`0.7.0-quick-oco.1`: fixed OCO STOP_LIMIT/GTC, original BUY upper/SELL lower,
+smallest whole broker pip gross TP meeting modeled 0.08 broker pip net after
+verified costs and retained execution reserves, native SL distance exactly 7× TP.
+Shared DEMO risk at most 5% current reconciled equity / 2.5% per race-exposed leg;
+other modes retain 1%, new execution composition is demo-only. No fixed lot
+multiplier, entry shifting, forced trades, profit guarantee or real-money authority.
+Broker pip/tick is 0.01; actual metadata commissions (~$24/lot round trip near
+$4,000 gold) override the unverified $7 estimate. Never understate costs or call
+0.08 pip the gross broker TP. New risk schema 1.6; old contracts stay immutable.
+Provider prompt/transport are entry-quick-oco-v1 / 1.7 / 1.2; preserve the old
+entry-modes-v1 / 1.6 exact-1% contract unchanged. New request 1.7 requires exactly 5%
+and fixed cost-aware OCO guidance; exercise actual Node-to-Python validation. Local deterministic
+prompt is entry-quick-oco-execution-v1. Keep WAIT, all fail-closed operational,
+account, session, margin, provider/revision/intent gates and native maintenance.
+Existing accepted groups retain old settings/protection; use an audited scoped
+selection CAS on deployment, never overwrite selection at startup or cancel an
+old group to accelerate activation. Preserve financial/history/worker state and
+the existing loss cooldown. No reset or automatic research promotion.
+The flight recorder is a separately unprivileged SELECT-only observer, with no
+provider/order/control credentials or execution authority. Preserve raw quote
+source/receive times, stream/sequence gaps, late-close and partial-fill censoring,
+immutable summaries and null counterfactual profit. Bounded/lossless learning
+records are distinct from seven-day diagnostic logs. Storage failure halts only
+recording; it cannot bypass or stop protection. Refresh AST Graphify, README and
+these instructions for every outgoing commit; retain old registrations/reports.
+
 # ISSUE-374 — Lean storage maintenance
 
 Maintenance source `0.6.0-entry-modes.1-codex.3` preserves the fixed single

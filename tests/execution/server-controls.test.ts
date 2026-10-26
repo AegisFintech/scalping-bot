@@ -11,8 +11,14 @@ function server(
   initialize: () => Promise<{ tradingDay: string; timezone: string }>,
   openPositionMonitor?: () => Promise<OpenPositionMonitor>,
   operationalReady = true,
+  flightSource?: {
+    mode: string;
+    strategyVersion: string;
+    policyVersion: string;
+  },
 ) {
   return createExecutionServer({
+    ...(flightSource ? { flightSource } : {}),
     coordinator: {} as AnalysisCoordinator,
     maintenance: {} as OrderMaintenance,
     controls: {} as RuntimeControlStore,
@@ -244,4 +250,26 @@ it("removes the mode mutation endpoint, including authenticated callers", async 
     expect(response.statusCode).toBe(404);
   }
   await app.close();
+});
+
+it("serves immutable recorder identity without account status or execution authority", async () => {
+  const source = {
+    mode: "demo",
+    strategyVersion: "fixture",
+    policyVersion: "fixture",
+  };
+  const app = server("demo", vi.fn(), undefined, true, source);
+  expect(
+    (await app.inject({ method: "GET", url: "/v1/flight-source" })).json(),
+  ).toEqual({ schemaVersion: "1.0", ...source });
+  expect(
+    (await app.inject({ method: "POST", url: "/v1/flight-source" })).statusCode,
+  ).toBe(404);
+  await app.close();
+  const unavailable = server("demo", vi.fn());
+  expect(
+    (await unavailable.inject({ method: "GET", url: "/v1/flight-source" }))
+      .statusCode,
+  ).toBe(503);
+  await unavailable.close();
 });

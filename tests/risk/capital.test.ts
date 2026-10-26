@@ -104,12 +104,12 @@ describe("operator-authorized demo development admission", () => {
   const capital = evaluate("9362", "0", null, daily.lossPercent);
   const input = { mode: "demo" as const, equity: "9362", daily, capital };
 
-  it("admits a locked demo at the shared 1% ceiling without changing its accounting", () => {
+  it("admits a locked demo at the shared 5% ceiling without changing its accounting", () => {
     const before = JSON.stringify(input);
     expect(capitalAdmission(input)).toEqual({
       lockedOut: false,
       riskMultiplier: "1",
-      riskPercentCap: "1",
+      riskPercentCap: "5",
     });
     expect(JSON.stringify(input)).toBe(before);
     expect(capital.lockedOut).toBe(true);
@@ -128,7 +128,7 @@ describe("operator-authorized demo development admission", () => {
       }),
   );
 
-  it("keeps demo at 1% while other modes retain reductions and remaining daily capacity", () => {
+  it("keeps demo at 5% while other modes retain reductions and remaining daily capacity", () => {
     const reduced = {
       ...input,
       equity: "9600",
@@ -143,7 +143,7 @@ describe("operator-authorized demo development admission", () => {
       ...reduced,
       daily: { ...reduced.daily, remainingLossBudget: "1" },
     };
-    expect(capitalAdmission(nearlyExhausted).riskPercentCap).toBe("1");
+    expect(capitalAdmission(nearlyExhausted).riskPercentCap).toBe("5");
     expect(
       capitalAdmission({ ...nearlyExhausted, mode: "paper" }).riskPercentCap,
     ).toBe("0.0104166666");

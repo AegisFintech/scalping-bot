@@ -2,6 +2,7 @@ import { Decimal } from "decimal.js";
 import {
   enforcesLossLimits,
   MONEY_MANAGEMENT,
+  setupRiskPercentFor,
 } from "../../config/src/policy.js";
 import type { TradingMode } from "../../contracts/src/index.js";
 import { canonical, decimal, signedDecimal } from "./decimal.js";
@@ -61,7 +62,7 @@ export function capitalAdmission(input: {
     return {
       lockedOut: false,
       riskMultiplier: "1",
-      riskPercentCap: MONEY_MANAGEMENT.setupRiskPercent,
+      riskPercentCap: setupRiskPercentFor(input.mode),
     };
   }
   return {

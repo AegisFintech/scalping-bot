@@ -1,3 +1,15 @@
+# ISSUE-376 — Current quick-TP dual breakout OCO
+
+New explicit DEMO source `0.7.0-quick-oco.1-codex.1` fixes OCO STOP_LIMIT/GTC,
+original model boundaries, broker-rounded cost-aware modeled 0.08-pip net TP
+objective and native SL distance seven times gross TP. Shared demo setup risk is
+5% current equity total (2.5% each); other modes retain 1%. Old groups/protection,
+all gates, accounting and provider memory remain. No normal env keys or migrations
+are added; deployment uses the existing scoped mode-selection CAS. The separate
+SELECT-only flight recorder has no trading authority and keeps learning evidence
+apart from seven-day logs. See [full contract and fee discrepancy](quick-oco-flight-report.md).
+Earlier release sections below are historical.
+
 # ISSUE-372 — Fixed trend-direction STOP_LIMIT
 
 New setups use SINGLE_STOP_LIMIT only; historical mode/protection/recovery stays

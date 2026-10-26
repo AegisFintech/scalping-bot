@@ -530,3 +530,58 @@ def test_four_mode_worker_schema_and_native_receipt(tmp_path: Path, decision: st
     assert schema == s.RequestV16.model_json_schema()
     with pytest.raises(ValueError):
         s.RequestV15.model_validate(body)
+
+
+@pytest.mark.parametrize("decision", ["BUY", "SELL", "WAIT"])
+def test_quick_oco_worker_contract_preserves_historical_risk_and_native_receipt(
+    tmp_path: Path, decision: str
+) -> None:
+    import hashlib
+
+    prompt = Path("prompts/entry-quick-oco-v1.md").read_text().strip()
+    body = current_request().model_dump()
+    body.update(
+        version="codex-entry-request-1.7",
+        promptVersion="entry-quick-oco-v1",
+        promptSha256=hashlib.sha256(prompt.encode()).hexdigest(),
+    )
+    body["payload"]["execution_context"]["shared_setup_risk_percent"] = "5"
+    req = s.parse_request(json.dumps(body).encode())
+    assert isinstance(req, s.RequestV17)
+    schema = json.loads(Path("schemas/codex-entry-request-1.7.json").read_text())
+    schema.pop("$schema")
+    schema.pop("$id")
+    assert schema == s.RequestV17.model_json_schema()
+    with pytest.raises(ValueError):
+        s.RequestV16.model_validate(body)
+    wrong = json.loads(json.dumps(body))
+    wrong["payload"]["execution_context"]["shared_setup_risk_percent"] = "1"
+    with pytest.raises(ValueError):
+        s.RequestV17.model_validate(wrong)
+
+    def call(text: str, job: Path) -> bytes:
+        assert "Return BUY, SELL or WAIT only." in text
+        assert "seven times gross TP" in text
+        assert '"shared_setup_risk_percent":"5"' in text
+        publish(
+            job / "memory-result.json",
+            {
+                "day": NOW.date().isoformat(),
+                "threadId": "quick-thread",
+                "turnId": "quick-turn",
+                "compacted": False,
+            },
+        )
+        return json.dumps(
+            {
+                "decision": decision,
+                "reason": "fixture",
+                "upper_breakout": None if decision == "WAIT" else "4002",
+                "lower_breakout": None if decision == "WAIT" else "3999",
+            }
+        ).encode()
+
+    result = s.run(req, tmp_path, prompt, now=lambda: NOW, call=call)
+    assert result["version"] == "codex-entry-response-1.2"
+    assert result["entries"]["decision"] == decision
+    assert result["executionAuthority"] is False

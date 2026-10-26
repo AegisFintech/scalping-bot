@@ -1,3 +1,22 @@
+# Quick-TP dual breakout OCO and setup flight recorder — ISSUE-376
+
+New DEMO setups use **two STOP_LIMIT/GTC OCO entries**, preserving Codex's upper
+BUY/lower SELL range. Native **SL distance = 7× gross TP distance**. TP rounds
+up to cover verified broker costs/reserves and target 0.08 broker pip modeled net;
+this is not guaranteed profit or a sub-tick gross TP. Shared dynamic demo risk is
+**5% equity total**, at most 2.5% per leg; margin/volume/cost gates can reduce size.
+Provider prompt `entry-quick-oco-v1` / worker request 1.7 carries the exact 5%
+context; historical 1.6/1% contracts and prior threads stay intact.
+Existing accepted groups finish with original protection. WAIT and all safety
+gates remain; no real-money authority or fixed lot multiplication is added.
+The read-only **Flight** chart records bid/ask movement, observed TP/SL proximity,
+MFE/MAE, modeled costs, fill/close timing and gaps, including a short post-close
+window. Broker metadata reports approximately $24/lot round-trip fees near $4,000
+gold, rather than the operator's unverified $7 estimate.
+See [exact contract, fee evidence, retention and validation](docs/quick-oco-flight-report.md)
+and [delivery status](https://github.com/AegisFintech/scalping-bot/issues/376).
+Earlier release sections below are historical.
+
 # Lean operational storage — ISSUE-374
 
 Weekly diagnostic log rotation retains seven days of closed logs with size caps.

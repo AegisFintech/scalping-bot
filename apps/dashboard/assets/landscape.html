@@ -43,7 +43,9 @@
     <article class="stat">
       <label id="budget-label">SHARED SETUP BUDGET</label
       ><strong class="mono" id="ceiling">Unavailable</strong
-      ><small>At most 1% setup · current-equity sizing</small>
+      ><small id="budget-policy"
+        >Shared setup ceiling · current-equity sizing</small
+      >
     </article>
     <article class="stat">
       <label>CURRENT ACTION</label
@@ -84,7 +86,16 @@
               tabindex="-1"
               data-frame="M15"
             >
-              M15
+              M15</button
+            ><button
+              role="tab"
+              aria-selected="false"
+              aria-controls="price-chart"
+              id="tab-FLIGHT"
+              tabindex="-1"
+              data-frame="FLIGHT"
+            >
+              Flight
             </button>
           </div>
         </div>

@@ -1,8 +1,11 @@
 import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
 import { technicalContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
 import { canonical } from "../../../packages/risk-engine/src/decimal.js";
+import {
+  quickOcoTransform,
+  validateQuickOcoCommands,
+} from "../../../packages/strategy-candidates/src/quick-oco.js";
 import { modeledScalpCost } from "../../../packages/strategy-candidates/src/compression-demo.js";
-import { evidenceDemoTransform } from "../../../packages/strategy-candidates/src/evidence-demo.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -376,7 +379,7 @@ async function main(): Promise<void> {
   const breakoutScalpActive =
     strategyVersion === BREAKOUT_SCALP_RELEASE.strategyVersion;
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
-  if (breakoutScalpActive && !["demo", "paper"].includes(config.tradingMode))
+  if (breakoutScalpActive && config.tradingMode !== "demo")
     throw new Error("BREAKOUT_SCALP_DEMO_ONLY");
   const fadeExecutionPolicy = usesFadeV3(strategyVersion)
     ? FADE_LIMIT_RELEASE_V3
@@ -398,7 +401,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "entry-modes-execution-v1",
+    promptVersion: "entry-quick-oco-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -558,7 +561,7 @@ async function main(): Promise<void> {
             ),
           ),
           cost_basis: "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
-          shared_setup_risk_percent: "1",
+          shared_setup_risk_percent: config.baseRiskPercent,
           recent_closed_outcomes: (
             await pool.query(
               `SELECT t.closed_at, t.direction, t.realized_pnl::text AS realized_net,
@@ -618,7 +621,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-modes-execution-v1",
+    promptVersion: "entry-quick-oco-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1314,7 +1317,7 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: "entry-modes-execution-v1",
+      promptVersion: "entry-quick-oco-execution-v1",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,
@@ -1322,18 +1325,12 @@ async function main(): Promise<void> {
         ? {
             evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
               Promise.resolve(
-                evidenceDemoTransform({
-                  snapshot,
-                  response,
-                  maximumStopDistance,
-                  reverseLimit: profile.limit,
-                  singleEntry: profile.single,
-                }),
+                quickOcoTransform({ snapshot, response, maximumStopDistance }),
               ),
           }
         : {}),
       minRiskRewardRatio: breakoutScalpActive
-        ? "1"
+        ? "0.1428571428"
         : fadeLimitActive
           ? fadeExecutionPolicy.minRiskRewardRatio
           : config.minRiskRewardRatio,
@@ -1348,6 +1345,9 @@ async function main(): Promise<void> {
       trendFilterBars: fadeLimitActive
         ? Number(fadeExecutionPolicy.trendFilterBars)
         : 0,
+      ...(breakoutScalpActive
+        ? { commandFeeCheck: validateQuickOcoCommands }
+        : {}),
       minimumExpectedNetToFeesRatio: breakoutScalpActive
         ? BREAKOUT_SCALP_RELEASE.minimumNetToFees
         : usesFadeV3(strategyVersion)
@@ -1709,6 +1709,11 @@ async function main(): Promise<void> {
     }
   };
   const app = createExecutionServer({
+    flightSource: {
+      mode: config.tradingMode,
+      strategyVersion,
+      policyVersion: POLICY_VERSION,
+    },
     coordinator,
     maintenance,
     controls,

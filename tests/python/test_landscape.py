@@ -261,3 +261,29 @@ def test_wait_observation_is_not_labelled_as_available_entry_prices() -> None:
         e["title"] == "Codex chose WAIT" and e["detail"] == row["wait_reason"] for e in events
     )
     assert not any(e["title"] == "Entry prices available" for e in events)
+
+
+def test_quick_oco_budget_is_demo_only_and_flight_withdraws_with_account_evidence() -> None:
+    s = snapshot()
+    s["capital"] = {
+        "updated_at": NOW,
+        "risk_multiplier": "1",
+        "drawdown_percent": "0",
+        "risk_cap_percent": "5",
+        "risk_policy": {
+            "version": "0.7.0-quick-oco.1",
+            "mode": "demo",
+            "lossLimitsEnforced": False,
+            "setupRiskPercent": "5",
+            "dailyLossLimitPercent": "5",
+        },
+    }
+    s["flight"] = {"available": True, "state": "RECORDING"}
+    m = landscape_model(s, "ready", NOW)
+    assert m["values"]["ceiling"]["text"] == "500.00"
+    assert m["flight"]["available"]
+    s["capital"]["risk_policy"]["version"] = "0.6.0-entry-modes.1"
+    assert landscape_model(s, "ready", NOW)["values"]["ceiling"]["text"] == "Unavailable"
+    s["capital"]["risk_policy"]["mode"] = "live"
+    assert landscape_model(s, "ready", NOW)["values"]["ceiling"]["text"] == "Unavailable"
+    assert not landscape_model(s, "unavailable", NOW)["flight"]["available"]

@@ -1,11 +1,12 @@
+import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-modes-v1.md", "utf8").trim();
-function fixture() {
+const prompt = readFileSync("prompts/entry-quick-oco-v1.md", "utf8").trim();
+function fixtureClient() {
   const request = {
     analysisId: randomUUID(),
     symbol: "XAUUSD",
@@ -57,7 +58,7 @@ function fixture() {
 }
 describe("isolated Codex transport", () => {
   it("records requested identity and unknown cost without retries or fallback", async () => {
-    const s = fixture();
+    const s = fixtureClient();
     const result = await s.client.analyze(s.request);
     expect(result.telemetry).toMatchObject({
       requestedModel: "gpt-6.1-sol",
@@ -68,11 +69,11 @@ describe("isolated Codex transport", () => {
     if (typeof rawBody !== "string") throw new Error("EXPECTED_JSON_REQUEST");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body).toMatchObject({
-      version: "codex-entry-request-1.6",
-      promptVersion: "entry-modes-v1",
+      version: "codex-entry-request-1.7",
+      promptVersion: "entry-quick-oco-v1",
       promptSha256: s.value.promptSha256,
     });
-    expect(result.promptArtifact?.version).toBe("entry-modes-v1");
+    expect(result.promptArtifact?.version).toBe("entry-quick-oco-v1");
     expect(result.retryCount).toBe(0);
     expect(s.gate).toHaveBeenCalledOnce();
     expect(s.fetchImpl).toHaveBeenCalledOnce();
@@ -81,7 +82,7 @@ describe("isolated Codex transport", () => {
     );
   });
   it("does not dispatch after session denial", async () => {
-    const s = fixture();
+    const s = fixtureClient();
     s.gate.mockRejectedValueOnce(new Error("closed"));
     await expect(s.client.analyze(s.request)).rejects.toThrow();
     expect(s.fetchImpl).not.toHaveBeenCalled();
@@ -89,7 +90,7 @@ describe("isolated Codex transport", () => {
   it.each(["identity", "prompt", "model", "stale", "entries", "authority"])(
     "rejects invalid receipt: %s",
     async (fault) => {
-      const s = fixture();
+      const s = fixtureClient();
       const bad: Record<string, unknown> = { ...s.value };
       if (fault === "identity") bad.analysisId = randomUUID();
       if (fault === "prompt") bad.promptSha256 = "0".repeat(64);
@@ -106,7 +107,7 @@ describe("isolated Codex transport", () => {
     },
   );
   it("does not retry usage-limit failures", async () => {
-    const s = fixture();
+    const s = fixtureClient();
     s.fetchImpl.mockResolvedValueOnce(new Response(null, { status: 429 }));
     await expect(s.client.analyze(s.request)).rejects.toThrow(
       "CODEX_FAILED_OR_UNKNOWN",
@@ -114,7 +115,7 @@ describe("isolated Codex transport", () => {
     expect(s.fetchImpl).toHaveBeenCalledOnce();
   });
   it("session denials do not open the provider circuit", async () => {
-    const s = fixture();
+    const s = fixtureClient();
     s.gate.mockRejectedValue(new Error("closed"));
     for (let i = 0; i < 3; i++)
       await expect(s.client.analyze(s.request)).rejects.toThrow();
@@ -122,7 +123,7 @@ describe("isolated Codex transport", () => {
     expect(s.fetchImpl).not.toHaveBeenCalled();
   });
   it("opens the local circuit only after dispatched failures", async () => {
-    const s = fixture();
+    const s = fixtureClient();
     s.fetchImpl.mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 429 })),
     );
@@ -159,4 +160,54 @@ describe("production provider selection", () => {
       ),
     ).toThrow("CODEX_LOCAL_AUTH_REQUIRED");
   });
+});
+
+it("validates the actual TypeScript 5% payload against the Python worker before a simulated receipt", async () => {
+  const fixture = spawnSync(
+    ".venv/bin/python",
+    [
+      "-c",
+      `import json
+from tests.python.test_codex_memory import current_request
+v=current_request().model_dump()
+v['payload']['execution_context']['shared_setup_risk_percent']='5'
+print(json.dumps(v))`,
+    ],
+    { encoding: "utf8" },
+  );
+  expect(fixture.status).toBe(0);
+  const body = JSON.parse(fixture.stdout) as {
+    analysisId: string;
+    payload: Record<string, unknown>;
+  };
+  const s = fixtureClient();
+  Object.assign(s.value, {
+    analysisId: body.analysisId,
+    capturedAt: body.payload.captured_at,
+  });
+  s.fetchImpl.mockImplementation((_url, init) => {
+    if (typeof init?.body !== "string")
+      throw new Error("EXPECTED_JSON_REQUEST");
+    const checked = spawnSync(
+      ".venv/bin/python",
+      [
+        "-c",
+        `import sys
+from python.codex_entry.service import RequestV17
+v=RequestV17.model_validate_json(sys.stdin.read())
+assert v.payload.execution_context.shared_setup_risk_percent=='5'`,
+      ],
+      { input: init.body, encoding: "utf8" },
+    );
+    expect(checked.status, checked.stderr).toBe(0);
+    return Promise.resolve(Response.json(s.value));
+  });
+  const result = await s.client.analyze({
+    analysisId: body.analysisId,
+    symbol: "XAUUSD",
+    chart: null,
+    payload: body.payload,
+  });
+  expect(result.promptArtifact?.version).toBe("entry-quick-oco-v1");
+  expect(s.fetchImpl).toHaveBeenCalledOnce();
 });

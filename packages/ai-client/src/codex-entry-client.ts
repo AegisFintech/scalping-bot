@@ -57,7 +57,7 @@ export class CodexEntryClient {
   ) {
     if (options.localToken.length < 32)
       throw new Error("CODEX_LOCAL_AUTH_REQUIRED");
-    this.#prompt = readFileSync("prompts/entry-modes-v1.md", "utf8").trim();
+    this.#prompt = readFileSync("prompts/entry-quick-oco-v1.md", "utf8").trim();
     this.#sha = createHash("sha256").update(this.#prompt).digest("hex");
     this.#fetch = options.fetchImpl ?? fetch;
     this.#now = options.now ?? Date.now;
@@ -74,10 +74,10 @@ export class CodexEntryClient {
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
     const body = JSON.stringify({
-      version: "codex-entry-request-1.6",
+      version: "codex-entry-request-1.7",
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-modes-v1",
+      promptVersion: "entry-quick-oco-v1",
       promptSha256: this.#sha,
       payload: request.payload,
     });
@@ -148,7 +148,7 @@ export class CodexEntryClient {
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
         promptArtifact: {
-          version: "entry-modes-v1",
+          version: "entry-quick-oco-v1",
           sha256: this.#sha,
           content: this.#prompt,
         },

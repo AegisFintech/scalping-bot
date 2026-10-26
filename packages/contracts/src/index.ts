@@ -21,7 +21,8 @@ export interface RiskPolicy {
     | "0.4.2-compression-scalp.1"
     | "0.4.3-evidence-scalp.1"
     | "0.5.0-directional-scalp.1"
-    | "0.6.0-entry-modes.1";
+    | "0.6.0-entry-modes.1"
+    | "0.7.0-quick-oco.1";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
@@ -261,7 +262,9 @@ export interface ModelPromptArtifact {
     | "entry-pair-v8"
     | "entry-direction-v1"
     | "entry-modes-v1"
+    | "entry-quick-oco-v1"
     | "entry-modes-execution-v1"
+    | "entry-quick-oco-execution-v1"
     | "entry-pair-execution-v1"
     | "entry-direction-execution-v1"
     | "scenario-v2"

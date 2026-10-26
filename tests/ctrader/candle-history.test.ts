@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { FlightQuoteObservation } from "../../packages/contracts/src/flight-quotes.js";
 import { CTraderClient } from "../../packages/ctrader-client/src/client.js";
 import {
   CTraderPayload,
@@ -129,7 +130,7 @@ async function buildClient() {
     new Date(NOW_MS).toISOString(),
   );
   await client.discoverSymbol("XAUUSD");
-  return { client, request };
+  return { client, request, messageHandler };
 }
 
 describe("paginated completed candle history", () => {
@@ -202,4 +203,50 @@ it("allows a bounded explicit candidate lookback without changing ordinary reque
   expect(
     request.mock.calls.filter((c) => c[0] === CTraderPayload.GET_TRENDBARS_REQ),
   ).toHaveLength(1);
+});
+
+it("observes actual spot events without observer failures breaking the broker client", async () => {
+  const f = await buildClient();
+  const observations: FlightQuoteObservation[] = [];
+  const unsubscribe = f.client.onQuoteObservation((e) => observations.push(e));
+  f.client.onQuoteObservation(() => {
+    throw new Error("observer unavailable");
+  });
+  const calls = f.request.mock.calls.length;
+  expect(() =>
+    f.messageHandler({
+      payloadType: CTraderPayload.SPOT_EVENT,
+      payload: {
+        symbolId: "77",
+        bid: 440000000,
+        ask: 440001000,
+        timestamp: NOW_MS,
+      },
+    }),
+  ).not.toThrow();
+  expect(observations[0]).toMatchObject({
+    kind: "QUOTE",
+    symbolName: "XAUUSD",
+    bid: "4400",
+    ask: "4400.01",
+    sourceTime: new Date(NOW_MS).toISOString(),
+    bidUpdated: true,
+    askUpdated: true,
+  });
+  f.messageHandler({
+    payloadType: CTraderPayload.SPOT_EVENT,
+    payload: { symbolId: "77", bid: 440000500 },
+  });
+  expect(observations[1]).toMatchObject({
+    sourceTime: null,
+    bidUpdated: true,
+    askUpdated: false,
+  });
+  expect(f.request.mock.calls.length).toBe(calls);
+  unsubscribe();
+  f.messageHandler({
+    payloadType: CTraderPayload.SPOT_EVENT,
+    payload: { symbolId: "77", bid: 440000700, timestamp: NOW_MS },
+  });
+  expect(observations).toHaveLength(2);
 });

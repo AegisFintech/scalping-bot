@@ -3,6 +3,7 @@
 import hashlib
 import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -11,6 +12,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from apps.dashboard.command_data import command_data
+from apps.dashboard.flight_view import load_flight_view
 from apps.dashboard.landscape_data import landscape_events
 from apps.dashboard.position_monitor import DecisionViewError, open_position_monitor_view
 
@@ -39,6 +41,9 @@ def api(path: str) -> dict[str, Any]:
 
 def load_snapshot() -> dict[str, Any]:
     result: dict[str, Any] = {"captured_at": datetime.now(UTC), "warnings": []}
+    result["flight"] = load_flight_view(
+        Path("/var/lib/scalper-flight/recordings"), datetime.now(UTC)
+    )
     try:
         status = api("/v1/status")
     except (httpx.HTTPError, ValueError):

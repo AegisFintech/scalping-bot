@@ -1,3 +1,12 @@
+### ISSUE-376 — Quick-TP dual OCO, shared demo risk and flight recorder
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/376.
+- Dependencies: existing #370 immutable profiles/native protection, #372 fixed-profile admission and #374 storage/weekly log maintenance; existing database migrations 0033/0034 unchanged.
+- Acceptance: original dual breakout STOP_LIMIT/GTC/OCO, modeled net objective 0.08 broker pip after verified costs/reserves with native whole-pip rounding and exact 7× SL/TP price distances; dynamic 5% total demo setup risk split across both legs, other modes 1%; preserve old groups, WAIT/all execution and cooldown gates/history. Read-only least-privilege flight recorder with actual quote sequence/time gaps, canonical lifecycle/costs, excursion/proximity, late-close/partial censoring and immutable bounded lossless evidence; Flight dashboard/default and truthful budget/freshness. Positive/failure tests, full qualification/config/security/audits/Graphify, reviewed pushed PR/green hosted checks/main and matching one-demo deployment with scoped selection CAS and protected state preservation.
+- Status: corrected request1.7 / fixed quick-OCO provider prompt and actual TypeScript-to-Python handoff now fully qualify: 1,672 tests (1,103 Node, 115 PostgreSQL, 454 Python), every required gate/audit, both config checks, AST Graphify and browser checks. First checkpoint remains immutable and was never deployed; historical request1.6/risk1 and prompt bytes preserved. Pushed PR #377 receives renewed exact-head checks before matching one-demo activation and receipt on #376. No new migration, history reset, forced trade, unverified fixed commission or profitability claim.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/377.
+- Evidence: [quick OCO and flight recorder](docs/quick-oco-flight-report.md).
+
 ### ISSUE-374 — Lean storage and weekly log rotation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/374.
