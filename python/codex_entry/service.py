@@ -327,6 +327,11 @@ class RequestV18(RequestV17):
     promptVersion: Literal["entry-quick-oco-v2"]  # type: ignore[assignment]
 
 
+class RequestV19(RequestV18):
+    version: Literal["codex-entry-request-1.9"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-quick-oco-v3"]  # type: ignore[assignment]
+
+
 def parse_request(
     raw: bytes,
 ) -> (
@@ -338,8 +343,11 @@ def parse_request(
     | RequestV16
     | RequestV17
     | RequestV18
+    | RequestV19
 ):
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.9":
+        return RequestV19.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.8":
         return RequestV18.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.7":

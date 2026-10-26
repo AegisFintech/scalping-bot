@@ -1,3 +1,26 @@
+# ISSUE-380 — Smaller TP and independent cost-aware profit capture
+
+Current explicitly approved DEMO trial source `0.7.2-quick-oco.1-codex.1`, policy
+`0.7.2-quick-oco.1`: new native TP0.40 price units (upward whole-pip rounded),
+SL remains7.00 price units independently, shared5% current-equity setup ceiling /
+at most2.5% per OCO leg. Keep dynamic sizing, broker margin/volume and65-tick stop
+risk reserve /30-tick entry range unchanged; no lot multiplier or risk increase.
+Profit economics now explicitly use5-tick exit allowance, not the old65-tick TP
+allowance. Native TP must cover costs at minimum AND actual quantity; reject
+rather than widen. Early capture uses fresh executable bid/ask, actual entry fee
+bounded conservatively by metadata, expected exit fee/conversion, known nonpositive
+swap and5-tick execution allowance, net floor0.05 price units times actual volume
+value. This is modeled, never guaranteed. Fresh exact owned position/native
+protection, full entry/zero-fill cancelled peer, no partial-close ledger or
+unresolved events, second quote/reconciliation and one committed close claim are
+mandatory. Timeout/rejection/partial/restart cannot resend. Native protection and
+maintenance remain independent of inference. Only new-source demo positions get
+this authority; accepted old groups/protection/history remain unchanged. Existing
+missing-SL authority stays separate. No forced provider/order, live activation,
+accounting reset, polarity change or automatic promotion. Promptv3/request1.9/
+local-executionv3/risk-schema1.8 are additive; older bytes stay immutable. Read
+[implementation, review and rollback](small-tp-profit-exit-report.md).
+
 # ISSUE-378 — Current manual intervention and fixed1.00 TP
 
 Current DEMO source0.7.1-quick-oco.1-codex.1 fixes new gross TP1.00 price unit /

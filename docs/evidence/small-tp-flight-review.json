@@ -1,0 +1,137 @@
+{
+  "review": "All available v0.7.1 flight summaries, inclusive of open/gaps; descriptive only, no paired replay or counterfactual returns",
+  "completeTickTape": false,
+  "counterfactualNet": null,
+  "rows": [
+    {
+      "file": "flight-44a49ab831960391a13267c6-20261026T091847691340.summary.json",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 2,
+      "closedTrades": [
+        {
+          "closed_at": "2026-10-26T09:23:01.098000+00:00",
+          "direction": "SHORT",
+          "net": "182.9500000000",
+          "opened_at": "2026-10-26T09:18:57.771000+00:00",
+          "signed_fees": "-58.0500000000"
+        }
+      ],
+      "legs": [
+        {
+          "side": "SELL",
+          "entry": "4014.88000000000000000000",
+          "volume": "24100.0000000000",
+          "mfePips": "106.000000000000000000",
+          "bestModeledNetPips": "81.91390000000",
+          "timeProfitableSeconds": "80.978",
+          "samples": 438
+        }
+      ]
+    },
+    {
+      "file": "flight-4d627826e62a6624af1dc6ee-20261026T103138187404.summary.json",
+      "state": "POSITION_OPEN",
+      "final": false,
+      "gaps": 78,
+      "closedTrades": [],
+      "legs": [
+        {
+          "side": "BUY",
+          "entry": "4016.00000000000000000000",
+          "volume": "24300.0000000000",
+          "mfePips": "51.000000000000000000",
+          "bestModeledNetPips": "26.90247000000",
+          "timeProfitableSeconds": "12.015",
+          "samples": 5644
+        }
+      ]
+    },
+    {
+      "file": "flight-505c02dc0f9eb14f06f6548c-20261026T084156751150.summary.json",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 7,
+      "closedTrades": [
+        {
+          "closed_at": "2026-10-26T08:51:22.728000+00:00",
+          "direction": "LONG",
+          "net": "185.3000000000",
+          "opened_at": "2026-10-26T08:42:00.375000+00:00",
+          "signed_fees": "-58.1100000000"
+        }
+      ],
+      "legs": [
+        {
+          "side": "BUY",
+          "entry": "4017.83000000000000000000",
+          "volume": "24100.0000000000",
+          "mfePips": "116.000000000000000000",
+          "bestModeledNetPips": "91.88954000000",
+          "timeProfitableSeconds": "122.129",
+          "samples": 1041
+        }
+      ]
+    },
+    {
+      "file": "flight-50af8e8304737187853c19c1-20261026T063020159163.summary.json",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 31,
+      "closedTrades": [
+        {
+          "closed_at": "2026-10-26T07:34:00.830000+00:00",
+          "direction": "SHORT",
+          "net": "-1818.0300000000",
+          "opened_at": "2026-10-26T06:30:59.762000+00:00",
+          "signed_fees": "-59.3900000000"
+        }
+      ],
+      "legs": [
+        {
+          "side": "SELL",
+          "entry": "4004.19000000000000000000",
+          "volume": "24700.0000000000",
+          "mfePips": "63.000000000000000000",
+          "bestModeledNetPips": "38.97675000000",
+          "timeProfitableSeconds": "52.294",
+          "samples": 7154
+        }
+      ]
+    },
+    {
+      "file": "flight-99b3e4806dd847dc474b6c9a-20261026T102611465734.summary.json",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 3,
+      "closedTrades": [
+        {
+          "closed_at": "2026-10-26T10:28:08.772000+00:00",
+          "direction": "SHORT",
+          "net": "188.5400000000",
+          "opened_at": "2026-10-26T10:26:12.039000+00:00",
+          "signed_fees": "-58.3000000000"
+        }
+      ],
+      "legs": [
+        {
+          "side": "SELL",
+          "entry": "4015.63000000000000000000",
+          "volume": "24200.0000000000",
+          "mfePips": "111.000000000000000000",
+          "bestModeledNetPips": "86.90955000000",
+          "timeProfitableSeconds": "62.295",
+          "samples": 210
+        }
+      ]
+    },
+    {
+      "file": "flight-ee4ef361dd550a826f81b962-20261026T081321250471.summary.json",
+      "state": "FAILED",
+      "final": true,
+      "gaps": 2,
+      "closedTrades": [],
+      "legs": []
+    }
+  ]
+}

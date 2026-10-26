@@ -1,6 +1,14 @@
+import { CODEX_STRATEGY_VERSION } from "../../../packages/config/src/policy.js";
+import {
+  quickProfitExit,
+  type ProfitExitEvidence,
+} from "./quick-profit-exit.js";
 import { Decimal } from "decimal.js";
 import type { PositionProtection } from "../../../packages/contracts/src/position-protection.js";
-import type { Quote } from "../../../packages/contracts/src/index.js";
+import type {
+  Quote,
+  SymbolMetadata,
+} from "../../../packages/contracts/src/index.js";
 import type {
   BrokerExecution,
   RawReconciliation,
@@ -12,6 +20,8 @@ import {
 } from "../../../packages/ctrader-client/src/protocol.js";
 
 export interface ProtectionPosition {
+  readonly strategyVersion?: string;
+  readonly entryCommission?: string;
   readonly id: string;
   readonly brokerPositionId: string;
   readonly side: "BUY" | "SELL";
@@ -38,6 +48,11 @@ export interface ProtectionSession {
     at: string,
     volume: string,
   ): Promise<boolean>;
+  claimProfitClose?(
+    position: ProtectionPosition,
+    at: string,
+    evidence: ProfitExitEvidence,
+  ): Promise<boolean>;
   closeAcknowledged(
     position: ProtectionPosition,
     brokerOrderId: string,
@@ -63,6 +78,10 @@ export interface ProtectionOptions {
   readonly symbol: string;
   readonly tickSize: string;
   readonly quote: () => Promise<Quote>;
+  readonly profitQuote?: () => Promise<{
+    quote: Quote;
+    metadata: SymbolMetadata;
+  }>;
   readonly now?: () => Date;
 }
 
@@ -233,7 +252,10 @@ export class PositionProtectionMaintenance {
     }
     await session.observe(position, observation);
     // Broker-held exits remain authoritative, including when sampled quotes cross them.
-    if (!plan.repair) return;
+    if (!plan.repair) {
+      await this.takeQuickProfit(session, position, matches[0]!, observation);
+      return;
+    }
     // Allow an in-flight amendment to become visible before any further command.
     if (position.commandAt !== null) {
       const age = now().getTime() - Date.parse(position.commandAt);
@@ -319,6 +341,101 @@ export class PositionProtectionMaintenance {
       confirmed.expectedTakeProfit,
     );
     // The acknowledgement is not proof. Next independent tick verifies fresh broker state.
+  }
+
+  private async takeQuickProfit(
+    session: ProtectionSession,
+    position: ProtectionPosition,
+    raw: Record<string, unknown>,
+    observation: PositionProtection,
+  ): Promise<void> {
+    if (
+      !this.options.profitQuote ||
+      !session.claimProfitClose ||
+      position.strategyVersion !== CODEX_STRATEGY_VERSION
+    )
+      return;
+    const now = () => this.options.now?.() ?? new Date();
+    const opportunity = async (current: Record<string, unknown>) => {
+      try {
+        const context = await this.options.profitQuote!();
+        return quickProfitExit({
+          position,
+          raw: current,
+          ...context,
+          symbolId: this.options.symbolId,
+          now: now(),
+        });
+      } catch {
+        return null;
+      } // Missing cost/quote data cannot authorize a profit close.
+    };
+    if (!(await opportunity(raw))) return;
+    // Repeat exact ownership/remaining volume/protection and executable quote just before the claim.
+    const latest = await this.options.client.reconcileRaw();
+    fresh(latest.receivedAt, now());
+    const matches = latest.positions.filter(
+      (p) => stringField(p, "positionId") === position.brokerPositionId,
+    );
+    if (matches.length !== 1) return;
+    const confirmed = protectionPlan(
+      position,
+      matches[0]!,
+      this.options.symbolId,
+      this.options.tickSize,
+    );
+    if (
+      confirmed.repair ||
+      confirmed.stopLoss === null ||
+      confirmed.takeProfit === null
+    )
+      return;
+    const evidence = await opportunity(matches[0]!);
+    if (!evidence) return;
+    fresh(latest.receivedAt, now());
+    await session.observe(position, {
+      ...observation,
+      stopLoss: confirmed.stopLoss,
+      takeProfit: confirmed.takeProfit,
+      observedAt: latest.receivedAt,
+      status: "CLOSE_REQUIRED",
+      reasonCode: "QUICK_PROFIT_EXIT_COST_COVERED",
+    });
+    if (
+      !(await session.claimProfitClose(position, now().toISOString(), evidence))
+    )
+      return;
+    // An unusually slow durable write must not turn an old quote into close authority.
+    const age = now().getTime() - Date.parse(evidence.quote.sourceTime);
+    if (age < 0 || age > 1000)
+      throw new Error("QUICK_PROFIT_CLOSE_QUOTE_STALE_AFTER_CLAIM");
+    // Claim committed before dispatch. Timeouts, rejections and partial fills are never resent.
+    await this.dispatchClose(session, position, confirmed.volume);
+  }
+
+  private async dispatchClose(
+    session: ProtectionSession,
+    position: ProtectionPosition,
+    volume: string,
+  ): Promise<void> {
+    const result = await this.options.client.closePosition(
+      position.brokerPositionId,
+      volume,
+    );
+    if (
+      result.errorCode !== null ||
+      ![2, 3, 11].includes(result.executionType) ||
+      result.order === null ||
+      result.order.closingOrder !== true ||
+      numberField(result.order, "orderType") !== 1 ||
+      result.position === null ||
+      stringField(result.position, "positionId") !== position.brokerPositionId
+    )
+      throw new Error("POSITION_PROTECTION_CLOSE_ACK_MISMATCH");
+    await session.closeAcknowledged(
+      position,
+      stringField(result.order, "orderId"),
+    );
   }
 
   private async closeUnprotected(

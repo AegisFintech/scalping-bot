@@ -504,3 +504,141 @@ describe("independent broker position protection", () => {
     expect(f.client.closePosition).not.toHaveBeenCalled();
   });
 });
+
+// New operator authority is isolated from the historical missing-SL close path.
+describe("quick-profit close lifecycle", () => {
+  async function profitable() {
+    const f = fixture();
+    const { CODEX_STRATEGY_VERSION } =
+      await import("../../packages/config/src/policy.js");
+    const { metadata } = await import("../helpers/breakout-candidate.js");
+    f.setPosition({
+      ...local,
+      strategyVersion: CODEX_STRATEGY_VERSION,
+      entryCommission: "-0.14",
+    });
+    f.protect();
+    f.replace({
+      ...broker(),
+      stopLoss: 4398.95,
+      takeProfit: 4397.36,
+      swap: "0",
+      moneyDigits: 2,
+    });
+    const context = {
+      quote: {
+        bid: "4397.30",
+        ask: "4397.40",
+        sourceTime: timestamp,
+        receivedAt: timestamp,
+      },
+      metadata: { ...metadata(), symbolId: "7", metadataTime: timestamp },
+    };
+    Object.assign(f.options, { profitQuote: () => Promise.resolve(context) });
+    const claim = vi.fn<NonNullable<ProtectionSession["claimProfitClose"]>>(
+      (_p, at, e) => f.session.claimClose(_p, at, e.volume),
+    );
+    f.session.claimProfitClose = claim;
+    return { ...f, claim, context };
+  }
+  it("claims before dispatch, keeps native protection and never resends on restart", async () => {
+    const f = await profitable();
+    await f.run();
+    expect(f.claim).toHaveBeenCalledOnce();
+    expect(f.client.closePosition).toHaveBeenCalledOnce();
+    expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+    expect(f.closeAcknowledged).toHaveBeenCalledOnce();
+    await f.run();
+    expect(f.client.closePosition).toHaveBeenCalledOnce();
+  });
+  it("does not repeat unknown close dispatch", async () => {
+    const f = await profitable();
+    f.client.closePosition.mockRejectedValueOnce(new Error("timeout"));
+    await expect(f.run()).rejects.toThrow();
+    await f.run();
+    expect(f.client.closePosition).toHaveBeenCalledOnce();
+  });
+  it("does not close when claim fails or price gives back before re-read", async () => {
+    const f = await profitable();
+    f.claim.mockResolvedValue(false);
+    await f.run();
+    expect(f.client.closePosition).not.toHaveBeenCalled();
+    const g = await profitable();
+    let n = 0;
+    Object.assign(g.options, {
+      profitQuote: () => {
+        n++;
+        return Promise.resolve({
+          ...g.context,
+          quote: { ...g.context.quote, ask: n === 1 ? "4397.40" : "4397.88" },
+        });
+      },
+    });
+    await g.run();
+    expect(g.claim).not.toHaveBeenCalled();
+  });
+  it("does not close a manually closed or changed-volume position", async () => {
+    const f = await profitable();
+    f.client.reconcileRaw
+      .mockResolvedValueOnce({
+        receivedAt: timestamp,
+        positions: [
+          {
+            ...broker(),
+            stopLoss: 4398.95,
+            takeProfit: 4397.36,
+            swap: "0",
+            moneyDigits: 2,
+          },
+        ],
+        orders: [],
+      })
+      .mockResolvedValueOnce({
+        receivedAt: timestamp,
+        positions: [],
+        orders: [],
+      });
+    await f.run();
+    expect(f.client.closePosition).not.toHaveBeenCalled();
+    const g = await profitable();
+    g.client.reconcileRaw
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          receivedAt: timestamp,
+          positions: [
+            {
+              ...broker(),
+              stopLoss: 4398.95,
+              takeProfit: 4397.36,
+              swap: "0",
+              moneyDigits: 2,
+            },
+          ],
+          orders: [],
+        }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          receivedAt: timestamp,
+          positions: [
+            {
+              ...broker(),
+              tradeData: { ...(broker().tradeData as object), volume: "99" },
+            },
+          ],
+          orders: [],
+        }),
+      );
+    await expect(g.run()).rejects.toThrow();
+    expect(g.client.closePosition).not.toHaveBeenCalled();
+  });
+  it("keeps verified broker protection when optional profit quote is unavailable", async () => {
+    const f = await profitable();
+    Object.assign(f.options, {
+      profitQuote: () => Promise.reject(new Error("unavailable")),
+    });
+    await f.run();
+    expect(f.claim).not.toHaveBeenCalled();
+    expect(f.observations.at(-1)?.status).toBe("VERIFIED");
+  });
+});

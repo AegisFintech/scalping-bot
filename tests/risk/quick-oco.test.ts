@@ -46,7 +46,7 @@ function commands(): PendingOrderCommand[] {
   });
 }
 describe("approved quick OCO economics", () => {
-  it("preserves both Codex entries, exact 7x native SL and fixed cost-checked 1.00 TP", () => {
+  it("preserves both Codex entries, unchanged7.00 native SL and cost-checked0.40 TP", () => {
     const r = proposal();
     expect(r.accepted).toBe(true);
     for (const [i, c] of commands().entries()) {
@@ -58,17 +58,17 @@ describe("approved quick OCO economics", () => {
       const entry = new Decimal(c.entryPrice),
         target = new Decimal(c.takeProfit),
         distance = entry.minus(target).abs();
-      expect(entry.minus(c.stopLoss).abs().eq(distance.mul(7))).toBe(true);
+      expect(entry.minus(c.stopLoss).abs().eq("7")).toBe(true);
       expect(distance.div(m.pipSize).isInteger()).toBe(true);
       const cost = quickOcoCost(m, entry, target, new Decimal(c.volume));
       expect(cost.netPrice.gte(new Decimal(m.pipSize).mul("0.08"))).toBe(true);
       expect(
         new Decimal(cost.evidence.modeled_round_trip_commission).gt(7),
       ).toBe(true);
-      expect(distance.eq("1")).toBe(true);
-      expect(cost.evidence.execution_reserve_price).toBe("0.65");
+      expect(distance.eq("0.4")).toBe(true);
+      expect(cost.evidence.execution_reserve_price).toBe("0.05");
       const native = stopLimitProtectionFields(c, m, "30");
-      expect(native.relativeStopLoss).toBe(native.relativeTakeProfit * 7);
+      expect(native.relativeStopLoss).toBe(native.relativeTakeProfit * 17.5);
     }
     expect(validateQuickOcoCommands(commands(), m).approved).toBe(true);
   });

@@ -108,11 +108,11 @@ export function quickOcoTransform(input: {
         distance.lt(
           Decimal.max(pip, tick.mul(5), decimal(m.minStopDistance)),
         ) ||
-        distance.mul(7).gt(maxStop)
+        decimal(QUICK_OCO.stopPriceDistance).gt(maxStop)
       )
         return reject("QUICK_OCO_PROTECTION_UNAFFORDABLE");
       const target = entry.plus(distance.mul(direction)),
-        stop = entry.minus(distance.mul(7).mul(direction));
+        stop = entry.minus(decimal(QUICK_OCO.stopPriceDistance).mul(direction));
       if (
         stop.lte(0) ||
         target.lte(0) ||
@@ -126,12 +126,12 @@ export function quickOcoTransform(input: {
         stop_loss: canonical(stop),
         invalidation_price: canonical(stop),
         take_profit: canonical(target),
-        risk_reward_ratio: "0.1428571428",
+        risk_reward_ratio: "0.0571428571",
       });
       details.push({
         side: direction === 1 ? "BUY" : "SELL",
         tp_distance: canonical(distance),
-        sl_distance: canonical(distance.mul(7)),
+        sl_distance: canonical(decimal(QUICK_OCO.stopPriceDistance)),
         ...cost.evidence,
       });
     }
@@ -140,7 +140,7 @@ export function quickOcoTransform(input: {
       downside_targets: [result.sell_stop.take_profit],
     });
     Object.assign(result, {
-      setup_tags: [...result.setup_tags, "QUICK_OCO_NATIVE_1_TO_7"],
+      setup_tags: [...result.setup_tags, "QUICK_OCO_SMALL_TP_FIXED_STOP"],
     });
     return {
       accepted: true,
@@ -184,7 +184,7 @@ export function validateQuickOcoCommands(
           decimal(QUICK_OCO.targetPriceDistance).div(pip).ceil().mul(pip),
         ) ||
         !tp.div(pip).isInteger() ||
-        !sl.eq(tp.mul(7)) ||
+        !sl.eq(decimal(QUICK_OCO.stopPriceDistance)) ||
         ![entry, target, stop].every(
           (p) => p.gt(0) && isTickAligned(p, tick),
         ) ||

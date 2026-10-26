@@ -401,7 +401,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "entry-quick-oco-execution-v2",
+    promptVersion: "entry-quick-oco-execution-v3",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -614,7 +614,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-quick-oco-execution-v2",
+    promptVersion: "entry-quick-oco-execution-v3",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1310,7 +1310,7 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: "entry-quick-oco-execution-v2",
+      promptVersion: "entry-quick-oco-execution-v3",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,
@@ -1323,7 +1323,7 @@ async function main(): Promise<void> {
           }
         : {}),
       minRiskRewardRatio: breakoutScalpActive
-        ? "0.1428571428"
+        ? "0.0571428571"
         : fadeLimitActive
           ? fadeExecutionPolicy.minRiskRewardRatio
           : config.minRiskRewardRatio,
@@ -1786,6 +1786,7 @@ async function main(): Promise<void> {
           symbolId: executionSymbolId,
           symbol: config.symbol,
           tickSize: startupMetadata.tickSize,
+          profitQuote: () => marketClient.quote(config.symbol),
           quote: async () => {
             const result = await marketClient.quote(config.symbol);
             if (result.metadata.symbolId !== executionSymbolId)
