@@ -1,4 +1,5 @@
-import { observedFullManualClose } from "./manual-close-evidence.js";
+import { recordPositionClose } from "./position-close-ledger.js";
+import { observedManualClose } from "./manual-close-evidence.js";
 import { readTerminalGroup } from "./terminal-history-attestor.js";
 import { terminalSnapshotHash } from "./terminal-group-proof.js";
 import { randomUUID } from "node:crypto";
@@ -201,9 +202,13 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
              AND terminal.broker_position_id = p.broker_position_id
              AND terminal.normalized_payload->'position'->>'state' = 'CLOSED'
              AND terminal.normalized_payload->'order'->>'state' = 'FILLED'
-             AND (terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric =
+             AND COALESCE((SELECT sum(d.closed_volume) FROM position_close_deals d WHERE d.position_id=p.id),
+                 (terminal.normalized_payload->'closeDetail'->>'closedVolume')::numeric) =
                  (SELECT sum(entry_fill.volume) FROM fills entry_fill
                   WHERE entry_fill.position_id = p.id AND entry_fill.order_id IS NOT NULL)
+             AND NOT EXISTS(SELECT 1 FROM position_close_deals d WHERE d.position_id=p.id
+               AND NOT EXISTS(SELECT 1 FROM fills f WHERE f.position_id=p.id AND f.order_id IS NULL
+                 AND f.broker_fill_id=d.broker_deal_id AND f.volume=d.closed_volume AND f.occurred_at=d.occurred_at))
              AND EXISTS (
                SELECT 1 FROM fills terminal_fill
                WHERE terminal_fill.position_id = p.id
@@ -662,7 +667,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         }));
       const manualClose =
         !authorizedMarketClose &&
-        (await observedFullManualClose(
+        (await observedManualClose(
           client,
           event,
           this.#options.accountId,
@@ -795,6 +800,16 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           throw new Error("DEMO_EXECUTION_ORDER_PERSIST_FAILED");
       }
 
+      const aggregateClose =
+        event.closeDetail !== null && event.fill !== null && event.closingOrder
+          ? await recordPositionClose(
+              client,
+              event,
+              this.#options.accountId,
+              this.#options.symbolId,
+              manualClose,
+            )
+          : null;
       if (event.position !== null) {
         const positionId = position?.position_id ?? randomUUID();
         const stored = await client.query<{
@@ -857,7 +872,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           const tradeReason = await this.#persistClosedTrade(
             client,
             stored.rows[0]!,
-            event.closeDetail,
+            aggregateClose ?? event.closeDetail,
           );
           if (tradeReason !== null) tradeReasonCodes.push(tradeReason);
         }
@@ -1009,10 +1024,32 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
              AND (
                reason_codes = '["DEMO_CLOSING_ORDER_AWAITING_DEAL"]'::jsonb
                OR reason_codes = '["DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT"]'::jsonb
+               OR ($5::boolean AND broker_position_id=$6 AND occurred_at<=$3
+                 AND execution_type=2 AND broker_order_type=1 AND closing_order
+                 AND normalized_payload->'fill'='null'::jsonb
+                 AND normalized_payload->'closeDetail'='null'::jsonb
+                 AND reason_codes='["DEMO_POSITION_CLOSE_NOT_AUTHORIZED"]'::jsonb)
              )`,
           [
             this.#options.accountId,
             event.brokerOrderId,
+            event.occurredAt,
+            event.eventKey,
+            manualClose,
+            event.brokerPositionId,
+          ],
+        );
+      }
+      if (event.position?.state === "CLOSED" && aggregateClose !== null) {
+        await client.query(
+          `UPDATE broker_execution_events SET resolved_at=$3,resolution_event_key=$4
+         WHERE account_id=$1 AND position_id=$2 AND resolved_at IS NULL AND mapping_state='MAPPED'
+         AND reason_codes='["DEMO_PARTIAL_CLOSE_RECONCILIATION_REQUIRED"]'::jsonb
+         AND occurred_at<=$3 AND EXISTS(SELECT 1 FROM position_close_deals d
+           WHERE d.position_id=$2 AND d.broker_deal_id=broker_execution_events.broker_fill_id)`,
+          [
+            this.#options.accountId,
+            position?.position_id,
             event.occurredAt,
             event.eventKey,
           ],

@@ -585,3 +585,16 @@ def test_quick_oco_worker_contract_preserves_historical_risk_and_native_receipt(
     assert result["version"] == "codex-entry-response-1.2"
     assert result["entries"]["decision"] == decision
     assert result["executionAuthority"] is False
+
+
+def test_fixed_tp_worker_contract_preserves_earlier_request_versions() -> None:
+    body = current_request().model_dump()
+    body.update(version="codex-entry-request-1.8", promptVersion="entry-quick-oco-v2")
+    body["payload"]["execution_context"]["shared_setup_risk_percent"] = "5"
+    assert isinstance(s.parse_request(json.dumps(body).encode()), s.RequestV18)
+    schema = json.loads(Path("schemas/codex-entry-request-1.8.json").read_text())
+    schema.pop("$id")
+    schema.pop("$schema")
+    assert schema == s.RequestV18.model_json_schema()
+    with pytest.raises(ValueError):
+        s.RequestV17.model_validate(body)

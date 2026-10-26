@@ -1,0 +1,299 @@
+{
+  "issue": 378,
+  "qualification": {
+    "qualificationVersion": "1.0",
+    "qualified": true,
+    "sourceSha256": "9c8a7c0c52e35f4bed53b29ef143bf3ad6362668f303bf63bd49869791e5f27a",
+    "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+    "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+    "nodeVersion": "v22.23.2",
+    "results": [
+      {
+        "label": "postgres-bindir",
+        "executable": "pg_config",
+        "args": ["--bindir"],
+        "code": 0,
+        "elapsedMs": 14
+      },
+      {
+        "label": "test-certificate",
+        "executable": "openssl",
+        "args": [
+          "req",
+          "-x509",
+          "-newkey",
+          "rsa:2048",
+          "-nodes",
+          "-days",
+          "1",
+          "-subj",
+          "/CN=localhost",
+          "-addext",
+          "subjectAltName=DNS:localhost,IP:127.0.0.1",
+          "-keyout",
+          "/tmp/scalper-qualification-1WrDHz/server.key",
+          "-out",
+          "/tmp/scalper-qualification-1WrDHz/server.crt"
+        ],
+        "code": 0,
+        "elapsedMs": 145
+      },
+      {
+        "label": "postgres-uid",
+        "executable": "id",
+        "args": ["-u", "postgres"],
+        "code": 0,
+        "elapsedMs": 11
+      },
+      {
+        "label": "postgres-gid",
+        "executable": "id",
+        "args": ["-g", "postgres"],
+        "code": 0,
+        "elapsedMs": 7
+      },
+      {
+        "label": "database-init",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/initdb",
+          "-D",
+          "/tmp/scalper-qualification-1WrDHz/database",
+          "-U",
+          "scalper_qualification",
+          "--auth-local=trust",
+          "--auth-host=trust",
+          "--no-locale",
+          "--encoding=UTF8"
+        ],
+        "code": 0,
+        "elapsedMs": 696
+      },
+      {
+        "label": "database-start",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/pg_ctl",
+          "-D",
+          "/tmp/scalper-qualification-1WrDHz/database",
+          "-l",
+          "/tmp/scalper-qualification-1WrDHz/postgres.log",
+          "-o",
+          "-h 127.0.0.1 -p 41045 -k /tmp/scalper-qualification-1WrDHz -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-1WrDHz/server.crt -c ssl_key_file=/tmp/scalper-qualification-1WrDHz/server.key",
+          "-w",
+          "start"
+        ],
+        "code": 0,
+        "elapsedMs": 120
+      },
+      {
+        "label": "format",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "**/*.{ts,mjs,json,md,yml,yaml}"
+        ],
+        "code": 0,
+        "elapsedMs": 24003
+      },
+      {
+        "label": "lint",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": ["node_modules/eslint/bin/eslint.js", "."],
+        "code": 0,
+        "elapsedMs": 38784
+      },
+      {
+        "label": "types",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "tsconfig.json"
+        ],
+        "code": 0,
+        "elapsedMs": 15267
+      },
+      {
+        "label": "build",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.build.json",
+          "--outDir",
+          "/tmp/scalper-qualification-1WrDHz/build"
+        ],
+        "code": 0,
+        "elapsedMs": 12735
+      },
+      {
+        "label": "node-tests",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--exclude",
+          "**/*.integration.test.ts",
+          "--maxWorkers=1"
+        ],
+        "code": 0,
+        "elapsedMs": 93388
+      },
+      {
+        "label": "python-format",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": [
+          "-m",
+          "ruff",
+          "format",
+          "--check",
+          "python",
+          "apps/dashboard",
+          "tests/python"
+        ],
+        "code": 0,
+        "elapsedMs": 44
+      },
+      {
+        "label": "python-lint",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": [
+          "-m",
+          "ruff",
+          "check",
+          "python",
+          "apps/dashboard",
+          "tests/python"
+        ],
+        "code": 0,
+        "elapsedMs": 51
+      },
+      {
+        "label": "python-types",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "mypy", "python", "apps/dashboard"],
+        "code": 0,
+        "elapsedMs": 486
+      },
+      {
+        "label": "secrets",
+        "executable": "bash",
+        "args": ["scripts/secret-scan.sh"],
+        "code": 0,
+        "elapsedMs": 229
+      },
+      {
+        "label": "npm-audit",
+        "executable": "npm",
+        "args": ["audit", "--audit-level=high"],
+        "code": 0,
+        "elapsedMs": 993
+      },
+      {
+        "label": "python-audit",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+        "code": 0,
+        "elapsedMs": 15810
+      },
+      {
+        "label": "database-lifecycle",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/integration",
+          "--maxWorkers=1",
+          "--testTimeout=60000"
+        ],
+        "code": 0,
+        "elapsedMs": 35712
+      },
+      {
+        "label": "python-tests",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "pytest", "tests/python", "-q"],
+        "code": 0,
+        "elapsedMs": 13053
+      },
+      {
+        "label": "database-stop",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/pg_ctl",
+          "-D",
+          "/tmp/scalper-qualification-1WrDHz/database",
+          "-m",
+          "immediate",
+          "-w",
+          "stop"
+        ],
+        "code": 0,
+        "elapsedMs": 111
+      }
+    ]
+  },
+  "testCounts": {
+    "node": 1105,
+    "postgresql": 123,
+    "python": 458,
+    "total": 1686
+  },
+  "command": "PATH=/opt/scalper-node22/bin:$PATH node scripts/qualify.mjs",
+  "additionalChecks": {
+    "configurationPolicyAndStartup": "PASS",
+    "actualPopulatedConfiguration": "PASS",
+    "graphify": "graphify update .; AST-only; 10362 nodes,17083 edges,715 communities",
+    "browser": {
+      "deskStateRetainedAcrossTicks": true,
+      "1920x1080": true,
+      "1440x900": true,
+      "1280x720": true,
+      "390x844": true,
+      "readOnlyWithoutNavigationOrSidebar": true,
+      "lightSchemeCompatible": true,
+      "transportFailureWithdrawsEvidence": true,
+      "transportAutomaticallyRecovers": true,
+      "pageErrors": 0,
+      "flightPathFreshnessAndDynamicBudget": true,
+      "htmlInjectionBlocked": true,
+      "duplicatePollsDoNotCreateEvents": true,
+      "lateEventsSorted": true,
+      "independentClientFreshness": true,
+      "disconnectedClientFailsClosed": true,
+      "partialPayloadFailsClosed": true,
+      "eventRetentionBounded": true,
+      "reducedMotion": true,
+      "fullscreen": true,
+      "harnessPageErrors": 0,
+      "harnessExternalRequests": 0
+    },
+    "actualBrokerParserReadOnly": {
+      "actualBrokerHistory": true,
+      "exactPositionAndOrderMatched": true,
+      "externalClientIdAcceptedByParser": true,
+      "entryPrice": "4012.52",
+      "closedVolume": "20900",
+      "normalizedPosition": "CLOSED",
+      "gross": "117.04",
+      "fees": "-50.32",
+      "net": "66.72",
+      "providerCalls": 0,
+      "brokerCommands": 0,
+      "databaseWrites": 0
+    }
+  },
+  "deployment": "Pending reviewed PR and matching main deployment; receipt will be posted to issue #378."
+}

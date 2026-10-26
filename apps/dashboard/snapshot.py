@@ -93,8 +93,23 @@ def load_snapshot() -> dict[str, Any]:
                 raise ValueError("ACCOUNT_SCOPE_AMBIGUOUS")
             identity = identities[0]
             scope = (identity["account_id"], identity["symbol_id"], mode)
+            intervention_rows = rows(
+                """SELECT be.mapping_state,be.resolved_at,be.received_at,
+                  be.normalized_payload->'closeDetail' IS NOT NULL
+                    AND be.normalized_payload->'closeDetail'<>'null'::jsonb AS has_close_deal,
+                  p.state AS position_state,t.realized_pnl::text AS realized_net
+                FROM broker_execution_events be JOIN order_groups g ON g.id=be.order_group_id
+                JOIN positions p ON p.id=be.position_id LEFT JOIN trades t ON t.position_id=p.id
+                WHERE be.account_id=%s AND be.symbol_id=%s AND g.mode=%s AND p.strategy_owned
+                  AND be.closing_order AND be.broker_order_type=1
+                  AND COALESCE(be.client_order_id,'') NOT LIKE 'cas-%%'
+                  AND be.received_at>now()-interval '1 day'
+                ORDER BY be.received_at DESC LIMIT 1""",
+                scope,
+            )
+            intervention = intervention_rows[0] if intervention_rows else None
             # IDs are only bind parameters; presentation receives currency, not account IDs.
-            data: dict[str, Any] = {"currency": identity["currency"]}
+            data: dict[str, Any] = {"currency": identity["currency"], "intervention": intervention}
             daily = rows(
                 "SELECT trading_day, current_equity, baseline_equity, loss_percent, "
                 "realized_pnl, "

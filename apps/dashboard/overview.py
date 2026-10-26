@@ -225,6 +225,7 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "0.5.0-directional-scalp.1",
                 "0.6.0-entry-modes.1",
                 "0.7.0-quick-oco.1",
+                "0.7.1-quick-oco.1",
             ):
                 return result
             demo_development = False
@@ -237,6 +238,7 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 "0.5.0-directional-scalp.1",
                 "0.6.0-entry-modes.1",
                 "0.7.0-quick-oco.1",
+                "0.7.1-quick-oco.1",
             }:
                 enforced = policy.get("lossLimitsEnforced")
                 mode = policy.get("mode")
@@ -256,7 +258,8 @@ def risk_summary(daily: dict[str, Any], capital: dict[str, Any], now: datetime) 
                 < setup_percent
                 <= (
                     Decimal(5)
-                    if policy["version"] == "0.7.0-quick-oco.1" and policy.get("mode") == "demo"
+                    if policy["version"] in {"0.7.0-quick-oco.1", "0.7.1-quick-oco.1"}
+                    and policy.get("mode") == "demo"
                     else Decimal(1)
                 )
                 or not Decimal(0) < daily_percent <= Decimal(5)

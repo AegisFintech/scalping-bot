@@ -3,9 +3,9 @@ import { technicalContextRequest } from "../../../packages/market-data-client/sr
 import { canonical } from "../../../packages/risk-engine/src/decimal.js";
 import {
   quickOcoTransform,
+  quickOcoModeledCost,
   validateQuickOcoCommands,
 } from "../../../packages/strategy-candidates/src/quick-oco.js";
-import { modeledScalpCost } from "../../../packages/strategy-candidates/src/compression-demo.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -401,7 +401,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "entry-quick-oco-execution-v1",
+    promptVersion: "entry-quick-oco-execution-v2",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -552,14 +552,7 @@ async function main(): Promise<void> {
           spread_price: canonical(
             decimal(snapshot.quote.ask).minus(decimal(snapshot.quote.bid)),
           ),
-          modeled_round_trip_cost_price: modeledScalpCost(
-            snapshot,
-            String(
-              (
-                result.evidence.frames as { timeframe: string; atr: string }[]
-              ).find((f) => f.timeframe === "M1")!.atr,
-            ),
-          ),
+          modeled_round_trip_cost_price: quickOcoModeledCost(snapshot),
           cost_basis: "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
           shared_setup_risk_percent: config.baseRiskPercent,
           recent_closed_outcomes: (
@@ -621,7 +614,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-quick-oco-execution-v1",
+    promptVersion: "entry-quick-oco-execution-v2",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1317,7 +1310,7 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: "entry-quick-oco-execution-v1",
+      promptVersion: "entry-quick-oco-execution-v2",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,

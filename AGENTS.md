@@ -1,3 +1,31 @@
+# ISSUE-378 — Current external-close recovery and fixed1.00 TP
+
+Read `docs/manual-intervention-report.md`. Source0.7.1-quick-oco.1-codex.1 / policy
+0.7.1-quick-oco.1 supersedes older TP instructions below for NEW DEMO setups.
+Fixed gross TP1.00 price unit, upward broker-pip rounded; native SL exactly7× TP.
+Keep shared5% current-equity ceiling / at most2.5% each OCO leg, actual costs,
+margin/volume and all gates. Remove only the second entry-slippage charge from
+fill-relative TP; native entry range30 and risk/TP exit reserves65 stay. Reject
+unaffordable targets instead of moving entries or widening TP. Other modes1%,
+no real-money authority. Preserve all accepted old intent/protection and history.
+New prompt entry-quick-oco-v2 / request1.8 / response1.2; local execution-v2,
+risk schema1.7. Older prompts/schemas remain immutable; no fallback or memory reset.
+Migration0035 appends immutable scoped close-deal evidence. External non-bot
+client IDs are not authority: match exact owned position/order/deal, side, entry,
+open/close times, original fills, cumulative closes and remaining volume/costs.
+Full/partial manual closes observe completed broker actions, never authorize
+commands. Final aggregate net includes closing-detail fees once. Retain original
+journal payload/reasons; only exact proven resolutions release waiting/errors.
+Partial exposure stays monitored/protected by existing independent maintenance;
+no new setup until fully reconciled. Bounded complete history is mandatory;
+missing/ambiguous/oversized evidence remains blocked. Do not reset accounting or
+inject trade rows to fix the current incident. Close the existing+66.72 incident
+through verified history with normal deployed code. Cancellation/OCO ownership
+rules stay. Dashboard intervention feedback is read-only and cannot infer a human
+identity or claim protection from a partial-close event alone. Keep old freezes,
+recordings, retention approvals and credentials. Qualify, push reviewed main PR
+with green checks, deploy one matching demo/worker/readonly recorder and verify.
+
 # ISSUE-376 — Current demo quick-TP dual breakout OCO authority
 
 Read `docs/quick-oco-flight-report.md` before changing this path. This explicit

@@ -97,6 +97,7 @@ describe("migrations", () => {
       "0032_directional_entry_groups.sql",
       "0033_entry_mode_selection.sql",
       "0034_storage_maintenance.sql",
+      "0035_position_close_deals.sql",
     ]);
     const sql = (
       await Promise.all(

@@ -15,6 +15,7 @@ import { createPool, migrate } from "../../packages/database/src/index.js";
 import type { BrokerExecution } from "../../packages/ctrader-client/src/client.js";
 import { normalizeDemoExecution } from "../../apps/execution-service/src/demo-execution.js";
 import { PostgresDemoExecutionStore } from "../../apps/execution-service/src/demo-execution-store.js";
+import { recoverDemoExecutions } from "../../apps/execution-service/src/demo-execution-recovery.js";
 import { DemoExecutionRecoveryRunner } from "../../apps/execution-service/src/demo-execution-recovery-runner.js";
 
 import {
@@ -593,6 +594,234 @@ suite(
       expect(
         (await uncertain.restart().reconcileTerminalEvidence()).certain,
       ).toBe(false);
+    });
+
+    it("recovers a manual close with a non-bot client ID and resolves its retained acknowledgement", async () => {
+      const f = await setup();
+      await f.restart().persist(f.events.peerCancelled);
+      const ack = structuredClone(f.rawEvents.accepted);
+      ack.order!.orderType = 1;
+      ack.order!.clientOrderId = "external-ui-close";
+      expect((await f.restart().persist(f.normalize(ack))).certain).toBe(false);
+      const close = structuredClone(f.rawEvents.closed);
+      close.order!.orderType = 1;
+      close.order!.clientOrderId = "external-ui-close";
+      close.position!.price = 0;
+      expect((await f.restart().persist(f.normalize(close))).certain).toBe(
+        true,
+      );
+      expect((await f.restart().readiness()).certain).toBe(true);
+      expect((await f.restart().reconcileTerminalEvidence()).certain).toBe(
+        true,
+      );
+      const rows = await pool.query<{ n: number }>(
+        "SELECT count(*)::int n FROM position_close_deals WHERE account_id=$1",
+        [f.accountId],
+      );
+      expect(rows.rows[0]!.n).toBe(1);
+      await f.restart().persist(f.normalize(close));
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            "SELECT count(*)::int n FROM trades WHERE order_group_id=$1",
+            [f.groupId],
+          )
+        ).rows[0]!.n,
+      ).toBe(1);
+    });
+
+    it("records partial manual outcomes, retains remaining exposure, then aggregates one exact net close across restarts", async () => {
+      const f = await setup();
+      await f.restart().persist(f.events.peerCancelled);
+      const leg = (
+        volume: string,
+        remaining: string,
+        id: string,
+        offset: number,
+        gross: string,
+        fee: string,
+      ) => {
+        const raw = structuredClone(f.rawEvents.closed);
+        raw.order!.orderType = 1;
+        raw.order!.clientOrderId = "external-ui-" + id;
+        raw.order!.orderId = id;
+        raw.order!.executedVolume = volume;
+        (raw.order!.tradeData as Record<string, unknown>).volume = volume;
+        raw.deal!.dealId = id;
+        raw.deal!.orderId = id;
+        raw.deal!.filledVolume = volume;
+        raw.deal!.commission = fee;
+        const d = raw.deal!.closePositionDetail as Record<string, unknown>;
+        Object.assign(d, {
+          closedVolume: volume,
+          grossProfit: gross,
+          commission: fee,
+          swap: "0",
+          pnlConversionFee: "0",
+        });
+        const at = Number(raw.deal!.executionTimestamp) + offset;
+        raw.deal!.executionTimestamp = at;
+        raw.order!.utcLastUpdateTimestamp = at;
+        raw.position!.utcLastUpdateTimestamp = at;
+        raw.position!.positionStatus = remaining === "0" ? 2 : 1;
+        raw.position!.price = remaining === "0" ? 0 : f.entry.position!.price;
+        const pd = raw.position!.tradeData as Record<string, unknown>;
+        pd.volume = remaining;
+        if (remaining === "0") pd.closeTimestamp = at;
+        else delete pd.closeTimestamp;
+        return raw;
+      };
+      const first = f.normalize(leg("40", "60", "710", -2000, "400", "-10"));
+      expect((await f.restart().persist(first)).reasonCodes).toContain(
+        "DEMO_PARTIAL_CLOSE_RECONCILIATION_REQUIRED",
+      );
+      expect(
+        (
+          await pool.query(
+            "SELECT state,volume::text FROM positions WHERE order_group_id=$1",
+            [f.groupId],
+          )
+        ).rows[0],
+      ).toMatchObject({ state: "OPEN", volume: "60.0000000000" });
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            "SELECT count(*)::int n FROM trades WHERE order_group_id=$1",
+            [f.groupId],
+          )
+        ).rows[0]!.n,
+      ).toBe(0);
+      await f.restart().persist(first);
+      const last = f.normalize(leg("60", "0", "711", 0, "600", "-20"));
+      expect((await f.restart().persist(last)).certain).toBe(true);
+      expect((await f.restart().readiness()).certain).toBe(true);
+      expect((await f.restart().reconcileTerminalEvidence()).certain).toBe(
+        true,
+      );
+      expect(
+        (
+          await pool.query(
+            "SELECT realized_pnl::text,fees::text FROM trades WHERE order_group_id=$1",
+            [f.groupId],
+          )
+        ).rows,
+      ).toEqual([{ realized_pnl: "9.7000000000", fees: "-0.3000000000" }]);
+      const closeRows = await pool.query<{ n: number }>(
+        "SELECT count(*)::int n FROM position_close_deals WHERE account_id=$1",
+        [f.accountId],
+      );
+      expect(closeRows.rows[0]!.n).toBe(2);
+      await expect(
+        pool.query(
+          "UPDATE position_close_deals SET gross_profit=0 WHERE account_id=$1",
+          [f.accountId],
+        ),
+      ).rejects.toThrow("POSITION_CLOSE_DEAL_IMMUTABLE");
+    });
+
+    it.each(["volume", "entry", "ownership", "bot_client", "time"])(
+      "rejects contradictory manual close evidence: %s",
+      async (fault) => {
+        const f = await setup();
+        await f.restart().persist(f.events.peerCancelled);
+        const raw = structuredClone(f.rawEvents.closed);
+        raw.order!.orderType = 1;
+        raw.order!.clientOrderId = "external-ui-close";
+        if (fault === "volume")
+          (
+            raw.deal!.closePositionDetail as Record<string, unknown>
+          ).closedVolume = "99";
+        if (fault === "entry")
+          (
+            raw.deal!.closePositionDetail as Record<string, unknown>
+          ).entryPrice = 123;
+        if (fault === "ownership")
+          await pool.query(
+            "UPDATE positions SET strategy_owned=false WHERE order_group_id=$1",
+            [f.groupId],
+          );
+        if (fault === "bot_client")
+          raw.order!.clientOrderId = "cas-unclaimed-close";
+        if (fault === "time")
+          (raw.position!.tradeData as Record<string, unknown>).openTimestamp =
+            1;
+        expect((await f.restart().persist(f.normalize(raw))).certain).toBe(
+          false,
+        );
+        expect(
+          (
+            await pool.query<{ n: number }>(
+              "SELECT count(*)::int n FROM trades WHERE order_group_id=$1",
+              [f.groupId],
+            )
+          ).rows[0]!.n,
+        ).toBe(0);
+        expect(
+          (
+            await pool.query<{ n: number }>(
+              "SELECT count(*)::int n FROM position_close_deals WHERE account_id=$1",
+              [f.accountId],
+            )
+          ).rows[0]!.n,
+        ).toBe(0);
+      },
+    );
+
+    it("recovers a missed external market close from broker history without resetting or duplicating outcomes", async () => {
+      const f = await setup();
+      await f.restart().persist(f.events.peerCancelled);
+      const close = structuredClone(f.rawEvents.closed);
+      close.order!.orderType = 1;
+      close.order!.clientOrderId = "external-ui-history";
+      const receivedAt = new Date(
+        Number(close.deal!.executionTimestamp) + 1000,
+      ).toISOString();
+      const client = {
+        orderHistoryRaw: vi.fn(() =>
+          Promise.resolve({
+            orders: [
+              f.entry.order!,
+              f.rawEvents.peerCancelled.order!,
+              close.order!,
+            ],
+            hasMore: false,
+            receivedAt,
+          }),
+        ),
+        dealHistoryRaw: vi.fn(() =>
+          Promise.resolve({
+            deals: [f.entry.deal!, close.deal!],
+            hasMore: false,
+            receivedAt,
+          }),
+        ),
+        reconcileRaw: vi.fn(() =>
+          Promise.resolve({
+            positions: [],
+            orders: [],
+            receivedAt,
+          }),
+        ),
+      };
+      const run = () =>
+        recoverDemoExecutions({
+          pool,
+          accountId: f.accountId,
+          symbolId: f.symbolId,
+          client,
+          store: f.restart(),
+          normalizer: { symbolId: "7" },
+          now: () => new Date(receivedAt),
+        });
+      expect((await run()).certain).toBe(true);
+      expect((await run()).certain).toBe(true);
+      expect(client.dealHistoryRaw).toHaveBeenCalledTimes(1);
+      const count = await pool.query<{ n: number }>(
+        "SELECT count(*)::int n FROM trades WHERE order_group_id=$1",
+        [f.groupId],
+      );
+      expect(count.rows[0]!.n).toBe(1);
+      expect((await f.restart().readiness()).certain).toBe(true);
     });
 
     it("attests the complete group serially and resolves a retained context-only conflict across restarts", async () => {

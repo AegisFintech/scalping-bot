@@ -8,6 +8,7 @@ import type {
 import {
   quickOcoTransform,
   quickOcoCost,
+  quickOcoModeledCost,
   validateQuickOcoCommands,
 } from "../../packages/strategy-candidates/src/quick-oco.js";
 import {
@@ -45,7 +46,7 @@ function commands(): PendingOrderCommand[] {
   });
 }
 describe("approved quick OCO economics", () => {
-  it("preserves both Codex entries, exact 7x native SL and smallest fee-aware rounded TP", () => {
+  it("preserves both Codex entries, exact 7x native SL and fixed cost-checked 1.00 TP", () => {
     const r = proposal();
     expect(r.accepted).toBe(true);
     for (const [i, c] of commands().entries()) {
@@ -64,14 +65,8 @@ describe("approved quick OCO economics", () => {
       expect(
         new Decimal(cost.evidence.modeled_round_trip_commission).gt(7),
       ).toBe(true);
-      const prior = target.minus(
-        new Decimal(m.pipSize).mul(c.side === "BUY" ? 1 : -1),
-      );
-      expect(
-        quickOcoCost(m, entry, prior, new Decimal(m.minVolume)).netPrice.lt(
-          new Decimal(m.pipSize).mul("0.08"),
-        ),
-      ).toBe(true);
+      expect(distance.eq("1")).toBe(true);
+      expect(cost.evidence.execution_reserve_price).toBe("0.65");
       const native = stopLimitProtectionFields(c, m, "30");
       expect(native.relativeStopLoss).toBe(native.relativeTakeProfit * 7);
     }
@@ -211,4 +206,23 @@ describe("approved quick OCO economics", () => {
       ).toBe(false);
     }
   });
+});
+
+it("reports fill-relative cost context without charging entry slippage again and refuses TP overrides", () => {
+  const snapshot = { metadata: m, quote: { ask: "4000" } } as MarketSnapshot;
+  expect(new Decimal(quickOcoModeledCost(snapshot)).lt(1)).toBe(true);
+  const c = commands();
+  const changed = c.map((x) => {
+    const sign = x.side === "BUY" ? 1 : -1;
+    return {
+      ...x,
+      takeProfit: new Decimal(x.entryPrice)
+        .plus(new Decimal("0.8").mul(sign))
+        .toFixed(),
+      stopLoss: new Decimal(x.entryPrice)
+        .minus(new Decimal("5.6").mul(sign))
+        .toFixed(),
+    };
+  });
+  expect(validateQuickOcoCommands(changed, m).approved).toBe(false);
 });

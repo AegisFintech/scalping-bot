@@ -119,7 +119,7 @@ def load_setup(
             (key,),
         ).fetchall()
         protection = connection.execute(
-            """SELECT p.side,p.state,p.volume::text,p.entry_price::text,
+            """SELECT p.side,p.state,p.volume::text,p.entry_price::text,p.updated_at,
             pp.stop_loss::text broker_sl,pp.take_profit::text broker_tp,pp.status protection_status,
             pp.observed_at FROM positions p LEFT JOIN position_protection pp ON pp.position_id=p.id
             WHERE p.order_group_id=%s AND p.strategy_owned ORDER BY p.side,p.opened_at""",
@@ -416,10 +416,20 @@ class Flight:
                     number(order["fill_price"]),
                     number(order["fill_volume"]),
                 )
+                for current in self.setup["protection"]:
+                    if (
+                        current["side"] == side
+                        and current.get("state") == "OPEN"
+                        and current.get("updated_at") is not None
+                        and timestamp(current["updated_at"]) <= source
+                    ):
+                        volume = number(current["volume"])
+                if volume <= 0:
+                    raise ValueError("POSITION_REMAINING_VOLUME_INVALID")
                 basis = f"{entry}:{volume}"
                 if side not in self.legs or self.legs[side]["basis"] != basis:
                     if side in self.legs:
-                        self.gap("PARTIAL_FILL_BASIS_CHANGED_PRIOR_METRICS_CENSORED")
+                        self.gap("POSITION_VOLUME_BASIS_CHANGED_PRIOR_METRICS_CENSORED")
                     self.legs[side] = {
                         "side": side,
                         "basis": basis,
