@@ -262,6 +262,7 @@ export interface ModelPromptArtifact {
     | "entry-pair-v8"
     | "entry-direction-v1"
     | "entry-modes-v1"
+    | "entry-quick-oco-v1"
     | "entry-modes-execution-v1"
     | "entry-quick-oco-execution-v1"
     | "entry-pair-execution-v1"

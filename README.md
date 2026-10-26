@@ -5,6 +5,8 @@ BUY/lower SELL range. Native **SL distance = 7× gross TP distance**. TP rounds
 up to cover verified broker costs/reserves and target 0.08 broker pip modeled net;
 this is not guaranteed profit or a sub-tick gross TP. Shared dynamic demo risk is
 **5% equity total**, at most 2.5% per leg; margin/volume/cost gates can reduce size.
+Provider prompt `entry-quick-oco-v1` / worker request 1.7 carries the exact 5%
+context; historical 1.6/1% contracts and prior threads stay intact.
 Existing accepted groups finish with original protection. WAIT and all safety
 gates remain; no real-money authority or fixed lot multiplication is added.
 The read-only **Flight** chart records bid/ask movement, observed TP/SL proximity,

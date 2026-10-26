@@ -12,7 +12,9 @@ multiplier, entry shifting, forced trades, profit guarantee or real-money author
 Broker pip/tick is 0.01; actual metadata commissions (~$24/lot round trip near
 $4,000 gold) override the unverified $7 estimate. Never understate costs or call
 0.08 pip the gross broker TP. New risk schema 1.6; old contracts stay immutable.
-Provider prompt/transport remain entry-modes-v1 / 1.6 / 1.2; local deterministic
+Provider prompt/transport are entry-quick-oco-v1 / 1.7 / 1.2; preserve the old
+entry-modes-v1 / 1.6 exact-1% contract unchanged. New request 1.7 requires exactly 5%
+and fixed cost-aware OCO guidance; exercise actual Node-to-Python validation. Local deterministic
 prompt is entry-quick-oco-execution-v1. Keep WAIT, all fail-closed operational,
 account, session, margin, provider/revision/intent gates and native maintenance.
 Existing accepted groups retain old settings/protection; use an audited scoped

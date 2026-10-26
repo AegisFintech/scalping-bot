@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { bindModeDecision } from "./mode-entry.js";
-import { bindDirectionalDecision } from "./directional-entry.js";
 import { FIXED_DEFAULTS } from "../../config/src/policy.js";
 import {
   boundedResponseText,
@@ -10,7 +9,6 @@ import {
 } from "../../ai-client/src/telemetry.js";
 import type { AiAnalysisResult } from "../../ai-client/src/client.js";
 import {
-  bindEntryDecision,
   validateEntryDecision,
   type EntryDecisionPlan,
 } from "./entry-decision.js";
@@ -101,13 +99,7 @@ export class EntryPairHttpPlanner {
       .find((s) => s.timeframe === "M1")
       ?.candles.at(-1)?.endTime;
     if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
-    const plan = (
-      ENTRY_PAIR_PROMPT.version === "entry-modes-v1"
-        ? bindModeDecision
-        : ENTRY_PAIR_PROMPT.version === "entry-direction-v1"
-          ? bindDirectionalDecision
-          : bindEntryDecision
-    )(envelope.rawResponse, {
+    const plan = bindModeDecision(envelope.rawResponse, {
       ...input,
       observedM1End,
     });

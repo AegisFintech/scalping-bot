@@ -308,10 +308,26 @@ class RequestV16(RequestV15):
     promptVersion: Literal["entry-modes-v1"]  # type: ignore[assignment]
 
 
+class ExecutionContextV17(ExecutionContext):
+    shared_setup_risk_percent: Literal["5"]  # type: ignore[assignment]
+
+
+class PayloadV17(PayloadV13):
+    execution_context: ExecutionContextV17
+
+
+class RequestV17(RequestV16):
+    version: Literal["codex-entry-request-1.7"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-quick-oco-v1"]  # type: ignore[assignment]
+    payload: PayloadV17
+
+
 def parse_request(
     raw: bytes,
-) -> Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16:
+) -> Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16 | RequestV17:
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.7":
+        return RequestV17.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.6":
         return RequestV16.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.5":
@@ -460,7 +476,7 @@ def invoke(prompt: str, job: Path) -> bytes:
 
 
 def run(
-    request: Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16,
+    request: Request | RequestV12 | RequestV13 | RequestV14 | RequestV15 | RequestV16 | RequestV17,
     root: Path,
     system_prompt: str,
     *,

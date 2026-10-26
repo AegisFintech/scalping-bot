@@ -32,7 +32,7 @@ const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
   it("uses directional continuation guidance with strict WAIT", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-modes-v1");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-quick-oco-v1");
     expect(prompt.replace(/\s+/g, " ")).toContain("Use completed M1 first");
     expect(prompt.replace(/\s+/g, " ")).toContain(
       "not an anticipated reversal",
@@ -262,7 +262,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.6");
+      expect(providerBody.version).toBe("codex-entry-request-1.7");
       expect(providerBody.payload).toMatchObject({ market_captured_at: at });
       const compact = (
         providerBody.payload as { candles: { rows: unknown[] }[] }
@@ -294,7 +294,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-modes-v1",
+        version: "entry-quick-oco-v1",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

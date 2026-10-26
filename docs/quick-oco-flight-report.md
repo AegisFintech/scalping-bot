@@ -16,11 +16,15 @@ market session, provider cooldowns, ownership, account reconciliation and all
 protection/recovery gates remain authoritative. No new trading bot or public
 mode selector is introduced.
 
-The provider prompt remains `entry-modes-v1`, worker request 1.6 / response 1.2.
+The provider prompt is `entry-quick-oco-v1`, worker request **1.7** / response 1.2.
 The local deterministic proposal artifact is separately versioned
-`entry-quick-oco-execution-v1`. The existing provider already returns both original
-range edges; local code selects the approved OCO profile and owns economics.
-Persistent provider memory is context, not model training.
+`entry-quick-oco-execution-v1`. Request 1.7 adds an exact 5% execution-context
+contract and fixed dual STOP_LIMIT / cost-aware TP / 7× SL guidance. Historical
+request 1.6, its 1% contract and `entry-modes-v1` prompt remain immutable and
+cannot accept this new payload. Node dispatch, Python validation, prompt hashes
+and durable evidence share the new identity. Daily memory gets the new prompt pin;
+old thread/job history remains, with no reset or fallback. Persistent provider
+memory is context, not model training.
 
 For each new leg, choose the smallest whole broker pip gross TP that meets a
 modeled **0.08 broker pip net objective** after broker metadata commissions,
@@ -103,7 +107,9 @@ canonical closed net/fees; signed fees are not subtracted twice.
 
 For actual fills, BUY excursions use bid and SELL excursions use ask. Summaries
 show observed MFE/MAE, closest TP/SL, entry slippage, modeled net and sampled time
-profitable. Protection uses a prior verified broker observation when available,
+profitable. Metrics begin when durable fill evidence is visible; earlier sub-second
+movement remains in raw records for later causal review. These are observed
+bounds, not reconstructed broker extrema. Protection uses a prior verified broker observation when available,
 otherwise explicitly fill-relative intent. Partial-fill basis changes censor prior
 metrics; raw observations remain. Late close evidence removes post-close metrics
 using a bounded ten-second checkpoint window; older unavailable windows are
@@ -142,9 +148,9 @@ Full qualification, both configuration checks, AST-only Graphify and matching
 source-head hosted checks precede main deployment. Operational receipts are
 appended to the issue without editing frozen prior evidence.
 
-## Frozen source qualification
+## First checkpoint qualification and pre-deployment boundary review
 
-Final `node scripts/qualify.mjs` under Node 22 passed every required gate and
+The first checkpoint `node scripts/qualify.mjs` under Node 22 passed every required gate and
 **1,668 tests**: **1,102 Node, 115 isolated PostgreSQL, 451 Python**. All 34 migration
 checksums/lifecycle cases passed; no new migration was added. Formatting, lint,
 TypeScript/Python types, build, schemas, replay/fail-closed, secret scan and npm /
@@ -164,6 +170,31 @@ Earlier preliminary lint failures were fixed; a development run whose source
 changed was discarded. Only the final frozen qualified fingerprint is authoritative.
 
 [Exact commands, gate results and fingerprints](evidence/quick-oco-flight-validation.json).
+A subsequent pre-deployment transport review found that historical request 1.6
+correctly rejects a 5% context and its old prompt describes equal-distance exits.
+The merge was stopped while still draft; no runtime changed. New request 1.7 /
+provider prompt and an actual TypeScript-to-Python contract test correct this
+boundary. The checkpoint evidence remains immutable; renewed final source
+qualification is recorded separately below.
+
 Reviewed PR, exact-head hosted checks, merge and same-demo activation follow on
 [issue #376](https://github.com/AegisFintech/scalping-bot/issues/376); source tests
 alone do not claim deployment, fills, expected returns or qualification.
+
+## Final source qualification — request 1.7
+
+The corrected full `node scripts/qualify.mjs` passed every required gate and
+**1,672 tests**: **1,103 Node, 115 isolated PostgreSQL, 454 Python**. The actual
+TypeScript request body validates against Python RequestV17 before a simulated
+receipt; new risk5 and historical risk1 reject each other's versioned contracts.
+BUY/SELL/WAIT native receipt cases and historical schema equality pass. Old
+request1.6 schema and provider prompt bytes match main exactly. No runtime was
+changed by the first checkpoint or this qualification.
+
+Both configuration checks, refreshed AST Graphify and the earlier desktop/mobile
+browser checks pass. Full formatting/lint/types/build/schema/migration/lifecycle/
+replay/fail-closed, secret and both dependency audits pass. All 34 migrations stay
+unchanged. [Authoritative final commands/results/fingerprint](evidence/quick-oco-flight-validation-v2.json)
+supersede the first checkpoint for delivery. Matching main deployment must verify
+actual completed-market input through RequestV17 with a simulated provider receipt
+and zero forced provider/order calls before resuming admission.
