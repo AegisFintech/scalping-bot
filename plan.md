@@ -1,3 +1,11 @@
+### ISSUE-380 — Smaller TP and cost-aware early profit capture
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/380.
+- Dependencies: #376 flight/native OCO, #378 full/partial external-close reconciliation, existing independent maintenance and immutable #253/#255 research.
+- Acceptance: inclusive available Flight review with open/gap/failure censoring; new TP0.40 and unchanged SL7.00/dynamic shared5% demo sizing, no lot multiplier. Explicit5-tick profit-exit allowance distinct from65-tick stop risk; cost-aware early capture at net0.05 price units with fresh executable quote/current position/fees/swap/conversion, second re-read, native protection, exact source/ownership/full entry/cancelled peer/terminal checks, durable claim and no resend. Historical accepted groups/contracts/freezes/accounting immutable. New prompt/schema binding and matching worker, tests including SQL durability/manual/partial races/rejection/stale/unknown outcomes, full qualification/config/security/audits/Graphify, README/AGENTS, issue branch/PR/push/green checks and matching one-demo activation.
+- Status: fully qualified: 1,117 Node +124 PostgreSQL +459 Python tests (1,700 total), all required gates/security/audits/config checks passed. Reviewed PR/push/green checks and matching one-demo activation follow; receipt will be posted on #380. Exact results: `docs/evidence/small-tp-profit-exit-validation.json`.
+- Evidence: [scope and limitations](docs/small-tp-profit-exit-report.md), [inclusive descriptive Flight snapshot](docs/evidence/small-tp-flight-review.json).
+
 ### ISSUE-378 — Manual intervention and fixed1.00 TP
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/378.

@@ -2236,3 +2236,53 @@ describe("actual-volume target cost checks", () => {
     expect(place).not.toHaveBeenCalled();
   });
 });
+
+it("places the approved0.40 target through the full coordinator with unchanged7.00 stop", async () => {
+  const { quickOcoTransform, validateQuickOcoCommands } =
+    await import("../../packages/strategy-candidates/src/quick-oco.js");
+  const o = options({
+    entryPairMode: true,
+    breakoutScalp: true,
+    executionOrderType: "STOP_LIMIT",
+    minRiskRewardRatio: "0.0571428571",
+    evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+      Promise.resolve(
+        quickOcoTransform({ snapshot, response, maximumStopDistance }),
+      ),
+    commandFeeCheck: validateQuickOcoCommands,
+  });
+  const evaluate = o.risk.evaluate.bind(o.risk);
+  o.risk.evaluate = async (input) => {
+    const result = await evaluate(input);
+    return {
+      ...result,
+      commands:
+        result.commands === null
+          ? null
+          : [
+              {
+                ...result.commands[0],
+                executionOrderType: "STOP_LIMIT" as const,
+              },
+              {
+                ...result.commands[1],
+                executionOrderType: "STOP_LIMIT" as const,
+              },
+            ],
+    };
+  };
+  const place = vi.spyOn(o.gateway, "placeOco");
+  const result = await new AnalysisCoordinator(o).runOnce();
+  expect(result.reasonCodes).toEqual([]);
+  expect(result.outcome).toBe("PLACED");
+  expect(place).toHaveBeenCalledOnce();
+  const { Decimal } = await import("decimal.js");
+  for (const c of place.mock.calls[0]![0]) {
+    expect(new Decimal(c.entryPrice).minus(c.takeProfit).abs().eq("0.4")).toBe(
+      true,
+    );
+    expect(new Decimal(c.entryPrice).minus(c.stopLoss).abs().eq("7")).toBe(
+      true,
+    );
+  }
+});

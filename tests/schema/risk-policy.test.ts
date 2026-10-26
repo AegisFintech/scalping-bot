@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { executionRiskPolicy } from "../../packages/config/src/policy.js";
 
 const validate = new Ajv2020({ strict: true }).compile(
-  JSON.parse(readFileSync("schemas/risk-policy-1.7.json", "utf8")) as AnySchema,
+  JSON.parse(readFileSync("schemas/risk-policy-1.8.json", "utf8")) as AnySchema,
 );
 
 it("reports explicit demo loss-policy authority while preserving historical contracts", () => {

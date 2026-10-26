@@ -598,3 +598,16 @@ def test_fixed_tp_worker_contract_preserves_earlier_request_versions() -> None:
     assert schema == s.RequestV18.model_json_schema()
     with pytest.raises(ValueError):
         s.RequestV17.model_validate(body)
+
+
+def test_quick_profit_request_is_versioned_and_preserves_v18() -> None:
+    body = current_request().model_dump()
+    body.update(version="codex-entry-request-1.9", promptVersion="entry-quick-oco-v3")
+    body["payload"]["execution_context"]["shared_setup_risk_percent"] = "5"
+    assert isinstance(s.parse_request(json.dumps(body).encode()), s.RequestV19)
+    schema = json.loads(Path("schemas/codex-entry-request-1.9.json").read_text())
+    schema.pop("$id")
+    schema.pop("$schema")
+    assert schema == s.RequestV19.model_json_schema()
+    with pytest.raises(ValueError):
+        s.RequestV18.model_validate(body)

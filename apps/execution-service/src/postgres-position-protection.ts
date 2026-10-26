@@ -1,3 +1,6 @@
+import { Decimal } from "decimal.js";
+import { CODEX_STRATEGY_VERSION } from "../../../packages/config/src/policy.js";
+import type { ProfitExitEvidence } from "./quick-profit-exit.js";
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import type { PositionProtection } from "../../../packages/contracts/src/position-protection.js";
@@ -59,13 +62,16 @@ class PostgresProtectionSession implements ProtectionSession {
   ) {}
   async positions(): Promise<readonly ProtectionPosition[]> {
     const result = await this.client.query<ProtectionPosition>(
-      `SELECT p.id, p.broker_position_id AS "brokerPositionId", p.side, p.volume::text,
+      `SELECT sv.version AS "strategyVersion",
+              (SELECT sum(f.commission)::text FROM fills f WHERE f.position_id=p.id AND f.order_id=o.id) AS "entryCommission",
+              p.id, p.broker_position_id AS "brokerPositionId", p.side, p.volume::text,
               p.entry_price::text AS "entryPrice", o.entry_price::text AS "orderEntry",
               o.stop_loss::text AS "orderStopLoss", o.take_profit::text AS "orderTakeProfit",
               o.strategy_label AS label, COALESCE(pp.repair_attempts, 0) AS "repairAttempts",
               pp.command_at AS "commandAt", pp.close_requested_at AS "closeRequestedAt"
        FROM positions p JOIN order_groups og ON og.id = p.order_group_id
        JOIN analysis_runs ar ON ar.id = og.analysis_id
+       JOIN strategy_versions sv ON sv.id=ar.strategy_version_id
        JOIN orders o ON o.order_group_id = og.id AND o.side = p.side
        LEFT JOIN position_protection pp ON pp.position_id = p.id
        WHERE p.account_id = $1 AND p.symbol_id = $2 AND ar.account_id = $1 AND ar.symbol_id = $2
@@ -170,6 +176,63 @@ class PostgresProtectionSession implements ProtectionSession {
       return true;
     });
   }
+  async claimProfitClose(
+    position: ProtectionPosition,
+    at: string,
+    evidence: ProfitExitEvidence,
+  ): Promise<boolean> {
+    if (
+      position.strategyVersion !== CODEX_STRATEGY_VERSION ||
+      evidence.policy !== "quick-profit-exit-v1" ||
+      !new Decimal(evidence.volume).eq(position.volume) ||
+      !new Decimal(evidence.modeledNet).gte(evidence.requiredNet) ||
+      !new Decimal(evidence.requiredNet).gt(0)
+    )
+      return false;
+    return this.transaction(async () => {
+      const result = await this.client.query(
+        `UPDATE position_protection SET close_requested_at=$2,close_volume=$3,command_at=$2,
+        status='CLOSE_SENT',reason_code='QUICK_PROFIT_EXIT_AWAITING_DEAL',updated_at=now()
+        WHERE position_id=$1 AND close_requested_at IS NULL AND status='CLOSE_REQUIRED'
+          AND reason_code='QUICK_PROFIT_EXIT_COST_COVERED' AND stop_loss IS NOT NULL AND take_profit IS NOT NULL
+          AND observed_at <= $2::timestamptz AND observed_at >= $2::timestamptz-interval '2 seconds'
+          AND $7::timestamptz <= $2::timestamptz AND $7::timestamptz >= $2::timestamptz-interval '1 second'
+          AND $8::timestamptz <= $2::timestamptz AND $8::timestamptz >= $2::timestamptz-interval '1 second'
+          AND EXISTS(SELECT 1 FROM positions p JOIN order_groups og ON og.id=p.order_group_id
+            JOIN analysis_runs ar ON ar.id=og.analysis_id JOIN strategy_versions sv ON sv.id=ar.strategy_version_id
+            WHERE p.id=$1 AND p.account_id=$4 AND p.symbol_id=$5 AND p.strategy_owned=true
+              AND p.state='OPEN' AND p.volume=$3 AND p.entry_price=$9 AND og.mode='demo' AND sv.version=$6
+              AND NOT EXISTS(SELECT 1 FROM position_close_deals d WHERE d.position_id=p.id)
+              AND EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=og.id AND o.side=p.side
+                AND o.state='FILLED' AND o.strategy_owned=true AND o.filled_volume=p.volume)
+              AND EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=og.id AND o.side<>p.side
+                AND o.state='CANCELLED' AND o.strategy_owned=true AND o.filled_volume=0)
+              AND NOT EXISTS(SELECT 1 FROM broker_execution_events e WHERE e.account_id=p.account_id
+                AND e.symbol_id=p.symbol_id AND e.resolved_at IS NULL AND e.reason_codes<>'[]'::jsonb))
+        RETURNING position_id`,
+        [
+          position.id,
+          at,
+          evidence.volume,
+          this.accountId,
+          this.symbolId,
+          CODEX_STRATEGY_VERSION,
+          evidence.quote.sourceTime,
+          evidence.quote.receivedAt,
+          evidence.entry,
+        ],
+      );
+      if (result.rows.length !== 1) return false;
+      await this.event(position, "CLOSE_CLAIM", {
+        at,
+        volume: evidence.volume,
+        reason: "QUICK_PROFIT_EXIT_COST_COVERED",
+        evidence,
+      });
+      return true;
+    });
+  }
+
   async closeAcknowledged(
     position: ProtectionPosition,
     brokerOrderId: string,
