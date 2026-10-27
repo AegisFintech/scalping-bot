@@ -6,6 +6,15 @@ directive text is preserved verbatim in [docs/agents-history.md](docs/agents-his
 the current contract wins wherever the two differ. No code, trading policy, prompt,
 risk or deployment behavior changes with this consolidation.
 
+Fill evidence: SELECT-only `export_fill_evidence` and `fill_gap_review` report each
+deal's gap and delay against the latest fresh executable quote, entry trigger gap,
+native level slippage, recorded TP crossings and a walk of the recorded visible
+ladder, grouped by close class and volume. The retained
+[#388 pack](docs/evidence/native-tp-fill-pattern.json) shows every TP fill came
+0.25–0.31 s after a quote 0.14–0.35 beyond TP and printed 0.14–0.18 worse than it;
+the losing trade's TP touches peaked at +0.06. Descriptive only, nothing sent to the
+broker: [report, commands and limits](docs/fill-evidence-report.md).
+
 # ISSUE-387 — Read-only entry evidence and native TP audit
 
 Operator approved investigating TP execution and recording/comparing entry context

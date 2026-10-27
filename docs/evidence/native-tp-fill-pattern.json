@@ -1,0 +1,348 @@
+{
+  "brokerAuthority": false,
+  "causeInference": null,
+  "closePriceBasis": "DERIVED_FROM_CANONICAL_NET_FEES_AND_VOLUME_NO_SWAP_OR_CONVERSION",
+  "closes": [
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.14",
+      "closedAt": "2026-10-27T04:17:47.114000+00:00",
+      "derivedClosePrice": "4023.73",
+      "entryFill": "4023.27",
+      "net": "53.55",
+      "setup": "968450ffa720789a31a49a53",
+      "side": "BUY",
+      "signedFees": "-59.15",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4023.67",
+        "crossings": 10,
+        "firstCrossingAt": "2026-10-27T04:17:30.393000+00:00",
+        "firstCrossingToFillSeconds": "16.721",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.2",
+          "lagToFillSeconds": "0.297",
+          "mark": "4023.87",
+          "quoteAt": "2026-10-27T04:17:46.817000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.2",
+        "tpFilled": true
+      },
+      "units": "245"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.16",
+      "closedAt": "2026-10-27T05:06:20.521000+00:00",
+      "derivedClosePrice": "4009.85",
+      "entryFill": "4010.28",
+      "net": "46.59",
+      "setup": "c19f6f0d5322f13f09aa208b",
+      "side": "SELL",
+      "signedFees": "-59.19",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4009.88",
+        "crossings": 13,
+        "firstCrossingAt": "2026-10-27T05:03:28.210000+00:00",
+        "firstCrossingToFillSeconds": "172.311",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.19",
+          "lagToFillSeconds": "0.297",
+          "mark": "4009.69",
+          "quoteAt": "2026-10-27T05:06:20.224000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.19",
+        "tpFilled": true
+      },
+      "units": "246"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": false,
+      "closeVersusLastCrossingQuote": null,
+      "closedAt": "2026-10-27T05:30:14.950000+00:00",
+      "derivedClosePrice": "4001.49",
+      "entryFill": "4008.7",
+      "net": "-1832.77",
+      "setup": "ff0c14acdbc7775f13e9b847",
+      "side": "BUY",
+      "signedFees": "-59.11",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4009.1",
+        "crossings": 4,
+        "firstCrossingAt": "2026-10-27T05:19:03.987000+00:00",
+        "firstCrossingToFillSeconds": "670.963",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0",
+          "lagToFillSeconds": "668.426",
+          "mark": "4009.1",
+          "quoteAt": "2026-10-27T05:19:06.524000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.06",
+        "tpFilled": false
+      },
+      "units": "246"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.18",
+      "closedAt": "2026-10-27T06:08:56.841000+00:00",
+      "derivedClosePrice": "4008.92",
+      "entryFill": "4008.35",
+      "net": "79.07",
+      "setup": "8bd43a255d3e41d513a817b6",
+      "side": "BUY",
+      "signedFees": "-57.73",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4008.75",
+        "crossings": 4,
+        "firstCrossingAt": "2026-10-27T06:08:55.490000+00:00",
+        "firstCrossingToFillSeconds": "1.351",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.35",
+          "lagToFillSeconds": "0.246",
+          "mark": "4009.1",
+          "quoteAt": "2026-10-27T06:08:56.595000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.35",
+        "tpFilled": true
+      },
+      "units": "240"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.18",
+      "closedAt": "2026-10-27T06:25:32.594000+00:00",
+      "derivedClosePrice": "4005.33",
+      "entryFill": "4004.85",
+      "net": "57.53",
+      "setup": "434cfd1d4825db128f8a77d1",
+      "side": "BUY",
+      "signedFees": "-57.67",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4005.25",
+        "crossings": 5,
+        "firstCrossingAt": "2026-10-27T06:25:06.158000+00:00",
+        "firstCrossingToFillSeconds": "26.436",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.26",
+          "lagToFillSeconds": "0.309",
+          "mark": "4005.51",
+          "quoteAt": "2026-10-27T06:25:32.285000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.26",
+        "tpFilled": true
+      },
+      "units": "240"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.14",
+      "closedAt": "2026-10-27T06:33:18.696000+00:00",
+      "derivedClosePrice": "4001.24",
+      "entryFill": "4001.68",
+      "net": "47.98",
+      "setup": "89994dadfd0513eb97a44df7",
+      "side": "SELL",
+      "signedFees": "-57.62",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4001.28",
+        "crossings": 15,
+        "firstCrossingAt": "2026-10-27T06:31:07.115000+00:00",
+        "firstCrossingToFillSeconds": "131.581",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.18",
+          "lagToFillSeconds": "0.251",
+          "mark": "4001.1",
+          "quoteAt": "2026-10-27T06:33:18.445000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.18",
+        "tpFilled": true
+      },
+      "units": "240"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.14",
+      "closedAt": "2026-10-27T06:34:07.358000+00:00",
+      "derivedClosePrice": "4000.47",
+      "entryFill": "4000.87",
+      "net": "38.39",
+      "setup": "e27a4da472ec3d1f64add784",
+      "side": "SELL",
+      "signedFees": "-57.61",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4000.47",
+        "crossings": 2,
+        "firstCrossingAt": "2026-10-27T06:34:06.746000+00:00",
+        "firstCrossingToFillSeconds": "0.612",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.14",
+          "lagToFillSeconds": "0.247",
+          "mark": "4000.33",
+          "quoteAt": "2026-10-27T06:34:07.111000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.14",
+        "tpFilled": true
+      },
+      "units": "240"
+    },
+    {
+      "closeAtOrBeyondRecordedTp": true,
+      "closeVersusLastCrossingQuote": "0.18",
+      "closedAt": "2026-10-27T06:37:16.153000+00:00",
+      "derivedClosePrice": "4001.77",
+      "entryFill": "4001.2",
+      "net": "79.51",
+      "setup": "547074ef96e481283f8ec824",
+      "side": "BUY",
+      "signedFees": "-57.86",
+      "tpCrossing": {
+        "basis": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION",
+        "brokerTp": "4001.6",
+        "crossings": 7,
+        "firstCrossingAt": "2026-10-27T06:37:08.105000+00:00",
+        "firstCrossingToFillSeconds": "8.048",
+        "lastCrossingBeforeFill": {
+          "excursionBeyondTp": "0.35",
+          "lagToFillSeconds": "0.273",
+          "mark": "4001.95",
+          "quoteAt": "2026-10-27T06:37:15.880000+00:00"
+        },
+        "maxExcursionBeyondTp": "0.35",
+        "tpFilled": true
+      },
+      "units": "241"
+    }
+  ],
+  "completeTickTape": false,
+  "counterfactualNet": null,
+  "entries": [
+    {
+      "fill": "4023.27",
+      "firstCrossingQuote": "4023.12",
+      "gap": "0.15",
+      "lagSeconds": "0.261",
+      "setup": "968450ffa720789a31a49a53",
+      "side": "BUY",
+      "trigger": "4023.03"
+    },
+    {
+      "fill": "4008.7",
+      "firstCrossingQuote": "4008.53",
+      "gap": "0.17",
+      "lagSeconds": "0.233",
+      "setup": "ff0c14acdbc7775f13e9b847",
+      "side": "BUY",
+      "trigger": "4008.45"
+    },
+    {
+      "fill": "4008.35",
+      "firstCrossingQuote": "4008.24",
+      "gap": "0.11",
+      "lagSeconds": "0.253",
+      "setup": "8bd43a255d3e41d513a817b6",
+      "side": "BUY",
+      "trigger": "4008.19"
+    },
+    {
+      "fill": "4004.85",
+      "firstCrossingQuote": "4004.61",
+      "gap": "0.24",
+      "lagSeconds": "0.237",
+      "setup": "434cfd1d4825db128f8a77d1",
+      "side": "BUY",
+      "trigger": "4004.57"
+    },
+    {
+      "fill": "4001.68",
+      "firstCrossingQuote": "4001.78",
+      "gap": "0.1",
+      "lagSeconds": "0.27",
+      "setup": "89994dadfd0513eb97a44df7",
+      "side": "SELL",
+      "trigger": "4001.8"
+    },
+    {
+      "fill": "4000.87",
+      "firstCrossingQuote": "4000.99",
+      "gap": "0.12",
+      "lagSeconds": "0.252",
+      "setup": "e27a4da472ec3d1f64add784",
+      "side": "SELL",
+      "trigger": "4001"
+    },
+    {
+      "fill": "4001.2",
+      "firstCrossingQuote": "4001.11",
+      "gap": "0.09",
+      "lagSeconds": "0.283",
+      "setup": "547074ef96e481283f8ec824",
+      "side": "BUY",
+      "trigger": "4001.05"
+    }
+  ],
+  "schemaVersion": "native-tp-fill-pattern-1.0",
+  "selection": "ALL_CLOSES_IN_RETAINED_14_INTENT_COHORT_NOT_PROSPECTIVE",
+  "source": {
+    "bundleSha256": "44df95b8335c7bfde33cf53bc5672df395adc5af266f8901a227ef1bc1400dec",
+    "from": "2026-10-27T03:54:41.136842+00:00",
+    "prospective": false,
+    "release": "0.7.3-quick-oco.1-codex.1",
+    "schemaVersion": "breakout-entry-observer-1.0",
+    "sha256": "9fab46783efc4e78917393488191959496ad5fb7dff3e925cd927189a8de99d5",
+    "until": "2026-10-27T06:41:11.521592+00:00"
+  },
+  "summary": {
+    "closesAtOrBeyondTp": 7,
+    "closesWithTpCrossingButNoTpFill": 1,
+    "crossedWithoutTpFillMaxExcursion": {
+      "max": "0.06",
+      "median": "0.06",
+      "min": "0.06",
+      "n": 1
+    },
+    "entryFillVersusFirstCrossingQuote": {
+      "max": "0.24",
+      "median": "0.12",
+      "min": "0.09",
+      "n": 7
+    },
+    "entryLagSeconds": {
+      "max": "0.283",
+      "median": "0.253",
+      "min": "0.233",
+      "n": 7
+    },
+    "tpFilledCloseVersusLastCrossingQuote": {
+      "max": "0.18",
+      "median": "0.16",
+      "min": "0.14",
+      "n": 7
+    },
+    "tpFilledFirstCrossingToFillSeconds": {
+      "max": "172.311",
+      "median": "16.721",
+      "min": "0.612",
+      "n": 7
+    },
+    "tpFilledLagSeconds": {
+      "max": "0.309",
+      "median": "0.273",
+      "min": "0.246",
+      "n": 7
+    },
+    "tpFilledLastCrossingExcursion": {
+      "max": "0.35",
+      "median": "0.2",
+      "min": "0.14",
+      "n": 7
+    }
+  },
+  "volumeScale": "0.01"
+}

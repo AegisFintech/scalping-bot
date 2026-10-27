@@ -217,6 +217,11 @@ gates, manufacture a trade or increase risk to maintain frequency.
 - The Flight recorder is a separately unprivileged SELECT-only observer without
   provider, order or control credentials. Storage failure halts only recording.
   Bounded lossless learning records are distinct from seven-day diagnostic logs.
+- Fill evidence (`docs/fill-evidence-report.md`) is descriptive: gaps are
+  adverse-positive against the latest fresh executable quote at or before the broker
+  fill time; close class uses closing order type and price against the last observed
+  protection, never P/L; a visible-ladder walk is not a predicted fill. Export only
+  hashed setup keys, never broker identifiers, and send nothing to the broker.
 
 ### Storage, server and deployment
 
@@ -306,7 +311,7 @@ Rules:
 Newest first. The full original directives are in
 [docs/agents-history.md](docs/agents-history.md).
 
-- ISSUE-390 agent contract consolidation (this file).
+- ISSUE-390 agent contract consolidation (this file); fill evidence and #388 pack — `docs/fill-evidence-report.md`
 - ISSUE-387 read-only entry evidence and native TP audit — `docs/entry-evidence-review-report.md`
 - ISSUE-384 broker-native profit exits — `docs/native-profit-exit-report.md`
 - ISSUE-382 Codex worker file cap — `docs/codex-file-cap-report.md`

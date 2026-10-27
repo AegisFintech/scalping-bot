@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fill-gap-review-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "fill-gap-review-1.0"
+    },
+    "from": {
+      "type": "string"
+    },
+    "until": {
+      "type": "string"
+    },
+    "fills": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "setup": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{24}$"
+          },
+          "originRelease": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": ["ENTRY", "CLOSE"]
+          },
+          "side": {
+            "enum": ["BUY", "SELL"]
+          },
+          "fillAt": {
+            "type": "string"
+          },
+          "fillPrice": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "units": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "volumeBucket": {
+            "enum": ["0-100", "100-200", "200-300", "300+"]
+          },
+          "executableSide": {
+            "enum": ["bid", "ask"]
+          },
+          "counterfactualNet": {
+            "type": "null"
+          },
+          "executionOrderType": {
+            "type": ["string", "null"]
+          },
+          "triggerPrice": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "triggerGap": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "acceptedToFillSeconds": {
+            "type": ["string", "null"],
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "closeClass": {
+            "enum": [
+              "NATIVE_AT_OR_BEYOND_TP",
+              "NATIVE_AT_OR_BEYOND_SL",
+              "NATIVE_BETWEEN_LEVELS",
+              "NATIVE_LEVEL_UNKNOWN",
+              "MARKET_CLOSE",
+              "EXTERNAL_CLOSE",
+              "CLOSE_TYPE_UNAVAILABLE"
+            ]
+          },
+          "closeClassBasis": {
+            "const": "CLOSING_ORDER_TYPE_AND_PRICE_VS_LAST_OBSERVED_PROTECTION"
+          },
+          "levelSlippage": {
+            "type": ["string", "null"],
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "tpCrossing": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": {
+              "brokerTp": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "crossings": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              },
+              "firstCrossingAt": {
+                "type": "string"
+              },
+              "firstCrossingToFillSeconds": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "maxExcursionBeyondTp": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "lastCrossingBeforeFill": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "quoteAt": {
+                    "type": "string"
+                  },
+                  "mark": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  },
+                  "excursionBeyondTp": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  },
+                  "lagToFillSeconds": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  }
+                },
+                "required": [
+                  "quoteAt",
+                  "mark",
+                  "excursionBeyondTp",
+                  "lagToFillSeconds"
+                ]
+              },
+              "tpFilled": {
+                "type": "boolean"
+              },
+              "basis": {
+                "const": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION"
+              },
+              "crossingsBounded": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "brokerTp",
+              "crossings",
+              "firstCrossingAt",
+              "firstCrossingToFillSeconds",
+              "maxExcursionBeyondTp",
+              "lastCrossingBeforeFill",
+              "tpFilled",
+              "basis"
+            ]
+          },
+          "quoteReference": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": {
+              "origin": {
+                "enum": ["FLIGHT", "MARKET_SAMPLE"]
+              },
+              "quoteAt": {
+                "type": "string"
+              },
+              "price": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "gap": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "delayMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3000
+              },
+              "spread": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              }
+            },
+            "required": [
+              "origin",
+              "quoteAt",
+              "price",
+              "gap",
+              "delayMs",
+              "spread"
+            ]
+          },
+          "visibleBook": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": {
+              "bookAt": {
+                "type": "string"
+              },
+              "timeBasis": {
+                "const": "BOOK_SOURCE_IS_LAST_BROKER_SPOT_TIME"
+              },
+              "levels": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  }
+                }
+              },
+              "visibleUnits": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "levelsNeeded": {
+                "type": ["integer", "null"],
+                "minimum": 1
+              },
+              "visibleWalkPrice": {
+                "type": ["string", "null"],
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "visibleWalkGap": {
+                "type": ["string", "null"],
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "visibleShortfallUnits": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "scope": {
+                "const": "BROKER_DEPTH_ONLY_NOT_CONSOLIDATED_LIQUIDITY"
+              }
+            },
+            "required": [
+              "bookAt",
+              "timeBasis",
+              "levels",
+              "visibleUnits",
+              "levelsNeeded",
+              "visibleWalkPrice",
+              "visibleWalkGap",
+              "visibleShortfallUnits",
+              "scope"
+            ]
+          }
+        },
+        "required": [
+          "setup",
+          "originRelease",
+          "kind",
+          "side",
+          "fillAt",
+          "fillPrice",
+          "units",
+          "volumeBucket",
+          "executableSide",
+          "counterfactualNet",
+          "quoteReference",
+          "visibleBook"
+        ]
+      }
+    },
+    "summary": {
+      "type": "object"
+    },
+    "flightQuotePoints": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "marketEvidence": {
+      "type": ["object", "null"]
+    },
+    "promotion": {
+      "const": "HOLD"
+    },
+    "brokerAuthority": {
+      "const": false
+    },
+    "causeInference": {
+      "type": "null"
+    },
+    "counterfactualNet": {
+      "type": "null"
+    },
+    "completeTickTape": {
+      "const": false
+    },
+    "inputSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "from",
+    "until",
+    "fills",
+    "summary",
+    "flightQuotePoints",
+    "marketEvidence",
+    "brokerAuthority",
+    "promotion",
+    "counterfactualNet",
+    "causeInference",
+    "completeTickTape"
+  ]
+}
