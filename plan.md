@@ -1,3 +1,11 @@
+### ISSUE-382 — Restore Codex worker under a finite larger file cap
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/382.
+- Dependencies: existing isolated worker and #380 application/normal admission; no economic or prompt/schema changes.
+- Acceptance: prove32MiB EFBIG/SIGXFSZ; change only dedicated-worker LimitFSIZE to512MiB, preserving512MiB memory/64tasks/swap0/isolation, all state and token controls. Add actual Linux old-cap rejection/new-cap sparse-write/history-preservation regression and unchanged-isolation check. Verify scoped live limit, worker health and next normal provider result without cooldown bypass or request replay. Keep existing matching app/worker artifacts, financial records and research source; no new bot. README/AGENTS/Graphify, full qualification/security/audits, pushed issue PR/green checks/main and durable operational receipt.
+- Status: authorized512MiB live soft/hard cap and persistent override applied without restarting the worker; state/settings preserved. Full qualification passed: 1,119 Node +124 PostgreSQL +459 Python tests (1,702), every gate/security/audit and AST Graphify. Next normal analysis succeeded at01:59:13Z with a genuine Codex WAIT. Reviewed pushed PR/green checks/main receipt follows on #382. Exact commands/results: `docs/evidence/codex-file-cap-validation.json`.
+- Evidence: [file-cap report](docs/codex-file-cap-report.md).
+
 ### ISSUE-380 — Smaller TP and cost-aware early profit capture
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/380.

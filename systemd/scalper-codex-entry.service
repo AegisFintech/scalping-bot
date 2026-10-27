@@ -23,7 +23,8 @@ CPUQuota=50%
 MemoryMax=512M
 MemorySwapMax=0
 TasksMax=64
-LimitFSIZE=32M
+# Persistent Codex SQLite/session state can exceed32MiB. This is not a token budget.
+LimitFSIZE=512M
 TimeoutStopSec=10
 KillMode=control-group
 NoNewPrivileges=true
