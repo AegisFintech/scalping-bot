@@ -22,6 +22,8 @@ import httpx
 import psycopg
 from psycopg.rows import dict_row
 
+from python.operations.entry_context import context_hash, entry_context
+
 TERMINAL = {"CLOSED", "FAILED", "EXPIRED"}
 MAX_BYTES = 512 * 1024**2
 MIN_FREE = 2 * 1024**3
@@ -89,10 +91,15 @@ def load_setup(
         connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
         row = connection.execute(
             """SELECT g.id,g.state,g.created_at,g.updated_at,g.execution_mode,
-            sv.version origin_release,ac.currency account_currency
+            sv.version origin_release,ac.currency account_currency,
+            sc.plan,sc.captured_at,sc.available_at,ce.request_sha256,ce.prompt_sha256,
+            CASE WHEN octet_length(ce.request_text)<=128000 THEN ce.request_text END provider_input
             FROM order_groups g JOIN analysis_runs a ON a.id=g.analysis_id
             JOIN accounts ac ON ac.id=a.account_id JOIN symbols sy ON sy.id=a.symbol_id
             JOIN strategy_versions sv ON sv.id=a.strategy_version_id
+            LEFT JOIN scenario_contexts sc ON sc.id=g.context_plan_id
+              AND sc.account_id=a.account_id AND sc.symbol_id=a.symbol_id AND sc.mode='demo'
+            LEFT JOIN context_provider_evidence ce ON ce.context_id=sc.id
             WHERE ac.provider_account_key_hash=%s AND ac.environment='demo'
               AND sy.name=%s AND g.mode='demo' AND a.mode='demo'
               AND (%s::text IS NULL OR
@@ -109,7 +116,11 @@ def load_setup(
             o.normalized_volume::text approved_volume,o.filled_volume::text,o.execution_order_type,
             o.time_in_force,o.submitted_at placement_result_recorded_at,o.updated_at,
             f.volume::text fill_volume,f.price::text fill_price,f.first_fill,f.last_fill,
-            f.commission::text entry_journal_commission
+            f.commission::text entry_journal_commission,
+            (SELECT min(e.occurred_at) FROM broker_execution_events e
+             WHERE e.order_id=o.id AND e.order_group_id=o.order_group_id
+               AND e.mapping_state='MAPPED' AND e.execution_type=2
+               AND NOT e.closing_order) broker_accepted_at
             FROM orders o LEFT JOIN LATERAL
               (SELECT sum(volume) volume,sum(price*volume)/NULLIF(sum(volume),0) price,
                sum(commission) commission,
@@ -149,6 +160,13 @@ def load_setup(
             "brokerEvents": list(reversed(events)),
             "closedTrades": trades,
             "brokerEventsBounded": len(events) == 500,
+            "entryContext": {
+                **entry_context(
+                    row["provider_input"], row["plan"], row["captured_at"], row["available_at"]
+                ),
+                "requestSha256": context_hash(row["request_sha256"]),
+                "promptSha256": context_hash(row["prompt_sha256"]),
+            },
         }
 
 
@@ -549,6 +567,7 @@ class Flight:
             "boundaries": list(self.boundaries.values()),
             "orders": self.setup["orders"],
             "closedTrades": self.setup["closedTrades"],
+            "entryContext": self.setup.get("entryContext"),
             "costBasis": "MODELED_BROKER_COMMISSION_EXCLUDES_UNKNOWN_SWAP_SLIPPAGE",
             "counterfactualNet": None,
             "quoteAt": self.last_quote.isoformat() if self.last_quote else None,

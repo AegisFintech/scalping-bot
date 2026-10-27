@@ -1,3 +1,15 @@
+# ISSUE-387 — Read-only entry evidence and native TP audit
+
+Operator approved investigating TP execution and recording/comparing entry context
+before reviewing any strategy change. Trading remains0.7.3, promptv4, TP0.40/SL7.00,
+STOP_LIMIT/GTC/OCO and dynamic shared5% demo risk; no new filter or model input.
+Only the SELECT-only Flight observer/research tools change. Keep original model
+levels separate from computed M1 envelopes and round-number hypotheses; actual
+broker acceptance/provider availability bind observations, never local placement
+timestamps. Quote crossings are not fills; unknown counterfactual net stays null.
+Preserve gaps/open/daily censoring, old frozen studies and all protection/history.
+See [scope, unresolved broker TP crossing and research protocol](docs/entry-evidence-review-report.md).
+
 # ISSUE-384 — Broker-native profit exits
 
 Operator approved fixing fee-to-fill execution after three recorded local profit

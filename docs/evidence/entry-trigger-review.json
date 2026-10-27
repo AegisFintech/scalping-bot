@@ -1,0 +1,3899 @@
+{
+  "brokerAuthority": false,
+  "bundleSha256": "44df95b8335c7bfde33cf53bc5672df395adc5af266f8901a227ef1bc1400dec",
+  "cohort": "ALL_SCOPED_INTENTS_NOT_SELECTED_CLOSED_TRADES",
+  "completeTickTape": false,
+  "counterfactualNet": null,
+  "economicPairedReplay": false,
+  "from": "2026-10-27T03:54:41.136842+00:00",
+  "promotion": "HOLD",
+  "prospective": false,
+  "registrationSha256": null,
+  "release": "0.7.3-quick-oco.1-codex.1",
+  "schemaVersion": "breakout-entry-observer-1.0",
+  "setups": [
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T04:17:47.114000+00:00",
+          "direction": "LONG",
+          "net": "53.5500000000",
+          "opened_at": "2026-10-27T04:11:46.492000+00:00",
+          "signed_fees": "-59.1500000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T04:11:46.492000+00:00",
+          "lastFill": "2026-10-27T04:11:46.492000+00:00",
+          "price": "4023.27000000000000000000",
+          "side": "BUY",
+          "volume": "24500.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.12",
+              "firstObservedAt": "2026-10-27T04:11:46.231000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.03",
+              "observedMaximumMove": "1.36",
+              "observedMinimumMove": "-1.82",
+              "quoteSamples": 446,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.12",
+              "firstObservedAt": "2026-10-27T04:11:46.231000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.08",
+              "observedMaximumMove": "1.36",
+              "observedMinimumMove": "-1.82",
+              "quoteSamples": 446,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.18",
+              "firstObservedAt": "2026-10-27T04:17:13.609000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.13",
+              "observedMaximumMove": "1.30",
+              "observedMinimumMove": "-0.18",
+              "quoteSamples": 78,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.24",
+              "firstObservedAt": "2026-10-27T04:17:14.677000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.23",
+              "observedMaximumMove": "1.24",
+              "observedMinimumMove": "-0.24",
+              "quoteSamples": 76,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T04:10:25.485080+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T04:10:16.558000+00:00",
+        "codexDirection": "BUY",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "0.05",
+            "candles": 5,
+            "lower": "4018.67",
+            "sellOffset": "-2.43",
+            "upper": "4022.98"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "0.05",
+            "candles": 10,
+            "lower": "4016.87",
+            "sellOffset": "-4.23",
+            "upper": "4022.98"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "c2102f4bf001cb2416099284dd76b4f4d2f25785ef77a96c6bb558a2fb9f3956",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "200",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T04:10:18.512000+00:00",
+          "rolling_sample_count_60s": 100,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T04:10:16.558000+00:00",
+          "spread": "0.05",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4021.1",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.05",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "361154ee94d6ac40721d9589b48ef216d8ade6da91a146834dd9dc0e93799beb",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-3.03",
+            "fromSell": "-1.1",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 1,
+            "price": "4020",
+            "step": "5"
+          },
+          {
+            "fromBuy": "1.97",
+            "fromSell": "3.9",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4025",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-3.03",
+            "fromSell": "-1.1",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 1,
+            "price": "4020",
+            "step": "10"
+          },
+          {
+            "fromBuy": "6.97",
+            "fromSell": "8.9",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4030",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.05",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4023.03"
+      },
+      "setup": "968450ffa720789a31a49a53",
+      "sourceFiles": [
+        {
+          "file": "flight-968450ffa720789a31a49a53-20261027T041045132690-0000.jsonl.gz",
+          "sha256": "a687e9e635e76b42858434a6d8892e372c3ca063b36c3168c72e89a84c43dbc6"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.87",
+            "priorProtectionObservedAt": "2026-10-27T04:17:29.365000+00:00",
+            "quoteAt": "2026-10-27T04:17:30.393000+00:00",
+            "receivedAt": "2026-10-27T04:17:30.553000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.71",
+            "priorProtectionObservedAt": "2026-10-27T04:17:31.529000+00:00",
+            "quoteAt": "2026-10-27T04:17:33.679000+00:00",
+            "receivedAt": "2026-10-27T04:17:33.838000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.67",
+            "priorProtectionObservedAt": "2026-10-27T04:17:35.526000+00:00",
+            "quoteAt": "2026-10-27T04:17:36.605000+00:00",
+            "receivedAt": "2026-10-27T04:17:36.766000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.67",
+            "priorProtectionObservedAt": "2026-10-27T04:17:37.530000+00:00",
+            "quoteAt": "2026-10-27T04:17:38.400000+00:00",
+            "receivedAt": "2026-10-27T04:17:38.562000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.83",
+            "priorProtectionObservedAt": "2026-10-27T04:17:39.366000+00:00",
+            "quoteAt": "2026-10-27T04:17:41.339000+00:00",
+            "receivedAt": "2026-10-27T04:17:41.498000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.67",
+            "priorProtectionObservedAt": "2026-10-27T04:17:41.746000+00:00",
+            "quoteAt": "2026-10-27T04:17:42.812000+00:00",
+            "receivedAt": "2026-10-27T04:17:42.972000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.69",
+            "priorProtectionObservedAt": "2026-10-27T04:17:44.364000+00:00",
+            "quoteAt": "2026-10-27T04:17:45.355000+00:00",
+            "receivedAt": "2026-10-27T04:17:45.514000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.73",
+            "priorProtectionObservedAt": "2026-10-27T04:17:45.687000+00:00",
+            "quoteAt": "2026-10-27T04:17:46.068000+00:00",
+            "receivedAt": "2026-10-27T04:17:46.227000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.76",
+            "priorProtectionObservedAt": "2026-10-27T04:17:45.687000+00:00",
+            "quoteAt": "2026-10-27T04:17:46.447000+00:00",
+            "receivedAt": "2026-10-27T04:17:46.607000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.87",
+            "priorProtectionObservedAt": "2026-10-27T04:17:45.687000+00:00",
+            "quoteAt": "2026-10-27T04:17:46.817000+00:00",
+            "receivedAt": "2026-10-27T04:17:46.976000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4023.6700000000",
+            "mark": "4023.88",
+            "priorProtectionObservedAt": "2026-10-27T04:17:45.687000+00:00",
+            "quoteAt": "2026-10-27T04:17:47.183000+00:00",
+            "receivedAt": "2026-10-27T04:17:47.343000+00:00",
+            "side": "BUY"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 401,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [],
+      "actualEntries": [],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.67",
+              "firstObservedAt": "2026-10-27T04:22:42.410000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.77",
+              "observedMaximumMove": "-0.05",
+              "observedMinimumMove": "-0.39",
+              "quoteSamples": 35,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.67",
+              "firstObservedAt": "2026-10-27T04:22:42.410000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.72",
+              "observedMaximumMove": "-0.05",
+              "observedMinimumMove": "-0.39",
+              "quoteSamples": 35,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4023.67",
+              "firstObservedAt": "2026-10-27T04:22:42.410000+00:00",
+              "hypotheticalFill": null,
+              "level": "4023.67",
+              "observedMaximumMove": "-0.05",
+              "observedMinimumMove": "-0.39",
+              "quoteSamples": 35,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T04:20:56.887185+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T04:20:48.483000+00:00",
+        "codexDirection": "BUY",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "0.07",
+            "candles": 5,
+            "lower": "4021.66",
+            "sellOffset": "-2.11",
+            "upper": "4025.19"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "0.07",
+            "candles": 10,
+            "lower": "4021.3",
+            "sellOffset": "-2.47",
+            "upper": "4025.19"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "48d893bd7327dac6ab423d01c0d363729f196476f7a6c6ac3e73c1b31afca278",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T04:20:48.643000+00:00",
+          "rolling_sample_count_60s": 116,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T04:20:48.483000+00:00",
+          "spread": "0.11",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4023.77",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.11",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "c2476689d9f0ce59b7415be9c1261c8caf9336c7e68c7f241541f793a14057e2",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-5.26",
+            "fromSell": "-3.77",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4020",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-0.26",
+            "fromSell": "1.23",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 1,
+            "price": "4025",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-5.26",
+            "fromSell": "-3.77",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4020",
+            "step": "10"
+          },
+          {
+            "fromBuy": "4.74",
+            "fromSell": "6.23",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4030",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.11",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4025.26"
+      },
+      "setup": "a04b157dac0f3c9192a1f9ce",
+      "sourceFiles": [
+        {
+          "file": "flight-a04b157dac0f3c9192a1f9ce-20261027T042105407019-0000.jsonl.gz",
+          "sha256": "6716b1ea1a34aff2594042364582cd2549f3f4bf63d716c08427bba89a13091d"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 0,
+        "executionCause": null,
+        "status": "NO_CROSSING_PROVEN"
+      }
+    },
+    {
+      "actualClosedTrades": [],
+      "actualEntries": [],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4012.72",
+              "firstObservedAt": "2026-10-27T04:50:04.356000+00:00",
+              "hypotheticalFill": null,
+              "level": "4013.02",
+              "observedMaximumMove": "-0.09",
+              "observedMinimumMove": "-2.31",
+              "quoteSamples": 52,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4012.72",
+              "firstObservedAt": "2026-10-27T04:50:04.356000+00:00",
+              "hypotheticalFill": null,
+              "level": "4012.97",
+              "observedMaximumMove": "-0.09",
+              "observedMinimumMove": "-2.31",
+              "quoteSamples": 52,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4012.72",
+              "firstObservedAt": "2026-10-27T04:50:04.356000+00:00",
+              "hypotheticalFill": null,
+              "level": "4012.92",
+              "observedMaximumMove": "-0.09",
+              "observedMinimumMove": "-2.31",
+              "quoteSamples": 52,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4012.72",
+              "firstObservedAt": "2026-10-27T04:50:04.356000+00:00",
+              "hypotheticalFill": null,
+              "level": "4012.82",
+              "observedMaximumMove": "-0.09",
+              "observedMinimumMove": "-2.31",
+              "quoteSamples": 52,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T04:48:25.586117+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T04:48:13.507000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.36",
+            "candles": 5,
+            "lower": "4013.15",
+            "sellOffset": "0.13",
+            "upper": "4015.74"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-3.11",
+            "candles": 10,
+            "lower": "4013.15",
+            "sellOffset": "0.13",
+            "upper": "4018.49"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "336005f8f95695e3807d95c770f458bc059fb6ec6f213e01baea002d6e7fa558",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T04:48:13.758000+00:00",
+          "rolling_sample_count_60s": 123,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T04:48:13.507000+00:00",
+          "spread": "0.13",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4013.02",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.13",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "8a60021766753afe405de3e84bcc317f0a3c2a4ef1ba7c2e018a5425f6ddd451",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-5.38",
+            "fromSell": "-3.02",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-0.38",
+            "fromSell": "1.98",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 2,
+            "price": "4015",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-5.38",
+            "fromSell": "-3.02",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "10"
+          },
+          {
+            "fromBuy": "4.62",
+            "fromSell": "6.98",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4020",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.13",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4015.38"
+      },
+      "setup": "5b25c9dd9ec27234aa73c25b",
+      "sourceFiles": [
+        {
+          "file": "flight-5b25c9dd9ec27234aa73c25b-20261027T044835757985-0000.jsonl.gz",
+          "sha256": "7d1a8c23f33a3620d285a753b59bdedb600f9b57c3cbf4ccb0450626667184e1"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 0,
+        "executionCause": null,
+        "status": "NO_CROSSING_PROVEN"
+      }
+    },
+    {
+      "actualClosedTrades": [],
+      "actualEntries": [],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4011.54",
+              "firstObservedAt": "2026-10-27T04:55:22.847000+00:00",
+              "hypotheticalFill": null,
+              "level": "4011.74",
+              "observedMaximumMove": "0.02",
+              "observedMinimumMove": "-0.31",
+              "quoteSamples": 51,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4011.54",
+              "firstObservedAt": "2026-10-27T04:55:22.847000+00:00",
+              "hypotheticalFill": null,
+              "level": "4011.69",
+              "observedMaximumMove": "0.02",
+              "observedMinimumMove": "-0.31",
+              "quoteSamples": 51,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4011.54",
+              "firstObservedAt": "2026-10-27T04:55:22.847000+00:00",
+              "hypotheticalFill": null,
+              "level": "4011.64",
+              "observedMaximumMove": "0.02",
+              "observedMinimumMove": "-0.31",
+              "quoteSamples": 51,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4011.54",
+              "firstObservedAt": "2026-10-27T04:55:22.847000+00:00",
+              "hypotheticalFill": null,
+              "level": "4011.54",
+              "observedMaximumMove": "0.02",
+              "observedMinimumMove": "-0.31",
+              "quoteSamples": 51,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T04:54:23.972601+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T04:54:12.402000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-2.36",
+            "candles": 5,
+            "lower": "4011.47",
+            "sellOffset": "-0.27",
+            "upper": "4014.89"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-2.72",
+            "candles": 10,
+            "lower": "4011.47",
+            "sellOffset": "-0.27",
+            "upper": "4015.25"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "0a277d2e610aaf2d531c10e1fa5fe60d7d25bb2ee46fa0ffe09545d94d57f0a2",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T04:54:12.563000+00:00",
+          "rolling_sample_count_60s": 109,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T04:54:12.402000+00:00",
+          "spread": "0.05",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4011.74",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.05",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "af52f054b45a6d8a886dfc58d66fc91ead7865c3248bf0376135c8c906ba1a4e",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-2.53",
+            "fromSell": "-1.74",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "2.47",
+            "fromSell": "3.26",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 2,
+            "price": "4015",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-2.53",
+            "fromSell": "-1.74",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "10"
+          },
+          {
+            "fromBuy": "7.47",
+            "fromSell": "8.26",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4020",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.05",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4012.53"
+      },
+      "setup": "cad33ac6f4b84d1225fbd3aa",
+      "sourceFiles": [
+        {
+          "file": "flight-cad33ac6f4b84d1225fbd3aa-20261027T045432012234-0000.jsonl.gz",
+          "sha256": "235e85f07e00abcae078dcb824b7b0ef6ac5b9b9610c08c1fa1edc124b1484d5"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 0,
+        "executionCause": null,
+        "status": "NO_CROSSING_PROVEN"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T05:06:20.521000+00:00",
+          "direction": "SHORT",
+          "net": "46.5900000000",
+          "opened_at": "2026-10-27T05:01:19.422000+00:00",
+          "signed_fees": "-59.1900000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T05:01:19.422000+00:00",
+          "lastFill": "2026-10-27T05:01:19.422000+00:00",
+          "price": "4010.28000000000000000000",
+          "side": "SELL",
+          "volume": "24600.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4010.37",
+              "firstObservedAt": "2026-10-27T05:01:23.910000+00:00",
+              "hypotheticalFill": null,
+              "level": "4010.38",
+              "observedMaximumMove": "1.25",
+              "observedMinimumMove": "-1.36",
+              "quoteSamples": 486,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4010.29",
+              "firstObservedAt": "2026-10-27T05:03:11.372000+00:00",
+              "hypotheticalFill": null,
+              "level": "4010.33",
+              "observedMaximumMove": "1.17",
+              "observedMinimumMove": "-1.44",
+              "quoteSamples": 336,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4010.23",
+              "firstObservedAt": "2026-10-27T05:03:11.752000+00:00",
+              "hypotheticalFill": null,
+              "level": "4010.28",
+              "observedMaximumMove": "1.11",
+              "observedMinimumMove": "-1.50",
+              "quoteSamples": 335,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4010.18",
+              "firstObservedAt": "2026-10-27T05:03:12.119000+00:00",
+              "hypotheticalFill": null,
+              "level": "4010.18",
+              "observedMaximumMove": "1.06",
+              "observedMinimumMove": "-1.55",
+              "quoteSamples": 334,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": "2026-10-27T05:06:28.314495+00:00",
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": false,
+              "executableQuoteReference": "4009.9",
+              "firstObservedAt": "2026-10-27T05:06:29.259000+00:00",
+              "hypotheticalFill": null,
+              "level": "4010.38",
+              "observedMaximumMove": "0.13",
+              "observedMinimumMove": "-0.37",
+              "quoteSamples": 35,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T04:59:09.444412+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T04:59:02.498000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.73",
+            "candles": 5,
+            "lower": "4010.44",
+            "sellOffset": "0.06",
+            "upper": "4012.47"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-3.15",
+            "candles": 10,
+            "lower": "4010.44",
+            "sellOffset": "0.06",
+            "upper": "4014.89"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "ecd4c51e1aaec3483e61a6ab14771c21e142922050448cc6c3dede9f796fcef2",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T04:59:02.663000+00:00",
+          "rolling_sample_count_60s": 98,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T04:59:02.498000+00:00",
+          "spread": "0.06",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4010.38",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.06",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "ccc9910270b6b67e01f8cc5cad94e56b89834d034320db399a534cd0e34371df",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-1.74",
+            "fromSell": "-0.38",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "3.26",
+            "fromSell": "4.62",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4015",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-1.74",
+            "fromSell": "-0.38",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "10"
+          },
+          {
+            "fromBuy": "8.26",
+            "fromSell": "9.62",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4020",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.06",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4011.74"
+      },
+      "setup": "c19f6f0d5322f13f09aa208b",
+      "sourceFiles": [
+        {
+          "file": "flight-c19f6f0d5322f13f09aa208b-20261027T045915469434-0000.jsonl.gz",
+          "sha256": "d049a9ef57e7cbdfa2c93798ac59da885b7bb0afe2e15b5dbd3dcc892606ed4f"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.88",
+            "priorProtectionObservedAt": "2026-10-27T05:03:27.787000+00:00",
+            "quoteAt": "2026-10-27T05:03:28.210000+00:00",
+            "receivedAt": "2026-10-27T05:03:28.375000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.85",
+            "priorProtectionObservedAt": "2026-10-27T05:06:04.461000+00:00",
+            "quoteAt": "2026-10-27T05:06:05.533000+00:00",
+            "receivedAt": "2026-10-27T05:06:05.697000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.88",
+            "priorProtectionObservedAt": "2026-10-27T05:06:04.461000+00:00",
+            "quoteAt": "2026-10-27T05:06:05.904000+00:00",
+            "receivedAt": "2026-10-27T05:06:06.068000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.83",
+            "priorProtectionObservedAt": "2026-10-27T05:06:05.820000+00:00",
+            "quoteAt": "2026-10-27T05:06:06.259000+00:00",
+            "receivedAt": "2026-10-27T05:06:06.431000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.74",
+            "priorProtectionObservedAt": "2026-10-27T05:06:05.820000+00:00",
+            "quoteAt": "2026-10-27T05:06:06.636000+00:00",
+            "receivedAt": "2026-10-27T05:06:06.810000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.77",
+            "priorProtectionObservedAt": "2026-10-27T05:06:05.820000+00:00",
+            "quoteAt": "2026-10-27T05:06:06.988000+00:00",
+            "receivedAt": "2026-10-27T05:06:07.155000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.79",
+            "priorProtectionObservedAt": "2026-10-27T05:06:05.820000+00:00",
+            "quoteAt": "2026-10-27T05:06:08.069000+00:00",
+            "receivedAt": "2026-10-27T05:06:08.234000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.82",
+            "priorProtectionObservedAt": "2026-10-27T05:06:07.785000+00:00",
+            "quoteAt": "2026-10-27T05:06:09.175000+00:00",
+            "receivedAt": "2026-10-27T05:06:09.341000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.83",
+            "priorProtectionObservedAt": "2026-10-27T05:06:09.831000+00:00",
+            "quoteAt": "2026-10-27T05:06:10.649000+00:00",
+            "receivedAt": "2026-10-27T05:06:10.815000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.81",
+            "priorProtectionObservedAt": "2026-10-27T05:06:17.789000+00:00",
+            "quoteAt": "2026-10-27T05:06:18.048000+00:00",
+            "receivedAt": "2026-10-27T05:06:18.213000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.8",
+            "priorProtectionObservedAt": "2026-10-27T05:06:17.789000+00:00",
+            "quoteAt": "2026-10-27T05:06:18.407000+00:00",
+            "receivedAt": "2026-10-27T05:06:18.572000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.79",
+            "priorProtectionObservedAt": "2026-10-27T05:06:17.789000+00:00",
+            "quoteAt": "2026-10-27T05:06:19.118000+00:00",
+            "receivedAt": "2026-10-27T05:06:19.283000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.69",
+            "priorProtectionObservedAt": "2026-10-27T05:06:19.797000+00:00",
+            "quoteAt": "2026-10-27T05:06:20.224000+00:00",
+            "receivedAt": "2026-10-27T05:06:20.389000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4009.8800000000",
+            "mark": "4009.66",
+            "priorProtectionObservedAt": "2026-10-27T05:06:19.797000+00:00",
+            "quoteAt": "2026-10-27T05:06:20.574000+00:00",
+            "receivedAt": "2026-10-27T05:06:20.739000+00:00",
+            "side": "SELL"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 422,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T05:30:14.950000+00:00",
+          "direction": "LONG",
+          "net": "-1832.7700000000",
+          "opened_at": "2026-10-27T05:15:27.367000+00:00",
+          "signed_fees": "-59.1100000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T05:15:27.367000+00:00",
+          "lastFill": "2026-10-27T05:15:27.367000+00:00",
+          "price": "4008.70000000000000000000",
+          "side": "BUY",
+          "volume": "24600.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.53",
+              "firstObservedAt": "2026-10-27T05:15:27.134000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.45",
+              "observedMaximumMove": "0.63",
+              "observedMinimumMove": "-8.43",
+              "quoteSamples": 1484,
+              "side": "BUY"
+            },
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4006.55",
+              "firstObservedAt": "2026-10-27T05:24:50.127000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.56",
+              "observedMaximumMove": "6.33",
+              "observedMinimumMove": "-1.37",
+              "quoteSamples": 625,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.53",
+              "firstObservedAt": "2026-10-27T05:15:27.134000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.50",
+              "observedMaximumMove": "0.63",
+              "observedMinimumMove": "-8.43",
+              "quoteSamples": 1484,
+              "side": "BUY"
+            },
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4006.48",
+              "firstObservedAt": "2026-10-27T05:28:19.243000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.51",
+              "observedMaximumMove": "6.26",
+              "observedMinimumMove": "-0.68",
+              "quoteSamples": 302,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.58",
+              "firstObservedAt": "2026-10-27T05:15:29.001000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.55",
+              "observedMaximumMove": "0.58",
+              "observedMinimumMove": "-8.48",
+              "quoteSamples": 1479,
+              "side": "BUY"
+            },
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4006.45",
+              "firstObservedAt": "2026-10-27T05:28:19.594000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.46",
+              "observedMaximumMove": "6.23",
+              "observedMinimumMove": "-0.71",
+              "quoteSamples": 301,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.71",
+              "firstObservedAt": "2026-10-27T05:19:00.682000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.65",
+              "observedMaximumMove": "0.45",
+              "observedMinimumMove": "-8.61",
+              "quoteSamples": 1163,
+              "side": "BUY"
+            },
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4006.3",
+              "firstObservedAt": "2026-10-27T05:28:20.339000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.36",
+              "observedMaximumMove": "6.08",
+              "observedMinimumMove": "-0.86",
+              "quoteSamples": 300,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": "2026-10-27T05:30:23.486221+00:00",
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": false,
+              "executableQuoteReference": "4000.73",
+              "firstObservedAt": "2026-10-27T05:30:23.808000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.56",
+              "observedMaximumMove": "0.51",
+              "observedMinimumMove": "-0.73",
+              "quoteSamples": 60,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T05:14:21.305147+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T05:14:13.131000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.89",
+            "candles": 5,
+            "lower": "4006.65",
+            "sellOffset": "0.09",
+            "upper": "4009.34"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-2.63",
+            "candles": 10,
+            "lower": "4006.65",
+            "sellOffset": "0.09",
+            "upper": "4011.08"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "448651d414395b2a79f0c628381d1c9bbe38892bdfdd8c8b916d6d2d99470007",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T05:14:13.293000+00:00",
+          "rolling_sample_count_60s": 128,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T05:14:13.131000+00:00",
+          "spread": "0.09",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4006.56",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.09",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "e64eb307830cdd4e51976d463a26f00dd6440285ff10630d29796749b191977a",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-3.45",
+            "fromSell": "-1.56",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "1.55",
+            "fromSell": "3.44",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 4,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-8.45",
+            "fromSell": "-6.56",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "1.55",
+            "fromSell": "3.44",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 4,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.09",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4008.45"
+      },
+      "setup": "ff0c14acdbc7775f13e9b847",
+      "sourceFiles": [
+        {
+          "file": "flight-ff0c14acdbc7775f13e9b847-20261027T051440319624-0000.jsonl.gz",
+          "sha256": "a470df00a12345d8075f2affdd0e17a5de1c52c757dfe4d2b4aa2d9c64abea50"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4009.1000000000",
+            "mark": "4009.15",
+            "priorProtectionObservedAt": "2026-10-27T05:19:03.853000+00:00",
+            "quoteAt": "2026-10-27T05:19:03.987000+00:00",
+            "receivedAt": "2026-10-27T05:19:04.147000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4009.1000000000",
+            "mark": "4009.16",
+            "priorProtectionObservedAt": "2026-10-27T05:19:03.853000+00:00",
+            "quoteAt": "2026-10-27T05:19:04.357000+00:00",
+            "receivedAt": "2026-10-27T05:19:04.518000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4009.1000000000",
+            "mark": "4009.13",
+            "priorProtectionObservedAt": "2026-10-27T05:19:04.492000+00:00",
+            "quoteAt": "2026-10-27T05:19:05.073000+00:00",
+            "receivedAt": "2026-10-27T05:19:05.234000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4009.1000000000",
+            "mark": "4009.1",
+            "priorProtectionObservedAt": "2026-10-27T05:19:05.899000+00:00",
+            "quoteAt": "2026-10-27T05:19:06.524000+00:00",
+            "receivedAt": "2026-10-27T05:19:06.685000+00:00",
+            "side": "BUY"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 1349,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [],
+      "actualEntries": [],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4007.62",
+              "firstObservedAt": "2026-10-27T06:03:56.355000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.66",
+              "observedMaximumMove": "0.50",
+              "observedMinimumMove": "-0.61",
+              "quoteSamples": 67,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4007.62",
+              "firstObservedAt": "2026-10-27T06:03:56.355000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.71",
+              "observedMaximumMove": "0.50",
+              "observedMinimumMove": "-0.61",
+              "quoteSamples": 67,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4007.62",
+              "firstObservedAt": "2026-10-27T06:03:56.355000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.76",
+              "observedMaximumMove": "0.50",
+              "observedMinimumMove": "-0.61",
+              "quoteSamples": 67,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4007.62",
+              "firstObservedAt": "2026-10-27T06:03:56.355000+00:00",
+              "hypotheticalFill": null,
+              "level": "4006.86",
+              "observedMaximumMove": "0.50",
+              "observedMinimumMove": "-0.61",
+              "quoteSamples": 67,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:03:39.261300+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:03:27.427000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-4.52",
+            "candles": 5,
+            "lower": "4004.43",
+            "sellOffset": "0.10",
+            "upper": "4011.18"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-4.52",
+            "candles": 10,
+            "lower": "4004.43",
+            "sellOffset": "0.10",
+            "upper": "4011.18"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "59608a55b2261244b1240dc5f25cc9b40dc390488dc5ce20a0e9be46e8364ab6",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "-0.8293838862",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:03:27.593000+00:00",
+          "rolling_sample_count_60s": 147,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:03:27.427000+00:00",
+          "spread": "0.1",
+          "symmetric_sizes": false,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK"
+          ]
+        },
+        "lowerEntry": "4004.33",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.1",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "c7433c4dad569aa706b1068dd9fc7c9922d2305408ab7502426efb97ff03b395",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-1.66",
+            "fromSell": "0.67",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 1,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "3.34",
+            "fromSell": "5.67",
+            "observedCloseCrosses": 3,
+            "observedM1Touches": 5,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-6.66",
+            "fromSell": "-4.33",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "3.34",
+            "fromSell": "5.67",
+            "observedCloseCrosses": 3,
+            "observedM1Touches": 5,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.10",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4006.66"
+      },
+      "setup": "32ba390294c9500872ea1d92",
+      "sourceFiles": [
+        {
+          "file": "flight-32ba390294c9500872ea1d92-20261027T060345684083-0000.jsonl.gz",
+          "sha256": "69e2787d10be3f2aaf57c86279122a22f42ca9f8ce6668962e3f117ddfb7ef04"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 0,
+        "executionCause": null,
+        "status": "NO_CROSSING_PROVEN"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T06:08:56.841000+00:00",
+          "direction": "LONG",
+          "net": "79.0700000000",
+          "opened_at": "2026-10-27T06:08:47.032000+00:00",
+          "signed_fees": "-57.7300000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T06:08:47.032000+00:00",
+          "lastFill": "2026-10-27T06:08:47.032000+00:00",
+          "price": "4008.35000000000000000000",
+          "side": "BUY",
+          "volume": "24000.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.24",
+              "firstObservedAt": "2026-10-27T06:08:46.779000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.19",
+              "observedMaximumMove": "1.81",
+              "observedMinimumMove": "-0.17",
+              "quoteSamples": 91,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.24",
+              "firstObservedAt": "2026-10-27T06:08:46.779000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.24",
+              "observedMaximumMove": "1.81",
+              "observedMinimumMove": "-0.17",
+              "quoteSamples": 91,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.39",
+              "firstObservedAt": "2026-10-27T06:08:47.142000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.29",
+              "observedMaximumMove": "1.66",
+              "observedMinimumMove": "-0.32",
+              "quoteSamples": 90,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4008.39",
+              "firstObservedAt": "2026-10-27T06:08:47.142000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.39",
+              "observedMaximumMove": "1.66",
+              "observedMinimumMove": "-0.32",
+              "quoteSamples": 90,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": "2026-10-27T06:09:02.700813+00:00",
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": false,
+              "executableQuoteReference": "4009.67",
+              "firstObservedAt": "2026-10-27T06:09:02.853000+00:00",
+              "hypotheticalFill": null,
+              "level": "4008.19",
+              "observedMaximumMove": "0.38",
+              "observedMinimumMove": "-0.39",
+              "quoteSamples": 51,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:05:30.145108+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:05:22.794000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.88",
+            "candles": 5,
+            "lower": "4004.43",
+            "sellOffset": "0.07",
+            "upper": "4009.07"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-2.99",
+            "candles": 10,
+            "lower": "4004.43",
+            "sellOffset": "0.07",
+            "upper": "4011.18"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "817a41393624191ad666d84babf64e10f67b00d73fd39bb11c6ee3d491261133",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:05:22.958000+00:00",
+          "rolling_sample_count_60s": 153,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:05:22.794000+00:00",
+          "spread": "0.07",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4004.36",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.07",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "b274b2b037f593362f078843aa5c4d00b383126add8d41eb4591a290dc9743b2",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-3.19",
+            "fromSell": "0.64",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 1,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "1.81",
+            "fromSell": "5.64",
+            "observedCloseCrosses": 2,
+            "observedM1Touches": 4,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-8.19",
+            "fromSell": "-4.36",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "1.81",
+            "fromSell": "5.64",
+            "observedCloseCrosses": 2,
+            "observedM1Touches": 4,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.07",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4008.19"
+      },
+      "setup": "8bd43a255d3e41d513a817b6",
+      "sourceFiles": [
+        {
+          "file": "flight-8bd43a255d3e41d513a817b6-20261027T060535802794-0000.jsonl.gz",
+          "sha256": "3ee54b627fcbecbea90c1e1eeb82fe617da590a5d9f451f1f6710ce6a56505b8"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4008.83",
+            "priorProtectionObservedAt": "2026-10-27T06:08:54.598000+00:00",
+            "quoteAt": "2026-10-27T06:08:55.490000+00:00",
+            "receivedAt": "2026-10-27T06:08:55.654000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4008.88",
+            "priorProtectionObservedAt": "2026-10-27T06:08:54.598000+00:00",
+            "quoteAt": "2026-10-27T06:08:55.870000+00:00",
+            "receivedAt": "2026-10-27T06:08:56.033000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4008.82",
+            "priorProtectionObservedAt": "2026-10-27T06:08:56.121000+00:00",
+            "quoteAt": "2026-10-27T06:08:56.220000+00:00",
+            "receivedAt": "2026-10-27T06:08:56.382000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4009.1",
+            "priorProtectionObservedAt": "2026-10-27T06:08:56.121000+00:00",
+            "quoteAt": "2026-10-27T06:08:56.595000+00:00",
+            "receivedAt": "2026-10-27T06:08:56.758000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4009.15",
+            "priorProtectionObservedAt": "2026-10-27T06:08:56.121000+00:00",
+            "quoteAt": "2026-10-27T06:08:56.975000+00:00",
+            "receivedAt": "2026-10-27T06:08:57.138000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4009.13",
+            "priorProtectionObservedAt": "2026-10-27T06:08:56.121000+00:00",
+            "quoteAt": "2026-10-27T06:08:57.362000+00:00",
+            "receivedAt": "2026-10-27T06:08:57.526000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4008.7500000000",
+            "mark": "4009.2",
+            "priorProtectionObservedAt": "2026-10-27T06:08:56.121000+00:00",
+            "quoteAt": "2026-10-27T06:08:57.718000+00:00",
+            "receivedAt": "2026-10-27T06:08:57.880000+00:00",
+            "side": "BUY"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 24,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [],
+      "actualEntries": [],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4003",
+              "firstObservedAt": "2026-10-27T06:20:53.139000+00:00",
+              "hypotheticalFill": null,
+              "level": "4003.21",
+              "observedMaximumMove": "0.82",
+              "observedMinimumMove": "-0.25",
+              "quoteSamples": 75,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4003",
+              "firstObservedAt": "2026-10-27T06:20:53.139000+00:00",
+              "hypotheticalFill": null,
+              "level": "4003.16",
+              "observedMaximumMove": "0.82",
+              "observedMinimumMove": "-0.25",
+              "quoteSamples": 75,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4003",
+              "firstObservedAt": "2026-10-27T06:20:53.139000+00:00",
+              "hypotheticalFill": null,
+              "level": "4003.11",
+              "observedMaximumMove": "0.82",
+              "observedMinimumMove": "-0.25",
+              "quoteSamples": 75,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4003",
+              "firstObservedAt": "2026-10-27T06:20:53.139000+00:00",
+              "hypotheticalFill": null,
+              "level": "4003.01",
+              "observedMaximumMove": "0.82",
+              "observedMinimumMove": "-0.25",
+              "quoteSamples": 75,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": "2026-10-27T06:21:03.090943+00:00",
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": false,
+              "executableQuoteReference": "4002.6",
+              "firstObservedAt": "2026-10-27T06:21:03.436000+00:00",
+              "hypotheticalFill": null,
+              "level": "4003.21",
+              "observedMaximumMove": "0.42",
+              "observedMinimumMove": "-0.64",
+              "quoteSamples": 50,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:18:35.563077+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:18:20.362000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-4.46",
+            "candles": 5,
+            "lower": "4003.32",
+            "sellOffset": "0.11",
+            "upper": "4011.1"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-5.40",
+            "candles": 10,
+            "lower": "4003.32",
+            "sellOffset": "0.11",
+            "upper": "4012.04"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "5b3ddcc40d1ca24790c70009770ae280671e140f49a937fd37994a7cba1f5ce0",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:18:21.987000+00:00",
+          "rolling_sample_count_60s": 155,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:18:20.362000+00:00",
+          "spread": "0.11",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4003.21",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.11",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "cbb7c73ce70c51acaf37939786c1b112c348004000b9a3ccb50b1b3289388b84",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-1.64",
+            "fromSell": "1.79",
+            "observedCloseCrosses": 2,
+            "observedM1Touches": 4,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "3.36",
+            "fromSell": "6.79",
+            "observedCloseCrosses": 4,
+            "observedM1Touches": 5,
+            "price": "4010",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-6.64",
+            "fromSell": "-3.21",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "3.36",
+            "fromSell": "6.79",
+            "observedCloseCrosses": 4,
+            "observedM1Touches": 5,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.11",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4006.64"
+      },
+      "setup": "7dbc068bd89688cc5935511a",
+      "sourceFiles": [
+        {
+          "file": "flight-7dbc068bd89688cc5935511a-20261027T061842471196-0000.jsonl.gz",
+          "sha256": "cce5e7a4f535b196ac22d00c33633df9963c0125767abb71e72f65baf4afffaf"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 0,
+        "executionCause": null,
+        "status": "NO_CROSSING_PROVEN"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T06:25:32.594000+00:00",
+          "direction": "LONG",
+          "net": "57.5300000000",
+          "opened_at": "2026-10-27T06:24:41.645000+00:00",
+          "signed_fees": "-57.6700000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T06:24:41.645000+00:00",
+          "lastFill": "2026-10-27T06:24:41.645000+00:00",
+          "price": "4004.85000000000000000000",
+          "side": "BUY",
+          "volume": "24000.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4004.61",
+              "firstObservedAt": "2026-10-27T06:24:41.408000+00:00",
+              "hypotheticalFill": null,
+              "level": "4004.57",
+              "observedMaximumMove": "0.90",
+              "observedMinimumMove": "-1.96",
+              "quoteSamples": 183,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4004.64",
+              "firstObservedAt": "2026-10-27T06:25:01.486000+00:00",
+              "hypotheticalFill": null,
+              "level": "4004.62",
+              "observedMaximumMove": "0.87",
+              "observedMinimumMove": "-1.99",
+              "quoteSamples": 144,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4004.69",
+              "firstObservedAt": "2026-10-27T06:25:05.087000+00:00",
+              "hypotheticalFill": null,
+              "level": "4004.67",
+              "observedMaximumMove": "0.82",
+              "observedMinimumMove": "-2.04",
+              "quoteSamples": 136,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4005.2",
+              "firstObservedAt": "2026-10-27T06:25:05.437000+00:00",
+              "hypotheticalFill": null,
+              "level": "4004.77",
+              "observedMaximumMove": "0.31",
+              "observedMinimumMove": "-2.55",
+              "quoteSamples": 135,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:24:18.941976+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:24:07.460000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-1.60",
+            "candles": 5,
+            "lower": "4001.91",
+            "sellOffset": "0.05",
+            "upper": "4006.17"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-5.05",
+            "candles": 10,
+            "lower": "4001.91",
+            "sellOffset": "0.05",
+            "upper": "4009.62"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "5581978cd8b3f9598c798eafd9d7ea172644d6179a67c3be886c2ec80bc0e7e5",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "-0.8293838862",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:24:07.629000+00:00",
+          "rolling_sample_count_60s": 162,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:24:07.460000+00:00",
+          "spread": "0.05",
+          "symmetric_sizes": false,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK"
+          ]
+        },
+        "lowerEntry": "4001.86",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.05",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "44dda175b30ee1c96aeda99618361b1131628337b71156264ee453652791255a",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-4.57",
+            "fromSell": "-1.86",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "5"
+          },
+          {
+            "fromBuy": "0.43",
+            "fromSell": "3.14",
+            "observedCloseCrosses": 3,
+            "observedM1Touches": 4,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-4.57",
+            "fromSell": "-1.86",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "5.43",
+            "fromSell": "8.14",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 2,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.05",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4004.57"
+      },
+      "setup": "434cfd1d4825db128f8a77d1",
+      "sourceFiles": [
+        {
+          "file": "flight-434cfd1d4825db128f8a77d1-20261027T062426126929-0000.jsonl.gz",
+          "sha256": "6032a94540ca01e01ed4960cf06123526bc4edde0291543a9fb4d59cda68b69f"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.33",
+            "priorProtectionObservedAt": "2026-10-27T06:25:04.608000+00:00",
+            "quoteAt": "2026-10-27T06:25:06.158000+00:00",
+            "receivedAt": "2026-10-27T06:25:06.328000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.26",
+            "priorProtectionObservedAt": "2026-10-27T06:25:29.619000+00:00",
+            "quoteAt": "2026-10-27T06:25:31.177000+00:00",
+            "receivedAt": "2026-10-27T06:25:31.345000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.27",
+            "priorProtectionObservedAt": "2026-10-27T06:25:29.619000+00:00",
+            "quoteAt": "2026-10-27T06:25:31.545000+00:00",
+            "receivedAt": "2026-10-27T06:25:31.714000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.32",
+            "priorProtectionObservedAt": "2026-10-27T06:25:29.619000+00:00",
+            "quoteAt": "2026-10-27T06:25:31.916000+00:00",
+            "receivedAt": "2026-10-27T06:25:32.084000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.51",
+            "priorProtectionObservedAt": "2026-10-27T06:25:29.619000+00:00",
+            "quoteAt": "2026-10-27T06:25:32.285000+00:00",
+            "receivedAt": "2026-10-27T06:25:32.454000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.47",
+            "priorProtectionObservedAt": "2026-10-27T06:25:32.262000+00:00",
+            "quoteAt": "2026-10-27T06:25:32.996000+00:00",
+            "receivedAt": "2026-10-27T06:25:33.163000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4005.2500000000",
+            "mark": "4005.38",
+            "priorProtectionObservedAt": "2026-10-27T06:25:32.262000+00:00",
+            "quoteAt": "2026-10-27T06:25:33.351000+00:00",
+            "receivedAt": "2026-10-27T06:25:33.520000+00:00",
+            "side": "BUY"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 108,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T06:33:18.696000+00:00",
+          "direction": "SHORT",
+          "net": "47.9800000000",
+          "opened_at": "2026-10-27T06:30:18.797000+00:00",
+          "signed_fees": "-57.6200000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T06:30:18.797000+00:00",
+          "lastFill": "2026-10-27T06:30:18.797000+00:00",
+          "price": "4001.68000000000000000000",
+          "side": "SELL",
+          "volume": "24000.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.78",
+              "firstObservedAt": "2026-10-27T06:30:18.527000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.8",
+              "observedMaximumMove": "1.58",
+              "observedMinimumMove": "-1.32",
+              "quoteSamples": 427,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.61",
+              "firstObservedAt": "2026-10-27T06:30:55.799000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.75",
+              "observedMaximumMove": "1.41",
+              "observedMinimumMove": "-1.06",
+              "quoteSamples": 340,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.61",
+              "firstObservedAt": "2026-10-27T06:30:55.799000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.70",
+              "observedMaximumMove": "1.41",
+              "observedMinimumMove": "-1.06",
+              "quoteSamples": 340,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.6",
+              "firstObservedAt": "2026-10-27T06:30:56.160000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.60",
+              "observedMaximumMove": "1.4",
+              "observedMinimumMove": "-1.07",
+              "quoteSamples": 339,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": "2026-10-27T06:33:24.294778+00:00",
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": false,
+              "executableQuoteReference": "4001.23",
+              "firstObservedAt": "2026-10-27T06:33:24.658000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.8",
+              "observedMaximumMove": "0.22",
+              "observedMinimumMove": "-0.64",
+              "quoteSamples": 47,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:25:49.045791+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:25:38.354000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.25",
+            "candles": 5,
+            "lower": "4001.91",
+            "sellOffset": "0.11",
+            "upper": "4004.92"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-3.04",
+            "candles": 10,
+            "lower": "4001.91",
+            "sellOffset": "0.11",
+            "upper": "4007.71"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "fcd1ad57b96e8e2a8c0c57e78e97f5d20c06b2f14a29d38bbfb43c0274ecfac3",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "-0.8293838862",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:25:38.523000+00:00",
+          "rolling_sample_count_60s": 157,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:25:38.354000+00:00",
+          "spread": "0.11",
+          "symmetric_sizes": false,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK"
+          ]
+        },
+        "lowerEntry": "4001.8",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.11",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "2931e4f1ce5efc5b9aaaa0ddb5489a76e1ec66ca3d2c91d693887338af60eaf2",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-4.67",
+            "fromSell": "-1.8",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "5"
+          },
+          {
+            "fromBuy": "0.33",
+            "fromSell": "3.2",
+            "observedCloseCrosses": 3,
+            "observedM1Touches": 4,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-4.67",
+            "fromSell": "-1.8",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "5.33",
+            "fromSell": "8.2",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 1,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.11",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4004.67"
+      },
+      "setup": "89994dadfd0513eb97a44df7",
+      "sourceFiles": [
+        {
+          "file": "flight-89994dadfd0513eb97a44df7-20261027T062555403735-0000.jsonl.gz",
+          "sha256": "7ca2b01ec12d20856d4b860f6fc79056a062fee5749358ca49d709dd4971d45d"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.28",
+            "priorProtectionObservedAt": "2026-10-27T06:31:06.301000+00:00",
+            "quoteAt": "2026-10-27T06:31:07.115000+00:00",
+            "receivedAt": "2026-10-27T06:31:07.294000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.25",
+            "priorProtectionObservedAt": "2026-10-27T06:31:06.301000+00:00",
+            "quoteAt": "2026-10-27T06:31:07.490000+00:00",
+            "receivedAt": "2026-10-27T06:31:07.659000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.24",
+            "priorProtectionObservedAt": "2026-10-27T06:31:08.296000+00:00",
+            "quoteAt": "2026-10-27T06:31:08.959000+00:00",
+            "receivedAt": "2026-10-27T06:31:09.128000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.22",
+            "priorProtectionObservedAt": "2026-10-27T06:31:08.296000+00:00",
+            "quoteAt": "2026-10-27T06:31:09.345000+00:00",
+            "receivedAt": "2026-10-27T06:31:09.516000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.22",
+            "priorProtectionObservedAt": "2026-10-27T06:31:44.658000+00:00",
+            "quoteAt": "2026-10-27T06:31:45.542000+00:00",
+            "receivedAt": "2026-10-27T06:31:45.710000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.25",
+            "priorProtectionObservedAt": "2026-10-27T06:31:44.658000+00:00",
+            "quoteAt": "2026-10-27T06:31:45.897000+00:00",
+            "receivedAt": "2026-10-27T06:31:46.066000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.27",
+            "priorProtectionObservedAt": "2026-10-27T06:31:46.304000+00:00",
+            "quoteAt": "2026-10-27T06:31:46.604000+00:00",
+            "receivedAt": "2026-10-27T06:31:46.775000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.27",
+            "priorProtectionObservedAt": "2026-10-27T06:31:52.398000+00:00",
+            "quoteAt": "2026-10-27T06:31:53.067000+00:00",
+            "receivedAt": "2026-10-27T06:31:53.237000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.24",
+            "priorProtectionObservedAt": "2026-10-27T06:31:52.398000+00:00",
+            "quoteAt": "2026-10-27T06:31:53.768000+00:00",
+            "receivedAt": "2026-10-27T06:31:53.937000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.23",
+            "priorProtectionObservedAt": "2026-10-27T06:33:09.624000+00:00",
+            "quoteAt": "2026-10-27T06:33:10.824000+00:00",
+            "receivedAt": "2026-10-27T06:33:10.995000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.19",
+            "priorProtectionObservedAt": "2026-10-27T06:33:09.624000+00:00",
+            "quoteAt": "2026-10-27T06:33:11.189000+00:00",
+            "receivedAt": "2026-10-27T06:33:11.358000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.18",
+            "priorProtectionObservedAt": "2026-10-27T06:33:09.624000+00:00",
+            "quoteAt": "2026-10-27T06:33:11.542000+00:00",
+            "receivedAt": "2026-10-27T06:33:11.710000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.2",
+            "priorProtectionObservedAt": "2026-10-27T06:33:12.389000+00:00",
+            "quoteAt": "2026-10-27T06:33:13.736000+00:00",
+            "receivedAt": "2026-10-27T06:33:13.905000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.18",
+            "priorProtectionObservedAt": "2026-10-27T06:33:16.321000+00:00",
+            "quoteAt": "2026-10-27T06:33:18.073000+00:00",
+            "receivedAt": "2026-10-27T06:33:18.242000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.1",
+            "priorProtectionObservedAt": "2026-10-27T06:33:18.321000+00:00",
+            "quoteAt": "2026-10-27T06:33:18.445000+00:00",
+            "receivedAt": "2026-10-27T06:33:18.615000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4001.2800000000",
+            "mark": "4001.09",
+            "priorProtectionObservedAt": "2026-10-27T06:33:18.321000+00:00",
+            "quoteAt": "2026-10-27T06:33:18.829000+00:00",
+            "receivedAt": "2026-10-27T06:33:18.999000+00:00",
+            "side": "SELL"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 346,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T06:34:07.358000+00:00",
+          "direction": "SHORT",
+          "net": "38.3900000000",
+          "opened_at": "2026-10-27T06:33:47.936000+00:00",
+          "signed_fees": "-57.6100000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T06:33:47.936000+00:00",
+          "lastFill": "2026-10-27T06:33:47.936000+00:00",
+          "price": "4000.87000000000000000000",
+          "side": "SELL",
+          "volume": "24000.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4000.99",
+              "firstObservedAt": "2026-10-27T06:33:47.684000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001",
+              "observedMaximumMove": "1.76",
+              "observedMinimumMove": "-0.12",
+              "quoteSamples": 108,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4000.85",
+              "firstObservedAt": "2026-10-27T06:33:49.515000+00:00",
+              "hypotheticalFill": null,
+              "level": "4000.95",
+              "observedMaximumMove": "1.62",
+              "observedMinimumMove": "-0.26",
+              "quoteSamples": 106,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4000.85",
+              "firstObservedAt": "2026-10-27T06:33:49.515000+00:00",
+              "hypotheticalFill": null,
+              "level": "4000.90",
+              "observedMaximumMove": "1.62",
+              "observedMinimumMove": "-0.26",
+              "quoteSamples": 106,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4000.8",
+              "firstObservedAt": "2026-10-27T06:33:49.880000+00:00",
+              "hypotheticalFill": null,
+              "level": "4000.80",
+              "observedMaximumMove": "1.57",
+              "observedMinimumMove": "-0.31",
+              "quoteSamples": 105,
+              "side": "SELL"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:33:33.202165+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:33:24.658000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.78",
+            "candles": 5,
+            "lower": "4001.11",
+            "sellOffset": "0.11",
+            "upper": "4003.51"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-2.78",
+            "candles": 10,
+            "lower": "4001.11",
+            "sellOffset": "0.11",
+            "upper": "4005.51"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "66abc646ccb0f95d93d713832b8d7b4dbd4cc678771f17add5d28366d97d9866",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:33:24.838000+00:00",
+          "rolling_sample_count_60s": 157,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:33:24.658000+00:00",
+          "spread": "0.11",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "4001",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.11",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "3d20116026c6948791c3ea2fe1c4428a5e15cfbcb4e810761692a490245d0882",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-2.73",
+            "fromSell": "-1",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "5"
+          },
+          {
+            "fromBuy": "2.27",
+            "fromSell": "4",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 1,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-2.73",
+            "fromSell": "-1",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "7.27",
+            "fromSell": "9",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.11",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4002.73"
+      },
+      "setup": "e27a4da472ec3d1f64add784",
+      "sourceFiles": [
+        {
+          "file": "flight-e27a4da472ec3d1f64add784-20261027T063341830875-0000.jsonl.gz",
+          "sha256": "e4a689da000043dde0ecf4ef25f6e826653733539eebe567e1e4b965ce54a436"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4000.4700000000",
+            "mark": "4000.46",
+            "priorProtectionObservedAt": "2026-10-27T06:34:06.335000+00:00",
+            "quoteAt": "2026-10-27T06:34:06.746000+00:00",
+            "receivedAt": "2026-10-27T06:34:06.915000+00:00",
+            "side": "SELL"
+          },
+          {
+            "brokerTp": "4000.4700000000",
+            "mark": "4000.33",
+            "priorProtectionObservedAt": "2026-10-27T06:34:06.335000+00:00",
+            "quoteAt": "2026-10-27T06:34:07.111000+00:00",
+            "receivedAt": "2026-10-27T06:34:07.285000+00:00",
+            "side": "SELL"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 38,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [
+        {
+          "closed_at": "2026-10-27T06:37:16.153000+00:00",
+          "direction": "LONG",
+          "net": "79.5100000000",
+          "opened_at": "2026-10-27T06:37:04.007000+00:00",
+          "signed_fees": "-57.8600000000"
+        }
+      ],
+      "actualEntries": [
+        {
+          "firstFill": "2026-10-27T06:37:04.007000+00:00",
+          "lastFill": "2026-10-27T06:37:04.007000+00:00",
+          "price": "4001.20000000000000000000",
+          "side": "BUY",
+          "volume": "24100.0000000000"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.11",
+              "firstObservedAt": "2026-10-27T06:37:03.724000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.05",
+              "observedMaximumMove": "0.87",
+              "observedMinimumMove": "-0.25",
+              "quoteSamples": 92,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.11",
+              "firstObservedAt": "2026-10-27T06:37:03.724000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.10",
+              "observedMaximumMove": "0.87",
+              "observedMinimumMove": "-0.25",
+              "quoteSamples": 92,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.18",
+              "firstObservedAt": "2026-10-27T06:37:04.088000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.15",
+              "observedMaximumMove": "0.80",
+              "observedMinimumMove": "-0.32",
+              "quoteSamples": 91,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [
+            {
+              "confirmationAvailableAt": null,
+              "counterfactualNet": null,
+              "crossingProvenInObservedQuotes": true,
+              "executableQuoteReference": "4001.31",
+              "firstObservedAt": "2026-10-27T06:37:04.458000+00:00",
+              "hypotheticalFill": null,
+              "level": "4001.25",
+              "observedMaximumMove": "0.67",
+              "observedMinimumMove": "-0.45",
+              "quoteSamples": 90,
+              "side": "BUY"
+            }
+          ],
+          "state": "OBSERVED_SIGNALS"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:36:51.649574+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:36:43.407000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-1.57",
+            "candles": 5,
+            "lower": "3999.08",
+            "sellOffset": "0.05",
+            "upper": "4002.62"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-3.39",
+            "candles": 10,
+            "lower": "3999.08",
+            "sellOffset": "0.05",
+            "upper": "4004.44"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "3fce328d75f598a3318e293d09fe31a1fbde63093788298b687b68cfa5b33a5d",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "0",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:36:43.576000+00:00",
+          "rolling_sample_count_60s": 148,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:36:43.407000+00:00",
+          "spread": "0.05",
+          "symmetric_sizes": true,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK",
+            "SYMMETRIC_SIZE_LADDER"
+          ]
+        },
+        "lowerEntry": "3999.03",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.05",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "3b0ef16f3a1c02396bad1403d5c59a18e3911670cdc28ebfcb71fbc1e67fa3e4",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-6.05",
+            "fromSell": "-4.03",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "3995",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-1.05",
+            "fromSell": "0.97",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 2,
+            "price": "4000",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-11.05",
+            "fromSell": "-9.03",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "3990",
+            "step": "10"
+          },
+          {
+            "fromBuy": "-1.05",
+            "fromSell": "0.97",
+            "observedCloseCrosses": 1,
+            "observedM1Touches": 2,
+            "price": "4000",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.05",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4001.05"
+      },
+      "setup": "547074ef96e481283f8ec824",
+      "sourceFiles": [
+        {
+          "file": "flight-547074ef96e481283f8ec824-20261027T063659967482-0000.jsonl.gz",
+          "sha256": "0a868d9bb3d77a123c110fc6d40380a89744a1d6227931dd9435eba1d2ce7c2a"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.64",
+            "priorProtectionObservedAt": "2026-10-27T06:37:06.384000+00:00",
+            "quoteAt": "2026-10-27T06:37:08.105000+00:00",
+            "receivedAt": "2026-10-27T06:37:08.274000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.66",
+            "priorProtectionObservedAt": "2026-10-27T06:37:06.384000+00:00",
+            "quoteAt": "2026-10-27T06:37:08.479000+00:00",
+            "receivedAt": "2026-10-27T06:37:08.648000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.64",
+            "priorProtectionObservedAt": "2026-10-27T06:37:08.384000+00:00",
+            "quoteAt": "2026-10-27T06:37:08.869000+00:00",
+            "receivedAt": "2026-10-27T06:37:09.038000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.66",
+            "priorProtectionObservedAt": "2026-10-27T06:37:08.384000+00:00",
+            "quoteAt": "2026-10-27T06:37:09.241000+00:00",
+            "receivedAt": "2026-10-27T06:37:09.410000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.62",
+            "priorProtectionObservedAt": "2026-10-27T06:37:12.400000+00:00",
+            "quoteAt": "2026-10-27T06:37:14.772000+00:00",
+            "receivedAt": "2026-10-27T06:37:14.941000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.64",
+            "priorProtectionObservedAt": "2026-10-27T06:37:14.383000+00:00",
+            "quoteAt": "2026-10-27T06:37:15.131000+00:00",
+            "receivedAt": "2026-10-27T06:37:15.300000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.95",
+            "priorProtectionObservedAt": "2026-10-27T06:37:14.383000+00:00",
+            "quoteAt": "2026-10-27T06:37:15.880000+00:00",
+            "receivedAt": "2026-10-27T06:37:16.048000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.93",
+            "priorProtectionObservedAt": "2026-10-27T06:37:14.383000+00:00",
+            "quoteAt": "2026-10-27T06:37:16.248000+00:00",
+            "receivedAt": "2026-10-27T06:37:16.426000+00:00",
+            "side": "BUY"
+          },
+          {
+            "brokerTp": "4001.6000000000",
+            "mark": "4001.92",
+            "priorProtectionObservedAt": "2026-10-27T06:37:14.383000+00:00",
+            "quoteAt": "2026-10-27T06:37:16.621000+00:00",
+            "receivedAt": "2026-10-27T06:37:16.789000+00:00",
+            "side": "BUY"
+          }
+        ],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 28,
+        "executionCause": null,
+        "status": "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW"
+      }
+    },
+    {
+      "actualClosedTrades": [],
+      "actualEntries": [],
+      "candidates": [
+        {
+          "candidate": "TOUCH",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        },
+        {
+          "candidate": "BUFFER_005",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        },
+        {
+          "candidate": "BUFFER_010",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        },
+        {
+          "candidate": "BUFFER_020",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        },
+        {
+          "candidate": "M1_CLOSE",
+          "counterfactualNet": null,
+          "cutoff": "2026-10-27T06:41:11.521592+00:00",
+          "gtcLifetime": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL",
+          "m1EvidenceAvailable": true,
+          "ocoRaceAmbiguous": false,
+          "pathCensored": true,
+          "signals": [],
+          "state": "NO_SIGNAL_OBSERVED"
+        }
+      ],
+      "entryContext": {
+        "availableAt": "2026-10-27T06:40:42.755677+00:00",
+        "brokerAuthority": false,
+        "capturedAt": "2026-10-27T06:40:34.064000+00:00",
+        "codexDirection": "SELL",
+        "completedM1Envelopes": [
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "0.05",
+            "candles": 5,
+            "lower": "3999.05",
+            "sellOffset": "0.05",
+            "upper": "4002.78"
+          },
+          {
+            "basis": "COMPLETED_M1_ENVELOPE_NOT_MODEL_SELECTED_BOX",
+            "buyOffset": "-0.65",
+            "candles": 10,
+            "lower": "3999.05",
+            "sellOffset": "0.05",
+            "upper": "4003.48"
+          }
+        ],
+        "counterfactualNet": null,
+        "depthInputSha256": "d916e19600dc21371be9834cedd98257cb0f8a9575e21343b5283ada568e4ccf",
+        "depthScope": "BROKER_ONLY_NOT_GLOBAL_FLOW",
+        "depthSummary": {
+          "ask_levels": 4,
+          "ask_liquidity_change_60s": "0",
+          "bid_levels": 4,
+          "bid_liquidity_change_60s": "0",
+          "imbalance": "-0.8293838862",
+          "microprice_bias": "0",
+          "received_at": "2026-10-27T06:40:34.233000+00:00",
+          "rolling_sample_count_60s": 155,
+          "scope": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "source_at": "2026-10-27T06:40:34.064000+00:00",
+          "spread": "0.05",
+          "symmetric_sizes": false,
+          "timestamp_basis": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "warnings": [
+            "SAMPLED_BROKER_DEPTH_NOT_EXECUTED_ORDER_FLOW",
+            "SHALLOW_BOOK"
+          ]
+        },
+        "lowerEntry": "3999",
+        "modelSelectedBox": null,
+        "movementBufferGuidance": "0.05",
+        "promptSha256": "8e9afdc31d770107f2436c03e1fd4a85b8d413c92f4fbe347a3621bdc2df6324",
+        "requestSha256": "26741765bf8a088d88e238b166579fd2d6821f993fa589c167d9b793b8b69a19",
+        "roundLevelLiquidity": null,
+        "roundLevels": [
+          {
+            "fromBuy": "-2.83",
+            "fromSell": "1",
+            "observedCloseCrosses": 3,
+            "observedM1Touches": 5,
+            "price": "4000",
+            "step": "5"
+          },
+          {
+            "fromBuy": "2.17",
+            "fromSell": "6",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4005",
+            "step": "5"
+          },
+          {
+            "fromBuy": "-2.83",
+            "fromSell": "1",
+            "observedCloseCrosses": 3,
+            "observedM1Touches": 5,
+            "price": "4000",
+            "step": "10"
+          },
+          {
+            "fromBuy": "7.17",
+            "fromSell": "11",
+            "observedCloseCrosses": 0,
+            "observedM1Touches": 0,
+            "price": "4010",
+            "step": "10"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "spread": "0.05",
+        "state": "RECORDED",
+        "tickSize": "0.01",
+        "upperEntry": "4002.83"
+      },
+      "setup": "e313284163968f6a54b8dc7f",
+      "sourceFiles": [
+        {
+          "file": "flight-e313284163968f6a54b8dc7f-20261027T064051350074-0000.jsonl.gz",
+          "sha256": "d621d724a9123c5f4e29b438f1c372fc0e59bab752d19d5b97db210a3c79bba1"
+        }
+      ],
+      "tpAudit": {
+        "counterfactualNet": null,
+        "crossings": [],
+        "crossingsBounded": false,
+        "eligibleQuoteObservations": 0,
+        "executionCause": null,
+        "status": "NO_CROSSING_PROVEN"
+      }
+    }
+  ],
+  "sourceSha256": "719a074ee6c44e8270bc07bb364ca989a3f27662dd6ac1c82e83395febb4d819",
+  "summary": { "NO_SIGNAL_OBSERVED": 14, "OBSERVED_SIGNALS": 56 },
+  "until": "2026-10-27T06:41:11.521592+00:00"
+}

@@ -1,0 +1,279 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "339d60e521c90514aa8e5f8f6c0a6effb2bceb51f4a66f1b75cfcb8c46b2452b",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "results": [
+    {
+      "label": "postgres-bindir",
+      "executable": "pg_config",
+      "args": ["--bindir"],
+      "code": 0,
+      "elapsedMs": 18
+    },
+    {
+      "label": "test-certificate",
+      "executable": "openssl",
+      "args": [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-days",
+        "1",
+        "-subj",
+        "/CN=localhost",
+        "-addext",
+        "subjectAltName=DNS:localhost,IP:127.0.0.1",
+        "-keyout",
+        "/tmp/scalper-qualification-KfVrHI/server.key",
+        "-out",
+        "/tmp/scalper-qualification-KfVrHI/server.crt"
+      ],
+      "code": 0,
+      "elapsedMs": 263
+    },
+    {
+      "label": "postgres-uid",
+      "executable": "id",
+      "args": ["-u", "postgres"],
+      "code": 0,
+      "elapsedMs": 6
+    },
+    {
+      "label": "postgres-gid",
+      "executable": "id",
+      "args": ["-g", "postgres"],
+      "code": 0,
+      "elapsedMs": 7
+    },
+    {
+      "label": "database-init",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/initdb",
+        "-D",
+        "/tmp/scalper-qualification-KfVrHI/database",
+        "-U",
+        "scalper_qualification",
+        "--auth-local=trust",
+        "--auth-host=trust",
+        "--no-locale",
+        "--encoding=UTF8"
+      ],
+      "code": 0,
+      "elapsedMs": 704
+    },
+    {
+      "label": "database-start",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-KfVrHI/database",
+        "-l",
+        "/tmp/scalper-qualification-KfVrHI/postgres.log",
+        "-o",
+        "-h 127.0.0.1 -p 43449 -k /tmp/scalper-qualification-KfVrHI -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-KfVrHI/server.crt -c ssl_key_file=/tmp/scalper-qualification-KfVrHI/server.key",
+        "-w",
+        "start"
+      ],
+      "code": 0,
+      "elapsedMs": 121
+    },
+    {
+      "label": "format",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "**/*.{ts,mjs,json,md,yml,yaml}"
+      ],
+      "code": 0,
+      "elapsedMs": 24285
+    },
+    {
+      "label": "lint",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": ["node_modules/eslint/bin/eslint.js", "."],
+      "code": 0,
+      "elapsedMs": 39479
+    },
+    {
+      "label": "types",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.json"
+      ],
+      "code": 0,
+      "elapsedMs": 15017
+    },
+    {
+      "label": "build",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.build.json",
+        "--outDir",
+        "/tmp/scalper-qualification-KfVrHI/build"
+      ],
+      "code": 0,
+      "elapsedMs": 11978
+    },
+    {
+      "label": "node-tests",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--exclude",
+        "**/*.integration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "code": 0,
+      "elapsedMs": 139894
+    },
+    {
+      "label": "python-format",
+      "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 45
+    },
+    {
+      "label": "python-lint",
+      "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 39
+    },
+    {
+      "label": "python-types",
+      "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+      "args": ["-m", "mypy", "python", "apps/dashboard"],
+      "code": 0,
+      "elapsedMs": 352
+    },
+    {
+      "label": "secrets",
+      "executable": "bash",
+      "args": ["scripts/secret-scan.sh"],
+      "code": 0,
+      "elapsedMs": 223
+    },
+    {
+      "label": "npm-audit",
+      "executable": "npm",
+      "args": ["audit", "--audit-level=high"],
+      "code": 0,
+      "elapsedMs": 738
+    },
+    {
+      "label": "python-audit",
+      "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+      "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+      "code": 0,
+      "elapsedMs": 10941
+    },
+    {
+      "label": "database-lifecycle",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration",
+        "--maxWorkers=1",
+        "--testTimeout=60000"
+      ],
+      "code": 0,
+      "elapsedMs": 31056
+    },
+    {
+      "label": "python-tests",
+      "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/python", "-q"],
+      "code": 0,
+      "elapsedMs": 13306
+    },
+    {
+      "label": "database-stop",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-KfVrHI/database",
+        "-m",
+        "immediate",
+        "-w",
+        "stop"
+      ],
+      "code": 0,
+      "elapsedMs": 109
+    }
+  ],
+  "issue": 387,
+  "scope": "OBSERVER_ONLY_NO_TRADING_ECONOMIC_CHANGE",
+  "counts": {
+    "node": 1126,
+    "postgres": 124,
+    "python": 485,
+    "total": 1735
+  },
+  "graphify": {
+    "mode": "AST_ONLY_NO_PROVIDER",
+    "nodes": 11611,
+    "edges": 18606,
+    "communities": 712
+  },
+  "additionalChecks": {
+    "retainedReportSchema": "PASS",
+    "samplePolicyAndStartup": "PASS",
+    "populatedPolicyAndStartup": "PASS",
+    "selectOnlyRoleExactScopeRead": "PASS",
+    "boundedRetrospectiveAllIntents": 14,
+    "forcedProviderCalls": 0,
+    "forcedBrokerCommands": 0
+  },
+  "supersededChecks": [
+    "First full run: new isolated SQL fixture omitted required volume_scale; fixture corrected, isolated database check passed, then full delivery qualification passed.",
+    "One intermediate run interrupted after the recursive storage reserve was strengthened; not used for delivery.",
+    "Initial config invocations used DOTENV_CONFIG_PATH instead of the checker positional file argument; corrected read-only invocations all pass."
+  ],
+  "limitations": [
+    "Native TP non-execution cause unresolved: issue388; no broker/support message sent.",
+    "All retrospective candidate paths censored, hypothetical fills and net remain null; no promotion.",
+    "One existing upstream FastAPI/httpx deprecation warning; tests pass.",
+    "Observer-only activation follows reviewed merged PR; separate operational receipt, no bot process restart."
+  ]
+}
