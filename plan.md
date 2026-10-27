@@ -1,3 +1,12 @@
+### ISSUE-390 — Agent contract, fill evidence and SMC level prompt
+
+- Issue: GitHub issue/PR link added after it exists remotely (one operator-approved PR, three commits).
+- Dependencies: #387 Flight/entry evidence, #388 unresolved native TP crossing, #351 causal-smc-1.0 context, #384 current native exits.
+- Acceptance (agent contract): replace the stacked per-issue `AGENTS.md` with a short current contract and still-binding invariants; preserve the previous text verbatim in `docs/agents-history.md`; no code or policy change.
+- Acceptance (fill evidence): SELECT-only per-fill quote-to-fill gap/delay evidence (entries and closes) with order-book context, a reproducible audit of gap versus volume and of native TP fills versus recorded crossings, and a sanitized #388 evidence pack. Descriptive only: no counterfactual fills/net, no inferred SL/TP cause from P/L, no broker message sent.
+- Acceptance (SMC prompt): operator-approved provider revision `0.7.3-quick-oco.1-codex.2` with deterministic `causal-smc-1.1` level map, prompt `entry-quick-oco-v5` and request 1.11 (response 1.2 unchanged). Every model price must anchor to a supplied level; the counter-trend trigger sits beyond protecting structure. TP0.40/SL7.00/5% demo risk, STOP_LIMIT/GTC/OCO, gates and protection unchanged; older prompts/schemas/`causal-smc-1.0` bytes immutable. No claim of entry improvement.
+- Status: agent contract consolidated (`docs/agents-history.md` byte-matches the previous text apart from four rewritten relative links). Fill evidence and prompt revision in progress.
+
 ### ISSUE-388 — Historical native TP execution explanation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/388.

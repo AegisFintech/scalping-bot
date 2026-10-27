@@ -1,3 +1,11 @@
+# ISSUE-390 — Agent contract, fill evidence and SMC level prompt
+
+`AGENTS.md` is now a short current contract (current release, operating contract,
+safety rules and still-binding invariants by area). The full previous per-issue
+directive text is preserved verbatim in [docs/agents-history.md](docs/agents-history.md);
+the current contract wins wherever the two differ. No code, trading policy, prompt,
+risk or deployment behavior changes with this consolidation.
+
 # ISSUE-387 — Read-only entry evidence and native TP audit
 
 Operator approved investigating TP execution and recording/comparing entry context
