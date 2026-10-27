@@ -13,8 +13,14 @@ from python.analytics.models import (
 from python.analytics.service import analyze, analyze_numeric
 from python.analytics.statistics import summarize
 from python.research.scalp_candidates import ScanReport, ScanRequest, scan
-from python.technical.models import ContextRequest, ContextRequestV11, ContextResponse
-from python.technical.service import prepare_context
+from python.technical.models import (
+    ContextRequest,
+    ContextRequestV11,
+    ContextRequestV12,
+    ContextResponse,
+    ContextResponseV11,
+)
+from python.technical.service import prepare_context, prepare_context_v11
 
 app = FastAPI(
     title="cTrader AI Scalper Analytics",
@@ -59,6 +65,11 @@ def technical_context_request(request: ContextRequest) -> ContextResponse:
 @app.post("/v2/technical-context", response_model=ContextResponse, response_model_by_alias=True)
 def technical_context_v11_request(request: ContextRequestV11) -> ContextResponse:
     return prepare_context(request)
+
+
+@app.post("/v3/technical-context", response_model=ContextResponseV11, response_model_by_alias=True)
+def technical_context_levels_request(request: ContextRequestV12) -> ContextResponseV11:
+    return prepare_context_v11(request)
 
 
 @app.post("/v1/scalp-scan", response_model=ScanReport, response_model_by_alias=True)

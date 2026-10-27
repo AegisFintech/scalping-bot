@@ -4,6 +4,9 @@ import { ModelResponseValidator } from "../packages/risk-engine/src/model-valida
 import type {
   TechnicalContextRequest,
   TechnicalContextRequestV11,
+  TechnicalContextRequestV12,
+  TechnicalContextResponse,
+  TechnicalContextResponseV11,
 } from "../packages/contracts/src/technical-context.js";
 
 // Existing saved request -> typed local HTTP -> exclusive private candidate file.
@@ -21,23 +24,33 @@ try {
     throw new Error("TECHNICAL_CONTEXT_INPUT_TOO_LARGE");
   const raw = await readFile(source, "utf8");
   const document: unknown = JSON.parse(raw);
-  const localClock =
+  const version =
     document !== null &&
     typeof document === "object" &&
-    "schemaVersion" in document &&
-    document.schemaVersion === "technical-context-request-1.1";
-  const validated = new ModelResponseValidator<
-    TechnicalContextRequest | TechnicalContextRequestV11
-  >(
-    localClock
-      ? "schemas/technical-context-request-1.1.json"
-      : "schemas/technical-context-request-1.0.json",
-  ).parse(raw);
-  if (!validated.accepted || validated.response === null)
-    throw new Error("TECHNICAL_CONTEXT_INPUT_INVALID");
-  const result = await new TechnicalContextHttpClient(baseUrl).prepare(
-    validated.response,
-  );
+    "schemaVersion" in document
+      ? document.schemaVersion
+      : null;
+  const client = new TechnicalContextHttpClient(baseUrl);
+  let result: TechnicalContextResponse | TechnicalContextResponseV11;
+  if (version === "technical-context-request-1.2") {
+    const levels = new ModelResponseValidator<TechnicalContextRequestV12>(
+      "schemas/technical-context-request-1.2.json",
+    ).parse(raw);
+    if (!levels.accepted || levels.response === null)
+      throw new Error("TECHNICAL_CONTEXT_INPUT_INVALID");
+    result = await client.prepare(levels.response);
+  } else {
+    const validated = new ModelResponseValidator<
+      TechnicalContextRequest | TechnicalContextRequestV11
+    >(
+      version === "technical-context-request-1.1"
+        ? "schemas/technical-context-request-1.1.json"
+        : "schemas/technical-context-request-1.0.json",
+    ).parse(raw);
+    if (!validated.accepted || validated.response === null)
+      throw new Error("TECHNICAL_CONTEXT_INPUT_INVALID");
+    result = await client.prepare(validated.response);
+  }
   await writeFile(destination, JSON.stringify(result, null, 2) + "\n", {
     mode: 0o600,
     flag: "wx",

@@ -18,7 +18,7 @@ from uuid import UUID
 from pydantic import Field, model_validator
 
 from python.research.codex_loop import StrictModel, encoded, publish, read_bounded, timestamp
-from python.technical.models import ContextEvidence
+from python.technical.models import ContextEvidence, ContextEvidenceV11
 
 MODEL = "gpt-6.1-sol"
 MAX_BYTES = 128_000
@@ -337,6 +337,45 @@ class RequestV110(RequestV19):
     promptVersion: Literal["entry-quick-oco-v4"]  # type: ignore[assignment]
 
 
+class PayloadV18(PayloadV17):
+    technical_context: ContextEvidenceV11
+
+    @model_validator(mode="after")
+    def level_provenance(self) -> PayloadV18:
+        """causal-smc-1.1 levels are completed-candle evidence available at capture."""
+        captured = timestamp(self.captured_at)
+        context = self.technical_context
+        times: list[str] = []
+        for frame in context.frames:
+            for level in frame.support_resistance:
+                try:
+                    lower, upper = Decimal(level.lower), Decimal(level.upper)
+                except ArithmeticError:
+                    raise ValueError("CODEX_CONTEXT_LEVEL_INVALID") from None
+                if not (lower.is_finite() and upper.is_finite() and 0 < lower <= upper):
+                    raise ValueError("CODEX_CONTEXT_LEVEL_INVALID")
+                if timestamp(level.last_pivot_at) > timestamp(level.available_at):
+                    raise ValueError("CODEX_CONTEXT_PROVENANCE_INVALID")
+                times.append(level.available_at)
+            times += [c.end_at for c in frame.candle_anatomy]
+            dealing = frame.dealing_range
+            times += [t for t in (dealing.high_at, dealing.low_at) if t is not None]
+        times += [e.high_at for e in context.m1_envelopes] + [
+            e.low_at for e in context.m1_envelopes
+        ]
+        times += [session.utc_start for session in context.sessions]
+        times += [s.utc_end for s in context.sessions if s.status == "COMPLETE"]
+        if any(timestamp(at) > captured for at in times):
+            raise ValueError("CODEX_CONTEXT_LOOKAHEAD")
+        return self
+
+
+class RequestV111(RequestV110):
+    version: Literal["codex-entry-request-1.11"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-quick-oco-v5"]  # type: ignore[assignment]
+    payload: PayloadV18
+
+
 def parse_request(
     raw: bytes,
 ) -> (
@@ -350,8 +389,11 @@ def parse_request(
     | RequestV18
     | RequestV19
     | RequestV110
+    | RequestV111
 ):
     value = json.loads(raw)
+    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.11":
+        return RequestV111.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.10":
         return RequestV110.model_validate_json(raw)
     if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.9":

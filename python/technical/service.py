@@ -6,16 +6,22 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from pathlib import Path
 
 from python.analytics.service import TIMEFRAME_SECONDS, quality_reasons
+from python.technical import levels
 from python.technical.models import (
     ContextEvidence,
+    ContextEvidenceV11,
     ContextRequest,
     ContextRequestV11,
+    ContextRequestV12,
     ContextResponse,
+    ContextResponseV11,
     DepthContext,
+    FrameContextV11,
 )
 from python.technical.structure import TARGET_COUNTS, frame_context, text
 
 PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts/research/entry-context-v1.md"
+LEVEL_CANDIDATE_LIMIT = 64000
 
 
 def context_reasons(source: ContextRequest | ContextRequestV11) -> list[str]:
@@ -194,4 +200,79 @@ def prepare_context(source: ContextRequest | ContextRequestV11) -> ContextRespon
         reasons=[],
         evidence=evidence,
         codex_payload=payload,
+    )
+
+
+def prepare_context_v11(source: ContextRequestV12) -> ContextResponseV11:
+    """causal-smc-1.1: the unchanged 1.0 evidence plus a deterministic level map.
+
+    Every 1.0 gate still applies first; a rejected or oversized context withholds all
+    evidence. Levels describe completed candles only and never authorize an order.
+    """
+    base = prepare_context(source)
+    common = dict(
+        request_id=base.request_id,
+        analysis_id=base.analysis_id,
+        input_sha256=base.input_sha256,
+        captured_at=base.captured_at,
+    )
+    if not base.acceptable or base.evidence is None or base.codex_payload is None:
+        return ContextResponseV11(
+            **common, acceptable=False, reasons=base.reasons, evidence=None, codex_payload=None
+        )
+    tick = Decimal(source.tick_size)
+    mid = (Decimal(source.quote.bid) + Decimal(source.quote.ask)) / 2
+    series = {s.timeframe: s.candles for s in source.request.candles}
+    frames = []
+    for frame in base.evidence.frames:
+        bars = series[frame.timeframe]
+        first = levels.segment_start(bars)
+        current = bars[first:]
+        pivots = levels.swing_pivots(current)
+        frames.append(
+            FrameContextV11.model_validate(
+                {
+                    **frame.model_dump(),
+                    "nearest_active_zones": [
+                        {**z.model_dump(), **levels.zone_extension(z, current, tick)}
+                        for z in frame.nearest_active_zones
+                    ],
+                    "recent_resolved_zones": [
+                        {**z.model_dump(), **levels.zone_extension(z, current, tick)}
+                        for z in frame.recent_resolved_zones
+                    ],
+                    "support_resistance": levels.support_resistance(
+                        frame.timeframe, current, pivots, mid, Decimal(frame.atr), tick
+                    ),
+                    "dealing_range": levels.dealing_range(pivots, mid, tick),
+                    "candle_anatomy": levels.anatomy(frame.timeframe, bars, first),
+                }
+            )
+        )
+    m1 = series["M1"]
+    m1_atr = Decimal(next(f.atr for f in base.evidence.frames if f.timeframe == "M1"))
+    evidence = ContextEvidenceV11.model_validate(
+        {
+            **base.evidence.model_dump(exclude={"definitions_version", "frames"}),
+            "frames": frames,
+            "m1_envelopes": levels.envelopes(m1[levels.segment_start(m1) :], m1_atr),
+            "sessions": levels.sessions(series["M5"]),
+            "round_levels": levels.round_levels(mid),
+        }
+    )
+    payload: dict[str, object] = {
+        **base.codex_payload,
+        "version": "entry-context-candidate-1.1",
+        "technical_context": evidence.model_dump(mode="json"),
+    }
+    if len(json.dumps(payload).encode()) > LEVEL_CANDIDATE_LIMIT:
+        return ContextResponseV11(
+            **common,
+            acceptable=False,
+            reasons=["CANDIDATE_PAYLOAD_OVERSIZED"],
+            evidence=None,
+            codex_payload=None,
+        )
+    return ContextResponseV11(
+        **common, acceptable=True, reasons=[], evidence=evidence, codex_payload=payload
     )

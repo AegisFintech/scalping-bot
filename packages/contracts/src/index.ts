@@ -269,6 +269,7 @@ export interface ModelPromptArtifact {
     | "entry-quick-oco-v2"
     | "entry-quick-oco-v3"
     | "entry-quick-oco-v4"
+    | "entry-quick-oco-v5"
     | "entry-modes-execution-v1"
     | "entry-quick-oco-execution-v1"
     | "entry-quick-oco-execution-v2"

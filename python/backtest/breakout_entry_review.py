@@ -72,7 +72,7 @@ def fingerprint() -> str:
         "requirements.lock",
         "package-lock.json",
         "packages/config/src/policy.ts",
-        "prompts/entry-quick-oco-v4.md",
+        "prompts/entry-quick-oco-v5.md",
         "schemas/breakout-entry-review-1.0.json",
     ]
     return hashlib.sha256(

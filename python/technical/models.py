@@ -206,3 +206,113 @@ class ContextRequestV11(ApiModel):
         if parse_decimal_string(self.tick_size) <= 0:
             raise ValueError("tick must be positive")
         return self
+
+
+class SupportResistance(ApiModel):
+    id: str
+    lower: str
+    upper: str
+    touches: int
+    high_pivots: int
+    low_pivots: int
+    first_pivot_at: str
+    last_pivot_at: str
+    available_at: str
+    role: Literal["SUPPORT", "RESISTANCE", "AT_QUOTE"]
+    distance_from_quote: str
+    traded_above_after: bool
+    traded_below_after: bool
+    tolerance: str
+
+
+class DealingRange(ApiModel):
+    basis: Literal["LATEST_SWING_LEG_CONFIRMED_PIVOTS"] = "LATEST_SWING_LEG_CONFIRMED_PIVOTS"
+    high: str | None
+    high_at: str | None
+    low: str | None
+    low_at: str | None
+    equilibrium: str | None
+    position: Literal[
+        "PREMIUM", "DISCOUNT", "EQUILIBRIUM", "ABOVE_RANGE", "BELOW_RANGE", "UNAVAILABLE"
+    ]
+    position_fraction: str | None
+
+
+class CandleAnatomy(ApiModel):
+    end_at: str
+    direction: Literal["UP", "DOWN", "DOJI"]
+    range_size: str
+    range_to_atr: str | None
+    body_fraction: str
+    upper_wick_fraction: str
+    lower_wick_fraction: str
+    close_location: str
+    inside_bar: bool
+    engulfing: bool
+    displacement: bool
+
+
+class ZoneV11(Zone):
+    midpoint: str
+    penetration_fraction: str
+
+
+class FrameContextV11(FrameContext):
+    nearest_active_zones: list[ZoneV11] = Field(max_length=8)  # type: ignore[assignment]
+    recent_resolved_zones: list[ZoneV11] = Field(max_length=4)  # type: ignore[assignment]
+    support_resistance: list[SupportResistance] = Field(max_length=6)
+    dealing_range: DealingRange
+    candle_anatomy: list[CandleAnatomy] = Field(max_length=5)
+
+
+class Envelope(ApiModel):
+    candles: Literal[3, 5, 10, 20]
+    high: str
+    high_at: str
+    low: str
+    low_at: str
+    width: str
+    width_to_atr: str | None
+
+
+class SessionRange(ApiModel):
+    basis: Literal["UTC_CONVENTION_COMPLETED_M5"] = "UTC_CONVENTION_COMPLETED_M5"
+    session: Literal["ASIA", "LONDON", "NEW_YORK"]
+    utc_start: str
+    utc_end: str
+    high: str | None
+    low: str | None
+    status: Literal["COMPLETE", "IN_PROGRESS", "PARTIAL_OR_UNAVAILABLE"]
+
+
+class RoundLevel(ApiModel):
+    scope: Literal["PSYCHOLOGICAL_LEVEL_HYPOTHESIS_NOT_LIQUIDITY"] = (
+        "PSYCHOLOGICAL_LEVEL_HYPOTHESIS_NOT_LIQUIDITY"
+    )
+    price: str
+    step: str
+    side: Literal["BELOW", "ABOVE"]
+    distance_from_quote: str
+
+
+class ContextEvidenceV11(ContextEvidence):
+    definitions_version: Literal["causal-smc-1.1"] = "causal-smc-1.1"  # type: ignore[assignment]
+    frames: list[FrameContextV11] = Field(min_length=3, max_length=3)  # type: ignore[assignment]
+    m1_envelopes: list[Envelope] = Field(max_length=4)
+    sessions: list[SessionRange] = Field(max_length=6)
+    round_levels: list[RoundLevel] = Field(max_length=4)
+
+
+class ContextRequestV12(ContextRequestV11):
+    """Request the causal-smc-1.1 level map; inputs and clocks are unchanged from 1.1."""
+
+    schema_version: Literal["technical-context-request-1.2"] = Field(  # type: ignore[assignment]
+        alias="schemaVersion"
+    )
+
+
+class ContextResponseV11(ContextResponse):
+    schema_version: Literal["technical-context-response-1.1"] = Field(  # type: ignore[assignment]
+        alias="schemaVersion", default="technical-context-response-1.1"
+    )
+    evidence: ContextEvidenceV11 | None

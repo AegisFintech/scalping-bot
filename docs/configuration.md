@@ -1,3 +1,13 @@
+# ISSUE-390 — causal-smc-1.1 level map and prompt v5
+
+Operator-approved provider revision `0.7.3-quick-oco.1-codex.2` (policy
+`0.7.3-quick-oco.1` and every economic constant unchanged). Analytics `/v3` returns
+`technical-context-response-1.1`: the unchanged `causal-smc-1.0` evidence plus a
+deterministic level map. Request 1.11 binds prompt `entry-quick-oco-v5`, which must
+anchor every price to a supplied level; response 1.2 is unchanged. Older prompts,
+requests and context versions stay immutable. See
+[level map and prompt report](smc-level-prompt-report.md).
+
 # ISSUE-384 — Broker-native profit exits
 
 Operator approved fixing fee-to-fill execution after three recorded local profit

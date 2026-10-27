@@ -1,0 +1,87 @@
+{
+  "issue": "ISSUE-390",
+  "qualified": false,
+  "qualificationVersion": null,
+  "scope": "Agent contract consolidation, read-only fill evidence and causal-smc-1.1/prompt v5 provider revision",
+  "environment": {
+    "nodeVersion": "v24.13.0 (repository requires >=22 <23)",
+    "python": "3.12.13 (repository requires 3.13)",
+    "dependencies": "npm and pip registries unreachable from the sandbox; node_modules and .venv absent"
+  },
+  "localChecks": [
+    {
+      "check": "ruff format --check python apps/dashboard tests/python",
+      "result": "PASS (local ruff 0.14.8; lock pins 0.16.4)"
+    },
+    {
+      "check": "ruff check python apps/dashboard tests/python",
+      "result": "PASS except the existing F811 fixture re-export pattern also present on main"
+    },
+    {
+      "check": "mypy --strict (no pydantic plugin) on stdlib-only modules levels.py, fill_gap_review.py, export_fill_evidence.py",
+      "result": "PASS"
+    },
+    {
+      "check": "tests/python/test_technical_levels.py and test_fill_gap_review.py via a stand-in pytest runner",
+      "result": "PASS 22/22"
+    },
+    {
+      "check": "export_fill_evidence SQL on PostgreSQL 16 with all 35 migrations and a fixture of the losing trade",
+      "result": "PASS; another account hash returns 0 rows"
+    },
+    {
+      "check": "pydantic JSON-schema emulator reproduces schemas/technical-context-response-1.0.json",
+      "result": "PASS (exact dict equality)"
+    },
+    {
+      "check": "generated schemas: $ref closure, no unreferenced $defs; fixtures and evidence validate (subset validator)",
+      "result": "PASS"
+    },
+    {
+      "check": "#388 pack regenerates byte-for-byte from docs/evidence/entry-trigger-review.json",
+      "result": "PASS"
+    },
+    {
+      "check": "Node type-stripping parse of every edited TypeScript file",
+      "result": "PASS (syntax only, no type check)"
+    },
+    {
+      "check": "node scripts/secret-scan.mjs",
+      "result": "PASS"
+    },
+    {
+      "check": "Prettier 3.3.3 (repository pins 3.9.6) --check on every changed TS/MD/JSON file",
+      "result": "PASS for all new files; five TS files differ only in pre-existing 3.3-vs-3.9 style also flagged on the base commit"
+    },
+    {
+      "check": "TypeScript 5.7.3 strict (repository pins 6.0.2) and ESLint recommendedTypeChecked on copies of the changed TS files and the execution-service caller",
+      "result": "PASS"
+    },
+    {
+      "check": "Ajv 8.20.0 strict compile of the new schemas and the TS client 1.2 path against the fixtures",
+      "result": "PASS (independent review)"
+    },
+    {
+      "check": "Independent schema derivation by parsing python/technical/models.py and python/codex_entry/service.py",
+      "result": "PASS: matches technical-context-request-1.2, response-1.1 and codex-entry-request-1.11"
+    }
+  ],
+  "notRunLocally": [
+    "node scripts/qualify.mjs (full qualification)",
+    "prettier --check, eslint, tsc, vitest (TypeScript tests and Ajv schema tests)",
+    "pytest with pydantic/fastapi/psycopg: schema-parity tests for technical-context-request-1.2, technical-context-response-1.1 and codex-entry-request-1.11, worker 1.11 tests, isolated PostgreSQL fill export test",
+    "dependency audits and graphify update"
+  ],
+  "limitations": [
+    "Hosted qualification must pass before merge; schema parity depends on exact pydantic generation.",
+    "No profitability or entry-improvement claim; level definitions are frozen descriptive choices."
+  ],
+  "reviewFixes": [
+    "candle_anatomy: first candle after a session gap has no in-segment ATR (no displacement or ratio)",
+    "sessions: partial windows publish no high or low",
+    "fill review: exact millisecond delays, validated setup keys, invalid market directories rejected, per-side freshest merge",
+    "worker: nonpositive or non-finite level bounds and completed sessions ending after capture are rejected",
+    "TS client: a 1.2 request requires a technical-context-response-1.1 with causal-smc-1.1 evidence",
+    "research: offline CLI accepts 1.2 requests; breakout review fingerprints the current v5 prompt"
+  ]
+}

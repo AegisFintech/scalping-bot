@@ -30,13 +30,20 @@ const context = {
 };
 const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
-  it("uses directional continuation guidance with strict WAIT", () => {
+  it("anchors v5 levels to supplied SMC evidence with strict WAIT", () => {
     const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-quick-oco-v4");
-    expect(prompt.replace(/\s+/g, " ")).toContain("Use completed M1 first");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-quick-oco-v5");
+    expect(prompt.replace(/\s+/g, " ")).toContain("use completed M1 first");
     expect(prompt.replace(/\s+/g, " ")).toContain(
       "not an anticipated reversal",
     );
+    expect(prompt.replace(/\s+/g, " ")).toContain(
+      "Anchor every price you output or cite to a supplied value",
+    );
+    expect(prompt.replace(/\s+/g, " ")).toContain(
+      "beyond the protecting structure",
+    );
+    expect(prompt).toContain("causal-smc-1.1");
     expect(prompt.replace(/\s+/g, " ")).toContain("broker session gap");
     expect(prompt.replace(/\s+/g, " ")).toContain('"decision":"WAIT"');
   });
@@ -262,7 +269,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
         string,
         unknown
       >;
-      expect(providerBody.version).toBe("codex-entry-request-1.10");
+      expect(providerBody.version).toBe("codex-entry-request-1.11");
       expect(providerBody.payload).toMatchObject({ market_captured_at: at });
       const compact = (
         providerBody.payload as { candles: { rows: unknown[] }[] }
@@ -294,7 +301,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
       });
       const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       expect(numeric.promptArtifact).toEqual({
-        version: "entry-quick-oco-v4",
+        version: "entry-quick-oco-v5",
         content: prompt,
         sha256: createHash("sha256").update(prompt).digest("hex"),
       });

@@ -15,6 +15,18 @@ ladder, grouped by close class and volume. The retained
 the losing trade's TP touches peaked at +0.06. Descriptive only, nothing sent to the
 broker: [report, commands and limits](docs/fill-evidence-report.md).
 
+SMC level prompt (operator-approved, live on next deploy): provider revision
+`0.7.3-quick-oco.1-codex.2` adds the deterministic `causal-smc-1.1` level map
+(support/resistance clusters with untaken-liquidity flags, latest swing-leg dealing
+range with premium/discount, order block/FVG midpoints and penetration, candle
+anatomy, exact M1 envelopes, UTC session ranges and round levels) through analytics
+`/v3` and request 1.11. Prompt `entry-quick-oco-v5` must anchor every price to a
+supplied level and cite it, needs clean room for the with-trend trigger and puts the
+counter-trend trigger beyond the protecting structure. TP0.40/SL7.00, 5% demo risk,
+STOP_LIMIT/GTC/OCO, response 1.2, gates and protection are unchanged; v4, request 1.10
+and `causal-smc-1.0` stay immutable. No entry improvement is claimed. Deployment order,
+rollback and validation: [level map and prompt report](docs/smc-level-prompt-report.md).
+
 # ISSUE-387 — Read-only entry evidence and native TP audit
 
 Operator approved investigating TP execution and recording/comparing entry context

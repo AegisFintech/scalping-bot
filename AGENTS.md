@@ -16,16 +16,18 @@ in linked reports. Give longer explanations only when explicitly requested.
 
 ## Current release (controlled DEMO only)
 
-- **Source / policy:** `0.7.3-quick-oco.1-codex.1` / `0.7.3-quick-oco.1`, defined
-  in `packages/config/src/policy.ts`.
+- **Source / policy:** `0.7.3-quick-oco.1-codex.2` / `0.7.3-quick-oco.1`, defined
+  in `packages/config/src/policy.ts` (ISSUE-390 provider revision; economics as
+  `codex.1`).
 - **Provider:** isolated subscription Codex worker, requested `gpt-6.1-sol`, no API
   fallback. Unattested returned identity, usage and cost stay null.
-- **Provider contract:** prompt `entry-quick-oco-v4`, request 1.10, response 1.2
+- **Provider contract:** prompt `entry-quick-oco-v5`, request 1.11, response 1.2
   (BUY/SELL/WAIT plus upper/lower breakout prices). Local execution prompt
   `entry-quick-oco-execution-v4`, risk schema 1.9.
-- **Model context:** completed M15/M5/M1 candles, `causal-smc-1.0` technical
-  context, broker DOM summary, entry boundaries and execution costs. Missing, stale
-  or mismatched context blocks dispatch; there is no fallback.
+- **Model context:** completed M15/M5/M1 candles, `causal-smc-1.1` technical context
+  (the unchanged 1.0 evidence plus the deterministic level map, analytics `/v3`,
+  request 1.2 / response 1.1), broker DOM summary, entry boundaries and execution
+  costs. Missing, stale or mismatched context blocks dispatch; there is no fallback.
 - **Orders:** dual STOP_LIMIT/GTC/OCO, BUY at upper and SELL at lower, 30-tick entry
   range; the pending peer is cancelled after a confirmed fill. Model direction is
   recorded, not a leg filter.
@@ -107,6 +109,10 @@ gates, manufacture a trade or increase risk to maintain frequency.
   registrations and migration checksums stay immutable; a previous model or prompt
   never authorizes new execution. Exact provider inputs, prompts and available
   response text are journaled.
+- The model anchors every price to a supplied `causal-smc-1.1` value plus whole ticks
+  and cites it; the counter-trend trigger goes beyond the protecting structure. Level
+  definitions are frozen descriptive code, never fitted thresholds or entry filters;
+  changing them needs a new definitions version (`docs/smc-level-prompt-report.md`).
 - Inference runs outside the execution path. Each execution decision needs fresh
   completed-candle context; crossed entries wait and are never shifted to chase.
   Deterministic entry boundaries bind; the spread/tick movement buffer is guidance,
@@ -311,7 +317,7 @@ Rules:
 Newest first. The full original directives are in
 [docs/agents-history.md](docs/agents-history.md).
 
-- ISSUE-390 agent contract consolidation (this file); fill evidence and #388 pack — `docs/fill-evidence-report.md`
+- ISSUE-390 agent contract consolidation (this file); fill evidence and #388 pack — `docs/fill-evidence-report.md`; `causal-smc-1.1` level map and prompt v5 — `docs/smc-level-prompt-report.md`
 - ISSUE-387 read-only entry evidence and native TP audit — `docs/entry-evidence-review-report.md`
 - ISSUE-384 broker-native profit exits — `docs/native-profit-exit-report.md`
 - ISSUE-382 Codex worker file cap — `docs/codex-file-cap-report.md`
