@@ -320,7 +320,8 @@ export interface CoordinatorOptions {
     | "entry-modes-execution-v1"
     | "entry-quick-oco-execution-v1"
     | "entry-quick-oco-execution-v2"
-    | "entry-quick-oco-execution-v3";
+    | "entry-quick-oco-execution-v3"
+    | "entry-quick-oco-execution-v4";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly commandFeeCheck?: (

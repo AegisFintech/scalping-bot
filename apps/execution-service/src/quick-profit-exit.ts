@@ -3,10 +3,7 @@ import type {
   Quote,
   SymbolMetadata,
 } from "../../../packages/contracts/src/index.js";
-import {
-  CODEX_STRATEGY_VERSION,
-  QUICK_OCO,
-} from "../../../packages/config/src/policy.js";
+import { QUICK_OCO } from "../../../packages/config/src/policy.js";
 import { oneWayCommission } from "../../../packages/risk-engine/src/commission.js";
 import type { ProtectionPosition } from "./position-protection.js";
 
@@ -42,7 +39,7 @@ export function quickProfitExit(input: {
 }): ProfitExitEvidence | null {
   const { position: p, quote: q, metadata: m, raw, now } = input;
   if (
-    p.strategyVersion !== CODEX_STRATEGY_VERSION ||
+    p.strategyVersion !== "0.7.2-quick-oco.1-codex.1" ||
     p.entryCommission === undefined
   )
     return null;

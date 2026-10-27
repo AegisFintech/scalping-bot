@@ -1,0 +1,301 @@
+{
+  "issue": 384,
+  "qualification": {
+    "qualificationVersion": "1.0",
+    "qualified": true,
+    "sourceSha256": "3c6c8fd8769e6086bcc8fba76b42c8dcf31d63290e5f902d7f9d3e5d16de1fb0",
+    "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+    "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+    "nodeVersion": "v22.23.2",
+    "results": [
+      {
+        "label": "postgres-bindir",
+        "executable": "pg_config",
+        "args": ["--bindir"],
+        "code": 0,
+        "elapsedMs": 30
+      },
+      {
+        "label": "test-certificate",
+        "executable": "openssl",
+        "args": [
+          "req",
+          "-x509",
+          "-newkey",
+          "rsa:2048",
+          "-nodes",
+          "-days",
+          "1",
+          "-subj",
+          "/CN=localhost",
+          "-addext",
+          "subjectAltName=DNS:localhost,IP:127.0.0.1",
+          "-keyout",
+          "/tmp/scalper-qualification-fxYKxn/server.key",
+          "-out",
+          "/tmp/scalper-qualification-fxYKxn/server.crt"
+        ],
+        "code": 0,
+        "elapsedMs": 588
+      },
+      {
+        "label": "postgres-uid",
+        "executable": "id",
+        "args": ["-u", "postgres"],
+        "code": 0,
+        "elapsedMs": 22
+      },
+      {
+        "label": "postgres-gid",
+        "executable": "id",
+        "args": ["-g", "postgres"],
+        "code": 0,
+        "elapsedMs": 17
+      },
+      {
+        "label": "database-init",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/initdb",
+          "-D",
+          "/tmp/scalper-qualification-fxYKxn/database",
+          "-U",
+          "scalper_qualification",
+          "--auth-local=trust",
+          "--auth-host=trust",
+          "--no-locale",
+          "--encoding=UTF8"
+        ],
+        "code": 0,
+        "elapsedMs": 1258
+      },
+      {
+        "label": "database-start",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/pg_ctl",
+          "-D",
+          "/tmp/scalper-qualification-fxYKxn/database",
+          "-l",
+          "/tmp/scalper-qualification-fxYKxn/postgres.log",
+          "-o",
+          "-h 127.0.0.1 -p 42981 -k /tmp/scalper-qualification-fxYKxn -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-fxYKxn/server.crt -c ssl_key_file=/tmp/scalper-qualification-fxYKxn/server.key",
+          "-w",
+          "start"
+        ],
+        "code": 0,
+        "elapsedMs": 140
+      },
+      {
+        "label": "format",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "**/*.{ts,mjs,json,md,yml,yaml}"
+        ],
+        "code": 0,
+        "elapsedMs": 49169
+      },
+      {
+        "label": "lint",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": ["node_modules/eslint/bin/eslint.js", "."],
+        "code": 0,
+        "elapsedMs": 65283
+      },
+      {
+        "label": "types",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "tsconfig.json"
+        ],
+        "code": 0,
+        "elapsedMs": 23469
+      },
+      {
+        "label": "build",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.build.json",
+          "--outDir",
+          "/tmp/scalper-qualification-fxYKxn/build"
+        ],
+        "code": 0,
+        "elapsedMs": 16504
+      },
+      {
+        "label": "node-tests",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--exclude",
+          "**/*.integration.test.ts",
+          "--maxWorkers=1"
+        ],
+        "code": 0,
+        "elapsedMs": 83072
+      },
+      {
+        "label": "python-format",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": [
+          "-m",
+          "ruff",
+          "format",
+          "--check",
+          "python",
+          "apps/dashboard",
+          "tests/python"
+        ],
+        "code": 0,
+        "elapsedMs": 81
+      },
+      {
+        "label": "python-lint",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": [
+          "-m",
+          "ruff",
+          "check",
+          "python",
+          "apps/dashboard",
+          "tests/python"
+        ],
+        "code": 0,
+        "elapsedMs": 53
+      },
+      {
+        "label": "python-types",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "mypy", "python", "apps/dashboard"],
+        "code": 0,
+        "elapsedMs": 424
+      },
+      {
+        "label": "secrets",
+        "executable": "bash",
+        "args": ["scripts/secret-scan.sh"],
+        "code": 0,
+        "elapsedMs": 259
+      },
+      {
+        "label": "npm-audit",
+        "executable": "npm",
+        "args": ["audit", "--audit-level=high"],
+        "code": 0,
+        "elapsedMs": 767
+      },
+      {
+        "label": "python-audit",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+        "code": 0,
+        "elapsedMs": 10301
+      },
+      {
+        "label": "database-lifecycle",
+        "executable": "/opt/scalper-node22/bin/node",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/integration",
+          "--maxWorkers=1",
+          "--testTimeout=60000"
+        ],
+        "code": 0,
+        "elapsedMs": 31577
+      },
+      {
+        "label": "python-tests",
+        "executable": "/root/scalping-bot-terminal/.venv/bin/python",
+        "args": ["-m", "pytest", "tests/python", "-q"],
+        "code": 0,
+        "elapsedMs": 12264
+      },
+      {
+        "label": "database-stop",
+        "executable": "runuser",
+        "args": [
+          "-u",
+          "postgres",
+          "--",
+          "/usr/lib/postgresql/18/bin/pg_ctl",
+          "-D",
+          "/tmp/scalper-qualification-fxYKxn/database",
+          "-m",
+          "immediate",
+          "-w",
+          "stop"
+        ],
+        "code": 0,
+        "elapsedMs": 112
+      }
+    ]
+  },
+  "testCounts": {
+    "node": 1125,
+    "postgresql": 124,
+    "python": 461,
+    "total": 1710
+  },
+  "configuration": {
+    "policy": {
+      "valid": true,
+      "scope": "policy_compatibility",
+      "policy": "0.7.3-quick-oco.1",
+      "normalSettings": 16,
+      "fileSettings": 19,
+      "requestedModel": "gpt-6.1-sol",
+      "obsoleteSettings": []
+    },
+    "startup": {
+      "valid": true,
+      "scope": "execution_configuration",
+      "policy": "0.7.3-quick-oco.1",
+      "normalSettings": 16,
+      "fileSettings": 19,
+      "requestedModel": "gpt-6.1-sol",
+      "obsoleteSettings": []
+    }
+  },
+  "graphify": {
+    "command": "graphify update .",
+    "mode": "AST_ONLY_NO_API",
+    "nodes": 11443,
+    "edges": 18275,
+    "communities": 698
+  },
+  "initialCheckFindings": [
+    "Missing ExecutionStatus field corrected before final source qualification",
+    "Overlong dashboard message wrapped before final source qualification",
+    "Historical SQL parameter preserved during code review",
+    "Earlier checks superseded by final exact-source report after audit-envelope schema coverage"
+  ],
+  "readOnlyBrokerAudit": {
+    "release": "0.7.2-quick-oco.1-codex.1",
+    "from": "2026-10-26T00:00:00Z",
+    "until": "2026-10-27T03:10:00Z",
+    "claims": 6,
+    "exactBotCloses": 4,
+    "unattributedOrIncomplete": 2,
+    "exactBotCloseNet": "-64.27"
+  },
+  "economicStrategyQualified": false,
+  "newLotMultiplier": null,
+  "forcedProviderCalls": 0,
+  "forcedBrokerCommands": 0,
+  "delivery": "Reviewed pushed PR/green checks/main and matching one-demo activation follow; durable receipt on issue384"
+}

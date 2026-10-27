@@ -1,3 +1,11 @@
+### ISSUE-384 — Broker-native profit exits after execution audit
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/384.
+- Dependencies: #376 native OCO/Flight, #378 manual/partial recovery, #380 frozen early-profit evidence, #382 worker file cap.
+- Acceptance: bounded inclusive exact-deal audit, remove production local profit market-close authority; native TP0.40/SL7.00/dynamic shared5% demo cap and every gate unchanged. Preserve unknown claims/manual/missing-SL protection, immutable history/prompts/research. Versioned promptv4/request1.10/local-v4/risk1.9; truthful dashboard. All three real-loss trigger regressions, failure/censoring/idempotency/transport tests and full qualification/security/audits/Graphify; README/AGENTS, pushed PR/green checks/main and verified matching same-demo activation/future observer freeze. No wider TP, size increase, force or profit guarantee.
+- Status: implementation and exact bounded audit complete; targeted55 tests pass, full qualification/delivery/activation follow. Native5-tick allowance remains declared modeling, not a validated tail bound. Exact results and receipt are recorded in the report/issue.
+- Evidence: [implementation and rollback](docs/native-profit-exit-report.md), [inclusive audit](docs/evidence/native-profit-exit-audit.json).
+
 ### ISSUE-382 — Restore Codex worker under a finite larger file cap
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/382.

@@ -414,13 +414,13 @@ export class ReusableScenarioModel implements ModelProvider {
       : null;
     const content = readFileSync(
       entryOnly
-        ? "prompts/entry-quick-oco-execution-v3.md"
+        ? "prompts/entry-quick-oco-execution-v4.md"
         : "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
       version: entryOnly
-        ? ("entry-quick-oco-execution-v3" as const)
+        ? ("entry-quick-oco-execution-v4" as const)
         : ("scenario-execution-v2" as const),
       content,
       sha256: createHash("sha256").update(content).digest("hex"),

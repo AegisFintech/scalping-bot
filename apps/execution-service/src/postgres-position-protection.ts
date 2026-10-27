@@ -1,5 +1,4 @@
 import { Decimal } from "decimal.js";
-import { CODEX_STRATEGY_VERSION } from "../../../packages/config/src/policy.js";
 import type { ProfitExitEvidence } from "./quick-profit-exit.js";
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
@@ -182,7 +181,7 @@ class PostgresProtectionSession implements ProtectionSession {
     evidence: ProfitExitEvidence,
   ): Promise<boolean> {
     if (
-      position.strategyVersion !== CODEX_STRATEGY_VERSION ||
+      position.strategyVersion !== "0.7.2-quick-oco.1-codex.1" ||
       evidence.policy !== "quick-profit-exit-v1" ||
       !new Decimal(evidence.volume).eq(position.volume) ||
       !new Decimal(evidence.modeledNet).gte(evidence.requiredNet) ||
@@ -216,7 +215,7 @@ class PostgresProtectionSession implements ProtectionSession {
           evidence.volume,
           this.accountId,
           this.symbolId,
-          CODEX_STRATEGY_VERSION,
+          "0.7.2-quick-oco.1-codex.1",
           evidence.quote.sourceTime,
           evidence.quote.receivedAt,
           evidence.entry,

@@ -4,7 +4,7 @@ import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
 export const HISTORICAL_API_MODEL = "grok-4.5";
 export const HISTORICAL_BREAKOUT_VERSION = "0.4.0-breakout-scalp.1-codex.1";
-export const CODEX_STRATEGY_VERSION = "0.7.2-quick-oco.1-codex.1";
+export const CODEX_STRATEGY_VERSION = "0.7.3-quick-oco.1-codex.1";
 export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {
@@ -13,7 +13,7 @@ export function usesFadeV3(version: string): boolean {
     version === HISTORICAL_CODEX_FADE_VERSION
   );
 }
-export const POLICY_VERSION = "0.7.2-quick-oco.1";
+export const POLICY_VERSION = "0.7.3-quick-oco.1";
 export const DEMO_SETUP_RISK_PERCENT = "5";
 export function setupRiskPercentFor(mode: TradingMode): string {
   return mode === "demo"
@@ -25,7 +25,8 @@ export const QUICK_OCO = {
   targetPriceDistance: "0.4",
   stopPriceDistance: "7",
   stopToTarget: "17.5",
-  earlyNetPrice: "0.05",
+  earlyNetPrice: "0.05", // Historical evaluator only; no current market-close authority.
+  profitExitMode: "BROKER_NATIVE" as const,
   entryReservePoints: "0",
   exitReservePoints: "5",
 } as const;
@@ -204,7 +205,7 @@ export const FIXED_DEFAULTS = {
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
   STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
-  CODE_VERSION: "0.7.2-quick-oco.1",
+  CODE_VERSION: "0.7.3-quick-oco.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

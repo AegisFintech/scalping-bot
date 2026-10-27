@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
 import { createPool } from "../../packages/database/src/index.js";
 import { PostgresPositionProtection } from "../../apps/execution-service/src/postgres-position-protection.js";
-import { CODEX_STRATEGY_VERSION } from "../../packages/config/src/policy.js";
+const HISTORICAL_PROFIT_SOURCE = "0.7.2-quick-oco.1-codex.1";
 import type { ProtectionPosition } from "../../apps/execution-service/src/position-protection.js";
 import type { ProfitExitEvidence } from "../../apps/execution-service/src/quick-profit-exit.js";
 const url = process.env.TEST_DATABASE_URL;
@@ -36,7 +36,7 @@ test("profit-close SQL claim is scoped, fresh, complete and durable across insta
  CREATE TABLE position_protection_events(id uuid,position_id uuid,kind text,details jsonb);`);
     await pool.query("INSERT INTO strategy_versions VALUES($1,$2)", [
       sv,
-      CODEX_STRATEGY_VERSION,
+      HISTORICAL_PROFIT_SOURCE,
     ]);
     await pool.query("INSERT INTO analysis_runs VALUES($1,$2)", [ar, sv]);
     await pool.query("INSERT INTO order_groups VALUES($1,$2,'demo')", [g, ar]);
@@ -61,7 +61,7 @@ test("profit-close SQL claim is scoped, fresh, complete and durable across insta
       repairAttempts: 0,
       commandAt: null,
       closeRequestedAt: null,
-      strategyVersion: CODEX_STRATEGY_VERSION,
+      strategyVersion: HISTORICAL_PROFIT_SOURCE,
       entryCommission: "-0.12",
     };
     const evidence: ProfitExitEvidence = {

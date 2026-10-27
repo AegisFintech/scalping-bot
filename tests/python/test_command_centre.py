@@ -130,3 +130,16 @@ def test_cumulative_money_uses_decimal_arithmetic_and_rejects_unknown_costs() ->
     for value in [None, "NaN", "Infinity"]:
         with pytest.raises(ValueError):
             cumulative_net(["1", value])
+
+
+def test_native_profit_policy_is_explicit_and_does_not_promise_net_profit() -> None:
+    status = {
+        "mode": "demo",
+        "startupChecksPassed": True,
+        "profitExit": {"mode": "BROKER_NATIVE", "guaranteedNet": False},
+        "managedSetup": {"status": "ACTIVE", "positions": [{"state": "OPEN"}], "orders": []},
+    }
+    view = action(status, NOW)
+    assert "local profit market closes are disabled" in view["next"].lower()
+    assert "fills and fees" in view["next"]
+    assert action({**status, "profitExit": None}, NOW)["active"] == "protect"

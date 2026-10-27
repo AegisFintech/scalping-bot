@@ -64,6 +64,12 @@ def action(status: dict[str, Any], now: datetime) -> dict[str, Any]:
         if active == "codex"
         else "Evaluate when market, account and safety gates permit."
     )
+    if positions and (status.get("profitExit") or {}).get("mode") == "BROKER_NATIVE":
+        next_step = (
+            "Broker-native TP/SL policy; verify broker protection below. "
+            "Local profit market closes are disabled. "
+            "Final net follows broker fills and fees."
+        )
     if title == "Paused":
         next_step = "Keep protection and reconciliation running; new analysis waits for resume."
     elif title == "Stopped":

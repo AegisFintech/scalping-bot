@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-quick-oco-v3.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-quick-oco-v4.md", "utf8").trim();
 function fixtureClient() {
   const request = {
     analysisId: randomUUID(),
@@ -69,11 +69,11 @@ describe("isolated Codex transport", () => {
     if (typeof rawBody !== "string") throw new Error("EXPECTED_JSON_REQUEST");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body).toMatchObject({
-      version: "codex-entry-request-1.9",
-      promptVersion: "entry-quick-oco-v3",
+      version: "codex-entry-request-1.10",
+      promptVersion: "entry-quick-oco-v4",
       promptSha256: s.value.promptSha256,
     });
-    expect(result.promptArtifact?.version).toBe("entry-quick-oco-v3");
+    expect(result.promptArtifact?.version).toBe("entry-quick-oco-v4");
     expect(result.retryCount).toBe(0);
     expect(s.gate).toHaveBeenCalledOnce();
     expect(s.fetchImpl).toHaveBeenCalledOnce();
@@ -193,8 +193,8 @@ print(json.dumps(v))`,
       [
         "-c",
         `import sys
-from python.codex_entry.service import RequestV19
-v=RequestV19.model_validate_json(sys.stdin.read())
+from python.codex_entry.service import RequestV110
+v=RequestV110.model_validate_json(sys.stdin.read())
 assert v.payload.execution_context.shared_setup_risk_percent=='5'`,
       ],
       { input: init.body, encoding: "utf8" },
@@ -208,6 +208,6 @@ assert v.payload.execution_context.shared_setup_risk_percent=='5'`,
     chart: null,
     payload: body.payload,
   });
-  expect(result.promptArtifact?.version).toBe("entry-quick-oco-v3");
+  expect(result.promptArtifact?.version).toBe("entry-quick-oco-v4");
   expect(s.fetchImpl).toHaveBeenCalledOnce();
 });
