@@ -1,3 +1,18 @@
+### ISSUE-388 — Historical native TP execution explanation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/388.
+- Dependencies: #387 retained Flight/independent broker history.
+- Acceptance: obtain broker-side historical TP trigger/execution/liquidity evidence for the exact2026-10-27T05:19Z crossing; reconcile original evidence without edits and document a bounded remedy only if supported. No inferred profitable fill, messages to others, market-close fallback or economic change.
+- Status: pending external broker historical evidence; local protection values/order history verified, exact non-execution cause remains unknown. This does not block read-only entry evidence delivery.
+
+### ISSUE-387 — Native TP audit and read-only entry evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/387.
+- Dependencies: #376 Flight, #378 broker close evidence, #384 native exits; #253/#255 research rules unchanged.
+- Acceptance: inclusive source/time-scoped TP/entry audit and actual broker-history check; exact Codex levels/direction, completed-M1 envelopes, spread/tick/round-level/DOM context and broker acceptance in separate read-only recording. Predeclared touch/+0.05/+0.10/+0.20-price/M1-close diagnostics, causal availability, GTC/OCO/gap/open/daily censoring, null counterfactual fills/economics, no automatic promotion. Separate frozen future30-day batch/settled daily runner; no change to deployed trading policy/provider/protection/risk/history. Positive/failure/isolated DB/schema tests, full qualification/security/audits/Graphify, README/AGENTS and pushed reviewed PR/green checks before observer-only activation.
+- Status: implemented and fully qualified:1,126 Node +124 PostgreSQL +485 Python (1,735), all required gates/security/audits and both config scopes passed; AST Graphify refreshed.14-intent frozen diagnostic retained with its source; all candidate paths censored. Pushed reviewed PR/green checks and observer-only activation follow on the issue. Broker TP cause stays unresolved in #388; no economic change.
+- Evidence: [audit/protocol/limits/rollback](docs/entry-evidence-review-report.md).
+
 ### ISSUE-384 — Broker-native profit exits after execution audit
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/384.

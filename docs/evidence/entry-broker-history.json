@@ -1,0 +1,47 @@
+{
+  "at": "2026-10-27T06:34:03.728Z",
+  "scope": "EXACT_LOCAL_POSITION_MATCHED_TO_BROKER_HISTORY",
+  "historyComplete": true,
+  "orders": [
+    {
+      "orderType": 4,
+      "orderStatus": 2,
+      "closingOrder": true,
+      "stopTriggerMethod": 1,
+      "executionPrice": 4001.49,
+      "utcLastUpdateTimestamp": 1793079014950,
+      "limitPrice": 4009.1,
+      "stopPrice": 4001.7
+    },
+    {
+      "orderType": 6,
+      "orderStatus": 2,
+      "closingOrder": false,
+      "stopTriggerMethod": 1,
+      "executionPrice": 4008.7,
+      "relativeTakeProfit": 40000,
+      "relativeStopLoss": 700000,
+      "utcLastUpdateTimestamp": 1793078127367,
+      "stopPrice": 4008.45
+    }
+  ],
+  "deals": [
+    {
+      "executionPrice": 4001.49,
+      "utcLastUpdateTimestamp": 1793079014683,
+      "executionTimestamp": 1793079014950,
+      "volume": 24600,
+      "filledVolume": 24600
+    },
+    {
+      "executionPrice": 4008.7,
+      "utcLastUpdateTimestamp": 1793078127151,
+      "executionTimestamp": 1793078127367,
+      "volume": 24600,
+      "filledVolume": 24600
+    }
+  ],
+  "brokerCommands": 0,
+  "databaseWrites": 0,
+  "providerCalls": 0
+}

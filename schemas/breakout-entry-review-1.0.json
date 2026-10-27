@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "breakout-entry-review-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "breakout-entry-observer-1.0"
+    },
+    "cohort": {
+      "const": "ALL_SCOPED_INTENTS_NOT_SELECTED_CLOSED_TRADES"
+    },
+    "release": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string"
+    },
+    "until": {
+      "type": "string"
+    },
+    "sourceSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "setups": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "setup": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{24}$"
+          },
+          "sourceFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "file": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": ["file", "sha256"]
+            }
+          },
+          "entryContext": {
+            "type": ["object", "null"]
+          },
+          "actualClosedTrades": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "direction": {
+                  "enum": ["LONG", "SHORT"]
+                },
+                "net": {
+                  "type": "string",
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                },
+                "signed_fees": {
+                  "type": "string",
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                },
+                "opened_at": {
+                  "type": "string"
+                },
+                "closed_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "direction",
+                "net",
+                "signed_fees",
+                "opened_at",
+                "closed_at"
+              ]
+            }
+          },
+          "tpAudit": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "status": {
+                "enum": [
+                  "RECORDED_CROSSING_REQUIRES_BROKER_REVIEW",
+                  "NO_CROSSING_PROVEN"
+                ]
+              },
+              "eligibleQuoteObservations": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "crossings": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "side": {
+                      "enum": ["BUY", "SELL"]
+                    },
+                    "quoteAt": {
+                      "type": "string"
+                    },
+                    "receivedAt": {
+                      "type": "string"
+                    },
+                    "mark": {
+                      "type": "string",
+                      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                    },
+                    "brokerTp": {
+                      "type": "string",
+                      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                    },
+                    "priorProtectionObservedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "side",
+                    "quoteAt",
+                    "receivedAt",
+                    "mark",
+                    "brokerTp",
+                    "priorProtectionObservedAt"
+                  ]
+                }
+              },
+              "crossingsBounded": {
+                "type": "boolean"
+              },
+              "executionCause": {
+                "type": "null"
+              },
+              "counterfactualNet": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "status",
+              "eligibleQuoteObservations",
+              "crossings",
+              "crossingsBounded",
+              "executionCause",
+              "counterfactualNet"
+            ]
+          },
+          "candidates": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "candidate": {
+                  "enum": [
+                    "TOUCH",
+                    "BUFFER_005",
+                    "BUFFER_010",
+                    "BUFFER_020",
+                    "M1_CLOSE"
+                  ]
+                },
+                "state": {
+                  "enum": [
+                    "CONTEXT_UNAVAILABLE",
+                    "ACCEPTANCE_UNAVAILABLE",
+                    "OBSERVED_SIGNALS",
+                    "NO_SIGNAL_OBSERVED",
+                    "PATH_UNAVAILABLE"
+                  ]
+                },
+                "signals": {
+                  "type": "array",
+                  "maxItems": 2,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "side": {
+                        "enum": ["BUY", "SELL"]
+                      },
+                      "level": {
+                        "type": "string",
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                      },
+                      "firstObservedAt": {
+                        "type": "string"
+                      },
+                      "confirmationAvailableAt": {
+                        "type": ["string", "null"]
+                      },
+                      "crossingProvenInObservedQuotes": {
+                        "type": "boolean"
+                      },
+                      "executableQuoteReference": {
+                        "type": "string",
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                      },
+                      "hypotheticalFill": {
+                        "type": "null"
+                      },
+                      "observedMaximumMove": {
+                        "type": "string",
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                      },
+                      "observedMinimumMove": {
+                        "type": "string",
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                      },
+                      "quoteSamples": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "counterfactualNet": {
+                        "type": "null"
+                      }
+                    },
+                    "required": [
+                      "side",
+                      "level",
+                      "firstObservedAt",
+                      "confirmationAvailableAt",
+                      "crossingProvenInObservedQuotes",
+                      "executableQuoteReference",
+                      "hypotheticalFill",
+                      "observedMaximumMove",
+                      "observedMinimumMove",
+                      "quoteSamples",
+                      "counterfactualNet"
+                    ]
+                  }
+                },
+                "ocoRaceAmbiguous": {
+                  "type": "boolean"
+                },
+                "pathCensored": {
+                  "type": "boolean"
+                },
+                "m1EvidenceAvailable": {
+                  "type": "boolean"
+                },
+                "cutoff": {
+                  "type": "string"
+                },
+                "gtcLifetime": {
+                  "const": "UNTIL_EVIDENCE_CUTOFF_NOT_ORIGINAL_FILL"
+                },
+                "counterfactualNet": {
+                  "type": "null"
+                }
+              },
+              "required": ["candidate", "state", "signals", "counterfactualNet"]
+            }
+          },
+          "actualEntries": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "side": {
+                  "enum": ["BUY", "SELL"]
+                },
+                "firstFill": {
+                  "type": "string"
+                },
+                "lastFill": {
+                  "type": "string"
+                },
+                "volume": {
+                  "type": "string",
+                  "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                },
+                "price": {
+                  "type": "string",
+                  "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                }
+              },
+              "required": ["side", "firstFill", "lastFill", "volume", "price"]
+            }
+          }
+        },
+        "required": [
+          "setup",
+          "sourceFiles",
+          "entryContext",
+          "actualClosedTrades",
+          "tpAudit",
+          "candidates",
+          "actualEntries"
+        ]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "brokerAuthority": {
+      "const": false
+    },
+    "promotion": {
+      "const": "HOLD"
+    },
+    "counterfactualNet": {
+      "type": "null"
+    },
+    "economicPairedReplay": {
+      "const": false
+    },
+    "completeTickTape": {
+      "const": false
+    },
+    "registrationSha256": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "prospective": {
+      "type": "boolean"
+    },
+    "bundleSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "cohort",
+    "release",
+    "from",
+    "until",
+    "sourceSha256",
+    "setups",
+    "summary",
+    "brokerAuthority",
+    "promotion",
+    "counterfactualNet",
+    "economicPairedReplay",
+    "completeTickTape"
+  ]
+}
