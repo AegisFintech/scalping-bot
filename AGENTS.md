@@ -1,3 +1,15 @@
+# ISSUE-382 — Codex worker storage cap
+
+The operator approved a finite512MiB per-file cap for the dedicated Codex analysis
+worker after a32MiB inherited RLIMIT_FSIZE killed its SQLite thread-history writes
+withSIGXFSZ/EFBIG. This operational correction changes no prompts, input sizes,
+memory compaction, token budgets, request cooldowns, risk, lots, TP/SL or strategy.
+Keep existing worker/application artifacts and all DB/session/claim history.
+Preserve MemoryMax512MiB, TasksMax64, swap0 and isolation. Apply only the scoped
+systemd LimitFSIZE override; verify live inherited limit and a normal gated retry.
+Never delete history or replay an unknown request. Full evidence and rollback:
+[worker file-cap report](docs/codex-file-cap-report.md).
+
 # ISSUE-380 — Smaller TP and independent cost-aware profit capture
 
 Current explicitly approved DEMO trial source `0.7.2-quick-oco.1-codex.1`, policy
