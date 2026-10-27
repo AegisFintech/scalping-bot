@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { quickProfitExit } from "../../apps/execution-service/src/quick-profit-exit.js";
-import { CODEX_STRATEGY_VERSION } from "../../packages/config/src/policy.js";
+const HISTORICAL_PROFIT_SOURCE = "0.7.2-quick-oco.1-codex.1";
 import { metadata } from "../helpers/breakout-candidate.js";
 import type { ProtectionPosition } from "../../apps/execution-service/src/position-protection.js";
 const now = new Date("2026-10-26T07:00:00Z");
 const position: ProtectionPosition = {
   id: "p",
   brokerPositionId: "1",
-  strategyVersion: CODEX_STRATEGY_VERSION,
+  strategyVersion: HISTORICAL_PROFIT_SOURCE,
   entryCommission: "-29.67",
   entryPrice: "4004.19",
   volume: "24700",

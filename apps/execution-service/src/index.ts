@@ -21,6 +21,7 @@ import "dotenv/config";
 import {
   resolveRuntimeEnvironment,
   POLICY_VERSION,
+  QUICK_OCO,
   executionRiskPolicy,
   FADE_LIMIT_RELEASE,
   FADE_LIMIT_RELEASE_V3,
@@ -401,7 +402,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "entry-quick-oco-execution-v3",
+    promptVersion: "entry-quick-oco-execution-v4",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -614,7 +615,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-quick-oco-execution-v3",
+    promptVersion: "entry-quick-oco-execution-v4",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1310,7 +1311,7 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: "entry-quick-oco-execution-v3",
+      promptVersion: "entry-quick-oco-execution-v4",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,
@@ -1545,6 +1546,7 @@ async function main(): Promise<void> {
         )
         .catch(() => null),
       policyVersion: POLICY_VERSION,
+      profitExit: { mode: QUICK_OCO.profitExitMode, guaranteedNet: false },
       riskPolicy: executionRiskPolicy(config.tradingMode),
       accountType: connectionMode,
       emergencyStopped:
@@ -1786,7 +1788,6 @@ async function main(): Promise<void> {
           symbolId: executionSymbolId,
           symbol: config.symbol,
           tickSize: startupMetadata.tickSize,
-          profitQuote: () => marketClient.quote(config.symbol),
           quote: async () => {
             const result = await marketClient.quote(config.symbol);
             if (result.metadata.symbolId !== executionSymbolId)

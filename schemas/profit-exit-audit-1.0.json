@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "profit-exit-audit-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "profit-exit-audit-1.0"
+    },
+    "claims": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "exactBotCloses": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unattributedOrIncomplete": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "exactBotCloseNet": {
+      "type": ["string", "null"],
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "maximumObservedAdversePrice": {
+      "type": ["string", "null"],
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "claimedAt": {
+            "type": "string"
+          },
+          "attribution": {
+            "enum": ["EXACT_BOT_CLOSE", "UNATTRIBUTED_OR_INCOMPLETE"]
+          },
+          "net": {
+            "type": ["string", "null"],
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "feePrice": {
+            "type": ["string", "null"],
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "adversePrice": {
+            "type": ["string", "null"],
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "allowancePrice": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "quoteToCloseMs": {
+            "type": ["number", "null"],
+            "minimum": 0
+          },
+          "guaranteedProfit": {
+            "const": false
+          }
+        },
+        "required": [
+          "claimedAt",
+          "attribution",
+          "net",
+          "feePrice",
+          "adversePrice",
+          "allowancePrice",
+          "quoteToCloseMs",
+          "guaranteedProfit"
+        ]
+      }
+    },
+    "counterfactualNet": {
+      "type": "null"
+    },
+    "qualification": {
+      "const": "DESCRIPTIVE_NOT_A_TAIL_BOUND_OR_STRATEGY_QUALIFICATION"
+    },
+    "executionAuthority": {
+      "const": false
+    },
+    "release": {
+      "type": "string",
+      "pattern": "^0\\.7\\.[23]-quick-oco\\.1-codex\\.1$"
+    },
+    "from": {
+      "type": "string"
+    },
+    "until": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "claims",
+    "exactBotCloses",
+    "unattributedOrIncomplete",
+    "exactBotCloseNet",
+    "maximumObservedAdversePrice",
+    "observations",
+    "counterfactualNet",
+    "qualification",
+    "executionAuthority"
+  ]
+}

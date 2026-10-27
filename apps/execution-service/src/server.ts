@@ -35,6 +35,10 @@ export interface ExecutionStatus {
   readonly scenarioContext?: Readonly<Record<string, unknown>>;
   readonly policyVersion?: RiskPolicy["version"];
   readonly riskPolicy?: RiskPolicy;
+  readonly profitExit?: {
+    readonly mode: "BROKER_NATIVE";
+    readonly guaranteedNet: false;
+  };
   readonly mode: string;
   readonly symbol: string;
   readonly accountType: string;

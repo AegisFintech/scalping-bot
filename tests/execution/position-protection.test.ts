@@ -505,140 +505,76 @@ describe("independent broker position protection", () => {
   });
 });
 
-// New operator authority is isolated from the historical missing-SL close path.
-describe("quick-profit close lifecycle", () => {
-  async function profitable() {
-    const f = fixture();
-    const { CODEX_STRATEGY_VERSION } =
-      await import("../../packages/config/src/policy.js");
-    const { metadata } = await import("../helpers/breakout-candidate.js");
-    f.setPosition({
-      ...local,
-      strategyVersion: CODEX_STRATEGY_VERSION,
-      entryCommission: "-0.14",
-    });
-    f.protect();
-    f.replace({
-      ...broker(),
-      stopLoss: 4398.95,
-      takeProfit: 4397.36,
-      swap: "0",
-      moneyDigits: 2,
-    });
-    const context = {
-      quote: {
-        bid: "4397.30",
-        ask: "4397.40",
+// ISSUE-384: optional market-profit authority is removed, not merely delayed.
+describe("broker-native profit exits", () => {
+  it.each([
+    { side: "SELL" as const, entry: "3999.90", mark: "3999.53", fee: "-29.28" },
+    { side: "SELL" as const, entry: "4015.37", mark: "4015.00", fee: "-29.51" },
+    { side: "BUY" as const, entry: "4010.44", mark: "4010.79", fee: "-29.48" },
+  ])(
+    "does not reproduce a market close for recorded losing trigger $entry",
+    async ({ side, entry, mark, fee }) => {
+      const f = fixture();
+      const { Decimal } = await import("decimal.js");
+      const { CODEX_STRATEGY_VERSION } =
+        await import("../../packages/config/src/policy.js");
+      const d = side === "BUY" ? 1 : -1;
+      const stop = new Decimal(entry).minus(7 * d).toFixed();
+      const target = new Decimal(entry)
+        .plus(new Decimal("0.4").mul(d))
+        .toFixed();
+      f.setPosition({
+        ...local,
+        side,
+        entryPrice: entry,
+        orderEntry: entry,
+        orderStopLoss: stop,
+        orderTakeProfit: target,
+        strategyVersion: CODEX_STRATEGY_VERSION,
+        entryCommission: fee,
+      });
+      f.replace({
+        ...broker(),
+        price: Number(entry),
+        stopLoss: Number(stop),
+        takeProfit: Number(target),
+        tradeData: {
+          ...(broker().tradeData as object),
+          tradeSide: side === "BUY" ? 1 : 2,
+        },
+      });
+      f.quote.mockResolvedValue({
+        bid: mark,
+        ask: mark,
         sourceTime: timestamp,
         receivedAt: timestamp,
-      },
-      metadata: { ...metadata(), symbolId: "7", metadataTime: timestamp },
-    };
-    Object.assign(f.options, { profitQuote: () => Promise.resolve(context) });
-    const claim = vi.fn<NonNullable<ProtectionSession["claimProfitClose"]>>(
-      (_p, at, e) => f.session.claimClose(_p, at, e.volume),
-    );
-    f.session.claimProfitClose = claim;
-    return { ...f, claim, context };
-  }
-  it("claims before dispatch, keeps native protection and never resends on restart", async () => {
-    const f = await profitable();
-    await f.run();
-    expect(f.claim).toHaveBeenCalledOnce();
-    expect(f.client.closePosition).toHaveBeenCalledOnce();
-    expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
-    expect(f.closeAcknowledged).toHaveBeenCalledOnce();
-    await f.run();
-    expect(f.client.closePosition).toHaveBeenCalledOnce();
-  });
-  it("does not repeat unknown close dispatch", async () => {
-    const f = await profitable();
-    f.client.closePosition.mockRejectedValueOnce(new Error("timeout"));
-    await expect(f.run()).rejects.toThrow();
-    await f.run();
-    expect(f.client.closePosition).toHaveBeenCalledOnce();
-  });
-  it("does not close when claim fails or price gives back before re-read", async () => {
-    const f = await profitable();
-    f.claim.mockResolvedValue(false);
-    await f.run();
-    expect(f.client.closePosition).not.toHaveBeenCalled();
-    const g = await profitable();
-    let n = 0;
-    Object.assign(g.options, {
-      profitQuote: () => {
-        n++;
-        return Promise.resolve({
-          ...g.context,
-          quote: { ...g.context.quote, ask: n === 1 ? "4397.40" : "4397.88" },
-        });
-      },
-    });
-    await g.run();
-    expect(g.claim).not.toHaveBeenCalled();
-  });
-  it("does not close a manually closed or changed-volume position", async () => {
-    const f = await profitable();
-    f.client.reconcileRaw
-      .mockResolvedValueOnce({
-        receivedAt: timestamp,
-        positions: [
-          {
-            ...broker(),
-            stopLoss: 4398.95,
-            takeProfit: 4397.36,
-            swap: "0",
-            moneyDigits: 2,
-          },
-        ],
-        orders: [],
-      })
-      .mockResolvedValueOnce({
-        receivedAt: timestamp,
-        positions: [],
-        orders: [],
       });
+      const claim = vi.fn<NonNullable<ProtectionSession["claimProfitClose"]>>();
+      f.session.claimProfitClose = claim;
+      await f.run();
+      await f.run();
+      expect(f.observations.at(-1)?.status).toBe("VERIFIED");
+      expect(claim).not.toHaveBeenCalled();
+      expect(f.client.closePosition).not.toHaveBeenCalled();
+      expect(f.client.amendPositionProtection).not.toHaveBeenCalled();
+      expect(f.quote).not.toHaveBeenCalled(); // No polling quote->market-close round trip.
+    },
+  );
+  it("preserves unknown prior close claims without replaying them", async () => {
+    const f = fixture();
+    f.protect();
+    f.setPosition({ ...local, closeRequestedAt: timestamp });
     await f.run();
+    await f.run();
+    expect(f.observations.at(-1)?.status).toBe("CLOSE_SENT");
     expect(f.client.closePosition).not.toHaveBeenCalled();
-    const g = await profitable();
-    g.client.reconcileRaw
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          receivedAt: timestamp,
-          positions: [
-            {
-              ...broker(),
-              stopLoss: 4398.95,
-              takeProfit: 4397.36,
-              swap: "0",
-              moneyDigits: 2,
-            },
-          ],
-          orders: [],
-        }),
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          receivedAt: timestamp,
-          positions: [
-            {
-              ...broker(),
-              tradeData: { ...(broker().tradeData as object), volume: "99" },
-            },
-          ],
-          orders: [],
-        }),
-      );
-    await expect(g.run()).rejects.toThrow();
-    expect(g.client.closePosition).not.toHaveBeenCalled();
   });
-  it("keeps verified broker protection when optional profit quote is unavailable", async () => {
-    const f = await profitable();
-    Object.assign(f.options, {
-      profitQuote: () => Promise.reject(new Error("unavailable")),
-    });
+  it("does not close a protected historical/manual position because a quote is green", async () => {
+    const f = fixture();
+    f.protect();
+    f.quote.mockRejectedValue(new Error("quote unavailable"));
     await f.run();
-    expect(f.claim).not.toHaveBeenCalled();
     expect(f.observations.at(-1)?.status).toBe("VERIFIED");
+    expect(f.client.closePosition).not.toHaveBeenCalled();
   });
 });

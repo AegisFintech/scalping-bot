@@ -1,3 +1,18 @@
+# ISSUE-384 — Broker-native profit exits
+
+Operator approved fixing fee-to-fill execution after three recorded local profit
+closes lost money net of fees. New source `0.7.3-quick-oco.1-codex.1`, policy
+`0.7.3-quick-oco.1` removes optional local market-profit dispatch entirely.
+Broker-held native TP stays0.40 price units (40 observed0.01 broker pips/ticks),
+SL7.00, dynamic shared5% demo setup ceiling/at most2.5% each OCO leg, entry30-tick
+range and65-tick stop-risk reserve are unchanged. Other modes1%. No fixed lots,
+size increase, wider TP, reverse direction or forced trades. Native protection,
+missing-SL emergency repair/close, manual/partial-close recovery, unresolved claims,
+GTC/OCO/ownership/session/account/cooldown gates and financial history remain.
+New promptv4/request1.10/local-executionv4/risk-schema1.9 are additive; old bytes
+and registrations stay immutable. Keep the worker512MiB file cap/isolation.
+See [evidence, limitations, validation and rollback](docs/native-profit-exit-report.md).
+
 # ISSUE-382 — Codex worker storage cap
 
 The operator approved a finite512MiB per-file cap for the dedicated Codex analysis

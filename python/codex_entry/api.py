@@ -79,6 +79,7 @@ def main() -> None:
         "entry-quick-oco-v1",
         "entry-quick-oco-v2",
         "entry-quick-oco-v3",
+        "entry-quick-oco-v4",
     }:
         raise ValueError("CODEX_PROMPT_VERSION_INVALID")
     app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"], prompt_version=expected)

@@ -1,0 +1,76 @@
+{
+  "release": "0.7.2-quick-oco.1-codex.1",
+  "from": "2026-10-26T00:00:00Z",
+  "until": "2026-10-27T03:10:00Z",
+  "schemaVersion": "profit-exit-audit-1.0",
+  "claims": 6,
+  "exactBotCloses": 4,
+  "unattributedOrIncomplete": 2,
+  "exactBotCloseNet": "-64.27",
+  "maximumObservedAdversePrice": "0.31",
+  "observations": [
+    {
+      "claimedAt": "2026-10-26 13:22:29.636152+00",
+      "attribution": "UNATTRIBUTED_OR_INCOMPLETE",
+      "net": "43.5900000000",
+      "feePrice": null,
+      "adversePrice": null,
+      "allowancePrice": "0.05",
+      "quoteToCloseMs": null,
+      "guaranteedProfit": false
+    },
+    {
+      "claimedAt": "2026-10-26 13:46:04.379351+00",
+      "attribution": "EXACT_BOT_CLOSE",
+      "net": "-21.9600000000",
+      "feePrice": "0.24",
+      "adversePrice": "0.22",
+      "allowancePrice": "0.05",
+      "quoteToCloseMs": 660,
+      "guaranteedProfit": false
+    },
+    {
+      "claimedAt": "2026-10-26 14:57:44.843876+00",
+      "attribution": "UNATTRIBUTED_OR_INCOMPLETE",
+      "net": "260.7100000000",
+      "feePrice": null,
+      "adversePrice": null,
+      "allowancePrice": "0.05",
+      "quoteToCloseMs": null,
+      "guaranteedProfit": false
+    },
+    {
+      "claimedAt": "2026-10-26 15:38:27.066655+00",
+      "attribution": "EXACT_BOT_CLOSE",
+      "net": "21.7700000000",
+      "feePrice": "0.2411428571428571428571428571428571428571",
+      "adversePrice": "0.08",
+      "allowancePrice": "0.05",
+      "quoteToCloseMs": 724,
+      "guaranteedProfit": false
+    },
+    {
+      "claimedAt": "2026-10-27 02:26:51.454808+00",
+      "attribution": "EXACT_BOT_CLOSE",
+      "net": "-14.9200000000",
+      "feePrice": "0.2408979591836734693877551020408163265306",
+      "adversePrice": "0.19",
+      "allowancePrice": "0.05",
+      "quoteToCloseMs": 854,
+      "guaranteedProfit": false
+    },
+    {
+      "claimedAt": "2026-10-27 03:06:21.513129+00",
+      "attribution": "EXACT_BOT_CLOSE",
+      "net": "-49.1600000000",
+      "feePrice": "0.240653061224489795918367346938775510204",
+      "adversePrice": "0.31",
+      "allowancePrice": "0.05",
+      "quoteToCloseMs": 801,
+      "guaranteedProfit": false
+    }
+  ],
+  "counterfactualNet": null,
+  "qualification": "DESCRIPTIVE_NOT_A_TAIL_BOUND_OR_STRATEGY_QUALIFICATION",
+  "executionAuthority": false
+}
