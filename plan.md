@@ -1,3 +1,9 @@
+### ISSUE-412 — Broker acknowledgement evidence design
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/412; parent #407.
+- Acceptance: document callback identity, field and clock provenance, compatible atomic evidence storage, failure behavior and remaining implementation and validation work. No runtime change.
+- Status: design documented; implementation and real receipt remain in #407.
+
 ### ISSUE-410 — Offline research publisher scope policy
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/410; parent #401.

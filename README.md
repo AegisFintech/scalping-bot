@@ -73,3 +73,5 @@ strategy automatically. Round numbers and shallow broker DOM are context, not
 proof of liquidity, accuracy or future fills.
 
 The [offline publisher scope policy](docs/publisher-policy-report.md) checks research proposal boundaries only; it cannot run, publish or merge code.
+
+The [broker acknowledgement design](docs/broker-acknowledgement-design.md) describes prospective evidence capture; it is not active yet.
