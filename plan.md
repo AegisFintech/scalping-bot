@@ -1,3 +1,12 @@
+### ISSUE-398 — One bot with tc01/tc02 research — proposed
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/398.
+- Dependencies: existing #304/#289/#290, current0.8/Flight and xauusd#22 completion repair; do not activate the xauusd broker adapter.
+- Acceptance: evidence-based integration plan for this bot as primary repository and sole executor, tc01 research coordination and tc02 heavy experiments; source/runtime/dirty-state review, measured learning limits, compatible evidence/replay and isolated self-commit/PR pathway; no trading or remote-source changes.
+- Status: investigation and plan delivered for operator review; implementation not started. Read `docs/harness-integration-plan.md` and pinned `docs/evidence/xauusd-harness-review-20261028.md`. SSH alias tested with local0600 Linux key/config; no private config committed.
+- Proposed batches: #399 current-release read-only evidence bridge (one-authority inventory, causal timestamps/denominators); #400 additive single STOP_LIMIT/GTD replay (depends#399/#290, old studies frozen); #401 isolated exact-path publisher (independent checks, no broker/root authority); #402 tc01/tc02 agenda/result/finding loop (depends on completion repair/#399/#400/#401); #403 unified desk and independently reviewed forward release (depends#399–#402).
+- Every batch stays PROPOSED pending review of this plan; each has its own acceptance/failure tests and issue dependencies. Code delivery does not authorize economic activation, risk increases or real-money live execution.
+
 ### ISSUE-390 — Agent contract, fill evidence and SMC level prompt
 
 - Issue: GitHub issue/PR link added after it exists remotely (one operator-approved PR, three commits).
