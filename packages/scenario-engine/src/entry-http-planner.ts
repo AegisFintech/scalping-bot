@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { bindModeDecision } from "./mode-entry.js";
+import { bindScalpDecision } from "./scalp-entry.js";
 import { FIXED_DEFAULTS } from "../../config/src/policy.js";
 import {
   boundedResponseText,
@@ -99,7 +99,7 @@ export class EntryPairHttpPlanner {
       .find((s) => s.timeframe === "M1")
       ?.candles.at(-1)?.endTime;
     if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
-    const plan = bindModeDecision(envelope.rawResponse, {
+    const plan = bindScalpDecision(envelope.rawResponse, {
       ...input,
       observedM1End,
     });

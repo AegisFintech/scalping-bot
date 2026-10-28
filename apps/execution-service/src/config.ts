@@ -1,3 +1,4 @@
+import { SCALP_LIMITS } from "../../../packages/config/src/policy.js";
 import { createHash } from "node:crypto";
 
 import { Decimal } from "decimal.js";
@@ -336,6 +337,7 @@ function configurationHash(
     .update(
       JSON.stringify({
         orderLifecycle: ORDER_LIFECYCLE,
+        scalpProposalLimits: SCALP_LIMITS,
         strategyRelease: BREAKOUT_SCALP_RELEASE,
         riskPolicy: executionRiskPolicy(config.tradingMode),
         appEnv: config.appEnv,

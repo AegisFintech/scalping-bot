@@ -4473,10 +4473,10 @@ runtime.
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/393; parent #391, depends on #392.
 - Acceptance: centralized validated request/prompt routing and deterministic execution-bound extraction, characterization/rejection tests, no changed trading behavior or immutable contracts; full checks and reviewed pushed PR.
-- Status: implemented; calculation blocks byte-identical, coordinator interface retained. 74 coordinator and105 targeted worker tests pass; full qualification passed: 1,132 Node +124 PostgreSQL +544 Python (1,800), all required gates/audits. Reviewed delivery follows. See `docs/execution-seams-report.md`.
+- Status: implemented; calculation blocks byte-identical, coordinator interface retained. 74 coordinator and105 targeted worker tests pass; full qualification passed: 1,132 Node +124 PostgreSQL +544 Python (1,800), all required gates/audits. [PR #396](https://github.com/AegisFintech/scalping-bot/pull/396) merged after both hosted checks passed. See `docs/execution-seams-report.md`.
 
 ### ISSUE-394 — Model-defined directional scalping
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/394; parent #391, depends on #392/#393.
 - Acceptance: one trend-direction STOP_LIMIT, model entry/TP/SL/pending expiry inside finite scalping bounds; deterministic sizing, costs, native protection/expiry, exact fill/cancel/partial/unknown/restart recovery and one durable refresh. Additive contracts, migrations if required, full checks, reviewed delivery and matching one-demo activation. No risk increase, reversal, filled-position expiry close, accounting reset or profitability claim.
-- Status: planned; actual native GTD acknowledgement/recovery semantics must be verified before activation. Current accepted groups retain their original GTC/OCO semantics.
+- Status: implemented in progress; additive contracts, scoped GTD authority and native callback/partial-fill tests. Independent review found short-lifetime admission, native-expiry refresh and dashboard-policy omissions; corrected with regressions. Full qualification passed: 1,152 Node +132 PostgreSQL +557 Python (1,841), every required check/audit and both configuration scopes; final independent reviews found no blocker. Pushed PR, hosted checks and matched one-demo activation follow. See `docs/model-scalp-report.md`.

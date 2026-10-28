@@ -1,3 +1,4 @@
+import type { ScalpEntryPlan } from "./scalp-entry.js";
 import type { ModeEntryPlan } from "./mode-entry.js";
 import { z } from "zod";
 import { decimal } from "../../risk-engine/src/decimal.js";
@@ -112,8 +113,10 @@ export function validateDirectionalPlan(
 }
 export function isEntryPlan(
   plan: { schema_version: string } | null | undefined,
-): plan is EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan {
+): plan is
+  EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan | ScalpEntryPlan {
   return (
+    plan?.schema_version === "entry-scalp-1.0" ||
     plan?.schema_version === "entry-pair-1.0" ||
     plan?.schema_version === "entry-direction-1.0" ||
     plan?.schema_version === "entry-modes-1.0"

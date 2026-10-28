@@ -26,27 +26,27 @@ in linked reports. Give longer explanations only when explicitly requested.
 
 ## Current release (controlled DEMO only)
 
-- **Source / policy:** `0.7.3-quick-oco.1-codex.2` / `0.7.3-quick-oco.1`, defined
-  in `packages/config/src/policy.ts` (ISSUE-390 provider revision; economics as
-  `codex.1`).
+- **Source / policy:** `0.8.0-model-scalp.1-codex.1` / `0.8.0-model-scalp.1`,
+  defined in `packages/config/src/policy.ts`; read `docs/model-scalp-report.md`.
 - **Provider:** isolated subscription Codex worker, requested `gpt-6.1-sol`, no API
   fallback. Unattested returned identity, usage and cost stay null.
-- **Provider contract:** prompt `entry-quick-oco-v5`, request 1.11, response 1.2
-  (BUY/SELL/WAIT plus upper/lower breakout prices). Local execution prompt
-  `entry-quick-oco-execution-v4`, risk schema 1.9.
+- **Provider contract:** prompt `entry-scalp-v1`, request1.12, response1.3
+  (BUY/SELL/WAIT plus one entry, TP, SL and pending seconds). Local execution
+  `entry-scalp-execution-v1`, context `entry-scalp-1.0`, risk schema2.0.
 - **Model context:** completed M15/M5/M1 candles, `causal-smc-1.1` technical context
   (the unchanged 1.0 evidence plus the deterministic level map, analytics `/v3`,
   request 1.2 / response 1.1), broker DOM summary, entry boundaries and execution
   costs. Missing, stale or mismatched context blocks dispatch; there is no fallback.
-- **Orders:** dual STOP_LIMIT/GTC/OCO, BUY at upper and SELL at lower, 30-tick entry
-  range; the pending peer is cancelled after a confirmed fill. Model direction is
-  recorded, not a leg filter.
-- **Protection and exits:** broker-native TP 0.40 price units (upward whole-pip
-  rounded) and SL 7.00 price units. No local profit market close; sampled green
-  P/L is never close authority.
+- **Orders:** one model-selected trend-direction STOP_LIMIT/GTD,30-tick entry
+  range, capture-relative60–300s expiry with exact broker acknowledgement.
+  Expiry never closes filled exposure; exact zero-fill terminal proof precedes one
+  durable refresh. Older GTC/OCO groups retain immutable authority.
+- **Protection and exits:** validated model distances, gross TP<=0.40 price units,
+  SL<=7.00 and RR>=0.0571428571, whole broker pips. Native protection stays
+  fill-relative and independent. No local sampled-profit market-close authority.
 - **Money management:** dynamic sizing from reconciled equity, actual metadata
-  costs, margin and volume steps. Demo shares at most 5% per setup and 2.5% per
-  race-exposed leg; other modes 1%. 65-tick stop-risk reserve; the 5-tick native
+  costs, margin and volume steps. Demo retains at most5% setup ceiling and at most
+  2.5% for the single order (former leg ceiling); other modes1%. 65-tick stop-risk reserve; the 5-tick native
   exit allowance is a declared model, not a validated tail bound. The 0.08 broker
   pip is the modeled net objective, never the gross TP.
 - **Live:** disabled by default and never inferred from credentials or configuration.
@@ -70,8 +70,8 @@ or trades, accounting reset or automatic research promotion. No profitability cl
 This repository implements an AI-assisted XAUUSD short-term trading system for
 controlled demo evaluation. It continuously observes completed candles, quotes,
 order-book/account/risk state and broker session status. The model proposes a
-direction or WAIT and two breakout prices; deterministic code owns validation,
-order type, SL/TP, dynamic sizing, broker precision, margin, ownership,
+direction or WAIT, one entry, TP, SL and pending lifetime; deterministic code owns
+validation, order type, native protection, dynamic sizing, broker precision, margin, ownership,
 reconciliation and all execution authority. The complete decision and broker
 lifecycle is recorded for later analysis.
 
@@ -120,8 +120,8 @@ gates, manufacture a trade or increase risk to maintain frequency.
   never authorizes new execution. Exact provider inputs, prompts and available
   response text are journaled.
 - The model anchors every price to a supplied `causal-smc-1.1` value plus whole ticks
-  and cites it; the counter-trend trigger goes beyond the protecting structure. Level
-  definitions are frozen descriptive code, never fitted thresholds or entry filters;
+  and cites it. The second internal reference is invalidation, never another entry
+  or an AI holding box. Level definitions are frozen descriptive code, never fitted thresholds or entry filters;
   changing them needs a new definitions version (`docs/smc-level-prompt-report.md`).
 - Inference runs outside the execution path. Each execution decision needs fresh
   completed-candle context; crossed entries wait and are never shifted to chase.
@@ -152,9 +152,11 @@ gates, manufacture a trade or increase risk to maintain frequency.
 
 ### Orders, OCO and recovery
 
-- Accepted pending orders are GTC with no timer expiry; the submission deadline only
-  authorizes fresh placement. Normal shutdown preserves GTC; emergency stop cancels
-  owned pending orders (`docs/persistent-order-loop-report.md`).
+- Historical GTC orders retain no timer expiry. New scalp entries use the exact
+  acknowledged GTD deadline; pending expiry never closes filled positions. Normal
+  shutdown preserves broker-held orders/protection; emergency stop cancels only
+  owned pending orders. See `docs/model-scalp-report.md` and the historical
+  `docs/persistent-order-loop-report.md`.
 - After a confirmed fill or zero-fill terminal peer outcome, cancel the surviving
   owned peer only with exact pair ownership, event evidence, no-fill/no-position
   checks and reconciliation; durable peer-cancel retries include partial fills.

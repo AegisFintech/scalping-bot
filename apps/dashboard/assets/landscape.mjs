@@ -41,7 +41,7 @@ function controller(root) {
     ["download", "⇣", "Market data", "Completed OHLC", "#83dbe3"],
     ["process", "⌁", "Process", "Indicators & risk", "#8abfff"],
     ["ai", "✦", "Codex", "Entry proposals", "#d49eea"],
-    ["orders", "⇄", "Place entry", "Selected mode / GTC", "#f1c47c"],
+    ["orders", "⇄", "Place entry", "STOP_LIMIT / GTD", "#f1c47c"],
     ["position", "◎", "Manage trade", "Broker SL / TP", "#64e5ba"],
   ];
   stages.forEach(([key, icon, name, detail, tone], index) => {
@@ -333,7 +333,7 @@ function controller(root) {
     );
     text(
       "chart-source",
-      `${m.chartSource || "Recorded setup snapshot"} · ${m.chartAt || "Unavailable"} · Historical completed candles, not a live feed. Corridor = buffered entry range, not exact AI box.`,
+      `${m.chartSource || "Recorded setup snapshot"} · ${m.chartAt || "Unavailable"} · Historical completed candles, not a live feed. Lines are recorded proposals; verified broker protection is shown separately.`,
     );
     if (!rows.length) {
       $("price-chart").append(

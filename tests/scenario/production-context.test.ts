@@ -150,11 +150,15 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-quick-oco-v5",
+          promptVersion: "entry-scalp-v1",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),
             tick_size: snapshot.metadata.tickSize,
+            pip_size: snapshot.metadata.pipSize,
+            maximum_stop_distance:
+              request.payload.execution_constraints.maximum_stop_distance,
+            minimum_protection_distance: snapshot.metadata.minStopDistance,
             quote: snapshot.quote,
             minimum_entry_distance: entryPriceBounds(
               snapshot.quote,
@@ -208,7 +212,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
       chart: analysisChart(),
     });
     expect(result.response.buy_stop.entry_price).toBe("4420");
-    expect(result.promptArtifact.version).toBe("entry-quick-oco-execution-v4");
+    expect(result.promptArtifact.version).toBe("entry-scalp-execution-v1");
     store.row = { ...store.row, consumed: true };
     expect(await model.prepare(input(40))).toBe("SCENARIO_MAP_CONSUMED");
     expect(generate).not.toHaveBeenCalled();
@@ -914,4 +918,51 @@ describe("restart-safe explicit WAIT scheduling", () => {
     expect(await model.prepare(next)).toBe("SCENARIO_CODEX_WAIT");
     expect(store.claim).not.toHaveBeenCalled();
   });
+});
+
+it("admits a sixty-second scalp after ordinary inference latency without the legacy65s wait", async () => {
+  const { bindScalpDecision } =
+    await import("../../packages/scenario-engine/src/scalp-entry.js");
+  const plan = bindScalpDecision(
+    JSON.stringify({
+      decision: "BUY",
+      reason: "Fixture continuation",
+      entry_price: "4406",
+      take_profit: "4406.4",
+      stop_loss: "4401",
+      pending_seconds: 60,
+    }),
+    {
+      analysisId: fixture.plan.analysis_id,
+      symbol: "XAUUSD",
+      capturedAt: at(0),
+      tickSize: "0.01",
+      observedM1End: at(0),
+    },
+  );
+  const store = memory();
+  store.row = { ...stored(), plan, validUntil: at(60), availableAt: at(10) };
+  const generate = vi.fn();
+  const model = new ReusableScenarioModel(
+    store,
+    { generate },
+    () => base + 20000,
+    () => {},
+    true,
+  );
+  const i = input(20),
+    p = payload();
+  p.server_time = at(20);
+  p.execution_constraints.order_expiry_min_seconds = 1;
+  expect(await model.prepare({ ...i, payload: p })).toBeNull();
+  const result = await model.analyze({
+    analysisId: p.analysis_id,
+    timeoutMs: 5000,
+    symbol: "XAUUSD",
+    payload: p,
+    chart: analysisChart(),
+  });
+  expect(result.entrySide).toBe("BUY");
+  expect(result.response.buy_stop.expires_at).toBe(at(60));
+  expect(generate).not.toHaveBeenCalled();
 });

@@ -300,11 +300,13 @@ export interface CoordinatorOptions {
     reasonCodes: readonly string[];
     details: Readonly<Record<string, unknown>>;
   }>;
+  readonly modelDefinedScalp?: boolean;
   readonly evidenceScalp?: (
     snapshot: MarketSnapshot,
     response: ModelResponse,
     atr: string,
     maximumStopDistance: string,
+    side?: "BUY" | "SELL",
   ) => Promise<ReturnType<typeof applyBreakoutScalpExitPolicy>>;
   readonly compressionScalp?: (
     snapshot: MarketSnapshot,
@@ -331,7 +333,8 @@ export interface CoordinatorOptions {
     | "entry-quick-oco-execution-v1"
     | "entry-quick-oco-execution-v2"
     | "entry-quick-oco-execution-v3"
-    | "entry-quick-oco-execution-v4";
+    | "entry-quick-oco-execution-v4"
+    | "entry-scalp-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly commandFeeCheck?: (
@@ -672,9 +675,10 @@ export class AnalysisCoordinator {
         return await reject(proposalRiskConstraints.reasonCodes);
       }
       // Two-price model scaffolding is not the adopted exit policy.
-      const minimumProposalRiskRewardRatio =
-        this.#options.compressionScalp === undefined &&
-        this.#options.evidenceScalp === undefined
+      const minimumProposalRiskRewardRatio = this.#options.modelDefinedScalp
+        ? this.#options.minRiskRewardRatio
+        : this.#options.compressionScalp === undefined &&
+            this.#options.evidenceScalp === undefined
           ? this.#options.minRiskRewardRatio
           : "0.1";
       if (
@@ -1201,6 +1205,7 @@ export class AnalysisCoordinator {
               model.response,
               atr,
               maximumEffectiveStopDistance,
+              model.entrySide,
             )
           : this.#options.compressionScalp !== undefined
             ? await this.#options.compressionScalp(

@@ -4,7 +4,7 @@ import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 export const CODEX_ENTRY_MODEL = "gpt-6.1-sol";
 export const HISTORICAL_API_MODEL = "grok-4.5";
 export const HISTORICAL_BREAKOUT_VERSION = "0.4.0-breakout-scalp.1-codex.1";
-export const CODEX_STRATEGY_VERSION = "0.7.3-quick-oco.1-codex.2";
+export const CODEX_STRATEGY_VERSION = "0.8.0-model-scalp.1-codex.1";
 export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {
@@ -13,13 +13,20 @@ export function usesFadeV3(version: string): boolean {
     version === HISTORICAL_CODEX_FADE_VERSION
   );
 }
-export const POLICY_VERSION = "0.7.3-quick-oco.1";
+export const POLICY_VERSION = "0.8.0-model-scalp.1";
 export const DEMO_SETUP_RISK_PERCENT = "5";
 export function setupRiskPercentFor(mode: TradingMode): string {
   return mode === "demo"
     ? DEMO_SETUP_RISK_PERCENT
     : MONEY_MANAGEMENT.setupRiskPercent;
 }
+export const SCALP_LIMITS = Object.freeze({
+  maximumTargetDistance: "0.4",
+  maximumStopDistance: "7",
+  minimumRiskReward: "0.0571428571",
+  minimumPendingSeconds: 60,
+  maximumPendingSeconds: 300,
+});
 export const QUICK_OCO = {
   netTargetPips: "0.08",
   targetPriceDistance: "0.4",
@@ -205,7 +212,7 @@ export const FIXED_DEFAULTS = {
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
   STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
-  CODE_VERSION: "0.7.3-quick-oco.1",
+  CODE_VERSION: "0.8.0-model-scalp.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;
@@ -350,6 +357,6 @@ export function resolveRuntimeEnvironment(
 
 /** Operator-selected order lifecycle; not a model or environment control. */
 export const ORDER_LIFECYCLE = Object.freeze({
-  version: "persistent-gtc-v1",
-  timeInForce: "GTC" as const,
+  version: "model-scalp-gtd-v1",
+  timeInForce: "GTD" as const,
 });

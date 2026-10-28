@@ -5,7 +5,7 @@ import {
   stopLimitProtectionFields,
   stopProtectionFields,
   stopLimitLifetimeFields,
-  validateGtcAcknowledgement,
+  validatePendingLifetimeAcknowledgement,
 } from "../../packages/ctrader-client/src/client.js";
 
 function command(side: "BUY" | "SELL"): PendingOrderCommand {
@@ -106,13 +106,19 @@ describe("broker lifetime encoding", () => {
 it("requires the broker to acknowledge GTC without a dated expiry", () => {
   const c = { ...command("BUY"), timeInForce: "GTC" as const };
   expect(() =>
-    validateGtcAcknowledgement(c, { orderStatus: 1, timeInForce: 2 }),
+    validatePendingLifetimeAcknowledgement(c, {
+      orderStatus: 1,
+      timeInForce: 2,
+    }),
   ).not.toThrow();
   expect(() =>
-    validateGtcAcknowledgement(c, { orderStatus: 1, timeInForce: 1 }),
+    validatePendingLifetimeAcknowledgement(c, {
+      orderStatus: 1,
+      timeInForce: 1,
+    }),
   ).toThrow("CTRADER_GTC_ACKNOWLEDGEMENT_MISMATCH");
   expect(() =>
-    validateGtcAcknowledgement(c, {
+    validatePendingLifetimeAcknowledgement(c, {
       orderStatus: 1,
       timeInForce: 2,
       expirationTimestamp: 123,
@@ -151,4 +157,30 @@ describe("ordinary stop protection", () => {
       ),
     ).toThrow();
   });
+});
+
+it("requires exact native GTD acknowledgement without reinterpreting fills", () => {
+  const c = { ...command("BUY"), timeInForce: "GTD" as const };
+  expect(() =>
+    validatePendingLifetimeAcknowledgement(c, {
+      orderStatus: 1,
+      timeInForce: 1,
+      expirationTimestamp: Date.parse(c.expiresAt),
+    }),
+  ).not.toThrow();
+  for (const order of [
+    { orderStatus: 1 },
+    { orderStatus: 1, timeInForce: 2 },
+    {
+      orderStatus: 1,
+      timeInForce: 1,
+      expirationTimestamp: Date.parse(c.expiresAt) + 1,
+    },
+  ])
+    expect(() => validatePendingLifetimeAcknowledgement(c, order)).toThrow(
+      "CTRADER_GTD_ACKNOWLEDGEMENT_MISMATCH",
+    );
+  expect(() =>
+    validatePendingLifetimeAcknowledgement(c, { orderStatus: 2 }),
+  ).not.toThrow();
 });

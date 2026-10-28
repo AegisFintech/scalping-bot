@@ -1209,7 +1209,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       numberField(execution.order, "orderType") !== brokerOrderTypeNumber(kind)
     )
       throw new Error("CTRADER_ORDER_TYPE_ACKNOWLEDGEMENT_MISMATCH");
-    validateGtcAcknowledgement(command, execution.order);
+    validatePendingLifetimeAcknowledgement(command, execution.order);
     return execution;
   }
 
@@ -1543,10 +1543,18 @@ export function stopLimitLifetimeFields(
     : { timeInForce: 1, expirationTimestamp: Date.parse(command.expiresAt) };
 }
 
-export function validateGtcAcknowledgement(
+export function validatePendingLifetimeAcknowledgement(
   command: PendingOrderCommand,
   order: Record<string, unknown> | null,
 ): void {
+  if (
+    orderTimeInForce(command) === "GTD" &&
+    order?.orderStatus === 1 &&
+    (order.timeInForce !== 1 ||
+      optionalNumberField(order, "expirationTimestamp") !==
+        Date.parse(command.expiresAt))
+  )
+    throw new Error("CTRADER_GTD_ACKNOWLEDGEMENT_MISMATCH");
   if (orderTimeInForce(command) === "GTC" && order?.orderStatus === 1) {
     const expiry = order.expirationTimestamp;
     if (

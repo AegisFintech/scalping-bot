@@ -88,11 +88,15 @@ def action(status: dict[str, Any], now: datetime) -> dict[str, Any]:
 def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
     plan = (snapshot.get("evidence") or {}).get("plan") or {}
     result = []
-    for side, key in (("BUY", "buy_stop"), ("SELL", "sell_stop")):
+    scalp = plan.get("schema_version") == "entry-scalp-1.0"
+    refs = (("BUY", "buy_stop"), ("SELL", "sell_stop"))
+    for side, key in refs:
+        if scalp and side != plan.get("entry_side"):
+            continue
         proposed = plan.get(key)
         proposed = proposed.get("entry_price") if isinstance(proposed, dict) else proposed
         if number(proposed) is not None:
-            label = f"Codex {side} breakout"
+            label = f"Codex {side} entry" if scalp else f"Codex {side} breakout"
             if plan.get("schema_version") == "entry-modes-1.0":
                 label = "Codex upper range" if side == "BUY" else "Codex lower range"
             if (
@@ -105,9 +109,20 @@ def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
                     "label": label,
                     "price": str(proposed),
                     "side": side,
-                    "role": "range_upper" if side == "BUY" else "range_lower",
+                    "role": "entry" if scalp else "range_upper" if side == "BUY" else "range_lower",
                 }
             )
+    if scalp:
+        for key, label in (("take_profit", "TP"), ("stop_loss", "SL")):
+            if number(plan.get(key)) is not None:
+                result.append(
+                    {
+                        "label": f"Codex proposed {label}",
+                        "price": str(plan[key]),
+                        "side": str(plan.get("entry_side")),
+                        "role": "proposal_protection",
+                    }
+                )
     for order in snapshot.get("orders", []):
         for field, label in (
             ("entry_price", "entry"),

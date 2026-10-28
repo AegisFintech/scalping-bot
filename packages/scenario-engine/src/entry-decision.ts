@@ -1,3 +1,4 @@
+import { validateScalpPlan, type ScalpEntryPlan } from "./scalp-entry.js";
 import { validateModePlan, type ModeEntryPlan } from "./mode-entry.js";
 import {
   validateDirectionalPlan,
@@ -47,7 +48,11 @@ export interface EntryWaitPlan {
   readonly reason: string;
 }
 export type EntryDecisionPlan =
-  EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan | EntryWaitPlan;
+  | EntryPairPlan
+  | DirectionalEntryPlan
+  | ModeEntryPlan
+  | ScalpEntryPlan
+  | EntryWaitPlan;
 export function bindEntryDecision(
   raw: string,
   context: {
@@ -92,6 +97,8 @@ export function validateEntryDecision(
   },
 ): EntryDecisionPlan {
   const value = JSON.parse(raw) as Record<string, unknown>;
+  if (value.schema_version === "entry-scalp-1.0")
+    return validateScalpPlan(raw, context);
   if (value.schema_version === "entry-modes-1.0")
     return validateModePlan(raw, context);
   if (value.schema_version === "entry-direction-1.0")
