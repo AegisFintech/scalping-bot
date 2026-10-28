@@ -1,3 +1,9 @@
+### ISSUE-400 — Offline single-order replay (draft checkpoint)
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/400; depends on #399 and the reviewed protocol in #290.
+- Acceptance: causal single STOP_LIMIT/GTD reconstruction, bounded sampled-path diagnostics, frozen benchmark and reviewed protocol; schemas, independent review, full qualification and an evidence-backed PR. Unknown fills, costs and historical acknowledgements stay unknown; no broker or promotion authority.
+- Status: incomplete draft; CLI disabled, 25 focused tests pass. Resolve documented review findings, complete schemas and protocol, then qualify and review before use. See `docs/scalp-replay-draft.md`. #407 tracks future broker acknowledgement evidence.
+
 ### ISSUE-399 — Read-only learning evidence bridge
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/399; parent #398.
