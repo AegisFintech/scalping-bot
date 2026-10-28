@@ -1,8 +1,20 @@
+### ISSUE-416 — Acknowledgement evidence activation record
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/416; parent #407.
+- Acceptance: document the verified demo activation and read-only smoke, without claiming a real broker receipt or zero trades.
+- Status: activation complete; documentation and GitHub delivery in progress. #407 remains open for a real acknowledgement and separately timestamped metadata.
+
+### ISSUE-407 — Prospective acknowledgement evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/407; software delivery https://github.com/AegisFintech/scalping-bot/pull/415.
+- Status: migration 0037 and the writer are active in the existing demo; scoped read-only export succeeded. No real acknowledgement or contemporaneous market/cost metadata has been verified, so this issue remains open.
+- Evidence: `docs/broker-acknowledgement-design.md` and `docs/evidence/broker-acknowledgement-rollout.json`.
+
 ### ISSUE-414 — Prospective acknowledgement capture software
 
-- Issue: https://github.com/AegisFintech/scalping-bot/issues/414; parent #407, design in #413.
+- Delivery: https://github.com/AegisFintech/scalping-bot/pull/415; parent #407, design in #413.
 - Acceptance: additive atomic callback evidence, bounded scoped research export, schemas and failure/duplicate/rollback tests, independent review and full qualification. No backfill or execution authority.
-- Status: software, independent reviews and full local qualification passed (1,173 Node, 132 PostgreSQL and 670 Python tests). No deployment, broker receipt or metadata reconstruction is claimed; #407 stays open for those remaining requirements.
+- Status: software qualified and merged; activation is recorded in #416. No broker receipt or metadata reconstruction is claimed; #407 stays open for those remaining requirements.
 
 ### ISSUE-412 — Broker acknowledgement evidence design
 
