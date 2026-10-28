@@ -2,7 +2,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/414; parent #407, design in #413.
 - Acceptance: additive atomic callback evidence, bounded scoped research export, schemas and failure/duplicate/rollback tests, independent review and full qualification. No backfill or execution authority.
-- Status: software and focused checks in progress. No deployment, broker receipt or metadata reconstruction is claimed; #407 stays open for those remaining requirements.
+- Status: software, independent reviews and full local qualification passed (1,173 Node, 132 PostgreSQL and 670 Python tests). No deployment, broker receipt or metadata reconstruction is claimed; #407 stays open for those remaining requirements.
 
 ### ISSUE-412 — Broker acknowledgement evidence design
 
