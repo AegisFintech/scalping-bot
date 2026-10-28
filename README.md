@@ -56,6 +56,8 @@ Normal environment settings are intentionally small; never replace a populated
 
 ## Reports
 
+- [Proposed tc01/tc02 research integration into this bot](docs/harness-integration-plan.md)
+
 - [Architecture seams and review](docs/execution-seams-report.md)
 - [Corrected causal fill evidence](docs/fill-evidence-integrity-report.md)
 - [Storage and seven-day logs](docs/lean-storage-report.md)

@@ -1,5 +1,10 @@
 # Agent contract
 
+ISSUE-398: tc01/tc02 integration is a proposed research plan, not active authority.
+This bot remains the primary repository and sole broker executor; read
+`docs/harness-integration-plan.md`. Preserve remote dirty work, frozen studies and
+separate research/publisher/rollout authority. No runtime change is implied.
+
 ISSUE-393: provider version/prompt routing derives from existing Pydantic request
 metadata. Execution bounds live in `model-execution-bounds.ts`; the coordinator
 retains compatible exports. Preserve validators and lifecycle authority; see
