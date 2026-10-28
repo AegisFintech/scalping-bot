@@ -1,3 +1,9 @@
+### ISSUE-410 — Offline research publisher scope policy
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/410; parent #401.
+- Acceptance: independently supplied complete tree snapshots must match a narrowly scoped research proposal, rejecting unsafe changes; results carry no execution or publication authority. Versioned schemas, tests, independent review and qualification required.
+- Status: implementation, independent reviews and full qualification passed; delivery pending. Actual trusted verification, isolation and server enforcement remain in #401.
+
 ### ISSUE-409 — Retrospective replay software checkpoint
 
 - Delivery: https://github.com/AegisFintech/scalping-bot/pull/408; tracker #409; parent #400.

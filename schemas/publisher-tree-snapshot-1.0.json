@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "TreeEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "mode": {
+          "enum": ["100644", "100755", "120000", "160000"],
+          "title": "Mode",
+          "type": "string"
+        },
+        "size": {
+          "maximum": 2147483648,
+          "minimum": 0,
+          "title": "Size",
+          "type": "integer"
+        }
+      },
+      "required": ["sha256", "mode", "size"],
+      "title": "TreeEntry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Evidence supplied by a separately trusted Git/tree verifier, not by the model.",
+  "properties": {
+    "headCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Headcommit",
+      "type": "string"
+    },
+    "treeId": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Treeid",
+      "type": "string"
+    },
+    "entries": {
+      "additionalProperties": {
+        "$ref": "#/$defs/TreeEntry"
+      },
+      "maxProperties": 20000,
+      "propertyNames": {
+        "maxLength": 1024,
+        "minLength": 1
+      },
+      "title": "Entries",
+      "type": "object"
+    }
+  },
+  "required": ["headCommit", "treeId", "entries"],
+  "title": "TrustedTreeSnapshot",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

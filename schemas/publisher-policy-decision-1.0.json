@@ -1,0 +1,72 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "policyId": {
+      "const": "research-additions-1.0",
+      "title": "Policyid",
+      "type": "string"
+    },
+    "proposalSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Proposalsha256",
+      "type": "string"
+    },
+    "candidateTree": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Candidatetree",
+      "type": "string"
+    },
+    "changedPaths": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Changedpaths",
+      "type": "array"
+    },
+    "result": {
+      "const": "SCOPE_MATCH_ONLY",
+      "title": "Result",
+      "type": "string"
+    },
+    "sourceEvidenceIndependentlyVerified": {
+      "const": false,
+      "title": "Sourceevidenceindependentlyverified",
+      "type": "boolean"
+    },
+    "sandboxVerified": {
+      "const": false,
+      "title": "Sandboxverified",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "publishAuthority": {
+      "const": false,
+      "title": "Publishauthority",
+      "type": "boolean"
+    },
+    "mergeAuthority": {
+      "const": false,
+      "title": "Mergeauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "policyId",
+    "proposalSha256",
+    "candidateTree",
+    "changedPaths",
+    "result",
+    "sourceEvidenceIndependentlyVerified",
+    "sandboxVerified",
+    "brokerAuthority",
+    "publishAuthority",
+    "mergeAuthority"
+  ],
+  "title": "PolicyDecision",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

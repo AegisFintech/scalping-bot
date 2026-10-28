@@ -35,7 +35,7 @@ flat. See the [sanitized smoke receipt](evidence/scalp-replay-smoke-20261028.jso
 Synthetic current-release tests establish software behavior; they do not establish
 historical execution accuracy or profitability. Issue #400 remains open until its
 factual current-release journal reconstruction and broader research acceptance can
-be verified. Software-only delivery is tracked by issue #409. Issue #407 tracks
+be verified. Software-only delivery is recorded in [PR #408](https://github.com/AegisFintech/scalping-bot/pull/408). Issue #407 tracks
 future native acknowledgement capture; unavailable historical fields cannot be
 reconstructed from intent or the current policy.
 
