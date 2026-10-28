@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-quick-oco-v4.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-quick-oco-v5.md", "utf8").trim();
 function fixtureClient() {
   const request = {
     analysisId: randomUUID(),
@@ -69,11 +69,11 @@ describe("isolated Codex transport", () => {
     if (typeof rawBody !== "string") throw new Error("EXPECTED_JSON_REQUEST");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body).toMatchObject({
-      version: "codex-entry-request-1.10",
-      promptVersion: "entry-quick-oco-v4",
+      version: "codex-entry-request-1.11",
+      promptVersion: "entry-quick-oco-v5",
       promptSha256: s.value.promptSha256,
     });
-    expect(result.promptArtifact?.version).toBe("entry-quick-oco-v4");
+    expect(result.promptArtifact?.version).toBe("entry-quick-oco-v5");
     expect(result.retryCount).toBe(0);
     expect(s.gate).toHaveBeenCalledOnce();
     expect(s.fetchImpl).toHaveBeenCalledOnce();
@@ -162,16 +162,14 @@ describe("production provider selection", () => {
   });
 });
 
-it("validates the actual TypeScript 5% payload against the Python worker before a simulated receipt", async () => {
+it("validates the actual TypeScript level-map payload against the Python worker before a simulated receipt", async () => {
   const fixture = spawnSync(
     ".venv/bin/python",
     [
       "-c",
       `import json
-from tests.python.test_codex_memory import current_request
-v=current_request().model_dump()
-v['payload']['execution_context']['shared_setup_risk_percent']='5'
-print(json.dumps(v))`,
+from tests.python.test_codex_memory import level_request
+print(level_request().model_dump_json())`,
     ],
     { encoding: "utf8" },
   );
@@ -193,9 +191,10 @@ print(json.dumps(v))`,
       [
         "-c",
         `import sys
-from python.codex_entry.service import RequestV110
-v=RequestV110.model_validate_json(sys.stdin.read())
-assert v.payload.execution_context.shared_setup_risk_percent=='5'`,
+from python.codex_entry.service import RequestV111
+v=RequestV111.model_validate_json(sys.stdin.read())
+assert v.payload.execution_context.shared_setup_risk_percent=='5'
+assert v.payload.technical_context.definitions_version=='causal-smc-1.1'`,
       ],
       { input: init.body, encoding: "utf8" },
     );
@@ -208,6 +207,6 @@ assert v.payload.execution_context.shared_setup_risk_percent=='5'`,
     chart: null,
     payload: body.payload,
   });
-  expect(result.promptArtifact?.version).toBe("entry-quick-oco-v4");
+  expect(result.promptArtifact?.version).toBe("entry-quick-oco-v5");
   expect(s.fetchImpl).toHaveBeenCalledOnce();
 });

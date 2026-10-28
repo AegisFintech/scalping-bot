@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, it, expect, vi } from "vitest";
 import type { Candle, Timeframe } from "../../packages/contracts/src/index.js";
 import type { TechnicalContextRequest } from "../../packages/contracts/src/technical-context.js";
-import { TechnicalContextCollector } from "../../packages/market-data-client/src/technical-collector.js";
+import {
+  levelContextRequest,
+  TechnicalContextCollector,
+  technicalContextRequest,
+} from "../../packages/market-data-client/src/technical-collector.js";
 import { metadata } from "../helpers/breakout-candidate.js";
 const req = JSON.parse(
   readFileSync("tests/fixtures/technical-context/request.json", "utf8"),
@@ -85,5 +89,28 @@ describe("candidate collection", () => {
     await expect(collector.collect()).rejects.toThrow("unavailable");
     await collector.collect();
     expect(reader.getCompletedCandles).toHaveBeenCalledTimes(22);
+  });
+});
+
+it("asks for the level map with exactly the 1.1 inputs", () => {
+  const snapshot = {
+    metadata: metadata(),
+    serverTime: req.request.serverTime,
+    capturedAt: req.request.serverTime,
+    observedSkewMs: 0,
+    candles: req.request.candles,
+    quote: req.quote,
+    orderBook: req.request.orderBook,
+  };
+  const legacy = technicalContextRequest(snapshot);
+  const current = levelContextRequest(snapshot);
+  expect(current.schemaVersion).toBe("technical-context-request-1.2");
+  expect({ ...current, schemaVersion: legacy.schemaVersion }).toEqual({
+    ...legacy,
+    request: {
+      ...legacy.request,
+      requestId: current.request.requestId,
+      analysisId: current.request.analysisId,
+    },
   });
 });

@@ -4,6 +4,7 @@ import { TechnicalContextHttpClient } from "../../packages/analytics-client/src/
 import type {
   TechnicalContextRequest,
   TechnicalContextResponse,
+  TechnicalContextResponseV11,
 } from "../../packages/contracts/src/technical-context.js";
 import { ModelResponseValidator } from "../../packages/risk-engine/src/model-validator.js";
 const request = JSON.parse(
@@ -134,4 +135,49 @@ it("routes explicit local snapshot time separately without changing legacy reque
   expect((fetchImpl.mock.calls[0]?.[0] as URL).pathname).toBe(
     "/v2/technical-context",
   );
+});
+
+it("routes the level map to v3 and requires its own response and candidate", async () => {
+  const levels = JSON.parse(
+    readFileSync("tests/fixtures/technical-context/response-1.1.json", "utf8"),
+  ) as TechnicalContextResponseV11;
+  const fetchImpl = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(Response.json(levels));
+  const client = new TechnicalContextHttpClient(
+    "http://127.0.0.1:8091",
+    fetchImpl,
+  );
+  const current = {
+    ...request,
+    schemaVersion: "technical-context-request-1.2" as const,
+    snapshotTime: request.request.serverTime,
+  };
+  const result = await client.prepare(current);
+  expect(result.schemaVersion).toBe("technical-context-response-1.1");
+  expect(result.evidence?.definitions_version).toBe("causal-smc-1.1");
+  expect((fetchImpl.mock.calls[0]?.[0] as URL).pathname).toBe(
+    "/v3/technical-context",
+  );
+  expect(
+    new ModelResponseValidator(
+      "schemas/technical-context-response-1.1.json",
+    ).parse(JSON.stringify(result)).accepted,
+  ).toBe(true);
+  // A legacy, unversioned response or legacy candidate never satisfies a level map.
+  fetchImpl.mockResolvedValueOnce(Response.json(response));
+  await expect(client.prepare(current)).rejects.toThrow("RESPONSE_INVALID");
+  const unversioned = structuredClone(levels) as unknown as Record<
+    string,
+    unknown
+  >;
+  delete unversioned.schemaVersion;
+  fetchImpl.mockResolvedValueOnce(Response.json(unversioned));
+  await expect(client.prepare(current)).rejects.toThrow("RESPONSE_INVALID");
+  const legacy = structuredClone(levels) as unknown as {
+    codexPayload: Record<string, unknown>;
+  };
+  legacy.codexPayload.version = "entry-context-candidate-1.0";
+  fetchImpl.mockResolvedValueOnce(Response.json(legacy));
+  await expect(client.prepare(current)).rejects.toThrow("PROVENANCE_MISMATCH");
 });

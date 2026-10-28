@@ -10,8 +10,13 @@ from fastapi.testclient import TestClient
 
 from python.analytics.api import app
 from python.analytics.models import AnalyticsRequest, Candle, CandleSeries
-from python.technical.models import ContextRequest, ContextResponse
-from python.technical.service import prepare_context
+from python.technical.models import (
+    ContextRequest,
+    ContextRequestV12,
+    ContextResponse,
+    ContextResponseV11,
+)
+from python.technical.service import prepare_context, prepare_context_v11
 from python.technical.structure import frame_context
 from tests.python.test_analytics import request_payload
 
@@ -372,3 +377,126 @@ def test_separate_clocks_do_not_allow_stale_or_future_evidence(fault: str) -> No
     )
     result = prepare_context(current)
     assert not result.acceptable and result.codex_payload is None
+
+
+def level_source() -> ContextRequestV12:
+    s = source()
+    return ContextRequestV12(
+        schema_version="technical-context-request-1.2",
+        request=s.request,
+        quote=s.quote,
+        tick_size=s.tick_size,
+        minimum_entry_distance=s.minimum_entry_distance,
+        snapshot_time=s.request.server_time,
+    )
+
+
+def test_level_map_extends_unchanged_v10_evidence_with_its_own_candidate() -> None:
+    from python.technical.models import ContextRequestV11
+
+    current = level_source()
+    legacy = ContextRequestV11.model_validate(
+        {**current.model_dump(by_alias=True), "schemaVersion": "technical-context-request-1.1"}
+    )
+    old, new = prepare_context(legacy), prepare_context_v11(current)
+    assert old.evidence is not None and new.acceptable and new.evidence is not None
+    assert new == prepare_context_v11(current) and new.execution_authority is False
+    assert new.evidence.definitions_version == "causal-smc-1.1"
+    added = {"support_resistance", "dealing_range", "candle_anatomy"}
+    for before, after in zip(old.evidence.frames, new.evidence.frames, strict=True):
+        dumped = after.model_dump(exclude=added)
+        for key in ("nearest_active_zones", "recent_resolved_zones"):
+            for zone in dumped[key]:
+                assert 0 <= Decimal(zone.pop("penetration_fraction")) <= 1
+                midpoint = Decimal(zone.pop("midpoint"))
+                assert Decimal(zone["lower"]) - 1 <= midpoint <= Decimal(zone["upper"]) + 1
+        assert dumped == before.model_dump()
+        assert len(after.candle_anatomy) == {"M1": 5, "M5": 3, "M15": 3}[after.timeframe]
+    shared = new.evidence.model_dump(exclude={"definitions_version", "frames"})
+    for key in ("m1_envelopes", "sessions", "round_levels"):
+        shared.pop(key)
+    assert shared == old.evidence.model_dump(exclude={"definitions_version", "frames"})
+    assert [e.candles for e in new.evidence.m1_envelopes] == [3, 5, 10, 20]
+    assert {r.step for r in new.evidence.round_levels} == {"5", "10"}
+    payload = new.codex_payload
+    assert payload is not None and payload["version"] == "entry-context-candidate-1.1"
+    assert payload["technical_context"] == new.evidence.model_dump(mode="json")
+    assert payload["input_sha256"] == new.input_sha256 != old.input_sha256
+    assert len(json.dumps(payload)) < 64000
+
+
+def test_level_map_rejections_withhold_evidence_and_versions_stay_separate() -> None:
+    bad = level_source()
+    quote = bad.quote.model_copy(update={"bid": "9999"})
+    rejected = prepare_context_v11(bad.model_copy(update={"quote": quote}))
+    assert not rejected.acceptable and "QUOTE_CROSSED" in rejected.reasons
+    assert rejected.evidence is None and rejected.codex_payload is None
+    for name, model in [
+        ("request-1.2", ContextRequestV12),
+        ("response-1.1", ContextResponseV11),
+    ]:
+        assert json.loads(
+            Path(f"schemas/technical-context-{name}.json").read_text()
+        ) == model.model_json_schema(by_alias=True)
+    data = level_source().model_dump(mode="json", by_alias=True)
+    with TestClient(app) as client:
+        accepted = client.post("/v3/technical-context", json=data)
+        assert accepted.status_code == 200 and accepted.json()["acceptable"]
+        assert accepted.json()["schemaVersion"] == "technical-context-response-1.1"
+        assert client.post("/v2/technical-context", json=data).status_code == 422
+        legacy = {**data, "schemaVersion": "technical-context-request-1.1"}
+        assert client.post("/v3/technical-context", json=legacy).status_code == 422
+
+
+def test_level_map_oversize_is_rejected_not_truncated(monkeypatch: pytest.MonkeyPatch) -> None:
+    from python.technical import service
+
+    monkeypatch.setattr(service, "LEVEL_CANDIDATE_LIMIT", 100)
+    result = service.prepare_context_v11(level_source())
+    assert not result.acceptable and result.reasons == ["CANDIDATE_PAYLOAD_OVERSIZED"]
+    assert result.evidence is None and result.codex_payload is None
+
+
+def test_level_models_accept_real_pivot_clusters_zones_and_dealing_leg() -> None:
+    from python.technical import levels
+    from python.technical.models import FrameContextV11
+
+    tick, mid, prices = Decimal("0.01"), Decimal(100), []
+    for i in range(64):
+        phase = i % 8
+        m = Decimal(100) + Decimal([0, 2, 4, 6, 4, 2, 0, -2][phase])
+        drift = Decimal("0.25") if phase < 3 or phase == 7 else Decimal("-0.25")
+        prices.append((str(m), str(m + Decimal("0.5")), str(m - Decimal("0.5")), str(m + drift)))
+    s = series(prices)
+    frame = frame_context(s, mid, tick)
+    pivots = levels.swing_pivots(s.candles)
+    current = FrameContextV11.model_validate(
+        {
+            **frame.model_dump(),
+            "nearest_active_zones": [
+                {**z.model_dump(), **levels.zone_extension(z, s.candles, tick)}
+                for z in frame.nearest_active_zones
+            ],
+            "recent_resolved_zones": [
+                {**z.model_dump(), **levels.zone_extension(z, s.candles, tick)}
+                for z in frame.recent_resolved_zones
+            ],
+            "support_resistance": levels.support_resistance(
+                "M1", s.candles, pivots, mid, Decimal(frame.atr), tick
+            ),
+            "dealing_range": levels.dealing_range(pivots, mid, tick),
+            "candle_anatomy": levels.anatomy("M1", s.candles, 0),
+        }
+    )
+    roles = {level.role: level for level in current.support_resistance}
+    assert roles["RESISTANCE"].upper == "106.5" and roles["RESISTANCE"].touches >= 2
+    assert roles["RESISTANCE"].traded_above_after is False
+    assert roles["SUPPORT"].lower == "97.5" and roles["SUPPORT"].traded_below_after is False
+    assert current.dealing_range.position == "DISCOUNT"
+    assert current.dealing_range.equilibrium == "102"
+    assert current.recent_resolved_zones or current.nearest_active_zones
+    for zone in current.nearest_active_zones + current.recent_resolved_zones:
+        assert Decimal(zone.lower) - tick <= Decimal(zone.midpoint) <= Decimal(zone.upper) + tick
+        assert 0 <= Decimal(zone.penetration_fraction) <= 1
+    # Pivot prices in the 1.0 evidence are the same strict fractals the level map uses.
+    assert {p.price for p in frame.pivots} <= {levels.text(p.price) for p in pivots}

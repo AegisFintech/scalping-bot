@@ -3,7 +3,10 @@ import type {
   MarketDataAdapter,
   MarketSnapshot,
 } from "../../contracts/src/index.js";
-import type { TechnicalContextRequestV11 } from "../../contracts/src/technical-context.js";
+import type {
+  TechnicalContextRequestV11,
+  TechnicalContextRequestV12,
+} from "../../contracts/src/technical-context.js";
 import {
   CandidateHistoryCache,
   TECHNICAL_HISTORY_COUNTS,
@@ -45,6 +48,16 @@ export function technicalContextRequest(
     quote: snapshot.quote,
     tickSize: snapshot.metadata.tickSize,
     minimumEntryDistance: snapshot.metadata.minStopDistance,
+  };
+}
+
+/** Production level-map request: identical inputs, causal-smc-1.1 response. */
+export function levelContextRequest(
+  snapshot: MarketSnapshot,
+): TechnicalContextRequestV12 {
+  return {
+    ...technicalContextRequest(snapshot),
+    schemaVersion: "technical-context-request-1.2",
   };
 }
 

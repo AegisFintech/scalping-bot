@@ -627,3 +627,141 @@ def test_native_profit_request_preserves_previous_versions_and_rejects_mixed_pro
     body["promptVersion"] = "entry-quick-oco-v3"
     with pytest.raises(ValueError):
         s.parse_request(json.dumps(body).encode())
+
+
+def level_request() -> s.RequestV111:
+    """Current request carrying the causal-smc-1.1 fixture evidence."""
+    body = current_request().model_dump()
+    body.update(version="codex-entry-request-1.11", promptVersion="entry-quick-oco-v5")
+    body["payload"]["execution_context"]["shared_setup_risk_percent"] = "5"
+    evidence = json.loads(Path("tests/fixtures/technical-context/response-1.1.json").read_text())[
+        "evidence"
+    ]
+    evidence["history_targets_met"] = True
+    for frame in evidence["frames"]:
+        frame["candle_count"] = {"M1": 720, "M5": 576, "M15": 480}[frame["timeframe"]]
+        frame["latest_completed_at"] = NOW.isoformat()
+    evidence["depth"]["source_at"] = NOW.isoformat()
+    evidence["depth"]["received_at"] = NOW.isoformat()
+    body["payload"]["technical_context"] = evidence
+    return s.RequestV111.model_validate(body)
+
+
+def level(available: str) -> dict[str, Any]:
+    return {
+        "id": "M5-L1",
+        "lower": "4010",
+        "upper": "4010.2",
+        "touches": 2,
+        "high_pivots": 2,
+        "low_pivots": 0,
+        "first_pivot_at": (NOW - timedelta(hours=2)).isoformat(),
+        "last_pivot_at": (NOW - timedelta(hours=1)).isoformat(),
+        "available_at": available,
+        "role": "RESISTANCE",
+        "distance_from_quote": "10",
+        "traded_above_after": False,
+        "traded_below_after": True,
+        "tolerance": "0.4",
+    }
+
+
+def test_level_map_request_is_versioned_and_rejects_mixed_contracts(tmp_path: Path) -> None:
+    from fastapi.testclient import TestClient
+
+    from python.codex_entry.api import create_app
+
+    req = level_request()
+    assert isinstance(s.parse_request(req.model_dump_json().encode()), s.RequestV111)
+    schema = json.loads(Path("schemas/codex-entry-request-1.11.json").read_text())
+    schema.pop("$id")
+    schema.pop("$schema")
+    assert schema == s.RequestV111.model_json_schema()
+    body = req.model_dump()
+    # 1.10 stays bound to causal-smc-1.0 and 1.11 to causal-smc-1.1; neither accepts the other.
+    with pytest.raises(ValueError):
+        s.RequestV110.model_validate(
+            {**body, "version": "codex-entry-request-1.10", "promptVersion": "entry-quick-oco-v4"}
+        )
+    legacy = current_request().model_dump()
+    legacy["payload"]["execution_context"]["shared_setup_risk_percent"] = "5"
+    with pytest.raises(ValueError):
+        s.RequestV111.model_validate(
+            {**legacy, **{k: body[k] for k in ("version", "promptVersion")}}
+        )
+    with pytest.raises(ValueError):
+        s.parse_request(json.dumps({**body, "promptVersion": "entry-quick-oco-v4"}).encode())
+    # A v4 worker refuses the level-map request and a v5 worker refuses 1.10 before any claim.
+    old = {**legacy, "version": "codex-entry-request-1.10", "promptVersion": "entry-quick-oco-v4"}
+    for expected, payload in [("entry-quick-oco-v4", body), ("entry-quick-oco-v5", old)]:
+        client = TestClient(create_app(tmp_path, PROMPT, "x" * 32, prompt_version=expected))
+        response = client.post(
+            "/v1/entry-proposals", json=payload, headers={"authorization": "Bearer " + "x" * 32}
+        )
+        assert response.status_code == 422
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "level_future",
+        "level_order",
+        "level_bounds",
+        "level_nan",
+        "anatomy_future",
+        "session",
+        "session_end",
+    ],
+)
+def test_level_map_lookahead_and_provenance_reject_before_provider(fault: str) -> None:
+    body = level_request().model_dump()
+    context = body["payload"]["technical_context"]
+    frame = context["frames"][0]
+    later = (NOW + timedelta(minutes=1)).isoformat()
+    if fault == "level_future":
+        frame["support_resistance"] = [level(later)]
+    elif fault == "level_order":
+        frame["support_resistance"] = [level((NOW - timedelta(hours=3)).isoformat())]
+    elif fault in {"level_bounds", "level_nan"}:
+        bad = level((NOW - timedelta(minutes=30)).isoformat())
+        bad["lower"] = "0" if fault == "level_bounds" else "NaN"
+        frame["support_resistance"] = [bad]
+    elif fault == "session_end":
+        complete = next(s for s in context["sessions"] if s["status"] == "COMPLETE")
+        complete["utc_end"] = later
+    elif fault == "anatomy_future":
+        frame["candle_anatomy"][-1]["end_at"] = later
+    else:
+        context["sessions"][0]["utc_start"] = later
+    with pytest.raises(ValueError):
+        s.parse_request(json.dumps(body).encode())
+    frame["support_resistance"] = [level((NOW - timedelta(minutes=30)).isoformat())]
+    if fault in {"level_future", "level_order", "level_bounds", "level_nan"}:
+        assert isinstance(s.parse_request(json.dumps(body).encode()), s.RequestV111)
+
+
+def test_level_map_receipt_keeps_directional_response(tmp_path: Path) -> None:
+    req = level_request()
+
+    def call(prompt: str, job: Path) -> bytes:
+        assert "Return BUY, SELL or WAIT only." in prompt
+        assert '"definitions_version":"causal-smc-1.1"' in prompt
+        assert '"support_resistance"' in prompt and '"m1_envelopes"' in prompt
+        publish(
+            job / "memory-result.json",
+            {
+                "day": NOW.date().isoformat(),
+                "threadId": "thread-v5",
+                "turnId": "turn-v5",
+                "compacted": False,
+            },
+        )
+        return (
+            b'{"decision":"SELL","reason":"M5 bearish BOS; SELL = M1 env5 low - 9 ticks",'
+            b'"upper_breakout":"4002","lower_breakout":"3999"}'
+        )
+
+    result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=call)
+    assert result["version"] == "codex-entry-response-1.2"
+    assert result["entries"]["decision"] == "SELL" and result["executionAuthority"] is False

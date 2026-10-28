@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "native-tp-fill-pattern-1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "native-tp-fill-pattern-1.0"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "breakout-entry-observer-1.0"
+        },
+        "bundleSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "release": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "until": {
+          "type": "string"
+        },
+        "prospective": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "bundleSha256",
+        "release",
+        "from",
+        "until",
+        "prospective"
+      ]
+    },
+    "closePriceBasis": {
+      "const": "DERIVED_FROM_CANONICAL_NET_FEES_AND_VOLUME_NO_SWAP_OR_CONVERSION"
+    },
+    "volumeScale": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "closes": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "setup": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{24}$"
+          },
+          "side": {
+            "enum": ["BUY", "SELL"]
+          },
+          "entryFill": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "derivedClosePrice": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "closedAt": {
+            "type": "string"
+          },
+          "net": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "signedFees": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "units": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "closeAtOrBeyondRecordedTp": {
+            "type": ["boolean", "null"]
+          },
+          "tpCrossing": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": {
+              "brokerTp": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "crossings": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              },
+              "firstCrossingAt": {
+                "type": "string"
+              },
+              "firstCrossingToFillSeconds": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "maxExcursionBeyondTp": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              "lastCrossingBeforeFill": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "quoteAt": {
+                    "type": "string"
+                  },
+                  "mark": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  },
+                  "excursionBeyondTp": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  },
+                  "lagToFillSeconds": {
+                    "type": "string",
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+                  }
+                },
+                "required": [
+                  "quoteAt",
+                  "mark",
+                  "excursionBeyondTp",
+                  "lagToFillSeconds"
+                ]
+              },
+              "tpFilled": {
+                "type": "boolean"
+              },
+              "basis": {
+                "const": "RECORDED_SAMPLED_QUOTES_PRIOR_VERIFIED_PROTECTION"
+              },
+              "crossingsBounded": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "brokerTp",
+              "crossings",
+              "firstCrossingAt",
+              "firstCrossingToFillSeconds",
+              "maxExcursionBeyondTp",
+              "lastCrossingBeforeFill",
+              "tpFilled",
+              "basis"
+            ]
+          },
+          "closeVersusLastCrossingQuote": {
+            "type": ["string", "null"],
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          }
+        },
+        "required": [
+          "setup",
+          "side",
+          "entryFill",
+          "derivedClosePrice",
+          "closedAt",
+          "net",
+          "signedFees",
+          "units",
+          "closeAtOrBeyondRecordedTp",
+          "tpCrossing",
+          "closeVersusLastCrossingQuote"
+        ]
+      }
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "setup": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{24}$"
+          },
+          "side": {
+            "enum": ["BUY", "SELL"]
+          },
+          "trigger": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "firstCrossingQuote": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "fill": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "gap": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "lagSeconds": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          }
+        },
+        "required": [
+          "setup",
+          "side",
+          "trigger",
+          "firstCrossingQuote",
+          "fill",
+          "gap",
+          "lagSeconds"
+        ]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "closesAtOrBeyondTp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closesWithTpCrossingButNoTpFill": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tpFilledLastCrossingExcursion": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        },
+        "tpFilledLagSeconds": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        },
+        "tpFilledFirstCrossingToFillSeconds": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        },
+        "tpFilledCloseVersusLastCrossingQuote": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        },
+        "crossedWithoutTpFillMaxExcursion": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        },
+        "entryFillVersusFirstCrossingQuote": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        },
+        "entryLagSeconds": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "n": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "median": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            }
+          },
+          "required": ["n", "min", "median", "max"]
+        }
+      },
+      "required": [
+        "closesAtOrBeyondTp",
+        "closesWithTpCrossingButNoTpFill",
+        "tpFilledLastCrossingExcursion",
+        "tpFilledLagSeconds",
+        "tpFilledFirstCrossingToFillSeconds",
+        "tpFilledCloseVersusLastCrossingQuote",
+        "crossedWithoutTpFillMaxExcursion",
+        "entryFillVersusFirstCrossingQuote",
+        "entryLagSeconds"
+      ]
+    },
+    "selection": {
+      "const": "ALL_CLOSES_IN_RETAINED_14_INTENT_COHORT_NOT_PROSPECTIVE"
+    },
+    "brokerAuthority": {
+      "const": false
+    },
+    "causeInference": {
+      "type": "null"
+    },
+    "counterfactualNet": {
+      "type": "null"
+    },
+    "completeTickTape": {
+      "const": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "source",
+    "closePriceBasis",
+    "volumeScale",
+    "closes",
+    "entries",
+    "summary",
+    "selection",
+    "brokerAuthority",
+    "causeInference",
+    "counterfactualNet",
+    "completeTickTape"
+  ]
+}

@@ -16,6 +16,7 @@ describe("versioned evidence-first wire schemas", () => {
     "entry-direction-context-1.0",
     "sampled-trade-path-1.0",
     "codex-entry-request-1.4",
+    "codex-entry-request-1.11",
     "codex-entry-response-1.1",
     "entry-decision-provider-1.0",
     "entry-wait-context-1.0",

@@ -30,3 +30,17 @@ export interface TechnicalContextRequestV11 extends Omit<
   readonly schemaVersion: "technical-context-request-1.1";
   readonly snapshotTime: string;
 }
+
+/** Same inputs and clocks as 1.1; selects the causal-smc-1.1 level map response. */
+export interface TechnicalContextRequestV12 extends Omit<
+  TechnicalContextRequestV11,
+  "schemaVersion"
+> {
+  readonly schemaVersion: "technical-context-request-1.2";
+}
+export interface TechnicalContextResponseV11 extends Omit<
+  TechnicalContextResponse,
+  "schemaVersion"
+> {
+  readonly schemaVersion: "technical-context-response-1.1";
+}

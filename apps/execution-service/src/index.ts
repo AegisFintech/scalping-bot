@@ -1,5 +1,5 @@
 import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
-import { technicalContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
+import { levelContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
 import { canonical } from "../../../packages/risk-engine/src/decimal.js";
 import {
   quickOcoTransform,
@@ -535,7 +535,7 @@ async function main(): Promise<void> {
       minimumPoints: optionalDecimal(environment.MIN_STOP_DISTANCE_POINTS),
     },
     async (snapshot, analysisId) => {
-      const prepared = technicalContextRequest(snapshot);
+      const prepared = levelContextRequest(snapshot);
       const result = await new TechnicalContextHttpClient(
         environment.ANALYTICS_BASE_URL ??
           `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,

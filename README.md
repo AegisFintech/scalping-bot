@@ -1,3 +1,32 @@
+# ISSUE-390 — Agent contract, fill evidence and SMC level prompt
+
+`AGENTS.md` is now a short current contract (current release, operating contract,
+safety rules and still-binding invariants by area). The full previous per-issue
+directive text is preserved verbatim in [docs/agents-history.md](docs/agents-history.md);
+the current contract wins wherever the two differ. No code, trading policy, prompt,
+risk or deployment behavior changes with this consolidation.
+
+Fill evidence: SELECT-only `export_fill_evidence` and `fill_gap_review` report each
+deal's gap and delay against the latest fresh executable quote, entry trigger gap,
+native level slippage, recorded TP crossings and a walk of the recorded visible
+ladder, grouped by close class and volume. The retained
+[#388 pack](docs/evidence/native-tp-fill-pattern.json) shows every TP fill came
+0.25–0.31 s after a quote 0.14–0.35 beyond TP and printed 0.14–0.18 worse than it;
+the losing trade's TP touches peaked at +0.06. Descriptive only, nothing sent to the
+broker: [report, commands and limits](docs/fill-evidence-report.md).
+
+SMC level prompt (operator-approved, live on next deploy): provider revision
+`0.7.3-quick-oco.1-codex.2` adds the deterministic `causal-smc-1.1` level map
+(support/resistance clusters with untaken-liquidity flags, latest swing-leg dealing
+range with premium/discount, order block/FVG midpoints and penetration, candle
+anatomy, exact M1 envelopes, UTC session ranges and round levels) through analytics
+`/v3` and request 1.11. Prompt `entry-quick-oco-v5` must anchor every price to a
+supplied level and cite it, needs clean room for the with-trend trigger and puts the
+counter-trend trigger beyond the protecting structure. TP0.40/SL7.00, 5% demo risk,
+STOP_LIMIT/GTC/OCO, response 1.2, gates and protection are unchanged; v4, request 1.10
+and `causal-smc-1.0` stay immutable. No entry improvement is claimed. Deployment order,
+rollback and validation: [level map and prompt report](docs/smc-level-prompt-report.md).
+
 # ISSUE-387 — Read-only entry evidence and native TP audit
 
 Operator approved investigating TP execution and recording/comparing entry context
