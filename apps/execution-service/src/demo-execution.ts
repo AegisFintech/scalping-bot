@@ -2,6 +2,11 @@ import { createHash } from "node:crypto";
 
 import { Decimal } from "decimal.js";
 
+import {
+  projectBrokerAcknowledgement,
+  type BrokerAcknowledgement,
+} from "./broker-acknowledgement.js";
+
 import type { GatewayOrder } from "../../../packages/contracts/src/index.js";
 import type { BrokerExecution } from "../../../packages/ctrader-client/src/client.js";
 import {
@@ -88,6 +93,7 @@ export interface DemoExecutionStore {
   persist(
     event: DemoExecutionEvent,
     source?: DemoExecutionEvidenceSource,
+    acknowledgement?: BrokerAcknowledgement | null,
   ): Promise<DemoExecutionPersistenceResult>;
   readiness(): Promise<DemoExecutionPersistenceResult>;
 }
@@ -747,7 +753,15 @@ export class DurableDemoExecutionRecorder {
       }
       if (normalized === null) continue;
       try {
-        const result = await this.#store.persist(normalized, "BROKER_CALLBACK");
+        const acknowledgement = projectBrokerAcknowledgement(
+          execution,
+          normalized,
+        );
+        const result = await this.#store.persist(
+          normalized,
+          "BROKER_CALLBACK",
+          acknowledgement,
+        );
         if (result.certain && normalized.brokerFillId !== null) {
           this.#persistedBrokerFillIds.add(normalized.brokerFillId);
         }

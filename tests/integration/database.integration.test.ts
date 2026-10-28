@@ -1,3 +1,4 @@
+import { projectBrokerAcknowledgement } from "../../apps/execution-service/src/broker-acknowledgement.js";
 import { FIXED_DEFAULTS } from "../../packages/config/src/policy.js";
 import type { OcoEvaluation } from "../../apps/execution-service/src/oco-risk-evaluator.js";
 import { transitionCharts } from "../../packages/database/src/chart-archive.js";
@@ -254,6 +255,7 @@ describe("PostgreSQL migrations integration", () => {
         "0034",
         "0035",
         "0036",
+        "0037",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -1626,6 +1628,62 @@ describe("PostgreSQL migrations integration", () => {
         { certain: true, reasonCodes: [] },
         { certain: true, reasonCodes: [] },
       ]);
+      // Distinct callback terms are retained independently of the existing event hash.
+      const withTerms = {
+        ...acceptedRaw,
+        order: {
+          ...acceptedRaw.order!,
+          stopPrice: 4000,
+          slippageInPoints: "30",
+          timeInForce: 1,
+          expirationTimestamp: "1787544300000",
+        },
+      };
+      const acknowledgementEvidence = projectBrokerAcknowledgement(
+        withTerms,
+        accepted!,
+      )!;
+      await store.persist(
+        accepted!,
+        "BROKER_CALLBACK",
+        acknowledgementEvidence,
+      );
+      await store.persist(
+        accepted!,
+        "BROKER_CALLBACK",
+        acknowledgementEvidence,
+      );
+      const otherTerms = {
+        ...withTerms,
+        order: { ...withTerms.order, stopPrice: 4001 },
+      };
+      const otherEvidence = projectBrokerAcknowledgement(
+        otherTerms,
+        accepted!,
+      )!;
+      await store.persist(accepted!, "BROKER_CALLBACK", otherEvidence);
+      const evidenceRows = await isolated.query<{ count: string }>(
+        "SELECT count(*)::text AS count FROM broker_acknowledgement_evidence",
+      );
+      expect(evidenceRows.rows[0]?.count).toBe("2");
+      const freshRaw = {
+        ...withTerms,
+        order: { ...withTerms.order, orderId: "999" },
+      };
+      const freshEvent = normalizeDemoExecution(freshRaw, { symbolId: "7" })!;
+      const freshEvidence = projectBrokerAcknowledgement(freshRaw, freshEvent)!;
+      await expect(
+        store.persist(freshEvent, "BROKER_CALLBACK", {
+          ...freshEvidence,
+          eventKey: "mismatch",
+        }),
+      ).rejects.toThrow("DEMO_ACKNOWLEDGEMENT_SOURCE_INVALID");
+      const rolledBack = await isolated.query(
+        "SELECT 1 FROM broker_execution_events WHERE account_id=$1 AND broker_event_key=$2",
+        [demoAccountId, freshEvent.eventKey],
+      );
+      expect(rolledBack.rowCount).toBe(0);
+      await isolated.query("DELETE FROM broker_acknowledgement_evidence");
       const acceptedRows = await isolated.query<{ count: string }>(
         "SELECT count(*)::text AS count FROM broker_execution_events WHERE account_id = $1",
         [demoAccountId],

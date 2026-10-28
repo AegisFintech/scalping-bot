@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "broker-acknowledgement-evidence-1.0",
+  "source": "tc01",
+  "start": "2026-01-01T00:00:00+00:00",
+  "until": "2026-01-01T01:00:00+00:00",
+  "snapshotAt": "2026-01-01T01:00:00+00:00",
+  "observations": [
+    {
+      "id": "00d93d7423558c856b479d16",
+      "eventId": "cfbf5b0f7ca2c200808eaa80",
+      "eventPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "orderType": 6,
+      "metadataAvailability": "NOT_CAPTURED",
+      "evidenceSha256": "974408f892b422def38da4d9ea0b799a6001004f7979c6bdd11ff65bf52787e8",
+      "stopPrice": "4000.5",
+      "slippageInPoints": "30",
+      "timeInForce": 1,
+      "expirationAt": "2026-01-01T00:05:00+00:00",
+      "brokerUpdatedAt": "2026-01-01T00:00:59+00:00",
+      "receivedAt": "2026-01-01T00:01:00+00:00",
+      "persistedAt": "2026-01-01T00:01:01+00:00",
+      "invalidFields": [],
+      "clockStatus": "ORDERED"
+    }
+  ],
+  "coverage": "PERSISTED_CALLBACKS_ONLY_ABSENCE_UNKNOWN",
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}

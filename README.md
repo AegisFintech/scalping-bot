@@ -74,4 +74,4 @@ proof of liquidity, accuracy or future fills.
 
 The [offline publisher scope policy](docs/publisher-policy-report.md) checks research proposal boundaries only; it cannot run, publish or merge code.
 
-The [broker acknowledgement design](docs/broker-acknowledgement-design.md) describes prospective evidence capture; it is not active yet.
+The [broker acknowledgement design](docs/broker-acknowledgement-design.md) describes prospective evidence capture and the bounded read-only exporter, with its qualification receipt; neither is active yet.

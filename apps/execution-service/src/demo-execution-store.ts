@@ -1,3 +1,4 @@
+import type { BrokerAcknowledgement } from "./broker-acknowledgement.js";
 import { recordPositionClose } from "./position-close-ledger.js";
 import { observedManualClose } from "./manual-close-evidence.js";
 import { readTerminalGroup } from "./terminal-history-attestor.js";
@@ -480,6 +481,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
   async persist(
     event: DemoExecutionEvent,
     source: DemoExecutionEvidenceSource = "UNSPECIFIED",
+    acknowledgement: BrokerAcknowledgement | null = null,
   ): Promise<DemoExecutionPersistenceResult> {
     const client = await this.#options.pool.connect();
     try {
@@ -508,6 +510,52 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
          FOR UPDATE`,
         [this.#options.accountId, event.eventKey],
       );
+      const persistAcknowledgement = async (): Promise<void> => {
+        if (acknowledgement === null) return;
+        if (
+          source !== "BROKER_CALLBACK" ||
+          acknowledgement.eventKey !== event.eventKey ||
+          acknowledgement.receivedAt !== event.receivedAt
+        )
+          throw new Error("DEMO_ACKNOWLEDGEMENT_SOURCE_INVALID");
+        const inserted = await client.query(
+          `INSERT INTO broker_acknowledgement_evidence
+            (id, event_id, event_payload_hash, evidence_hash, evidence, received_at)
+           SELECT $3, id, $4, $5, $6::jsonb, $7 FROM broker_execution_events
+           WHERE account_id=$1 AND broker_event_key=$2
+           ON CONFLICT (event_id, evidence_hash) DO NOTHING`,
+          [
+            this.#options.accountId,
+            event.eventKey,
+            randomUUID(),
+            event.payloadHash,
+            acknowledgement.evidenceHash,
+            JSON.stringify(acknowledgement),
+            acknowledgement.receivedAt,
+          ],
+        );
+        if (inserted.rowCount === 0) {
+          const retained = await client.query(
+            `SELECT 1 FROM broker_acknowledgement_evidence a
+             JOIN broker_execution_events e ON e.id=a.event_id
+             WHERE e.account_id=$1 AND e.broker_event_key=$2
+               AND a.event_payload_hash=$3 AND a.evidence_hash=$4
+               AND a.evidence=$5::jsonb AND a.received_at=$6`,
+            [
+              this.#options.accountId,
+              event.eventKey,
+              event.payloadHash,
+              acknowledgement.evidenceHash,
+              JSON.stringify(acknowledgement),
+              acknowledgement.receivedAt,
+            ],
+          );
+          if (retained.rowCount !== 1)
+            throw new Error("DEMO_ACKNOWLEDGEMENT_PERSIST_FAILED");
+        } else if (inserted.rowCount !== 1) {
+          throw new Error("DEMO_ACKNOWLEDGEMENT_PERSIST_FAILED");
+        }
+      };
       const duplicate = existing.rows[0];
       let replayTradeOutcomeConflict = false;
       if (duplicate !== undefined) {
@@ -562,6 +610,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
               [this.#options.accountId, event.eventKey],
             );
           }
+          await persistAcknowledgement();
           await client.query("COMMIT");
           return {
             certain: false,
@@ -586,6 +635,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           // conflict row is resolved only after exact position/fill/trade and
           // terminal group evidence agree; it is never deleted or overwritten.
         } else {
+          await persistAcknowledgement();
           await client.query("COMMIT");
           const unresolvedReasonCodes =
             duplicate.resolved_at === null ? reasonCodes : [];
@@ -619,6 +669,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         await this.#insertEvent(client, event, null, null, "CONFLICT", [
           "DEMO_EXECUTION_ORDER_AMBIGUOUS",
         ]);
+        await persistAcknowledgement();
         await client.query("COMMIT");
         return {
           certain: false,
@@ -645,6 +696,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         await this.#insertEvent(client, event, order, null, "CONFLICT", [
           "DEMO_EXECUTION_POSITION_AMBIGUOUS",
         ]);
+        await persistAcknowledgement();
         await client.query("COMMIT");
         return {
           certain: false,
@@ -682,6 +734,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         await this.#insertEvent(client, event, order, position, "UNMATCHED", [
           "DEMO_POSITION_CLOSE_NOT_AUTHORIZED",
         ]);
+        await persistAcknowledgement();
         await client.query("COMMIT");
         return {
           certain: false,
@@ -709,6 +762,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           await this.#insertEvent(client, event, order, position, "CONFLICT", [
             "DEMO_EXECUTION_CLOSING_ORDER_GROUP_CONFLICT",
           ]);
+          await persistAcknowledgement();
           await client.query("COMMIT");
           return {
             certain: false,
@@ -729,6 +783,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         await this.#insertEvent(client, event, order, position, "CONFLICT", [
           "DEMO_EXECUTION_BROKER_ORDER_ID_CONFLICT",
         ]);
+        await persistAcknowledgement();
         await client.query("COMMIT");
         return {
           certain: false,
@@ -741,6 +796,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
         await this.#insertEvent(client, event, null, position, "UNMATCHED", [
           "DEMO_EXECUTION_LOCAL_INTENT_NOT_FOUND",
         ]);
+        await persistAcknowledgement();
         await client.query("COMMIT");
         return {
           certain: false,
@@ -760,6 +816,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           await this.#insertEvent(client, event, order, position, "CONFLICT", [
             "DEMO_TRADE_OUTCOME_CONFLICT",
           ]);
+          await persistAcknowledgement();
           await client.query("COMMIT");
           return {
             certain: false,
@@ -1055,6 +1112,7 @@ export class PostgresDemoExecutionStore implements DemoExecutionStore {
           ],
         );
       }
+      await persistAcknowledgement();
       await client.query("COMMIT");
       const persistenceReasons = replayTradeOutcomeConflict
         ? ["DEMO_TRADE_OUTCOME_CONFLICT"]
