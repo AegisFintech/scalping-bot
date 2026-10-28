@@ -1,0 +1,81 @@
+{
+  "receiptVersion": "learning-bridge-smoke-1.0",
+  "recordedAt": "2026-10-28T07:25:26.415956+00:00",
+  "sourceId": "scalper-epoch314",
+  "schemaVersion": "scalper-learning-evidence-1.0",
+  "sourceMode": "demo",
+  "symbol": "XAUUSD",
+  "producerReader": {
+    "missingSelectGrants": 0,
+    "mutationTableGrants": 0,
+    "privilegedRole": false,
+    "newSelectEvidenceTables": 9
+  },
+  "recipient": {
+    "hostAlias": "tc01",
+    "root": false,
+    "rootDirectoryReadable": false,
+    "brokerDatabaseEnvironment": false,
+    "codexCredentialEnvironment": false,
+    "archiveOnly": true
+  },
+  "packets": [
+    {
+      "name": "packet-1.json",
+      "sha256": "37ec3218ce96c684908a16a08419be697c6d4b28cbc2e69ac2cb9b8f5a7a1c09",
+      "bytes": 869626,
+      "start": "2026-10-28T06:40:00+00:00",
+      "until": "2026-10-28T07:10:00+00:00",
+      "journalSnapshotAt": "2026-10-28T07:10:16.684802+00:00",
+      "exportedAt": "2026-10-28T07:10:16.857855+00:00",
+      "exporterSourceSha256": "ee89bad714e5fe74648b481d7327e61f091833f23f9eecabf978ecf0b9ae2971",
+      "records": {
+        "contexts": 22,
+        "analyses": 44,
+        "setups": 0,
+        "flight": 0,
+        "unscopedBrokerEvents": 0
+      },
+      "protectionFacts": 0,
+      "closedTrades": 0,
+      "flightAvailable": 0,
+      "recipientFirstChanged": 66,
+      "recipientDuplicateChanged": 0
+    },
+    {
+      "name": "packet-3.json",
+      "sha256": "29cfaeda12fcceae6d2c6b1122f1a20ef0c8ab1c79161af1fc3f07ace2668a2d",
+      "bytes": 975245,
+      "start": "2026-10-28T03:45:00+00:00",
+      "until": "2026-10-28T04:45:00+00:00",
+      "journalSnapshotAt": "2026-10-28T07:22:47.102541+00:00",
+      "exportedAt": "2026-10-28T07:22:47.313626+00:00",
+      "exporterSourceSha256": "61129f3d6830a83c18dea4c3490063430b08dd43b92b9132bae01456fd02833a",
+      "records": {
+        "contexts": 11,
+        "analyses": 17,
+        "setups": 1,
+        "flight": 2,
+        "unscopedBrokerEvents": 0
+      },
+      "protectionFacts": 1753,
+      "closedTrades": 1,
+      "flightAvailable": 2,
+      "recipientFirstChanged": 31,
+      "recipientDuplicateChanged": 0
+    }
+  ],
+  "historicalWindowSelection": "Most recent setup metadata only; successful window surrounds its update minute. No selection by outcome or P/L. Original full-history smoke refused above 2000 protection facts; narrower history remains explicitly incomplete.",
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "autonomousFinding": false,
+  "completeTickTape": false,
+  "modelConsumptionEnabled": false,
+  "economicQualification": false,
+  "accountOverlapWithAurum": "UNKNOWN_NOT_ASSUMED",
+  "crossAccountPricingEquivalence": "UNKNOWN_NOT_ASSUMED",
+  "tradingArtifactSourceSha256": "348c6afddbd64c282a8012b8864007073ff58fc2b75ac242342da5ece4582879",
+  "tradingArtifactChanged": false,
+  "producerManifestSha256": "ac2a4542be8ecbc703c6c03d7018ade7bf41f054d4ddaedb46ad34c4b12f3374",
+  "recipientManifestSha256": "3c5754473139ef362e2279953adfd497884456cf63b528aa0967f9c165abdaf7"
+}
