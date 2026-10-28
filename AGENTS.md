@@ -1,5 +1,11 @@
 # Agent contract
 
+ISSUE-400: offline scalp replay is historical reconstruction only and always HOLD.
+Sampled crossings are not fills; original acknowledgement fields and unidentifiable
+costs remain unknown. Draft protocols do not register studies. Preserve immutable
+prior research and read `docs/scalp-replay-draft.md` before changing this path.
+The local software qualification receipt is `docs/evidence/scalp-replay-validation.json`.
+
 ISSUE-398: tc01/tc02 research integration is approved for staged implementation.
 This bot remains the primary repository and sole broker executor; read
 `docs/harness-integration-plan.md`. Preserve remote dirty work, frozen studies and

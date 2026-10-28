@@ -1,0 +1,776 @@
+{
+  "$defs": {
+    "ClosedStatistics": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "currencyBasis": {
+          "const": "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED",
+          "default": "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED",
+          "title": "Currencybasis",
+          "type": "string"
+        },
+        "basis": {
+          "const": "RECORDED_CLOSED_ROWS_NOT_COMPLETE_COHORT",
+          "default": "RECORDED_CLOSED_ROWS_NOT_COMPLETE_COHORT",
+          "title": "Basis",
+          "type": "string"
+        },
+        "records": {
+          "title": "Records",
+          "type": "integer"
+        },
+        "wins": {
+          "title": "Wins",
+          "type": "integer"
+        },
+        "losses": {
+          "title": "Losses",
+          "type": "integer"
+        },
+        "breakeven": {
+          "title": "Breakeven",
+          "type": "integer"
+        },
+        "recordedNet": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Recordednet",
+          "type": "string"
+        },
+        "meanNet": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Meannet",
+          "type": "string"
+        },
+        "meanWin": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Meanwin"
+        },
+        "meanLoss": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Meanloss"
+        },
+        "largestWin": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Largestwin"
+        },
+        "worstLoss": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Worstloss"
+        },
+        "withoutLargestWinnerDiagnostic": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Withoutlargestwinnerdiagnostic",
+          "type": "string"
+        },
+        "providerCost": {
+          "default": null,
+          "title": "Providercost",
+          "type": "null"
+        },
+        "actualStopRiskR": {
+          "default": null,
+          "title": "Actualstopriskr",
+          "type": "null"
+        },
+        "preIntentEquityNormalizedReturn": {
+          "default": null,
+          "title": "Preintentequitynormalizedreturn",
+          "type": "null"
+        },
+        "portfolioDrawdown": {
+          "default": null,
+          "title": "Portfoliodrawdown",
+          "type": "null"
+        }
+      },
+      "required": [
+        "currency",
+        "records",
+        "wins",
+        "losses",
+        "breakeven",
+        "recordedNet",
+        "meanNet",
+        "meanWin",
+        "meanLoss",
+        "largestWin",
+        "worstLoss",
+        "withoutLargestWinnerDiagnostic"
+      ],
+      "title": "ClosedStatistics",
+      "type": "object"
+    },
+    "EntryBenchmark": {
+      "additionalProperties": false,
+      "properties": {
+        "contextId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Contextid",
+          "type": "string"
+        },
+        "definition": {
+          "const": "completed-m15-m5-trend-m1-five-bars-one-tick-1.0",
+          "default": "completed-m15-m5-trend-m1-five-bars-one-tick-1.0",
+          "title": "Definition",
+          "type": "string"
+        },
+        "decision": {
+          "enum": ["BUY", "SELL", "WAIT"],
+          "title": "Decision",
+          "type": "string"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entry"
+        },
+        "availableAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Availableat"
+        },
+        "originalDecision": {
+          "enum": ["BUY", "SELL", "WAIT", "UNKNOWN"],
+          "title": "Originaldecision",
+          "type": "string"
+        },
+        "directionAgreement": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Directionagreement"
+        },
+        "reasons": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "entryOnlyTakeProfit": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entryonlytakeprofit"
+        },
+        "entryOnlyStopLoss": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entryonlystoploss"
+        },
+        "frozenApprovedVolume": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frozenapprovedvolume"
+        },
+        "counterfactualFill": {
+          "default": null,
+          "title": "Counterfactualfill",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": [
+        "contextId",
+        "decision",
+        "entry",
+        "availableAt",
+        "originalDecision",
+        "directionAgreement",
+        "reasons"
+      ],
+      "title": "EntryBenchmark",
+      "type": "object"
+    },
+    "ExposurePath": {
+      "additionalProperties": false,
+      "properties": {
+        "positionId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Positionid",
+          "type": "string"
+        },
+        "basis": {
+          "const": "SAMPLED_EXECUTABLE_SIDE_KNOWN_FILL_VWAP",
+          "default": "SAMPLED_EXECUTABLE_SIDE_KNOWN_FILL_VWAP",
+          "title": "Basis",
+          "type": "string"
+        },
+        "samples": {
+          "default": 0,
+          "title": "Samples",
+          "type": "integer"
+        },
+        "observedMfePrice": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observedmfeprice"
+        },
+        "observedMaePrice": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observedmaeprice"
+        },
+        "firstObservedGrossPositiveAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firstobservedgrosspositiveat"
+        },
+        "firstObservedTpCrossingAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firstobservedtpcrossingat"
+        },
+        "firstObservedSlCrossingAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firstobservedslcrossingat"
+        },
+        "afterCostTimeToProfit": {
+          "default": null,
+          "title": "Aftercosttimetoprofit",
+          "type": "null"
+        },
+        "exitCause": {
+          "default": null,
+          "title": "Exitcause",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        },
+        "reasons": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": ["positionId"],
+      "title": "ExposurePath",
+      "type": "object"
+    },
+    "PathDiagnostic": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": ["UNAVAILABLE", "OBSERVED", "CENSORED"],
+          "title": "Status",
+          "type": "string"
+        },
+        "acceptedBrokerAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acceptedbrokerat"
+        },
+        "activationAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activationat"
+        },
+        "limitEligibleAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limiteligibleat"
+        },
+        "declaredLimit": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Declaredlimit"
+        },
+        "declaredRangeBasis": {
+          "anyOf": [
+            {
+              "const": "DECLARED_HYPOTHESIS_NOT_BROKER_ACK",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Declaredrangebasis"
+        },
+        "usableSamples": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Usablesamples",
+          "type": "integer"
+        },
+        "reasons": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "completeTickTape": {
+          "const": false,
+          "default": false,
+          "title": "Completeticktape",
+          "type": "boolean"
+        },
+        "brokerRangeAcknowledgement": {
+          "const": "NOT_RETAINED",
+          "default": "NOT_RETAINED",
+          "title": "Brokerrangeacknowledgement",
+          "type": "string"
+        },
+        "counterfactualFill": {
+          "default": null,
+          "title": "Counterfactualfill",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": ["status", "reasons"],
+      "title": "PathDiagnostic",
+      "type": "object"
+    },
+    "SetupReconstruction": {
+      "additionalProperties": false,
+      "properties": {
+        "setupId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Setupid",
+          "type": "string"
+        },
+        "supported": {
+          "title": "Supported",
+          "type": "boolean"
+        },
+        "state": {
+          "enum": [
+            "UNKNOWN",
+            "UNFILLED_PENDING",
+            "ZERO_FILL_TERMINAL",
+            "PARTIAL_OPEN",
+            "OPEN",
+            "CLOSED"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "rawFillRows": {
+          "minimum": 0,
+          "title": "Rawfillrows",
+          "type": "integer"
+        },
+        "uniqueEntryFills": {
+          "minimum": 0,
+          "title": "Uniqueentryfills",
+          "type": "integer"
+        },
+        "filledVolume": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Filledvolume",
+          "type": "string"
+        },
+        "weightedEntry": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Weightedentry"
+        },
+        "partialCloseVolume": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Partialclosevolume",
+          "type": "string"
+        },
+        "recordedClosedTrades": {
+          "minimum": 0,
+          "title": "Recordedclosedtrades",
+          "type": "integer"
+        },
+        "recordedClosedNet": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedclosednet"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "currencyBasis": {
+          "const": "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED",
+          "default": "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED",
+          "title": "Currencybasis",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "path": {
+          "$ref": "#/$defs/PathDiagnostic"
+        },
+        "exposure": {
+          "items": {
+            "$ref": "#/$defs/ExposurePath"
+          },
+          "title": "Exposure",
+          "type": "array"
+        },
+        "gtdAcknowledgement": {
+          "const": "NOT_RETAINED",
+          "default": "NOT_RETAINED",
+          "title": "Gtdacknowledgement",
+          "type": "string"
+        },
+        "actualFilledStopRisk": {
+          "default": null,
+          "title": "Actualfilledstoprisk",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": [
+        "setupId",
+        "supported",
+        "state",
+        "rawFillRows",
+        "uniqueEntryFills",
+        "filledVolume",
+        "weightedEntry",
+        "partialCloseVolume",
+        "recordedClosedTrades",
+        "recordedClosedNet",
+        "currency",
+        "reasons",
+        "path"
+      ],
+      "title": "SetupReconstruction",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "scalp-replay-report-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "classification": {
+      "const": "RECONSTRUCTION_ONLY",
+      "title": "Classification",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "sourceId": {
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "replaySourceSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Replaysourcesha256",
+      "type": "string"
+    },
+    "sourceHashScope": {
+      "const": "MODULE_FILE_ONLY_NOT_CLOSURE_OR_DEPLOYMENT_ATTESTATION",
+      "default": "MODULE_FILE_ONLY_NOT_CLOSURE_OR_DEPLOYMENT_ATTESTATION",
+      "title": "Sourcehashscope",
+      "type": "string"
+    },
+    "knowledgeCutoff": {
+      "title": "Knowledgecutoff",
+      "type": "string"
+    },
+    "counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Counts",
+      "type": "object"
+    },
+    "setups": {
+      "items": {
+        "$ref": "#/$defs/SetupReconstruction"
+      },
+      "title": "Setups",
+      "type": "array"
+    },
+    "benchmark": {
+      "items": {
+        "$ref": "#/$defs/EntryBenchmark"
+      },
+      "title": "Benchmark",
+      "type": "array"
+    },
+    "recordedClosedStatistics": {
+      "items": {
+        "$ref": "#/$defs/ClosedStatistics"
+      },
+      "title": "Recordedclosedstatistics",
+      "type": "array"
+    },
+    "draftProtocolSha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Draftprotocolsha256"
+    },
+    "recommendation": {
+      "const": "HOLD",
+      "title": "Recommendation",
+      "type": "string"
+    },
+    "reasons": {
+      "items": {
+        "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "providerCost": {
+      "title": "Providercost",
+      "type": "null"
+    },
+    "counterfactualNet": {
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "portfolioDrawdown": {
+      "title": "Portfoliodrawdown",
+      "type": "null"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "classification",
+    "packetSha256",
+    "sourceId",
+    "replaySourceSha256",
+    "knowledgeCutoff",
+    "counts",
+    "setups",
+    "benchmark",
+    "recordedClosedStatistics",
+    "draftProtocolSha256",
+    "recommendation",
+    "reasons",
+    "providerCost",
+    "counterfactualNet",
+    "portfolioDrawdown",
+    "promotionAuthority",
+    "brokerAuthority"
+  ],
+  "title": "ReplayReport",
+  "type": "object"
+}

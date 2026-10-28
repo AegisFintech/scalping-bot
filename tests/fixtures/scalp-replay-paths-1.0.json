@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "scalp-replay-paths-1.0",
+  "packetSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "sessions": [],
+  "declaredRangeTicks": null,
+  "rangeBasis": "DECLARED_HYPOTHESIS_NOT_BROKER_ACK",
+  "brokerAuthority": false
+}

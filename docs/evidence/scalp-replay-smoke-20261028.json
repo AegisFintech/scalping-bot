@@ -1,0 +1,32 @@
+{
+  "version": "scalp-replay-smoke-1.0",
+  "observedAt": "2026-10-28T09:35:53.743507+00:00",
+  "packetSha256": "29cfaeda12fcceae6d2c6b1122f1a20ef0c8ab1c79161af1fc3f07ace2668a2d",
+  "replaySourceSha256": "e6c6bddfcb5cb308727a311038eabb9afef80b2d6b1314c0e3f0090a266ec4b0",
+  "classification": "RECONSTRUCTION_ONLY",
+  "counts": {
+    "analyses": 17,
+    "analysis_DEFERRED": 15,
+    "analysis_EXPIRED": 1,
+    "analysis_REJECTED": 1,
+    "contexts": 11,
+    "decision_UNKNOWN": 3,
+    "decision_WAIT": 8,
+    "provider_state_FAILED": 1,
+    "provider_state_READY": 9,
+    "provider_state_REQUESTING": 1,
+    "setup_UNKNOWN": 1,
+    "setups": 1,
+    "unsupported_setups": 1
+  },
+  "setupStates": ["UNKNOWN"],
+  "setupReasons": [["LEGACY_OR_UNSUPPORTED_SETUP"]],
+  "recommendation": "HOLD",
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "counterfactualNet": null,
+  "currentReleaseScopedSetups": 0,
+  "currentReleaseSetupsWithEntryFillRows": 0,
+  "scope": "READ_ONLY_LOCAL_JOURNAL_NOT_BROKER_FLAT_PROOF",
+  "qualification": "SOFTWARE_ONLY_NOT_ECONOMIC_OR_PROSPECTIVE"
+}

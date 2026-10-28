@@ -56,6 +56,9 @@ Normal environment settings are intentionally small; never replace a populated
 
 ## Reports
 
+- [Offline scalping replay and evidence limits](docs/scalp-replay-draft.md)
+- [Replay qualification receipt](docs/evidence/scalp-replay-validation.json)
+
 - [Approved tc01/tc02 research integration into this bot](docs/harness-integration-plan.md)
 - [Read-only learning evidence bridge and verification status](docs/learning-evidence-bridge-report.md)
 

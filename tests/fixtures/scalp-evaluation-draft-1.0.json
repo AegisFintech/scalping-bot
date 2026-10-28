@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "scalp-evaluation-draft-1.0",
+  "status": "DRAFT_NOT_REGISTERED",
+  "sourceSha256": "e6c6bddfcb5cb308727a311038eabb9afef80b2d6b1314c0e3f0090a266ec4b0",
+  "periods": [
+    {
+      "partition": "DEVELOPMENT",
+      "start": "2026-10-19T12:00:00+00:00",
+      "until": "2026-10-19T12:01:40+00:00"
+    },
+    {
+      "partition": "VALIDATION",
+      "start": "2026-10-19T12:16:40+00:00",
+      "until": "2026-10-19T12:18:20+00:00"
+    },
+    {
+      "partition": "HOLDOUT",
+      "start": "2026-10-19T12:33:20+00:00",
+      "until": "2026-10-19T12:35:00+00:00"
+    }
+  ],
+  "purgeSeconds": 60,
+  "embargoSeconds": 60,
+  "candidates": [
+    {
+      "id": "trend-entry-1",
+      "codeSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "changedRule": "ENTRY_ONLY",
+      "hypothesis": "A fixed causal entry comparison; no financial qualification."
+    }
+  ],
+  "declaredAttemptIds": ["trend-entry-1"],
+  "primaryMetric": "AFTER_COST_EXPECTANCY_WHEN_IDENTIFIABLE",
+  "uncertainty": "CORRELATED_CONTEXT_BLOCKS_REQUIRES_REVIEW",
+  "multipleTesting": "ALL_DECLARED_ATTEMPTS_REQUIRES_REVIEW",
+  "numericalThresholds": null,
+  "operatorThresholdReview": "PENDING",
+  "registrationAuthority": false,
+  "promotionAuthority": false,
+  "brokerAuthority": false
+}
