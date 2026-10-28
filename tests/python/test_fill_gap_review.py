@@ -117,7 +117,8 @@ def fill(kind: str = "ENTRY", **values: Any) -> dict[str, Any]:
 
 def bundle(*fills: dict[str, Any]) -> dict[str, Any]:
     return {
-        "schemaVersion": "fill-evidence-input-1.0",
+        "schemaVersion": "fill-evidence-input-1.1",
+        "symbol": "XAUUSD",
         "from": NOW.isoformat(),
         "until": at(60).isoformat(),
         "fills": list(fills),
@@ -266,27 +267,30 @@ def test_visible_book_walk_and_shortfall_are_descriptive(tmp_path: Path) -> None
     walk = (Decimal("400853") + Decimal("400860") + Decimal(46) * Decimal("4008.70")) / 246
     assert book["visibleWalkPrice"] == g.plain(walk.quantize(Decimal("1e-10")))
     assert Decimal(book["visibleWalkGap"]) == Decimal(book["visibleWalkPrice"]) - Decimal("4008.53")
-    assert result["fills"][0]["quoteReference"]["origin"] == "MARKET_SAMPLE"
+    assert result["fills"][0]["quoteReference"] is None
     big = fill(fillVolume="40000")
     assert (
         g.review(bundle(big), None, [market])["fills"][0]["visibleBook"]["visibleWalkPrice"] is None
     )
     # Samples outside every fill window are never retained.
-    assert result["marketEvidence"]["quoteSamples"] == 1
+    assert result["marketEvidence"]["quoteSamples"] == 0
 
 
 def test_market_segments_require_checksum_count_and_complete_book(tmp_path: Path) -> None:
     path = segment(tmp_path, [sample(0.9, complete=False)])
-    quotes, books, evidence = g.market_samples([tmp_path], [at(1.233)])
-    assert len(quotes) == 1 and not books
-    assert evidence["rejected"] == {"SAMPLE_BOOK_INCOMPLETE": 1}
+    quotes, books, evidence = g.market_samples([tmp_path], [at(1.233)], "XAUUSD")
+    assert not quotes and not books
+    assert evidence["rejected"] == {
+        "SAMPLE_SIDE_FRESHNESS_UNAVAILABLE": 1,
+        "SAMPLE_BOOK_INCOMPLETE": 1,
+    }
     segment(tmp_path, [sample(0.9)], count=2)
     with pytest.raises(ValueError, match="COUNT_MISMATCH"):
-        g.market_samples([tmp_path], [at(1.233)])
+        g.market_samples([tmp_path], [at(1.233)], "XAUUSD")
     segment(tmp_path, [sample(0.9)])
     path.write_bytes(gzip.compress(b"{}\n", mtime=0))
     with pytest.raises(ValueError, match="CHECKSUM"):
-        g.market_samples([tmp_path], [at(1.233)])
+        g.market_samples([tmp_path], [at(1.233)], "XAUUSD")
 
 
 def test_review_bounds_and_schema_fail_closed(tmp_path: Path) -> None:
@@ -406,3 +410,55 @@ def test_exporter_projects_hashed_rows_read_only_and_bounded() -> None:
     connection.execute.return_value.fetchall.return_value = [row] * (x.MAX_FILLS + 1)
     with pytest.raises(ValueError, match="LIMIT"):
         x.export(connection, "a" * 64, "XAUUSD", NOW, at(60))
+
+
+def test_wrong_symbol_cannot_supply_book(tmp_path: Path) -> None:
+    segment(tmp_path, [sample(0.9) | {"symbol": "EURUSD"}])
+    result = g.review(bundle(fill()), None, [tmp_path])
+    assert result["fills"][0]["visibleBook"] is None
+
+
+def test_post_fill_book_is_not_backdated(tmp_path: Path) -> None:
+    row = sample(1)
+    row["capturedAt"] = at(2).isoformat()
+    row["orderBook"]["receivedAt"] = at(1.8).isoformat()
+    segment(tmp_path, [row])
+    result = g.review(bundle(fill(occurredAt=at(1.5).isoformat())), None, [tmp_path])
+    assert result["fills"][0]["visibleBook"] is None
+
+
+def test_aggregate_quote_does_not_prove_side_freshness(tmp_path: Path) -> None:
+    segment(tmp_path, [sample(0.9)])
+    result = g.review(bundle(fill()), None, [tmp_path])
+    assert result["fills"][0]["quoteReference"] is None
+
+
+def test_expanded_market_bytes_are_bounded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    segment(tmp_path, [sample(0.9)])
+    monkeypatch.setattr(g, "MAX_DECODED_BYTES", 10, raising=False)
+    with pytest.raises(ValueError, match="EXPANSION_LIMIT"):
+        g.review(bundle(fill()), None, [tmp_path])
+
+
+def test_review_requires_symbol_and_bounds_paths_sessions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    missing = bundle(fill())
+    del missing["symbol"]
+    with pytest.raises(ValueError, match="SYMBOL_INVALID"):
+        g.review(missing, None, [])
+    segment(tmp_path, [sample(0.9)])
+    monkeypatch.setattr(g, "MAX_PATHS", 0)
+    with pytest.raises(ValueError, match="PATH_LIMIT"):
+        g.review(bundle(fill()), None, [tmp_path])
+    write_chain(tmp_path, chain_records())
+    monkeypatch.setattr(g, "MAX_SESSIONS", 0)
+    with pytest.raises(ValueError, match="SESSION_LIMIT"):
+        g.review(bundle(fill()), tmp_path, [])
+
+
+def test_quote_received_after_fill_and_stale_protection_are_unavailable(tmp_path: Path) -> None:
+    write_chain(tmp_path, chain_records())
+    row = g.review(bundle(fill(occurredAt=at(1.1).isoformat())), tmp_path, [])["fills"][0]
+    assert row["quoteReference"]["quoteAt"] == at(0).isoformat()
+    assert g.close_class(fill("CLOSE"), Decimal("4001.49"), at(8)) == "NATIVE_LEVEL_UNKNOWN"

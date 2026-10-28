@@ -18,17 +18,22 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
 from python.backtest.breakout_entry_review import audit_tp, verify_records, write_new
 from python.operations.entry_context import number, timestamp
 
-PROTOCOL = "fill-gap-review-1.0"
+PROTOCOL = "fill-gap-review-1.1"
 PATTERN_PROTOCOL = "native-tp-fill-pattern-1.0"
 MAX_FILLS = 10000
 MAX_INPUT = 16 * 1024**2
 MAX_AGE = timedelta(seconds=3)
+MAX_PATHS = 4096
+MAX_SESSIONS = 64
+MAX_DECODED_BYTES = 64 * 1024**2
+MAX_RECORDS = 100_000
 VOLUME_BUCKETS = (Decimal(100), Decimal(200), Decimal(300))
 NATIVE_PROTECTION_ORDER = 4
 MARKET_ORDER = 1
@@ -56,6 +61,7 @@ class QuotePoint:
 @dataclass(frozen=True)
 class BookPoint:
     source: datetime
+    available: datetime
     bids: tuple[tuple[Decimal, Decimal], ...]
     asks: tuple[tuple[Decimal, Decimal], ...]
 
@@ -100,7 +106,7 @@ def near(times: list[datetime], at: datetime) -> bool:
 
 
 def market_samples(
-    directories: list[Path], times: list[datetime]
+    directories: list[Path], times: list[datetime], symbol: str
 ) -> tuple[list[QuotePoint], list[BookPoint], dict[str, Any]]:
     """Sealed 250 ms quote/DOM segments: checksum, count and order precede use.
 
@@ -113,13 +119,16 @@ def market_samples(
     hashes: set[str] = set()
     if any(root.is_symlink() or not root.is_dir() for root in directories):
         raise ValueError("FILL_MARKET_DIRECTORY_INVALID")
-    paths = sorted(
-        (p for root in directories for p in root.glob("*.jsonl.gz")),
-        key=lambda p: (p.name, str(p)),
+    paths = list(
+        islice((p for root in directories for p in root.glob("*.jsonl.gz")), MAX_PATHS + 1)
     )
+    if len(paths) > MAX_PATHS:
+        raise ValueError("FILL_MARKET_PATH_LIMIT")
+    paths.sort(key=lambda p: (p.name, str(p)))
+    decoded, total_samples = 0, 0
     for path in paths:
         manifest_path = Path(str(path) + ".manifest.json")
-        if path.is_symlink() or not manifest_path.is_file():
+        if path.is_symlink() or manifest_path.is_symlink() or not manifest_path.is_file():
             rejected["UNSEALED_SEGMENT"] += 1
             continue
         if manifest_path.stat().st_size > 16384 or path.stat().st_size > 8_000_000:
@@ -136,13 +145,19 @@ def market_samples(
         if digest in hashes:
             continue
         hashes.add(digest)
-        if len(hashes) > 10000:
+        if len(hashes) > MAX_PATHS:
             raise ValueError("FILL_MARKET_SEGMENT_LIMIT")
         count, previous = 0, None
-        with gzip.open(BytesIO(contents), "rt") as stream:
+        with gzip.open(BytesIO(contents), "rb") as stream:
             while line := stream.readline(100_001):
                 count += 1
-                if count > 100_000 or len(line) > 100_000:
+                total_samples += 1
+                decoded += len(line)
+                if (
+                    total_samples > MAX_RECORDS
+                    or decoded > MAX_DECODED_BYTES
+                    or len(line) > 100_000
+                ):
                     raise ValueError("FILL_MARKET_SEGMENT_EXPANSION_LIMIT")
                 row = json.loads(line)
                 captured = timestamp(row["capturedAt"])
@@ -156,6 +171,8 @@ def market_samples(
                 try:
                     if row.get("schemaVersion") not in {"1.0", "1.1"}:
                         raise ValueError("SAMPLE_CONTRACT_INVALID")
+                    if row.get("symbol") != symbol:
+                        raise ValueError("SAMPLE_SYMBOL_MISMATCH")
                     raw, book = row["quote"], row["orderBook"]
                     source, received = timestamp(raw["sourceTime"]), timestamp(raw["receivedAt"])
                     bid, ask = number(raw["bid"]), number(raw["ask"])
@@ -163,11 +180,17 @@ def market_samples(
                         raise ValueError("SAMPLE_TIME_INVALID")
                     if not 0 < bid < ask:
                         raise ValueError("SAMPLE_QUOTE_INVALID")
-                    quotes.append(
-                        QuotePoint(source, received, bid, ask, source, source, "MARKET_SAMPLE")
-                    )
+                    # Aggregate spot time cannot attest freshness of a carried-forward side.
+                    rejected["SAMPLE_SIDE_FRESHNESS_UNAVAILABLE"] += 1
                     if book.get("complete") is not True or book.get("discontinuity") is not False:
                         raise ValueError("SAMPLE_BOOK_INCOMPLETE")
+                    book_source = timestamp(book["sourceTime"])
+                    book_received = timestamp(book["receivedAt"])
+                    if (
+                        not book_source <= book_received <= captured
+                        or captured - book_source > MAX_AGE
+                    ):
+                        raise ValueError("SAMPLE_BOOK_TIME_INVALID")
                     levels = {
                         side: tuple(
                             (number(level["price"]), number(level["size"]))
@@ -179,7 +202,8 @@ def market_samples(
                         raise ValueError("SAMPLE_BOOK_INVALID")
                     books.append(
                         BookPoint(
-                            timestamp(book["sourceTime"]),
+                            book_source,
+                            captured,
                             tuple(sorted(levels["bids"], key=lambda x: -x[0])),
                             tuple(sorted(levels["asks"], key=lambda x: x[0])),
                         )
@@ -222,8 +246,8 @@ class Observations:
     @classmethod
     def build(cls, points: list[QuotePoint], books: list[BookPoint]) -> Observations:
         points = sorted(points, key=lambda p: (p.source, p.received, p.origin))
-        books = sorted(books, key=lambda b: b.source)
-        return cls(points, [p.source for p in points], books, [b.source for b in books])
+        books = sorted(books, key=lambda b: b.available)
+        return cls(points, [p.source for p in points], books, [b.available for b in books])
 
 
 def reference(observed: Observations, at: datetime, quote_side: str) -> QuotePoint | None:
@@ -234,7 +258,7 @@ def reference(observed: Observations, at: datetime, quote_side: str) -> QuotePoi
         side_at = point.ask_at if quote_side == "ask" else point.bid_at
         if at - point.source > MAX_AGE:
             return None
-        if at - side_at <= MAX_AGE:
+        if point.received <= at and at - side_at <= MAX_AGE:
             return point
     return None
 
@@ -284,7 +308,7 @@ def close_class(fill: dict[str, Any], price: Decimal, at: datetime) -> str:
         return "CLOSE_TYPE_UNAVAILABLE"
     observed = fill.get("protectionObservedAt")
     tp, sl = fill.get("brokerTakeProfit"), fill.get("brokerStopLoss")
-    if not observed or not tp or not sl or timestamp(observed) > at:
+    if not observed or not tp or not sl or not timedelta(0) <= at - timestamp(observed) <= MAX_AGE:
         return "NATIVE_LEVEL_UNKNOWN"
     tp_price, sl_price, long = number(tp), number(sl), fill["side"] == "BUY"
     if (price >= tp_price) if long else (price <= tp_price):
@@ -479,8 +503,14 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 def chains(directory: Path, key: str) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
-    for summary in sorted(directory.glob(f"flight-{key}-*.summary.json")):
-        paths = sorted(directory.glob(summary.name.removesuffix(".summary.json") + "-*.jsonl*"))
+    summaries = list(islice(directory.glob(f"flight-{key}-*.summary.json"), MAX_SESSIONS + 1))
+    if len(summaries) > MAX_SESSIONS:
+        raise ValueError("FILL_FLIGHT_SESSION_LIMIT")
+    used = 0
+    for summary in sorted(summaries):
+        paths = sorted(
+            islice(directory.glob(summary.name.removesuffix(".summary.json") + "-*.jsonl*"), 129)
+        )
         if not paths:
             continue
         chain = verify_records(paths)
@@ -488,14 +518,20 @@ def chains(directory: Path, key: str) -> list[dict[str, Any]]:
             raise ValueError("FILL_FLIGHT_SCOPE_MISMATCH")
         if records:
             records.append({"kind": "GAP", "payload": {"reason": "RECORDER_RESTART"}})
+        used += sum(len(json.dumps(r).encode()) for r in chain)
+        if used > MAX_DECODED_BYTES or len(records) + len(chain) > MAX_RECORDS:
+            raise ValueError("FILL_FLIGHT_EXPANSION_LIMIT")
         records.extend(chain)
     return records
 
 
 def review(bundle: dict[str, Any], recordings: Path | None, markets: list[Path]) -> dict[str, Any]:
-    if bundle.get("schemaVersion") != "fill-evidence-input-1.0" or len(bundle["fills"]) > MAX_FILLS:
+    if bundle.get("schemaVersion") != "fill-evidence-input-1.1" or len(bundle["fills"]) > MAX_FILLS:
         raise ValueError("FILL_REVIEW_INPUT_INVALID")
     fills = bundle["fills"]
+    symbol = bundle.get("symbol")
+    if not isinstance(symbol, str) or not re.fullmatch(r"[A-Z0-9._-]{1,32}", symbol):
+        raise ValueError("FILL_REVIEW_SYMBOL_INVALID")
     keys = sorted({f["setup"] for f in fills})
     if len(keys) > 1000 or (recordings is not None and recordings.is_symlink()):
         raise ValueError("FILL_REVIEW_BOUNDS_INVALID")
@@ -504,8 +540,13 @@ def review(bundle: dict[str, Any], recordings: Path | None, markets: list[Path])
     unique: dict[tuple[datetime, datetime, Decimal, Decimal], QuotePoint] = {}
     crossings: dict[str, list[dict[str, Any]]] = {}
     bounded: set[str] = set()
+    total_bytes, total_records = 0, 0
     for key in keys:
         records = chains(recordings, key) if recordings is not None else []
+        total_bytes += sum(len(json.dumps(r).encode()) for r in records)
+        total_records += len(records)
+        if total_bytes > MAX_DECODED_BYTES or total_records > MAX_RECORDS:
+            raise ValueError("FILL_REVIEW_EXPANSION_LIMIT")
         # The same ring event can appear in overlapping setup chains; keep one copy.
         for point in flight_points(records):
             identity = (point.source, point.received, point.bid, point.ask)
@@ -520,16 +561,16 @@ def review(bundle: dict[str, Any], recordings: Path | None, markets: list[Path])
                     ask_at=max(prior.ask_at, point.ask_at),
                 )
             )
-        audit = audit_tp(records) if records else {"crossings": [], "crossingsBounded": False}
-        crossings[key] = audit["crossings"]
-        if audit["crossingsBounded"]:
+        audit = audit_tp(records) if records else None
+        crossings[key] = list(audit["crossings"]) if audit else []
+        if audit and audit["crossingsBounded"]:
             bounded.add(key)
     evidence: dict[str, Any] | None = None
     samples: list[QuotePoint] = []
     books: list[BookPoint] = []
     if markets and fills:
         samples, books, evidence = market_samples(
-            markets, [timestamp(f["occurredAt"]) for f in fills]
+            markets, [timestamp(f["occurredAt"]) for f in fills], symbol
         )
     observed = Observations.build([*unique.values(), *samples], books)
     rows = [evaluate(f, observed, crossings[f["setup"]]) for f in fills]
@@ -538,6 +579,7 @@ def review(bundle: dict[str, Any], recordings: Path | None, markets: list[Path])
             row["tpCrossing"]["crossingsBounded"] = row["setup"] in bounded
     return {
         "schemaVersion": PROTOCOL,
+        "symbol": symbol,
         "from": bundle["from"],
         "until": bundle["until"],
         "fills": rows,
