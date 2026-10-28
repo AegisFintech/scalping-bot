@@ -1,14 +1,14 @@
 ### ISSUE-409 — Retrospective replay software checkpoint
 
-- Issue: https://github.com/AegisFintech/scalping-bot/issues/409; parent #400; delivery: https://github.com/AegisFintech/scalping-bot/pull/408.
+- Delivery: https://github.com/AegisFintech/scalping-bot/pull/408; tracker #409; parent #400.
 - Acceptance: deliver the offline reconstruction, cautious sampled diagnostics, strict schemas and draft protocol, fixture/failure tests, full qualification and independent reviews through a reviewed PR. No broker, provider, study-registration or promotion authority.
-- Status: software and scoped reviews complete; full qualification and GitHub delivery in progress. #400 stays open for actual current-release reconstruction and broader research acceptance.
+- Status: software and independent reviews complete; full local qualification passed (1,161 Node, 132 PostgreSQL and 636 Python tests; 1,929 total), all gates/audits and both configuration scopes pass. Exact evidence: `docs/evidence/scalp-replay-validation.json`; GitHub delivery follows. #400 stays open for actual current-release reconstruction and broader research acceptance.
 
 ### ISSUE-400 — Offline single-order replay
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/400; depends on #399 and the reviewed protocol in #290.
 - Acceptance: causal single STOP_LIMIT/GTD reconstruction, bounded sampled-path diagnostics, frozen benchmark and reviewed protocol; schemas, independent review, full qualification and an evidence-backed PR. Unknown fills, costs and historical acknowledgements stay unknown; no broker or promotion authority.
-- Status: offline implementation and structural contracts complete; focused tests and independent review in progress. The real bounded smoke contained only an unsupported older-release setup. Current-release broker reconstruction is not yet verified; keep issue open for that evidence. Draft protocol cannot register a study or promote a candidate. See `docs/scalp-replay-draft.md`; #407 tracks prospective acknowledgement evidence.
+- Status: offline implementation, structural contracts, 49 focused tests and independent reviews complete; full local qualification passed. The real bounded smoke contained only an unsupported older-release setup. Current-release broker reconstruction is not yet verified; keep issue open for that evidence. Draft protocol cannot register a study or promote a candidate. See `docs/scalp-replay-draft.md`; #407 tracks prospective acknowledgement evidence.
 
 ### ISSUE-399 — Read-only learning evidence bridge
 

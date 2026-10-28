@@ -42,4 +42,15 @@ reconstructed from intent or the current policy.
 The prior paired replay, existing historical contracts and frozen prospective
 registrations remain immutable. No demo strategy, risk, service or account state
 is changed. Both independent source reviews found no blocker in this software-only scope.
-Full qualification and GitHub checks must pass before merging.
+Full local qualification passed: 1,161 Node/schema tests, 132 PostgreSQL tests
+and 636 Python tests (1,929 total), with formatting, lint, types, build, secret
+scan and npm/pip dependency audits passing. Command:
+`PYTHONDONTWRITEBYTECODE=1 /opt/scalper-node22/bin/node scripts/qualify.mjs`.
+The exact commands, results and source fingerprint are in the
+[qualification receipt](evidence/scalp-replay-validation.json). The existing
+Starlette/httpx test-client deprecation warning remains.
+
+Both policy and startup checks passed for the sample and active configuration
+files. PM2 metadata exposed none of the 19 active file keys, so cached values
+were not independently verified. No service was restarted. GitHub checks must
+still pass on the final PR commit before merging.
