@@ -337,3 +337,17 @@ def test_storage_failure_halts_only_observer_before_reads(
     connect.assert_not_called()
     http.assert_not_called()
     assert not (tmp_path / "day-01.json").exists()
+
+
+def test_single_scalp_context_labels_invalidation_without_a_second_entry() -> None:
+    p, plan = input_context()
+    plan.update(
+        schema_version="entry-scalp-1.0",
+        take_profit="3999.3",
+        stop_loss="4000.3",
+        valid_until=(NOW + timedelta(seconds=120)).isoformat(),
+    )
+    result = entry_context(json.dumps(p), plan, NOW, NOW + timedelta(seconds=1))
+    assert result["schemaVersion"] == "1.1" and result["entryPrice"] == "3999.70"
+    assert result["invalidationPrice"] == "4000.30" and "upperEntry" not in result
+    assert result["modelSelectedBox"] is None and result["roundLevelLiquidity"] is None

@@ -175,8 +175,6 @@ export function createProductionAiOptions(
   return {
     entryPairPlanner: new EntryPairPlanner({
       client,
-      baseUrl: "",
-      apiKey: "",
       requireTechnicalContext: true,
     }),
   };

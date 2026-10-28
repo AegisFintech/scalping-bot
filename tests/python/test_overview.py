@@ -374,3 +374,31 @@ def test_smc_demo_policy_is_displayed_without_relaxing_unknown_policy() -> None:
     assert overview.risk_summary(daily, capital, now)["setup_budget"] == "100.00"
     policy["version"] = "unknown"
     assert overview.risk_summary(daily, capital, now)["setup_budget"] == "Unavailable"
+
+
+def test_model_scalp_policy_budget_is_scoped_and_not_actual_stop_risk() -> None:
+    now = datetime(2026, 10, 28, tzinfo=UTC)
+    daily = {
+        "reconciled_at": now,
+        "current_equity": "10000",
+        "baseline_equity": "10000",
+        "loss_percent": "0",
+        "locked_out": False,
+    }
+    policy = {
+        "version": "0.8.0-model-scalp.1",
+        "mode": "demo",
+        "lossLimitsEnforced": False,
+        "setupRiskPercent": "5",
+        "dailyLossLimitPercent": "5",
+    }
+    capital = {
+        "updated_at": now,
+        "drawdown_percent": "0",
+        "risk_cap_percent": "5",
+        "risk_multiplier": "1",
+        "risk_policy": policy,
+    }
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "500.00"
+    policy["version"] = "unknown"
+    assert overview.risk_summary(daily, capital, now)["setup_budget"] == "Unavailable"

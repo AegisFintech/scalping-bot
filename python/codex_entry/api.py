@@ -17,6 +17,7 @@ from python.codex_entry.service import (
     Response,
     ResponseV11,
     ResponseV12,
+    ResponseV13,
     parse_request,
     run,
 )
@@ -33,7 +34,9 @@ def create_app(
     def live() -> dict[str, str]:
         return {"status": "alive"}
 
-    @app.post("/v1/entry-proposals", response_model=Response | ResponseV11 | ResponseV12)
+    @app.post(
+        "/v1/entry-proposals", response_model=Response | ResponseV11 | ResponseV12 | ResponseV13
+    )
     async def propose(
         request: HttpRequest, authorization: Annotated[str | None, Header()] = None
     ) -> dict[str, object]:

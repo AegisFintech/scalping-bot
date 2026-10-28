@@ -1,11 +1,11 @@
+import {
+  directionalScalpTransform,
+  validateDirectionalScalpCommands,
+} from "../../../packages/strategy-candidates/src/directional-scalp.js";
 import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
 import { levelContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
 import { canonical } from "../../../packages/risk-engine/src/decimal.js";
-import {
-  quickOcoTransform,
-  quickOcoModeledCost,
-  validateQuickOcoCommands,
-} from "../../../packages/strategy-candidates/src/quick-oco.js";
+import { quickOcoModeledCost } from "../../../packages/strategy-candidates/src/quick-oco.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -402,7 +402,7 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config),
-    promptVersion: "entry-quick-oco-execution-v4",
+    promptVersion: "entry-scalp-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -592,9 +592,10 @@ async function main(): Promise<void> {
   const createRisk = (executionOrderType: "STOP_LIMIT" | "LIMIT") =>
     new OcoRiskEvaluator({
       operatorEntryModes: true,
+      modelDefinedScalp: breakoutScalpActive,
       executionOrderType,
       adverseSlippagePoints: activeExecutionPolicy.adverseSlippagePoints,
-      timeInForce: ORDER_LIFECYCLE.timeInForce,
+      timeInForce: breakoutScalpActive ? "GTD" : ORDER_LIFECYCLE.timeInForce,
       riskMultiplier: () => capitalMultiplier,
       riskPercentCap: () => capitalRiskCap,
       marginEstimator: margin,
@@ -615,7 +616,7 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-quick-oco-execution-v4",
+    promptVersion: "entry-scalp-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1281,6 +1282,8 @@ async function main(): Promise<void> {
   }
   const admissionModes = { read: () => entryModes.readForAdmission() };
   const coordinator = new EntryModeCoordinator(admissionModes, (selection) => {
+    if (breakoutScalpActive && selection.mode !== "SINGLE_STOP_LIMIT")
+      throw new Error("SCALP_SINGLE_STOP_LIMIT_REQUIRED");
     const profile = entryModeProfile(selection.mode);
     const selectedRisk = createRisk(profile.orderType);
     return new AnalysisCoordinator({
@@ -1311,15 +1314,27 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: "entry-quick-oco-execution-v4",
+      promptVersion: "entry-scalp-execution-v1",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,
+      modelDefinedScalp: breakoutScalpActive,
       ...(breakoutScalpActive
         ? {
-            evidenceScalp: (snapshot, response, _atr, maximumStopDistance) =>
+            evidenceScalp: (
+              snapshot,
+              response,
+              _atr,
+              maximumStopDistance,
+              side,
+            ) =>
               Promise.resolve(
-                quickOcoTransform({ snapshot, response, maximumStopDistance }),
+                directionalScalpTransform({
+                  snapshot,
+                  response,
+                  maximumStopDistance,
+                  ...(side ? { side } : {}),
+                }),
               ),
           }
         : {}),
@@ -1340,16 +1355,18 @@ async function main(): Promise<void> {
         ? Number(fadeExecutionPolicy.trendFilterBars)
         : 0,
       ...(breakoutScalpActive
-        ? { commandFeeCheck: validateQuickOcoCommands }
+        ? { commandFeeCheck: validateDirectionalScalpCommands }
         : {}),
       minimumExpectedNetToFeesRatio: breakoutScalpActive
         ? BREAKOUT_SCALP_RELEASE.minimumNetToFees
         : usesFadeV3(strategyVersion)
           ? "1.5"
           : config.minimumExpectedNetToFeesRatio,
-      minExpirySeconds: minimumOrderExpirySeconds,
-      maxExpirySeconds: maximumOrderExpirySeconds,
-      preferredExpirySeconds: preferredOrderExpirySeconds,
+      minExpirySeconds: breakoutScalpActive ? 1 : minimumOrderExpirySeconds,
+      maxExpirySeconds: breakoutScalpActive ? 300 : maximumOrderExpirySeconds,
+      preferredExpirySeconds: breakoutScalpActive
+        ? 120
+        : preferredOrderExpirySeconds,
       maxStopDistanceAtr: environment.MAX_STOP_DISTANCE_ATR ?? "3",
       maxEntryDistanceAtr: config.maxEntryDistanceAtr,
       entryLatencyBufferAtr: config.entryLatencyBufferAtr,

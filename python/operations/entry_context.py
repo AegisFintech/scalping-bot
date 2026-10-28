@@ -141,7 +141,7 @@ def entry_context(request: str | None, plan: Any, captured: Any, available: Any)
             buffer = plain(number(buffer))
             if number(buffer) < 0:
                 raise ValueError("CONTEXT_BUFFER_INVALID")
-        return {
+        result = {
             "schemaVersion": "1.0",
             "state": "RECORDED",
             "capturedAt": captured_at.isoformat(),
@@ -183,6 +183,17 @@ def entry_context(request: str | None, plan: Any, captured: Any, available: Any)
             "counterfactualNet": None,
             "brokerAuthority": False,
         }
+        if plan.get("schema_version") == "entry-scalp-1.0":
+            result["schemaVersion"] = "1.1"
+            result["referenceBasis"] = "SINGLE_ENTRY_AND_INVALIDATION_NOT_TWO_ENTRIES"
+            result["entryPrice"] = result.pop("upperEntry" if side == "BUY" else "lowerEntry")
+            result["invalidationPrice"] = result.pop(
+                "lowerEntry" if side == "BUY" else "upperEntry"
+            )
+            result["proposedTakeProfit"] = plan.get("take_profit")
+            result["proposedStopLoss"] = plan.get("stop_loss")
+            result["pendingExpiresAt"] = plan.get("valid_until")
+        return result
     except (ValueError, KeyError, TypeError, ArithmeticError):
         return missing
 

@@ -39,6 +39,7 @@ export interface OcoRiskEvaluatorOptions {
   readonly strategyVersion: string;
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly adverseSlippagePoints?: string;
+  readonly modelDefinedScalp?: boolean;
   readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabelPrefix?: string;
   readonly riskMultiplier?: () => string;
@@ -408,10 +409,20 @@ export class OcoRiskEvaluator {
       if (side !== "BUY" && side !== "SELL")
         return this.#reject("DIRECTIONAL_SIDE_INVALID");
       if (
+        this.#options.modelDefinedScalp &&
+        (this.#options.executionOrderType !== "STOP_LIMIT" ||
+          this.#options.timeInForce !== "GTD")
+      )
+        return this.#reject("DIRECTIONAL_EXECUTION_POLICY_INVALID");
+      if (
         !["STOP_LIMIT", "LIMIT"].includes(
           this.#options.executionOrderType ?? "",
         ) ||
-        this.#options.timeInForce !== "GTC"
+        (this.#options.timeInForce !== "GTC" &&
+          !(
+            this.#options.modelDefinedScalp &&
+            this.#options.timeInForce === "GTD"
+          ))
       )
         return this.#reject("DIRECTIONAL_EXECUTION_POLICY_INVALID");
       const proposal =
@@ -500,7 +511,7 @@ export class OcoRiskEvaluator {
             directionalCommand: {
               executionOrderType: this.#options.executionOrderType as
                 "STOP_LIMIT" | "LIMIT",
-              timeInForce: "GTC",
+              timeInForce: this.#options.modelDefinedScalp ? "GTD" : "GTC",
               idempotencyKey: digest,
               analysisId: input.response.analysis_id,
               orderGroupId: randomUUID(),

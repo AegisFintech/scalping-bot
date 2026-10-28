@@ -1,3 +1,4 @@
+import type { ScalpEntryPlan } from "./scalp-entry.js";
 import type { ModeEntryPlan } from "./mode-entry.js";
 import { Decimal } from "decimal.js";
 import type {
@@ -15,7 +16,12 @@ const validator = new ModelResponseValidator("schemas/model-response-2.1.json");
 
 /** Pure candidate construction. Account sizing and every placement gate stay downstream. */
 export function scenarioOco(
-  plan: ScenarioPlan | EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan,
+  plan:
+    | ScenarioPlan
+    | EntryPairPlan
+    | DirectionalEntryPlan
+    | ModeEntryPlan
+    | ScalpEntryPlan,
   payload: Readonly<Record<string, unknown>>,
   metadata?: SymbolMetadata,
 ): ModelResponse {
@@ -25,6 +31,7 @@ export function scenarioOco(
       throw new Error("SCENARIO_EXECUTION_CONSTRAINT_INVALID");
     return decimal(c[key]);
   };
+  const scalp = plan.schema_version === "entry-scalp-1.0";
   const now = time(String(payload.server_time));
   const preferred = time(String(c.preferred_expires_at));
   const minimum = c.order_expiry_min_seconds;
@@ -32,15 +39,17 @@ export function scenarioOco(
   if (
     typeof minimum !== "number" ||
     !Number.isSafeInteger(minimum) ||
-    minimum < 60 ||
+    minimum < (scalp ? 1 : 60) ||
     typeof maximum !== "number" ||
     !Number.isSafeInteger(maximum) ||
     maximum < minimum ||
-    preferred - now < minimum * 1000 ||
-    preferred - now > maximum * 1000
+    (!scalp &&
+      (preferred - now < minimum * 1000 || preferred - now > maximum * 1000))
   )
     throw new Error("SCENARIO_EXECUTION_CONSTRAINT_INVALID");
-  const expiry = Math.min(preferred, time(plan.valid_until));
+  const expiry = scalp
+    ? time(plan.valid_until)
+    : Math.min(preferred, time(plan.valid_until));
   if (expiry - now < minimum * 1000) throw new Error("SCENARIO_WAIT_REFRESH");
   const expires = new Date(expiry).toISOString();
   const tick = price("tick_size");
@@ -76,7 +85,7 @@ export function scenarioOco(
     .div(tick)
     .ceil()
     .mul(tick);
-  if (entries) {
+  if (entries && !scalp) {
     if (metadata === undefined)
       throw new Error("SCENARIO_ENTRY_METADATA_MISSING");
     const pip = decimal(metadata.pipSize);
@@ -101,7 +110,15 @@ export function scenarioOco(
     });
     reward = Decimal.max(...targets);
   }
-  const risk = reward.mul(2);
+  if (scalp)
+    reward = decimal(plan.take_profit)
+      .minus(plan.entry_side === "BUY" ? buy : sell)
+      .abs();
+  const risk = scalp
+    ? decimal(plan.stop_loss)
+        .minus(plan.entry_side === "BUY" ? buy : sell)
+        .abs()
+    : reward.mul(2);
   if (
     risk.gt(price("maximum_stop_distance")) ||
     (!entries &&
@@ -117,7 +134,9 @@ export function scenarioOco(
     stop_loss: canonical(entry.minus(risk.mul(direction))),
     take_profit: canonical(entry.plus(reward.mul(direction))),
     invalidation_price: canonical(entry.minus(risk.mul(direction))),
-    risk_reward_ratio: "0.5",
+    risk_reward_ratio: scalp
+      ? canonical(reward.div(risk).toDecimalPlaces(10, Decimal.ROUND_DOWN))
+      : "0.5",
     expires_at: expires,
   });
   const performance = payload.performance as {
@@ -173,13 +192,15 @@ export function scenarioOco(
       original_sell: 0,
     },
     setup_tags: [
-      plan.schema_version === "entry-modes-1.0"
-        ? `MODE_RANGE_${plan.entry_side}`
-        : plan.schema_version === "entry-direction-1.0"
-          ? `DIRECTIONAL_${plan.entry_side}_BREAKOUT`
-          : entries
-            ? "DIRECT_ENTRY_PAIR_OCO"
-            : "REUSABLE_SCENARIO_OCO",
+      scalp
+        ? `SINGLE_SCALP_${plan.entry_side}_BREAKOUT`
+        : plan.schema_version === "entry-modes-1.0"
+          ? `MODE_RANGE_${plan.entry_side}`
+          : plan.schema_version === "entry-direction-1.0"
+            ? `DIRECTIONAL_${plan.entry_side}_BREAKOUT`
+            : entries
+              ? "DIRECT_ENTRY_PAIR_OCO"
+              : "REUSABLE_SCENARIO_OCO",
     ],
     evidence_codes: ["DETERMINISTIC_PLAN_DERIVATION"],
     risk_flags: [],

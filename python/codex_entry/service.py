@@ -376,6 +376,25 @@ class RequestV111(RequestV110):
     payload: PayloadV18
 
 
+class PayloadScalp(PayloadV18):
+    pip_size: Price
+    maximum_stop_distance: Price
+    minimum_protection_distance: Price
+
+    @model_validator(mode="after")
+    def pip_precision(self) -> PayloadScalp:
+        pip, tick = Decimal(self.pip_size), Decimal(self.tick_size)
+        if pip <= 0 or pip % tick or Decimal(self.maximum_stop_distance) <= 0:
+            raise ValueError("CODEX_PIP_METADATA_INVALID")
+        return self
+
+
+class RequestV112(RequestV111):
+    version: Literal["codex-entry-request-1.12"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-scalp-v1"]  # type: ignore[assignment]
+    payload: PayloadScalp
+
+
 REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     Request,
     RequestV12,
@@ -388,6 +407,7 @@ REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     RequestV19,
     RequestV110,
     RequestV111,
+    RequestV112,
 )
 REQUEST_BY_VERSION = {
     version: model
@@ -415,6 +435,7 @@ def parse_request(
     | RequestV19
     | RequestV110
     | RequestV111
+    | RequestV112
 ):
     value = json.loads(raw)
     version = value.get("version") if isinstance(value, dict) else None
@@ -506,6 +527,43 @@ class ResponseV11(Response):
 class ResponseV12(ResponseV11):
     version: Literal["codex-entry-response-1.2"]  # type: ignore[assignment]
     entries: DirectionalDecision  # type: ignore[assignment]
+
+
+class ScalpDecision(StrictModel):
+    decision: Literal["BUY", "SELL", "WAIT"]
+    reason: Annotated[str, Field(min_length=1, max_length=1200)]
+    entry_price: Price | None
+    take_profit: Price | None
+    stop_loss: Price | None
+    pending_seconds: Annotated[int, Field(strict=True, ge=60, le=300)] | None
+
+    @model_validator(mode="after")
+    def geometry(self) -> ScalpDecision:
+        values = (self.entry_price, self.take_profit, self.stop_loss, self.pending_seconds)
+        if self.decision == "WAIT":
+            if any(v is not None for v in values):
+                raise ValueError("CODEX_SCALP_WAIT_INVALID")
+            return self
+        if (
+            self.entry_price is None
+            or self.take_profit is None
+            or self.stop_loss is None
+            or self.pending_seconds is None
+        ):
+            raise ValueError("CODEX_SCALP_PROPOSAL_REQUIRED")
+        entry, target, stop = map(Decimal, (self.entry_price, self.take_profit, self.stop_loss))
+        ordered = stop < entry < target if self.decision == "BUY" else target < entry < stop
+        if not ordered or min(entry, target, stop) <= 0:
+            raise ValueError("CODEX_SCALP_GEOMETRY_INVALID")
+        reward, risk = abs(target - entry), abs(stop - entry)
+        if reward > Decimal("0.4") or risk > 7 or reward / risk < Decimal("0.0571428571"):
+            raise ValueError("CODEX_SCALP_LIMIT_INVALID")
+        return self
+
+
+class ResponseV13(ResponseV12):
+    version: Literal["codex-entry-response-1.3"]  # type: ignore[assignment]
+    entries: ScalpDecision  # type: ignore[assignment]
 
 
 def invoke(prompt: str, job: Path) -> bytes:
@@ -628,15 +686,22 @@ def run(
             finally:
                 os.close(descriptor)
         try:
+            decision_model = (
+                ScalpDecision
+                if isinstance(request, RequestV112)
+                else DirectionalDecision
+                if isinstance(request, RequestV15)
+                else Decision
+                if isinstance(request, RequestV13)
+                else Entries
+            )
             if isinstance(request, RequestV13) and call is invoke:
                 from python.codex_entry.memory import invoke_daily
 
                 result = invoke_daily(
                     prompt,
                     job,
-                    schema=(
-                        DirectionalDecision if isinstance(request, RequestV15) else Decision
-                    ).model_json_schema(),
+                    schema=decision_model.model_json_schema(),
                     model=MODEL,
                 )
             else:
@@ -645,13 +710,7 @@ def run(
                 raise ValueError("CODEX_OUTPUT_OVERSIZED")
             # Preserve available response text even when validation fails.
             publish(job / "response-text.json", {"text": result.decode("utf-8")})
-            entries = (
-                DirectionalDecision
-                if isinstance(request, RequestV15)
-                else Decision
-                if isinstance(request, RequestV13)
-                else Entries
-            ).model_validate_json(result)
+            entries = decision_model.model_validate_json(result)
             ended = now()
             if ended < started or ended - started > timedelta(seconds=TIMEOUT):
                 raise ValueError("CODEX_RESULT_STALE")
@@ -671,17 +730,16 @@ def run(
                 "executionAuthority": False,
             }
             if isinstance(request, RequestV13):
-                response["version"] = (
-                    "codex-entry-response-1.2"
+                response_model = (
+                    ResponseV13
+                    if isinstance(request, RequestV112)
+                    else ResponseV12
                     if isinstance(request, RequestV15)
-                    else "codex-entry-response-1.1"
+                    else ResponseV11
                 )
+                response["version"] = get_args(response_model.model_fields["version"].annotation)[0]
                 response["memory"] = json.loads(read_bounded(job / "memory-result.json"))
-                response = (
-                    (ResponseV12 if isinstance(request, RequestV15) else ResponseV11)
-                    .model_validate(response)
-                    .model_dump()
-                )
+                response = response_model.model_validate(response).model_dump()
             else:
                 response = Response.model_validate(response).model_dump()
             publish(job / "result.json", response)

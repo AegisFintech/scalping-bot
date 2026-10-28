@@ -1,3 +1,4 @@
+import type { ScalpEntryPlan } from "./scalp-entry.js";
 import { Decimal } from "decimal.js";
 import type {
   EntryRetirementEvidence,
@@ -61,7 +62,7 @@ export function entryPriceBounds(
 
 /** Only proven price-side failures qualify for retirement. Bad data throws instead. */
 export function checkEntryPrices(
-  plan: EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan,
+  plan: EntryPairPlan | DirectionalEntryPlan | ModeEntryPlan | ScalpEntryPlan,
   snapshot: Pick<MarketSnapshot, "quote" | "metadata" | "serverTime">,
   phase: EntryRetirementEvidence["phase"],
   now: number,
@@ -102,7 +103,11 @@ export function checkEntryPrices(
     options.minimumPoints,
   );
   const bounds = entryPriceBounds(snapshot.quote, canonical(tick), minimum);
-  if (plan.schema_version === "entry-modes-1.0") return null; // Freshness/grid validated above; executable side/type is selected per cycle.
+  if (
+    plan.schema_version === "entry-modes-1.0" ||
+    plan.schema_version === "entry-scalp-1.0"
+  )
+    return null; // Freshness/grid validated above; executable side/type is selected per cycle.
   const reasonCodes: EntryRetirementEvidence["reasonCodes"][number][] = [];
   if (decimal(plan.buy_stop).lt(bounds.buy_stop_minimum))
     reasonCodes.push("BUY_ENTRY_TOO_CLOSE");

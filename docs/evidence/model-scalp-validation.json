@@ -1,0 +1,109 @@
+{
+  "issue": 394,
+  "qualified": true,
+  "sourceSha256": "348c6afddbd64c282a8012b8864007073ff58fc2b75ac242342da5ece4582879",
+  "tests": {
+    "node": 1152,
+    "postgresql": 132,
+    "python": 557,
+    "total": 1841
+  },
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "configChecks": {
+    "samplePolicy": true,
+    "sampleStartup": true,
+    "populatedPolicy": true,
+    "populatedStartup": true
+  },
+  "reviews": {
+    "standards": "NO_BLOCKING_FINDINGS",
+    "spec": "NO_BLOCKING_FINDINGS"
+  },
+  "providerCallsByChecks": 0,
+  "brokerCommandsByChecks": 0,
+  "productionDatabaseWritesByChecks": 0,
+  "liveMoneyAuthority": false,
+  "profitabilityClaim": false,
+  "deploymentCompleted": false
+}

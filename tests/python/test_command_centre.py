@@ -143,3 +143,25 @@ def test_native_profit_policy_is_explicit_and_does_not_promise_net_profit() -> N
     assert "local profit market closes are disabled" in view["next"].lower()
     assert "fills and fees" in view["next"]
     assert action({**status, "profitExit": None}, NOW)["active"] == "protect"
+
+
+def test_single_scalp_does_not_display_invalidation_as_another_entry() -> None:
+    snapshot = {
+        "evidence": {
+            "plan": {
+                "schema_version": "entry-scalp-1.0",
+                "entry_side": "BUY",
+                "buy_stop": "4002",
+                "sell_stop": "3995",
+                "stop_loss": "3995",
+                "take_profit": "4002.4",
+            }
+        }
+    }
+    rows = levels(snapshot, NOW)
+    assert {r["label"] for r in rows} == {
+        "Codex BUY entry",
+        "Codex proposed SL",
+        "Codex proposed TP",
+    }
+    assert not any(r.get("role") in {"range_upper", "range_lower"} for r in rows)

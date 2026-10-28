@@ -3,7 +3,7 @@ import type pg from "pg";
 import { describe, expect, it, vi } from "vitest";
 import { EntryModeStore } from "../../apps/execution-service/src/entry-mode-store.js";
 
-function fixture(mode = "OCO_STOP_LIMIT") {
+function fixture(mode = "SINGLE_STOP_LIMIT") {
   const query = vi.fn().mockResolvedValue({
     rowCount: 1,
     rows: [{ entry_mode: mode, revision: randomUUID() }],
@@ -20,14 +20,14 @@ function fixture(mode = "OCO_STOP_LIMIT") {
 describe("fixed trend-direction admission", () => {
   it("admits the persisted single STOP_LIMIT revision", async () => {
     const { store } = fixture();
-    expect((await store.readForAdmission()).mode).toBe("OCO_STOP_LIMIT");
+    expect((await store.readForAdmission()).mode).toBe("SINGLE_STOP_LIMIT");
   });
-  it.each(["SINGLE_LIMIT", "OCO_LIMIT", "SINGLE_STOP_LIMIT"])(
+  it.each(["SINGLE_LIMIT", "OCO_LIMIT", "OCO_STOP_LIMIT"])(
     "withholds new %s admission without rewriting historical selection",
     async (mode) => {
       const { store, query } = fixture(mode);
       await expect(store.readForAdmission()).rejects.toThrow(
-        "FIXED_OCO_STOP_LIMIT_MODE_REQUIRED",
+        "FIXED_SINGLE_STOP_LIMIT_MODE_REQUIRED",
       );
       expect((await store.read()).mode).toBe(mode);
       expect(
@@ -51,7 +51,7 @@ describe("fixed trend-direction admission", () => {
   it("initializes new scopes as STOP_LIMIT without overwriting an existing revision", async () => {
     const { store, query } = fixture();
     await store.initialize();
-    expect(query.mock.calls[0]?.[0]).toContain("'OCO_STOP_LIMIT'");
+    expect(query.mock.calls[0]?.[0]).toContain("'SINGLE_STOP_LIMIT'");
     expect(query.mock.calls[0]?.[0]).toContain(
       "ON CONFLICT(account_id,symbol_id,environment) DO NOTHING",
     );

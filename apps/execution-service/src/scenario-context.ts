@@ -1,3 +1,4 @@
+import type { ScalpEntryPlan } from "../../../packages/scenario-engine/src/scalp-entry.js";
 import type { ModeEntryPlan } from "../../../packages/scenario-engine/src/mode-entry.js";
 import {
   isEntryPlan,
@@ -44,6 +45,7 @@ import {
 } from "../../../packages/scenario-engine/src/entry-planner.js";
 import { type EntryPairPlan } from "../../../packages/scenario-engine/src/entry-plan.js";
 type ContextPlan =
+  | ScalpEntryPlan
   | ModeEntryPlan
   | ScenarioPlan
   | EntryPairPlan
@@ -59,7 +61,13 @@ import {
 
 /** Same proof is used for discovery and the locked dispatch claim. Aliases: c, g. */
 const zeroFillTerminalProof = `
-  g.state='FAILED' AND g.cancellation_reason IN ('OCO_PEER_UNFILLED_TERMINAL','DEMO_BROKER_ZERO_FILL_CANCELLED')
+  ((g.state='FAILED' AND g.cancellation_reason IN ('OCO_PEER_UNFILLED_TERMINAL','DEMO_BROKER_ZERO_FILL_CANCELLED'))
+   OR (c.plan->>'schema_version'='entry-scalp-1.0' AND g.state='EXPIRED'
+     AND (g.cancellation_reason='ANALYSIS_EXPIRED' OR (g.cancellation_reason IS NULL
+       AND EXISTS(SELECT 1 FROM orders o JOIN broker_execution_events e ON e.order_id=o.id
+         WHERE o.order_group_id=g.id AND o.state='EXPIRED' AND e.order_group_id=g.id
+           AND e.account_id=c.account_id AND e.symbol_id=c.symbol_id AND e.mapping_state='MAPPED'
+           AND e.execution_type=6 AND e.broker_order_id=o.broker_order_id)))))
   AND g.updated_at<=clock_timestamp() AND g.mode=c.mode
   AND EXISTS(SELECT 1 FROM analysis_runs a WHERE a.id=g.analysis_id AND a.account_id=c.account_id AND a.symbol_id=c.symbol_id)
   AND (SELECT count(*) FROM orders o WHERE o.order_group_id=g.id)=CASE WHEN g.entry_side IS NULL THEN 2 ELSE 1 END
@@ -343,6 +351,8 @@ export class PostgresContextStore implements ContextStore {
       await client.query("BEGIN");
       const updated = await client.query(
         `UPDATE scenario_contexts SET state=$2,completed_at=clock_timestamp(),duration_ms=GREATEST(0,floor(extract(epoch FROM (clock_timestamp()-requested_at))*1000))::integer,available_at=CASE WHEN $2='READY' THEN clock_timestamp() ELSE NULL END,
+      valid_until=CASE WHEN $2='READY' AND $3::jsonb->>'schema_version'='entry-scalp-1.0'
+        THEN ($3::jsonb->>'valid_until')::timestamptz ELSE valid_until END,
       plan=$3::jsonb,telemetry=$4::jsonb,reason=$5 WHERE id=$1 AND state='REQUESTING' AND account_id=$6 AND symbol_id=$7 AND mode=$8`,
         [
           id,
@@ -414,13 +424,13 @@ export class ReusableScenarioModel implements ModelProvider {
       : null;
     const content = readFileSync(
       entryOnly
-        ? "prompts/entry-quick-oco-execution-v4.md"
+        ? "prompts/entry-scalp-execution-v1.md"
         : "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
       version: entryOnly
-        ? ("entry-quick-oco-execution-v4" as const)
+        ? ("entry-scalp-execution-v1" as const)
         : ("scenario-execution-v2" as const),
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
@@ -498,6 +508,8 @@ export class ReusableScenarioModel implements ModelProvider {
     this.prepared = null;
     let existing = await this.store.latest();
     const now = this.now();
+    const submissionReserveMs =
+      existing?.plan?.schema_version === "entry-scalp-1.0" ? 5_000 : 65_000;
     if (
       this.entryOnly &&
       existing?.state === "READY" &&
@@ -506,7 +518,7 @@ export class ReusableScenarioModel implements ModelProvider {
       existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
       this.currentProviderPrompt(existing) &&
       isEntryPlan(existing.plan) &&
-      time(existing.validUntil) >= now + 65_000
+      time(existing.validUntil) >= now + submissionReserveMs
     ) {
       if (
         existing.tickSize !== input.snapshot.metadata.tickSize ||
@@ -544,7 +556,7 @@ export class ReusableScenarioModel implements ModelProvider {
       !existing.consumed &&
       existing.retiredAt == null &&
       (!this.entryOnly || isEntryPlan(existing.plan)) &&
-      time(existing.validUntil) >= now + 65_000
+      time(existing.validUntil) >= now + submissionReserveMs
     ) {
       if (
         existing.availableAt === null ||
@@ -576,7 +588,8 @@ export class ReusableScenarioModel implements ModelProvider {
           analysisId: response.analysis_id,
           response,
           ...(plan.schema_version === "entry-direction-1.0" ||
-          plan.schema_version === "entry-modes-1.0"
+          plan.schema_version === "entry-modes-1.0" ||
+          plan.schema_version === "entry-scalp-1.0"
             ? { entrySide: plan.entry_side }
             : {}),
         };
@@ -673,6 +686,15 @@ export class ReusableScenarioModel implements ModelProvider {
       symbol: input.snapshot.metadata.symbolName,
       capturedAt: input.snapshot.serverTime,
       tickSize: input.snapshot.metadata.tickSize,
+      pipSize: input.snapshot.metadata.pipSize,
+      minimumProtectionDistance: input.snapshot.metadata.minStopDistance,
+      ...(() => {
+        const constraints = input.payload.execution_constraints as
+          Record<string, unknown> | undefined;
+        return typeof constraints?.maximum_stop_distance === "string"
+          ? { maximumStopDistance: constraints.maximum_stop_distance }
+          : {};
+      })(),
       candles: input.snapshot.candles,
       chart: input.chart,
       quote: input.snapshot.quote,

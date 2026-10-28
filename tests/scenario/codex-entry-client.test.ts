@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CodexEntryClient } from "../../packages/ai-client/src/codex-entry-client.js";
 const now = Date.parse("2026-10-19T12:00:00Z");
 const at = new Date(now).toISOString();
-const prompt = readFileSync("prompts/entry-quick-oco-v5.md", "utf8").trim();
+const prompt = readFileSync("prompts/entry-scalp-v1.md", "utf8").trim();
 function fixtureClient() {
   const request = {
     analysisId: randomUUID(),
@@ -14,11 +14,12 @@ function fixtureClient() {
     payload: {
       captured_at: at,
       tick_size: "0.01",
+      pip_size: "0.01",
       candles: [{ timeframe: "M1", rows: [[at, at]] }],
     },
   };
   const value = {
-    version: "codex-entry-response-1.2",
+    version: "codex-entry-response-1.3",
     analysisId: request.analysisId,
     requestedModel: "gpt-6.1-sol",
     returnedModel: null,
@@ -28,8 +29,10 @@ function fixtureClient() {
     entries: {
       decision: "BUY",
       reason: "Box",
-      upper_breakout: "4002",
-      lower_breakout: "3999",
+      entry_price: "4002",
+      take_profit: "4002.4",
+      stop_loss: "3995",
+      pending_seconds: 120,
     },
     memory: {
       day: "2026-10-19",
@@ -38,7 +41,7 @@ function fixtureClient() {
       compacted: false,
     },
     rawResponse:
-      '{"decision":"BUY","reason":"Box","upper_breakout":"4002","lower_breakout":"3999"}',
+      '{"decision":"BUY","reason":"Box","entry_price":"4002","take_profit":"4002.4","stop_loss":"3995","pending_seconds":120}',
     inputTokens: null,
     outputTokens: null,
     costAmount: null,
@@ -69,11 +72,11 @@ describe("isolated Codex transport", () => {
     if (typeof rawBody !== "string") throw new Error("EXPECTED_JSON_REQUEST");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body).toMatchObject({
-      version: "codex-entry-request-1.11",
-      promptVersion: "entry-quick-oco-v5",
+      version: "codex-entry-request-1.12",
+      promptVersion: "entry-scalp-v1",
       promptSha256: s.value.promptSha256,
     });
-    expect(result.promptArtifact?.version).toBe("entry-quick-oco-v5");
+    expect(result.promptArtifact?.version).toBe("entry-scalp-v1");
     expect(result.retryCount).toBe(0);
     expect(s.gate).toHaveBeenCalledOnce();
     expect(s.fetchImpl).toHaveBeenCalledOnce();
@@ -178,6 +181,9 @@ print(level_request().model_dump_json())`,
     analysisId: string;
     payload: Record<string, unknown>;
   };
+  body.payload.pip_size = "0.01";
+  body.payload.maximum_stop_distance = "7";
+  body.payload.minimum_protection_distance = "0.01";
   const s = fixtureClient();
   Object.assign(s.value, {
     analysisId: body.analysisId,
@@ -191,8 +197,8 @@ print(level_request().model_dump_json())`,
       [
         "-c",
         `import sys
-from python.codex_entry.service import RequestV111
-v=RequestV111.model_validate_json(sys.stdin.read())
+from python.codex_entry.service import RequestV112
+v=RequestV112.model_validate_json(sys.stdin.read())
 assert v.payload.execution_context.shared_setup_risk_percent=='5'
 assert v.payload.technical_context.definitions_version=='causal-smc-1.1'`,
       ],
@@ -207,6 +213,6 @@ assert v.payload.technical_context.definitions_version=='causal-smc-1.1'`,
     chart: null,
     payload: body.payload,
   });
-  expect(result.promptArtifact?.version).toBe("entry-quick-oco-v5");
+  expect(result.promptArtifact?.version).toBe("entry-scalp-v1");
   expect(s.fetchImpl).toHaveBeenCalledOnce();
 });

@@ -4,31 +4,29 @@ import {
 } from "./entry-decision.js";
 import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
-import { HISTORICAL_API_MODEL } from "../../config/src/policy.js";
-import {
+import type {
   OpenAiCompatibleClient,
-  type AiAnalysisResult,
+  AiAnalysisResult,
 } from "../../ai-client/src/client.js";
-import { bindEntryPrices } from "./entry-plan.js";
 import { validateScenarioMarket, type ScenarioInput } from "./planner.js";
-import { SCENARIO_REQUEST_POLICY } from "./request-policy.js";
 import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-quick-oco-v5" as const,
-  path: "prompts/entry-quick-oco-v5.md",
+  version: "entry-scalp-v1" as const,
+  path: "prompts/entry-scalp-v1.md",
 });
 
 const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
   candleLimits: Object.freeze({ M1: 120, M5: 144, M15: 288 }),
-  maxOutputTokens: 1024,
-  reasoningEffort: "low" as const,
 });
 
 export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
   readonly chart: ScenarioInput["chart"] | null;
   readonly schemaVersion?: "2.0";
+  readonly pipSize?: string;
+  readonly maximumStopDistance?: string;
+  readonly minimumProtectionDistance?: string;
   readonly quote?: Quote;
   readonly minimumStopDistance?: string;
   readonly technicalContext?: {
@@ -53,6 +51,13 @@ export function entryProviderPayload(
   return {
     captured_at: input.capturedAt,
     tick_size: input.tickSize,
+    ...(input.pipSize === undefined ? {} : { pip_size: input.pipSize }),
+    ...(input.maximumStopDistance === undefined
+      ? {}
+      : { maximum_stop_distance: input.maximumStopDistance }),
+    ...(input.minimumProtectionDistance === undefined
+      ? {}
+      : { minimum_protection_distance: input.minimumProtectionDistance }),
     quote: input.quote,
     minimum_entry_distance: boundaries.minimum_entry_distance,
     entry_boundaries: boundaries,
@@ -108,47 +113,16 @@ export class EntryPairPlanner {
   private readonly now: () => number;
   private readonly requireTechnicalContext: boolean;
   constructor(options: {
-    client?: Pick<
+    client: Pick<
       OpenAiCompatibleClient<EntryDecisionPlan>,
       "analyze" | "circuitOpen"
     >;
-    baseUrl: string;
-    apiKey: string;
-    fetchImpl?: typeof fetch;
-    beforeDispatch?: (symbol: string) => Promise<void>;
     now?: () => number;
     requireTechnicalContext?: boolean;
   }) {
     this.now = options.now ?? Date.now;
     this.requireTechnicalContext = options.requireTechnicalContext ?? false;
-    this.client =
-      options.client ??
-      new OpenAiCompatibleClient<EntryDecisionPlan>({
-        ...options,
-        model: HISTORICAL_API_MODEL,
-        // EPRToken's Grok route supports the OpenAI-compatible chat contract;
-        // its Responses route rejects the structured reasoning field below.
-        apiStyle: "chat_completions",
-        schemaPath: "schemas/entry-pair-provider-1.0.json",
-        outputSchemaName: "stop_entries_1_0",
-        systemPromptPath: ENTRY_PAIR_PROMPT.path,
-        promptVersion: ENTRY_PAIR_PROMPT.version,
-        inputProfile: "structured",
-        timeoutMs: SCENARIO_REQUEST_POLICY.providerTimeoutMs,
-        maxRetries: 0,
-        maxOutputTokens: ENTRY_PAIR_REQUEST_POLICY.maxOutputTokens,
-        // Grok rejects `none`; low keeps the mandatory reasoning bounded.
-        reasoningEffort: ENTRY_PAIR_REQUEST_POLICY.reasoningEffort,
-        // The operator accepts readable entries; requested/returned identities remain recorded.
-        requireReturnedModelMatch: false,
-        parseResponse: (raw, request) =>
-          bindEntryPrices(raw, {
-            analysisId: request.analysisId,
-            symbol: request.symbol,
-            capturedAt: String(request.payload.captured_at),
-            tickSize: String(request.payload.tick_size),
-          }),
-      });
+    this.client = options.client;
   }
   async generate(
     input: EntryPlannerInput,
