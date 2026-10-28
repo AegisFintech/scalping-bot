@@ -1,0 +1,35 @@
+{
+  "activation": {
+    "at": "2026-10-28T12:47:41.271351+00:00",
+    "commit": "aebb1deec26509402a6250464d45be0350068fe7",
+    "sourceSha256": "87b975640872522c44575491d4df4ed7f2f7efba3b97e305464c7d7ed5e8c69a",
+    "servicesOnline": 5,
+    "workerMatched": true,
+    "flightMatched": true,
+    "migration": "0037",
+    "pauseRestored": true,
+    "oldRecordsPreserved": true,
+    "protectedFilesUnchanged": true,
+    "forcedProviderCalls": 0,
+    "forcedBrokerCommands": 0,
+    "liveReceiptObserved": false
+  },
+  "migration": {
+    "at": "2026-10-28T12:45:41.514568+00:00",
+    "migration": "0037",
+    "checksum": "9d98e84cdb1650f1e27c60b7be39414c868107e5015f5fa4a907b772043ade9b",
+    "previousChecksumsVerified": 36,
+    "priorRecordsPreserved": true,
+    "appSchemaCreate": false,
+    "readerSelectOnly": true,
+    "brokerCommands": 0
+  },
+  "readOnlyExport": {
+    "start": "2026-10-28T12:45:41.514568+00:00",
+    "until": "2026-10-28T12:48:37.831000+00:00",
+    "observations": 0,
+    "coverage": "PERSISTED_CALLBACKS_ONLY_ABSENCE_UNKNOWN",
+    "actualAcknowledgementVerified": false,
+    "zeroTradesInferred": false
+  }
+}

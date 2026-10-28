@@ -1,6 +1,6 @@
-# Prospective broker acknowledgement evidence — design in progress
+# Prospective broker acknowledgement evidence
 
-Issue [#407](https://github.com/AegisFintech/scalping-bot/issues/407) tracks capture for future callbacks. No capture or migration is active. Existing historical acknowledgements cannot be reconstructed.
+Issue [#407](https://github.com/AegisFintech/scalping-bot/issues/407) tracks capture for future callbacks. Capture is active in the controlled demo. Existing historical acknowledgements cannot be reconstructed.
 
 The client parses the JSON callback into `BrokerExecution`, preserving optional order fields. `normalizeDemoExecution` then computes the existing 1.1 event hash from a narrower projection. `PostgresDemoExecutionStore.persist` uses that hash and event key for idempotency, immutable variants and reconciliation. Adding fields to that hash would change existing identity and can manufacture conflicts. History reconstruction is a different source from a broker callback.
 
@@ -8,7 +8,7 @@ The [cTrader order model](https://github.com/spotware/openapi-proto-messages/blo
 
 A compatible design must preserve the old hash and every existing duplicate/conflict path. An additive, independently hashed evidence record can retain allowlisted callback fields and all three clocks. A later reconciliation observation cannot be labeled as the original callback. Same old event identity with different captured fields must retain variants, not overwrite either version. Missing callbacks and interrupted writes remain unknown; neither a flat account nor elapsed time repairs that gap.
 
-Open engineering decision: coupling an optional research write to the journal transaction can turn an evidence-storage outage into an execution gate, while writing afterward can lose the callback between commits. The implementation must explicitly test and document its chosen failure and recovery behavior before claiming full retention. The evidence must not create a broker command, change trade decisions, replay an unknown outcome or silently erase failures. Schema, reader privileges, bounded export, migration, recovery and rollback must be reviewed together.
+The design tradeoff is that coupling a research write to the journal transaction can turn an evidence-storage outage into an execution gate, while writing afterward can lose the callback between commits. The implementation uses the existing fail-closed persistence path and does not claim complete retention. The evidence must not create a broker command, change trade decisions, replay an unknown outcome or silently erase failures. Schema, reader privileges, bounded export, migration, recovery and rollback must be reviewed together.
 
 ## Chosen direction for implementation
 
@@ -20,12 +20,14 @@ A database failure rolls back the existing event and evidence together and uses 
 
 The implementation must verify callback origin, strategy ownership, field ranges and precision; exercise duplicate callbacks with matching and differing fields, early transaction exits, database rollback, restart/recovery and immutable prior event hashes; and compare exports against the actual recorded source. Actual pip/tick/volume/cost/FX facts may be attached only from independently timestamped evidence with an explicitly justified temporal relationship. This design is not a promise that those facts exist or that every callback is available.
 
-## Software implementation (not deployed)
+## Software implementation and activation
 
 Migration 0037 adds a separate evidence table. The live callback recorder projects allowlisted fields only after normalizing an owned pending STOP/STOP_LIMIT acceptance and passes them to the existing journal transaction. Missing fields remain null; invalid optional fields are separately named and do not invalidate a valid broker event. The existing event key and hash are unchanged. Each observed callback has its own digest and receive time, and distinct evidence is retained even for the same old event key. Persistence errors roll back with the journal and follow the existing storage-failure behavior. No prior callback is backfilled.
 
 `python.operations.export_broker_acknowledgements` is a separate bounded read-only packet, joined by opaque event identity to other research inputs. It checks one demo account/symbol, repeatable-read scope, one-hour maximum window, 500-record limit, 16 KiB per evidence object, stored digests and local receive time. It withholds account and broker identities. The packet does not infer missing callbacks; pip/tick/volume/fee/FX metadata is explicitly `NOT_CAPTURED`. `ORDERED` describes timestamp order only, not proof of causal receipt or commit. The schema is `broker-acknowledgement-evidence-1.0`; no broker or promotion authority is granted.
 
-The migration and writer must be released together. Rollback disables the new writer and retains the evidence table; no destructive migration or historical rewrite is needed. A separately scoped SELECT-only grant is needed for the research reader before invoking the new export; do not broaden privileges or infer a successful receipt from tests. Deployment and a real scoped broker acknowledgement are still outstanding under #407. The active execution service and database have not been modified by this software change.
+The migration and writer were released together. Rollback disables the new writer and retains the evidence table; no destructive migration or historical rewrite is needed. The scoped research reader has SELECT-only access. A real broker acknowledgement and separately timestamped metadata remain outstanding under #407.
 
 Qualification: `PYTHONDONTWRITEBYTECODE=1 /opt/scalper-node22/bin/node scripts/qualify.mjs` passed all checks, including 1,173 Node, 132 PostgreSQL lifecycle and 670 Python tests, without skips. The Python count includes the exporter test against isolated PostgreSQL. Both independent standards and specification reviews identified an optional-value bounds issue; the correction and regression tests were re-reviewed with no remaining blocker. See the [sanitized qualification receipt](evidence/broker-acknowledgement-validation.json). The existing Starlette/httpx test-client deprecation warning remains.
+
+The existing demo was activated from merged source `aebb1deec26509402a6250464d45be0350068fe7`. All five services and the matched worker and Flight recorder were verified; the temporary analysis pause was restored. Migration 0037 preserved the 36 prior checksums and scoped records. A bounded read-only smoke export succeeded with zero acknowledgement observations, which does not establish that no trades occurred. No live acknowledgement or profitability result is claimed. See the [sanitized rollout receipt](evidence/broker-acknowledgement-rollout.json).
