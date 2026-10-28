@@ -2,7 +2,8 @@
 
 ISSUE-418: qualification checks the PR head explicitly. Main protection and an
 independent review authority are separate; do not enable autonomous merging
-until server-side enforcement is verified. See `docs/exact-head-checks-report.md`.
+until server-side enforcement is verified. See `docs/exact-head-checks-report.md`
+and `docs/evidence/exact-head-checks-validation.json`.
 
 ISSUE-407: preserve existing broker event identities and distinguish original
 callbacks from reconstruction. Read `docs/broker-acknowledgement-design.md`
