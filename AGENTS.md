@@ -1,5 +1,10 @@
 # Agent contract
 
+ISSUE-405: the tc01 research harness distinguishes failed or unknown results
+from successful results awaiting findings. Do not fabricate findings or replay
+unknown work; genuine autonomous completion remains unverified. See
+`docs/research-failure-guidance-report.md`.
+
 ISSUE-418: qualification checks the PR head explicitly, and main requires its
 GitHub Actions check and an up-to-date PR with administrator enforcement. Zero
 review approvals are required. Do not enable an autonomous publisher until

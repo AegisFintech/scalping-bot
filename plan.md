@@ -1,3 +1,9 @@
+### ISSUE-423 — Research failure-guidance activation record
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/423; parent #405; depends on xauusd PR #28.
+- Acceptance: record the qualified deployment, recovery and remaining genuine autonomous completion evidence without changing trading or research state.
+- Status: deployment verified; documentation delivery in progress. See `docs/research-failure-guidance-report.md`.
+
 ### ISSUE-418 — Exact-head checks and main protection
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/418; parent #401.
@@ -57,7 +63,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/405; prerequisite for #402.
 - Acceptance: repair advertised tool/plan contracts, qualify and deploy without resets; observe a genuine fresh autonomous result-to-finding-to-close cycle.
-- Status: source delivered and deployed via xauusd PR26/main aa8b7e1; 978 tests passed, one optional database test skipped. Existing dirty work and persistent thread preserved. Genuine fresh autonomous completion remains unverified; issue stays open.
+- Status: failure-result guidance additionally delivered and deployed via xauusd PR28/main d1bb18b; 993 tests passed, one optional database test skipped. Existing dirty work and persistent thread preserved. Genuine fresh autonomous completion remains unverified; issue stays open.
 - Evidence: https://github.com/AegisFintech/scalping-bot/issues/405#issuecomment-6461697640.
 
 ### ISSUE-398 — One bot with tc01/tc02 research — implementation approved
