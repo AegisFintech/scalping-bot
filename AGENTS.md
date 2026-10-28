@@ -1,9 +1,10 @@
 # Agent contract
 
-ISSUE-418: qualification checks the PR head explicitly. Main protection and an
-independent review authority are separate; do not enable autonomous merging
-until server-side enforcement is verified. See `docs/exact-head-checks-report.md`
-and `docs/evidence/exact-head-checks-validation.json`.
+ISSUE-418: qualification checks the PR head explicitly, and main requires its
+GitHub Actions check and an up-to-date PR with administrator enforcement. Zero
+review approvals are required. Do not enable an autonomous publisher until
+independent review and trusted isolation are enforceable; see
+`docs/exact-head-checks-report.md` and `docs/evidence/main-protection-activation.json`.
 
 ISSUE-407: preserve existing broker event identities and distinguish original
 callbacks from reconstruction. Read `docs/broker-acknowledgement-design.md`
