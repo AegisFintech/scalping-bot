@@ -4466,14 +4466,14 @@ runtime.
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/392; parent #391.
 - Dependencies: #390 fill evidence, #387 Flight, existing immutable protection events.
 - Acceptance: instrument-scoped additive v1.1; causal clocks, side freshness, historical protection, aggregate bounds; positive/failure/DB/schema tests; full qualification and reviewed pushed PR. Trading and frozen evidence unchanged.
-- Status: implemented; four red regressions reproduced, latest uncertainty preserved and existing msgpack vulnerability patched. Full qualification passed: 1,132 Node +124 PostgreSQL +527 Python (1,783), all required gates/audits and both sample/populated config scopes. Reviewed pushed PR delivery follows; exact results in `docs/fill-evidence-integrity-report.md`. No deployment or trading change.
+- Status: implemented; four red regressions reproduced, latest uncertainty preserved and existing msgpack vulnerability patched. Full qualification passed: 1,132 Node +124 PostgreSQL +527 Python (1,783), all required gates/audits and both sample/populated config scopes. Pushed [PR #395](https://github.com/AegisFintech/scalping-bot/pull/395), merged after both hosted checks passed; exact results in `docs/fill-evidence-integrity-report.md`. No deployment or trading change.
 - Next batches under #391: characterize and simplify current execution seams, then implement one directional STOP_LIMIT scalping proposal with model entry/TP/SL/expiry and deterministic risk/expiry reconciliation. No economic change in #392.
 
 ### ISSUE-393 — Provider routing and execution-bound refactor
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/393; parent #391, depends on #392.
 - Acceptance: centralized validated request/prompt routing and deterministic execution-bound extraction, characterization/rejection tests, no changed trading behavior or immutable contracts; full checks and reviewed pushed PR.
-- Status: planned; codebase and architecture review identified these narrow seams instead of a broad lifecycle rewrite.
+- Status: implemented; calculation blocks byte-identical, coordinator interface retained. 74 coordinator and105 targeted worker tests pass; full qualification passed: 1,132 Node +124 PostgreSQL +544 Python (1,800), all required gates/audits. Reviewed delivery follows. See `docs/execution-seams-report.md`.
 
 ### ISSUE-394 — Model-defined directional scalping
 
