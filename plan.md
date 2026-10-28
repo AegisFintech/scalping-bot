@@ -1,11 +1,25 @@
-### ISSUE-398 — One bot with tc01/tc02 research — proposed
+### ISSUE-399 — Read-only learning evidence bridge
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/399; parent #398.
+- Dependencies: current journal/Flight and existing SELECT-only reader. This bot remains the sole executor.
+- Acceptance: strict versioned sanitized causal evidence; inclusive bounded cohort and carry-in; immutable revision/dedup archive; separate observed Flight clocks; retry/corruption/failure/DB/schema tests; full qualification, independent review and cross-host read-only round trip. No provider, broker, protected-dataset or promotion authority.
+- Status: implemented;27 focused Python/five schema tests and independent Standards/Spec review pass. Isolated132 PostgreSQL/587 Python tests pass; real tc01 imports66 and31 observations with duplicate no-ops, including a closed setup/Flight. Full qualification passed:1,157 Node/schema/migration +132 PostgreSQL +587 Python (1,876), no skips, all quality/security/audit gates. Graphify refreshed; reviewed GitHub delivery in progress. See `docs/learning-evidence-bridge-report.md`.
+
+### ISSUE-405 — Upstream research tool/completion contract
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/405; prerequisite for #402.
+- Acceptance: repair advertised tool/plan contracts, qualify and deploy without resets; observe a genuine fresh autonomous result-to-finding-to-close cycle.
+- Status: source delivered and deployed via xauusd PR26/main aa8b7e1; 978 tests passed, one optional database test skipped. Existing dirty work and persistent thread preserved. Genuine fresh autonomous completion remains unverified; issue stays open.
+- Evidence: https://github.com/AegisFintech/scalping-bot/issues/405#issuecomment-6461697640.
+
+### ISSUE-398 — One bot with tc01/tc02 research — implementation approved
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/398.
 - Dependencies: existing #304/#289/#290, current0.8/Flight and xauusd#22 completion repair; do not activate the xauusd broker adapter.
 - Acceptance: evidence-based integration plan for this bot as primary repository and sole executor, tc01 research coordination and tc02 heavy experiments; source/runtime/dirty-state review, measured learning limits, compatible evidence/replay and isolated self-commit/PR pathway; no trading or remote-source changes.
-- Status: investigation and plan delivered for operator review; implementation not started. Read `docs/harness-integration-plan.md` and pinned `docs/evidence/xauusd-harness-review-20261028.md`. SSH alias tested with local0600 Linux key/config; no private config committed.
-- Proposed batches: #399 current-release read-only evidence bridge (one-authority inventory, causal timestamps/denominators); #400 additive single STOP_LIMIT/GTD replay (depends#399/#290, old studies frozen); #401 isolated exact-path publisher (independent checks, no broker/root authority); #402 tc01/tc02 agenda/result/finding loop (depends on completion repair/#399/#400/#401); #403 unified desk and independently reviewed forward release (depends#399–#402).
-- Every batch stays PROPOSED pending review of this plan; each has its own acceptance/failure tests and issue dependencies. Code delivery does not authorize economic activation, risk increases or real-money live execution.
+- Status: operator approved staged implementation; #399 is in validation and upstream #405 source repair is deployed. Read `docs/harness-integration-plan.md` and pinned `docs/evidence/xauusd-harness-review-20261028.md`. SSH alias tested with local0600 Linux key/config; no private config committed.
+- Implementation batches: #399 current-release read-only evidence bridge (one-authority inventory, causal timestamps/denominators); #400 additive single STOP_LIMIT/GTD replay (depends#399/#290, old studies frozen); #401 isolated exact-path publisher (independent checks, no broker/root authority); #402 tc01/tc02 agenda/result/finding loop (depends on completion repair/#399/#400/#401); #403 unified desk and independently reviewed forward release (depends#399–#402).
+- Every batch requires its own completed acceptance evidence; each has its own acceptance/failure tests and issue dependencies. Code delivery does not authorize economic activation, risk increases or real-money live execution.
 
 ### ISSUE-390 — Agent contract, fill evidence and SMC level prompt
 

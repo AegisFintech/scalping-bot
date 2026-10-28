@@ -1,9 +1,15 @@
 # Agent contract
 
-ISSUE-398: tc01/tc02 integration is a proposed research plan, not active authority.
+ISSUE-398: tc01/tc02 research integration is approved for staged implementation.
 This bot remains the primary repository and sole broker executor; read
 `docs/harness-integration-plan.md`. Preserve remote dirty work, frozen studies and
-separate research/publisher/rollout authority. No runtime change is implied.
+separate research/publisher/rollout authority. No economic activation is implied.
+
+ISSUE-399: learning exports are bounded external observations, not a dataset
+partition or autonomous finding. Preserve WAIT/rejection/carry-in denominators,
+unknown economics, classified clocks and independently observed unverified Flight
+summaries. Import only into the immutable research archive; no broker, training
+or promotion authority. Read `docs/learning-evidence-bridge-report.md`.
 
 ISSUE-393: provider version/prompt routing derives from existing Pydantic request
 metadata. Execution bounds live in `model-execution-bounds.ts`; the coordinator

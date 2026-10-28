@@ -56,7 +56,8 @@ Normal environment settings are intentionally small; never replace a populated
 
 ## Reports
 
-- [Proposed tc01/tc02 research integration into this bot](docs/harness-integration-plan.md)
+- [Approved tc01/tc02 research integration into this bot](docs/harness-integration-plan.md)
+- [Read-only learning evidence bridge and verification status](docs/learning-evidence-bridge-report.md)
 
 - [Architecture seams and review](docs/execution-seams-report.md)
 - [Corrected causal fill evidence](docs/fill-evidence-integrity-report.md)

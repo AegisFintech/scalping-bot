@@ -1,7 +1,9 @@
-# One scalping bot with distributed research — proposed plan
+# One scalping bot with distributed research — approved plan
 
 Issue: [#398](https://github.com/AegisFintech/scalping-bot/issues/398).
-Status: **research and planning delivered; implementation and rollout not started**.
+Status: **operator approved implementation; staged delivery in progress**.
+The original inspection below is a source-pinned historical review. Current
+implementation status is recorded in `plan.md` and each batch report.
 Operator clarification: combine INTO this bot; tc01 and tc02 are research machines.
 The existing scalper remains the primary repository and sole broker runtime.
 

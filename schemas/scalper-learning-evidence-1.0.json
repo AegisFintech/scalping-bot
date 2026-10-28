@@ -1,0 +1,3329 @@
+{
+  "$defs": {
+    "AnalysisObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "originRelease": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Originrelease",
+          "type": "string"
+        },
+        "recordedCodeHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedcodehash"
+        },
+        "recordedConfigHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedconfighash"
+        },
+        "revisionSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revisionsha256",
+          "type": "string"
+        },
+        "cohortRole": {
+          "enum": ["OBSERVED_WINDOW", "CARRY_IN", "LINKED_REFERENCE"],
+          "title": "Cohortrole",
+          "type": "string"
+        },
+        "state": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "State",
+          "type": "string"
+        },
+        "analysisAt": {
+          "title": "Analysisat",
+          "type": "string"
+        },
+        "persistedAt": {
+          "title": "Persistedat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        },
+        "contextIds": {
+          "items": {
+            "pattern": "^[0-9a-f]{24}$",
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Contextids",
+          "type": "array"
+        },
+        "reasonCodes": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "risk": {
+          "items": {
+            "$ref": "#/$defs/RiskObservation"
+          },
+          "maxItems": 2,
+          "title": "Risk",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "originRelease",
+        "recordedCodeHash",
+        "recordedConfigHash",
+        "revisionSha256",
+        "cohortRole",
+        "state",
+        "analysisAt",
+        "persistedAt",
+        "updatedAt",
+        "contextIds",
+        "reasonCodes",
+        "risk"
+      ],
+      "title": "AnalysisObservation",
+      "type": "object"
+    },
+    "Bounds": {
+      "additionalProperties": false,
+      "properties": {
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "buy_stop_minimum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Buy Stop Minimum",
+          "type": "string"
+        },
+        "sell_stop_maximum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Sell Stop Maximum",
+          "type": "string"
+        },
+        "movement_buffer": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Movement Buffer",
+          "type": "string"
+        },
+        "preferred_buy_stop_minimum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Preferred Buy Stop Minimum",
+          "type": "string"
+        },
+        "preferred_sell_stop_maximum": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Preferred Sell Stop Maximum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum_entry_distance",
+        "buy_stop_minimum",
+        "sell_stop_maximum",
+        "movement_buffer",
+        "preferred_buy_stop_minimum",
+        "preferred_sell_stop_maximum"
+      ],
+      "title": "Bounds",
+      "type": "object"
+    },
+    "BrokerObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "payloadSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Payloadsha256",
+          "type": "string"
+        },
+        "executionType": {
+          "title": "Executiontype",
+          "type": "integer"
+        },
+        "mappingState": {
+          "enum": ["MAPPED", "UNMATCHED", "CONFLICT"],
+          "title": "Mappingstate",
+          "type": "string"
+        },
+        "closingOrder": {
+          "title": "Closingorder",
+          "type": "boolean"
+        },
+        "orderType": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ordertype"
+        },
+        "orderId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Orderid"
+        },
+        "positionId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Positionid"
+        },
+        "occurredAt": {
+          "title": "Occurredat",
+          "type": "string"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        },
+        "persistedAt": {
+          "title": "Persistedat",
+          "type": "string"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resolvedat"
+        },
+        "reasonCodes": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "clockStatus": {
+          "enum": ["CAUSAL", "UNORDERED", "INCOMPLETE"],
+          "title": "Clockstatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "payloadSha256",
+        "executionType",
+        "mappingState",
+        "closingOrder",
+        "orderType",
+        "orderId",
+        "positionId",
+        "occurredAt",
+        "receivedAt",
+        "persistedAt",
+        "resolvedAt",
+        "reasonCodes",
+        "clockStatus"
+      ],
+      "title": "BrokerObservation",
+      "type": "object"
+    },
+    "CandleAnatomy": {
+      "additionalProperties": false,
+      "properties": {
+        "end_at": {
+          "title": "End At",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["UP", "DOWN", "DOJI"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "range_size": {
+          "title": "Range Size",
+          "type": "string"
+        },
+        "range_to_atr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Range To Atr"
+        },
+        "body_fraction": {
+          "title": "Body Fraction",
+          "type": "string"
+        },
+        "upper_wick_fraction": {
+          "title": "Upper Wick Fraction",
+          "type": "string"
+        },
+        "lower_wick_fraction": {
+          "title": "Lower Wick Fraction",
+          "type": "string"
+        },
+        "close_location": {
+          "title": "Close Location",
+          "type": "string"
+        },
+        "inside_bar": {
+          "title": "Inside Bar",
+          "type": "boolean"
+        },
+        "engulfing": {
+          "title": "Engulfing",
+          "type": "boolean"
+        },
+        "displacement": {
+          "title": "Displacement",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "end_at",
+        "direction",
+        "range_size",
+        "range_to_atr",
+        "body_fraction",
+        "upper_wick_fraction",
+        "lower_wick_fraction",
+        "close_location",
+        "inside_bar",
+        "engulfing",
+        "displacement"
+      ],
+      "title": "CandleAnatomy",
+      "type": "object"
+    },
+    "Candles": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "maxItems": 288,
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": ["timeframe", "columns", "rows"],
+      "title": "Candles",
+      "type": "object"
+    },
+    "CloseObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "positionId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Positionid",
+          "type": "string"
+        },
+        "closedVolume": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Closedvolume",
+          "type": "string"
+        },
+        "entryPrice": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Entryprice",
+          "type": "string"
+        },
+        "gross": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Gross",
+          "type": "string"
+        },
+        "commission": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Commission",
+          "type": "string"
+        },
+        "swap": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Swap",
+          "type": "string"
+        },
+        "conversionFee": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Conversionfee",
+          "type": "string"
+        },
+        "occurredAt": {
+          "title": "Occurredat",
+          "type": "string"
+        },
+        "recordedAt": {
+          "title": "Recordedat",
+          "type": "string"
+        },
+        "externalIntervention": {
+          "title": "Externalintervention",
+          "type": "boolean"
+        },
+        "evidenceSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Evidencesha256",
+          "type": "string"
+        },
+        "exitCause": {
+          "default": null,
+          "title": "Exitcause",
+          "type": "null"
+        }
+      },
+      "required": [
+        "id",
+        "positionId",
+        "closedVolume",
+        "entryPrice",
+        "gross",
+        "commission",
+        "swap",
+        "conversionFee",
+        "occurredAt",
+        "recordedAt",
+        "externalIntervention",
+        "evidenceSha256"
+      ],
+      "title": "CloseObservation",
+      "type": "object"
+    },
+    "ClosedOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "closed_at": {
+          "title": "Closed At",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["LONG", "SHORT"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "realized_net": {
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,10})?$",
+          "title": "Realized Net",
+          "type": "string"
+        },
+        "strategy_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Strategy Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "closed_at",
+        "direction",
+        "realized_net",
+        "strategy_version"
+      ],
+      "title": "ClosedOutcome",
+      "type": "object"
+    },
+    "ContextEvidenceV11": {
+      "additionalProperties": false,
+      "properties": {
+        "definitions_version": {
+          "const": "causal-smc-1.1",
+          "default": "causal-smc-1.1",
+          "title": "Definitions Version",
+          "type": "string"
+        },
+        "frames": {
+          "items": {
+            "$ref": "#/$defs/FrameContextV11"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Frames",
+          "type": "array"
+        },
+        "depth": {
+          "$ref": "#/$defs/DepthContext"
+        },
+        "spread_to_m1_atr": {
+          "title": "Spread To M1 Atr",
+          "type": "string"
+        },
+        "history_targets_met": {
+          "title": "History Targets Met",
+          "type": "boolean"
+        },
+        "news": {
+          "const": "NOT_COLLECTED",
+          "default": "NOT_COLLECTED",
+          "title": "News",
+          "type": "string"
+        },
+        "harmonics": {
+          "const": "NOT_IMPLEMENTED",
+          "default": "NOT_IMPLEMENTED",
+          "title": "Harmonics",
+          "type": "string"
+        },
+        "counterfactual_costs": {
+          "default": null,
+          "title": "Counterfactual Costs",
+          "type": "null"
+        },
+        "m1_envelopes": {
+          "items": {
+            "$ref": "#/$defs/Envelope"
+          },
+          "maxItems": 4,
+          "title": "M1 Envelopes",
+          "type": "array"
+        },
+        "sessions": {
+          "items": {
+            "$ref": "#/$defs/SessionRange"
+          },
+          "maxItems": 6,
+          "title": "Sessions",
+          "type": "array"
+        },
+        "round_levels": {
+          "items": {
+            "$ref": "#/$defs/RoundLevel"
+          },
+          "maxItems": 4,
+          "title": "Round Levels",
+          "type": "array"
+        }
+      },
+      "required": [
+        "frames",
+        "depth",
+        "spread_to_m1_atr",
+        "history_targets_met",
+        "m1_envelopes",
+        "sessions",
+        "round_levels"
+      ],
+      "title": "ContextEvidenceV11",
+      "type": "object"
+    },
+    "ContextObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "originRelease": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Originrelease",
+          "type": "string"
+        },
+        "recordedCodeHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedcodehash"
+        },
+        "recordedConfigHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedconfighash"
+        },
+        "revisionSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revisionsha256",
+          "type": "string"
+        },
+        "cohortRole": {
+          "enum": ["OBSERVED_WINDOW", "CARRY_IN", "LINKED_REFERENCE"],
+          "title": "Cohortrole",
+          "type": "string"
+        },
+        "sourceAnalysisId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Sourceanalysisid",
+          "type": "string"
+        },
+        "refreshAfterContextId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Refreshaftercontextid"
+        },
+        "refreshAfterEntryContextId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Refreshafterentrycontextid"
+        },
+        "refreshAfterWaitContextId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Refreshafterwaitcontextid"
+        },
+        "consumedBySetupId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Consumedbysetupid"
+        },
+        "retiredAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Retiredat"
+        },
+        "retirementReasonCodes": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Retirementreasoncodes",
+          "type": "array"
+        },
+        "state": {
+          "enum": ["REQUESTING", "READY", "FAILED"],
+          "title": "State",
+          "type": "string"
+        },
+        "requestedAt": {
+          "title": "Requestedat",
+          "type": "string"
+        },
+        "capturedAt": {
+          "title": "Capturedat",
+          "type": "string"
+        },
+        "availableAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Availableat"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completedat"
+        },
+        "validUntil": {
+          "title": "Validuntil",
+          "type": "string"
+        },
+        "clockStatus": {
+          "enum": ["CAUSAL", "UNORDERED", "INCOMPLETE"],
+          "title": "Clockstatus",
+          "type": "string"
+        },
+        "decision": {
+          "enum": ["BUY", "SELL", "WAIT", "UNKNOWN"],
+          "title": "Decision",
+          "type": "string"
+        },
+        "requestedModel": {
+          "pattern": "^[a-zA-Z0-9._/-]{1,80}$",
+          "title": "Requestedmodel",
+          "type": "string"
+        },
+        "returnedModel": {
+          "title": "Returnedmodel",
+          "type": "null"
+        },
+        "providerCost": {
+          "title": "Providercost",
+          "type": "null"
+        },
+        "failureCode": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Failurecode"
+        },
+        "narrativeSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Narrativesha256"
+        },
+        "promptVersion": {
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Promptversion"
+        },
+        "promptSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Promptsha256"
+        },
+        "requestSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Requestsha256"
+        },
+        "responseSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Responsesha256"
+        },
+        "planSchema": {
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Planschema"
+        },
+        "entryPrice": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entryprice"
+        },
+        "takeProfit": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Takeprofit"
+        },
+        "stopLoss": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stoploss"
+        },
+        "pendingSeconds": {
+          "anyOf": [
+            {
+              "maximum": 300,
+              "minimum": 60,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pendingseconds"
+        },
+        "market": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PayloadScalp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unavailableReasons": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Unavailablereasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "originRelease",
+        "recordedCodeHash",
+        "recordedConfigHash",
+        "revisionSha256",
+        "cohortRole",
+        "sourceAnalysisId",
+        "refreshAfterContextId",
+        "refreshAfterEntryContextId",
+        "refreshAfterWaitContextId",
+        "consumedBySetupId",
+        "retiredAt",
+        "retirementReasonCodes",
+        "state",
+        "requestedAt",
+        "capturedAt",
+        "availableAt",
+        "completedAt",
+        "validUntil",
+        "clockStatus",
+        "decision",
+        "requestedModel",
+        "returnedModel",
+        "providerCost",
+        "failureCode",
+        "narrativeSha256",
+        "promptVersion",
+        "promptSha256",
+        "requestSha256",
+        "responseSha256",
+        "planSchema",
+        "entryPrice",
+        "takeProfit",
+        "stopLoss",
+        "pendingSeconds",
+        "market",
+        "unavailableReasons"
+      ],
+      "title": "ContextObservation",
+      "type": "object"
+    },
+    "DayRange": {
+      "additionalProperties": false,
+      "properties": {
+        "utc_date": {
+          "title": "Utc Date",
+          "type": "string"
+        },
+        "status": {
+          "enum": ["COMPLETE_UTC_DAY", "PARTIAL_OR_UNAVAILABLE"],
+          "title": "Status",
+          "type": "string"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "High"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Low"
+        }
+      },
+      "required": ["utc_date", "status", "high", "low"],
+      "title": "DayRange",
+      "type": "object"
+    },
+    "DealingRange": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "const": "LATEST_SWING_LEG_CONFIRMED_PIVOTS",
+          "default": "LATEST_SWING_LEG_CONFIRMED_PIVOTS",
+          "title": "Basis",
+          "type": "string"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "High"
+        },
+        "high_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "High At"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Low"
+        },
+        "low_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Low At"
+        },
+        "equilibrium": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Equilibrium"
+        },
+        "position": {
+          "enum": [
+            "PREMIUM",
+            "DISCOUNT",
+            "EQUILIBRIUM",
+            "ABOVE_RANGE",
+            "BELOW_RANGE",
+            "UNAVAILABLE"
+          ],
+          "title": "Position",
+          "type": "string"
+        },
+        "position_fraction": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Position Fraction"
+        }
+      },
+      "required": [
+        "high",
+        "high_at",
+        "low",
+        "low_at",
+        "equilibrium",
+        "position",
+        "position_fraction"
+      ],
+      "title": "DealingRange",
+      "type": "object"
+    },
+    "DepthContext": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "const": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "default": "BROKER_ONLY_NOT_GLOBAL_ORDER_FLOW",
+          "title": "Scope",
+          "type": "string"
+        },
+        "timestamp_basis": {
+          "const": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "default": "BROKER_SPOT_CLOCK_AND_LOCAL_RECEIPT",
+          "title": "Timestamp Basis",
+          "type": "string"
+        },
+        "source_at": {
+          "title": "Source At",
+          "type": "string"
+        },
+        "received_at": {
+          "title": "Received At",
+          "type": "string"
+        },
+        "bid_levels": {
+          "title": "Bid Levels",
+          "type": "integer"
+        },
+        "ask_levels": {
+          "title": "Ask Levels",
+          "type": "integer"
+        },
+        "symmetric_sizes": {
+          "title": "Symmetric Sizes",
+          "type": "boolean"
+        },
+        "spread": {
+          "title": "Spread",
+          "type": "string"
+        },
+        "imbalance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Imbalance"
+        },
+        "microprice_bias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Microprice Bias"
+        },
+        "bid_liquidity_change_60s": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Bid Liquidity Change 60S"
+        },
+        "ask_liquidity_change_60s": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ask Liquidity Change 60S"
+        },
+        "rolling_sample_count_60s": {
+          "title": "Rolling Sample Count 60S",
+          "type": "integer"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_at",
+        "received_at",
+        "bid_levels",
+        "ask_levels",
+        "symmetric_sizes",
+        "spread",
+        "imbalance",
+        "microprice_bias",
+        "bid_liquidity_change_60s",
+        "ask_liquidity_change_60s",
+        "rolling_sample_count_60s",
+        "warnings"
+      ],
+      "title": "DepthContext",
+      "type": "object"
+    },
+    "Envelope": {
+      "additionalProperties": false,
+      "properties": {
+        "candles": {
+          "enum": [3, 5, 10, 20],
+          "title": "Candles",
+          "type": "integer"
+        },
+        "high": {
+          "title": "High",
+          "type": "string"
+        },
+        "high_at": {
+          "title": "High At",
+          "type": "string"
+        },
+        "low": {
+          "title": "Low",
+          "type": "string"
+        },
+        "low_at": {
+          "title": "Low At",
+          "type": "string"
+        },
+        "width": {
+          "title": "Width",
+          "type": "string"
+        },
+        "width_to_atr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Width To Atr"
+        }
+      },
+      "required": [
+        "candles",
+        "high",
+        "high_at",
+        "low",
+        "low_at",
+        "width",
+        "width_to_atr"
+      ],
+      "title": "Envelope",
+      "type": "object"
+    },
+    "ExecutionContextV17": {
+      "additionalProperties": false,
+      "properties": {
+        "spread_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Spread Price",
+          "type": "string"
+        },
+        "modeled_round_trip_cost_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Modeled Round Trip Cost Price",
+          "type": "string"
+        },
+        "cost_basis": {
+          "const": "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
+          "title": "Cost Basis",
+          "type": "string"
+        },
+        "shared_setup_risk_percent": {
+          "const": "5",
+          "title": "Shared Setup Risk Percent",
+          "type": "string"
+        },
+        "recent_closed_outcomes": {
+          "items": {
+            "$ref": "#/$defs/ClosedOutcome"
+          },
+          "maxItems": 8,
+          "title": "Recent Closed Outcomes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "spread_price",
+        "modeled_round_trip_cost_price",
+        "cost_basis",
+        "shared_setup_risk_percent",
+        "recent_closed_outcomes"
+      ],
+      "title": "ExecutionContextV17",
+      "type": "object"
+    },
+    "FillObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "orderId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Orderid"
+        },
+        "positionId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Positionid"
+        },
+        "price": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Price",
+          "type": "string"
+        },
+        "volume": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Volume",
+          "type": "string"
+        },
+        "commission": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Commission",
+          "type": "string"
+        },
+        "occurredAt": {
+          "title": "Occurredat",
+          "type": "string"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        },
+        "clockStatus": {
+          "enum": ["CAUSAL", "UNORDERED", "INCOMPLETE"],
+          "title": "Clockstatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "positionId",
+        "price",
+        "volume",
+        "commission",
+        "occurredAt",
+        "receivedAt",
+        "clockStatus"
+      ],
+      "title": "FillObservation",
+      "type": "object"
+    },
+    "FlightMetric": {
+      "additionalProperties": false,
+      "properties": {
+        "side": {
+          "enum": ["BUY", "SELL"],
+          "title": "Side",
+          "type": "string"
+        },
+        "samples": {
+          "minimum": 0,
+          "title": "Samples",
+          "type": "integer"
+        },
+        "entry": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Entry",
+          "type": "string"
+        },
+        "volume": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Volume",
+          "type": "string"
+        },
+        "mfePips": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mfepips"
+        },
+        "maePips": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maepips"
+        },
+        "bestModeledNetPips": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Bestmodelednetpips"
+        },
+        "closestTpPips": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Closesttppips"
+        },
+        "closestSlPips": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Closestslpips"
+        },
+        "timeProfitableSeconds": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Timeprofitableseconds",
+          "type": "string"
+        }
+      },
+      "required": [
+        "side",
+        "samples",
+        "entry",
+        "volume",
+        "mfePips",
+        "maePips",
+        "bestModeledNetPips",
+        "closestTpPips",
+        "closestSlPips",
+        "timeProfitableSeconds"
+      ],
+      "title": "FlightMetric",
+      "type": "object"
+    },
+    "FlightObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "originRelease": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Originrelease",
+          "type": "string"
+        },
+        "recordedCodeHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedcodehash"
+        },
+        "recordedConfigHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedconfighash"
+        },
+        "revisionSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revisionsha256",
+          "type": "string"
+        },
+        "cohortRole": {
+          "enum": ["OBSERVED_WINDOW", "CARRY_IN", "LINKED_REFERENCE"],
+          "title": "Cohortrole",
+          "type": "string"
+        },
+        "setupId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Setupid",
+          "type": "string"
+        },
+        "checkedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Checkedat"
+        },
+        "observedAt": {
+          "title": "Observedat",
+          "type": "string"
+        },
+        "coverageStart": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Coveragestart"
+        },
+        "quoteAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Quoteat"
+        },
+        "final": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Final"
+        },
+        "gaps": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Gaps"
+        },
+        "records": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Records"
+        },
+        "snapshotSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Snapshotsha256"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/FlightMetric"
+          },
+          "maxItems": 2,
+          "title": "Metrics",
+          "type": "array"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unavailablereason"
+        },
+        "basis": {
+          "const": "RECORDER_SUMMARY_NOT_VERIFIED_TICK_PATH",
+          "title": "Basis",
+          "type": "string"
+        },
+        "chainVerified": {
+          "const": false,
+          "title": "Chainverified",
+          "type": "boolean"
+        },
+        "counterfactualNet": {
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": [
+        "id",
+        "originRelease",
+        "recordedCodeHash",
+        "recordedConfigHash",
+        "revisionSha256",
+        "cohortRole",
+        "setupId",
+        "checkedAt",
+        "observedAt",
+        "coverageStart",
+        "quoteAt",
+        "final",
+        "gaps",
+        "records",
+        "snapshotSha256",
+        "metrics",
+        "unavailableReason",
+        "basis",
+        "chainVerified",
+        "counterfactualNet"
+      ],
+      "title": "FlightObservation",
+      "type": "object"
+    },
+    "FrameContextV11": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": ["M1", "M5", "M15"],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "candle_count": {
+          "title": "Candle Count",
+          "type": "integer"
+        },
+        "latest_completed_at": {
+          "title": "Latest Completed At",
+          "type": "string"
+        },
+        "segment_candle_count": {
+          "title": "Segment Candle Count",
+          "type": "integer"
+        },
+        "bias": {
+          "enum": ["UNKNOWN", "BULLISH", "BEARISH"],
+          "title": "Bias",
+          "type": "string"
+        },
+        "atr": {
+          "title": "Atr",
+          "type": "string"
+        },
+        "ema_fast": {
+          "title": "Ema Fast",
+          "type": "string"
+        },
+        "ema_slow": {
+          "title": "Ema Slow",
+          "type": "string"
+        },
+        "rsi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rsi"
+        },
+        "adx": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Adx"
+        },
+        "pivots": {
+          "items": {
+            "$ref": "#/$defs/Pivot"
+          },
+          "maxItems": 12,
+          "title": "Pivots",
+          "type": "array"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/StructureEvent"
+          },
+          "maxItems": 12,
+          "title": "Events",
+          "type": "array"
+        },
+        "nearest_active_zones": {
+          "items": {
+            "$ref": "#/$defs/ZoneV11"
+          },
+          "maxItems": 8,
+          "title": "Nearest Active Zones",
+          "type": "array"
+        },
+        "recent_resolved_zones": {
+          "items": {
+            "$ref": "#/$defs/ZoneV11"
+          },
+          "maxItems": 4,
+          "title": "Recent Resolved Zones",
+          "type": "array"
+        },
+        "liquidity_pools": {
+          "items": {
+            "$ref": "#/$defs/LiquidityPool"
+          },
+          "maxItems": 6,
+          "title": "Liquidity Pools",
+          "type": "array"
+        },
+        "active_zone_count": {
+          "title": "Active Zone Count",
+          "type": "integer"
+        },
+        "resolved_zone_count": {
+          "title": "Resolved Zone Count",
+          "type": "integer"
+        },
+        "previous_utc_day": {
+          "$ref": "#/$defs/DayRange"
+        },
+        "support_resistance": {
+          "items": {
+            "$ref": "#/$defs/SupportResistance"
+          },
+          "maxItems": 6,
+          "title": "Support Resistance",
+          "type": "array"
+        },
+        "dealing_range": {
+          "$ref": "#/$defs/DealingRange"
+        },
+        "candle_anatomy": {
+          "items": {
+            "$ref": "#/$defs/CandleAnatomy"
+          },
+          "maxItems": 5,
+          "title": "Candle Anatomy",
+          "type": "array"
+        }
+      },
+      "required": [
+        "timeframe",
+        "candle_count",
+        "latest_completed_at",
+        "segment_candle_count",
+        "bias",
+        "atr",
+        "ema_fast",
+        "ema_slow",
+        "rsi",
+        "adx",
+        "pivots",
+        "events",
+        "nearest_active_zones",
+        "recent_resolved_zones",
+        "liquidity_pools",
+        "active_zone_count",
+        "resolved_zone_count",
+        "previous_utc_day",
+        "support_resistance",
+        "dealing_range",
+        "candle_anatomy"
+      ],
+      "title": "FrameContextV11",
+      "type": "object"
+    },
+    "LiquidityPool": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "const": "HISTORICAL_PIVOT_CLUSTER_NOT_RESTING_ORDERS",
+          "default": "HISTORICAL_PIVOT_CLUSTER_NOT_RESTING_ORDERS",
+          "title": "Scope",
+          "type": "string"
+        },
+        "kind": {
+          "enum": ["EQUAL_HIGHS", "EQUAL_LOWS"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "tolerance": {
+          "title": "Tolerance",
+          "type": "string"
+        },
+        "confirmed_touches": {
+          "title": "Confirmed Touches",
+          "type": "integer"
+        },
+        "first_pivot_at": {
+          "title": "First Pivot At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "level",
+        "tolerance",
+        "confirmed_touches",
+        "first_pivot_at",
+        "available_at"
+      ],
+      "title": "LiquidityPool",
+      "type": "object"
+    },
+    "OrderObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "side": {
+          "enum": ["BUY", "SELL"],
+          "title": "Side",
+          "type": "string"
+        },
+        "state": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "State",
+          "type": "string"
+        },
+        "orderType": {
+          "enum": ["STOP", "STOP_LIMIT", "LIMIT"],
+          "title": "Ordertype",
+          "type": "string"
+        },
+        "timeInForce": {
+          "enum": ["GTC", "GTD"],
+          "title": "Timeinforce",
+          "type": "string"
+        },
+        "entryPrice": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Entryprice",
+          "type": "string"
+        },
+        "stopLoss": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Stoploss",
+          "type": "string"
+        },
+        "takeProfit": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Takeprofit",
+          "type": "string"
+        },
+        "approvedVolume": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Approvedvolume",
+          "type": "string"
+        },
+        "filledVolume": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Filledvolume",
+          "type": "string"
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expiresat"
+        },
+        "submissionValidUntil": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Submissionvaliduntil"
+        },
+        "placementResultPersistedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Placementresultpersistedat"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "side",
+        "state",
+        "orderType",
+        "timeInForce",
+        "entryPrice",
+        "stopLoss",
+        "takeProfit",
+        "approvedVolume",
+        "filledVolume",
+        "expiresAt",
+        "submissionValidUntil",
+        "placementResultPersistedAt",
+        "updatedAt"
+      ],
+      "title": "OrderObservation",
+      "type": "object"
+    },
+    "PayloadScalp": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "title": "Captured At",
+          "type": "string"
+        },
+        "tick_size": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Tick Size",
+          "type": "string"
+        },
+        "quote": {
+          "$ref": "#/$defs/Quote"
+        },
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "entry_boundaries": {
+          "$ref": "#/$defs/Bounds"
+        },
+        "candles": {
+          "items": {
+            "$ref": "#/$defs/Candles"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Candles",
+          "type": "array"
+        },
+        "market_captured_at": {
+          "title": "Market Captured At",
+          "type": "string"
+        },
+        "technical_context": {
+          "$ref": "#/$defs/ContextEvidenceV11"
+        },
+        "context_input_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Context Input Sha256",
+          "type": "string"
+        },
+        "execution_context": {
+          "$ref": "#/$defs/ExecutionContextV17"
+        },
+        "pip_size": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Pip Size",
+          "type": "string"
+        },
+        "maximum_stop_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Maximum Stop Distance",
+          "type": "string"
+        },
+        "minimum_protection_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Protection Distance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "captured_at",
+        "tick_size",
+        "quote",
+        "minimum_entry_distance",
+        "entry_boundaries",
+        "candles",
+        "market_captured_at",
+        "technical_context",
+        "context_input_sha256",
+        "execution_context",
+        "pip_size",
+        "maximum_stop_distance",
+        "minimum_protection_distance"
+      ],
+      "title": "PayloadScalp",
+      "type": "object"
+    },
+    "Pivot": {
+      "additionalProperties": false,
+      "properties": {
+        "side": {
+          "enum": ["HIGH", "LOW"],
+          "title": "Side",
+          "type": "string"
+        },
+        "price": {
+          "title": "Price",
+          "type": "string"
+        },
+        "candle_at": {
+          "title": "Candle At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        }
+      },
+      "required": ["side", "price", "candle_at", "available_at"],
+      "title": "Pivot",
+      "type": "object"
+    },
+    "ProtectionHistoryObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "positionId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Positionid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": ["OBSERVATION", "REPAIR_CLAIM", "CLOSE_CLAIM", "CLOSE_ACK"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status"
+        },
+        "stopLoss": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stoploss"
+        },
+        "takeProfit": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Takeprofit"
+        },
+        "observedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observedat"
+        },
+        "persistedAt": {
+          "title": "Persistedat",
+          "type": "string"
+        },
+        "detailsSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Detailssha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "positionId",
+        "kind",
+        "status",
+        "stopLoss",
+        "takeProfit",
+        "observedAt",
+        "persistedAt",
+        "detailsSha256"
+      ],
+      "title": "ProtectionHistoryObservation",
+      "type": "object"
+    },
+    "ProtectionObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "positionId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Positionid",
+          "type": "string"
+        },
+        "side": {
+          "enum": ["BUY", "SELL"],
+          "title": "Side",
+          "type": "string"
+        },
+        "positionState": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Positionstate",
+          "type": "string"
+        },
+        "volume": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Volume",
+          "type": "string"
+        },
+        "entryPrice": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Entryprice",
+          "type": "string"
+        },
+        "brokerStopLoss": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Brokerstoploss"
+        },
+        "brokerTakeProfit": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Brokertakeprofit"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status"
+        },
+        "observedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observedat"
+        },
+        "basis": {
+          "const": "CURRENT_OBSERVATION_NOT_HISTORICAL_FILL_ATTRIBUTION",
+          "title": "Basis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "positionId",
+        "side",
+        "positionState",
+        "volume",
+        "entryPrice",
+        "brokerStopLoss",
+        "brokerTakeProfit",
+        "status",
+        "observedAt",
+        "basis"
+      ],
+      "title": "ProtectionObservation",
+      "type": "object"
+    },
+    "Quote": {
+      "additionalProperties": false,
+      "properties": {
+        "bid": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Bid",
+          "type": "string"
+        },
+        "ask": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Ask",
+          "type": "string"
+        },
+        "sourceTime": {
+          "title": "Sourcetime",
+          "type": "string"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        }
+      },
+      "required": ["bid", "ask", "sourceTime", "receivedAt"],
+      "title": "Quote",
+      "type": "object"
+    },
+    "RiskObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "side": {
+          "enum": ["BUY", "SELL"],
+          "title": "Side",
+          "type": "string"
+        },
+        "approved": {
+          "title": "Approved",
+          "type": "boolean"
+        },
+        "equity": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Equity"
+        },
+        "riskPercent": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Riskpercent"
+        },
+        "approvedBudget": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Approvedbudget"
+        },
+        "entryPrice": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entryprice"
+        },
+        "stopLoss": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stoploss"
+        },
+        "stopDistance": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stopdistance"
+        },
+        "normalizedVolume": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Normalizedvolume"
+        },
+        "estimatedMargin": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Estimatedmargin"
+        },
+        "decidedAt": {
+          "title": "Decidedat",
+          "type": "string"
+        },
+        "reasonCodes": {
+          "items": {
+            "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "actualFilledStopRisk": {
+          "default": null,
+          "title": "Actualfilledstoprisk",
+          "type": "null"
+        }
+      },
+      "required": [
+        "side",
+        "approved",
+        "equity",
+        "riskPercent",
+        "approvedBudget",
+        "entryPrice",
+        "stopLoss",
+        "stopDistance",
+        "normalizedVolume",
+        "estimatedMargin",
+        "decidedAt",
+        "reasonCodes"
+      ],
+      "title": "RiskObservation",
+      "type": "object"
+    },
+    "RoundLevel": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "const": "PSYCHOLOGICAL_LEVEL_HYPOTHESIS_NOT_LIQUIDITY",
+          "default": "PSYCHOLOGICAL_LEVEL_HYPOTHESIS_NOT_LIQUIDITY",
+          "title": "Scope",
+          "type": "string"
+        },
+        "price": {
+          "title": "Price",
+          "type": "string"
+        },
+        "step": {
+          "title": "Step",
+          "type": "string"
+        },
+        "side": {
+          "enum": ["BELOW", "ABOVE"],
+          "title": "Side",
+          "type": "string"
+        },
+        "distance_from_quote": {
+          "title": "Distance From Quote",
+          "type": "string"
+        }
+      },
+      "required": ["price", "step", "side", "distance_from_quote"],
+      "title": "RoundLevel",
+      "type": "object"
+    },
+    "SessionRange": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "const": "UTC_CONVENTION_COMPLETED_M5",
+          "default": "UTC_CONVENTION_COMPLETED_M5",
+          "title": "Basis",
+          "type": "string"
+        },
+        "session": {
+          "enum": ["ASIA", "LONDON", "NEW_YORK"],
+          "title": "Session",
+          "type": "string"
+        },
+        "utc_start": {
+          "title": "Utc Start",
+          "type": "string"
+        },
+        "utc_end": {
+          "title": "Utc End",
+          "type": "string"
+        },
+        "high": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "High"
+        },
+        "low": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Low"
+        },
+        "status": {
+          "enum": ["COMPLETE", "IN_PROGRESS", "PARTIAL_OR_UNAVAILABLE"],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": ["session", "utc_start", "utc_end", "high", "low", "status"],
+      "title": "SessionRange",
+      "type": "object"
+    },
+    "SetupObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "originRelease": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Originrelease",
+          "type": "string"
+        },
+        "recordedCodeHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedcodehash"
+        },
+        "recordedConfigHash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recordedconfighash"
+        },
+        "revisionSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revisionsha256",
+          "type": "string"
+        },
+        "cohortRole": {
+          "enum": ["OBSERVED_WINDOW", "CARRY_IN", "LINKED_REFERENCE"],
+          "title": "Cohortrole",
+          "type": "string"
+        },
+        "analysisId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "contextId": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Contextid"
+        },
+        "state": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "State",
+          "type": "string"
+        },
+        "executionMode": {
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Executionmode"
+        },
+        "timeInForce": {
+          "enum": ["GTC", "GTD"],
+          "title": "Timeinforce",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expiresat"
+        },
+        "submissionValidUntil": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Submissionvaliduntil"
+        },
+        "accountCurrency": {
+          "pattern": "^[A-Z]{3,8}$",
+          "title": "Accountcurrency",
+          "type": "string"
+        },
+        "volumeScaleAsOfExport": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volumescaleasofexport"
+        },
+        "metadataObservedAt": {
+          "title": "Metadataobservedat",
+          "type": "string"
+        },
+        "orders": {
+          "items": {
+            "$ref": "#/$defs/OrderObservation"
+          },
+          "maxItems": 2,
+          "title": "Orders",
+          "type": "array"
+        },
+        "fills": {
+          "items": {
+            "$ref": "#/$defs/FillObservation"
+          },
+          "maxItems": 500,
+          "title": "Fills",
+          "type": "array"
+        },
+        "brokerEvents": {
+          "items": {
+            "$ref": "#/$defs/BrokerObservation"
+          },
+          "maxItems": 500,
+          "title": "Brokerevents",
+          "type": "array"
+        },
+        "currentProtection": {
+          "items": {
+            "$ref": "#/$defs/ProtectionObservation"
+          },
+          "maxItems": 10,
+          "title": "Currentprotection",
+          "type": "array"
+        },
+        "protectionHistory": {
+          "items": {
+            "$ref": "#/$defs/ProtectionHistoryObservation"
+          },
+          "maxItems": 2000,
+          "title": "Protectionhistory",
+          "type": "array"
+        },
+        "protectionHistoryStart": {
+          "title": "Protectionhistorystart",
+          "type": "string"
+        },
+        "protectionHistoryComplete": {
+          "title": "Protectionhistorycomplete",
+          "type": "boolean"
+        },
+        "brokerVariants": {
+          "items": {
+            "$ref": "#/$defs/VariantObservation"
+          },
+          "maxItems": 500,
+          "title": "Brokervariants",
+          "type": "array"
+        },
+        "variantCoverage": {
+          "const": "RETAINED_ONLY_MISSING_LEGACY_VARIANTS_NOT_RECONSTRUCTED",
+          "title": "Variantcoverage",
+          "type": "string"
+        },
+        "closeDeals": {
+          "items": {
+            "$ref": "#/$defs/CloseObservation"
+          },
+          "maxItems": 500,
+          "title": "Closedeals",
+          "type": "array"
+        },
+        "closedTrades": {
+          "items": {
+            "$ref": "#/$defs/TradeObservation"
+          },
+          "maxItems": 10,
+          "title": "Closedtrades",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "originRelease",
+        "recordedCodeHash",
+        "recordedConfigHash",
+        "revisionSha256",
+        "cohortRole",
+        "analysisId",
+        "contextId",
+        "state",
+        "executionMode",
+        "timeInForce",
+        "createdAt",
+        "updatedAt",
+        "expiresAt",
+        "submissionValidUntil",
+        "accountCurrency",
+        "volumeScaleAsOfExport",
+        "metadataObservedAt",
+        "orders",
+        "fills",
+        "brokerEvents",
+        "currentProtection",
+        "protectionHistory",
+        "protectionHistoryStart",
+        "protectionHistoryComplete",
+        "brokerVariants",
+        "variantCoverage",
+        "closeDeals",
+        "closedTrades"
+      ],
+      "title": "SetupObservation",
+      "type": "object"
+    },
+    "StructureEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": ["INITIAL_BREAK", "BOS", "MSS", "SWEEP"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["BULLISH", "BEARISH"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "pivot_at": {
+          "title": "Pivot At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        },
+        "displacement": {
+          "title": "Displacement",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "level",
+        "pivot_at",
+        "available_at",
+        "displacement"
+      ],
+      "title": "StructureEvent",
+      "type": "object"
+    },
+    "SupportResistance": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "lower": {
+          "title": "Lower",
+          "type": "string"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "string"
+        },
+        "touches": {
+          "title": "Touches",
+          "type": "integer"
+        },
+        "high_pivots": {
+          "title": "High Pivots",
+          "type": "integer"
+        },
+        "low_pivots": {
+          "title": "Low Pivots",
+          "type": "integer"
+        },
+        "first_pivot_at": {
+          "title": "First Pivot At",
+          "type": "string"
+        },
+        "last_pivot_at": {
+          "title": "Last Pivot At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        },
+        "role": {
+          "enum": ["SUPPORT", "RESISTANCE", "AT_QUOTE"],
+          "title": "Role",
+          "type": "string"
+        },
+        "distance_from_quote": {
+          "title": "Distance From Quote",
+          "type": "string"
+        },
+        "traded_above_after": {
+          "title": "Traded Above After",
+          "type": "boolean"
+        },
+        "traded_below_after": {
+          "title": "Traded Below After",
+          "type": "boolean"
+        },
+        "tolerance": {
+          "title": "Tolerance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "lower",
+        "upper",
+        "touches",
+        "high_pivots",
+        "low_pivots",
+        "first_pivot_at",
+        "last_pivot_at",
+        "available_at",
+        "role",
+        "distance_from_quote",
+        "traded_above_after",
+        "traded_below_after",
+        "tolerance"
+      ],
+      "title": "SupportResistance",
+      "type": "object"
+    },
+    "TradeObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["LONG", "SHORT"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "realizedNet": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Realizednet",
+          "type": "string"
+        },
+        "signedFees": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Signedfees",
+          "type": "string"
+        },
+        "openedAt": {
+          "title": "Openedat",
+          "type": "string"
+        },
+        "closedAt": {
+          "title": "Closedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "direction",
+        "realizedNet",
+        "signedFees",
+        "openedAt",
+        "closedAt"
+      ],
+      "title": "TradeObservation",
+      "type": "object"
+    },
+    "VariantObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "eventId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "payloadSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Payloadsha256",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "ORIGINAL_JOURNAL",
+            "BROKER_CALLBACK",
+            "HISTORY_RECONSTRUCTION",
+            "UNSPECIFIED"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "originalMappingState": {
+          "enum": ["MAPPED", "UNMATCHED", "CONFLICT"],
+          "title": "Originalmappingstate",
+          "type": "string"
+        },
+        "originalResolvedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Originalresolvedat"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        },
+        "persistedAt": {
+          "title": "Persistedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "payloadSha256",
+        "source",
+        "originalMappingState",
+        "originalResolvedAt",
+        "receivedAt",
+        "persistedAt"
+      ],
+      "title": "VariantObservation",
+      "type": "object"
+    },
+    "ZoneV11": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": ["ORDER_BLOCK", "FVG"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "direction": {
+          "enum": ["BULLISH", "BEARISH"],
+          "title": "Direction",
+          "type": "string"
+        },
+        "lower": {
+          "title": "Lower",
+          "type": "string"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "string"
+        },
+        "origin_at": {
+          "title": "Origin At",
+          "type": "string"
+        },
+        "available_at": {
+          "title": "Available At",
+          "type": "string"
+        },
+        "status": {
+          "enum": ["FRESH", "TOUCHED", "FILLED", "INVALIDATED"],
+          "title": "Status",
+          "type": "string"
+        },
+        "first_touched_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Touched At"
+        },
+        "resolved_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resolved At"
+        },
+        "age_bars": {
+          "title": "Age Bars",
+          "type": "integer"
+        },
+        "distance_from_quote": {
+          "title": "Distance From Quote",
+          "type": "string"
+        },
+        "overlap_count": {
+          "default": 0,
+          "title": "Overlap Count",
+          "type": "integer"
+        },
+        "midpoint": {
+          "title": "Midpoint",
+          "type": "string"
+        },
+        "penetration_fraction": {
+          "title": "Penetration Fraction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "lower",
+        "upper",
+        "origin_at",
+        "available_at",
+        "status",
+        "first_touched_at",
+        "resolved_at",
+        "age_bars",
+        "distance_from_quote",
+        "midpoint",
+        "penetration_fraction"
+      ],
+      "title": "ZoneV11",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "scalper-learning-evidence-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "sourceId": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "mode": {
+      "const": "demo",
+      "title": "Mode",
+      "type": "string"
+    },
+    "symbol": {
+      "pattern": "^[A-Z0-9._-]{1,32}$",
+      "title": "Symbol",
+      "type": "string"
+    },
+    "exporterSourceSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Exportersourcesha256",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "journalSnapshotAt": {
+      "title": "Journalsnapshotat",
+      "type": "string"
+    },
+    "exportedAt": {
+      "title": "Exportedat",
+      "type": "string"
+    },
+    "snapshotScope": {
+      "const": "ONE_REPEATABLE_READ_JOURNAL",
+      "title": "Snapshotscope",
+      "type": "string"
+    },
+    "cohortBasis": {
+      "const": "OBSERVED_OR_CHANGED_IN_WINDOW_PLUS_ACTIVE_AND_LINKED",
+      "title": "Cohortbasis",
+      "type": "string"
+    },
+    "dataUse": {
+      "const": "EXTERNAL_OBSERVATIONS_NOT_A_DATASET_PARTITION",
+      "title": "Datause",
+      "type": "string"
+    },
+    "contexts": {
+      "items": {
+        "$ref": "#/$defs/ContextObservation"
+      },
+      "maxItems": 2000,
+      "title": "Contexts",
+      "type": "array"
+    },
+    "analyses": {
+      "items": {
+        "$ref": "#/$defs/AnalysisObservation"
+      },
+      "maxItems": 2000,
+      "title": "Analyses",
+      "type": "array"
+    },
+    "setups": {
+      "items": {
+        "$ref": "#/$defs/SetupObservation"
+      },
+      "maxItems": 2000,
+      "title": "Setups",
+      "type": "array"
+    },
+    "flight": {
+      "items": {
+        "$ref": "#/$defs/FlightObservation"
+      },
+      "maxItems": 2000,
+      "title": "Flight",
+      "type": "array"
+    },
+    "unscopedBrokerEvents": {
+      "items": {
+        "$ref": "#/$defs/BrokerObservation"
+      },
+      "maxItems": 500,
+      "title": "Unscopedbrokerevents",
+      "type": "array"
+    },
+    "coverageWarnings": {
+      "items": {
+        "pattern": "^[A-Z][A-Z0-9_:.-]{0,159}$",
+        "type": "string"
+      },
+      "maxItems": 30,
+      "title": "Coveragewarnings",
+      "type": "array"
+    },
+    "scopeComplete": {
+      "const": true,
+      "title": "Scopecomplete",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "autonomousFinding": {
+      "const": false,
+      "title": "Autonomousfinding",
+      "type": "boolean"
+    },
+    "completeTickTape": {
+      "const": false,
+      "title": "Completeticktape",
+      "type": "boolean"
+    },
+    "counterfactualNet": {
+      "title": "Counterfactualnet",
+      "type": "null"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sourceId",
+    "mode",
+    "symbol",
+    "exporterSourceSha256",
+    "start",
+    "until",
+    "journalSnapshotAt",
+    "exportedAt",
+    "snapshotScope",
+    "cohortBasis",
+    "dataUse",
+    "contexts",
+    "analyses",
+    "setups",
+    "flight",
+    "unscopedBrokerEvents",
+    "coverageWarnings",
+    "scopeComplete",
+    "brokerAuthority",
+    "promotionAuthority",
+    "autonomousFinding",
+    "completeTickTape",
+    "counterfactualNet"
+  ],
+  "title": "LearningEvidence",
+  "type": "object"
+}
