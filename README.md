@@ -3,6 +3,9 @@
 AI-assisted XAUUSD scalping for controlled demo evaluation. One existing demo
 account and deployment; real-money live execution is disabled by default.
 
+The isolated research harness reports failed tool results separately from findings;
+its deployment and remaining observation are in [the research report](docs/research-failure-guidance-report.md).
+
 ## Workflow
 
 ```text
