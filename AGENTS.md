@@ -1,7 +1,9 @@
 # Agent contract
 
-ISSUE-400: offline scalp replay is an incomplete draft. Its CLI is disabled;
-resolve the remaining review findings in `docs/scalp-replay-draft.md` before use.
+ISSUE-400: offline scalp replay is historical reconstruction only and always HOLD.
+Sampled crossings are not fills; original acknowledgement fields and unidentifiable
+costs remain unknown. Draft protocols do not register studies. Preserve immutable
+prior research and read `docs/scalp-replay-draft.md` before changing this path.
 
 ISSUE-398: tc01/tc02 research integration is approved for staged implementation.
 This bot remains the primary repository and sole broker executor; read

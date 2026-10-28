@@ -6,9 +6,12 @@ import argparse
 import hashlib
 import json
 import sys
+import tempfile
 from collections import Counter
+from collections.abc import Callable
 from datetime import timedelta
-from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, Decimal, localcontext
+from functools import wraps
 from itertools import pairwise
 from pathlib import Path
 from typing import Annotated, Any, Final, Literal, cast
@@ -21,6 +24,7 @@ from python.operations.entry_context import timestamp
 from python.research.codex_loop import StrictModel
 from python.research.learning_archive import bounded, parse, unique
 from python.research.learning_evidence import (
+    CloseObservation,
     Code,
     ContextObservation,
     Digest,
@@ -39,8 +43,29 @@ MAX_PATH_BYTES = 32 * 1024**2
 BASELINE: Final = "completed-m15-m5-trend-m1-five-bars-one-tick-1.0"
 
 
+def precise[**P, T](function: Callable[P, T]) -> Callable[P, T]:
+    @wraps(function)
+    def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
+        with localcontext() as context:
+            context.prec = 100
+            return function(*args, **kwargs)
+
+    return wrapped
+
+
 def plain(value: Decimal) -> str:
+    exponent = value.as_tuple().exponent
+    if isinstance(exponent, int) and exponent < -40:
+        with localcontext() as context:
+            context.prec = 128
+            value = value.quantize(Decimal("1e-40"), rounding=ROUND_HALF_EVEN)
     return format(value, "f")
+
+
+def no_authority(value: Any, fields: tuple[str, ...]) -> Any:
+    if isinstance(value, dict) and any(value.get(field) is not False for field in fields):
+        raise ValueError("SCALP_AUTHORITY_INVALID")
+    return value
 
 
 class FileReference(StrictModel):
@@ -61,6 +86,11 @@ class PathCompanion(StrictModel):
     declaredRangeTicks: Annotated[int, Field(ge=0, le=1000)] | None
     rangeBasis: Literal["DECLARED_HYPOTHESIS_NOT_BROKER_ACK"]
     brokerAuthority: Literal[False]
+
+    @model_validator(mode="before")
+    @classmethod
+    def authority(cls, value: Any) -> Any:
+        return no_authority(value, ("brokerAuthority",))
 
     @model_validator(mode="after")
     def names(self) -> PathCompanion:
@@ -129,6 +159,7 @@ class ExposurePath(StrictModel):
     reasons: list[Code] = Field(default_factory=list)
 
 
+@precise
 def exposure_paths(
     group: SetupObservation, sessions: list[list[dict[str, Any]]], cutoff: str
 ) -> list[ExposurePath]:
@@ -148,6 +179,7 @@ def exposure_paths(
             "AFTER_COST_PROFIT_UNKNOWN_FX_AND_FUTURE_FEES",
         }
         previous = None
+        seen_points = set()
         for records in sorted(sessions, key=lambda rows: timestamp(rows[0]["observedAt"])):
             if records[0]["payload"].get("carryIn") is not False:
                 reasons.add("EXPOSURE_CARRY_IN_OR_UNDECLARED")
@@ -155,6 +187,17 @@ def exposure_paths(
             if any(r["kind"] == "GAP" for r in known):
                 reasons.add("EXPOSURE_GAP")
             for point in flight_points(known):
+                key = (
+                    point.source,
+                    point.received,
+                    point.bid,
+                    point.ask,
+                    point.bid_at,
+                    point.ask_at,
+                )
+                if key in seen_points:
+                    continue
+                seen_points.add(key)
                 position_fills = [
                     f
                     for f in fills.values()
@@ -193,7 +236,10 @@ def exposure_paths(
                 row.observedMaePrice = plain(
                     max(Decimal(row.observedMaePrice or "0"), -move, Decimal(0))
                 )
-                if move > 0 and row.firstObservedGrossPositiveAt is None:
+                if move > 0 and (
+                    row.firstObservedGrossPositiveAt is None
+                    or point.source < timestamp(row.firstObservedGrossPositiveAt)
+                ):
                     row.firstObservedGrossPositiveAt = point.source.isoformat()
                 observations = [
                     p
@@ -215,6 +261,7 @@ def exposure_paths(
                 if (
                     protected.status != "VERIFIED"
                     or protected.observedAt is None
+                    or timestamp(protected.observedAt) > timestamp(protected.persistedAt)
                     or timestamp(protected.observedAt) > point.source
                     or point.source - timestamp(protected.observedAt) > MAX_AGE
                 ):
@@ -223,12 +270,18 @@ def exposure_paths(
                 if protected.takeProfit is not None:
                     target = Decimal(protected.takeProfit)
                     crossed = mark >= target if order.side == "BUY" else mark <= target
-                    if crossed and row.firstObservedTpCrossingAt is None:
+                    if crossed and (
+                        row.firstObservedTpCrossingAt is None
+                        or point.source < timestamp(row.firstObservedTpCrossingAt)
+                    ):
                         row.firstObservedTpCrossingAt = point.source.isoformat()
                 if protected.stopLoss is not None:
                     stop = Decimal(protected.stopLoss)
                     crossed = mark <= stop if order.side == "BUY" else mark >= stop
-                    if crossed and row.firstObservedSlCrossingAt is None:
+                    if crossed and (
+                        row.firstObservedSlCrossingAt is None
+                        or point.source < timestamp(row.firstObservedSlCrossingAt)
+                    ):
                         row.firstObservedSlCrossingAt = point.source.isoformat()
         row.reasons = sorted(reasons)
         result.append(row)
@@ -249,6 +302,9 @@ class SetupReconstruction(StrictModel):
     recordedClosedTrades: Annotated[int, Field(ge=0)]
     recordedClosedNet: MetricNumber | None
     currency: str
+    currencyBasis: Literal["ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED"] = (
+        "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED"
+    )
     reasons: list[Code]
     path: PathDiagnostic
     exposure: list[ExposurePath] = Field(default_factory=list)
@@ -288,6 +344,13 @@ class EvaluationDraft(StrictModel):
     promotionAuthority: Literal[False]
     brokerAuthority: Literal[False]
 
+    @model_validator(mode="before")
+    @classmethod
+    def authority(cls, value: Any) -> Any:
+        return no_authority(
+            value, ("registrationAuthority", "promotionAuthority", "brokerAuthority")
+        )
+
     @model_validator(mode="after")
     def chronology(self) -> EvaluationDraft:
         if [p.partition for p in self.periods] != ["DEVELOPMENT", "VALIDATION", "HOLDOUT"]:
@@ -309,6 +372,9 @@ class EvaluationDraft(StrictModel):
 
 class ClosedStatistics(StrictModel):
     currency: str
+    currencyBasis: Literal["ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED"] = (
+        "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED"
+    )
     basis: Literal["RECORDED_CLOSED_ROWS_NOT_COMPLETE_COHORT"] = (
         "RECORDED_CLOSED_ROWS_NOT_COMPLETE_COHORT"
     )
@@ -352,7 +418,13 @@ class ReplayReport(StrictModel):
     promotionAuthority: Literal[False]
     brokerAuthority: Literal[False]
 
+    @model_validator(mode="before")
+    @classmethod
+    def authority(cls, value: Any) -> Any:
+        return no_authority(value, ("promotionAuthority", "brokerAuthority"))
 
+
+@precise
 def benchmark(context: ContextObservation) -> EntryBenchmark:
     result = EntryBenchmark(
         contextId=context.id,
@@ -364,6 +436,9 @@ def benchmark(context: ContextObservation) -> EntryBenchmark:
         reasons=[],
     )
     market = context.market
+    if context.originRelease != RELEASE:
+        result.reasons = ["CONTEXT_RELEASE_UNSUPPORTED"]
+        return result
     if context.clockStatus != "CAUSAL" or context.state != "READY" or market is None:
         result.reasons = ["CONTEXT_UNAVAILABLE_OR_UNORDERED"]
         return result
@@ -413,15 +488,17 @@ def load_paths(
     for session in companion.sessions:
         if session.setupId not in groups:
             raise ValueError("SCALP_PATH_SETUP_UNKNOWN")
-        paths = []
-        for reference in session.files:
-            path = directory / reference.name
-            raw = bounded(path, MAX_PATH_BYTES)
-            used += len(raw)
-            if used > MAX_PATH_BYTES or hashlib.sha256(raw).hexdigest() != reference.sha256:
-                raise ValueError("SCALP_PATH_HASH_OR_BOUNDS")
-            paths.append(path)
-        records = verify_records(paths)
+        with tempfile.TemporaryDirectory(prefix="scalp-replay-") as temporary:
+            paths = []
+            for reference in session.files:
+                raw = bounded(directory / reference.name, MAX_PATH_BYTES)
+                used += len(raw)
+                if used > MAX_PATH_BYTES or hashlib.sha256(raw).hexdigest() != reference.sha256:
+                    raise ValueError("SCALP_PATH_HASH_OR_BOUNDS")
+                snapshot = Path(temporary) / reference.name
+                snapshot.write_bytes(raw)
+                paths.append(snapshot)
+            records = verify_records(paths)
         previous_at = None
         for record in records:
             at = timestamp(record["observedAt"])
@@ -450,6 +527,7 @@ def load_paths(
     return result
 
 
+@precise
 def path_diagnostic(
     group: SetupObservation,
     context: ContextObservation | None,
@@ -541,6 +619,7 @@ def path_diagnostic(
     return result
 
 
+@precise
 def reconstruct(
     group: SetupObservation,
     context: ContextObservation | None,
@@ -579,11 +658,21 @@ def reconstruct(
         result.supported = False
         reasons.add("ORDER_TYPE_MISMATCH")
     if (
+        group.executionMode != "SINGLE_STOP_LIMIT"
+        or group.expiresAt != order.expiresAt
+        or group.submissionValidUntil != order.submissionValidUntil
+        or order.submissionValidUntil != order.expiresAt
+        or order.expiresAt is None
+    ):
+        reasons.add("GROUP_INTENT_MISMATCH")
+    if (
         context is None
         or context.decision not in {"BUY", "SELL"}
         or context.clockStatus != "CAUSAL"
     ):
         reasons.add("CONTEXT_MISSING_OR_UNORDERED")
+    elif context.originRelease != group.originRelease:
+        reasons.add("CONTEXT_RELEASE_MISMATCH")
     elif (
         context.decision != order.side
         or context.entryPrice is None
@@ -650,7 +739,19 @@ def reconstruct(
         reasons.add("BROKER_EVENT_UNRESOLVED")
     if any(timestamp(e.persistedAt) > timestamp(cutoff) for e in group.brokerEvents):
         reasons.add("BROKER_EVENT_NOT_KNOWN_AT_CUTOFF")
-    closes = [d for d in group.closeDeals if timestamp(d.recordedAt) <= timestamp(cutoff)]
+    close_rows = [d for d in group.closeDeals if timestamp(d.recordedAt) <= timestamp(cutoff)]
+    close_by_id: dict[str, CloseObservation] = {}
+    for deal in close_rows:
+        if deal.id in close_by_id and close_by_id[deal.id] != deal:
+            raise ValueError("SCALP_CLOSE_DEAL_IDENTITY_CONFLICT")
+        close_by_id[deal.id] = deal
+    closes = list(close_by_id.values())
+    if len(closes) != len(close_rows):
+        reasons.add("CLOSE_DEAL_IDENTITY_DUPLICATE")
+    if len({e.id for e in group.brokerEvents}) != len(group.brokerEvents):
+        reasons.add("BROKER_EVENT_IDENTITY_DUPLICATE")
+    if len({p.id for p in group.protectionHistory}) != len(group.protectionHistory):
+        reasons.add("PROTECTION_HISTORY_IDENTITY_DUPLICATE")
     result.partialCloseVolume = plain(sum((Decimal(d.closedVolume) for d in closes), Decimal(0)))
     terminal = any(
         e.orderId == order.id
@@ -679,7 +780,21 @@ def reconstruct(
         if (
             None in positions
             or positions != protected_positions
+            or len(protected_positions) != len(group.currentProtection)
             or any(p.side != order.side for p in group.currentProtection)
+            or any(
+                Decimal(p.volume)
+                != sum(
+                    (Decimal(f.volume) for f in fills.values() if f.positionId == p.positionId),
+                    Decimal(0),
+                )
+                - sum(
+                    (Decimal(d.closedVolume) for d in closes if d.positionId == p.positionId),
+                    Decimal(0),
+                )
+                for p in group.currentProtection
+                if p.positionState == "OPEN"
+            )
         ):
             reasons.add("POSITION_EVIDENCE_INCOMPLETE")
         if (
@@ -737,10 +852,15 @@ def reconstruct(
     # Broker realizedNet already includes signed fees; do not deduct them a second time.
     blockers = {
         "ORDER_TYPE_MISMATCH",
+        "GROUP_INTENT_MISMATCH",
         "CONTEXT_MISSING_OR_UNORDERED",
+        "CONTEXT_RELEASE_MISMATCH",
         "APPROVED_INTENT_CONTEXT_MISMATCH",
         "FILL_ORDER_LINK_UNAVAILABLE",
         "POSITION_EVIDENCE_INCOMPLETE",
+        "CLOSE_DEAL_IDENTITY_DUPLICATE",
+        "BROKER_EVENT_IDENTITY_DUPLICATE",
+        "PROTECTION_HISTORY_IDENTITY_DUPLICATE",
         "TERMINAL_STATE_CONFLICT",
         "FILL_NOT_KNOWN_AT_CUTOFF",
         "FILL_IDENTITY_CONFLICT",
@@ -769,6 +889,7 @@ def reconstruct(
     return result
 
 
+@precise
 def replay(
     packet: LearningEvidence,
     packet_sha: str,
@@ -813,7 +934,13 @@ def replay(
         for trade in group.closedTrades:
             if timestamp(trade.closedAt) > timestamp(cutoff):
                 continue
-            row = encoded(trade.model_dump())
+            row = encoded(
+                {
+                    "trade": trade.model_dump(),
+                    "currency": group.accountCurrency,
+                    "setupId": group.id,
+                }
+            )
             if trade.id in seen_trades:
                 if seen_trades[trade.id] != row:
                     raise ValueError("SCALP_CLOSED_TRADE_IDENTITY_CONFLICT")
@@ -867,7 +994,7 @@ def replay(
     if draft is not None and draft.sourceSha256 != source_sha:
         report_reasons.append("DRAFT_SOURCE_DRIFT_RESEARCH_HALTED")
         comparisons = []
-    return ReplayReport(
+    report = ReplayReport(
         schemaVersion="scalp-replay-report-1.0",
         classification="RECONSTRUCTION_ONLY",
         packetSha256=packet_sha,
@@ -889,13 +1016,10 @@ def replay(
         promotionAuthority=False,
         brokerAuthority=False,
     )
+    return ReplayReport.model_validate(report.model_dump())
 
 
 def main() -> None:
-    raise RuntimeError("SCALP_REPLAY_DRAFT_INCOMPLETE")
-
-
-def draft_main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--sha256", required=True)

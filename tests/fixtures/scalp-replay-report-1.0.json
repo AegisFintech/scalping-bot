@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "scalp-replay-report-1.0",
+  "classification": "RECONSTRUCTION_ONLY",
+  "packetSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "sourceId": "fixture-demo",
+  "replaySourceSha256": "e6c6bddfcb5cb308727a311038eabb9afef80b2d6b1314c0e3f0090a266ec4b0",
+  "sourceHashScope": "MODULE_FILE_ONLY_NOT_CLOSURE_OR_DEPLOYMENT_ATTESTATION",
+  "knowledgeCutoff": "2026-10-19T12:10:01+00:00",
+  "counts": {
+    "contexts": 1,
+    "analyses": 0,
+    "setups": 1,
+    "decision_BUY": 1,
+    "provider_state_READY": 1,
+    "setup_UNFILLED_PENDING": 1,
+    "unsupported_setups": 0
+  },
+  "setups": [
+    {
+      "setupId": "cccccccccccccccccccccccc",
+      "supported": true,
+      "state": "UNFILLED_PENDING",
+      "rawFillRows": 0,
+      "uniqueEntryFills": 0,
+      "filledVolume": "0",
+      "weightedEntry": null,
+      "partialCloseVolume": "0",
+      "recordedClosedTrades": 0,
+      "recordedClosedNet": null,
+      "currency": "USD",
+      "currencyBasis": "ACCOUNT_CURRENCY_AT_EXPORT_HISTORICAL_UNATTESTED",
+      "reasons": [
+        "ENTRY_RANGE_ACK_NOT_RETAINED",
+        "GTD_ACK_NOT_RETAINED",
+        "HISTORICAL_BROKER_METADATA_NOT_ATTESTED"
+      ],
+      "path": {
+        "status": "UNAVAILABLE",
+        "acceptedBrokerAt": null,
+        "activationAt": null,
+        "limitEligibleAt": null,
+        "declaredLimit": null,
+        "declaredRangeBasis": null,
+        "usableSamples": 0,
+        "reasons": ["PATH_NOT_PROVIDED"],
+        "completeTickTape": false,
+        "brokerRangeAcknowledgement": "NOT_RETAINED",
+        "counterfactualFill": null,
+        "counterfactualNet": null
+      },
+      "exposure": [],
+      "gtdAcknowledgement": "NOT_RETAINED",
+      "actualFilledStopRisk": null,
+      "counterfactualNet": null
+    }
+  ],
+  "benchmark": [
+    {
+      "contextId": "4172ca914196b8dd2f759ff8",
+      "definition": "completed-m15-m5-trend-m1-five-bars-one-tick-1.0",
+      "decision": "BUY",
+      "entry": "4002.01",
+      "availableAt": "2026-10-19T12:00:05+00:00",
+      "originalDecision": "BUY",
+      "directionAgreement": true,
+      "reasons": [
+        "SAME_RECORDED_AVAILABILITY_NOT_AN_ALTERNATE_REQUEST_STREAM",
+        "FROZEN_ORIGINAL_INTENT_QUANTITY_NOT_DYNAMIC_PORTFOLIO"
+      ],
+      "entryOnlyTakeProfit": "4002.4100000000",
+      "entryOnlyStopLoss": "3995.0100000000",
+      "frozenApprovedVolume": "20",
+      "counterfactualFill": null,
+      "counterfactualNet": null
+    }
+  ],
+  "recordedClosedStatistics": [],
+  "draftProtocolSha256": null,
+  "recommendation": "HOLD",
+  "reasons": [
+    "HISTORICAL_RECONSTRUCTION_NOT_PROSPECTIVE_QUALIFICATION",
+    "PROVIDER_COST_UNATTESTED",
+    "COUNTERFACTUAL_FILLS_COSTS_FX_MARGIN_UNKNOWN",
+    "NO_REVIEWED_FUTURE_PROTOCOL",
+    "CLOSED_NET_IS_NOT_AN_EQUITY_CURVE"
+  ],
+  "providerCost": null,
+  "counterfactualNet": null,
+  "portfolioDrawdown": null,
+  "promotionAuthority": false,
+  "brokerAuthority": false
+}

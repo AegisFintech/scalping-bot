@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "FileReference": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^flight-[a-f0-9]{24}-[0-9T]+-[0-9]{4}\\.jsonl(\\.gz)?$",
+          "title": "Name",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": ["name", "sha256"],
+      "title": "FileReference",
+      "type": "object"
+    },
+    "PathSession": {
+      "additionalProperties": false,
+      "properties": {
+        "setupId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Setupid",
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/FileReference"
+          },
+          "maxItems": 128,
+          "minItems": 1,
+          "title": "Files",
+          "type": "array"
+        }
+      },
+      "required": ["setupId", "files"],
+      "title": "PathSession",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "scalp-replay-paths-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "sessions": {
+      "items": {
+        "$ref": "#/$defs/PathSession"
+      },
+      "maxItems": 16,
+      "title": "Sessions",
+      "type": "array"
+    },
+    "declaredRangeTicks": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Declaredrangeticks"
+    },
+    "rangeBasis": {
+      "const": "DECLARED_HYPOTHESIS_NOT_BROKER_ACK",
+      "title": "Rangebasis",
+      "type": "string"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packetSha256",
+    "sessions",
+    "declaredRangeTicks",
+    "rangeBasis",
+    "brokerAuthority"
+  ],
+  "title": "PathCompanion",
+  "type": "object"
+}

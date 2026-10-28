@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from copy import deepcopy
 from datetime import timedelta
 from decimal import Decimal
@@ -576,6 +577,349 @@ def test_conflicting_prior_protection_cannot_prove_tp_crossing(tmp_path: Path) -
     assert "HISTORICAL_PROTECTION_CONFLICT" in result.reasons
 
 
-def test_draft_cli_cannot_run_before_review() -> None:
-    with pytest.raises(RuntimeError, match="DRAFT_INCOMPLETE"):
-        replay.main()
+def test_offline_cli_validates_hash_and_never_overwrites(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    raw = encoded(model(fixture()).model_dump())
+    source, result = tmp_path / "input.json", tmp_path / "result.json"
+    source.write_bytes(raw)
+    command = [
+        sys.executable,
+        "-m",
+        "python.backtest.scalp_replay",
+        "--input",
+        str(source),
+        "--sha256",
+        hashlib.sha256(raw).hexdigest(),
+        "--output",
+        str(result),
+    ]
+    assert subprocess.run(command, capture_output=True, check=False).returncode == 0
+    assert json.loads(result.read_bytes())["recommendation"] == "HOLD"
+    assert subprocess.run(command, capture_output=True, check=False).returncode != 0
+    result.unlink()
+    command[command.index("--sha256") + 1] = "0" * 64
+    assert subprocess.run(command, capture_output=True, check=False).returncode != 0
+    assert not result.exists()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [("executionMode", "OCO"), ("expiresAt", at(119)), ("submissionValidUntil", at(119))],
+)
+def test_group_intent_mismatch_blocks_reconstruction(field: str, value: str) -> None:
+    data = fixture()
+    data["setups"][0][field] = value
+    result = run(data).setups[0]
+    assert result.state == "UNKNOWN" and "GROUP_INTENT_MISMATCH" in result.reasons
+
+
+def test_position_remaining_volume_mismatch_stays_unknown() -> None:
+    data = fixture()
+    fill(data)
+    data["setups"][0]["currentProtection"][0]["volume"] = "9"
+    result = run(data).setups[0]
+    assert result.state == "UNKNOWN" and "POSITION_EVIDENCE_INCOMPLETE" in result.reasons
+
+
+def test_matching_group_and_order_deadlines_must_match_expiry() -> None:
+    data = fixture()
+    data["setups"][0]["submissionValidUntil"] = at(119)
+    data["setups"][0]["orders"][0]["submissionValidUntil"] = at(119)
+    result = run(data).setups[0]
+    assert result.state == "UNKNOWN" and "GROUP_INTENT_MISMATCH" in result.reasons
+
+
+def test_overlapping_sessions_keep_earliest_exposure_and_deduplicate(tmp_path: Path) -> None:
+    data = fixture()
+    fill(data, "20")
+    later, earlier = tmp_path / "later", tmp_path / "earlier"
+    later.mkdir()
+    earlier.mkdir()
+    first = chain(later, data, [quote(18, "4002.7")])
+    second = chain(earlier, data, [quote(12, "4002.7"), quote(18, "4002.7")])
+    packet = model(data)
+    sessions = (
+        replay.load_paths(first, later, packet)[KEY]
+        + replay.load_paths(second, earlier, packet)[KEY]
+    )
+    result = replay.replay(packet, "f" * 64, sessions={KEY: sessions}, range_ticks=30)
+    exposure = result.setups[0].exposure[0]
+    assert exposure.firstObservedGrossPositiveAt == at(12)
+    assert exposure.samples == 2
+
+
+@pytest.mark.parametrize(
+    "name,cls",
+    [
+        ("scalp-replay-report-1.0", replay.ReplayReport),
+        ("scalp-evaluation-draft-1.0", replay.EvaluationDraft),
+        ("scalp-replay-paths-1.0", replay.PathCompanion),
+    ],
+)
+def test_published_schema_matches_model(name: str, cls: type) -> None:
+    assert json.loads(Path("schemas", name + ".json").read_text()) == cls.model_json_schema()
+
+
+def test_chain_is_verified_from_exact_hashed_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    value = fixture()
+    companion = chain(tmp_path, value, [quote(8, "4002.5")])
+    original_path = tmp_path / companion.sessions[0].files[0].name
+    verify = replay.verify_records
+
+    def replace_original(paths: list[Path]) -> list[dict[str, Any]]:
+        original_path.write_bytes(b"changed after hashing")
+        return verify(paths)
+
+    monkeypatch.setattr(replay, "verify_records", replace_original)
+    assert len(replay.load_paths(companion, tmp_path, model(value))[KEY][0]) == 2
+
+
+def test_newer_uncertain_protection_censors_older_verified_crossing(tmp_path: Path) -> None:
+    data = fixture()
+    fill(data, "20")
+    group = data["setups"][0]
+    prior = {
+        "id": identity("prior"),
+        "positionId": identity("position"),
+        "kind": "OBSERVATION",
+        "status": "VERIFIED",
+        "stopLoss": "3995.1",
+        "takeProfit": "4002.5",
+        "observedAt": at(11),
+        "persistedAt": at(11),
+        "detailsSha256": "a" * 64,
+    }
+    uncertain = {
+        **prior,
+        "id": identity("uncertain"),
+        "status": "UNCERTAIN",
+        "observedAt": None,
+        "persistedAt": at(12),
+    }
+    group["protectionHistory"] = [prior, uncertain]
+    comp = chain(tmp_path, data, [quote(13, "4002.7")])
+    packet = model(data)
+    sessions = replay.load_paths(comp, tmp_path, packet)
+    exposure = (
+        replay.replay(packet, "f" * 64, sessions=sessions, range_ticks=30).setups[0].exposure[0]
+    )
+    assert exposure.firstObservedTpCrossingAt is None
+    assert "HISTORICAL_PROTECTION_STALE_OR_UNVERIFIED" in exposure.reasons
+
+
+def test_terminal_event_conflicting_with_pending_order_is_unknown() -> None:
+    data = fixture()
+    data["setups"][0]["brokerEvents"][0]["executionType"] = 6
+    result = run(data).setups[0]
+    assert result.state == "UNKNOWN" and "TERMINAL_STATE_CONFLICT" in result.reasons
+
+
+def test_sell_stop_limit_uses_bid_and_continuation_trend(tmp_path: Path) -> None:
+    data = fixture()
+    context = data["contexts"][0]
+    context.update(decision="SELL", entryPrice="3998.99", stopLoss="4005.99", takeProfit="3998.59")
+    context["market"]["entry_boundaries"]["sell_stop_maximum"] = "3999"
+    for frame in context["market"]["candles"]:
+        if frame["timeframe"] in {"M5", "M15"}:
+            frame["rows"][-1][5] = "3999"
+    order = data["setups"][0]["orders"][0]
+    order.update(side="SELL", entryPrice="3998.99", stopLoss="4005.99", takeProfit="3998.59")
+    packet = model(data)
+    assert replay.replay(packet, "f" * 64).benchmark[0].decision == "SELL"
+    companion = chain(tmp_path, data, [quote(8, "3998.7"), quote(9, "3998.9")])
+    sessions = replay.load_paths(companion, tmp_path, packet)
+    path = replay.replay(packet, "f" * 64, sessions=sessions, range_ticks=30).setups[0].path
+    assert path.activationAt == at(8) and path.limitEligibleAt == at(9)
+    assert (
+        path.counterfactualFill is None
+        and path.declaredRangeBasis == "DECLARED_HYPOTHESIS_NOT_BROKER_ACK"
+    )
+
+
+@pytest.mark.parametrize("field,value", [("stopLoss", "3994"), ("takeProfit", "4002.3")])
+def test_changed_intent_protection_is_not_original_context(field: str, value: str) -> None:
+    data = fixture()
+    data["setups"][0]["orders"][0][field] = value
+    result = run(data).setups[0]
+    assert result.state == "UNKNOWN" and "APPROVED_INTENT_CONTEXT_MISMATCH" in result.reasons
+
+
+def test_protection_observed_after_its_persistence_cannot_prove_crossing(tmp_path: Path) -> None:
+    data = fixture()
+    fill(data, "20")
+    data["setups"][0]["protectionHistory"] = [
+        {
+            "id": identity("future-protection"),
+            "positionId": identity("position"),
+            "kind": "OBSERVATION",
+            "status": "VERIFIED",
+            "stopLoss": "3995.1",
+            "takeProfit": "4002.5",
+            "observedAt": at(12),
+            "persistedAt": at(11),
+            "detailsSha256": "a" * 64,
+        }
+    ]
+    companion = chain(tmp_path, data, [quote(13, "4002.7")])
+    packet = model(data)
+    result = replay.replay(
+        packet, "f" * 64, sessions=replay.load_paths(companion, tmp_path, packet), range_ticks=30
+    )
+    exposure = result.setups[0].exposure[0]
+    assert exposure.firstObservedTpCrossingAt is None
+    assert "HISTORICAL_PROTECTION_STALE_OR_UNVERIFIED" in exposure.reasons
+
+
+def test_previous_release_context_never_authorizes_current_release_geometry() -> None:
+    data = fixture()
+    data["contexts"][0]["originRelease"] = "0.7.3-quick-oco.1-codex.2"
+    result = run(data)
+    assert result.setups[0].state == "UNKNOWN"
+    assert "CONTEXT_RELEASE_MISMATCH" in result.setups[0].reasons
+    assert result.benchmark[0].decision == "WAIT"
+    assert result.benchmark[0].reasons == ["CONTEXT_RELEASE_UNSUPPORTED"]
+
+
+def test_numeric_false_cannot_impersonate_authority_flag() -> None:
+    value = draft().model_dump()
+    value["brokerAuthority"] = 0
+    with pytest.raises(ValueError, match="AUTHORITY_INVALID"):
+        replay.EvaluationDraft.model_validate(value)
+    report = run(fixture()).model_dump()
+    report["promotionAuthority"] = 0
+    with pytest.raises(ValueError, match="AUTHORITY_INVALID"):
+        replay.ReplayReport.model_validate(report)
+
+
+def test_trade_identity_reused_by_another_setup_is_rejected() -> None:
+    data = fixture()
+    group = data["setups"][0]
+    group["closedTrades"] = [
+        {
+            "id": identity("trade"),
+            "direction": "LONG",
+            "realizedNet": "1.3",
+            "signedFees": "-0.7",
+            "openedAt": at(10),
+            "closedAt": at(30),
+        }
+    ]
+    other = deepcopy(group)
+    other["id"] = identity("other-group")
+    other["accountCurrency"] = "EUR"
+    data["setups"].append(other)
+    with pytest.raises(ValueError, match="CLOSED_TRADE_IDENTITY_CONFLICT"):
+        run(data)
+
+
+def test_high_precision_price_does_not_flip_a_loss_to_positive(tmp_path: Path) -> None:
+    data = fixture()
+    fill(data, "1")
+    data["setups"][0]["fills"][0]["price"] = "12345678901234567890.0000000049"
+    q = (
+        "BROKER_QUOTE",
+        {
+            "kind": "QUOTE",
+            "sourceTime": at(12),
+            "receivedAt": at(12),
+            "bid": "12345678901234567890.0000000010",
+            "ask": "12345678901234567890.0000000020",
+            "bidUpdated": True,
+            "askUpdated": True,
+        },
+    )
+    companion = chain(tmp_path, data, [q])
+    packet = model(data)
+    sessions = replay.load_paths(companion, tmp_path, packet)[KEY]
+    result = replay.exposure_paths(packet.setups[0], sessions, packet.journalSnapshotAt)[0]
+    assert result.firstObservedGrossPositiveAt is None
+    assert Decimal(result.observedMaePrice or "0") == Decimal("0.0000000039")
+
+
+def test_repeating_weighted_price_is_bounded_and_report_revalidates() -> None:
+    data = fixture()
+    fill(data, "3")
+    group = data["setups"][0]
+    first = group["fills"][0]
+    first.update(volume="1", price="4002.01")
+    group["fills"] = [
+        first,
+        {**first, "id": identity("fill-2"), "price": "4002.02"},
+        {**first, "id": identity("fill-3"), "price": "4002.02"},
+    ]
+    report = run(data)
+    assert report.setups[0].weightedEntry == "4002.0166666666666666666666666666666666666667"
+    assert replay.ReplayReport.model_validate(report.model_dump()).recommendation == "HOLD"
+
+
+def test_replay_does_not_change_the_callers_decimal_context() -> None:
+    from decimal import getcontext
+
+    original = getcontext().prec
+    run(fixture())
+    assert getcontext().prec == original
+
+
+def test_duplicate_close_deal_cannot_complete_position_volume() -> None:
+    data = fixture()
+    fill(data, "20")
+    group = data["setups"][0]
+    group["state"] = "CLOSED"
+    group["currentProtection"][0]["positionState"] = "CLOSED"
+    group["closedTrades"] = [
+        {
+            "id": identity("trade"),
+            "direction": "LONG",
+            "realizedNet": "1",
+            "signedFees": "-0.7",
+            "openedAt": at(10),
+            "closedAt": at(30),
+        }
+    ]
+    deal = {
+        "id": identity("deal"),
+        "positionId": identity("position"),
+        "closedVolume": "10",
+        "entryPrice": "4002.1",
+        "gross": "1.7",
+        "commission": "-0.7",
+        "swap": "0",
+        "conversionFee": "0",
+        "occurredAt": at(30),
+        "recordedAt": at(31),
+        "externalIntervention": False,
+        "evidenceSha256": "a" * 64,
+        "exitCause": None,
+    }
+    group["closeDeals"] = [deal, deepcopy(deal)]
+    result = run(data).setups[0]
+    assert result.state == "UNKNOWN"
+    assert result.partialCloseVolume == "10"
+    assert "CLOSE_DEAL_IDENTITY_DUPLICATE" in result.reasons
+
+
+def test_conflicting_close_deal_identity_never_selects_a_version() -> None:
+    data = fixture()
+    fill(data, "20")
+    deal = {
+        "id": identity("deal-conflict"),
+        "positionId": identity("position"),
+        "closedVolume": "10",
+        "entryPrice": "4002.1",
+        "gross": "1.7",
+        "commission": "-0.7",
+        "swap": "0",
+        "conversionFee": "0",
+        "occurredAt": at(30),
+        "recordedAt": at(31),
+        "externalIntervention": False,
+        "evidenceSha256": "a" * 64,
+        "exitCause": None,
+    }
+    data["setups"][0]["closeDeals"] = [deal, {**deal, "closedVolume": "11"}]
+    with pytest.raises(ValueError, match="CLOSE_DEAL_IDENTITY_CONFLICT"):
+        run(data)
