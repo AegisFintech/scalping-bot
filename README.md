@@ -452,3 +452,10 @@ caches. Active bot/Codex/monitor/storage services, registered research, accepted
 GTC orders, current data and immutable deployment artifacts remain protected.
 Review unused files/dependencies as part of each update and record the result.
 Server cleanup is an explicit reviewed operation, never an automatic push action.
+
+# Fill evidence integrity
+
+Read-only fill review now requires instrument-scoped v1.1 inputs, excludes
+unattested side freshness and post-fill depth, and reads immutable historical
+protection. See [verification and limits](docs/fill-evidence-integrity-report.md).
+The running scalping strategy is unchanged by this research repair.

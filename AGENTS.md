@@ -1,5 +1,10 @@
 # Agent contract
 
+ISSUE-392: fill review/export v1.1 requires symbol scope, causal receipt/capture
+times and immutable pre-fill protection observations. Market samples lack per-side
+freshness and cannot price fills. Preserve bounded readers, unknown evidence and
+frozen v1.0 reports; see `docs/fill-evidence-integrity-report.md`.
+
 Read this file, `plan.md` and the report for the area you change before editing
 code. This is the short current contract. The full per-issue directive history
 (ISSUE-075 … ISSUE-387) is preserved verbatim in

@@ -68,3 +68,27 @@ it("keeps the native TP pattern a retained diagnostic", () => {
   ])
     expect(pattern({ ...document, ...update })).toBe(false);
 });
+
+const reviewV11 = compile("fill-gap-review-1.1");
+it("requires instrument scope in the corrected review contract", () => {
+  const report = {
+    schemaVersion: "fill-gap-review-1.1",
+    symbol: "XAUUSD",
+    from: "2026-10-27T00:00:00Z",
+    until: "2026-10-28T00:00:00Z",
+    fills: [],
+    summary: {},
+    flightQuotePoints: 0,
+    marketEvidence: null,
+    brokerAuthority: false,
+    promotion: "HOLD",
+    counterfactualNet: null,
+    causeInference: null,
+    completeTickTape: false,
+  };
+  expect(reviewV11(report)).toBe(true);
+  expect(reviewV11({ ...report, symbol: "../" })).toBe(false);
+  const missing: Partial<typeof report> = { ...report };
+  delete missing.symbol;
+  expect(reviewV11(missing)).toBe(false);
+});

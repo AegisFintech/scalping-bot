@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     import psycopg
 
 MAX_FILLS = 10000
-SCHEMA_VERSION = "fill-evidence-input-1.0"
+SCHEMA_VERSION = "fill-evidence-input-1.1"
 
 # Entry deals carry their order; broker-generated closing deals carry only the position.
 FILLS_SQL = """
@@ -61,7 +61,21 @@ SELECT * FROM (
   JOIN strategy_versions sv ON sv.id=a.strategy_version_id
   LEFT JOIN position_close_deals d ON d.account_id=p.account_id AND d.position_id=p.id
     AND d.broker_deal_id=f.broker_fill_id
-  LEFT JOIN position_protection pp ON pp.position_id=p.id
+  LEFT JOIN LATERAL (
+    SELECT CASE WHEN e.details->>'status'='VERIFIED'
+      AND (e.details->>'observedAt')::timestamptz
+        BETWEEN f.occurred_at - interval '3 seconds' AND f.occurred_at
+      THEN e.details->>'stopLoss' END stop_loss,
+      CASE WHEN e.details->>'status'='VERIFIED'
+      AND (e.details->>'observedAt')::timestamptz
+        BETWEEN f.occurred_at - interval '3 seconds' AND f.occurred_at
+      THEN e.details->>'takeProfit' END take_profit,
+      (e.details->>'observedAt')::timestamptz observed_at
+    FROM position_protection_events e
+    WHERE e.position_id=p.id AND e.kind='OBSERVATION'
+      AND e.created_at <= f.occurred_at
+    ORDER BY e.created_at DESC,e.id DESC LIMIT 1
+  ) pp ON true
   WHERE f.order_id IS NULL AND p.strategy_owned
     AND ac.provider_account_key_hash=%(account)s AND ac.environment='demo'
     AND sy.name=%(symbol)s AND g.mode='demo' AND a.mode='demo'
@@ -126,6 +140,7 @@ def export(
         raise ValueError("FILL_EXPORT_LIMIT")
     return {
         "schemaVersion": SCHEMA_VERSION,
+        "symbol": symbol,
         "from": start.isoformat(),
         "until": until.isoformat(),
         "exportedAt": datetime.now(UTC).isoformat(),

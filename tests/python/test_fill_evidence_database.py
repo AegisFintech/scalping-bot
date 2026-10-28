@@ -107,12 +107,53 @@ def test_entry_and_native_close_deals_export_scoped_without_identifiers(
         observed_at,reason_code) VALUES(%s,'VERIFIED',4001.70,4009.10,%s,'VERIFIED')""",
         (position, closed - timedelta(seconds=1)),
     )
+    database.execute(
+        """INSERT INTO position_protection_events(id,position_id,kind,details,created_at)
+        VALUES(%s,%s,'OBSERVATION',%s,%s)""",
+        (
+            str(uuid4()),
+            position,
+            psycopg.types.json.Jsonb(
+                {
+                    "status": "VERIFIED",
+                    "stopLoss": "4001.70",
+                    "takeProfit": "4009.10",
+                    "observedAt": (closed - timedelta(seconds=1)).isoformat(),
+                }
+            ),
+            closed - timedelta(seconds=0.5),
+        ),
+    )
     database.commit()
     result = export(database, "a" * 64, "XAUUSD", at, now)
     entry, close = result["fills"]
     assert entry["kind"] == "ENTRY" and entry["brokerAcceptedAt"] == at.isoformat()
     assert close["kind"] == "CLOSE" and close["closingOrderType"] == 4
     assert close["externalIntervention"] is False and close["brokerTakeProfit"]
+    # A later current observation and immutable later event cannot rewrite an old close.
+    database.execute(
+        "UPDATE position_protection SET take_profit=5000,observed_at=%s WHERE position_id=%s",
+        (now, position),
+    )
+    database.execute(
+        """INSERT INTO position_protection_events(id,position_id,kind,details,created_at)
+        VALUES(%s,%s,'OBSERVATION',%s,%s)""",
+        (
+            str(uuid4()),
+            position,
+            psycopg.types.json.Jsonb(
+                {
+                    "status": "VERIFIED",
+                    "stopLoss": "3000",
+                    "takeProfit": "5000",
+                    "observedAt": now.isoformat(),
+                }
+            ),
+            now,
+        ),
+    )
+    database.commit()
+    assert export(database, "a" * 64, "XAUUSD", at, now)["fills"] == result["fills"]
     text = repr(result)
     assert group not in text and position not in text and order not in text
     assert not {"brokerFillId", "brokerDealId", "brokerPositionId"} & set(close)
@@ -120,6 +161,30 @@ def test_entry_and_native_close_deals_export_scoped_without_identifiers(
     assert [r.get("closeClass") for r in reviewed["fills"]] == [None, "NATIVE_AT_OR_BEYOND_SL"]
     assert reviewed["fills"][0]["triggerGap"] == "0.25"
     assert reviewed["fills"][1]["levelSlippage"] == "0.21"
+    database.execute(
+        """INSERT INTO position_protection_events(id,position_id,kind,details,created_at)
+        VALUES(%s,%s,'OBSERVATION',%s,%s)""",
+        (
+            str(uuid4()),
+            position,
+            psycopg.types.json.Jsonb(
+                {
+                    "status": "UNCERTAIN",
+                    "stopLoss": None,
+                    "takeProfit": None,
+                    "observedAt": None,
+                }
+            ),
+            closed - timedelta(seconds=0.1),
+        ),
+    )
+    database.commit()
+    uncertain = export(database, "a" * 64, "XAUUSD", at, now)["fills"][1]
+    assert uncertain["brokerTakeProfit"] is None and uncertain["brokerStopLoss"] is None
+    assert (
+        g.review(export(database, "a" * 64, "XAUUSD", at, now), None, [])["fills"][1]["closeClass"]
+        == "NATIVE_LEVEL_UNKNOWN"
+    )
     assert not export(database, "b" * 64, "XAUUSD", at, now)["fills"]
     assert not export(database, "a" * 64, "OTHER", at, now)["fills"]
     with database.transaction():

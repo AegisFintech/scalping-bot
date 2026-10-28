@@ -4460,3 +4460,23 @@ runtime.
 - Dependencies: existing qualification batch and #269 fixture evidence.
 - Status: corrected #265 source qualifies locally (798 Node / 70 DB / 251 Python, no skips; audits clean); dependent hosted qualification pending.
 - Commands/evidence: [CI backport report](docs/upgrade-ci-backport-report.md).
+
+### ISSUE-392 — Correct fill evidence before scalping redesign
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/392; parent #391.
+- Dependencies: #390 fill evidence, #387 Flight, existing immutable protection events.
+- Acceptance: instrument-scoped additive v1.1; causal clocks, side freshness, historical protection, aggregate bounds; positive/failure/DB/schema tests; full qualification and reviewed pushed PR. Trading and frozen evidence unchanged.
+- Status: implemented; four red regressions reproduced, latest uncertainty preserved and existing msgpack vulnerability patched. Full qualification passed: 1,132 Node +124 PostgreSQL +527 Python (1,783), all required gates/audits and both sample/populated config scopes. Reviewed pushed PR delivery follows; exact results in `docs/fill-evidence-integrity-report.md`. No deployment or trading change.
+- Next batches under #391: characterize and simplify current execution seams, then implement one directional STOP_LIMIT scalping proposal with model entry/TP/SL/expiry and deterministic risk/expiry reconciliation. No economic change in #392.
+
+### ISSUE-393 — Provider routing and execution-bound refactor
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/393; parent #391, depends on #392.
+- Acceptance: centralized validated request/prompt routing and deterministic execution-bound extraction, characterization/rejection tests, no changed trading behavior or immutable contracts; full checks and reviewed pushed PR.
+- Status: planned; codebase and architecture review identified these narrow seams instead of a broad lifecycle rewrite.
+
+### ISSUE-394 — Model-defined directional scalping
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/394; parent #391, depends on #392/#393.
+- Acceptance: one trend-direction STOP_LIMIT, model entry/TP/SL/pending expiry inside finite scalping bounds; deterministic sizing, costs, native protection/expiry, exact fill/cancel/partial/unknown/restart recovery and one durable refresh. Additive contracts, migrations if required, full checks, reviewed delivery and matching one-demo activation. No risk increase, reversal, filled-position expiry close, accounting reset or profitability claim.
+- Status: planned; actual native GTD acknowledgement/recovery semantics must be verified before activation. Current accepted groups retain their original GTC/OCO semantics.
