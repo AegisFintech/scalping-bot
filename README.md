@@ -75,3 +75,5 @@ proof of liquidity, accuracy or future fills.
 The [offline publisher scope policy](docs/publisher-policy-report.md) checks research proposal boundaries only; it cannot run, publish or merge code.
 
 The [broker acknowledgement design](docs/broker-acknowledgement-design.md) describes the demo acknowledgement recorder and its bounded read-only research export; a real acknowledgement remains unverified.
+
+The [exact-head qualification report](docs/exact-head-checks-report.md) records qualification, repository protection and its limits.

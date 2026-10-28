@@ -1,3 +1,9 @@
+### ISSUE-418 — Exact-head checks and main protection
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/418; parent #401.
+- Acceptance: test and assert the exact PR head, require the GitHub Actions check and an up-to-date PR on main, and verify administrator enforcement. Preserve independent review requirements and do not enable a publisher.
+- Status: workflow change and independent reviews complete; full local qualification passed (1,173 Node, 132 PostgreSQL and 670 Python tests). Hosted exact-head checks and main protection remain to be verified. Independent review authority remains a separate #401 requirement.
+
 ### ISSUE-416 — Acknowledgement evidence activation record
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/416; parent #407.
