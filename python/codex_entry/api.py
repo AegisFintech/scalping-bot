@@ -13,6 +13,7 @@ from starlette.concurrency import run_in_threadpool
 
 from python.codex_entry.service import (
     MAX_BYTES,
+    SUPPORTED_PROMPTS,
     Response,
     ResponseV11,
     ResponseV12,
@@ -68,20 +69,7 @@ def main() -> None:
     root = Path.home() / "entry-jobs"
     prompt = Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).read_text().strip()
     expected = Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).stem
-    if expected not in {
-        "entry-pair-v4",
-        "entry-pair-v5",
-        "entry-pair-v6",
-        "entry-pair-v7",
-        "entry-pair-v8",
-        "entry-direction-v1",
-        "entry-modes-v1",
-        "entry-quick-oco-v1",
-        "entry-quick-oco-v2",
-        "entry-quick-oco-v3",
-        "entry-quick-oco-v4",
-        "entry-quick-oco-v5",
-    }:
+    if expected not in SUPPORTED_PROMPTS:
         raise ValueError("CODEX_PROMPT_VERSION_INVALID")
     app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"], prompt_version=expected)
     uvicorn.run(

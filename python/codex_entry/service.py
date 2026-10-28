@@ -12,7 +12,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, get_args
 from uuid import UUID
 
 from pydantic import Field, model_validator
@@ -376,6 +376,31 @@ class RequestV111(RequestV110):
     payload: PayloadV18
 
 
+REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
+    Request,
+    RequestV12,
+    RequestV13,
+    RequestV14,
+    RequestV15,
+    RequestV16,
+    RequestV17,
+    RequestV18,
+    RequestV19,
+    RequestV110,
+    RequestV111,
+)
+REQUEST_BY_VERSION = {
+    version: model
+    for model in REQUEST_MODELS
+    for version in get_args(model.model_fields["version"].annotation)
+}
+SUPPORTED_PROMPTS = frozenset(
+    prompt
+    for model in REQUEST_MODELS
+    for prompt in get_args(model.model_fields["promptVersion"].annotation)
+)
+
+
 def parse_request(
     raw: bytes,
 ) -> (
@@ -392,27 +417,10 @@ def parse_request(
     | RequestV111
 ):
     value = json.loads(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.11":
-        return RequestV111.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.10":
-        return RequestV110.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.9":
-        return RequestV19.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.8":
-        return RequestV18.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.7":
-        return RequestV17.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.6":
-        return RequestV16.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.5":
-        return RequestV15.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.4":
-        return RequestV14.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.3":
-        return RequestV13.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("version") == "codex-entry-request-1.2":
-        return RequestV12.model_validate_json(raw)
-    return Request.model_validate_json(raw)
+    version = value.get("version") if isinstance(value, dict) else None
+    if not isinstance(version, str) or version not in REQUEST_BY_VERSION:
+        raise ValueError("CODEX_REQUEST_VERSION_INVALID")
+    return REQUEST_BY_VERSION[version].model_validate_json(raw)
 
 
 class Entries(StrictModel):

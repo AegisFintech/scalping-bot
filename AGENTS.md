@@ -1,5 +1,10 @@
 # Agent contract
 
+ISSUE-393: provider version/prompt routing derives from existing Pydantic request
+metadata. Execution bounds live in `model-execution-bounds.ts`; the coordinator
+retains compatible exports. Preserve validators and lifecycle authority; see
+`docs/execution-seams-report.md`.
+
 ISSUE-392: fill review/export v1.1 requires symbol scope, causal receipt/capture
 times and immutable pre-fill protection observations. Market samples lack per-side
 freshness and cannot price fills. Preserve bounded readers, unknown evidence and

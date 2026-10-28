@@ -455,6 +455,10 @@ Server cleanup is an explicit reviewed operation, never an automatic push action
 
 # Fill evidence integrity
 
+Provider routing now derives from existing typed contracts, and deterministic
+execution bounds are isolated with the coordinator's public interface preserved.
+See [architecture assessment and verification](docs/execution-seams-report.md).
+
 Read-only fill review now requires instrument-scoped v1.1 inputs, excludes
 unattested side freshness and post-fill depth, and reads immutable historical
 protection. See [verification and limits](docs/fill-evidence-integrity-report.md).
