@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "engineering-proposal-1.0",
+  "repository": "AegisFintech/scalping-bot",
+  "issue": 410,
+  "classification": "RESEARCH_ONLY",
+  "policyId": "research-additions-1.0",
+  "baseCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "baseTree": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "changes": [
+    {
+      "path": "python/research/experiments/strategy_probe.py",
+      "beforeSha256": null,
+      "afterSha256": "66f62d1807d3821a3865f2573b69c74be033f1341240ac861fefc6d430bff5e0",
+      "size": 8,
+      "mode": "100644"
+    },
+    {
+      "path": "tests/python/generated_research/test_strategy_probe.py",
+      "beforeSha256": null,
+      "afterSha256": "59830ebc3a4184110566bf1a290d08473dfdcbd492ce498b14cd1a5e2fa2e441",
+      "size": 5,
+      "mode": "100644"
+    }
+  ],
+  "brokerAuthority": false,
+  "publishAuthority": false,
+  "mergeAuthority": false
+}

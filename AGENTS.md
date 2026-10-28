@@ -1,5 +1,9 @@
 # Agent contract
 
+ISSUE-410: offline publisher scope matching grants no execution or publication
+authority. Caller-supplied trees are not independently verified; preserve #401
+isolation and server-enforcement requirements. See `docs/publisher-policy-report.md`.
+
 ISSUE-400: offline scalp replay is historical reconstruction only and always HOLD.
 Sampled crossings are not fills; original acknowledgement fields and unidentifiable
 costs remain unknown. Draft protocols do not register studies. Preserve immutable

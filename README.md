@@ -71,3 +71,5 @@ Normal environment settings are intentionally small; never replace a populated
 Research is SELECT-only, retains unknown/censored outcomes and never promotes a
 strategy automatically. Round numbers and shallow broker DOM are context, not
 proof of liquidity, accuracy or future fills.
+
+The [offline publisher scope policy](docs/publisher-policy-report.md) checks research proposal boundaries only; it cannot run, publish or merge code.

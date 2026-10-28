@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "FileChange": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "beforeSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Beforesha256"
+        },
+        "afterSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Aftersha256",
+          "type": "string"
+        },
+        "size": {
+          "maximum": 262144,
+          "minimum": 0,
+          "title": "Size",
+          "type": "integer"
+        },
+        "mode": {
+          "const": "100644",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": ["path", "beforeSha256", "afterSha256", "size", "mode"],
+      "title": "FileChange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "engineering-proposal-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "repository": {
+      "const": "AegisFintech/scalping-bot",
+      "title": "Repository",
+      "type": "string"
+    },
+    "issue": {
+      "maximum": 999999999,
+      "minimum": 1,
+      "title": "Issue",
+      "type": "integer"
+    },
+    "classification": {
+      "const": "RESEARCH_ONLY",
+      "title": "Classification",
+      "type": "string"
+    },
+    "policyId": {
+      "const": "research-additions-1.0",
+      "title": "Policyid",
+      "type": "string"
+    },
+    "baseCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Basecommit",
+      "type": "string"
+    },
+    "baseTree": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Basetree",
+      "type": "string"
+    },
+    "changes": {
+      "items": {
+        "$ref": "#/$defs/FileChange"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Changes",
+      "type": "array"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "publishAuthority": {
+      "const": false,
+      "title": "Publishauthority",
+      "type": "boolean"
+    },
+    "mergeAuthority": {
+      "const": false,
+      "title": "Mergeauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "repository",
+    "issue",
+    "classification",
+    "policyId",
+    "baseCommit",
+    "baseTree",
+    "changes",
+    "brokerAuthority",
+    "publishAuthority",
+    "mergeAuthority"
+  ],
+  "title": "EngineeringProposal",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

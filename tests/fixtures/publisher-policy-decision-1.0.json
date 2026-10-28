@@ -1,0 +1,15 @@
+{
+  "policyId": "research-additions-1.0",
+  "proposalSha256": "c8e16bf0de1f94c752619cf6267219ceb6fb545d4bbf167662055eb9f53c3fba",
+  "candidateTree": "cccccccccccccccccccccccccccccccccccccccc",
+  "changedPaths": [
+    "python/research/experiments/strategy_probe.py",
+    "tests/python/generated_research/test_strategy_probe.py"
+  ],
+  "result": "SCOPE_MATCH_ONLY",
+  "sourceEvidenceIndependentlyVerified": false,
+  "sandboxVerified": false,
+  "brokerAuthority": false,
+  "publishAuthority": false,
+  "mergeAuthority": false
+}
