@@ -1,5 +1,9 @@
 # Agent contract
 
+ISSUE-407: preserve existing broker event identities and distinguish original
+callbacks from reconstruction. Read `docs/broker-acknowledgement-design.md`
+before adding prospective acknowledgement evidence; no capture is active yet.
+
 ISSUE-410: offline publisher scope matching grants no execution or publication
 authority. Caller-supplied trees are not independently verified; preserve #401
 isolation and server-enforcement requirements. See `docs/publisher-policy-report.md`.
