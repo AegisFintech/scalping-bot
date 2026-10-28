@@ -1,6 +1,12 @@
+### ISSUE-414 — Prospective acknowledgement capture software
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/414; parent #407, design in #413.
+- Acceptance: additive atomic callback evidence, bounded scoped research export, schemas and failure/duplicate/rollback tests, independent review and full qualification. No backfill or execution authority.
+- Status: software and focused checks in progress. No deployment, broker receipt or metadata reconstruction is claimed; #407 stays open for those remaining requirements.
+
 ### ISSUE-412 — Broker acknowledgement evidence design
 
-- Issue: https://github.com/AegisFintech/scalping-bot/issues/412; parent #407.
+- Delivery: https://github.com/AegisFintech/scalping-bot/pull/413; parent #407.
 - Acceptance: document callback identity, field and clock provenance, compatible atomic evidence storage, failure behavior and remaining implementation and validation work. No runtime change.
 - Status: design documented; implementation and real receipt remain in #407.
 

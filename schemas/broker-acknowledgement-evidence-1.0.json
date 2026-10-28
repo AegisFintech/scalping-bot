@@ -1,0 +1,208 @@
+{
+  "$defs": {
+    "Acknowledgement": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "eventId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "eventPayloadSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Eventpayloadsha256",
+          "type": "string"
+        },
+        "orderType": {
+          "enum": [3, 6],
+          "title": "Ordertype",
+          "type": "integer"
+        },
+        "metadataAvailability": {
+          "const": "NOT_CAPTURED",
+          "title": "Metadataavailability",
+          "type": "string"
+        },
+        "evidenceSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Evidencesha256",
+          "type": "string"
+        },
+        "stopPrice": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stopprice"
+        },
+        "slippageInPoints": {
+          "anyOf": [
+            {
+              "pattern": "^[1-9][0-9]{0,18}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Slippageinpoints"
+        },
+        "timeInForce": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Timeinforce"
+        },
+        "expirationAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expirationat"
+        },
+        "brokerUpdatedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Brokerupdatedat"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        },
+        "persistedAt": {
+          "title": "Persistedat",
+          "type": "string"
+        },
+        "invalidFields": {
+          "items": {
+            "enum": [
+              "stopPrice",
+              "slippageInPoints",
+              "timeInForce",
+              "expirationTimestamp",
+              "utcLastUpdateTimestamp"
+            ],
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Invalidfields",
+          "type": "array"
+        },
+        "clockStatus": {
+          "enum": ["ORDERED", "UNORDERED", "INCOMPLETE"],
+          "title": "Clockstatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "eventPayloadSha256",
+        "orderType",
+        "metadataAvailability",
+        "evidenceSha256",
+        "stopPrice",
+        "slippageInPoints",
+        "timeInForce",
+        "expirationAt",
+        "brokerUpdatedAt",
+        "receivedAt",
+        "persistedAt",
+        "invalidFields",
+        "clockStatus"
+      ],
+      "title": "Acknowledgement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "broker-acknowledgement-evidence-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "source": {
+      "pattern": "^[a-zA-Z0-9._-]{1,80}$",
+      "title": "Source",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "snapshotAt": {
+      "title": "Snapshotat",
+      "type": "string"
+    },
+    "observations": {
+      "items": {
+        "$ref": "#/$defs/Acknowledgement"
+      },
+      "maxItems": 500,
+      "title": "Observations",
+      "type": "array"
+    },
+    "coverage": {
+      "const": "PERSISTED_CALLBACKS_ONLY_ABSENCE_UNKNOWN",
+      "title": "Coverage",
+      "type": "string"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "source",
+    "start",
+    "until",
+    "snapshotAt",
+    "observations",
+    "coverage",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "AcknowledgementPacket",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

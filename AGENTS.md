@@ -2,7 +2,8 @@
 
 ISSUE-407: preserve existing broker event identities and distinguish original
 callbacks from reconstruction. Read `docs/broker-acknowledgement-design.md`
-before adding prospective acknowledgement evidence; no capture is active yet.
+before changing prospective acknowledgement evidence. Migration 0037 and the
+writer are an undeployed software change; missing metadata and callbacks stay unknown.
 
 ISSUE-410: offline publisher scope matching grants no execution or publication
 authority. Caller-supplied trees are not independently verified; preserve #401
