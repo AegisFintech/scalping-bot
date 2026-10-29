@@ -11,7 +11,12 @@
   tests plus all quality/security gates and both configuration scopes.
   [PR #437](https://github.com/AegisFintech/scalping-bot/pull/437) awaits final
   documentation checks/merge and the separately verified demo recovery.
-  No production data has changed at this checkpoint.
+  Migration0038 is applied; the first recovery attempt rolled back with zero
+  proofs because graceful stop changed the mutable reason to SERVICE_SHUTDOWN.
+  Previous execution is restored with the owned pause retained. Follow-up tests
+  exercise actual OrderMaintenance shutdown. Independent reviews and full
+  qualification (2,088 tests) pass. [Follow-up PR #438](https://github.com/AegisFintech/scalping-bot/pull/438)
+  awaits final document checks, merge and separately verified recovery.
 - Evidence, trust assumptions and rollback: `docs/predispatch-incident-recovery-report.md`.
 
 ### ISSUE-435 — GTD execution activation record

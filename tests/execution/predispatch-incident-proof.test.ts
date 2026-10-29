@@ -93,6 +93,21 @@ describe("historical pre-dispatch incident evidence", () => {
   it("accepts only the pinned incident with complete fresh evidence", () => {
     expect(() => assertPredispatchIncidentEvidence(evidence)).not.toThrow();
   });
+  it("retains every incident proof requirement after graceful shutdown", () => {
+    expect(() =>
+      assertPredispatchIncidentEvidence({
+        ...evidence,
+        cancellationReason: "SERVICE_SHUTDOWN",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      assertPredispatchIncidentEvidence({
+        ...evidence,
+        cancellationReason: "SERVICE_SHUTDOWN",
+        submitted: true,
+      }),
+    ).toThrow("PREDISPATCH_INCIDENT_EVIDENCE_INCOMPLETE");
+  });
   it.each([
     { executionStopped: false },
     { analysisPaused: false },

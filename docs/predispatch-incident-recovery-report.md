@@ -156,3 +156,36 @@ Graphify AST refreshed (14,138 nodes / 22,609 edges). Its parser reports no node
 for `pyproject.toml`; semantic document extraction was not run. No paid graph calls.
 The exact rollout remains gated on the reviewed artifact, current evidence and
 privileges; merge is not proof of activation.
+
+## First activation attempt and shutdown follow-up
+
+Migration0038 applied at 2026-10-29T04:17:32Z, verified all37 earlier checksums,
+retained history/accounting and granted only SELECT to application/reader. The
+qualified CLI then refused recovery with PREDISPATCH_INCIDENT_EVIDENCE_INCOMPLETE.
+Independent read-back showed zero proof rows and the original unresolved states;
+temporary INSERT was revoked and the owned pause retained.
+
+The required graceful stop calls `OrderMaintenance.cancelAll("SERVICE_SHUTDOWN",
+true)`. That existing code replaces the GTD group's mutable cancellation reason,
+even when cancellation fails for the never-submitted intent. It leaves the exact
+intent/rejection audits intact. The original guard accepted only ANALYSIS_EXPIRED
+and therefore rejected the procedure's own verified shutdown transition.
+
+A new integration regression runs the real maintenance path against isolated
+PostgreSQL, reproduces the refusal, then requires recovery to preserve
+SERVICE_SHUTDOWN as its prior reason. Only these two known maintenance reasons
+are admitted; exact provenance, identity, stopped process, owned pause, fresh
+complete broker evidence, no-fill/no-dispatch conditions and all atomicity guards
+remain. Unknown reasons still reject. No historical reason is edited to make
+recovery pass. The previous qualified execution service was restored, paused,
+after a fresh broker check at04:20:27Z confirmed no incident-window history or
+open exposure. The follow-up requires independent review/full qualification
+before a newly verified one-off attempt; it is not an automatic retry.
+
+Shutdown follow-up qualification passed: 1,271 Node/schema/migration, 147 isolated
+PostgreSQL and 670 Python tests (2,088 total), all format/lint/type/build/security
+and dependency checks. [Receipt](evidence/predispatch-shutdown-validation.json).
+Both independent reviews approved `8c03792`; both hosted checks passed. The
+revised rollout adopts only the retained, verified owned pause, preserves the
+first attempt's records and skips the already-applied migration. Final document
+checks and separately verified activation remain pending.
