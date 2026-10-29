@@ -1,0 +1,26 @@
+[Unit]
+Description=Bounded read-only scalper research observation export
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+EnvironmentFile=/etc/scalper-flight/recorder.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-observation-review
+ExecStart=/opt/scalper-flight-384/.venv/bin/python -m python.operations.observation_review feed /var/lib/scalper-observation-feed/current.json
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-observation-feed
+InaccessiblePaths=-/root
+CPUQuota=25%
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=16
+TimeoutStartSec=90
+StandardOutput=journal
+StandardError=journal

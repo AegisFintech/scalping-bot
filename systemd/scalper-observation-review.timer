@@ -1,0 +1,10 @@
+[Unit]
+Description=Review new observations with durable per-window provider claims
+
+[Timer]
+OnCalendar=*-*-* *:05,35:00 UTC
+Persistent=true
+Unit=scalper-observation-review.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,33 @@
+[Unit]
+Description=Confined current-observation Codex research review on tc01
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=scalper-learning
+Group=scalper-learning
+WorkingDirectory=/var/lib/scalper-learning-evidence
+Environment=HOME=/var/lib/scalper-learning-evidence
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-observation-review
+ExecStart=/opt/scalper-observation-review/.venv/bin/python -m python.operations.observation_review review /var/lib/scalper-learning-evidence/archive
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-learning-evidence
+InaccessiblePaths=-/root -/run/postgresql -/opt/ctrader-ai-scalper
+CPUQuota=50%
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=64
+LimitFSIZE=512M
+TimeoutStartSec=240
+TimeoutStopSec=10
+KillMode=control-group
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

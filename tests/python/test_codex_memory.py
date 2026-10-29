@@ -165,13 +165,19 @@ def daily(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
 
     monkeypatch.setattr(m.subprocess, "Popen", spawn)
 
-    def run(day: str = "2026-10-19") -> Path:
+    def run(day: str = "2026-10-19", purpose: str = "entries") -> Path:
         job = tmp_path / "jobs" / str(uuid4())
         job.mkdir(parents=True)
         req = current_request().model_dump()
         req["payload"]["captured_at"] = day + "T12:00:00Z"
         publish(job / "request.json", req)
-        m.invoke_daily("Fresh INPUT", job, schema=s.Decision.model_json_schema(), model=s.MODEL)
+        m.invoke_daily(
+            "Fresh INPUT",
+            job,
+            schema=s.Decision.model_json_schema(),
+            model=s.MODEL,
+            purpose=purpose,
+        )
         return job
 
     return run
@@ -765,3 +771,13 @@ def test_level_map_receipt_keeps_directional_response(tmp_path: Path) -> None:
     result = s.run(req, tmp_path, PROMPT, now=lambda: NOW, call=call)
     assert result["version"] == "codex-entry-response-1.2"
     assert result["entries"]["decision"] == "SELL" and result["executionAuthority"] is False
+
+
+def test_research_purpose_has_separate_thread_and_no_price_instruction(daily: Any) -> None:
+    daily()
+    daily(purpose="research")
+    starts = [params for method, params in FakeRpc.calls if method == "thread/start"]
+    assert len(starts) == 2
+    assert "propose prices" in starts[0]["baseInstructions"]
+    assert "research diagnostics" in starts[1]["baseInstructions"]
+    assert "Never use tools" in starts[1]["baseInstructions"]

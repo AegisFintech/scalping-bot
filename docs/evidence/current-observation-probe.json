@@ -1,0 +1,96 @@
+{
+  "health": {
+    "blocker": null,
+    "brokerAuthority": false,
+    "checkedAt": "2026-10-29T10:31:10.489691+00:00",
+    "lastCompletedAt": "2026-10-29T10:30:35.284151+00:00",
+    "lastCompletedWindow": "2026-10-29T10:00:00+00:00",
+    "planId": "be190a80a59bb4f1e3d7ae7e2b4ec25ee1c065b3ade80b147b6eaadbca5873a8",
+    "promotionAuthority": false,
+    "recentFailedOrUnknownReviews": 0,
+    "recentReviews": [
+      {
+        "planId": "be190a80a59bb4f1e3d7ae7e2b4ec25ee1c065b3ade80b147b6eaadbca5873a8",
+        "status": "CLOSED"
+      }
+    ],
+    "recentTerminalReviews": 1,
+    "reviewStartedAt": "2026-10-29T10:31:09.841439+00:00",
+    "scheduledNextReviewAt": "2026-10-29T10:35:00+00:00",
+    "sourceCoverage": {
+      "externalSources": 0,
+      "quotePathsSupplied": false,
+      "sourceId": "scalper-epoch314",
+      "start": "2026-10-29T09:30:00+00:00",
+      "until": "2026-10-29T10:00:00+00:00"
+    },
+    "status": "CLOSED",
+    "version": "current-observation-review-1.0",
+    "windowUntil": "2026-10-29T10:00:00+00:00"
+  },
+  "counts": {
+    "analyses": 44,
+    "analysis_DEFERRED": 38,
+    "analysis_REJECTED": 6,
+    "contexts": 20,
+    "decision_SELL": 1,
+    "decision_UNKNOWN": 1,
+    "decision_WAIT": 18,
+    "provider_state_FAILED": 1,
+    "provider_state_READY": 19,
+    "setups": 0,
+    "unsupported_setups": 0
+  },
+  "analysisReasons": {
+    "SCENARIO_CODEX_WAIT": 18,
+    "SCENARIO_REFRESH_PENDING": 1,
+    "SCENARIO_REFRESH_STARTED": 1,
+    "SCENARIO_WAIT_REFRESH_STARTED": 18,
+    "SELL_ENTRY_TOO_CLOSE": 6
+  },
+  "finding": {
+    "brokerAuthority": false,
+    "classification": "MODEL_INTERPRETATION_NOT_INDEPENDENTLY_VALIDATED",
+    "interpretation": {
+      "diagnosticSha256": "8ebbf5c386b223d29d591261c974979431df57c249e389f889b82d88c5921ee1",
+      "falsificationTest": "Predefine reconciliation and cost-allocation rules, then audit every cohort record against broker and provider evidence. Any unexplained missing record, unreconciled outcome or unknown material cost falsifies economic completeness; otherwise report net outcomes and downside tails with sample-size uncertainty, without treating them as proof of profitability.",
+      "limitations": [
+        "Provider cost is unattested; counterfactual fills, costs, FX and margin are unknown. Payoff-tail evidence is absent.",
+        "Latency, nonfills, per-side quote freshness and protection/recording completeness are not established. One FAILED provider state does not establish an execution failure or its cause.",
+        "No intratrade paths were supplied: giveback is unavailable. Sampled quotes cannot establish a missed winner, exit cause or achievable profit.",
+        "Empty closed-row statistics do not establish zero cohort profit or loss. Equity-curve and drawdown evidence are absent.",
+        "Counts cover this packet, not all opportunities or today's trading. Linked records outside the observed cohort may recur and must not be summed as new trades.",
+        "This historical reconstruction is not prospective qualification, a tested hypothesis or a completed experiment; no reviewed future protocol or economic authority is supplied."
+      ],
+      "nextQuestion": "Can a deduplicated, fully reconciled cohort establish all-in net outcomes and downside payoff tails without unresolved economic inputs?",
+      "nextTopic": "costs",
+      "requiredEvidence": "A stable cohort ledger identifying carry-in and linked records; reconciled orders, fills, nonfills, open and closed positions; gross outcomes, spread, commissions, slippage, financing, FX conversion and attested provider charges with an explicit allocation rule; unresolved records retained rather than excluded.",
+      "summary": "Unvalidated reconstruction-only interpretation; HOLD. This packet records 44 analyses: 38 deferred and 6 rejected, with all rejections labeled SELL_ENTRY_TOO_CLOSE. Its 20 contexts contain 18 WAIT, 1 SELL and 1 UNKNOWN decision; no setups or closed-row statistics are supplied. Costs, payoff tails and complete-cohort performance cannot be assessed. No profitability, execution or activation conclusion is supported."
+    },
+    "origin": "AUTONOMOUS_CURRENT_OBSERVATION_REVIEW",
+    "planId": "be190a80a59bb4f1e3d7ae7e2b4ec25ee1c065b3ade80b147b6eaadbca5873a8",
+    "promotionAuthority": false,
+    "recordedAt": "2026-10-29T10:30:35.284151+00:00",
+    "responseSha256": "849f0c968080f5026910aa3b8331b223799e21a7db0b373ce5fd10164028f66e"
+  },
+  "artifactManifestSha256": "f42523d05a2e651d81739fa008efee1fbec59a9fdbcc98d7a23ec2aabbdbaab5",
+  "fileHashes": {
+    "input.json": "93090a39ae2d3e1ecb39284a7543539601f93426143bdaa0155d9078bc4f2f26",
+    "registration.json": "4d2c1a9ff901bc331c2cfabd27d2c07546a2ed52a076e1fd5c1b1b699cdb3584",
+    "diagnostic.json": "8ebbf5c386b223d29d591261c974979431df57c249e389f889b82d88c5921ee1",
+    "claim.json": "d28c4551fe6e064879e2aedb4b9d535c981a557b9ac2defba36aeca81d4176e4",
+    "response.json": "849f0c968080f5026910aa3b8331b223799e21a7db0b373ce5fd10164028f66e",
+    "finding.json": "2afdf4039596c30c235fa1522a258d5d7d31fad755c13ccea3a4926cc96db086",
+    "closed.json": "24f6b663a157149a5c472005d7777d85e96f90d53819b58829bde6e809bdf6e8"
+  },
+  "classification": "REAL_READ_ONLY_RESEARCH_PROBE_NOT_ECONOMIC_QUALIFICATION",
+  "repeatChangedArtifacts": false,
+  "forcedSshCommandVerified": true,
+  "sshForwardingDenied": true,
+  "databaseReadOnly": true,
+  "mutableTableGrants": 0,
+  "privilegedRoleAttributes": false,
+  "timerActivation": "AFTER_EXACT_HEAD_HOSTED_CHECKS_AND_MERGE_SEE_ISSUE_445",
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}

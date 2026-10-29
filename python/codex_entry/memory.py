@@ -11,7 +11,7 @@ import signal
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from python.research.codex_loop import publish, read_bounded
 
@@ -167,13 +167,22 @@ def state_write(path: Path, state: dict[str, Any]) -> None:
 
 
 def invoke_daily(
-    prompt: str, job: Path, *, schema: dict[str, Any], model: str, timeout: int = 90
+    prompt: str,
+    job: Path,
+    *,
+    schema: dict[str, Any],
+    model: str,
+    timeout: int = 90,
+    purpose: Literal["entries", "research"] = "entries",
 ) -> bytes:
     if os.geteuid() == 0 or not job.resolve().is_relative_to(Path.home().resolve()):
         raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
     request = json.loads(read_bounded(job / "request.json"))
     day = request["payload"]["captured_at"][:10]
-    pin = hashlib.sha256((model + request["promptSha256"]).encode()).hexdigest()[:16]
+    material = model + request["promptSha256"]
+    if purpose == "research":
+        material = "research:" + material
+    pin = hashlib.sha256(material.encode()).hexdigest()[:16]
     directory = job.parent / "memory" / f"{day}-{pin}"
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     # Fixed cwd is essential: per-job directories would change resumed context.
@@ -241,8 +250,12 @@ def invoke_daily(
             "sandbox": "read-only",
             "cwd": str(work),
             "baseInstructions": (
-                "You propose prices or WAIT from supplied data only. "
-                "Never use tools or execute actions."
+                (
+                    "You interpret supplied research diagnostics only. "
+                    if purpose == "research"
+                    else "You propose prices or WAIT from supplied data only. "
+                )
+                + "Never use tools or execute actions."
             ),
             "developerInstructions": (
                 "Fresh INPUT is authoritative. Memory is historical only. "

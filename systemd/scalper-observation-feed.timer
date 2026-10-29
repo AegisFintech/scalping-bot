@@ -1,0 +1,10 @@
+[Unit]
+Description=Export completed half-hour observation windows
+
+[Timer]
+OnCalendar=*-*-* *:02,32:00 UTC
+Persistent=true
+Unit=scalper-observation-feed.service
+
+[Install]
+WantedBy=timers.target
