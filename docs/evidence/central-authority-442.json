@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-29T09:07:08.918043+00:00",
+  "agentDisabled": true,
+  "paperEngineDisabled": true,
+  "feedAndViewUnchanged": true,
+  "trackedDirtyWorkUnchanged": true,
+  "environmentUnchanged": true,
+  "paperPositionStillZero": true,
+  "brokerCommandsIssued": 0,
+  "providerCallsForced": 0,
+  "historyReset": false,
+  "researchLoopActivated": false,
+  "mainDeployment": {
+    "comparisonBaselineAt": "2026-10-29T05:58:14Z",
+    "servicePidsAndReleasesUnchanged": true,
+    "protectedFilesMatched": 4,
+    "startupChecksPassed": true,
+    "operationalReady": true,
+    "pauseNewAnalyses": false,
+    "reasonCodes": []
+  }
+}

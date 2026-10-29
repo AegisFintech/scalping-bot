@@ -1,3 +1,17 @@
+### ISSUE-442 — One executor and proactive research ownership
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/442; parent #398.
+- Acceptance: disable the authorized tc01 standalone paper engine/agent, preserve
+  data feed/view, dirty source, credentials, research history and unknown jobs;
+  verify this demo remains ready and document the actual central-loop blockers.
+- Status: both remote services stopped/disabled at 2026-10-29T09:07:08Z. Feed/view
+  PIDs, remote tracked changes/environment and flat paper position unchanged;
+  existing demo startup/readiness passed with no pause or reason codes. No new
+  central loop or automatic publisher is claimed. Independent reviews found no
+  blocker and all2,088 tests/quality gates passed; hosted delivery pending.
+- Evidence: `docs/central-research-report.md`,
+  `docs/evidence/central-authority-442.json`.
+
 ### ISSUE-440 — Approved legacy data and disposable-file cleanup
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/440; related #430.

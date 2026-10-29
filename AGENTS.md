@@ -8,6 +8,10 @@
 - Use the time and tokens needed. Be proactive and bold within verified demo
   authority; reliable operation comes before tuning returns. Prefer small,
   complete changes and remove only proven unused code/services.
+- Own the research agenda: investigate costs, execution, entries, exits and external
+  data proactively; retain negative findings and finish result-to-plan closure.
+  Research breadth needs no repeated permission; economic activation still needs
+  versioned evidence and independent review. See `docs/central-research-report.md`.
 - Do not guess missing facts. Inspect available evidence first; ask the operator
   when information, external data or a decision is genuinely missing. Existing
   authorization covers safe recovery/restarts; it does not waive safeguards.
