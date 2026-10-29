@@ -74,7 +74,7 @@ supersede the current versioned policy or explicit operator instructions.
   only after their actual acceptance criteria are met.
 - Test behavior changes and failure paths; synchronize schemas/types/docs and
   forward migrations. Destructive transitions require documented evidence,
-  rollback limits and operator authority. App/observer roles never get DDL.
+  rollback limits and operator authority. App/observer roles never get DDL; immutable proof also rejects truncation.
 - Inspect working/staged diffs and scan secrets before committing. Run the full
   `npm run qualify` gates (Node/Python/types/lint/format/schema/migrations/replay,
   isolated database lifecycle, secret scans and audits), both configuration checks,

@@ -101,7 +101,10 @@ missing pause, changed process, receipt tampering, immutable proof, partial-writ
 rollback, delayed verification/write freshness, contradictory intent identity and
 real commit with lost reply. The first full run passed formatting but found an unnecessary async test mock;
 it was corrected without runtime changes. Full qualification and independent
-review are pending. The reviewed CLI negative production preflight refused recovery
+review results are recorded below. Full qualification remains pending.
+The full Node suite exposed a migration-scan false positive on the protective
+`BEFORE TRUNCATE` trigger (1,269 passing, one failure); the scan now exempts only
+that exact reviewed trigger declaration, retaining its destructive-statement check. The reviewed CLI negative production preflight refused recovery
 while execution was running (`PREDISPATCH_EXECUTION_NOT_STOPPED`). The original
 account reconciliation fixture lacked the required response account; updating it
 retains its actual lifecycle assertions. An intermediate qualification run was
@@ -113,3 +116,13 @@ callers' regression tests; migration inventories; fixtures, reports and lean
 agent instructions. No new dependency, strategy, env setting, HTTP control or
 background unlock service. Detailed agent rules were retained with links;
 existing immutable release/receipt files are required dependencies, not clutter.
+
+## Independent review
+
+At `e6932a0`, Standards found no blocking violation; one optional duplicate SQL
+intent predicate remains in this one-off operation. Spec found no remaining
+findings. Reviews corrected exact intent identity, freshness after waited checks
+and before commit, proof truncation, and response-account validation. Independent
+reviewers ran 21 boundary and 20 lifecycle tests. The fresh read-only broker smoke
+at 2026-10-29T03:55:32Z passed the new readers and prior-order account anchor with
+no incident-window history or current exposure. No order/provider call was forced.
