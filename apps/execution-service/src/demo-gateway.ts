@@ -20,6 +20,7 @@ import type {
   BrokerExecution,
   RawReconciliation,
 } from "../../../packages/ctrader-client/src/client.js";
+import { validatePendingLifetimeAcknowledgement } from "../../../packages/ctrader-client/src/client.js";
 import {
   numberField,
   optionalNumberField,
@@ -205,7 +206,11 @@ export class CTraderDemoGateway implements ExecutionGateway {
   ): Promise<OcoPlacementResult> {
     if (
       !["STOP_LIMIT", "LIMIT"].includes(pendingOrderType(command)) ||
-      orderTimeInForce(command) !== "GTC" ||
+      (orderTimeInForce(command) !== "GTC" &&
+        !(
+          orderTimeInForce(command) === "GTD" &&
+          pendingOrderType(command) === "STOP_LIMIT"
+        )) ||
       !["BUY", "SELL"].includes(command.side) ||
       decimal(command.volume).lte(0) ||
       !decimal(command.volume).isInteger()
@@ -714,6 +719,8 @@ export class CTraderDemoGateway implements ExecutionGateway {
       )
         throw new Error("DEMO_IDEMPOTENCY_TYPE_MISMATCH");
       if (commands.length === 1) {
+        if (orderTimeInForce(command) === "GTD")
+          validatePendingLifetimeAcknowledgement(command, match);
         const data = orderTradeData(match);
         if (
           stringField(data, "symbolId") !== this.#options.symbolId ||

@@ -72,6 +72,9 @@ function event(
             ? 2
             : 6,
       clientOrderId: command.clientOrderId,
+      ...(command.timeInForce === "GTD"
+        ? { timeInForce: 1, expirationTimestamp: Date.parse(command.expiresAt) }
+        : {}),
       executedVolume: "0",
       tradeData: {
         symbolId: "7",
@@ -1080,6 +1083,60 @@ describe("one protected directional entry", () => {
     ...command(side),
     executionOrderType: "STOP_LIMIT" as const,
     timeInForce: "GTC" as const,
+  });
+  it("passes a directional GTD stop-limit and its exact expiry to the broker", async () => {
+    const client = new MockClient(),
+      gateway = single(client),
+      cmd = { ...request("BUY"), timeInForce: "GTD" as const };
+    const placement = vi.spyOn(client, "placeStopLimit");
+    await gateway.placeDirectional(cmd);
+    expect(placement).toHaveBeenCalledOnce();
+    expect(placement.mock.calls[0]?.[0]).toEqual(cmd);
+  });
+  it("does not replay an unknown GTD placement", async () => {
+    const client = new MockClient(),
+      gateway = single(client),
+      cmd = { ...request("BUY"), timeInForce: "GTD" as const };
+    const placement = vi
+      .spyOn(client, "placeStopLimit")
+      .mockRejectedValue(Error("unknown"));
+    await expect(gateway.placeDirectional(cmd)).rejects.toThrow();
+    expect((await gateway.placeDirectional(cmd)).orders[0]?.state).toBe(
+      "UNKNOWN",
+    );
+    expect(placement).toHaveBeenCalledOnce();
+  });
+  it("rejects recovery of a pending GTD entry with a different broker expiry", async () => {
+    const client = new MockClient(),
+      cmd = { ...request("BUY"), timeInForce: "GTD" as const },
+      raw = event(cmd, 1).order!;
+    raw.expirationTimestamp = Date.parse(cmd.expiresAt) + 1000;
+    client.orders.push(raw);
+    await expect(single(client).placeDirectional(cmd)).rejects.toThrow(
+      "CTRADER_GTD_ACKNOWLEDGEMENT_MISMATCH",
+    );
+    expect(client.orders).toHaveLength(1);
+  });
+  it("recovers a pending GTD entry only with its exact broker expiry", async () => {
+    const client = new MockClient(),
+      cmd = { ...request("BUY"), timeInForce: "GTD" as const };
+    client.orders.push(event(cmd, 1).order!);
+    expect((await single(client).placeDirectional(cmd)).idempotentReplay).toBe(
+      true,
+    );
+    expect(client.orders).toHaveLength(1);
+  });
+  it("rejects GTD for a directional limit order", async () => {
+    const client = new MockClient(),
+      gateway = single(client);
+    await expect(
+      gateway.placeDirectional({
+        ...request("BUY"),
+        executionOrderType: "LIMIT",
+        timeInForce: "GTD",
+      }),
+    ).rejects.toThrow("DEMO_DIRECTIONAL_COMMAND_INVALID");
+    expect(client.orders).toHaveLength(0);
   });
   it.each(["BUY", "SELL"] as const)(
     "places only %s and replays its receipt after fill without peer cancellation",
