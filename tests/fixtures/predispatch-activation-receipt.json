@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-28T12:47:41.271351+00:00",
+  "commit": "aebb1deec26509402a6250464d45be0350068fe7",
+  "sourceSha256": "87b975640872522c44575491d4df4ed7f2f7efba3b97e305464c7d7ed5e8c69a",
+  "servicesOnline": 5,
+  "workerMatched": true,
+  "flightMatched": true,
+  "migration": "0037",
+  "pauseRestored": true,
+  "oldRecordsPreserved": true,
+  "protectedFilesUnchanged": true,
+  "forcedProviderCalls": 0,
+  "forcedBrokerCommands": 0,
+  "liveReceiptObserved": false
+}

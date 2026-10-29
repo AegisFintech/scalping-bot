@@ -9,6 +9,9 @@ The directional GTD gateway correction and unresolved incident are described in
 [the recovery report](docs/directional-gtd-recovery-report.md).
 The independent broker-history review and unresolved recovery are recorded in
 [issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
+The exact historical recovery procedure is in [the incident report](docs/predispatch-incident-recovery-report.md).
+[AGENTS.md](AGENTS.md) now keeps operator directives and essential safeguards short,
+with detailed subsystem rules linked on demand.
 Continuous operation and research timer verification are tracked in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431) and
 [issue 430](https://github.com/AegisFintech/scalping-bot/issues/430).

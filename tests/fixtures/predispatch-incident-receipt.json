@@ -1,0 +1,29 @@
+{
+  "evidence": "READ_ONLY_INCIDENT_OBSERVATION_V1",
+  "capturedAt": "2026-10-29T01:27:20.468022+00:00",
+  "processStartedAt": "2026-10-28T12:47:21.962000+00:00",
+  "processRestarts": 0,
+  "gatewaySha256": "6aadc3847e1afdece95460a08baaa185b39e6754f63f3bc2aa745c9dbca39f3c",
+  "rows": [
+    {
+      "created_at": "2026-10-28T23:16:11.329Z",
+      "expires_at": "2026-10-28T23:17:51.558Z",
+      "group_state": "RECONCILIATION_REQUIRED",
+      "cancellation_reason": "ANALYSIS_EXPIRED",
+      "entry_side": "BUY",
+      "time_in_force": "GTD",
+      "order_state": "CANCEL_PENDING",
+      "side": "BUY",
+      "filled_volume": "0.0000000000",
+      "broker_id_recorded": false,
+      "submitted_recorded": false,
+      "intent_audits": 1,
+      "rejection_audits": 1,
+      "rejected_at": "2026-10-28T23:16:11.375Z",
+      "fills": 0,
+      "events": 0,
+      "local_proofs": 0
+    }
+  ],
+  "brokerMutation": false
+}
