@@ -12,6 +12,7 @@ execution, reconciliation and risk safeguards below.
 Proactively verify the bot, research harness and background services after each
 change; investigate failures and continue through safe deployment and monitoring
 without waiting for a reminder. Establish reliable operation before tuning wins.
+Existing monitoring still needs qualification; see issue #431 in `plan.md`.
 
 For payoff research, distinguish release cohorts and sampled marks from executable
 exits; read `docs/quantitative-review-426.md` before changing scalp economics.

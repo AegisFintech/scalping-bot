@@ -1,3 +1,15 @@
+### ISSUE-431 — Continuous operational verification
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/431.
+- Acceptance: assess existing supervision and add bounded, persistent health evidence and safe follow-through for the demo and research harness. Distinguish normal waiting and frozen-study halts from faults; preserve risk gates and unknown outcomes.
+- Status: existing services and timers inspected; monitoring and operator visibility are not yet qualified.
+
+### ISSUE-430 — Research timer failures
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/430.
+- Acceptance: diagnose both read-only timer failures without changing frozen registrations or reports; remediate only supported dependency faults.
+- Status: entry observer reports the expected frozen release drift. Fast-exit research fails its 15% disk reserve; disposable package caches were reclaimed but more free space is needed.
+
 ### ISSUE-425 — Directional GTD gateway and incident
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/425.
