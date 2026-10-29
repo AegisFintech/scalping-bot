@@ -309,9 +309,9 @@ const url = process.env.TEST_DATABASE_URL;
   });
   it("rejects evidence that ages during the final supervisor check", async () => {
     const f = await fixture();
+    const observation = broker(f.anchorEvent);
     const now = Date.now();
     let checks = 0;
-    const observation = broker(f.anchorEvent);
     const clock = vi.spyOn(Date, "now").mockReturnValue(now);
     try {
       await expect(
@@ -333,6 +333,7 @@ const url = process.env.TEST_DATABASE_URL;
     } finally {
       clock.mockRestore();
     }
+    expect(checks).toBe(2);
     const r = await pool.query(
       "SELECT g.state group_state,o.state order_state,(SELECT count(*)::int FROM predispatch_recovery_evidence WHERE order_id=o.id) proofs FROM order_groups g JOIN orders o ON o.order_group_id=g.id WHERE g.id=$1",
       [f.group],
@@ -381,7 +382,9 @@ const url = process.env.TEST_DATABASE_URL;
   });
   it("rolls back if the final write outlives broker freshness", async () => {
     const f = await fixture();
+    const observation = broker(f.anchorEvent);
     const now = Date.now();
+    let wroteGroup = false;
     const clock = vi.spyOn(Date, "now").mockReturnValue(now);
     const delayed = {
       connect: async () => {
@@ -398,8 +401,10 @@ const url = process.env.TEST_DATABASE_URL;
                 if (
                   typeof args[0] === "string" &&
                   args[0].startsWith("UPDATE order_groups")
-                )
+                ) {
+                  wroteGroup = true;
                   clock.mockReturnValue(now + 16_000);
+                }
                 return result;
               };
             if (key === "release") return target.release.bind(target);
@@ -419,12 +424,13 @@ const url = process.env.TEST_DATABASE_URL;
           receiptBytes: await receipt(),
           activationBytes: await activation(),
           executionStopped: () => true,
-          observeBroker: () => broker(f.anchorEvent),
+          observeBroker: () => observation,
         }),
       ).rejects.toThrow("PREDISPATCH_INCIDENT_BROKER_STALE");
     } finally {
       clock.mockRestore();
     }
+    expect(wroteGroup).toBe(true);
     const r = await pool.query(
       "SELECT g.state group_state,o.state order_state,(SELECT count(*)::int FROM predispatch_recovery_evidence WHERE order_id=o.id) proofs FROM order_groups g JOIN orders o ON o.order_group_id=g.id WHERE g.id=$1",
       [f.group],

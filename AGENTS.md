@@ -72,7 +72,7 @@ supersede the current versioned policy or explicit operator instructions.
 - Track bounded issues, acceptance, dependencies and status in `plan.md`. Update
   README and this file concisely in every non-merge commit; close completed issues
   only after their actual acceptance criteria are met.
-- Test behavior changes and failure paths; synchronize schemas/types/docs and
+- Test behavior changes and failure paths at their actual boundary; synchronize schemas/types/docs and
   forward migrations. Destructive transitions require documented evidence,
   rollback limits and operator authority. App/observer roles never get DDL; immutable proof also rejects truncation.
 - Inspect working/staged diffs and scan secrets before committing. Run the full

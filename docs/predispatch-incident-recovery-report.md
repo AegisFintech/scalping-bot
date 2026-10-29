@@ -47,8 +47,10 @@ Only after independent review, full qualification and merged delivery:
 2. Apply additive migration 0038 with the local database administrator. Verify all
    previous checksums and retain accounting/history invariants. Never grant DDL to
    the app or observer. Grant only necessary evidence-table access.
-3. Acquire an authenticated durable pause with a unique `codex-predispatch-…`
-   owner; preserve a pre-existing operator pause. Stop the sole execution process.
+3. Acquire an audited durable pause with a unique `codex-predispatch-…`
+   owner using a row-locked comparison of the previous disabled control; preserve
+   a pre-existing operator pause. Release and failure restoration use the same
+   atomic ownership check. Stop the sole execution process.
    The CLI independently requires one stopped PM2 entry and no execution process.
 4. Run `scripts/recover-predispatch-incident.ts --pause-actor <owned-actor>` from
    the reviewed artifact with the existing protected deployment environment.
@@ -126,3 +128,10 @@ and before commit, proof truncation, and response-account validation. Independen
 reviewers ran 21 boundary and 20 lifecycle tests. The fresh read-only broker smoke
 at 2026-10-29T03:55:32Z passed the new readers and prior-order account anchor with
 no incident-window history or current exposure. No order/provider call was forced.
+
+The final freshness tests pin observations before the mocked clock and assert the
+second supervisor check/final group write was actually reached. Removing final
+freshness guards makes exactly those two tests fail (12 other recovery tests
+pass); restoring them gives 14 passing. This prevents an earlier rejection from
+masquerading as a delayed-write regression. The preceding full run passed all
+1,270 Node tests before being stopped for this test-strengthening change.
