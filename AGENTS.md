@@ -9,6 +9,9 @@ and authorized GitHub delivery without repeated prompts. Ask for external data
 when it is genuinely needed. Keep updates short and evidence-based; preserve the
 execution, reconciliation and risk safeguards below.
 
+For payoff research, distinguish release cohorts and sampled marks from executable
+exits; read `docs/quantitative-review-426.md` before changing scalp economics.
+
 ISSUE-405: the tc01 research harness distinguishes failed or unknown results
 from successful results awaiting findings. Do not fabricate findings or replay
 unknown work; genuine autonomous completion remains unverified. See
