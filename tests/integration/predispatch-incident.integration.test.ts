@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createPool, migrate } from "../../packages/database/src/index.js";
 import {
   recoverPredispatchIncident,
@@ -57,7 +57,7 @@ const url = process.env.TEST_DATABASE_URL;
       await admin.end();
     }
   });
-  async function fixture() {
+  async function fixture(intentGroupMismatch = false) {
     const account = randomUUID(),
       symbol = randomUUID(),
       analysis = randomUUID(),
@@ -181,7 +181,12 @@ const url = process.env.TEST_DATABASE_URL;
       "risk_intent_persisted",
       "accepted",
       null,
-      JSON.stringify({ commands: [command] }),
+      JSON.stringify({
+        order_group_id: intentGroupMismatch ? randomUUID() : group,
+        execution_mode: "SINGLE_STOP_LIMIT",
+        mode_revision: revision,
+        commands: [command],
+      }),
     ]);
     await pool.query(insertAudit, [
       randomUUID(),
@@ -229,6 +234,9 @@ const url = process.env.TEST_DATABASE_URL;
       ),
     ).rejects.toThrow("PREDISPATCH_RECOVERY_EVIDENCE_IMMUTABLE");
     await expect(
+      pool.query("TRUNCATE predispatch_recovery_evidence"),
+    ).rejects.toThrow("PREDISPATCH_RECOVERY_EVIDENCE_IMMUTABLE");
+    await expect(
       recoverPredispatchIncident({
         pool,
         accountId: f.account,
@@ -251,8 +259,9 @@ const url = process.env.TEST_DATABASE_URL;
     "pause-missing",
     "receipt-tampered",
     "activation-tampered",
+    "intent-group-mismatch",
   ] as const)("rolls back on %s", async (failure) => {
-    const f = await fixture();
+    const f = await fixture(failure === "intent-group-mismatch");
     let calls = 0;
     if (failure === "pause-missing")
       await pool.query(
@@ -298,6 +307,42 @@ const url = process.env.TEST_DATABASE_URL;
       proofs: 0,
     });
   });
+  it("rejects evidence that ages during the final supervisor check", async () => {
+    const f = await fixture();
+    const now = Date.now();
+    let checks = 0;
+    const observation = broker(f.anchorEvent);
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    try {
+      await expect(
+        recoverPredispatchIncident({
+          pool,
+          accountId: f.account,
+          symbolId: f.symbol,
+          scope: f.actor,
+          pauseActor: f.actor,
+          receiptBytes: await receipt(),
+          activationBytes: await activation(),
+          executionStopped: () => {
+            if (++checks === 2) clock.mockReturnValue(now + 16_000);
+            return true;
+          },
+          observeBroker: () => observation,
+        }),
+      ).rejects.toThrow("PREDISPATCH_INCIDENT_BROKER_STALE");
+    } finally {
+      clock.mockRestore();
+    }
+    const r = await pool.query(
+      "SELECT g.state group_state,o.state order_state,(SELECT count(*)::int FROM predispatch_recovery_evidence WHERE order_id=o.id) proofs FROM order_groups g JOIN orders o ON o.order_group_id=g.id WHERE g.id=$1",
+      [f.group],
+    );
+    expect(r.rows[0]).toEqual({
+      group_state: "RECONCILIATION_REQUIRED",
+      order_state: "CANCEL_PENDING",
+      proofs: 0,
+    });
+  });
   it("rolls back the proof and order update if the group update fails", async () => {
     const f = await fixture();
     await pool.query(
@@ -323,6 +368,62 @@ const url = process.env.TEST_DATABASE_URL;
     } finally {
       await pool.query("DROP TRIGGER fail_test_group_update ON order_groups");
       await pool.query("DROP FUNCTION fail_test_group_update()");
+    }
+    const r = await pool.query(
+      "SELECT g.state group_state,o.state order_state,(SELECT count(*)::int FROM predispatch_recovery_evidence WHERE order_id=o.id) proofs FROM order_groups g JOIN orders o ON o.order_group_id=g.id WHERE g.id=$1",
+      [f.group],
+    );
+    expect(r.rows[0]).toEqual({
+      group_state: "RECONCILIATION_REQUIRED",
+      order_state: "CANCEL_PENDING",
+      proofs: 0,
+    });
+  });
+  it("rolls back if the final write outlives broker freshness", async () => {
+    const f = await fixture();
+    const now = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    const delayed = {
+      connect: async () => {
+        const real = await pool.connect();
+        return new Proxy(real, {
+          get(target, key) {
+            if (key === "query")
+              return async (...args: unknown[]) => {
+                const result: unknown = await Reflect.apply(
+                  target.query.bind(target),
+                  target,
+                  args,
+                );
+                if (
+                  typeof args[0] === "string" &&
+                  args[0].startsWith("UPDATE order_groups")
+                )
+                  clock.mockReturnValue(now + 16_000);
+                return result;
+              };
+            if (key === "release") return target.release.bind(target);
+            return Reflect.get(target, key) as unknown;
+          },
+        });
+      },
+    } as unknown as pg.Pool;
+    try {
+      await expect(
+        recoverPredispatchIncident({
+          pool: delayed,
+          accountId: f.account,
+          symbolId: f.symbol,
+          scope: f.actor,
+          pauseActor: f.actor,
+          receiptBytes: await receipt(),
+          activationBytes: await activation(),
+          executionStopped: () => true,
+          observeBroker: () => broker(f.anchorEvent),
+        }),
+      ).rejects.toThrow("PREDISPATCH_INCIDENT_BROKER_STALE");
+    } finally {
+      clock.mockRestore();
     }
     const r = await pool.query(
       "SELECT g.state group_state,o.state order_state,(SELECT count(*)::int FROM predispatch_recovery_evidence WHERE order_id=o.id) proofs FROM order_groups g JOIN orders o ON o.order_group_id=g.id WHERE g.id=$1",

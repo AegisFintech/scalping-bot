@@ -78,7 +78,7 @@ supersede the current versioned policy or explicit operator instructions.
 - Inspect working/staged diffs and scan secrets before committing. Run the full
   `npm run qualify` gates (Node/Python/types/lint/format/schema/migrations/replay,
   isolated database lifecycle, secret scans and audits), both configuration checks,
-  and record exact results. Update Graphify AST after code changes.
+  and record exact results, including corrected failures. Update Graphify AST after code changes.
 - Push coherent issue branches and create/update PRs; independent review and
   passing exact-head hosted checks precede authorized merge/deploy. Respect branch
   protection, hooks and failed checks; see `docs/exact-head-checks-report.md`.

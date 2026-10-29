@@ -83,7 +83,7 @@ back proof and state together. No automatic retry. A lost COMMIT response is
 read-only before any decision; never rerun based on the exit code alone.
 
 Migration 0038 is additive and does not transition data itself. Retain it and its
-immutable proof permanently; UPDATE/DELETE are rejected. Disable the one-off CLI
+immutable proof permanently; UPDATE/DELETE/TRUNCATE are rejected. Verify app/reader lack those privileges. Disable the one-off CLI
 rather than dropping evidence. After a successful recovery, do not restore the
 old active-group state or downgrade the database, especially once subsequent
 activity exists. On a failed precommit recovery, restart the previously qualified
@@ -93,9 +93,11 @@ owned pause. Existing economic policy, risk locks and history are never reset.
 ## Validation and delivery
 
 Focused unit/schema/migration checks: 79 passing. Isolated TLS PostgreSQL recovery
-checks: 11 passing, including changed second observation, invalid account anchor,
+checks: 14 passing, including changed second observation, invalid account anchor,
 missing pause, changed process, receipt tampering, immutable proof, partial-write
-rollback and real commit with lost reply. Full qualification and independent
+rollback, delayed verification/write freshness, contradictory intent identity and
+real commit with lost reply. The first full run passed formatting but found an unnecessary async test mock;
+it was corrected without runtime changes. Full qualification and independent
 review are pending. A prior negative production preflight refused recovery while
 execution was running; the final reviewed CLI must repeat that guard check.
 

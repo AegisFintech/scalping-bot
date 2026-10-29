@@ -126,14 +126,14 @@ export async function recoverPredispatchIncident(options: {
         g.state group_state,o.state order_state,g.cancellation_reason,o.side,g.time_in_force,
         o.execution_order_type execution_type,o.filled_volume::text,o.broker_order_id,o.submitted_at,
         ar.state analysis_state,sv.version strategy,s.name symbol,g.mode,
-        (SELECT count(*)::int FROM audit_events x WHERE x.analysis_id=ar.id AND x.event_name='risk_intent_persisted' AND x.outcome='accepted' AND jsonb_array_length(x.details->'commands')=1 AND x.details->'commands'->0->>'execution_order_type'='STOP_LIMIT' AND x.details->'commands'->0->>'time_in_force'='GTD' AND x.details->'commands'->0->>'side'='BUY' AND x.occurred_at='2026-10-28T23:16:11.370947Z'::timestamptz
+        (SELECT count(*)::int FROM audit_events x WHERE x.analysis_id=ar.id AND x.event_name='risk_intent_persisted' AND x.outcome='accepted' AND x.details->>'order_group_id'=g.id::text AND x.details->>'execution_mode'=g.execution_mode AND x.details->>'mode_revision'=g.mode_revision::text AND jsonb_array_length(x.details->'commands')=1 AND x.details->'commands'->0->>'execution_order_type'='STOP_LIMIT' AND x.details->'commands'->0->>'time_in_force'='GTD' AND x.details->'commands'->0->>'side'='BUY' AND x.occurred_at='2026-10-28T23:16:11.370947Z'::timestamptz
           AND (x.details->'commands'->0->>'entry_price')::numeric=o.entry_price
           AND (x.details->'commands'->0->>'stop_loss')::numeric=o.stop_loss
           AND (x.details->'commands'->0->>'take_profit')::numeric=o.take_profit
           AND (x.details->'commands'->0->>'normalized_volume')::numeric=o.normalized_volume
           AND (x.details->'commands'->0->>'expires_at')::timestamptz=g.expires_at
           AND (x.details->'commands'->0->>'submission_valid_until')::timestamptz=g.submission_valid_until) intent_count,
-        (SELECT min(x.id::text) FROM audit_events x WHERE x.analysis_id=ar.id AND x.event_name='risk_intent_persisted' AND x.outcome='accepted' AND jsonb_array_length(x.details->'commands')=1 AND x.details->'commands'->0->>'execution_order_type'='STOP_LIMIT' AND x.details->'commands'->0->>'time_in_force'='GTD' AND x.details->'commands'->0->>'side'='BUY' AND x.occurred_at='2026-10-28T23:16:11.370947Z'::timestamptz
+        (SELECT min(x.id::text) FROM audit_events x WHERE x.analysis_id=ar.id AND x.event_name='risk_intent_persisted' AND x.outcome='accepted' AND x.details->>'order_group_id'=g.id::text AND x.details->>'execution_mode'=g.execution_mode AND x.details->>'mode_revision'=g.mode_revision::text AND jsonb_array_length(x.details->'commands')=1 AND x.details->'commands'->0->>'execution_order_type'='STOP_LIMIT' AND x.details->'commands'->0->>'time_in_force'='GTD' AND x.details->'commands'->0->>'side'='BUY' AND x.occurred_at='2026-10-28T23:16:11.370947Z'::timestamptz
           AND (x.details->'commands'->0->>'entry_price')::numeric=o.entry_price
           AND (x.details->'commands'->0->>'stop_loss')::numeric=o.stop_loss
           AND (x.details->'commands'->0->>'take_profit')::numeric=o.take_profit
@@ -290,6 +290,18 @@ export async function recoverPredispatchIncident(options: {
     });
     if (!brokerSummaryValidator.parse(brokerSummary).accepted)
       throw new Error("PREDISPATCH_INCIDENT_BROKER_INVALID");
+    // Process checks and row locks can outlive the broker freshness window.
+    const assertFresh = () => {
+      const authorizedAt = Date.now();
+      if (
+        [broker.until, broker.observedAt].some((time) => {
+          const age = authorizedAt - Date.parse(time);
+          return !Number.isFinite(age) || age < 0 || age > 15_000;
+        })
+      )
+        throw new Error("PREDISPATCH_INCIDENT_BROKER_STALE");
+    };
+    assertFresh();
     await client.query(
       `INSERT INTO predispatch_recovery_evidence
       (order_id,order_group_id,analysis_id,account_id,symbol_id,rejection_audit_id,intent_audit_id,anchor_event_id,
@@ -326,6 +338,7 @@ export async function recoverPredispatchIncident(options: {
     );
     if (order.rowCount !== 1 || group.rowCount !== 1)
       throw new Error("PREDISPATCH_INCIDENT_STATE_CHANGED");
+    assertFresh();
     commitAttempted = true;
     await client.query("COMMIT");
   } catch (error) {

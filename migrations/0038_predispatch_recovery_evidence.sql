@@ -29,3 +29,5 @@ END;
 $$;
 CREATE TRIGGER predispatch_recovery_evidence_immutable BEFORE UPDATE OR DELETE ON predispatch_recovery_evidence
   FOR EACH ROW EXECUTE FUNCTION reject_predispatch_recovery_evidence_mutation();
+CREATE TRIGGER predispatch_recovery_evidence_no_truncate BEFORE TRUNCATE ON predispatch_recovery_evidence
+  FOR EACH STATEMENT EXECUTE FUNCTION reject_predispatch_recovery_evidence_mutation();

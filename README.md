@@ -63,7 +63,7 @@ npm run qualify
 npm run hooks:install
 ```
 
-Qualification checks formatting/lint/types/build, Node/Python/schema/migration and
+Qualification records failures and corrections as well as passing formatting/lint/types/build, Node/Python/schema/migration and
 isolated PostgreSQL lifecycle tests, secret scanning and dependency audits. Reviewed
 issue branches, README/AGENTS updates, AST Graphify and green checks precede merge.
 Normal environment settings are intentionally small; never replace a populated

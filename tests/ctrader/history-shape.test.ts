@@ -13,7 +13,7 @@ describe("raw broker history and reconciliation trust boundary", () => {
       vi.spyOn(transport, "onMessage").mockImplementation(() => () => {});
       const request = vi
         .spyOn(transport, "request")
-        .mockImplementation(async (payloadType) => {
+        .mockImplementation((payloadType) => {
           const payloads: Record<number, Record<string, unknown>> = {
             [P.APPLICATION_AUTH_REQ]: {},
             [P.ACCOUNT_AUTH_REQ]: {},
@@ -27,7 +27,7 @@ describe("raw broker history and reconciliation trust boundary", () => {
           };
           const payload = payloads[payloadType];
           if (!payload) throw new Error("UNEXPECTED_REQUEST");
-          return { payloadType, payload };
+          return Promise.resolve({ payloadType, payload });
         });
       const client = new CTraderClient({
         clientId: "fixture",
