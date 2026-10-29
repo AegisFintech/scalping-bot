@@ -9,6 +9,9 @@ The current directional GTD gateway correction and unresolved incident are track
 in [issue 425](https://github.com/AegisFintech/scalping-bot/issues/425).
 The independent broker-history review and unresolved recovery are recorded in
 [issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
+Continuous operation and research timer verification are tracked in
+[issue 431](https://github.com/AegisFintech/scalping-bot/issues/431) and
+[issue 430](https://github.com/AegisFintech/scalping-bot/issues/430).
 See the [quantitative review](docs/quantitative-review-426.md) for recent demo
 payoffs and flight-recorder limits.
 
