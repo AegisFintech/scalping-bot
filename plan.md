@@ -7,16 +7,15 @@
   broker event/replay/refresh exception; failure/rollback/unknown-commit tests,
   reviewed migration, qualification, deployment and verified ordinary readiness.
   Compress AGENTS while retaining operator directives and subsystem safeguards.
-- Status: software and independent review pass; full qualification passes 2,086
-  tests plus all quality/security gates and both configuration scopes.
-  [PR #437](https://github.com/AegisFintech/scalping-bot/pull/437) awaits final
-  documentation checks/merge and the separately verified demo recovery.
-  Migration0038 is applied; the first recovery attempt rolled back with zero
-  proofs because graceful stop changed the mutable reason to SERVICE_SHUTDOWN.
-  Previous execution is restored with the owned pause retained. Follow-up tests
-  exercise actual OrderMaintenance shutdown. Independent reviews and full
-  qualification (2,088 tests) pass. [Follow-up PR #438](https://github.com/AegisFintech/scalping-bot/pull/438)
-  awaits final document checks, merge and separately verified recovery.
+- Status: recovery and demo activation verified at 2026-10-29T04:41:29Z.
+  [PR #437](https://github.com/AegisFintech/scalping-bot/pull/437) and
+  [PR #438](https://github.com/AegisFintech/scalping-bot/pull/438) merged after
+  independent review and exact-head checks; final qualification passed 2,088 tests.
+  Migration0038 retained all earlier checksums/history. The first refusal and
+  later final-check correction remain recorded; recovery committed exactly once.
+  All five services run the qualified main artifact; worker/Flight files match.
+  Startup/account readiness passed, old blockers cleared and owned pause released.
+  Activation evidence is recorded below; no forced order/provider call.
 - Evidence, trust assumptions and rollback: `docs/predispatch-incident-recovery-report.md`.
 
 ### ISSUE-435 — GTD execution activation record
@@ -47,7 +46,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/427; depends on #425 and exact incident evidence.
 - Acceptance: prove the incident's dispatch outcome with scoped source, audit and broker evidence; test and review any narrowly audited recovery. Preserve uncertainty if proof is incomplete.
-- Status: intent and matching pre-dispatch rejection are recorded. An independent read-only demo broker query found no matching order, no deals in the bounded complete account history and no open exposure. The existing lock remains pending a reviewed recovery; absence alone is not proof.
+- Status: exact audited recovery completed through #434; one immutable proof records the local rejection. Scoped source/audits/account-bound complete broker history jointly establish non-dispatch; absence alone was never used. Existing demo resumed 2026-10-29T04:41:29Z. Activation evidence is in `docs/predispatch-incident-recovery-report.md`.
 
 ### ISSUE-426 — Quantitative loss review
 

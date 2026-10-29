@@ -1,10 +1,10 @@
 # Audited historical pre-dispatch recovery — #434 / #427
 
-The existing demo is blocked by an October 28 intent rejected locally before
-broker dispatch. The GTD gateway defect was corrected and deployed in #428/#436.
-This change provides a root-only, exact-incident recovery, not a general unlock.
-Software is fully qualified; actual recovery/activation is recorded separately below.
-No production transition has occurred at this qualification checkpoint.
+The existing demo resumed at 2026-10-29T04:41:29Z after exact audited recovery of
+the October 28 locally rejected intent. The GTD gateway defect was corrected in
+#428/#436; #437/#438 delivered this root-only recovery. The procedure below is
+historical and must not be repeated for the recovered incident. See
+[verified activation](#verified-activation--2026-10-29) for the deployed result.
 
 ## Evidence and authority
 
@@ -178,7 +178,7 @@ are admitted; exact provenance, identity, stopped process, owned pause, fresh
 complete broker evidence, no-fill/no-dispatch conditions and all atomicity guards
 remain. Unknown reasons still reject. No historical reason is edited to make
 recovery pass. The previous qualified execution service was restored, paused,
-after a fresh broker check at04:20:27Z confirmed no incident-window history or
+after a fresh broker check at 04:20:27Z confirmed no incident-window history or
 open exposure. The follow-up requires independent review/full qualification
 before a newly verified one-off attempt; it is not an automatic retry.
 
@@ -187,5 +187,66 @@ PostgreSQL and 670 Python tests (2,088 total), all format/lint/type/build/securi
 and dependency checks. [Receipt](evidence/predispatch-shutdown-validation.json).
 Both independent reviews approved `8c03792`; both hosted checks passed. The
 revised rollout adopts only the retained, verified owned pause, preserves the
-first attempt's records and skips the already-applied migration. Final document
-checks and separately verified activation remain pending.
+first attempt's records and skips the already-applied migration. Its final checks
+and subsequent activation are recorded below.
+
+## Verified activation — 2026-10-29
+
+Both final #438 hosted checks passed on exact head
+`2710d806fa922237e954419823157102f42e6c1c` (runs 40818020258 and 40818015880).
+Merged main `f55ca1b4489ba8de10f4df9facce26a10dd6387b` produced the verified
+`predispatch434-r2-main` artifact, source SHA-256
+`e4aa1f105b548830cf834b80622ba2af913cf8de346b260c1a50fca3578f0c97`.
+Its source matches the complete 2,088-test qualification receipt above.
+
+The read-only preflight passed. Execution stopped under the retained owned pause;
+the CLI committed exactly one immutable proof and changed only the incident's
+local order/group to REJECTED / FAILED with LOCAL_PRE_DISPATCH_REJECTION. Original
+intent/rejection and financial records remained. The temporary evidence INSERT
+permission was revoked before restart; the application cannot insert, update,
+delete or truncate recovery proof during normal operation. Migration was not rerun.
+
+All five services restarted on the same verified artifact. Startup and account
+readiness passed and the old incident blockers disappeared. The rollout's final
+check nevertheless retained the pause. Code inspection and the subsequent
+independent checks support the diagnosis that comparing the entire entry-mode
+status was inappropriate: it includes changing workflow phase/active setup as
+well as the fixed selection. The full pre-recovery status snapshot was not
+retained, and the failure receipt records only the verify stage; exact historical
+field values and the particular failed assertion are not directly preserved.
+
+A separately reviewed finalizer did **not** repeat recovery or restart. It verified
+the existing proof, qualified artifact, service/process bindings, matching worker
+and Flight files, revoked privileges, exact unchanged mode/revision and a selection
+update timestamp predating the incident. Current policy matched the qualified
+release. Existing protected files predated rollout and stayed byte-identical during
+final verification; original audit and prior rows stayed stable during those checks.
+A read-only dry run passed, including four negative checks for changed mode,
+revision, phase and active-mode state. The existing isolated pause tests cover
+release, restoration and preservation of a competing owner's control.
+
+Fresh account-bound broker history through 04:41:24.955Z was complete and empty for
+the incident window, with no current orders/positions. Freshness was checked again
+immediately before the row-locked owned-pause release. At 04:41:29.597Z normal demo
+operation resumed with startupChecksPassed=true, operationalReady=true and
+pauseNewAnalyses=false. No order or provider call was forced. PM2 state was saved.
+[Sanitized activation receipt](evidence/predispatch-recovery-activation.json).
+
+The administrator-only finalizer SHA-256 is
+`d09fbaa58b6b84d7a3ca3dd1fc89cd45abde0838de2b017ccd0e501ae617fbeb`;
+both independent Standards and Spec reviews found no remaining blocker. Private
+first-attempt, committed-recovery and finalization receipts remain separate and
+unaltered. Operational proof depends on trusted administrator evidence as described
+above; it is not cryptographic attestation of historical in-memory execution.
+
+Ordinary scheduling resumed without forcing. The first completed cycle at
+04:41:52.340Z recorded SCENARIO_CODEX_WAIT; the next at 04:42:53.639Z recorded
+SCENARIO_WAIT_REFRESH_STARTED. A brief MARKET_SESSION_UNAVAILABLE observation
+at 04:42:16Z cleared automatically: session OPEN at 04:42:30Z and 04:42:58Z,
+with no operational fault, broker error or reason codes. This demonstrates bounded
+recovery in this observation window, not uninterrupted future availability.
+
+This activation record changes documentation only. Formatting, secret scanning
+and unchanged qualified source fingerprint checks passed. Readiness and provider
+activity are not fills or profitability evidence. Research timer and
+continuous-monitoring work remain in #430/#431.
