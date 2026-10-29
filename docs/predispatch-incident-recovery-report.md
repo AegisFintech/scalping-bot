@@ -181,3 +181,11 @@ recovery pass. The previous qualified execution service was restored, paused,
 after a fresh broker check at04:20:27Z confirmed no incident-window history or
 open exposure. The follow-up requires independent review/full qualification
 before a newly verified one-off attempt; it is not an automatic retry.
+
+Shutdown follow-up qualification passed: 1,271 Node/schema/migration, 147 isolated
+PostgreSQL and 670 Python tests (2,088 total), all format/lint/type/build/security
+and dependency checks. [Receipt](evidence/predispatch-shutdown-validation.json).
+Both independent reviews approved `8c03792`; both hosted checks passed. The
+revised rollout adopts only the retained, verified owned pause, preserves the
+first attempt's records and skips the already-applied migration. Final document
+checks and separately verified activation remain pending.

@@ -10,7 +10,8 @@ The directional GTD gateway correction and unresolved incident are described in
 The independent broker-history review and unresolved recovery are recorded in
 [issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
 The first recovery attempt correctly rolled back because graceful shutdown changed
-the maintenance reason; the follow-up covers that existing shutdown path.
+the maintenance reason; the follow-up covers that existing shutdown path and
+passes 2,088 tests. Activation remains separately verified.
 The exact historical recovery procedure is in [the incident report](docs/predispatch-incident-recovery-report.md).
 [AGENTS.md](AGENTS.md) now keeps operator directives and essential safeguards short,
 with detailed subsystem rules linked on demand. The recovery software passed 2,086 tests and independent review; activation is recorded separately.

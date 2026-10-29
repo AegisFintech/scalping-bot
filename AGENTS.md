@@ -36,7 +36,8 @@ supersede the current versioned policy or explicit operator instructions.
 - This historical pre-dispatch incident: `docs/predispatch-incident-recovery-report.md`.
   Recovery is an exact, root-only audited operation, not automatic unlock authority;
   verify its qualification receipt and separately recorded activation. Graceful GTD
-  shutdown changes the maintenance reason, never the original rejection evidence.
+  shutdown changes the maintenance reason, never the original rejection evidence;
+  use the shutdown-qualified receipt for subsequent recovery.
 - Research, exports, autonomous publishing or tc01/tc02 integration:
   `docs/harness-integration-plan.md`, `docs/learning-evidence-bridge-report.md`,
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.
