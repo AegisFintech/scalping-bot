@@ -44,7 +44,7 @@ supersede the current versioned policy or explicit operator instructions.
 - Economic/entry research: `docs/quantitative-review-426.md`,
   `docs/paired-replay-report.md`, `docs/forward-observer-report.md`,
   `docs/entry-evidence-review-report.md`, `docs/fill-evidence-integrity-report.md`.
-- Storage/cleanup: `docs/lean-storage-report.md`, `docs/server-cleanup-report.md`;
+- Storage/cleanup: `docs/lean-storage-report.md`, `docs/legacy-cleanup-report.md`;
   weekly log rotation and seven-day closed-log retention. Never replace `.env`.
 
 ## Execution invariants

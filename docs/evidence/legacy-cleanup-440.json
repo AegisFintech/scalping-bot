@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-29T06:03:23.547901+00:00",
+  "beforeAvailableBytes": 4713398272,
+  "afterAvailableBytes": 9326706688,
+  "totalBytes": 52591984640,
+  "netAvailableIncreaseBytes": 4613308416,
+  "dockerVolumesRemaining": 0,
+  "demoServicesSamePidsAndRelease": true,
+  "protectedFilesUnchanged": 4,
+  "workerAndFlightActive": true,
+  "deployedArtifactVerified": true,
+  "orphanTestDatabaseStopped": true,
+  "status": {
+    "mode": "demo",
+    "startupChecksPassed": true,
+    "pauseNewAnalyses": false,
+    "operationalReady": true,
+    "reasonCodes": []
+  },
+  "removedLegacyVolumes": [
+    "aiquanttrader-grafana-data",
+    "aiquanttrader-native-data",
+    "aiquanttrader-native-state",
+    "aiquanttrader-prometheus-data"
+  ],
+  "disposableDirectoriesRemoved": 151,
+  "fixtureAndEmptyDirectoriesRemoved": 114,
+  "disposableAllocatedBytes": 964718592,
+  "fastExitScheduledRun": {
+    "startedAt": "2026-10-29T06:00:19Z",
+    "finishedAt": "2026-10-29T06:00:41Z",
+    "exitStatus": 0
+  },
+  "entryStudyReason": "ENTRY_OBSERVER_RUNNING_SOURCE_DRIFT"
+}
