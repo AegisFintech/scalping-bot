@@ -8,7 +8,7 @@
   file-size, process, output and descendant-timeout probe passed.33 focused tests
   and independent reviews pass after canonical-path and namespace corrections;
   all2,121 tests and required full qualification gates pass. Final-source tc02
-  containment receipt matches; exact-head GitHub delivery remains. This library does not start a daemon, call Codex, publish changes
+  containment receipt matches; PR #446 merged after exact-head GitHub checks. This library does not start a daemon, call Codex, publish changes
   or independently verify a proposed Git tree; #401/#402 remain open.
 - Evidence, trust assumptions and invocation: `docs/isolated-worker-report.md`.
 
@@ -20,8 +20,11 @@
 - Acceptance: validated immutable observation scope, null/decimal costs, complete
   bounded diagnostic cohort, durable result/finding/closure and restart/duplicate
   tests; prove real observation plumbing without claiming autonomous learning.
-- Status: source seams and incompatible old dataset/cost contracts inspected;
-  implementation pending. `docs/research-integration-next-slice.md` records scope.
+- Status: additive archive agenda and current-contract diagnostic implemented; immutable
+  input/result/finding/closure, unknown-outcome claims and half-hour admission covered
+  by focused tests. All2,149 tests/gates and independent reviews pass; the real tc01
+  review closed and duplicate did not invoke again. Delivery/recurrence receipt: #445.
+  Implementation choice and limits: `docs/current-observation-review-report.md`.
 
 ### ISSUE-445 — Research advisor containment and capabilities
 
@@ -31,8 +34,11 @@
 - Acceptance: dedicated confined advisor with one schema/dispatch capability
   policy, no root shell/paper/deploy/control authority; preserve unknown jobs,
   qualify one attributable result-to-finding-to-close cycle before recurrence.
-- Status: direct root launcher and hardcoded forbidden tools identified; old
-  supervisor stays disabled. Existing operator authorization covers implementation.
+- Status: reused the primary bot's tool-disabled transport with a separate research
+  purpose/home/thread; old supervisor remains disabled. Restricted evidence feed and
+  confined tc01 service verified. All2,149 tests/gates and independent reviews pass.
+  Real one-shot review closed; recurring activation receipt follows on the issue
+  after exact-head hosted checks and merge. Experiments/publishing remain #402/#401.
 
 ### ISSUE-442 — One executor and proactive research ownership
 
@@ -44,7 +50,7 @@
   PIDs, remote tracked changes/environment and flat paper position unchanged;
   existing demo startup/readiness passed with no pause or reason codes. No new
   central loop or automatic publisher is claimed. Independent reviews found no
-  blocker and all2,088 tests/quality gates passed; hosted delivery pending.
+  blocker and all2,088 tests/quality gates passed; PR #443 merged after hosted checks.
 - Evidence: `docs/central-research-report.md`,
   `docs/evidence/central-authority-442.json`.
 

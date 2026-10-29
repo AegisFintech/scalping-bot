@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.scalper.local/current-observation-interpretation-1.0.json",
+  "additionalProperties": false,
+  "properties": {
+    "diagnosticSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Diagnosticsha256",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "maxLength": 600,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "title": "Limitations",
+      "type": "array"
+    },
+    "nextTopic": {
+      "enum": [
+        "costs",
+        "execution",
+        "data_quality",
+        "entries",
+        "exits",
+        "external_data"
+      ],
+      "title": "Nexttopic",
+      "type": "string"
+    },
+    "nextQuestion": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Nextquestion",
+      "type": "string"
+    },
+    "requiredEvidence": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Requiredevidence",
+      "type": "string"
+    },
+    "falsificationTest": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Falsificationtest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "diagnosticSha256",
+    "summary",
+    "limitations",
+    "nextTopic",
+    "nextQuestion",
+    "requiredEvidence",
+    "falsificationTest"
+  ],
+  "title": "Interpretation",
+  "type": "object"
+}

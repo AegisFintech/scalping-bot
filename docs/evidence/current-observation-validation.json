@@ -1,0 +1,263 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "fea6e413a307782a8c1a280d0e92920bb27de716e4361555d880ac1891a673ac",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "results": [
+    {
+      "label": "postgres-bindir",
+      "executable": "pg_config",
+      "args": ["--bindir"],
+      "code": 0,
+      "elapsedMs": 26
+    },
+    {
+      "label": "test-certificate",
+      "executable": "openssl",
+      "args": [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-days",
+        "1",
+        "-subj",
+        "/CN=localhost",
+        "-addext",
+        "subjectAltName=DNS:localhost,IP:127.0.0.1",
+        "-keyout",
+        "/tmp/scalper-qualification-iL2sHP/server.key",
+        "-out",
+        "/tmp/scalper-qualification-iL2sHP/server.crt"
+      ],
+      "code": 0,
+      "elapsedMs": 438
+    },
+    {
+      "label": "postgres-uid",
+      "executable": "id",
+      "args": ["-u", "postgres"],
+      "code": 0,
+      "elapsedMs": 14
+    },
+    {
+      "label": "postgres-gid",
+      "executable": "id",
+      "args": ["-g", "postgres"],
+      "code": 0,
+      "elapsedMs": 14
+    },
+    {
+      "label": "database-init",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/initdb",
+        "-D",
+        "/tmp/scalper-qualification-iL2sHP/database",
+        "-U",
+        "scalper_qualification",
+        "--auth-local=trust",
+        "--auth-host=trust",
+        "--no-locale",
+        "--encoding=UTF8"
+      ],
+      "code": 0,
+      "elapsedMs": 658
+    },
+    {
+      "label": "database-start",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-iL2sHP/database",
+        "-l",
+        "/tmp/scalper-qualification-iL2sHP/postgres.log",
+        "-o",
+        "-h 127.0.0.1 -p 44443 -k /tmp/scalper-qualification-iL2sHP -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-iL2sHP/server.crt -c ssl_key_file=/tmp/scalper-qualification-iL2sHP/server.key",
+        "-w",
+        "start"
+      ],
+      "code": 0,
+      "elapsedMs": 124
+    },
+    {
+      "label": "format",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "**/*.{ts,mjs,json,md,yml,yaml}"
+      ],
+      "code": 0,
+      "elapsedMs": 28978
+    },
+    {
+      "label": "lint",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": ["node_modules/eslint/bin/eslint.js", "."],
+      "code": 0,
+      "elapsedMs": 55365
+    },
+    {
+      "label": "types",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.json"
+      ],
+      "code": 0,
+      "elapsedMs": 21300
+    },
+    {
+      "label": "build",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.build.json",
+        "--outDir",
+        "/tmp/scalper-qualification-iL2sHP/build"
+      ],
+      "code": 0,
+      "elapsedMs": 18072
+    },
+    {
+      "label": "node-tests",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--exclude",
+        "**/*.integration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "code": 0,
+      "elapsedMs": 93388
+    },
+    {
+      "label": "python-format",
+      "executable": "/tmp/scalper-observation-cycle/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 60
+    },
+    {
+      "label": "python-lint",
+      "executable": "/tmp/scalper-observation-cycle/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 61
+    },
+    {
+      "label": "python-types",
+      "executable": "/tmp/scalper-observation-cycle/.venv/bin/python",
+      "args": ["-m", "mypy", "python", "apps/dashboard"],
+      "code": 0,
+      "elapsedMs": 6428
+    },
+    {
+      "label": "secrets",
+      "executable": "bash",
+      "args": ["scripts/secret-scan.sh"],
+      "code": 0,
+      "elapsedMs": 248
+    },
+    {
+      "label": "npm-audit",
+      "executable": "npm",
+      "args": ["audit", "--audit-level=high"],
+      "code": 0,
+      "elapsedMs": 1468
+    },
+    {
+      "label": "python-audit",
+      "executable": "/tmp/scalper-observation-cycle/.venv/bin/python",
+      "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+      "code": 0,
+      "elapsedMs": 11689
+    },
+    {
+      "label": "database-lifecycle",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration",
+        "--maxWorkers=1",
+        "--testTimeout=60000"
+      ],
+      "code": 0,
+      "elapsedMs": 32468
+    },
+    {
+      "label": "python-tests",
+      "executable": "/tmp/scalper-observation-cycle/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/python", "-q"],
+      "code": 0,
+      "elapsedMs": 19196
+    },
+    {
+      "label": "database-stop",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-iL2sHP/database",
+        "-m",
+        "immediate",
+        "-w",
+        "stop"
+      ],
+      "code": 0,
+      "elapsedMs": 110
+    }
+  ],
+  "focusedTests": 70,
+  "counts": {
+    "node": 1271,
+    "postgres": 147,
+    "python": 731,
+    "total": 2149
+  },
+  "configurationChecks": {
+    "samplePolicy": true,
+    "sampleStartup": true,
+    "activeFilePolicy": true,
+    "activeFileStartup": true
+  },
+  "independentReviews": {
+    "standards": "PASS",
+    "spec": "PASS"
+  },
+  "earlierAttempt": "Stopped for final response-attribution review fix; interrupted checks are not passing evidence."
+}
