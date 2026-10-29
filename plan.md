@@ -1,3 +1,19 @@
+### ISSUE-434 — Audited historical pre-dispatch recovery
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/434; parent #427.
+- Dependencies: deployed GTD fix #428, pinned activation/incident receipts, complete
+  independently bound demo broker evidence and stopped execution.
+- Acceptance: exact immutable proof and transactional local rejection, no invented
+  broker event/replay/refresh exception; failure/rollback/unknown-commit tests,
+  reviewed migration, qualification, deployment and verified ordinary readiness.
+  Compress AGENTS while retaining operator directives and subsystem safeguards.
+- Status: software and independent review pass; full qualification passes 2,086
+  tests plus all quality/security gates and both configuration scopes.
+  [PR #437](https://github.com/AegisFintech/scalping-bot/pull/437) awaits final
+  documentation checks/merge and the separately verified demo recovery.
+  No production data has changed at this checkpoint.
+- Evidence, trust assumptions and rollback: `docs/predispatch-incident-recovery-report.md`.
+
 ### ISSUE-435 — GTD execution activation record
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/435; depends on #425.

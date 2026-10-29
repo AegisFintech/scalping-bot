@@ -9,6 +9,11 @@ The directional GTD gateway correction and unresolved incident are described in
 [the recovery report](docs/directional-gtd-recovery-report.md).
 The independent broker-history review and unresolved recovery are recorded in
 [issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
+The exact historical recovery procedure is in [the incident report](docs/predispatch-incident-recovery-report.md).
+[AGENTS.md](AGENTS.md) now keeps operator directives and essential safeguards short,
+with detailed subsystem rules linked on demand. The recovery software passed 2,086 tests and independent review; activation is recorded separately.
+Recovery evidence rejects updates,
+deletions and truncation; delayed-verification tests exercise rollback before commit.
 Continuous operation and research timer verification are tracked in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431) and
 [issue 430](https://github.com/AegisFintech/scalping-bot/issues/430).
@@ -27,6 +32,7 @@ unfilled expiry -> exact zero-fill broker proof -> fresh market analysis
 Codex proposes direction, entry, TP, SL and pending lifetime. Code owns execution,
 broker precision, costs, margin, ownership, dynamic sizing and reconciliation.
 WAIT, stale data, closed sessions, active exposure or uncertainty prevent new orders.
+Broker history and reconciliation reject missing or mismatched account identity.
 A filled position never closes just because the pending-entry timer elapsed.
 
 ## Current source contract
@@ -60,7 +66,7 @@ npm run qualify
 npm run hooks:install
 ```
 
-Qualification checks formatting/lint/types/build, Node/Python/schema/migration and
+Qualification records failures and corrections as well as passing formatting/lint/types/build, Node/Python/schema/migration and
 isolated PostgreSQL lifecycle tests, secret scanning and dependency audits. Reviewed
 issue branches, README/AGENTS updates, AST Graphify and green checks precede merge.
 Normal environment settings are intentionally small; never replace a populated

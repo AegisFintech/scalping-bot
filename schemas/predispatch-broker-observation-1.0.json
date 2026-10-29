@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bounded pre-dispatch broker observation 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "orders",
+    "deals",
+    "ordersHasMore",
+    "dealsHasMore",
+    "openOrders",
+    "openPositions",
+    "brokerAccountBound",
+    "observedAt"
+  ],
+  "properties": {
+    "orders": { "const": 0 },
+    "deals": { "const": 0 },
+    "ordersHasMore": { "const": false },
+    "dealsHasMore": { "const": false },
+    "openOrders": { "const": 0 },
+    "openPositions": { "const": 0 },
+    "brokerAccountBound": { "const": true },
+    "observedAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -100,6 +100,7 @@ describe("migrations", () => {
       "0035_position_close_deals.sql",
       "0036_directional_scalp_expiry.sql",
       "0037_broker_acknowledgement_evidence.sql",
+      "0038_predispatch_recovery_evidence.sql",
     ]);
     const sql = (
       await Promise.all(
@@ -116,7 +117,12 @@ describe("migrations", () => {
     const files = await migrationFiles(path.resolve("migrations"));
     for (const file of files) {
       const sql = await readFile(path.resolve("migrations", file), "utf8");
-      expect(sql).not.toMatch(
+      // This reviewed trigger forbids truncation; it never executes TRUNCATE.
+      const checkedSql = sql.replace(
+        "CREATE TRIGGER predispatch_recovery_evidence_no_truncate BEFORE TRUNCATE ON predispatch_recovery_evidence\n  FOR EACH STATEMENT EXECUTE FUNCTION reject_predispatch_recovery_evidence_mutation();",
+        "",
+      );
+      expect(checkedSql).not.toMatch(
         /\b(?:DROP\s+(?:TABLE|COLUMN)|TRUNCATE|DELETE\s+FROM)\b/i,
       );
     }

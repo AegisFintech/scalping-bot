@@ -78,7 +78,8 @@ export function recordsField(
   key: string,
 ): readonly Record<string, unknown>[] {
   const value = object[key];
-  if (!Array.isArray(value)) return [];
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new Error("CTRADER_REPEATED_FIELD_INVALID");
   return value.map((item) => record(item));
 }
 
