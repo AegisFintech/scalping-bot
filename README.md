@@ -30,6 +30,7 @@ unfilled expiry -> exact zero-fill broker proof -> fresh market analysis
 Codex proposes direction, entry, TP, SL and pending lifetime. Code owns execution,
 broker precision, costs, margin, ownership, dynamic sizing and reconciliation.
 WAIT, stale data, closed sessions, active exposure or uncertainty prevent new orders.
+Broker history and reconciliation reject missing or mismatched account identity.
 A filled position never closes just because the pending-entry timer elapsed.
 
 ## Current source contract

@@ -58,7 +58,7 @@ supersede the current versioned policy or explicit operator instructions.
   margin and volume steps stay authoritative. No economic/risk/polarity change,
   fixed lots, loss chasing, accounting reset or automatic research promotion.
 - Preserve durable claims, unknown outcomes and idempotency across restarts.
-  Neither elapsed time nor a flat snapshot clears uncertainty. Never replay an
+  Broker responses must match the authenticated account. Neither elapsed time nor a flat snapshot clears uncertainty. Never replay an
   unknown command, fabricate broker events, cancel manual orders or alter history.
 - Read-only Flight/research cannot trade or promote. Keep causal clocks, missing
   evidence, null counterfactual economics and complete cohort denominators. Freeze

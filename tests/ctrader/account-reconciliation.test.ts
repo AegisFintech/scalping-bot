@@ -41,7 +41,11 @@ function fixture() {
             trader: { depositAssetId: 2, moneyDigits: 2, balance: 1000000 },
           },
           [P.ASSET_LIST_REQ]: { asset: [{ assetId: 2, name: "USD" }] },
-          [P.RECONCILE_REQ]: { position: state.positions, order: state.orders },
+          [P.RECONCILE_REQ]: {
+            ctidTraderAccountId: 123,
+            position: state.positions,
+            order: state.orders,
+          },
           [P.POSITION_UNREALIZED_PNL_REQ]: {
             moneyDigits: 2,
             positionUnrealizedPnL: state.pnl,

@@ -33,7 +33,10 @@ covers the entire account from five minutes before intent through observation;
 paginated history, any orders/deals or open exposure blocks recovery. No identifiers
 or raw broker payloads are printed or committed. Present malformed repeated fields
 now reject instead of becoming an empty history; omitted/null repeated fields
-retain their existing unset semantics.
+retain their existing unset semantics. History and reconciliation also require the
+response account to match the authenticated account; an absent response payload
+cannot establish an empty account. This follows the required account field in
+[cTrader message definitions](https://help.ctrader.com/open-api/messages/).
 
 ## Procedure and state transition
 
@@ -98,8 +101,11 @@ missing pause, changed process, receipt tampering, immutable proof, partial-writ
 rollback, delayed verification/write freshness, contradictory intent identity and
 real commit with lost reply. The first full run passed formatting but found an unnecessary async test mock;
 it was corrected without runtime changes. Full qualification and independent
-review are pending. A prior negative production preflight refused recovery while
-execution was running; the final reviewed CLI must repeat that guard check.
+review are pending. The reviewed CLI negative production preflight refused recovery
+while execution was running (`PREDISPATCH_EXECUTION_NOT_STOPPED`). The original
+account reconciliation fixture lacked the required response account; updating it
+retains its actual lifecycle assertions. An intermediate qualification run was
+interrupted before source changes to complete this broker-boundary review.
 
 Changed surfaces: internal proof/store/account-binding modules; administrative
 CLI; additive evidence migration/schema; broker repeated-field parser and its

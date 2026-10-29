@@ -652,6 +652,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       },
       [CTraderPayload.DEAL_LIST_RES],
     );
+    this.#assertResponseAccount(response.payload);
     if (typeof response.payload.hasMore !== "boolean")
       throw new Error("CTRADER_DEAL_HISTORY_HAS_MORE_INVALID");
     return {
@@ -676,6 +677,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       },
       [CTraderPayload.ORDER_LIST_RES],
     );
+    this.#assertResponseAccount(response.payload);
     if (typeof response.payload.hasMore !== "boolean")
       throw new Error("CTRADER_ORDER_HISTORY_HAS_MORE_INVALID");
     return {
@@ -1296,6 +1298,11 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     return this.#parseExecution(response);
   }
 
+  #assertResponseAccount(payload: Record<string, unknown>): void {
+    if (stringField(payload, "ctidTraderAccountId") !== this.accountId)
+      throw new Error("CTRADER_RESPONSE_ACCOUNT_MISMATCH");
+  }
+
   async reconcileRaw(): Promise<RawReconciliation> {
     this.#requireAuthenticated();
     const response = await this.#transport.request(
@@ -1309,6 +1316,7 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
       },
       [CTraderPayload.RECONCILE_RES],
     );
+    this.#assertResponseAccount(response.payload);
     return {
       receivedAt: new Date().toISOString(),
       positions: recordsField(response.payload, "position"),
