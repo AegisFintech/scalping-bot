@@ -8,7 +8,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/427; depends on #425 and exact incident evidence.
 - Acceptance: prove the incident's dispatch outcome with scoped source, audit and broker evidence; test and review any narrowly audited recovery. Preserve uncertainty if proof is incomplete.
-- Status: intent and matching pre-dispatch rejection are recorded; the existing lock remains in place.
+- Status: intent and matching pre-dispatch rejection are recorded. An independent read-only demo broker query found no matching order, no deals in the bounded complete account history and no open exposure. The existing lock remains pending a reviewed recovery; absence alone is not proof.
 
 ### ISSUE-426 — Quantitative loss review
 

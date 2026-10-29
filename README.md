@@ -7,6 +7,8 @@ The isolated research harness reports failed tool results separately from findin
 its deployment and remaining observation are in [the research report](docs/research-failure-guidance-report.md).
 The current directional GTD gateway correction and unresolved incident are tracked
 in [issue 425](https://github.com/AegisFintech/scalping-bot/issues/425).
+The independent broker-history review and unresolved recovery are recorded in
+[issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
 See the [quantitative review](docs/quantitative-review-426.md) for recent demo
 payoffs and flight-recorder limits.
 
