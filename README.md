@@ -12,6 +12,8 @@ The qualified release passed 2,088 tests. [AGENTS.md](AGENTS.md) keeps operator
 directives short and links detailed subsystem rules on demand.
 Approved legacy-data cleanup recovered 4.30 GiB net; the research disk-reserve
 blocker cleared on its next scheduled run. [Cleanup and retained evidence](docs/legacy-cleanup-report.md).
+The separate tc01 paper engine and agent are disabled; its feed, view and research
+evidence remain preserved. [Central research status and priorities](docs/central-research-report.md).
 Continuous operational verification remains in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431).
 See the [quantitative review](docs/quantitative-review-426.md) for recent demo
