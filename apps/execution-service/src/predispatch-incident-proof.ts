@@ -109,7 +109,8 @@ export function assertPredispatchIncidentEvidence(
     e.strategy !== "0.8.0-model-scalp.1-codex.1" ||
     e.analysisState !== "REJECTED" ||
     e.activeGroups !== 1 ||
-    e.cancellationReason !== "ANALYSIS_EXPIRED" ||
+    // The required graceful stop replaces the mutable maintenance reason.
+    !["ANALYSIS_EXPIRED", "SERVICE_SHUTDOWN"].includes(e.cancellationReason) ||
     e.executionType !== "STOP_LIMIT" ||
     e.zeroFilled !== true ||
     e.receiptSha256 !== INCIDENT_RECEIPT_SHA256 ||

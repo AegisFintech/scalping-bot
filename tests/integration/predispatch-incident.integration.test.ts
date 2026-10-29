@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type pg from "pg";
+import type { ExecutionGateway } from "../../packages/contracts/src/index.js";
+import { OrderMaintenance } from "../../apps/execution-service/src/order-maintenance.js";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createPool, migrate } from "../../packages/database/src/index.js";
 import {
@@ -249,6 +251,59 @@ const url = process.env.TEST_DATABASE_URL;
         observeBroker: () => broker(f.anchorEvent),
       }),
     ).rejects.toThrow();
+  });
+  it("recovers after the real shutdown maintenance records its cancellation reason", async () => {
+    const f = await fixture();
+    const gateway = {
+      cancelStrategyOrder: () => Promise.reject(new Error("unsubmitted")),
+      reconcile: () =>
+        Promise.resolve({
+          certain: false,
+          orders: [],
+          relevantPositionCount: 0,
+        }),
+    } as unknown as ExecutionGateway;
+    const maintenance = new OrderMaintenance(pool, gateway, "XAUUSD", {
+      accountId: f.account,
+      symbolId: f.symbol,
+    });
+    await expect(
+      maintenance.cancelAll("SERVICE_SHUTDOWN", true),
+    ).rejects.toThrow("ORDER_MAINTENANCE_RECONCILIATION_REQUIRED");
+    const stopped = await pool.query(
+      "SELECT state,cancellation_reason FROM order_groups WHERE id=$1",
+      [f.group],
+    );
+    expect(stopped.rows[0]).toEqual({
+      state: "RECONCILIATION_REQUIRED",
+      cancellation_reason: "SERVICE_SHUTDOWN",
+    });
+    await recoverPredispatchIncident({
+      pool,
+      accountId: f.account,
+      symbolId: f.symbol,
+      scope: f.actor,
+      pauseActor: f.actor,
+      receiptBytes: await receipt(),
+      activationBytes: await activation(),
+      executionStopped: () => true,
+      observeBroker: () => broker(f.anchorEvent),
+    });
+    const proof = await pool.query(
+      "SELECT prior_cancellation_reason FROM predispatch_recovery_evidence WHERE order_id=$1",
+      [f.order],
+    );
+    expect(proof.rows[0]).toEqual({
+      prior_cancellation_reason: "SERVICE_SHUTDOWN",
+    });
+    expect(
+      (
+        await pool.query(
+          "SELECT count(*)::int n FROM broker_execution_events WHERE order_id=$1",
+          [f.order],
+        )
+      ).rows[0],
+    ).toEqual({ n: 0 });
   });
   it.each([
     "pagination",
