@@ -5,18 +5,11 @@ account and deployment; real-money live execution is disabled by default.
 
 The isolated research harness reports failed tool results separately from findings;
 its deployment and remaining observation are in [the research report](docs/research-failure-guidance-report.md).
-The directional GTD gateway correction and unresolved incident are described in
-[the recovery report](docs/directional-gtd-recovery-report.md).
-The independent broker-history review and unresolved recovery are recorded in
-[issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
-The first recovery attempt correctly rolled back because graceful shutdown changed
-the maintenance reason; the follow-up covers that existing shutdown path and
-passes 2,088 tests. Activation remains separately verified.
-The exact historical recovery procedure is in [the incident report](docs/predispatch-incident-recovery-report.md).
-[AGENTS.md](AGENTS.md) now keeps operator directives and essential safeguards short,
-with detailed subsystem rules linked on demand. The recovery software passed 2,086 tests and independent review; activation is recorded separately.
-Recovery evidence rejects updates,
-deletions and truncation; delayed-verification tests exercise rollback before commit.
+The directional GTD gateway and historical rejected-intent recovery are deployed.
+The existing demo resumed at 2026-10-29 04:41 UTC with verified startup and account
+readiness. [Recovery, safeguards and activation evidence](docs/predispatch-incident-recovery-report.md).
+The qualified release passed 2,088 tests. [AGENTS.md](AGENTS.md) keeps operator
+directives short and links detailed subsystem rules on demand.
 Continuous operation and research timer verification are tracked in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431) and
 [issue 430](https://github.com/AegisFintech/scalping-bot/issues/430).

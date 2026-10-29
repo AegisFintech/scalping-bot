@@ -35,9 +35,9 @@ supersede the current versioned policy or explicit operator instructions.
 - Missing protection: `docs/missing-stop-recovery-report.md`.
 - This historical pre-dispatch incident: `docs/predispatch-incident-recovery-report.md`.
   Recovery is an exact, root-only audited operation, not automatic unlock authority;
-  verify its qualification receipt and separately recorded activation. Graceful GTD
-  shutdown changes the maintenance reason, never the original rejection evidence;
-  use the shutdown-qualified receipt for subsequent recovery.
+  verify qualification and activation separately. This incident is recovered;
+  never repeat its recovery. Compare fixed mode/revision separately from changing
+  workflow status during deployment checks.
 - Research, exports, autonomous publishing or tc01/tc02 integration:
   `docs/harness-integration-plan.md`, `docs/learning-evidence-bridge-report.md`,
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.
@@ -61,8 +61,9 @@ supersede the current versioned policy or explicit operator instructions.
   margin and volume steps stay authoritative. No economic/risk/polarity change,
   fixed lots, loss chasing, accounting reset or automatic research promotion.
 - Preserve durable claims, unknown outcomes and idempotency across restarts.
-  Broker responses must match the authenticated account. Neither elapsed time nor a flat snapshot clears uncertainty. Never replay an
-  unknown command, fabricate broker events, cancel manual orders or alter history.
+  Broker responses must match the authenticated account. Neither elapsed time nor
+  a flat snapshot clears uncertainty. Never replay an unknown command, fabricate
+  broker events, cancel manual orders or alter history.
 - Read-only Flight/research cannot trade or promote. Keep causal clocks, missing
   evidence, null counterfactual economics and complete cohort denominators. Freeze
   prospective studies before outcomes; source drift halts research only.
@@ -75,13 +76,15 @@ supersede the current versioned policy or explicit operator instructions.
 - Track bounded issues, acceptance, dependencies and status in `plan.md`. Update
   README and this file concisely in every non-merge commit; close completed issues
   only after their actual acceptance criteria are met.
-- Test behavior changes and failure paths at their actual boundary; synchronize schemas/types/docs and
-  forward migrations. Destructive transitions require documented evidence,
-  rollback limits and operator authority. App/observer roles never get DDL; immutable proof also rejects truncation.
+- Test behavior changes and failure paths at their actual boundary; synchronize
+  schemas/types/docs and forward migrations. Destructive transitions require
+  documented evidence, rollback limits and operator authority. App/observer roles
+  never get DDL; immutable proof also rejects truncation.
 - Inspect working/staged diffs and scan secrets before committing. Run the full
   `npm run qualify` gates (Node/Python/types/lint/format/schema/migrations/replay,
   isolated database lifecycle, secret scans and audits), both configuration checks,
-  and record exact results, including corrected failures. Update Graphify AST after code changes.
+  and record exact results, including corrected failures. Update Graphify AST
+  after code changes.
 - Push coherent issue branches and create/update PRs; independent review and
   passing exact-head hosted checks precede authorized merge/deploy. Respect branch
   protection, hooks and failed checks; see `docs/exact-head-checks-report.md`.
