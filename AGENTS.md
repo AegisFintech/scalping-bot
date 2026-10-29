@@ -9,6 +9,10 @@ and authorized GitHub delivery without repeated prompts. Ask for external data
 when it is genuinely needed. Keep updates short and evidence-based; preserve the
 execution, reconciliation and risk safeguards below.
 
+Proactively verify the bot, research harness and background services after each
+change; investigate failures and continue through safe deployment and monitoring
+without waiting for a reminder. Establish reliable operation before tuning wins.
+
 For payoff research, distinguish release cohorts and sampled marks from executable
 exits; read `docs/quantitative-review-426.md` before changing scalp economics.
 

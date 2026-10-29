@@ -22,6 +22,13 @@ recovery procedure, tracked in [issue 427](https://github.com/AegisFintech/scalp
 Passing tests does not establish its broker outcome or trading
 performance. No history, accounting, strategy or risk policy was reset.
 
+On October 29, a separate demo broker connection with order commands disabled
+queried the complete account order and deal history from 23:11:11 UTC October 28
+through 01:06:29 UTC October 29. Neither history response reported more pages;
+there was no matching order and no deal in the window. Fresh reconciliation
+returned no open orders or positions. This supports the audit evidence but does
+not by itself establish non-dispatch or authorize clearing uncertainty.
+
 ## Qualification
 
 `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed: 1,178 Node tests,
