@@ -1,5 +1,14 @@
 # Agent contract
 
+## Operator working style
+
+Own the whole trading and research system: investigate related failures and
+economic outcomes, find root causes, and improve them proactively. Work boldly,
+use the time and tokens needed, learn from mistakes, and finish testing, deployment
+and authorized GitHub delivery without repeated prompts. Ask for external data
+when it is genuinely needed. Keep updates short and evidence-based; preserve the
+execution, reconciliation and risk safeguards below.
+
 ISSUE-405: the tc01 research harness distinguishes failed or unknown results
 from successful results awaiting findings. Do not fabricate findings or replay
 unknown work; genuine autonomous completion remains unverified. See

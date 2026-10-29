@@ -1,3 +1,21 @@
+### ISSUE-425 — Directional GTD gateway and incident
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/425.
+- Acceptance: reproduce and repair current STOP_LIMIT/GTD rejection; qualify broker lifetime, failure and no-replay paths; investigate existing uncertain order with exact evidence and preserve fail-closed recovery.
+- Status: gateway and restart-lifetime mismatches reproduced and corrected locally; 141 focused tests and full qualification passed. Existing incident remains unresolved in #427; no broker state has been altered. See `docs/directional-gtd-recovery-report.md`.
+
+### ISSUE-427 — Rejected GTD incident recovery
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/427; depends on #425 and exact incident evidence.
+- Acceptance: prove the incident's dispatch outcome with scoped source, audit and broker evidence; test and review any narrowly audited recovery. Preserve uncertainty if proof is incomplete.
+- Status: intent and matching pre-dispatch rejection are recorded; the existing lock remains in place.
+
+### ISSUE-426 — Quantitative loss review
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/426.
+- Acceptance: review cost-inclusive outcomes and Flight coverage by release, investigate loss asymmetry, document data gaps and testable hypotheses without changing frozen studies or claiming profitability.
+- Status: preliminary results identify pronounced win/loss asymmetry in 0.7.3; deeper analysis pending.
+
 ### ISSUE-423 — Research failure-guidance activation record
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/423; parent #405; depends on xauusd PR #28.

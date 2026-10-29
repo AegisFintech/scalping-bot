@@ -5,6 +5,8 @@ account and deployment; real-money live execution is disabled by default.
 
 The isolated research harness reports failed tool results separately from findings;
 its deployment and remaining observation are in [the research report](docs/research-failure-guidance-report.md).
+The current directional GTD gateway correction and unresolved incident are tracked
+in [issue 425](https://github.com/AegisFintech/scalping-bot/issues/425).
 
 ## Workflow
 
