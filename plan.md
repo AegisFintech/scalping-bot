@@ -1,3 +1,15 @@
+### ISSUE-440 — Approved legacy data and disposable-file cleanup
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/440; related #430.
+- Acceptance: remove the four approved unused volumes and proven disposable files;
+  preserve active dependencies, trading/accounting state and frozen evidence;
+  measure disk changes, verify operation and deliver reviewed documentation.
+- Status: cleanup verified; net available space increased 4.30 GiB to 8.69 GiB.
+  All demo PIDs/release and protected files stayed unchanged. Natural fast-exit
+  research succeeded after the disk reserve recovered; frozen source drift remains
+  explicit. Cleanup evidence and remaining limitations are recorded below.
+- Evidence and deletion limits: `docs/legacy-cleanup-report.md`.
+
 ### ISSUE-434 — Audited historical pre-dispatch recovery
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/434; parent #427.
@@ -34,7 +46,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/430.
 - Acceptance: diagnose both read-only timer failures without changing frozen registrations or reports; remediate only supported dependency faults.
-- Status: entry observer reports the expected frozen release drift. Fast-exit research fails its 15% disk reserve; disposable package caches were reclaimed but more free space is needed.
+- Status: diagnosed and dependency resolved through #440. Approved legacy-volume/cache cleanup restored disk reserve; the normal fast-exit run at 2026-10-29T06:00:19Z exited 0. Entry observer remains an explicit frozen-source-drift halt; its registration is unchanged. See `docs/legacy-cleanup-report.md`.
 
 ### ISSUE-425 — Directional GTD gateway and incident
 

@@ -10,9 +10,10 @@ The existing demo resumed at 2026-10-29 04:41 UTC with verified startup and acco
 readiness. [Recovery, safeguards and activation evidence](docs/predispatch-incident-recovery-report.md).
 The qualified release passed 2,088 tests. [AGENTS.md](AGENTS.md) keeps operator
 directives short and links detailed subsystem rules on demand.
-Continuous operation and research timer verification are tracked in
-[issue 431](https://github.com/AegisFintech/scalping-bot/issues/431) and
-[issue 430](https://github.com/AegisFintech/scalping-bot/issues/430).
+Approved legacy-data cleanup recovered 4.30 GiB net; the research disk-reserve
+blocker cleared on its next scheduled run. [Cleanup and retained evidence](docs/legacy-cleanup-report.md).
+Continuous operational verification remains in
+[issue 431](https://github.com/AegisFintech/scalping-bot/issues/431).
 See the [quantitative review](docs/quantitative-review-426.md) for recent demo
 payoffs and flight-recorder limits.
 
