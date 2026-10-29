@@ -3,7 +3,8 @@
 The existing demo is blocked by an October 28 intent rejected locally before
 broker dispatch. The GTD gateway defect was corrected and deployed in #428/#436.
 This change provides a root-only, exact-incident recovery, not a general unlock.
-No recovery has been applied by this implementation checkpoint.
+Software is fully qualified; actual recovery/activation is recorded separately below.
+No production transition has occurred at this qualification checkpoint.
 
 ## Evidence and authority
 
@@ -103,7 +104,7 @@ missing pause, changed process, receipt tampering, immutable proof, partial-writ
 rollback, delayed verification/write freshness, contradictory intent identity and
 real commit with lost reply. The first full run passed formatting but found an unnecessary async test mock;
 it was corrected without runtime changes. Full qualification and independent
-review results are recorded below. Full qualification remains pending.
+review results are recorded below. Full qualification subsequently passed; see the final receipt below.
 The full Node suite exposed a migration-scan false positive on the protective
 `BEFORE TRUNCATE` trigger (1,269 passing, one failure); the scan now exempts only
 that exact reviewed trigger declaration, retaining its destructive-statement check. The reviewed CLI negative production preflight refused recovery
@@ -135,3 +136,23 @@ freshness guards makes exactly those two tests fail (12 other recovery tests
 pass); restoring them gives 14 passing. This prevents an earlier rejection from
 masquerading as a delayed-write regression. The preceding full run passed all
 1,270 Node tests before being stopped for this test-strengthening change.
+
+## Final software qualification
+
+`PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed on the final source:
+1,270 Node/schema/migration tests, 146 isolated TLS PostgreSQL lifecycle tests and
+670 Python tests (2,086 total). All formatting, lint, types, build, secret and
+dependency audits passed. Sample and deployed policy/`--startup` configuration
+checks also pass. [Machine-readable receipt](evidence/predispatch-recovery-validation.json).
+
+Both hosted push/PR checks explicitly verified `7f7ef851ca8067e7896ef7b77ee9fac191e2ef3d`
+and passed. Standards/Spec independent review has no blocker. Isolated operational
+control tests passed acquisition, release, restoration and preservation of a
+competing operator's pause. Rollout review covered temporary INSERT revocation,
+unknown outcomes, a fresh post-restart broker check, original audit fingerprint
+and worker/Flight active-process binding. No runtime economic change.
+
+Graphify AST refreshed (14,138 nodes / 22,609 edges). Its parser reports no nodes
+for `pyproject.toml`; semantic document extraction was not run. No paid graph calls.
+The exact rollout remains gated on the reviewed artifact, current evidence and
+privileges; merge is not proof of activation.

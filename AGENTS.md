@@ -34,7 +34,8 @@ supersede the current versioned policy or explicit operator instructions.
   `docs/session-recurrence-report.md`, `docs/manual-intervention-report.md`.
 - Missing protection: `docs/missing-stop-recovery-report.md`.
 - This historical pre-dispatch incident: `docs/predispatch-incident-recovery-report.md`.
-  Recovery is an exact, root-only audited operation, not automatic unlock authority.
+  Recovery is an exact, root-only audited operation, not automatic unlock authority;
+  verify its qualification receipt and separately recorded activation.
 - Research, exports, autonomous publishing or tc01/tc02 integration:
   `docs/harness-integration-plan.md`, `docs/learning-evidence-bridge-report.md`,
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.

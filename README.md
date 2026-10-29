@@ -11,7 +11,8 @@ The independent broker-history review and unresolved recovery are recorded in
 [issue 427](https://github.com/AegisFintech/scalping-bot/issues/427).
 The exact historical recovery procedure is in [the incident report](docs/predispatch-incident-recovery-report.md).
 [AGENTS.md](AGENTS.md) now keeps operator directives and essential safeguards short,
-with detailed subsystem rules linked on demand. Recovery evidence rejects updates,
+with detailed subsystem rules linked on demand. The recovery software passed 2,086 tests and independent review; activation is recorded separately.
+Recovery evidence rejects updates,
 deletions and truncation; delayed-verification tests exercise rollback before commit.
 Continuous operation and research timer verification are tracked in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431) and
