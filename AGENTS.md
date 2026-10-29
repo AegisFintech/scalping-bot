@@ -14,6 +14,9 @@ change; investigate failures and continue through safe deployment and monitoring
 without waiting for a reminder. Establish reliable operation before tuning wins.
 Existing monitoring still needs qualification; see issue #431 in `plan.md`.
 
+The GTD gateway fix is active; the historical order remains locked until its
+audited recovery is proven. See `docs/directional-gtd-recovery-report.md`.
+
 For payoff research, distinguish release cohorts and sampled marks from executable
 exits; read `docs/quantitative-review-426.md` before changing scalp economics.
 

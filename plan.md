@@ -1,3 +1,9 @@
+### ISSUE-435 — GTD execution activation record
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/435; depends on #425.
+- Acceptance: record the verified execution-only activation and preserved uncertainty, without claiming resumed trading.
+- Status: activation verified; documentation delivery in progress. Recovery remains in #427 and #434.
+
 ### ISSUE-431 — Continuous operational verification
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/431.
@@ -14,7 +20,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/425.
 - Acceptance: reproduce and repair current STOP_LIMIT/GTD rejection; qualify broker lifetime, failure and no-replay paths; investigate existing uncertain order with exact evidence and preserve fail-closed recovery.
-- Status: gateway and restart-lifetime mismatches reproduced and corrected locally; 141 focused tests and full qualification passed. Existing incident remains unresolved in #427; no broker state has been altered. See `docs/directional-gtd-recovery-report.md`.
+- Status: gateway and restart-lifetime mismatches corrected and deployed. 141 focused tests and full qualification passed; the existing incident remains unresolved in #427. No broker order was changed. See `docs/directional-gtd-recovery-report.md`.
 
 ### ISSUE-427 — Rejected GTD incident recovery
 

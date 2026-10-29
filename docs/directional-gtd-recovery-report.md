@@ -1,7 +1,7 @@
 # Directional GTD gateway incident
 
-[Issue 425](https://github.com/AegisFintech/scalping-bot/issues/425) tracks
-the fix and separate recovery of the existing demo entry.
+[PR 428](https://github.com/AegisFintech/scalping-bot/pull/428) delivered the
+fix; separate recovery of the existing demo entry remains open.
 
 On October 28 at 23:16 UTC, the current scalp release persisted an entry intent
 and then recorded `DEMO_DIRECTIONAL_COMMAND_INVALID`. Its directional gateway
@@ -28,6 +28,19 @@ through 01:06:29 UTC October 29. Neither history response reported more pages;
 there was no matching order and no deal in the window. Fresh reconciliation
 returned no open orders or positions. This supports the audit evidence but does
 not by itself establish non-dispatch or authorize clearing uncertainty.
+
+## Activation
+
+On October 29 at 01:39 UTC the execution service restarted on the qualified
+`gtd425-main` artifact, with the existing reconciliation lock retained. A fresh
+independent demo broker query found no orders or deals in the incident window
+and no open broker orders or positions. No provider request was in flight. A
+temporary owned analysis pause was restored after startup; risk policy and the
+pre-existing order, group and accounting records were preserved. The four other
+compiled services, Codex worker and Flight recorder matched the staged code and
+were not restarted. All five PM2 services and both systemd services were active.
+No provider call or broker order command was forced. Startup readiness remained
+false because the old order remains unresolved; this is not resumed trading.
 
 ## Qualification
 
