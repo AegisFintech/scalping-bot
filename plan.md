@@ -14,7 +14,7 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/426.
 - Acceptance: review cost-inclusive outcomes and Flight coverage by release, investigate loss asymmetry, document data gaps and testable hypotheses without changing frozen studies or claiming profitability.
-- Status: preliminary results identify pronounced win/loss asymmetry in 0.7.3; deeper analysis pending.
+- Status: recent payoff and sampled Flight coverage recorded in `docs/quantitative-review-426.md`; deeper fill-relative and prospective analysis remains pending.
 
 ### ISSUE-423 — Research failure-guidance activation record
 
