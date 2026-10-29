@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "isolated-worker-probe-1.0",
+  "checks": {
+    "containment": {
+      "exitCode": 0,
+      "output": "contained\n"
+    },
+    "memory_limit": {
+      "exitCode": 0,
+      "output": "bounded\n"
+    },
+    "file_limit": {
+      "exitCode": 0,
+      "output": "bounded\n"
+    },
+    "output_limit": {
+      "error": "WORKER_OUTPUT_LIMIT"
+    },
+    "process_limit": {
+      "exitCode": 0,
+      "output": "bounded\n"
+    },
+    "timeout": {
+      "error": "WORKER_TIMEOUT"
+    },
+    "timeout_descendant": {
+      "error": "WORKER_TIMEOUT"
+    }
+  },
+  "descendantsGoneBetweenChecks": true,
+  "descendantTimeoutPeakProcesses": 5,
+  "runtimeSha256": "cdb9570b7974373ee3a152412e11750f6f50490cb6023c1394d7eed5355069d6",
+  "verifierSha256": "e7b499c150f2e66d4283b4fea991ed9c0ac8af3f4b77993c887c4960ebde35a2",
+  "workerSha256": "49a85fb65e768a8c34feb795fe4e945b25602aab60c67d91f3c6ae0303f9325e",
+  "brokerAuthority": false,
+  "publishAuthority": false,
+  "qualificationAuthority": false,
+  "hostRole": "tc02_research",
+  "standaloneAgentStarted": false,
+  "brokerCommandsIssued": 0,
+  "providerCallsForced": 0,
+  "receiptPersistedAt": "2026-10-29T09:50:56.703278+00:00"
+}

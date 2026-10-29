@@ -45,6 +45,8 @@ supersede the current versioned policy or explicit operator instructions.
 - Research, exports, autonomous publishing or tc01/tc02 integration:
   `docs/harness-integration-plan.md`, `docs/learning-evidence-bridge-report.md`,
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.
+  Candidate execution requires the pinned, unprivileged namespace and aggregate
+  resource limits in `docs/isolated-worker-report.md`; process exit is not qualification.
 - Economic/entry research: `docs/quantitative-review-426.md`,
   `docs/paired-replay-report.md`, `docs/forward-observer-report.md`,
   `docs/entry-evidence-review-report.md`, `docs/fill-evidence-integrity-report.md`.
