@@ -1,3 +1,39 @@
+### ISSUE-421 — Credential-free candidate test worker
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/421; parent #401.
+- Acceptance: independent pinned runtime/verifier/input, disposable unprivileged
+  namespace without host secrets/network/writes; process/output/time/memory limits,
+  tamper/failure tests and actual containment probe on a research machine.
+- Status: implementation and focused tests pass; tc02 real containment, memory,
+  file-size, process, output and descendant-timeout probe passed.33 focused tests
+  and independent reviews pass after canonical-path and namespace corrections;
+  all2,121 tests and required full qualification gates pass. Final-source tc02
+  containment receipt matches; exact-head GitHub delivery remains. This library does not start a daemon, call Codex, publish changes
+  or independently verify a proposed Git tree; #401/#402 remain open.
+- Evidence, trust assumptions and invocation: `docs/isolated-worker-report.md`.
+
+### ISSUE-444 — Current-observation diagnostic admission
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/444; parent #402.
+- Dependencies: #399 archive/exports, #400 current-contract replay and preserved
+  tc01 durable agenda. Fixed diagnostics do not require the future publisher.
+- Acceptance: validated immutable observation scope, null/decimal costs, complete
+  bounded diagnostic cohort, durable result/finding/closure and restart/duplicate
+  tests; prove real observation plumbing without claiming autonomous learning.
+- Status: source seams and incompatible old dataset/cost contracts inspected;
+  implementation pending. `docs/research-integration-next-slice.md` records scope.
+
+### ISSUE-445 — Research advisor containment and capabilities
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/445; parent #402.
+- Dependencies: #444 current-observation scope; #421 for generated-code jobs;
+  #401 remains separate publication authority.
+- Acceptance: dedicated confined advisor with one schema/dispatch capability
+  policy, no root shell/paper/deploy/control authority; preserve unknown jobs,
+  qualify one attributable result-to-finding-to-close cycle before recurrence.
+- Status: direct root launcher and hardcoded forbidden tools identified; old
+  supervisor stays disabled. Existing operator authorization covers implementation.
+
 ### ISSUE-442 — One executor and proactive research ownership
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/442; parent #398.

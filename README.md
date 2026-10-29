@@ -89,6 +89,10 @@ Research is SELECT-only, retains unknown/censored outcomes and never promotes a
 strategy automatically. Round numbers and shallow broker DOM are context, not
 proof of liquidity, accuracy or future fills.
 
+The [isolated research worker](docs/isolated-worker-report.md) confines candidate
+processes to a pinned runtime with no network or host credentials. It does not
+publish code or activate a research loop.
+
 The [offline publisher scope policy](docs/publisher-policy-report.md) checks research proposal boundaries only; it cannot run, publish or merge code.
 
 The [broker acknowledgement design](docs/broker-acknowledgement-design.md) describes the demo acknowledgement recorder and its bounded read-only research export; a real acknowledgement remains unverified.
