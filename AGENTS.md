@@ -52,7 +52,8 @@ supersede the current versioned policy or explicit operator instructions.
   Freeze exploratory jobs using `docs/experiment-registration-report.md`; unknown
   claims never authorize redispatch and recorded output is not independent validation.
   Distributed fixed-method jobs: `docs/experiment-execution-report.md`; query unknown
-  jobs without redispatch, and distinguish measured diagnostics from strategy improvement.
+  jobs without redispatch, preserve the source/runtime pins, and verify fresh closure
+  receipts rather than equating timer success with strategy improvement.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
   resource limits in `docs/isolated-worker-report.md`; process exit is not qualification.
 - Economic/entry research: `docs/quantitative-review-426.md`,
