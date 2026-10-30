@@ -49,6 +49,8 @@ supersede the current versioned policy or explicit operator instructions.
   fresh completed windows and findings, not only a running timer. No implicit promotion.
   Continue the dependency queue in `docs/autonomous-harness-delivery-plan.md`; a
   prerequisite is not whole-harness completion. Source verification: `docs/source-verifier-report.md`.
+  Freeze exploratory jobs using `docs/experiment-registration-report.md`; unknown
+  claims never authorize redispatch and recorded output is not independent validation.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
   resource limits in `docs/isolated-worker-report.md`; process exit is not qualification.
 - Economic/entry research: `docs/quantitative-review-426.md`,

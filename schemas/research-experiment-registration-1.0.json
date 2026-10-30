@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "Method": {
+      "additionalProperties": false,
+      "description": "A proposed method, not an assertion that code implements it correctly.",
+      "properties": {
+        "methodId": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Methodid",
+          "type": "string"
+        },
+        "hypothesis": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Hypothesis",
+          "type": "string"
+        },
+        "baseline": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Baseline",
+          "type": "string"
+        },
+        "measurement": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Measurement",
+          "type": "string"
+        },
+        "falsification": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Falsification",
+          "type": "string"
+        },
+        "runtimeSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Runtimesha256",
+          "type": "string"
+        },
+        "costPolicy": {
+          "const": "RECORDED_SIGNED_COSTS_ONLY_UNKNOWN_COUNTERFACTUALS_NULL",
+          "title": "Costpolicy",
+          "type": "string"
+        },
+        "cohortPolicy": {
+          "const": "ALL_ROWS_RETAIN_OPEN_GAP_PARTIAL_NONFILL_AND_CARRY_IN",
+          "title": "Cohortpolicy",
+          "type": "string"
+        },
+        "dataUse": {
+          "const": "RETROSPECTIVE_EXPLORATORY_NOT_PROSPECTIVE",
+          "title": "Datause",
+          "type": "string"
+        }
+      },
+      "required": [
+        "methodId",
+        "hypothesis",
+        "baseline",
+        "measurement",
+        "falsification",
+        "runtimeSha256",
+        "costPolicy",
+        "cohortPolicy",
+        "dataUse"
+      ],
+      "title": "Method",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "research-experiment-registration-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "sourceId": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "questionId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Questionid",
+      "type": "string"
+    },
+    "trialId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Trialid",
+      "type": "string"
+    },
+    "question": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    },
+    "requiredEvidence": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Requiredevidence",
+      "type": "string"
+    },
+    "originatingFalsification": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Originatingfalsification",
+      "type": "string"
+    },
+    "findingSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Findingsha256",
+      "type": "string"
+    },
+    "planId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Planid",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "codeBundleSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Codebundlesha256",
+      "type": "string"
+    },
+    "method": {
+      "$ref": "#/$defs/Method"
+    },
+    "registeredAt": {
+      "title": "Registeredat",
+      "type": "string"
+    },
+    "maxTrialsPerExactQuestion": {
+      "const": 4,
+      "title": "Maxtrialsperexactquestion",
+      "type": "integer"
+    },
+    "counterfactualCosts": {
+      "title": "Counterfactualcosts",
+      "type": "null"
+    },
+    "executionAuthority": {
+      "const": false,
+      "title": "Executionauthority",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sourceId",
+    "questionId",
+    "trialId",
+    "question",
+    "requiredEvidence",
+    "originatingFalsification",
+    "findingSha256",
+    "planId",
+    "packetSha256",
+    "codeBundleSha256",
+    "method",
+    "registeredAt",
+    "maxTrialsPerExactQuestion",
+    "counterfactualCosts",
+    "executionAuthority",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "Registration",
+  "type": "object"
+}
