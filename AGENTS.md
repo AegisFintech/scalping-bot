@@ -51,6 +51,8 @@ supersede the current versioned policy or explicit operator instructions.
   prerequisite is not whole-harness completion. Source verification: `docs/source-verifier-report.md`.
   Freeze exploratory jobs using `docs/experiment-registration-report.md`; unknown
   claims never authorize redispatch and recorded output is not independent validation.
+  Distributed fixed-method jobs: `docs/experiment-execution-report.md`; query unknown
+  jobs without redispatch, and distinguish measured diagnostics from strategy improvement.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
   resource limits in `docs/isolated-worker-report.md`; process exit is not qualification.
 - Economic/entry research: `docs/quantitative-review-426.md`,

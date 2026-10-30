@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "experiment-data-probe-1.0",
+  "checks": {
+    "readOnlyDataAndContainment": true,
+    "inputSha256": "e163481bbc7b7619128c1dfa1ab88e52c0bdf2b0d02c55b3049131ad387258ee",
+    "descendantTimeout": true,
+    "subsequentRunAfterTimeout": true
+  },
+  "workerSha256": "4a48c4c86a3f4846436ff3a810086aa6ee6fe807be0731d14b3dd0f75b552a00",
+  "runtimeSha256": "5a917d905e6a98ba071377a141184d6920621cbad00045212c66b0702c0b2e33",
+  "verifierSha256": "5347b67c1c13120c5af3b6052437abb4ca2b45449e73e1ba5afb736807218141",
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}

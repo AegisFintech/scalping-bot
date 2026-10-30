@@ -144,15 +144,30 @@ class WorkerResult:
     broker_authority: bool = False
     publish_authority: bool = False
     qualification_authority: bool = False
+    input_sha256: str | None = None
 
 
-def run(files: dict[str, bytes], expected_bundle: str, trust: WorkerTrust) -> WorkerResult:
+def run(
+    files: dict[str, bytes],
+    expected_bundle: str,
+    trust: WorkerTrust,
+    *,
+    data: bytes | None = None,
+    expected_input: str | None = None,
+) -> WorkerResult:
     if os.geteuid() == 0:
         raise ValueError("WORKER_REQUIRES_UNPRIVILEGED_USER")
     files = dict(files)
     actual = bundle_digest(files)
     if actual != expected_bundle:
         raise ValueError("WORKER_BUNDLE_CHANGED")
+    if (data is None) != (expected_input is None) or (
+        data is not None
+        and (
+            type(data) is not bytes or len(data) > 8 * 1024 * 1024 or digest(data) != expected_input
+        )
+    ):
+        raise ValueError("WORKER_INPUT_CHANGED_OR_OVERSIZED")
     verify_cgroup()
     verifier = trust.verify()
     with tempfile.TemporaryDirectory(prefix="scalper-research-") as temporary:
@@ -165,6 +180,11 @@ def run(files: dict[str, bytes], expected_bundle: str, trust: WorkerTrust) -> Wo
             target.write_bytes(raw)
         check = root / "verify.py"
         check.write_bytes(verifier)
+        data_mount: list[str] = []
+        if data is not None:
+            input_file = root / "input.json"
+            input_file.write_bytes(data)
+            data_mount = ["--ro-bind", str(input_file), "/input.json"]
         command = [
             "/usr/bin/prlimit",
             "--as=536870912",
@@ -201,6 +221,7 @@ def run(files: dict[str, bytes], expected_bundle: str, trust: WorkerTrust) -> Wo
             "--ro-bind",
             str(check),
             "/verify.py",
+            *data_mount,
             "--chdir",
             "/work",
             "--",
@@ -247,5 +268,10 @@ def run(files: dict[str, bytes], expected_bundle: str, trust: WorkerTrust) -> Wo
                         os.killpg(process.pid, signal.SIGKILL)
                     process.wait()
         return WorkerResult(
-            actual, trust.runtime_sha256, trust.verifier_sha256, code, bytes(output)
+            actual,
+            trust.runtime_sha256,
+            trust.verifier_sha256,
+            code,
+            bytes(output),
+            input_sha256=expected_input,
         )
