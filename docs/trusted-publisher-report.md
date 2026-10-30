@@ -125,3 +125,41 @@ GitHub Actions check. [Server readback](evidence/publisher-review-enforcement.js
 The CODEOWNERS file is still pending this PR's merge. This is stronger enforcement,
 not authorization for a research worker to approve itself. Automated publication
 and its actual candidate review remain separate operational acceptance.
+
+## Actual publication and formatter correction
+
+PR #458 merged64078f4. The dedicated timer was activated11:04 UTC30 October and
+naturally ran again11:06. A fresh tc01 candidate was normalized before freezing,
+independently source-verified and passed28 isolated tc02 cases. The timer created
+[PR #459](https://github.com/AegisFintech/scalping-bot/pull/459) at exact1452f8dd.
+Both independent source reviews passed; trading processes were untouched.
+
+Two deployment/delivery defects were found by this real path. Git treats a `.venv`
+symlink differently from the repository's directory ignore. Install the root-owned
+`/opt/scalper-publisher/runtime.gitignore` containing exactly `.venv` plus newline,
+and run `git config --global core.excludesFile /opt/scalper-publisher/runtime.gitignore`
+as the publisher user from its home directory. The service independently verifies
+that link resolves to the protected toolchain before checking source cleanliness.
+An unknown-file probe remained visible. No tracked/unapproved source was ignored.
+
+Hosted exact-head qualification then rejected a missing blank line after the
+trusted Markdown metadata marker. The local candidate suite ran before that final
+README/AGENTS projection; matching the code fingerprint did not validate changed
+Markdown. That is a delivery defect, not a passing exact-head qualification.
+The failed PR remains evidence and is not rewritten or merged. The correction
+checks actual generated README/AGENTS with Prettier and fixes the separator.
+Existing receipts/remote PRs remain bound to their original exact legacy commit;
+only the two deterministic trusted templates can reconcile. New publications use
+the corrected template. Existing arbitrary heads still reject.
+
+This publisher remains draft-only. A newly frozen candidate against corrected main
+must pass final-artifact qualification, hosted CI and independently authenticated
+review. No recurring generator/reviewer or complete unattended self-improvement
+loop is claimed by these successful local publishing steps.
+
+Correction validation:34 focused publisher/service tests, both independent reviews,
+all2,366 full qualification tests (1,275 Node /147 PostgreSQL /944 Python), all
+gates/audits and four configuration checks pass. A real read-only GitHub probe with
+the corrected source reconciled closed PR #459 to its unchanged1452f8dd head.
+Graphify updated14,759 nodes /24,358 edges /870 communities; the existing pyproject
+zero-node warning remains. [Correction receipt](evidence/publisher-format-validation.json).

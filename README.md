@@ -1,4 +1,4 @@
-Local signed draft publication and independent review: [publisher boundary](docs/trusted-publisher-report.md).
+Local signed draft publication, formatter checks and independent review: [publisher boundary](docs/trusted-publisher-report.md).
 
 Implementation queue: [autonomous harness delivery plan](docs/autonomous-harness-delivery-plan.md), with bounded tasks and an explicit full-cycle completion test.
 
