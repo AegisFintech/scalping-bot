@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.scalper.local/research-source-verification-1.0.json",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "research-source-verification-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "baseCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Basecommit",
+      "type": "string"
+    },
+    "baseTree": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Basetree",
+      "type": "string"
+    },
+    "candidateTree": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Candidatetree",
+      "type": "string"
+    },
+    "proposalSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Proposalsha256",
+      "type": "string"
+    },
+    "bundleSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Bundlesha256",
+      "type": "string"
+    },
+    "gitSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Gitsha256",
+      "type": "string"
+    },
+    "prlimitSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Prlimitsha256",
+      "type": "string"
+    },
+    "sourceBasis": {
+      "const": "INDEPENDENTLY_PROVISIONED_LOCAL_MIRROR",
+      "title": "Sourcebasis",
+      "type": "string"
+    },
+    "objectBytesVerified": {
+      "const": true,
+      "title": "Objectbytesverified",
+      "type": "boolean"
+    },
+    "remoteFreshnessAttested": {
+      "const": false,
+      "title": "Remotefreshnessattested",
+      "type": "boolean"
+    },
+    "dependencyClosureVerified": {
+      "const": false,
+      "title": "Dependencyclosureverified",
+      "type": "boolean"
+    },
+    "testsPassed": {
+      "const": false,
+      "title": "Testspassed",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "publishAuthority": {
+      "const": false,
+      "title": "Publishauthority",
+      "type": "boolean"
+    },
+    "mergeAuthority": {
+      "const": false,
+      "title": "Mergeauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "baseCommit",
+    "baseTree",
+    "candidateTree",
+    "proposalSha256",
+    "bundleSha256",
+    "gitSha256",
+    "prlimitSha256",
+    "sourceBasis",
+    "objectBytesVerified",
+    "remoteFreshnessAttested",
+    "dependencyClosureVerified",
+    "testsPassed",
+    "brokerAuthority",
+    "publishAuthority",
+    "mergeAuthority"
+  ],
+  "title": "SourceReceipt",
+  "type": "object"
+}
