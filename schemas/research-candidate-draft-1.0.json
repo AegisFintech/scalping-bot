@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "task": {
+      "const": "recorded-payoff-audit-1.0",
+      "title": "Task",
+      "type": "string"
+    },
+    "baseCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Basecommit",
+      "type": "string"
+    },
+    "resultSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Resultsha256",
+      "type": "string"
+    },
+    "findingSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Findingsha256",
+      "type": "string"
+    },
+    "code": {
+      "maxLength": 6000,
+      "minLength": 1,
+      "title": "Code",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 700,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task",
+    "baseCommit",
+    "resultSha256",
+    "findingSha256",
+    "code",
+    "rationale"
+  ],
+  "title": "Draft",
+  "type": "object"
+}

@@ -16,4 +16,5 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
 addopts = "-ra --strict-markers"
+norecursedirs = ["generated_research"]
 pythonpath = ["."]

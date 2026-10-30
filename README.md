@@ -2,6 +2,8 @@ Implementation queue: [autonomous harness delivery plan](docs/autonomous-harness
 
 Experiment registration and its authority limits: [frozen jobs](docs/experiment-registration-report.md).
 
+Generated research and independent software checks: [candidate boundary](docs/candidate-attestation-report.md).
+
 Current research integration: [bounded observation review](docs/current-observation-review-report.md) connects the existing evidence archive to a confined Codex review thread. Proposed experiments and automatic publishing remain separate.
 
 # Scalping bot

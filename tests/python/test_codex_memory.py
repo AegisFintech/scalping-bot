@@ -781,3 +781,12 @@ def test_research_purpose_has_separate_thread_and_no_price_instruction(daily: An
     assert "propose prices" in starts[0]["baseInstructions"]
     assert "research diagnostics" in starts[1]["baseInstructions"]
     assert "Never use tools" in starts[1]["baseInstructions"]
+
+
+def test_generated_research_uses_separate_tool_disabled_thread(daily: Any) -> None:
+    daily(purpose="research")
+    daily(purpose="research_code")
+    starts = [params for method, params in FakeRpc.calls if method == "thread/start"]
+    assert len(starts) == 2
+    assert "research source text" in starts[1]["baseInstructions"]
+    assert "Never use tools" in starts[1]["baseInstructions"]

@@ -1,3 +1,15 @@
+### ISSUE-451 — Result-derived candidate code and independent attestation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/451; parent #401/#402.
+- Dependency: deployed #450 and source verifier #448 / isolated worker #421.
+- Acceptance: result-derived scoped patch, exact source/dependency validation,
+  independent immutable checks, separately authenticated source/result-bound review;
+  actual qualified candidate without publisher credentials in research workers.
+- Status: generation and independent software checks implemented; all2,290 tests/gates,
+  configuration checks, independent reviews and real positive/rejected probes pass. Separate authenticated review/publication remains
+  explicit; no recurring generator or publisher is claimed active.
+- Evidence: `docs/candidate-attestation-report.md`.
+
 ### ISSUE-450 — Distributed fixed-method experiment execution
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/450; parent #402.
@@ -8,7 +20,9 @@
 - Status: implemented;111 focused tests and independent reviews pass. All2,258
   qualification tests/gates and four configuration checks pass. Real remote
   validation/closure, negative/lost-reply, duplicate and process-restart probes pass.
-  PR #455 delivery and recurring activation follow; no trading change.
+  PR #455 merged; recurring services enabled08:39 UTC30 October. Natural registration,
+  tc02 execution and independently validated closure completed08:42:57 UTC.
+  Issue closed with activation evidence; no trading change.
 - Evidence: `docs/experiment-execution-report.md`.
 
 ### ISSUE-449 — Frozen hypothesis and job registration
