@@ -118,3 +118,7 @@ supersede the current versioned policy or explicit operator instructions.
   Report exact blockers; never leave completed work unpushed without explaining why.
 - For codebase questions, query an existing Graphify graph first; use its wiki for
   navigation and query/path/explain for relationships. Dirty graph output is expected.
+
+<!-- research-publication -->
+
+Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

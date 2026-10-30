@@ -112,3 +112,7 @@ The [broker acknowledgement design](docs/broker-acknowledgement-design.md) descr
 The [exact-head qualification report](docs/exact-head-checks-report.md) records active main protection and its independent-review limitation.
 
 Distributed experiment delivery is tracked in [the execution report](docs/experiment-execution-report.md). Real registered jobs have remote execution/independent-check/closure evidence; periodic activation is recorded separately. Generated strategy improvement remains a separate milestone.
+
+<!-- research-publication -->
+
+Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.
