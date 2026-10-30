@@ -1,0 +1,70 @@
+{
+  "additionalProperties": false,
+  "description": "Retained worker observation only. Independent interpretation comes later.",
+  "properties": {
+    "trialId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Trialid",
+      "type": "string"
+    },
+    "claimSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Claimsha256",
+      "type": "string"
+    },
+    "resultSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Resultsha256",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "INCONCLUSIVE",
+        "REJECTED",
+        "FAILED",
+        "OPEN",
+        "GAP"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "recordedAt": {
+      "title": "Recordedat",
+      "type": "string"
+    },
+    "independentValidation": {
+      "const": false,
+      "title": "Independentvalidation",
+      "type": "boolean"
+    },
+    "counterfactualNet": {
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "trialId",
+    "claimSha256",
+    "resultSha256",
+    "kind",
+    "recordedAt",
+    "independentValidation",
+    "counterfactualNet",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "Outcome",
+  "type": "object"
+}
