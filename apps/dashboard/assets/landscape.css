@@ -818,6 +818,41 @@ small,
   font-weight: 500;
   color: var(--violet);
 }
+
+.harness-details summary {
+  cursor: pointer;
+  color: var(--blue);
+  white-space: nowrap;
+}
+.harness-card {
+  position: fixed;
+  z-index: 40;
+  right: 20px;
+  bottom: 45px;
+  width: min(580px, calc(100vw - 40px));
+  max-height: 70dvh;
+  overflow: auto;
+  padding: 18px;
+  background: #141722;
+  color: #dce3ef;
+  border: 1px solid #69718a;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: 0 10px 40px #0008;
+}
+.harness-card p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  margin: 7px 0;
+}
+.harness-stage {
+  padding: 8px 0;
+  border-bottom: 1px solid #30374b;
+}
+.harness-card a {
+  color: #9fc6ff;
+}
 .foot .links {
   display: flex;
   gap: 12px;

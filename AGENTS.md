@@ -56,6 +56,8 @@ supersede the current versioned policy or explicit operator instructions.
   receipts rather than equating timer success with strategy improvement.
   Result-derived candidates: `docs/candidate-attestation-report.md`; generated code
   stays isolated and software PASS still awaits independently authenticated review.
+  Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
+  is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
   resource limits in `docs/isolated-worker-report.md`; process exit is not qualification.
 - Economic/entry research: `docs/quantitative-review-426.md`,

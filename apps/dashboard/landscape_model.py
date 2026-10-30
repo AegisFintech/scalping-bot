@@ -494,4 +494,5 @@ def landscape_model(snapshot: dict[str, Any], poll_state: str, now: datetime) ->
             (status.get("riskPolicy") or {}).get("setupRiskPercent", "Unavailable")
         ),
         "eventWindow": "Latest bounded journal window; not a complete event stream.",
+        "harness": snapshot.get("harness", {"available": False}),
     }

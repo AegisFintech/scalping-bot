@@ -1,0 +1,10 @@
+[Unit]
+Description=Observe bot and research health every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:30 UTC
+Persistent=true
+Unit=scalper-harness-health.service
+
+[Install]
+WantedBy=timers.target

@@ -15,6 +15,7 @@ function controller(root) {
     factorsKey: "",
     logKey: "",
     gap: false,
+    harnessKey: "",
     stale: true,
   };
   const reduced = win.matchMedia("(prefers-reduced-motion: reduce)");
@@ -620,6 +621,102 @@ function controller(root) {
   function tick() {
     const m = state.model,
       isLive = live();
+    const harness = m.harness;
+    const harnessAt = Date.parse(harness?.checkedAt);
+    const harnessFresh =
+      Number.isFinite(harnessAt) &&
+      Date.now() >= harnessAt - 5000 &&
+      Date.now() <= harnessAt + 180000;
+    const rows = (harnessFresh ? harness.stages || [] : []).map((stage) => {
+      if (stage.state === "UNAVAILABLE") return stage;
+      if (
+        !valid(stage.expiresAt) ||
+        Date.parse(stage.checkedAt) > Date.now() + 5000
+      ) {
+        return {
+          ...stage,
+          state: "STALE",
+          detail: "This component's observation has expired.",
+        };
+      }
+      return stage;
+    });
+    const harnessKey = JSON.stringify([
+      harnessFresh,
+      harness,
+      rows.map((s) => s.state),
+    ]);
+    if ($("harness-stages") && harnessKey !== state.harnessKey) {
+      state.harnessKey = harnessKey;
+      $("harness-stages").replaceChildren(
+        ...rows.map((stage) => {
+          const row = node("div", "harness-stage", "");
+          row.append(
+            node(
+              "strong",
+              stage.state === "CURRENT" ? "green" : "amber",
+              `${stage.name} · ${stage.state}`,
+            ),
+            node("p", "", stage.detail),
+          );
+          return row;
+        }),
+      );
+      const research = harnessFresh ? harness.research : null;
+      const currentStage = (name) =>
+        rows.some(
+          (s) => s.name === name && !["STALE", "UNAVAILABLE"].includes(s.state),
+        );
+      const publication =
+        harnessFresh && currentStage("Publishing") ? harness.publisher : null;
+      const prNumber = publication?.pullRequest;
+      $("harness-pr").hidden =
+        !Number.isInteger(prNumber) || prNumber < 1 || prNumber > 999999999;
+      if (!$("harness-pr").hidden) {
+        $("harness-pr").href =
+          `https://github.com/AegisFintech/scalping-bot/pull/${prNumber}`;
+        $("harness-pr").textContent =
+          `Research PR #${prNumber} · ${publication.status}`;
+      }
+      text(
+        "research-health",
+        !harnessFresh
+          ? "Unavailable"
+          : rows.some((s) =>
+                ["BLOCKED", "STALE", "UNAVAILABLE"].includes(s.state),
+              )
+            ? "Needs attention"
+            : "Observed",
+      );
+      text(
+        "harness-time",
+        harnessFresh
+          ? `Observed ${new Date(harnessAt).toLocaleString()}`
+          : "Harness observations are unavailable or stale.",
+      );
+      text(
+        "harness-question",
+        currentStage("Observation") && research?.question
+          ? `Proposed question: ${research.question}`
+          : "No current proposed question available.",
+      );
+      text(
+        "harness-trials",
+        currentStage("Experiments") && research?.closureCounts != null
+          ? `Recorded experiment closures: ${
+              Object.entries(research.closureCounts || {})
+                .map(([k, v]) => `${k} ${v}`)
+                .join(" · ") || "none recorded"
+            }. These are trials, not trades.`
+          : "Experiment closure counts unavailable.",
+      );
+      text(
+        "harness-ids",
+        research
+          ? `Plan ${currentStage("Observation") ? research.planId?.slice(0, 12) || "unavailable" : "unavailable"} · latest reported job ${currentStage("Experiments") ? research.trialId?.slice(0, 12) || "none in latest check" : "unavailable"}`
+          : "Plan and job observations unavailable.",
+      );
+    }
     text(
       "budget-policy",
       `At most ${m.setupRiskPercent || "Unavailable"}% shared setup · current-equity sizing`,

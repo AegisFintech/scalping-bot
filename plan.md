@@ -1,3 +1,15 @@
+### ISSUE-431 — Continuous harness health and visible lifecycle
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/431; dashboard portion #403.
+- Dependencies: existing watchdog/Flight/current review/#450; publication receipt from #452.
+- Acceptance: bounded read-only cross-machine health, distinct waits/faults/unknowns,
+  explicit lifecycle/evidence in the dashboard, persistent monitoring and safe recovery
+  ownership. Whole-loop publication proof remains dependent on #452.
+- Status: implemented;38 focused tests, browser checks, independent reviews, all2,328
+  qualification tests/gates and four configuration checks pass. Restricted reader
+  probe succeeds; reviewed delivery and persistent activation follow.
+- Evidence: `docs/harness-health-report.md`.
+
 ### ISSUE-451 — Result-derived candidate code and independent attestation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/451; parent #401/#402.

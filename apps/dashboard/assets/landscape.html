@@ -328,13 +328,37 @@
         <div class="feed-health">
           <span>Status <b id="status-health">Unknown</b></span
           ><span>Quotes <b id="quote-health">Unavailable</b></span
-          ><span>Research <b class="muted">Read-only</b></span
+          ><span>Harness <b id="research-health">Unavailable</b></span
           ><span>News <b class="muted">Unavailable</b></span>
         </div>
       </section>
     </div>
   </main>
   <footer class="foot">
+    <details class="harness-details">
+      <summary>Research pipeline</summary>
+      <section class="harness-card" aria-label="Read-only harness status">
+        <h3>Research pipeline</h3>
+        <p id="harness-time">Waiting for verified observations.</p>
+        <div id="harness-stages"></div>
+        <p id="harness-question"></p>
+        <p id="harness-trials"></p>
+        <p id="harness-ids"></p>
+        <a id="harness-pr" hidden target="_blank" rel="noopener noreferrer"
+          >Recorded research PR</a
+        >
+        <p>
+          Research observations and software tests do not qualify a trading
+          strategy.
+        </p>
+        <a
+          href="https://github.com/AegisFintech/scalping-bot/issues/452"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Publishing gate · #452</a
+        >
+      </section>
+    </details>
     <span
       ><strong><span class="dot"></span>OBSERVATION DESK</strong> · Decorative
       motion is not activity telemetry</span
