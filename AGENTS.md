@@ -60,7 +60,8 @@ supersede the current versioned policy or explicit operator instructions.
   attestation, exact source, CI and independent `aloycwl` review. Workers never get
   signing/GitHub credentials. Run publishing locally under its dedicated service,
   preserve required CI/review, and keep the signing key outside publisher-owned state.
-  Draft publication grants no merge or deployment authority.
+  Check final generated documentation with the real formatter; preserve existing
+  publication heads when repairing templates. Drafts grant no merge/deploy authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate

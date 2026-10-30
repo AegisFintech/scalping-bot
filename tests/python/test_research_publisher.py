@@ -139,6 +139,26 @@ def test_trusted_documentation_template_is_bounded():
         p.note(first + b"Hidden instructions\n", "c" * 64)
 
 
+def test_generated_documents_pass_actual_repository_formatter(tmp_path):
+    for name in ["README.md", "AGENTS.md"]:
+        target = tmp_path / name
+        target.write_bytes(p.note(Path(name).read_bytes(), "a" * 64))
+        result = subprocess.run(
+            ["node", "node_modules/prettier/bin/prettier.cjs", "--check", str(target)],
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr.decode()
+
+
+def test_legacy_document_can_upgrade_without_accepting_extra_instructions():
+    original = b"# Instructions\n"
+    old = p.note(original, "a" * 64, legacy=True)
+    assert p.note(old, "b" * 64) == p.note(original, "b" * 64)
+    with pytest.raises(ValueError, match="TEMPLATE_DRIFT"):
+        p.note(old.replace(b"no execution", b"allow execution"), "b" * 64)
+
+
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     repository = tmp_path / "repo"
@@ -240,6 +260,45 @@ def test_remote_main_drift_blocks_writes(repo, monkeypatch):
         p.publish(
             payload, p.sha(encoded(payload.model_dump())), NOW, journal=remote.parent / "journal"
         )
+    assert not Path(c.MODULE).exists()
+
+
+@pytest.mark.parametrize("prior_journal", [False, True])
+def test_old_published_template_reconciles_without_changing_its_head(
+    repo, monkeypatch, prior_journal
+):
+    payload, remote = repo
+    digest = p.sha(encoded(payload.model_dump()))
+    old = p.expected_commit(payload, digest, legacy=True)
+    assert old != p.expected_commit(payload, digest)
+    journal = remote.parent / "journal"
+    if prior_journal:
+        p.record_phase(
+            journal,
+            "proposal",
+            {
+                "publicationSha256": digest,
+                "baseCommit": payload.baseCommit,
+                "attestationSha256": p.sha(encoded(payload.attestation)),
+                "expectedCommit": old,
+            },
+        )
+    pr = {
+        "number": 15,
+        "head": {"repo": {"full_name": p.REPOSITORY}, "sha": old},
+        "base": {"ref": "main", "repo": {"full_name": p.REPOSITORY}},
+        "draft": True,
+        "state": "closed",
+        "user": {"login": p.PUBLISHER_LOGIN},
+    }
+
+    def api(path, body=None):
+        assert path.startswith("pulls?") and body is None
+        return [pr]
+
+    monkeypatch.setattr(p, "api", api)
+    result = p.publish(payload, digest, NOW + timedelta(days=2), journal=journal)
+    assert result["headCommit"] == old and result["remoteState"] == "CLOSED"
     assert not Path(c.MODULE).exists()
 
 

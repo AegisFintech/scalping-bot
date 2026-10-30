@@ -190,14 +190,21 @@ def api(path: str, payload: dict[str, Any] | None = None) -> Any:
     return json.loads(command(args, data=encoded(payload) if payload is not None else None))
 
 
-def note(current: bytes, digest: str) -> bytes:
+def note(current: bytes, digest: str, *, legacy: bool = False) -> bytes:
     """Fixed parent-owned metadata; candidate prose never edits protected instructions."""
     marker = "<!-- research-publication -->"
     text = current.decode()
-    line = f"{marker}\nResearch-only delivery `{digest}`; no execution or promotion authority.\n"
+    separator = "\n" if legacy else "\n\n"
+    line = (
+        f"{marker}{separator}Research-only delivery `{digest}`; "
+        "no execution or promotion authority.\n"
+    )
     if marker in text:
         before, after = text.split(marker, 1)
-        if after.count("\n") != 2:
+        if not re.fullmatch(
+            r"\n\n?Research-only delivery `[a-f0-9]{64}`; no execution or promotion authority\.\n",
+            after,
+        ):
             raise ValueError("PUBLICATION_DOCUMENTATION_TEMPLATE_DRIFT")
         return (before + line).encode()
     return (text.rstrip() + "\n\n" + line).encode()
@@ -217,11 +224,13 @@ def commit_identity(payload: Publication) -> None:
     )
 
 
-def expected_commit(payload: Publication, digest: str) -> str:
+def expected_commit(payload: Publication, digest: str, *, legacy: bool = False) -> str:
     """Construct Git objects with a separate index; never execute candidate code."""
     files = payload.files()
     for path in ["README.md", "AGENTS.md"]:
-        files[path] = note(command(["git", "show", payload.baseCommit + ":" + path]), digest)
+        files[path] = note(
+            command(["git", "show", payload.baseCommit + ":" + path]), digest, legacy=legacy
+        )
     commit_identity(payload)
     with tempfile.TemporaryDirectory() as directory:
         old = os.environ.get("GIT_INDEX_FILE")
@@ -287,6 +296,20 @@ def record_phase(journal: Path, phase: str, facts: dict[str, Any]) -> None:
 def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) -> dict[str, Any]:
     branch = "research/" + digest
     expected_head = expected_commit(payload, digest)
+    pulls = api("pulls?state=all&head=AegisFintech:" + branch + "&base=main&per_page=100")
+    if len(pulls) > 1:
+        raise ValueError("PUBLICATION_REMOTE_AMBIGUOUS")
+    prior = journal / "proposal.json"
+    recorded_head = read(prior).get("expectedCommit") if prior.exists() else None
+    observed_head = recorded_head or (pulls[0]["head"]["sha"] if pulls else None)
+    legacy = observed_head is not None and observed_head != expected_head
+    if legacy:
+        # Preserve already committed/published bytes after fixing Markdown whitespace.
+        # Only these two exact trusted templates are recoverable, never arbitrary heads.
+        old_head = expected_commit(payload, digest, legacy=True)
+        if observed_head != old_head:
+            raise ValueError("PUBLICATION_REMOTE_AMBIGUOUS")
+        expected_head = old_head
     record_phase(
         journal,
         "proposal",
@@ -298,10 +321,7 @@ def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) 
         },
     )
     # Reconcile existing proposals before freshness rejection; closed/merged PRs never re-open.
-    pulls = api("pulls?state=all&head=AegisFintech:" + branch + "&base=main&per_page=100")
     if pulls:
-        if len(pulls) != 1:
-            raise ValueError("PUBLICATION_REMOTE_AMBIGUOUS")
         confirm_pr(pulls[0], expected_head)
         record_phase(
             journal, "remote-pr", {"number": pulls[0]["number"], "headCommit": expected_head}
@@ -336,7 +356,7 @@ def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) 
             target.write_bytes(raw)
         for path in ["README.md", "AGENTS.md"]:
             target = Path(path)
-            target.write_bytes(note(target.read_bytes(), digest))
+            target.write_bytes(note(target.read_bytes(), digest, legacy=legacy))
         check_style("python/research/experiments/recorded_payoff.py")
         command(["git", "checkout", "-b", branch])
         command(["git", "add", *sorted(files), "README.md", "AGENTS.md"])
