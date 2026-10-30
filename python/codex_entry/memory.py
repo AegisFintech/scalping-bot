@@ -173,15 +173,15 @@ def invoke_daily(
     schema: dict[str, Any],
     model: str,
     timeout: int = 90,
-    purpose: Literal["entries", "research"] = "entries",
+    purpose: Literal["entries", "research", "research_code"] = "entries",
 ) -> bytes:
     if os.geteuid() == 0 or not job.resolve().is_relative_to(Path.home().resolve()):
         raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
     request = json.loads(read_bounded(job / "request.json"))
     day = request["payload"]["captured_at"][:10]
     material = model + request["promptSha256"]
-    if purpose == "research":
-        material = "research:" + material
+    if purpose != "entries":
+        material = purpose + ":" + material
     pin = hashlib.sha256(material.encode()).hexdigest()[:16]
     directory = job.parent / "memory" / f"{day}-{pin}"
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -251,7 +251,9 @@ def invoke_daily(
             "cwd": str(work),
             "baseInstructions": (
                 (
-                    "You interpret supplied research diagnostics only. "
+                    "You propose research source text from supplied evidence only. "
+                    if purpose == "research_code"
+                    else "You interpret supplied research diagnostics only. "
                     if purpose == "research"
                     else "You propose prices or WAIT from supplied data only. "
                 )
