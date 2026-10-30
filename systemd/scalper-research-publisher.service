@@ -1,0 +1,32 @@
+[Unit]
+Description=Signed local research draft publisher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=scalper-publisher
+Group=scalper-publisher
+WorkingDirectory=/var/lib/scalper-publisher
+Environment=HOME=/var/lib/scalper-publisher
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-publisher
+Environment=PATH=/opt/scalper-publisher/.venv/bin:/opt/scalper-node22/bin:/usr/bin:/bin
+LoadCredential=github-token:/etc/scalper-publisher/github-token
+ExecStart=/opt/scalper-publisher/.venv/bin/python -m python.operations.publisher_service
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-publisher
+InaccessiblePaths=-/root -/run/postgresql -/etc/scalping-bot -/etc/scalper-publisher/authority -/var/lib/scalper-demo-epoch-314
+CPUQuota=100%
+MemoryMax=1G
+MemorySwapMax=0
+TasksMax=48
+LimitFSIZE=256M
+TimeoutStartSec=480
+TimeoutStopSec=10
+KillMode=control-group
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

@@ -1,46 +1,97 @@
-# Signed research draft publisher
+# Local signed research draft publisher
 
 Issue [#452](https://github.com/AegisFintech/scalping-bot/issues/452), depending on
-#448 source verification and #451 independent candidate attestation. Development
-in progress; no scheduled signer, generator or publisher is activated by this text.
+#448 source verification and #451 independent candidate attestation.
 
-The existing GitHub Actions App supplies a repository-scoped job token with only
-contents/PR write access for publishing. The designated independent reviewer is
-`aloycwl`, authenticated separately on tc01; no reviewer credentials are copied
-into research workers. This resolves the earlier local-only identity search.
-[GitHub documents the App token and its lifetime](https://docs.github.com/en/actions/concepts/security/github_token).
+The operator selected local execution after GitHub rejected Actions-created PRs
+with organization-policy HTTP409. The publishing workflow is removed. Existing
+required hosted qualification remains; no organization setting needs changing.
 
-Only a protected parent's SSH signature authorizes publication. Its private key
-stays root-only outside the repo and worker namespaces. The committed public signer
-verifies canonical bytes, the exact base, result/finding digests, candidate bundle
-and independently checked28-case receipt. Model-generated prose cannot edit paths,
-README, AGENTS, workflows, keys, tests or execution. The first bounded task can only
-add the recorded-payoff module and its fixed provenance note; existing research
-requires a new reviewed task. Static style/type checks must pass without modifying
-the attested bytes.
+`scalper-research-publisher.timer` runs a dedicated unprivileged local service.
+It uses the existing `AegisWalletApp` credential through systemd LoadCredential;
+`aloycwl` remains the independently authenticated reviewer on tc01. This existing
+credential has broader repository privileges than this service needs: it is NOT a
+new least-privilege App token. The root-owned code, fixed operations, filesystem
+sandbox and branch protection constrain this implementation. Research workers
+receive neither credential, and the publisher cannot read the signing private key,
+broker environment, demo storage or root home. A dedicated narrow App token would
+further reduce the credential compromise boundary, but is not required for the
+operator-selected local route. Never copy reviewer credentials into this service.
 
-A main-only workflow accepts the existing operator dispatch identity, verifies the
-signature, checks main again before writes and after push, and commits only the
-fixed candidate files plus parent-owned README/AGENTS metadata. The deterministic
-commit binds author/time, parent, tree and message. Normal secret scan and pre-push
-Graphify/documentation hooks remain active. Existing PRs must match the exact
-expected commit, repository, base and publisher identity before duplicate recovery
-returns them. Unknown remote failures remain unknown; no force-push, branch deletion,
-merge, economic activation or deployment is performed by this publisher.
+## Authority and durable delivery
 
-The publisher creates a draft. CODEOWNERS names `aloycwl`; server-side required
-review, stale dismissal and exact-head checks must be verified before unattended
-publishing is activated. The signer/controller, durable dispatch receipts, real
-research PR, independent review and full natural cycle still need operational proof.
+A protected parent signs canonical publication bytes only after independent
+attestation. Its private key stays under `/etc/scalper-publisher/authority`, outside
+the publisher-owned state directory. The public signer is committed. Root owns
+`/var/lib/scalper-publisher-queue`; each request is named by its payload SHA256.
+The service checks ownership/permissions, signature, exact base, result/finding
+hashes, candidate bundle and independent28-case receipt before preparing Git files.
+At most four queued requests are considered per bounded service run. Unknown queue
+entries, excessive requests, invalid signatures and unavailable identity fail closed.
 
-GitHub-token pushes do not start ordinary push CI; automation-created PR runs can
-require approval. The qualification workflow therefore also accepts explicit
-workflow dispatch and checks its exact event SHA with no persisted checkout token.
-The trusted controller must verify the candidate before approving/dispatching CI.
-[GitHub event behavior](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+The first bounded task only adds a recorded-payoff research module and fixed
+provenance note. Model prose cannot alter protected paths. Parent-owned templates
+update README/AGENTS; static style/type checks never modify attested bytes. No model
+or candidate is executed by the publisher. Git uses ordinary secret/pre-push hooks,
+with a pinned Graphify toolchain and deterministic commit identity/time/tree/message.
 
-Qualification, failure recovery, independent review and actual activation results
-will be recorded here. Infrastructure delivery is not whole-loop completion.
+Per-request immutable phase receipts bind proposal, commit, push intent/confirmation,
+PR intent and verified remote PR. Existing remote PRs must match exact commit,
+repository, base and publisher before recovery returns them. Lost push replies
+recover from either the persistent checkout or a fresh clone. Lost PR replies
+reconcile by deterministic branch; closed/merged PRs never reopen. A dirty partial
+checkout is preserved and blocked rather than erased or guessed safe. Main drift
+blocks new publication; historical existing PR reconciliation remains available.
+The service never force-pushes, deletes branches, reviews, merges or deploys.
+
+The publisher creates a draft. CODEOWNERS names `aloycwl`; required independent
+review, stale dismissal, last-push approval and exact-head qualification remain
+server enforced. Credential-backed local pushes use the existing push/PR CI events;
+no extra workflow dispatch or Actions PR permission is needed.
+
+## Monitoring and operations
+
+The two-minute timer serializes runs with a file lock, bounds runtime/resources and
+refreshes `/var/lib/scalper-publisher/status.json` for the existing harness monitor.
+An empty queue is IDLE only after protected queue and GitHub identity checks pass.
+Failures outrank successful jobs in the public status; raw exceptions and credential
+values never appear. Stale receipts remain unavailable in the dashboard. This timer
+publishes signed requests; it does not fabricate them or claim the generator,
+independent reviewer or economic promotion loop is scheduled.
+
+Activation: install reviewed root-owned source/toolchain at `/opt/scalper-publisher`,
+create the dedicated service user/state and root-owned queue, move the existing
+signing key to the protected authority directory, and load the existing credential
+from a root-only file. Verify unit sandbox, actor identity, queue rejection/recovery,
+natural timer and monitor readback. Preserve all receipts and original signatures.
+Rollback disables only this publisher timer/service; it does not delete queued jobs,
+PRs, commits, experiment evidence or trading state. In-flight remote writes must be
+reconciled by exact branch/head before any retry or replacement.
+
+## Local revision validation
+
+Thirty focused publisher/service tests pass, including signed tampering, actual Git
+commits, persistent/fresh-checkout lost-push recovery, lost PR-create replies,
+conflicting phase receipts, identity mismatch, bounded queue, failure precedence
+and unchanged exact-head validation. Both independent Standards/Spec reviews found
+no code blocker. The installed systemd unit ran as the dedicated user: verified idle,
+rejected a real signed stale-base request with PUBLICATION_MAIN_DRIFT before remote
+writes, then recovered to idle after archiving the probe. The account cannot read
+the signing key or modify installed source. The timer remains disabled pending
+reviewed delivery. [Local probe](evidence/local-publisher-probe.json).
+
+The initial full-check invocation stopped before checks because the removed workflow
+was not yet staged; after staging, another run was intentionally interrupted to
+correct a trailing blank line in the service unit. Neither is counted as passing.
+The Graphify dependency audit initially rejected a CLI flag combination; rerunning
+with explicit no-deps for the complete pinned lock passed with no known vulnerabilities.
+Full revised qualification passed:1,275 Node,147 PostgreSQL and940 Python tests
+(2,362), all required gates and four configuration checks. Commands: `npm run qualify`,
+both `npm run config:check` modes on sample/deployment files, `graphify update .`,
+`systemd-analyze verify`, and the actual oneshot probes above. Graphify:14,755 nodes,
+24,345 edges,866 communities; existing pyproject zero-node warning persists.
+[Revised qualification receipt](evidence/local-publisher-validation.json).
+Earlier counts below describe the previous source.
 
 ## Development validation
 
@@ -74,18 +125,3 @@ GitHub Actions check. [Server readback](evidence/publisher-review-enforcement.js
 The CODEOWNERS file is still pending this PR's merge. This is stronger enforcement,
 not authorization for a research worker to approve itself. Automated publication
 and its actual candidate review remain separate operational acceptance.
-
-## Organization policy blocker
-
-The repository setting to permit Actions-created PRs was rejected with HTTP409:
-“The organization does not allow GitHub Actions to create or approve pull requests.”
-The change did not apply. The independent reviewer identity is available; this is
-an organization policy boundary, not a reviewer sign-in failure. The installed Apps
-visible through the reviewer identity are third-party integrations, not a configured
-harness publishing key. No third-party App identity or credential is repurposed.
-
-Activation requires an explicit organization-policy decision or a separately
-provisioned repository-scoped publishing App. The workflow remains undispatched;
-no permission bypass, worker credential sharing or fallback to a broad operator PAT
-is used for automatic publication. Code delivery and narrow publication design
-remain reviewable while the organization decision is pending.

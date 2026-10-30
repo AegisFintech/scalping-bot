@@ -4,11 +4,12 @@
 - Acceptance: narrow separate publisher identity, authenticated exact source/test
   binding, durable commit/push/PR recovery, trusted documentation templates, enforced
   CI/review, actual research PR and rejected/duplicate/unknown recovery proof.
-- Status: signed draft publisher, GitHub Actions boundary and19 focused tests pass.
-  Full2,351-test qualification, audits/configuration and independent reviews pass.
-  Server review enforcement is active; CODEOWNERS delivery, signer/controller
-  scheduling and real publication proof remain pending. GitHub rejected Actions PR
-  permission with organization-policy HTTP409; no bypass or automatic activation.
+- Status: operator selected local publishing; Actions publisher removed. Dedicated
+  service, signed queue, durable phases and30 focused tests pass. Revised2,362-test
+  qualification, audits/configuration and independent reviews pass. Real service
+  idle/stale-signature rejection/recovery and credential isolation probes pass.
+  Server review enforcement is active. Actual signed publication, independent
+  candidate review and natural full-loop proof remain acceptance work.
 - Evidence: `docs/trusted-publisher-report.md`.
 
 ### ISSUE-431 — Continuous harness health and visible lifecycle

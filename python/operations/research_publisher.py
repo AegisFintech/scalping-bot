@@ -16,14 +16,16 @@ from pydantic import Field, model_validator
 
 from python.research.candidate_attestation import TASK, Draft, candidate_files
 from python.research.codex_loop import StrictModel, timestamp
+from python.research.experiment_registry import read
 from python.research.isolated_worker import bundle_digest
-from python.research.learning_archive import unique
+from python.research.learning_archive import immutable, unique
 from python.research.learning_evidence import Digest, encoded
 from python.research.observation_cycle import sha
 from python.research.publisher_policy import GitId
 from python.research.source_verifier import SourceReceipt
 
 REPOSITORY = "AegisFintech/scalping-bot"
+PUBLISHER_LOGIN = "AegisWalletApp"
 MAX_REQUEST = 32768
 
 
@@ -262,68 +264,102 @@ def confirm_pr(pr: dict[str, Any], expected_head: str, *, created: bool = False)
         or pr["head"]["sha"] != expected_head
         or pr["base"]["repo"]["full_name"] != REPOSITORY
         or pr["base"]["ref"] != "main"
-        or pr["user"]["login"] != "github-actions[bot]"
+        or pr["user"]["login"] != PUBLISHER_LOGIN
         or type(pr.get("draft")) is not bool
         or (created and (pr["draft"] is not True or pr.get("state") != "open"))
     ):
         raise ValueError("PUBLICATION_REMOTE_AMBIGUOUS")
 
 
-def publish(payload: Publication, digest: str, now: datetime) -> dict[str, Any]:
+def record_phase(journal: Path, phase: str, facts: dict[str, Any]) -> None:
+    journal.mkdir(parents=True, mode=0o700, exist_ok=True)
+    path = journal / (phase + ".json")
+    value = {"phase": phase, **facts}
+    if path.exists():
+        prior = read(path)
+        prior.pop("observedAt")
+        if prior != value:
+            raise ValueError("PUBLICATION_JOURNAL_CONFLICT")
+        return
+    immutable(path, {**value, "observedAt": datetime.now(UTC).isoformat()})
+
+
+def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) -> dict[str, Any]:
     branch = "research/" + digest
     expected_head = expected_commit(payload, digest)
+    record_phase(
+        journal,
+        "proposal",
+        {
+            "publicationSha256": digest,
+            "baseCommit": payload.baseCommit,
+            "attestationSha256": sha(encoded(payload.attestation)),
+            "expectedCommit": expected_head,
+        },
+    )
     # Reconcile existing proposals before freshness rejection; closed/merged PRs never re-open.
     pulls = api("pulls?state=all&head=AegisFintech:" + branch + "&base=main&per_page=100")
     if pulls:
         if len(pulls) != 1:
             raise ValueError("PUBLICATION_REMOTE_AMBIGUOUS")
         confirm_pr(pulls[0], expected_head)
+        record_phase(
+            journal, "remote-pr", {"number": pulls[0]["number"], "headCommit": expected_head}
+        )
         return {
             "status": "EXISTING_PR",
             "pullRequest": pulls[0]["number"],
             "headCommit": pulls[0]["head"]["sha"],
+            "remoteState": "MERGED"
+            if pulls[0].get("merged_at")
+            else "CLOSED"
+            if pulls[0]["state"] == "closed"
+            else "OPEN",
         }
     completed = timestamp(payload.attestation["completedAt"])
     if not now - timedelta(hours=24) <= completed <= now:
         raise ValueError("PUBLICATION_ATTESTATION_STALE")
     remote = api("git/ref/heads/main")["object"]["sha"]
-    if (
-        remote != payload.baseCommit
-        or command(["git", "rev-parse", "HEAD"]).decode().strip() != remote
-    ):
+    head = command(["git", "rev-parse", "HEAD"]).decode().strip()
+    if remote != payload.baseCommit or head not in {payload.baseCommit, expected_head}:
         raise ValueError("PUBLICATION_MAIN_DRIFT")
     if command(["git", "status", "--porcelain"]).strip():
         raise ValueError("PUBLICATION_DIRTY_SOURCE")
-    files = payload.files()
-    # This first bounded task only adds files. Existing research needs a new reviewed task.
-    if any(Path(path).exists() for path in files):
-        raise ValueError("PUBLICATION_TASK_ALREADY_PRESENT")
-    for path, raw in files.items():
-        target = Path(path)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(raw)
-    for path in ["README.md", "AGENTS.md"]:
-        target = Path(path)
-        target.write_bytes(note(target.read_bytes(), digest))
-    check_style("python/research/experiments/recorded_payoff.py")
-    command(["git", "checkout", "-b", branch])
-    command(["git", "add", *sorted(files), "README.md", "AGENTS.md"])
-    staged = set(command(["git", "diff", "--cached", "--name-only"]).decode().splitlines())
-    if staged != set(files) | {"README.md", "AGENTS.md"}:
-        raise ValueError("PUBLICATION_STAGED_SCOPE")
-    command(["git", "diff", "--cached", "--check"])
-    command(["bash", "scripts/secret-scan.sh"])
-    # Stable author/time make interrupted push reconciliation compare the exact same commit.
-    commit_identity(payload)
-    command(["git", "commit", "-m", "research: independently checked recorded payoff audit"])
+    if head != expected_head:
+        files = payload.files()
+        # This first bounded task only adds files. Existing research needs a new reviewed task.
+        if any(Path(path).exists() for path in files):
+            raise ValueError("PUBLICATION_TASK_ALREADY_PRESENT")
+        for path, raw in files.items():
+            target = Path(path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        for path in ["README.md", "AGENTS.md"]:
+            target = Path(path)
+            target.write_bytes(note(target.read_bytes(), digest))
+        check_style("python/research/experiments/recorded_payoff.py")
+        command(["git", "checkout", "-b", branch])
+        command(["git", "add", *sorted(files), "README.md", "AGENTS.md"])
+        staged = set(command(["git", "diff", "--cached", "--name-only"]).decode().splitlines())
+        if staged != set(files) | {"README.md", "AGENTS.md"}:
+            raise ValueError("PUBLICATION_STAGED_SCOPE")
+        command(["git", "diff", "--cached", "--check"])
+        command(["bash", "scripts/secret-scan.sh"])
+        # Stable author/time make interrupted push reconciliation compare the exact same commit.
+        commit_identity(payload)
+        command(["git", "commit", "-m", "research: independently checked recorded payoff audit"])
     head = command(["git", "rev-parse", "HEAD"]).decode().strip()
     if head != expected_head:
         raise ValueError("PUBLICATION_COMMIT_DRIFT")
+    record_phase(journal, "commit", {"headCommit": head})
+    record_phase(journal, "push-intent", {"headCommit": head, "branch": branch})
     command(["git", "push", "origin", branch])  # Normal pre-push hook, never force or skip.
     if api("git/ref/heads/" + branch)["object"]["sha"] != head:
         raise ValueError("PUBLICATION_PUSH_UNCONFIRMED")
+    record_phase(journal, "push-confirmed", {"headCommit": head, "branch": branch})
     if api("git/ref/heads/main")["object"]["sha"] != payload.baseCommit:
         raise ValueError("PUBLICATION_MAIN_DRIFT_AFTER_PUSH")
+    record_phase(journal, "pr-intent", {"headCommit": head, "branch": branch})
     pr = api(
         "pulls",
         {
@@ -342,30 +378,10 @@ def publish(payload: Publication, digest: str, now: datetime) -> dict[str, Any]:
         },
     )
     confirm_pr(pr, head, created=True)
-    return {"status": "DRAFT", "pullRequest": pr["number"], "headCommit": head}
-
-
-def main() -> None:
-    if (
-        os.environ.get("GITHUB_REPOSITORY") != REPOSITORY
-        or os.environ.get("GITHUB_REF") != "refs/heads/main"
-        or os.environ.get("GITHUB_ACTOR") != "AegisWalletApp"
-    ):
-        raise ValueError("PUBLICATION_TRUSTED_DISPATCH_REQUIRED")
-    event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_bytes())
-    request = event["inputs"]["request"].encode()
-    payload, digest = authenticate(request, Path("policy/research-publisher-signers"))
-    result = publish(payload, digest, datetime.now(UTC))
-    print(
-        encoded(
-            {"publication": digest, **result, "mergeAuthority": False, "brokerAuthority": False}
-        ).decode()
-    )
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception:
-        print("PUBLICATION_FAILED_OR_REMOTE_OUTCOME_UNKNOWN")
-        raise SystemExit(1) from None
+    record_phase(journal, "remote-pr", {"number": pr["number"], "headCommit": head})
+    return {
+        "status": "DRAFT",
+        "pullRequest": pr["number"],
+        "headCommit": head,
+        "remoteState": "OPEN",
+    }

@@ -199,7 +199,7 @@ def test_real_git_commit_and_duplicate_pr_reconciliation(repo, monkeypatch, lost
             "base": {"ref": "main", "repo": {"full_name": p.REPOSITORY}},
             "draft": True,
             "state": "open",
-            "user": {"login": "github-actions[bot]"},
+            "user": {"login": p.PUBLISHER_LOGIN},
         }
         prs.append(pr)
         if lost_reply:
@@ -211,34 +211,48 @@ def test_real_git_commit_and_duplicate_pr_reconciliation(repo, monkeypatch, lost
     expected = p.expected_commit(payload, digest)
     if lost_reply:
         with pytest.raises(OSError):
-            p.publish(payload, digest, NOW)
+            p.publish(payload, digest, NOW, journal=remote.parent / "journal")
     else:
-        result = p.publish(payload, digest, NOW)
-        assert result == {"status": "DRAFT", "pullRequest": 12, "headCommit": expected}
-    duplicate = p.publish(payload, digest, NOW + timedelta(days=2))
+        result = p.publish(payload, digest, NOW, journal=remote.parent / "journal")
+        assert result == {
+            "status": "DRAFT",
+            "pullRequest": 12,
+            "headCommit": expected,
+            "remoteState": "OPEN",
+        }
+    duplicate = p.publish(
+        payload, digest, NOW + timedelta(days=2), journal=remote.parent / "journal"
+    )
     assert duplicate["status"] == "EXISTING_PR" and len(prs) == 1
     prs[0]["head"]["sha"] = "f" * 40
     with pytest.raises(ValueError, match="REMOTE_AMBIGUOUS"):
-        p.publish(payload, digest, NOW)
+        p.publish(payload, digest, NOW, journal=remote.parent / "journal")
 
 
 def test_remote_main_drift_blocks_writes(repo, monkeypatch):
-    payload, _ = repo
+    payload, remote = repo
     monkeypatch.setattr(
         p,
         "api",
         lambda path, body=None: [] if path.startswith("pulls?") else {"object": {"sha": "f" * 40}},
     )
     with pytest.raises(ValueError, match="MAIN_DRIFT"):
-        p.publish(payload, p.sha(encoded(payload.model_dump())), NOW)
+        p.publish(
+            payload, p.sha(encoded(payload.model_dump())), NOW, journal=remote.parent / "journal"
+        )
     assert not Path(c.MODULE).exists()
 
 
 def test_expired_attestation_cannot_start_new_publication(repo, monkeypatch):
-    payload, _ = repo
+    payload, remote = repo
     monkeypatch.setattr(p, "api", lambda *args: [])
     with pytest.raises(ValueError, match="ATTESTATION_STALE"):
-        p.publish(payload, p.sha(encoded(payload.model_dump())), NOW + timedelta(days=2))
+        p.publish(
+            payload,
+            p.sha(encoded(payload.model_dump())),
+            NOW + timedelta(days=2),
+            journal=remote.parent / "journal",
+        )
 
 
 def test_schema_matches():
@@ -248,7 +262,8 @@ def test_schema_matches():
     )
 
 
-def test_lost_push_reply_recovers_from_a_fresh_runner(repo, monkeypatch, tmp_path):
+@pytest.mark.parametrize("fresh", [False, True])
+def test_lost_push_reply_recovers(repo, monkeypatch, tmp_path, fresh):
     payload, remote = repo
     digest = p.sha(encoded(payload.model_dump()))
     original = p.command
@@ -284,18 +299,19 @@ def test_lost_push_reply_recovers_from_a_fresh_runner(repo, monkeypatch, tmp_pat
             "base": {"ref": "main", "repo": {"full_name": p.REPOSITORY}},
             "draft": True,
             "state": "open",
-            "user": {"login": "github-actions[bot]"},
+            "user": {"login": p.PUBLISHER_LOGIN},
         }
 
     monkeypatch.setattr(p, "api", api)
     monkeypatch.setattr(p, "check_style", lambda module: None)
     monkeypatch.setattr(p, "command", command)
     with pytest.raises(OSError):
-        p.publish(payload, digest, NOW)
-    recovered = tmp_path / "fresh-runner"
-    original(["git", "clone", "--branch", "main", str(remote), str(recovered)])
-    monkeypatch.chdir(recovered)
-    result = p.publish(payload, digest, NOW)
+        p.publish(payload, digest, NOW, journal=remote.parent / "journal")
+    if fresh:
+        recovered = tmp_path / "fresh-runner"
+        original(["git", "clone", "--branch", "main", str(remote), str(recovered)])
+        monkeypatch.chdir(recovered)
+    result = p.publish(payload, digest, NOW, journal=remote.parent / "journal")
     assert result["pullRequest"] == 15 and result["headCommit"] == p.expected_commit(
         payload, digest
     )
@@ -317,8 +333,17 @@ def test_create_response_must_confirm_exact_draft_head(patch):
         "base": {"ref": "main", "repo": {"full_name": p.REPOSITORY}},
         "draft": True,
         "state": "open",
-        "user": {"login": "github-actions[bot]"},
+        "user": {"login": p.PUBLISHER_LOGIN},
         **patch,
     }
     with pytest.raises(ValueError, match="REMOTE_AMBIGUOUS"):
         p.confirm_pr(pr, "a" * 40, created=True)
+
+
+def test_phase_journal_reuses_exact_receipt_and_rejects_conflict(tmp_path):
+    p.record_phase(tmp_path, "commit", {"headCommit": "a" * 40})
+    before = (tmp_path / "commit.json").read_bytes()
+    p.record_phase(tmp_path, "commit", {"headCommit": "a" * 40})
+    assert (tmp_path / "commit.json").read_bytes() == before
+    with pytest.raises(ValueError, match="JOURNAL_CONFLICT"):
+        p.record_phase(tmp_path, "commit", {"headCommit": "b" * 40})

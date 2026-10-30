@@ -58,7 +58,9 @@ supersede the current versioned policy or explicit operator instructions.
   stays isolated and software PASS still awaits independently authenticated review.
   Signed draft publishing: `docs/trusted-publisher-report.md`; require protected-parent
   attestation, exact source, CI and independent `aloycwl` review. Workers never get
-  signing/GitHub credentials; draft publication grants no merge or deployment authority.
+  signing/GitHub credentials. Run publishing locally under its dedicated service,
+  preserve required CI/review, and keep the signing key outside publisher-owned state.
+  Draft publication grants no merge or deployment authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
