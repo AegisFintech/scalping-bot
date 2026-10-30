@@ -1,0 +1,30 @@
+[Unit]
+Description=Read-only bot and distributed research health
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=scalper-harness-health
+Group=scalper-harness-health
+WorkingDirectory=/var/lib/scalper-harness-health
+Environment=HOME=/var/lib/scalper-harness-health
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-harness-health
+ExecStart=/opt/scalper-harness-health/.venv/bin/python -m python.operations.harness_health collect /var/lib/scalper-harness-health/status.json
+UMask=0022
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-harness-health
+InaccessiblePaths=-/root -/run/postgresql -/etc/scalping-bot
+CPUQuota=25%
+MemoryMax=256M
+MemorySwapMax=0
+TasksMax=16
+LimitFSIZE=1M
+TimeoutStartSec=45
+TimeoutStopSec=5
+KillMode=control-group
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

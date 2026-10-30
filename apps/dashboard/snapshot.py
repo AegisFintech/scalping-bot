@@ -15,6 +15,7 @@ from apps.dashboard.command_data import command_data
 from apps.dashboard.flight_view import load_flight_view
 from apps.dashboard.landscape_data import landscape_events
 from apps.dashboard.position_monitor import DecisionViewError, open_position_monitor_view
+from python.operations.harness_health import load as load_harness_health
 
 
 def api_url() -> str:
@@ -41,6 +42,9 @@ def api(path: str) -> dict[str, Any]:
 
 def load_snapshot() -> dict[str, Any]:
     result: dict[str, Any] = {"captured_at": datetime.now(UTC), "warnings": []}
+    result["harness"] = load_harness_health(
+        Path("/var/lib/scalper-harness-health/status.json"), datetime.now(UTC)
+    )
     result["flight"] = load_flight_view(
         Path("/var/lib/scalper-flight/recordings"), datetime.now(UTC)
     )
