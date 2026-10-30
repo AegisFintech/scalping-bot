@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "experiment-execution-probe-1.0",
+  "sourceCommit": "ae9c061a74969ec11867f251ccba2422010c6fb6",
+  "jobs": [
+    {
+      "trialId": "0b3bdf3ec98c7fa6a0aa99773123e43720bbfa538353b01f3b7b2b1a79c27f2f",
+      "status": "CLOSED_NEGATIVE",
+      "receiptSha256": "969f4c4b1f5e8e8198857a3c1fdf68c7947a5d9857f69b53649c1ca34c2a31f0",
+      "resultSha256": "28ea9b43baafdfd1b7e889cac4680b1569dbde29a3e6a23ad499b79148e7887d",
+      "findingSha256": "7a0bbe47bf4328d552300be51a07879ee5ecb19f99901f4c852cb7bf75a0dce4",
+      "measurementValidated": true,
+      "originalQuestionAnswered": false,
+      "closedInWindow": 2,
+      "net": "-1563.3000000000",
+      "signedFees": "-293.9900000000",
+      "duplicateUnchanged": true
+    },
+    {
+      "trialId": "5e0f608151d3f3eac3869f8b2326dceaebc6e2be8003a54f2921e4a9a422b08d",
+      "status": "CLOSED_INCONCLUSIVE",
+      "receiptSha256": "8418312756ac4e8f5c7aab41487435ab82fc6d94590a2803dade062c9bde6548",
+      "resultSha256": "f78f44932f87859e8f4deceae170a62dd7b573c763a428fb8647b66c4b9aa29c",
+      "findingSha256": "298f879c27f50a629328c2f37459524bdde3ca137b5ee5ce81051e05c6cefa15",
+      "measurementValidated": true,
+      "originalQuestionAnswered": false,
+      "closedInWindow": 0,
+      "net": "0",
+      "signedFees": "0",
+      "duplicateUnchanged": true
+    }
+  ],
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "generatedExperimentsEnabled": false,
+  "transfer": {
+    "forcedCommand": true,
+    "forwardingDenied": true
+  },
+  "restart": {
+    "processRestartAfterClaim": true,
+    "unknownPreserved": true,
+    "rerunPrevented": true,
+    "trialId": "0b3bdf3ec98c7fa6a0aa99773123e43720bbfa538353b01f3b7b2b1a79c27f2f",
+    "brokerAuthority": false
+  },
+  "lostReply": {
+    "purpose": "HISTORICAL_NEGATIVE_PACKET_PLUMBING_NOT_ECONOMIC_QUALIFICATION",
+    "trialId": "0b3bdf3ec98c7fa6a0aa99773123e43720bbfa538353b01f3b7b2b1a79c27f2f",
+    "questionId": "2aa10d95288777445b7f2065112cead38e42f24e8ab70cfa4d52c427925f5f4c",
+    "replyDiscarded": true,
+    "windowUntil": "2026-10-30T03:00:00+00:00",
+    "brokerAuthority": false
+  },
+  "transferTiming": {
+    "compressedTransferSeconds": 8.920662006363273,
+    "requestBytes": 875293,
+    "duplicateReturned": true
+  },
+  "uncompressedDuplicateProbeTimedOut": true
+}

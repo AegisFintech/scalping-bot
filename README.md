@@ -104,3 +104,5 @@ The [offline publisher scope policy](docs/publisher-policy-report.md) checks res
 The [broker acknowledgement design](docs/broker-acknowledgement-design.md) describes the demo acknowledgement recorder and its bounded read-only research export; a real acknowledgement remains unverified.
 
 The [exact-head qualification report](docs/exact-head-checks-report.md) records active main protection and its independent-review limitation.
+
+Distributed experiment delivery is tracked in [the execution report](docs/experiment-execution-report.md). Real registered jobs have remote execution/independent-check/closure evidence; periodic activation is recorded separately. Generated strategy improvement remains a separate milestone.

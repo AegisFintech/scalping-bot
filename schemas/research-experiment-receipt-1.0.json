@@ -1,0 +1,123 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "trialId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Trialid",
+      "type": "string"
+    },
+    "status": {
+      "enum": ["FAILED", "RETURNED"],
+      "title": "Status",
+      "type": "string"
+    },
+    "requestSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Requestsha256",
+      "type": "string"
+    },
+    "startedAt": {
+      "title": "Startedat",
+      "type": "string"
+    },
+    "completedAt": {
+      "title": "Completedat",
+      "type": "string"
+    },
+    "registrationSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Registrationsha256",
+      "type": "string"
+    },
+    "claimSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Claimsha256",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "codeBundleSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Codebundlesha256",
+      "type": "string"
+    },
+    "runtimeSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Runtimesha256",
+      "type": "string"
+    },
+    "verifierSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Verifiersha256",
+      "type": "string"
+    },
+    "sourceCommit": {
+      "pattern": "^[a-f0-9]{40}$",
+      "title": "Sourcecommit",
+      "type": "string"
+    },
+    "outputHex": {
+      "maxLength": 131072,
+      "pattern": "^(?:[a-f0-9]{2})*$",
+      "title": "Outputhex",
+      "type": "string"
+    },
+    "exitCode": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Exitcode"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "pattern": "^(?:WORKER|RESEARCH)_[A-Z_]{1,100}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Error"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "trialId",
+    "status",
+    "requestSha256",
+    "startedAt",
+    "completedAt",
+    "registrationSha256",
+    "claimSha256",
+    "packetSha256",
+    "codeBundleSha256",
+    "runtimeSha256",
+    "verifierSha256",
+    "sourceCommit",
+    "outputHex",
+    "exitCode",
+    "error",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "Receipt",
+  "type": "object"
+}

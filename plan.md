@@ -1,3 +1,16 @@
+### ISSUE-450 — Distributed fixed-method experiment execution
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/450; parent #402.
+- Dependencies: merged #448/#449 and isolated worker #421.
+- Acceptance: restricted tc01→tc02 dispatch, pinned source/runtime/input; durable
+  claims, bounded execution, unknown/restart reconciliation; independently validated
+  result, attributed finding and closure; real probe before recurring activation.
+- Status: implemented;111 focused tests and independent reviews pass. All2,258
+  qualification tests/gates and four configuration checks pass. Real remote
+  validation/closure, negative/lost-reply, duplicate and process-restart probes pass.
+  PR #455 delivery and recurring activation follow; no trading change.
+- Evidence: `docs/experiment-execution-report.md`.
+
 ### ISSUE-449 — Frozen hypothesis and job registration
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/449; parent #402.
