@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-30T11:43:22.459723+00:00",
+  "publisherSourceCommit": "80bba4a179dc4b71240b855303a977c894b047ea",
+  "publisherIdentity": "AegisWalletApp",
+  "reviewerIdentity": "aloycwl",
+  "credentialScope": "existing broader repository credential; fixed local service operations",
+  "timer": "120 seconds after the previous run completes",
+  "publisherStatus": {
+    "checkedAt": "2026-10-30T11:41:49.453539+00:00",
+    "headCommit": "a9437ada1f803d45d9a0b6b64dd4274c151c52ab",
+    "pullRequest": 461,
+    "reason": "PUBLICATION_MERGED",
+    "status": "MERGED"
+  },
+  "dashboardPublisher": {
+    "checkedAt": "2026-10-30T11:41:49.453539+00:00",
+    "headCommit": "a9437ada1f803d45d9a0b6b64dd4274c151c52ab",
+    "pullRequest": 461,
+    "reason": "PUBLICATION_MERGED",
+    "status": "MERGED"
+  },
+  "candidateBase": "80bba4a179dc4b71240b855303a977c894b047ea",
+  "candidateHead": "a9437ada1f803d45d9a0b6b64dd4274c151c52ab",
+  "candidateMergeCommit": "d4773e8e0cf84bba21efdd16f59cbe0190f33ac2",
+  "publicationSha256": "ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199",
+  "isolatedCasesPassed": 28,
+  "repositoryTestsPassed": 2366,
+  "finalDocumentationIncluded": true,
+  "hostedCiRuns": [41049198651, 41049188896],
+  "review": "https://github.com/AegisFintech/scalping-bot/pull/461#pullrequestreview-5711686540",
+  "naturalDuplicateReconciliation": true,
+  "matchingRemotePrCount": 1,
+  "failedPublicationPreserved": 459,
+  "publisherRecurring": true,
+  "candidateGenerationRecurring": false,
+  "independentReviewControllerRecurring": false,
+  "brokerAuthority": false,
+  "economicPromotionAuthority": false,
+  "tradingProcessesRestarted": false,
+  "attestedCandidateTree": "8c90b9805c5bcc7405e2ad3fcc67f0b7af770bdd",
+  "publishedCommitTree": "6ffe1abba6acdd0c79409f69cff0cfb8dee3007f",
+  "treeBoundary": "Independent attestation binds research files; trusted publisher adds fixed README/AGENTS metadata."
+}
