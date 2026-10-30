@@ -1,0 +1,27 @@
+{
+  "unprivileged": true,
+  "protectedMirror": true,
+  "inertCandidateNotExecuted": true,
+  "falseByteClaimRejected": true,
+  "receipt": {
+    "schemaVersion": "research-source-verification-1.0",
+    "baseCommit": "e443f309269a6089b0429660a82c30ee833c6162",
+    "baseTree": "5ce077105b9af7533d93053964d75c5e20903f05",
+    "candidateTree": "d4e2ff728a5fe465e03a1f7c4daee65638112377",
+    "proposalSha256": "3e4a8a1b540a076e67d9965926435a238d25b704194f80baea6923918b6fd8af",
+    "bundleSha256": "0c3432af7b401c7604859d30034944fce72b77d10152ebdcbf97326218f95d04",
+    "gitSha256": "356db14e102d68a1a37d8a1ac577dfd678d45d46e92f468bef8b7154e7bfdc60",
+    "prlimitSha256": "06275e616ca2b721482aeb564260489be3fdc6d5f86836b4a78e96485845f060",
+    "sourceBasis": "INDEPENDENTLY_PROVISIONED_LOCAL_MIRROR",
+    "objectBytesVerified": true,
+    "remoteFreshnessAttested": false,
+    "dependencyClosureVerified": false,
+    "testsPassed": false,
+    "brokerAuthority": false,
+    "publishAuthority": false,
+    "mergeAuthority": false
+  },
+  "verifierSourceSha256": "07e6137f5c7778c63ddadd4734562e270e5dc7556022d9054dc6ee10682e18b7",
+  "probeSourceSha256": "42269e2afad66128e0fff17af18cc1b537fe9cb361dc210d68460c09eb0a3bd4",
+  "classification": "SOURCE_BOUNDARY_PROBE_NOT_CANDIDATE_TEST_OR_PUBLISHER_ACTIVATION"
+}

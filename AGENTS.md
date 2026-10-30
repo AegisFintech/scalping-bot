@@ -47,6 +47,8 @@ supersede the current versioned policy or explicit operator instructions.
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.
   Current observation reviews: `docs/current-observation-review-report.md`; verify
   fresh completed windows and findings, not only a running timer. No implicit promotion.
+  Continue the dependency queue in `docs/autonomous-harness-delivery-plan.md`; a
+  prerequisite is not whole-harness completion. Source verification: `docs/source-verifier-report.md`.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
   resource limits in `docs/isolated-worker-report.md`; process exit is not qualification.
 - Economic/entry research: `docs/quantitative-review-426.md`,

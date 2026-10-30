@@ -1,3 +1,9 @@
+### Autonomous harness completion queue — operator approved30 October
+
+- Bounded tasks, dependencies, acceptance and current status: [delivery plan](docs/autonomous-harness-delivery-plan.md).
+- #448 source verifier: implemented, real unprivileged mirror probe and all2,180 checks/tests passed; exact-head GitHub delivery follows. Then #449 registrations → #450 tc02 dispatch/results → #451 independent candidate attestation → #452 publication → existing #403 rollout/dashboard and #431 unattended qualification.
+- Current scheduled observation loop has32 completed reviews and zero recorded failures at the inspected cutoff. No autonomous experiments or publisher are claimed yet. Each issue closes only after its own proof; the parent remains open until the full chain is verified.
+
 ### ISSUE-421 — Credential-free candidate test worker
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/421; parent #401.
