@@ -1,3 +1,16 @@
+### ISSUE-452 — Signed research publication and exact-head independent review
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/452; depends on #448/#451.
+- Acceptance: narrow separate publisher identity, authenticated exact source/test
+  binding, durable commit/push/PR recovery, trusted documentation templates, enforced
+  CI/review, actual research PR and rejected/duplicate/unknown recovery proof.
+- Status: signed draft publisher, GitHub Actions boundary and19 focused tests pass.
+  Full2,351-test qualification, audits/configuration and independent reviews pass.
+  Server review enforcement is active; CODEOWNERS delivery, signer/controller
+  scheduling and real publication proof remain pending. GitHub rejected Actions PR
+  permission with organization-policy HTTP409; no bypass or automatic activation.
+- Evidence: `docs/trusted-publisher-report.md`.
+
 ### ISSUE-431 — Continuous harness health and visible lifecycle
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/431; dashboard portion #403.
@@ -7,7 +20,9 @@
   ownership. Whole-loop publication proof remains dependent on #452.
 - Status: implemented;38 focused tests, browser checks, independent reviews, all2,328
   qualification tests/gates and four configuration checks pass. Restricted reader
-  probe succeeds; reviewed delivery and persistent activation follow.
+  probe succeeds. PR #457 merged after exact-head hosted checks and independent
+  authenticated approval. Monitor and dashboard deployed; natural timer and browser
+  proof pass. Full publication-cycle acceptance remains dependent on #452.
 - Evidence: `docs/harness-health-report.md`.
 
 ### ISSUE-451 — Result-derived candidate code and independent attestation

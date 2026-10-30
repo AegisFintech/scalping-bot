@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-30T10:24:21.806299+00:00",
+  "requiredReviews": 1,
+  "dismissStaleReviews": true,
+  "requireCodeOwnerReviews": true,
+  "requireLastPushApproval": true,
+  "enforceAdmins": true,
+  "strictExactHeadCheck": true,
+  "reviewer": "aloycwl",
+  "codeownersFileMerged": false,
+  "publisherActivated": false
+}

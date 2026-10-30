@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "signed-research-publication-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "authority": {
+      "const": "DRAFT_ONLY",
+      "title": "Authority",
+      "type": "string"
+    },
+    "baseCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Basecommit",
+      "type": "string"
+    },
+    "trialId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Trialid",
+      "type": "string"
+    },
+    "resultSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Resultsha256",
+      "type": "string"
+    },
+    "findingSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Findingsha256",
+      "type": "string"
+    },
+    "code": {
+      "maxLength": 6000,
+      "minLength": 1,
+      "title": "Code",
+      "type": "string"
+    },
+    "attestation": {
+      "additionalProperties": true,
+      "title": "Attestation",
+      "type": "object"
+    }
+  },
+  "required": [
+    "version",
+    "authority",
+    "baseCommit",
+    "trialId",
+    "resultSha256",
+    "findingSha256",
+    "code",
+    "attestation"
+  ],
+  "title": "Publication",
+  "type": "object"
+}
