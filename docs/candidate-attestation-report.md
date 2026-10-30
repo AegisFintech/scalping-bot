@@ -81,3 +81,13 @@ its base requires fresh verification after main advances. The separate reviewer
 The operator selected local publishing after GitHub rejected Actions PR creation.
 #451/#452 stay open until an actual source-bound published candidate receives
 independent authenticated review; infrastructure delivery alone is insufficient.
+
+## First candidate delivered
+
+The corrected local publisher delivered fresh, independently attested and reviewed
+[PR #461](https://github.com/AegisFintech/scalping-bot/pull/461), merged d4773e8.
+The candidate source, final metadata, full qualification and review are bound in
+[the rollout receipt](evidence/local-publisher-rollout.json). Earlier unsuccessful
+publication #459 and all original model responses remain preserved. This completes
+this bounded candidate acceptance; recurring generation/review and economic
+qualification remain separate work. Memory is not model training.

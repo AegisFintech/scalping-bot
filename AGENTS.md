@@ -61,7 +61,9 @@ supersede the current versioned policy or explicit operator instructions.
   signing/GitHub credentials. Run publishing locally under its dedicated service,
   preserve required CI/review, and keep the signing key outside publisher-owned state.
   Check final generated documentation with the real formatter; preserve existing
-  publication heads when repairing templates. Drafts grant no merge/deploy authority.
+  publication heads when repairing templates. The recorded-payoff task is delivered;
+  do not regenerate it. Recurring generation/review remains separate pending work.
+  Drafts grant no merge/deploy authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate

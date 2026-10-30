@@ -163,3 +163,33 @@ gates/audits and four configuration checks pass. A real read-only GitHub probe w
 the corrected source reconciled closed PR #459 to its unchanged1452f8dd head.
 Graphify updated14,759 nodes /24,358 edges /870 communities; the existing pyproject
 zero-node warning remains. [Correction receipt](evidence/publisher-format-validation.json).
+
+## Verified local delivery —30 October11:42 UTC
+
+The operator-selected local route is active. PR #460 merged80bba4a and its
+publisher source was deployed without restarting trading services. A new candidate
+was generated against that main, normalized before freezing, independently verified
+and passed28 fresh tc02 cases. The local timer committed, pushed and created
+[PR #461](https://github.com/AegisFintech/scalping-bot/pull/461), heada9437ada.
+The attested candidate tree excludes trusted README/AGENTS metadata; the rollout
+receipt records that tree separately from the final published commit tree.
+All four final files, including trusted metadata, matched the local projection that
+passed2,366 tests and every required gate. Both hosted runs verified that exact head
+and passed; the separate aloycwl identity submitted the explicitly automated,
+operator-authorized independent review. The PR merged asd4773e8.
+
+Natural later runs reconciled the existing PR without duplicates and observed
+MERGED at11:41:49 UTC; the dashboard monitor read the same result. The failed PR
+#459, its closed publication outcome, original generations and all receipts remain
+preserved. Its failure was never counted as a passing final-artifact qualification.
+[Rollout receipt](evidence/local-publisher-rollout.json) and
+[final candidate qualification](evidence/payoff-candidate-validation.json).
+
+This completes #451's first independently checked/reviewed candidate and #452's
+bounded local publishing route. The root-controlled generation, signing and final
+review steps in this demonstration were operator-directed; their recurring
+controllers are not yet implemented. #431 still needs the fully unattended natural
+cycle and #403 retains the remaining integrated/qualified-rollout acceptance.
+No improved trading returns, economic activation or complete self-improvement loop
+is claimed. Existing reviewer/CI requirements stay in place; no Actions publishing
+permission or organization-policy change was needed.

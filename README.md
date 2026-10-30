@@ -1,4 +1,4 @@
-Local signed draft publication, formatter checks and independent review: [publisher boundary](docs/trusted-publisher-report.md).
+Local publishing is active; the first independently reviewed research module is merged. Evidence: [publisher boundary](docs/trusted-publisher-report.md).
 
 Implementation queue: [autonomous harness delivery plan](docs/autonomous-harness-delivery-plan.md), with bounded tasks and an explicit full-cycle completion test.
 

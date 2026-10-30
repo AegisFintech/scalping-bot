@@ -4,14 +4,12 @@
 - Acceptance: narrow separate publisher identity, authenticated exact source/test
   binding, durable commit/push/PR recovery, trusted documentation templates, enforced
   CI/review, actual research PR and rejected/duplicate/unknown recovery proof.
-- Status: local publisher PR #458 merged64078f4; timer active and actual signed
-  candidate PR #459 created, but hosted formatting rejected trusted metadata.
-  The pre-publication local suite did not cover that final README/AGENTS projection.
-  Repair adds actual formatter checks and exact legacy-head reconciliation;34 focused
-  tests, all2,366 qualification tests/gates, four config checks and independent reviews
-  pass. Real legacy PR recovery passes. No failed head is merged or rewritten.
-  Runtime-link ignore setup is documented; reviewed correction delivery follows.
-  Actual passing candidate delivery and full unattended-loop proof remain open.
+- Status: complete for the bounded local publishing scope. PR #458 and correction
+  #460 merged/deployed; real generated candidate PR #461 passed28 isolated cases,
+  all2,366 final-artifact tests/gates, four config checks, both hosted exact-head
+  runs and separate aloycwl approval, then merged. Natural duplicate/merged
+  reconciliation and dashboard readback pass. Failed PR #459 remains preserved.
+  Recurring generation/review and full unattended-cycle proof remain #431/#403.
 - Evidence: `docs/trusted-publisher-report.md`.
 
 ### ISSUE-431 — Continuous harness health and visible lifecycle
@@ -25,7 +23,8 @@
   qualification tests/gates and four configuration checks pass. Restricted reader
   probe succeeds. PR #457 merged after exact-head hosted checks and independent
   authenticated approval. Monitor and dashboard deployed; natural timer and browser
-  proof pass. Full publication-cycle acceptance remains dependent on #452.
+  proof pass. Local publication is now delivered; recurring generation/review and
+  natural whole-cycle acceptance remain pending.
 - Evidence: `docs/harness-health-report.md`.
 
 ### ISSUE-451 — Result-derived candidate code and independent attestation
@@ -35,9 +34,10 @@
 - Acceptance: result-derived scoped patch, exact source/dependency validation,
   independent immutable checks, separately authenticated source/result-bound review;
   actual qualified candidate without publisher credentials in research workers.
-- Status: generation and independent software checks implemented; all2,290 tests/gates,
-  configuration checks, independent reviews and real positive/rejected probes pass. Separate authenticated review/publication remains
-  explicit; no recurring generator or publisher is claimed active.
+- Status: complete for the first bounded candidate task. Fresh result-derived code
+  was independently source-verified, tested in tc02 isolation, published by the
+  local timer and independently reviewed/merged in PR #461. All attempts/failures
+  remain archived; no recurring generation or economic promotion is implied.
 - Evidence: `docs/candidate-attestation-report.md`.
 
 ### ISSUE-450 — Distributed fixed-method experiment execution
@@ -71,7 +71,7 @@
 
 - Bounded tasks, dependencies, acceptance and current status: [delivery plan](docs/autonomous-harness-delivery-plan.md).
 - #448 source verifier: merged in PR #453 after both exact-head checks passed; issue closed. Real unprivileged mirror probe and all2,180 tests/gates passed. Then #449 registrations → #450 tc02 dispatch/results → #451 independent candidate attestation → #452 publication → existing #403 rollout/dashboard and #431 unattended qualification.
-- Current scheduled observation loop has32 completed reviews and zero recorded failures at the inspected cutoff. No autonomous experiments or publisher are claimed yet. Each issue closes only after its own proof; the parent remains open until the full chain is verified.
+- Historical baseline before #450:32 completed scheduled observation reviews and zero recorded failures at that cutoff. Experiments and publishing were not yet active then. Current delivery is recorded above; the parent remains open until the full unattended chain is verified.
 
 ### ISSUE-421 — Credential-free candidate test worker
 
