@@ -1,0 +1,11 @@
+[Unit]
+Description=Reconcile signed research publications locally
+
+[Timer]
+OnBootSec=90s
+OnUnitInactiveSec=120s
+AccuracySec=5s
+Unit=scalper-research-publisher.service
+
+[Install]
+WantedBy=timers.target

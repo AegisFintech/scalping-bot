@@ -234,3 +234,26 @@ it("binds dashboard HTML and CSS to qualification while leaving documentation ex
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+it.each([
+  "policy/research-publisher-signers",
+  ".github/CODEOWNERS",
+  ".githooks/pre-push",
+  "systemd/monitor.service",
+])(
+  "binds authority/configuration file %s regardless of extension",
+  async (name) => {
+    const root = mkdtempSync(path.join(tmpdir(), "authority-source-"));
+    try {
+      expect(spawnSync("git", ["init", "-q", root]).status).toBe(0);
+      const file = path.join(root, name);
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, "trusted first version\n");
+      const before = await sourceFingerprint(root);
+      writeFileSync(file, "changed authority\n");
+      expect(await sourceFingerprint(root)).not.toBe(before);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+);

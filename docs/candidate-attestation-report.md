@@ -36,11 +36,11 @@ can be published. Original trusted tests continue to run normally.
 
 ## Delivery and activation limits
 
-GitHub main currently requires exact-head CI but zero review approvals. The available
-operator identity is not a separately provisioned publisher/reviewer pair. A scheduled
-publisher must remain disabled until the independent review and narrow credential
-boundary are enforceable. The candidate checker does not claim that boundary exists.
-No new recurring generation timer or demo economic change is activated by this batch.
+The original candidate probe preceded separate publisher/reviewer discovery.
+Current server review enforcement and the operator-selected local publisher are
+recorded in [the publisher report](trusted-publisher-report.md). The researcher
+still has no GitHub or signing credentials. No recurring candidate-generation timer
+or economic promotion is activated by the attestation library itself.
 
 ## Validation
 
@@ -76,8 +76,8 @@ Only the structured result was accepted:94.97 winning net,−1658.27 losing net,
 two-close packet is a software qualification input, not a new performance study.
 
 The candidate remains `AWAITING_INDEPENDENT_REVIEW`. It is not published or merged;
-its base will require fresh verification after main advances. The operator designated
-`aloycwl` as reviewer, but only `AegisWalletApp` is authenticated locally. No App
-credential is configured, and installed-App enumeration returns HTTP403. #451/#452
-remain open for the authenticated review/publisher boundary. The four-item queue
-remains open until each issue's complete acceptance is evidenced.
+its base requires fresh verification after main advances. The separate reviewer
+`aloycwl` is now verified on tc01, while the local publisher uses `AegisWalletApp`.
+The operator selected local publishing after GitHub rejected Actions PR creation.
+#451/#452 stay open until an actual source-bound published candidate receives
+independent authenticated review; infrastructure delivery alone is insufficient.

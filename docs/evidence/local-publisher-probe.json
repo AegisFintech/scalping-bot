@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-30T10:56:38.618320+00:00",
+  "staleSignedRequest": {
+    "checkedAt": "2026-10-30T10:56:16.660508+00:00",
+    "headCommit": null,
+    "pullRequest": null,
+    "reason": "PUBLICATION_MAIN_DRIFT",
+    "status": "BLOCKED"
+  },
+  "timerEnabled": false,
+  "brokerCommands": 0,
+  "providerCalls": 0,
+  "remotePublicationWrites": 0,
+  "recoveredIdle": {
+    "checkedAt": "2026-10-30T10:56:39.276706+00:00",
+    "headCommit": null,
+    "pullRequest": null,
+    "reason": "PUBLICATION_QUEUE_EMPTY",
+    "status": "IDLE"
+  },
+  "signingKeyUnreadable": true,
+  "sourceNotWritable": true
+}

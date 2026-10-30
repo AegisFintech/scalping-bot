@@ -56,6 +56,11 @@ supersede the current versioned policy or explicit operator instructions.
   receipts rather than equating timer success with strategy improvement.
   Result-derived candidates: `docs/candidate-attestation-report.md`; generated code
   stays isolated and software PASS still awaits independently authenticated review.
+  Signed draft publishing: `docs/trusted-publisher-report.md`; require protected-parent
+  attestation, exact source, CI and independent `aloycwl` review. Workers never get
+  signing/GitHub credentials. Run publishing locally under its dedicated service,
+  preserve required CI/review, and keep the signing key outside publisher-owned state.
+  Draft publication grants no merge or deployment authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
@@ -107,7 +112,8 @@ supersede the current versioned policy or explicit operator instructions.
 - Push coherent issue branches and create/update PRs; independent review and
   passing exact-head hosted checks precede authorized merge/deploy. Respect branch
   protection, hooks and failed checks; see `docs/exact-head-checks-report.md`.
-  Verify deployed artifact, broker/account state and background services afterward.
+  Verify deployed artifact, actual process cwd/arguments, broker/account state and
+  background services afterward; PM2 restart can retain an old cwd.
   Report exact blockers; never leave completed work unpushed without explaining why.
 - For codebase questions, query an existing Graphify graph first; use its wiki for
   navigation and query/path/explain for relationships. Dirty graph output is expected.

@@ -82,3 +82,27 @@ No reader access to recorder credentials or the broker database was granted.
 The first failure-probe write found a root-owned temporary test directory; ownership
 was corrected before repeating it. This was probe provisioning, not a trading fault.
 Runtime activation and natural timer evidence are recorded after reviewed delivery.
+
+## Reviewed activation
+
+PR457 merged as `4af946bf3af36878624d006fb7ac21b1ef391ab4` after both hosted
+runs passed the exact head and `aloycwl` submitted the authorized automated review.
+The first artifact preparation rejected worktree dependency symlinks; preparing
+from the clean primary checkout passed. PM2 restart updated arguments but retained
+its old cwd; replacing only the dashboard process corrected the deployment.
+The four trading/dependency PIDs stayed unchanged. The verified dashboard artifact
+is `health431-main`; broker execution remains `predispatch434-r2-main`.
+
+The systemd health timer is enabled and its natural10:10:32 and10:11:32 UTC runs
+completed successfully. A live Chromium check confirmed five stages and keyboard
+panel opening without browser errors. Its first probe incorrectly waited for
+visibility inside the initially collapsed disclosure; waiting for attachment then
+opening the disclosure passed. Missing/stale Flight projections remain explicit;
+a publisher receipt is correctly unavailable until #452 activation.
+[Rollout receipt](evidence/harness-health-rollout.json).
+
+Rollback restores only the previous dashboard artifact (replace its PM2 process,
+verify cwd, save the dump) and disables this monitor timer. The old dashboard
+artifact remains intact and no broker/risk/accounting migration occurred. Boot
+configuration is saved; no actual machine reboot was performed. Full unattended
+publication and economically qualified rollout remain open.

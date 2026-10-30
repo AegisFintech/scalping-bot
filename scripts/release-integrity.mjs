@@ -63,7 +63,9 @@ export async function sourceFingerprint(root) {
       !/\.(?:ts|mts|cts|js|mjs|cjs|css|html|json|ya?ml|py|sql|lock|in|sh|toml)$/.test(
         file,
       ) &&
-      !file.startsWith("prompts/") &&
+      !["prompts/", "policy/", ".github/", ".githooks/", "systemd/"].some(
+        (prefix) => file.startsWith(prefix),
+      ) &&
       file !== ".env.sample"
     )
       continue;
