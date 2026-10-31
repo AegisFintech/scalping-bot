@@ -1,0 +1,17 @@
+[
+  {
+    "publicationSha256": "ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199",
+    "version": "signed-research-publication-1.0",
+    "headCommit": "a9437ada1f803d45d9a0b6b64dd4274c151c52ab"
+  },
+  {
+    "publicationSha256": "98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639",
+    "version": "signed-research-publication-1.1",
+    "headCommit": "c709f306cd3bf05285881d085c0667c80ae91b77"
+  },
+  {
+    "publicationSha256": "2b95c24a3f6b273c3f5661ec5b53191f48d0a3d3244e9d58ae424b0e5892b303",
+    "version": "signed-research-publication-1.1",
+    "headCommit": "ec71b33a9431deb89f6647b4b933567294625b88"
+  }
+]

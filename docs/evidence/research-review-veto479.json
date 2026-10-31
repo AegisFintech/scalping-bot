@@ -1,0 +1,17 @@
+{
+  "job": "c3e9974441781e4895d1ac96438f6f7dc6b2267cc556bca359321d09a994f174",
+  "review": {
+    "axis": "standards",
+    "decision": "REQUEST_CHANGES",
+    "economicQualification": false,
+    "findings": [
+      "recorded_holding_payoff.py: _parse and report convert unrestricted input strings with int(); valid inputs exceeding Python's default integer-string conversion limit can raise ValueError. _add and _loss_ratio also construct powers of ten proportional to unrestricted decimal scales, without a resource bound. Establish an explicit supported input-size",
+      "and computation budget consistent with the contract, with controlled handling of oversized inputs rather than interpreter-dependent failures."
+    ],
+    "headCommit": "ec71b33a9431deb89f6647b4b933567294625b88",
+    "publicationSha256": "2b95c24a3f6b273c3f5661ec5b53191f48d0a3d3244e9d58ae424b0e5892b303",
+    "rationale": "Exact integer-based decimal arithmetic, HALF_EVEN rounding, unknown counts and separate fee totals otherwise appear consistent with the supplied contract. The unrestricted numeric conversions and scale-dependent allocations leave a substantive bounded-computation finding. No tools or execution were used.",
+    "version": "research-source-review-1.0"
+  },
+  "status": "REVIEWED"
+}
