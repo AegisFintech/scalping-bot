@@ -5,7 +5,7 @@ account and deployment; real-money live execution is disabled by default.
 
 Scheduled research has reached an independently reviewed draft; its veto and exhausted
 batch are retained. [Verified activation and remaining work](docs/research-pipeline-activation-report.md),
-[bounded input repair](docs/research-input-domain-report.md), and
+[installed bounded input repair](docs/research-input-domain-report.md#reviewed-activation), and
 [implementation queue](docs/autonomous-harness-delivery-plan.md).
 
 The isolated research harness reports failed tool results separately from findings;

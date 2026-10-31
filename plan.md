@@ -11,8 +11,11 @@
   all2,509 tests/gates/audits and four config checks pass. Actual signed1.0/1.1
   payloads retain exact original commits; 20,000-row and oversized-boundary cases
   pass. Actual negative-review service restart preserves one claim/response and
-  all immutable bytes. Reviewed pushed delivery/activation follows. #479 veto and
-  original four attempts remain intact; corrective allowance is pending operator decision.
+  all immutable bytes. PR #481 merged `7ba0c3b` after exact-head CI/separate approval;
+  matching research-only activation verifies334 runtime files on each machine and
+  actual28-case/20,000-row tc02 namespace PASS. Code/activation acceptance complete.
+  #479 veto and all four attempts remain intact; new allowance decision stays pending
+  under #466. No successful natural merge/economic qualification is claimed.
 - Evidence: `docs/research-input-domain-report.md` and
   `docs/research-pipeline-activation-report.md`.
 
@@ -38,6 +41,10 @@
 
 ### ISSUE-474 — Convergent import preparation before attestation
 
+- Activation: PR #475 / `7786c38` deployed and exercised in subsequent signed/CI-passing
+  candidates; receiver HOME/cache acknowledgement verified. Acceptance complete;
+  old failed publication/source/claims remain in audited quarantine.
+
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/474; follows #472/#466.
 - Acceptance: trusted import-only normalization precedes formatting, source
   verification, namespace testing and signing; preserve original/final byte binds,
@@ -56,6 +63,10 @@
 
 ### ISSUE-472 — Repair first-cycle research operational blockers
 
+- Activation: PR #473 / `48e2f4f` deployed across research roles; real generation/
+  signing confirms private CLI state, exact imports and bounded-question WAITING.
+  All425 prior files/approved fixed config unchanged. Acceptance complete.
+
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/472; follows #466.
 - Acceptance: persist private parent HOME/GH_CONFIG_DIR under existing protected
   state; preserve home blocking, empty capabilities and credential separation.
@@ -69,8 +80,8 @@
   Actual restricted parent preflight passed with private HOME after reproducing
   config access failure. Both independent reviews approve; all2,493 tests/gates,
   four configuration checks and111 focused tests pass. Separate real namespace
-  rejection/interruption/restart proof passes with no provider calls. Reviewed
-  pushed delivery and matching new source/oracle deployment follow.
+  rejection/interruption/restart proof passes with no provider calls. PR #473 merged,
+  matching deployment is verified; current compatible roles are in the activation report.
 - Evidence: `docs/research-operational-waits-report.md`.
 
 ### ISSUE-466 — Delivery lineage and independent recorder health
@@ -84,10 +95,11 @@
   independent review, full qualification and reviewed pushed delivery required.
 - Status: implemented; both independent reviews approve, all2,488 tests/gates/audits
   and four configuration checks pass;85 focused tests and fixture browser checks
-  pass. Natural scheduled cycle and restart/remote-failure proof remain separate
-  acceptance under this issue; #403 economic rollout is unqualified. No new timer
-  activated yet. #465 PR #470 merged cff21ef after both exact-head CI runs and
-  separate approval; matching installation follows this visibility delivery.
+  pass. PR #471 is deployed with actual browser/recorder readback; all research
+  timers are active. Scheduled generation reached the retained #479 model veto;
+  actual namespace interruption and negative-review restart/dedup proof pass.
+  Successful natural merge/merged lineage remain pending the corrective allowance;
+  #403 economic rollout remains unqualified. See the current activation report.
 - Evidence: `docs/research-delivery-report.md`.
 
 ### ISSUE-465 — Independent local research review and guarded delivery
@@ -101,13 +113,18 @@
 - Status: implemented; both independent reviews, all2,474 tests/gates/audits and
   four configuration checks pass. Actual systemd model/credential boundary probe
   passes. Disk reserve recovered with verified cache/runtime cleanup; unchanged
-  source rerun passes. Reviewed pushed delivery follows; no reviewer timer activated.
-  #464 PR #469 merged fba83e1 after exact-head CI and separate approval. Generation
-  remains disabled until this controller is installed; actual #464/#465 scheduled
-  evidence and #466 natural-cycle/dashboard proof remain pending.
+  source rerun passes. PR #470 is merged/deployed; the enabled local timer made one
+  actual tool-disabled review, retained REQUEST_CHANGES and proved restart without
+  duplicate inference or transition claims. Positive API approval/merge transitions
+  remain pending #466; the veto is not treated as a controller failure.
 - Evidence: `docs/research-reviewer-report.md`.
 
 ### ISSUE-464 — Scheduled holding-time generation and signing
+
+- Activation: normal timers performed four bounded generations, independent real
+  namespace checks, protected signing and automatic #476/#479 draft delivery.
+  Scheduled generation/signing acceptance complete; actual veto and exhausted
+  batch retained. Successful review-to-merge remains #465/#466.
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/464; depends #463 and
   merged foundation PR #468 / b603abb.
@@ -118,9 +135,9 @@
   tests, independent review/full gates and actual scheduled activation.
 - Status: implemented; both independent reviews, all2,449 full tests/gates/audits
   and four configuration checks pass;55 focused foundation/handoff tests pass.
-  Reviewed pushed delivery/activation follows. No new timer activated yet.
-  Foundation publisher contract is deployed and existing publication reconciles MERGED.
-  #465 review scheduling and #466 natural full-cycle proof remain separate.
+  PR #469 is merged/deployed; actual scheduled selection, generation, tc02 checks,
+  protected signing and draft delivery are verified. This issue's signing acceptance
+  is complete. Positive review/merge remains #465/#466; all four attempts stay recorded.
 - Evidence: `docs/holding-pipeline-report.md`.
 
 ### ISSUE-464 — Holding-time research contract and independent checks
@@ -134,8 +151,9 @@
   four configuration checks pass. Real recorded-archive and signed1.0 compatibility
   probes pass. PR #468 merged b603abb after both exact-head hosted checks and separate
   aloycwl approval. Publisher-only activation passed; existing publication remains MERGED.
-  Scheduling, remote handoff and actual unattended proof remain part of open #464;
-  this batch enables no timer, provider request, strategy change or broker mutation.
+  This foundation enabled no timer/provider/trading change at source delivery.
+  Subsequent #469 scheduling/signing acceptance is now verified above; full successful
+  natural review/merge remains #466, with no economic activation.
 - Evidence: `docs/holding-research-report.md`.
 
 ### ISSUE-463 — Independent-review admission evidence

@@ -50,6 +50,8 @@ supersede the current versioned policy or explicit operator instructions.
   Actual activation/veto: `docs/research-pipeline-activation-report.md`. Input domain:
   `docs/research-input-domain-report.md`; preserve rejected reviews and exhausted
   batches; a new allowance needs separate registration, never a ledger reset.
+  #480 is installed on research roles; the original holding batch remains spent.
+  Its pending corrective allowance is separate from ordinary demo readiness.
   Continue the dependency queue in `docs/autonomous-harness-delivery-plan.md`; a
   prerequisite is not whole-harness completion. Source verification: `docs/source-verifier-report.md`.
   Freeze exploratory jobs using `docs/experiment-registration-report.md`; unknown
