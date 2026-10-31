@@ -12,6 +12,7 @@ from typing import Any
 
 from python.operations import research_publisher as publisher
 from python.operations.harness_health import PublisherHealth
+from python.research.codex_loop import timestamp
 from python.research.learning_archive import atomic_bytes, bounded, immutable
 from python.research.learning_evidence import encoded
 
@@ -19,6 +20,60 @@ ROOT = Path("/var/lib/scalper-publisher")
 QUEUE = Path("/var/lib/scalper-publisher-queue")
 ARTIFACT = Path("/opt/scalper-publisher")
 MAX_JOBS = 4
+
+
+def review_status(number: int, head: str) -> dict[str, str]:
+    """Observe prerequisites; only the separate review controller may advance a PR."""
+    checks = publisher.api(f"commits/{head}/check-runs?per_page=100")
+    count = checks.get("total_count")
+    runs = checks.get("check_runs")
+    if type(count) is not int or not isinstance(runs, list) or count != len(runs) or count > 100:
+        raise ValueError("PUBLICATION_CHECKS_INCOMPLETE")
+    required = [r for r in runs if r.get("name") == "qualify-exact-head"]
+    for run in required:
+        if run.get("head_sha") != head or run.get("app", {}).get("id") != 15368:
+            raise ValueError("PUBLICATION_CHECK_IDENTITY_MISMATCH")
+        if run.get("status") not in {"queued", "in_progress", "completed"}:
+            raise ValueError("PUBLICATION_CHECK_STATE_UNKNOWN")
+    if any(r.get("status") == "completed" and r.get("conclusion") != "success" for r in required):
+        return {"status": "BLOCKED", "reason": "PUBLICATION_CI_FAILED"}
+    if not required or any(r.get("status") != "completed" for r in required):
+        return {"status": "CHECKING", "reason": "PUBLICATION_CI_PENDING"}
+    reviews = publisher.api(f"pulls/{number}/reviews?per_page=100")
+    if not isinstance(reviews, list) or len(reviews) >= 100:
+        raise ValueError("PUBLICATION_REVIEWS_INCOMPLETE")
+    binding = []
+    for review in reviews:
+        if review.get("user", {}).get("login") != "aloycwl" or review.get("commit_id") != head:
+            continue
+        state = review.get("state")
+        if state in {"COMMENTED", "PENDING"}:
+            continue
+        if state not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
+            raise ValueError("PUBLICATION_REVIEW_STATE_UNKNOWN")
+        if type(review.get("id")) is not int or review["id"] <= 0:
+            raise ValueError("PUBLICATION_REVIEW_ID_INVALID")
+        if not isinstance(review.get("submitted_at"), str):
+            raise ValueError("PUBLICATION_REVIEW_TIME_INVALID")
+        try:
+            submitted = timestamp(review["submitted_at"])
+        except ValueError:
+            raise ValueError("PUBLICATION_REVIEW_TIME_INVALID") from None
+        if submitted > datetime.now(UTC):
+            raise ValueError("PUBLICATION_REVIEW_TIME_INVALID")
+        binding.append((submitted, review))
+    if len({r["id"] for _, r in binding}) != len(binding):
+        raise ValueError("PUBLICATION_REVIEW_ID_CONFLICT")
+    last_time = max((t for t, _ in binding), default=None)
+    last_reviews = [r for t, r in binding if t == last_time]
+    if len({r["state"] for r in last_reviews}) > 1:
+        raise ValueError("PUBLICATION_REVIEW_ORDER_AMBIGUOUS")
+    latest = last_reviews[0] if last_reviews else None
+    if latest is not None and latest["state"] == "CHANGES_REQUESTED":
+        return {"status": "BLOCKED", "reason": "PUBLICATION_CHANGES_REQUESTED"}
+    if latest is not None and latest["state"] == "APPROVED":
+        return {"status": "CHECKING", "reason": "PUBLICATION_INDEPENDENT_REVIEW_APPROVED"}
+    return {"status": "AWAITING_REVIEW", "reason": "PUBLICATION_INDEPENDENT_REVIEW_REQUIRED"}
 
 
 def protected(path: Path) -> None:
@@ -102,7 +157,7 @@ def process(request: Path, root: Path, artifact: Path, now: datetime) -> dict[st
         result = publisher.publish(payload, digest, now, journal=job / "phases")
     finally:
         os.chdir(previous)
-    return {
+    observation = {
         "status": "MERGED"
         if result["remoteState"] == "MERGED"
         else "BLOCKED"
@@ -112,6 +167,9 @@ def process(request: Path, root: Path, artifact: Path, now: datetime) -> dict[st
         "pullRequest": result["pullRequest"],
         "headCommit": result["headCommit"],
     }
+    if result["remoteState"] == "OPEN":
+        observation.update(review_status(result["pullRequest"], result["headCommit"]))
+    return observation
 
 
 def error_code(error: Exception) -> str:
@@ -138,7 +196,7 @@ def cycle(root: Path, queue: Path, artifact: Path, now: datetime) -> PublisherHe
         except Exception as error:
             observations.append({"status": "BLOCKED", "reason": error_code(error)})
     # One failure remains visible even if another job is awaiting review or merged.
-    priority = {"BLOCKED": 0, "AWAITING_REVIEW": 1, "MERGED": 2}
+    priority = {"BLOCKED": 0, "CHECKING": 1, "AWAITING_REVIEW": 2, "MERGED": 3}
     result = (
         min(observations, key=lambda item: priority[item["status"]])
         if observations
