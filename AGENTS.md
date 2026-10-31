@@ -63,6 +63,8 @@ supersede the current versioned policy or explicit operator instructions.
   Check final generated documentation with the real formatter; preserve existing
   publication heads when repairing templates. The recorded-payoff task is delivered;
   do not regenerate it. Recurring generation/review remains separate pending work.
+  Holding-time research: `docs/holding-research-report.md`; preserve unknown clocks,
+  full cohorts and separate version1.1; elapsed holding time proves no earlier exit.
   Review admission: `docs/review-admission-report.md`; missing/failed CI and stale
   approvals never authorize advancement. Drafts grant no merge/deploy authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status

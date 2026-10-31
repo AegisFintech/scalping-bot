@@ -10,10 +10,11 @@ import subprocess
 import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import Field, model_validator
 
+from python.research import holding_task as holding
 from python.research.candidate_attestation import TASK, Draft, candidate_files
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.experiment_registry import read
@@ -30,6 +31,10 @@ MAX_REQUEST = 32768
 
 
 class Publication(StrictModel):
+    module: ClassVar[str] = "python/research/experiments/recorded_payoff.py"
+    message: ClassVar[str] = "research: independently checked recorded payoff audit"
+    title: ClassVar[str] = "Research: independently checked recorded payoff audit"
+    issue: ClassVar[str] = "#451/#452"
     version: Literal["signed-research-publication-1.0"]
     authority: Literal["DRAFT_ONLY"]
     baseCommit: GitId
@@ -52,86 +57,153 @@ class Publication(StrictModel):
 
     @model_validator(mode="after")
     def binding(self) -> Publication:
-        receipt = self.attestation
-        fields = {
-            "task",
-            "source",
-            "resultSha256",
-            "findingSha256",
-            "runtimeSha256",
-            "verifierSha256",
-            "oracleSha256",
-            "inputSha256",
-            "outputSha256",
-            "expectedSha256",
-            "caseCount",
-            "completedAt",
-            "status",
-            "softwareTestsPassed",
-            "independentReview",
-            "actualReport",
-            "economicQualification",
-            "publishAuthority",
-            "brokerAuthority",
-        }
-        if set(receipt) != fields or receipt["independentReview"] is not None:
-            raise ValueError("PUBLICATION_ATTESTATION_FIELDS")
-        report = receipt["actualReport"]
-        counts = {
-            "rows",
-            "knownNet",
-            "unknownNet",
-            "wins",
-            "losses",
-            "flat",
-            "knownFees",
-            "unknownFees",
-        }
-        amounts = {"net", "signedFees", "winningNet", "losingNet", "lossPerAverageWin"}
-        if not isinstance(report, dict) or set(report) != counts | amounts | {
-            "counterfactualNet",
-            "economicQualification",
-        }:
-            raise ValueError("PUBLICATION_REPORT_FIELDS")
-        if any(type(report[k]) is not int or not 0 <= report[k] <= 100000 for k in counts):
-            raise ValueError("PUBLICATION_REPORT_COUNT")
-        for key in amounts:
-            value = report[key]
-            if key == "lossPerAverageWin" and value is None:
-                continue
-            if not isinstance(value, str) or not re.fullmatch(
-                r"-?[0-9]{1,100}(?:\.[0-9]{1,100})?", value
-            ):
-                raise ValueError("PUBLICATION_REPORT_AMOUNT")
-        if report["counterfactualNet"] is not None or report["economicQualification"] is not False:
-            raise ValueError("PUBLICATION_REPORT_AUTHORITY")
-        source = SourceReceipt.model_validate(receipt.get("source"))
-        if (
-            source.baseCommit != self.baseCommit
-            or source.bundleSha256 != bundle_digest(self.files())
-            or receipt.get("task") != TASK
-            or receipt.get("resultSha256") != self.resultSha256
-            or receipt.get("findingSha256") != self.findingSha256
-            or receipt.get("softwareTestsPassed") is not True
-            or receipt.get("status") != "AWAITING_INDEPENDENT_REVIEW"
-            or receipt.get("caseCount") != 28
-            or receipt.get("publishAuthority") is not False
-            or receipt.get("brokerAuthority") is not False
-            or receipt.get("economicQualification") is not False
-        ):
-            raise ValueError("PUBLICATION_ATTESTATION_BINDING")
-        for key in [
-            "runtimeSha256",
-            "verifierSha256",
-            "oracleSha256",
-            "inputSha256",
-            "outputSha256",
-            "expectedSha256",
-        ]:
-            if not re.fullmatch(r"[a-f0-9]{64}", str(receipt.get(key))):
-                raise ValueError("PUBLICATION_ATTESTATION_DIGEST")
-        timestamp(receipt["completedAt"])
+        validate_receipt(self, TASK)
+        validate_payoff_report(self.attestation["actualReport"])
         return self
+
+
+class HoldingPublication(StrictModel):
+    version: Literal["signed-research-publication-1.1"]
+    authority: Literal["DRAFT_ONLY"]
+    baseCommit: GitId
+    trialId: Digest
+    resultSha256: Digest
+    findingSha256: Digest
+    code: Annotated[str, Field(min_length=1, max_length=6000)]
+    attestation: dict[str, Any]
+    module: ClassVar[str] = holding.MODULE
+    message: ClassVar[str] = "research: independently checked holding-duration payoff audit"
+    title: ClassVar[str] = "Research: recorded holding-duration payoff audit"
+    issue: ClassVar[str] = "#464"
+
+    def files(self) -> dict[str, bytes]:
+        draft = holding.Draft(
+            task=holding.TASK,
+            baseCommit=self.baseCommit,
+            resultSha256=self.resultSha256,
+            findingSha256=self.findingSha256,
+            code=self.code,
+            rationale="Trusted binding; original rationale remains archived.",
+        )
+        return holding.candidate_files(draft, self.model_dump(), self.baseCommit)
+
+    @model_validator(mode="after")
+    def binding(self) -> HoldingPublication:
+        validate_receipt(self, holding.TASK)
+        report = self.attestation["actualReport"]
+        if (
+            not isinstance(report, dict)
+            or set(report) != {"rows", "buckets", "counterfactualNet", "economicQualification"}
+            or type(report["rows"]) is not int
+            or not 0 <= report["rows"] <= 100000
+            or not isinstance(report["buckets"], list)
+            or len(report["buckets"]) != 6
+            or report["counterfactualNet"] is not None
+            or report["economicQualification"] is not False
+        ):
+            raise ValueError("PUBLICATION_HOLDING_REPORT")
+        for name, item in zip(holding.BUCKETS, report["buckets"], strict=True):
+            if (
+                not isinstance(item, dict)
+                or set(item) != {"bucket", "payoff"}
+                or item["bucket"] != name
+            ):
+                raise ValueError("PUBLICATION_HOLDING_BUCKET")
+            validate_payoff_report(item["payoff"])
+        if sum(item["payoff"]["rows"] for item in report["buckets"]) != report["rows"]:
+            raise ValueError("PUBLICATION_HOLDING_ROWS")
+        return self
+
+
+type SignedPublication = Publication | HoldingPublication
+
+
+def validate_payoff_report(report: Any) -> None:
+    counts = {
+        "rows",
+        "knownNet",
+        "unknownNet",
+        "wins",
+        "losses",
+        "flat",
+        "knownFees",
+        "unknownFees",
+    }
+    amounts = {"net", "signedFees", "winningNet", "losingNet", "lossPerAverageWin"}
+    if not isinstance(report, dict) or set(report) != counts | amounts | {
+        "counterfactualNet",
+        "economicQualification",
+    }:
+        raise ValueError("PUBLICATION_REPORT_FIELDS")
+    if any(type(report[k]) is not int or not 0 <= report[k] <= 100000 for k in counts):
+        raise ValueError("PUBLICATION_REPORT_COUNT")
+    for key in amounts:
+        value = report[key]
+        if key == "lossPerAverageWin" and value is None:
+            continue
+        if not isinstance(value, str) or not re.fullmatch(
+            r"-?[0-9]{1,100}(?:\.[0-9]{1,100})?", value
+        ):
+            raise ValueError("PUBLICATION_REPORT_AMOUNT")
+    if report["counterfactualNet"] is not None or report["economicQualification"] is not False:
+        raise ValueError("PUBLICATION_REPORT_AUTHORITY")
+
+
+def validate_receipt(payload: SignedPublication, task_name: str) -> None:
+    receipt = payload.attestation
+    fields = {
+        "task",
+        "source",
+        "resultSha256",
+        "findingSha256",
+        "runtimeSha256",
+        "verifierSha256",
+        "oracleSha256",
+        "inputSha256",
+        "outputSha256",
+        "expectedSha256",
+        "caseCount",
+        "completedAt",
+        "status",
+        "softwareTestsPassed",
+        "independentReview",
+        "actualReport",
+        "economicQualification",
+        "publishAuthority",
+        "brokerAuthority",
+    }
+    if task_name == holding.TASK:
+        fields.add("rowsSha256")
+        if not re.fullmatch(r"[a-f0-9]{64}", str(receipt.get("rowsSha256"))):
+            raise ValueError("PUBLICATION_ATTESTATION_DIGEST")
+    if set(receipt) != fields or receipt["independentReview"] is not None:
+        raise ValueError("PUBLICATION_ATTESTATION_FIELDS")
+    source = SourceReceipt.model_validate(receipt.get("source"))
+    if (
+        source.baseCommit != payload.baseCommit
+        or source.bundleSha256 != bundle_digest(payload.files())
+        or receipt.get("task") != task_name
+        or receipt.get("resultSha256") != payload.resultSha256
+        or receipt.get("findingSha256") != payload.findingSha256
+        or receipt.get("softwareTestsPassed") is not True
+        or receipt.get("status") != "AWAITING_INDEPENDENT_REVIEW"
+        or receipt.get("caseCount") != 28
+        or receipt.get("publishAuthority") is not False
+        or receipt.get("brokerAuthority") is not False
+        or receipt.get("economicQualification") is not False
+    ):
+        raise ValueError("PUBLICATION_ATTESTATION_BINDING")
+    for key in [
+        "runtimeSha256",
+        "verifierSha256",
+        "oracleSha256",
+        "inputSha256",
+        "outputSha256",
+        "expectedSha256",
+    ]:
+        if not re.fullmatch(r"[a-f0-9]{64}", str(receipt.get(key))):
+            raise ValueError("PUBLICATION_ATTESTATION_DIGEST")
+    timestamp(receipt["completedAt"])
 
 
 def command(args: list[str], *, data: bytes | None = None, timeout: int = 120) -> bytes:
@@ -143,7 +215,7 @@ def command(args: list[str], *, data: bytes | None = None, timeout: int = 120) -
     return result.stdout
 
 
-def authenticate(envelope: bytes, signers: Path) -> tuple[Publication, str]:
+def authenticate(envelope: bytes, signers: Path) -> tuple[SignedPublication, str]:
     """A protected parent signs only after independent attestation; workers lack its key."""
     if len(envelope) > MAX_REQUEST:
         raise ValueError("PUBLICATION_REQUEST_OVERSIZED")
@@ -177,7 +249,13 @@ def authenticate(envelope: bytes, signers: Path) -> tuple[Publication, str]:
         )
         if result.returncode:
             raise ValueError("PUBLICATION_SIGNATURE_REJECTED")
-    payload = Publication.model_validate(json.loads(raw, object_pairs_hook=unique))
+    document = json.loads(raw, object_pairs_hook=unique)
+    if document.get("version") == "signed-research-publication-1.0":
+        payload: SignedPublication = Publication.model_validate(document)
+    elif document.get("version") == "signed-research-publication-1.1":
+        payload = HoldingPublication.model_validate(document)
+    else:
+        raise ValueError("PUBLICATION_CONTRACT_UNKNOWN")
     if encoded(payload.model_dump()) != raw:
         raise ValueError("PUBLICATION_NONCANONICAL")
     return payload, sha(raw)
@@ -210,7 +288,7 @@ def note(current: bytes, digest: str, *, legacy: bool = False) -> bytes:
     return (text.rstrip() + "\n\n" + line).encode()
 
 
-def commit_identity(payload: Publication) -> None:
+def commit_identity(payload: SignedPublication) -> None:
     stamp = "@" + str(int(timestamp(payload.attestation["completedAt"]).timestamp())) + " +0000"
     os.environ.update(
         {
@@ -224,7 +302,7 @@ def commit_identity(payload: Publication) -> None:
     )
 
 
-def expected_commit(payload: Publication, digest: str, *, legacy: bool = False) -> str:
+def expected_commit(payload: SignedPublication, digest: str, *, legacy: bool = False) -> str:
     """Construct Git objects with a separate index; never execute candidate code."""
     files = payload.files()
     for path in ["README.md", "AGENTS.md"]:
@@ -246,7 +324,7 @@ def expected_commit(payload: Publication, digest: str, *, legacy: bool = False) 
             return (
                 command(
                     ["git", "commit-tree", tree, "-p", payload.baseCommit],
-                    data=b"research: independently checked recorded payoff audit\n",
+                    data=(payload.message + "\n").encode(),
                 )
                 .decode()
                 .strip()
@@ -293,7 +371,9 @@ def record_phase(journal: Path, phase: str, facts: dict[str, Any]) -> None:
     immutable(path, {**value, "observedAt": datetime.now(UTC).isoformat()})
 
 
-def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) -> dict[str, Any]:
+def publish(
+    payload: SignedPublication, digest: str, now: datetime, *, journal: Path
+) -> dict[str, Any]:
     branch = "research/" + digest
     expected_head = expected_commit(payload, digest)
     pulls = api("pulls?state=all&head=AegisFintech:" + branch + "&base=main&per_page=100")
@@ -347,7 +427,7 @@ def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) 
         raise ValueError("PUBLICATION_DIRTY_SOURCE")
     if head != expected_head:
         files = payload.files()
-        # This first bounded task only adds files. Existing research needs a new reviewed task.
+        # Each bounded task only adds files; existing research needs a new reviewed task.
         if any(Path(path).exists() for path in files):
             raise ValueError("PUBLICATION_TASK_ALREADY_PRESENT")
         for path, raw in files.items():
@@ -357,7 +437,7 @@ def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) 
         for path in ["README.md", "AGENTS.md"]:
             target = Path(path)
             target.write_bytes(note(target.read_bytes(), digest, legacy=legacy))
-        check_style("python/research/experiments/recorded_payoff.py")
+        check_style(payload.module)
         command(["git", "checkout", "-b", branch])
         command(["git", "add", *sorted(files), "README.md", "AGENTS.md"])
         staged = set(command(["git", "diff", "--cached", "--name-only"]).decode().splitlines())
@@ -367,7 +447,7 @@ def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) 
         command(["bash", "scripts/secret-scan.sh"])
         # Stable author/time make interrupted push reconciliation compare the exact same commit.
         commit_identity(payload)
-        command(["git", "commit", "-m", "research: independently checked recorded payoff audit"])
+        command(["git", "commit", "-m", payload.message])
     head = command(["git", "rev-parse", "HEAD"]).decode().strip()
     if head != expected_head:
         raise ValueError("PUBLICATION_COMMIT_DRIFT")
@@ -383,12 +463,12 @@ def publish(payload: Publication, digest: str, now: datetime, *, journal: Path) 
     pr = api(
         "pulls",
         {
-            "title": "Research: independently checked recorded payoff audit",
+            "title": payload.title,
             "head": branch,
             "base": "main",
             "draft": True,
             "body": (
-                "Result-derived descriptive research for #451/#452.\n\n"
+                f"Result-derived descriptive research for {payload.issue}.\n\n"
                 f"Signed publication `{digest}`; exact base `{payload.baseCommit}`.\n"
                 "Independent isolated checks: 28 cases. "
                 "Software checks do not qualify a trading strategy.\n\n"

@@ -26,7 +26,7 @@ read-only observations are not atomic with GitHub mutations.
 Real API probes distinguished failed checks on #459 from successful checks and
 separate review on #461. This is not a claim that those historical PRs are open.
 The service invokes admission observations only for a publication it just verified
-as open. Full delivery/activation results follow. Recurring generation, signing,
+as open. PR #467 merged as64d28b8; publisher-only activation passed. Recurring generation, signing,
 review execution and whole unattended-cycle proof remain pending under #431.
 
 Independent Spec review caught the creation-ID chronology assumption. The correction
@@ -42,5 +42,9 @@ and four sample/deployment configuration checks pass. Both independent reviews
 passed after the submission-order correction. Graphify:14,791 nodes/24,425 edges/
 877 communities, with the existing pyproject zero-node warning.
 [Exact receipt](evidence/review-admission-validation.json).
-The live GitHub probes were repeated after the correction. Deployment is still
-pending reviewed merge; existing bot and publisher continue independently.
+Both hosted runs41155502061/41155542251 passed with exact checked-out a688b33.
+Independent authenticated aloycwl review preceded merge. Publisher artifact and
+manifest were updated without restarting trading. A systemd probe under the actual
+dedicated publisher UID, credential loading and filesystem restrictions returned
+BLOCKED/CI_FAILED for459 and CHECKING/INDEPENDENT_REVIEW_APPROVED for461. The
+publisher timer/service remain active and the real publication reconciles MERGED.

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 import secrets
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -19,6 +18,7 @@ from typing import Annotated, Any, Final, Literal
 from pydantic import Field
 
 from python.research import isolated_worker as worker
+from python.research.candidate_generation import generate as generate_task
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.experiment_execution import independently_measure
 from python.research.experiment_registry import Registration, Registry, read
@@ -341,62 +341,14 @@ def generate(
     invoke: Callable[[str, Path], bytes],
 ) -> dict[str, Any]:
     """One durable provider claim for this task/base/finding, never a checkout or tool call."""
-    if not re.fullmatch(r"[a-f0-9]{40}", base):
-        raise ValueError("CANDIDATE_BASE_INVALID")
-    facts, _ = evidence(experiment)
-    key = sha(encoded([TASK, base, facts["findingSha256"]]))
-    registry = Registry(root)
-    with registry.locked():
-        job = registry.directory(key)
-        if (
-            not job.exists()
-            and len(
-                [p for p in root.iterdir() if p.is_dir() and re.fullmatch(r"[a-f0-9]{64}", p.name)]
-            )
-            >= 4
-        ):
-            return {"status": "CANDIDATE_TASK_TRIAL_BUDGET", "publishAuthority": False}
-        job.mkdir(mode=0o700, exist_ok=True)
-        binding = {"task": TASK, "baseCommit": base, **facts}
-        prompt = PROMPT + "\nINPUT=" + encoded(binding).decode()
-        if len(prompt.encode()) > 64000:
-            raise ValueError("CANDIDATE_INPUT_OVERSIZED")
-        immutable(job / "binding.json", binding)
-        if (job / "draft.json").exists():
-            draft = Draft.model_validate(read(job / "draft.json", 32768))
-            candidate_files(draft, facts, base)
-            return {"status": "GENERATED_UNVERIFIED", "job": key}
-        if (job / "rejected.json").exists():
-            return {"status": "REJECTED", "job": key}
-        if (job / "claim.json").exists() and not (job / "response.json").exists():
-            return {"status": "OUTCOME_UNKNOWN", "job": key}
-        if not (job / "response.json").exists():
-            immutable(
-                job / "request.json",
-                {
-                    "promptSha256": sha(PROMPT.encode()),
-                    "payload": {"captured_at": datetime.now(UTC).isoformat(), **binding},
-                },
-            )
-            immutable(
-                job / "claim.json",
-                {
-                    "bindingSha256": sha(encoded(binding)),
-                    "claimedAt": datetime.now(UTC).isoformat(),
-                },
-            )
-            raw = invoke(prompt, job)
-            if len(raw) > 8192:
-                raise ValueError("CANDIDATE_OUTPUT_OVERSIZED")
-            immutable(job / "response.json", {"raw": raw.decode()})
-        try:
-            response = read(job / "response.json", 32768)["raw"]
-            draft = Draft.model_validate(json.loads(response, object_pairs_hook=unique))
-            candidate_files(draft, facts, base)
-        except (ValueError, SyntaxError):
-            immutable(
-                job / "rejected.json", {"status": "REJECTED", "reason": "CANDIDATE_DRAFT_INVALID"}
-            )
-            return {"status": "REJECTED", "job": key}
-        immutable(job / "draft.json", draft.model_dump())
-        return {"status": "GENERATED_UNVERIFIED", "job": key}
+    return generate_task(
+        root,
+        experiment,
+        base,
+        invoke,
+        task=TASK,
+        prompt_text=PROMPT,
+        measure=evidence,
+        draft_model=Draft,
+        files=candidate_files,
+    )
