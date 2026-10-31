@@ -229,3 +229,19 @@ def test_admission_blocks_namespace_conflicts_before_paid_dispatch(tmp_path, mon
 
 def test_generation_prompt_includes_real_static_delivery_requirements():
     assert "mypy --strict" in task.PROMPT and "Ruff check/format" in task.PROMPT
+
+
+def test_prompt_names_exact_import_symbols_and_preserves_dependency_gate():
+    for module, names in {
+        "decimal": ["Decimal", "localcontext", "ROUND_HALF_EVEN"],
+        "typing": ["Any", "Dict", "List", "Optional", "Tuple"],
+        "__future__": ["annotations"],
+    }.items():
+        for name in names:
+            assert name in task.PROMPT
+            task.payoff.dependencies(
+                f"from {module} import {name}\ndef report(rows): return {{}}\n".encode()
+            )
+    assert "TypedDict is not" in task.PROMPT
+    with pytest.raises(ValueError, match="DEPENDENCY_FORBIDDEN"):
+        task.payoff.dependencies(b"from typing import TypedDict\ndef report(rows): return {}\n")

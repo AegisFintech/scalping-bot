@@ -10,6 +10,8 @@ WorkingDirectory=/opt/scalper-holding-authority
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-holding-authority
 Environment=PATH=/usr/bin:/bin
+Environment=HOME=/var/lib/scalper-candidate-authority
+Environment=GH_CONFIG_DIR=/var/lib/scalper-candidate-authority/gh
 LoadCredential=github-token:/etc/scalper-publisher/github-token
 ExecStart=/opt/scalper-holding-authority/.venv/bin/python -P -m python.operations.holding_pipeline
 UMask=0077

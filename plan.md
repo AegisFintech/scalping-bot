@@ -1,3 +1,22 @@
+### ISSUE-472 — Repair first-cycle research operational blockers
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/472; follows #466.
+- Acceptance: persist private parent HOME/GH_CONFIG_DIR under existing protected
+  state; preserve home blocking, empty capabilities and credential separation.
+  Exact exhausted-question code produces WAITING, while other errors/unknown jobs
+  block and existing reconciliation continues. Clarify the exact code-generation
+  import symbol lists; preserve the checker and retain the first rejected draft.
+  Preserve four-trial cap, frozen method/runtime/registrations, one demo and
+  unchanged economic policy.
+- Status: prepared after #466's first natural draft was safely rejected for an
+  allowed-module/forbidden-symbol prompt mismatch; no historical rewrite.
+  Actual restricted parent preflight passed with private HOME after reproducing
+  config access failure. Both independent reviews approve; all2,493 tests/gates,
+  four configuration checks and111 focused tests pass. Separate real namespace
+  rejection/interruption/restart proof passes with no provider calls. Reviewed
+  pushed delivery and matching new source/oracle deployment follow.
+- Evidence: `docs/research-operational-waits-report.md`.
+
 ### ISSUE-466 — Delivery lineage and independent recorder health
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/466; depends #464/#465.

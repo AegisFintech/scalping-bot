@@ -273,8 +273,15 @@ def test_worker_does_not_block_intake_and_query(setup):
     assert mailbox.execute_one(approved, during_execution)["status"] == "RETURNED"
 
 
+@pytest.mark.parametrize(
+    "reason,expected",
+    [
+        ("RESEARCH_REGISTRY_TRIAL_BUDGET", "RESEARCH_REGISTRY_TRIAL_BUDGET"),
+        ("RESEARCH_REGISTRATION_REVIEW_BINDING", "RESEARCH_NEW_REGISTRATION_FAILED"),
+    ],
+)
 def test_coordinator_queries_claimed_jobs_despite_registration_failure(
-    setup, monkeypatch, tmp_path
+    setup, monkeypatch, tmp_path, reason, expected
 ):
     from python.operations import experiment_jobs as cli
 
@@ -307,7 +314,7 @@ def test_coordinator_queries_claimed_jobs_despite_registration_failure(
     monkeypatch.setattr(cli, "verify_source", lambda *args: None)
 
     def budget(*args, **kwargs):
-        raise ValueError("RESEARCH_REGISTRY_TRIAL_BUDGET")
+        raise ValueError(reason)
 
     monkeypatch.setattr(Registry, "register", budget)
     calls = []
@@ -319,7 +326,7 @@ def test_coordinator_queries_claimed_jobs_despite_registration_failure(
     monkeypatch.setattr(cli, "transfer", transfer)
     result = cli.cycle(registry.root, agenda, config)
     assert calls == [{"action": "query", "trialId": reg.trialId}]
-    assert result["admissionBlocker"] == "RESEARCH_NEW_REGISTRATION_FAILED"
+    assert result["admissionBlocker"] == expected
     assert result["recent"][0]["status"] == "CLOSED_INCONCLUSIVE"
 
 

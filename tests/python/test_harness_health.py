@@ -351,3 +351,29 @@ def test_unsampled_claims_remain_visible_across_rotating_checks(root):
     assert stage.state == "WAITING"
     assert "5 claimed job outcomes unresolved" in stage.detail
     assert counts["NEGATIVE"] == 1
+
+
+@pytest.mark.parametrize(
+    "reason,unknown,state",
+    [
+        ("RESEARCH_REGISTRY_TRIAL_BUDGET", False, "WAITING"),
+        ("RESEARCH_REGISTRY_TRIAL_BUDGET", True, "BLOCKED"),
+        ("RESEARCH_NEW_REGISTRATION_FAILED", False, "BLOCKED"),
+    ],
+)
+def test_budget_wait_never_hides_unknown_jobs_or_other_errors(root, reason, unknown, state):
+    write(
+        root / "experiments450/health.json",
+        {
+            "checkedAt": NOW.isoformat(),
+            "status": "CHECKED",
+            "admissionBlocker": reason,
+            "recent": [{"status": "RUNNING_OR_UNKNOWN", "trialId": "b" * 64}] if unknown else [],
+        },
+    )
+    result, _, counts = h.experiments(root, NOW)
+    assert result.state == state and counts["NEGATIVE"] == 1
+    if state == "WAITING":
+        assert "budget exhausted" in result.detail
+    if unknown:
+        assert "never authorize redispatch" in result.detail
