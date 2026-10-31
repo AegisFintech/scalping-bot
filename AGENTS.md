@@ -74,6 +74,8 @@ supersede the current versioned policy or explicit operator instructions.
   Delivery lineage: `docs/research-delivery-report.md`; match exact publication
   digests, preserve unavailable/stale clocks, and never equate a research merge
   with trading deployment. Public recorder heartbeats expose no account state.
+  Preparation: `docs/research-import-preparation-report.md`; normalize imports
+  before formatting/freezing and never rewrite attested bytes or unknown state.
   Operational waits: `docs/research-operational-waits-report.md`; keep parent CLI
   state outside blocked root home and preserve four-trial limits as explicit waits.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status

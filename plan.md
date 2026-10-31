@@ -1,3 +1,21 @@
+### ISSUE-474 — Convergent import preparation before attestation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/474; follows #472/#466.
+- Acceptance: trusted import-only normalization precedes formatting, source
+  verification, namespace testing and signing; preserve original/final byte binds,
+  size/dependency/oracle/runtime/four-attempt limits. Actual configured Ruff
+  import/type-alias regression and failed-normalizer preservation tests, full
+  gates, independent review and reviewed pushed deployment required.
+- Status: reproduced old Ruff I001 disagreement; both independent reviews,
+  all2,495 tests/gates/audits and four configuration checks pass;23 focused tests
+  pass. Actual failed signed artifact passes configured Ruff after normalization
+  with unchanged syntax tree and original envelope. Second
+  natural candidate's28 namespace checks and mypy passed, but its exact known
+  unsubmitted style failure is quarantined with signed envelope/checkout intact.
+  Receiver HOME corrected to its existing service state; natural relay ACK passed.
+  First two attempts remain counted. Whole-chain successful merge still pending.
+- Evidence: `docs/research-import-preparation-report.md`.
+
 ### ISSUE-472 — Repair first-cycle research operational blockers
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/472; follows #466.

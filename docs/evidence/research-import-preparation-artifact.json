@@ -1,0 +1,11 @@
+{
+  "publicationSha256": "f5a69a30387ca1851350486e6cb41ae403d11798dbe11e8ab6b622d48e03ad80",
+  "beforeCodeSha256": "fb287db9888bf8716f9657b149b49ccb06da8166c2c868ae214206cd6f87e1b0",
+  "afterCodeSha256": "2ed91fe80689076804aedf7cdf8e24b76d9335faaba5f0e4498c3f508d45fe69",
+  "configuredRuffPassed": true,
+  "thisArtifactAstUnchanged": true,
+  "originalEnvelopeUnchanged": true,
+  "candidateExecuted": false,
+  "providerCalls": 0,
+  "economicQualification": false
+}
