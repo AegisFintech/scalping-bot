@@ -125,4 +125,4 @@ Distributed experiment delivery is tracked in [the execution report](docs/experi
 
 <!-- research-publication -->
 
-Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.
+Research-only delivery `98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639`; no execution or promotion authority.
