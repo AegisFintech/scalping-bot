@@ -71,6 +71,9 @@ supersede the current versioned policy or explicit operator instructions.
   approvals never authorize advancement. Drafts grant no merge/deploy authority.
   Automated review: `docs/research-reviewer-report.md`; separate aloycwl adapter,
   two tool-disabled contexts, durable API claims and fresh exact-source gates.
+  Delivery lineage: `docs/research-delivery-report.md`; match exact publication
+  digests, preserve unavailable/stale clocks, and never equate a research merge
+  with trading deployment. Public recorder heartbeats expose no account state.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate

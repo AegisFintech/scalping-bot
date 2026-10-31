@@ -1,0 +1,310 @@
+{
+  "$defs": {
+    "ResearchHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "checkedAt": {
+          "title": "Checkedat",
+          "type": "string"
+        },
+        "observation": {
+          "$ref": "#/$defs/Stage"
+        },
+        "experiments": {
+          "$ref": "#/$defs/Stage"
+        },
+        "question": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Question"
+        },
+        "planId": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Planid"
+        },
+        "trialId": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Trialid"
+        },
+        "closureCounts": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "maximum": 4000,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "propertyNames": {
+                "enum": [
+                  "POSITIVE",
+                  "NEGATIVE",
+                  "INCONCLUSIVE",
+                  "REJECTED",
+                  "FAILED",
+                  "OPEN",
+                  "GAP"
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Closurecounts"
+        }
+      },
+      "required": [
+        "checkedAt",
+        "observation",
+        "experiments",
+        "question",
+        "planId",
+        "trialId",
+        "closureCounts"
+      ],
+      "title": "ResearchHealth",
+      "type": "object"
+    },
+    "ReviewHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "research-review-health-1.0",
+          "title": "Version",
+          "type": "string"
+        },
+        "checkedAt": {
+          "title": "Checkedat",
+          "type": "string"
+        },
+        "status": {
+          "pattern": "^[A-Z_]{1,100}$",
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z_]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "recent": {
+          "items": {
+            "$ref": "#/$defs/ReviewOutcome"
+          },
+          "maxItems": 4,
+          "title": "Recent",
+          "type": "array"
+        },
+        "lastTerminal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewOutcome"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "brokerAuthority": {
+          "const": false,
+          "title": "Brokerauthority",
+          "type": "boolean"
+        },
+        "promotionAuthority": {
+          "const": false,
+          "title": "Promotionauthority",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "version",
+        "checkedAt",
+        "status",
+        "reason",
+        "recent",
+        "lastTerminal",
+        "brokerAuthority",
+        "promotionAuthority"
+      ],
+      "title": "ReviewHealth",
+      "type": "object"
+    },
+    "ReviewOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "pullRequest": {
+          "maximum": 999999999,
+          "minimum": 1,
+          "title": "Pullrequest",
+          "type": "integer"
+        },
+        "status": {
+          "pattern": "^[A-Z_]{1,100}$",
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z_]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "publicationSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publicationsha256"
+        },
+        "headCommit": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Headcommit"
+        },
+        "mergeCommit": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{40}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mergecommit"
+        }
+      },
+      "required": ["pullRequest", "status"],
+      "title": "ReviewOutcome",
+      "type": "object"
+    },
+    "Stage": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "Demo",
+            "Flight recorder",
+            "Observation",
+            "Experiments",
+            "Publishing"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "state": {
+          "enum": ["CURRENT", "WAITING", "BLOCKED", "STALE", "UNAVAILABLE"],
+          "title": "State",
+          "type": "string"
+        },
+        "checkedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Checkedat"
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expiresat"
+        },
+        "detail": {
+          "maxLength": 700,
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": ["name", "state", "checkedAt", "expiresAt", "detail"],
+      "title": "Stage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "research-health-1.1",
+      "title": "Version",
+      "type": "string"
+    },
+    "core": {
+      "$ref": "#/$defs/ResearchHealth"
+    },
+    "review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewHealth"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": ["version", "core", "review"],
+  "title": "RemoteHealth11",
+  "type": "object"
+}

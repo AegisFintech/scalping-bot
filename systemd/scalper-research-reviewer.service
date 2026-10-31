@@ -25,5 +25,5 @@ ProtectSystem=strict
 PrivateTmp=yes
 NoNewPrivileges=yes
 CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_DAC_READ_SEARCH
-ReadWritePaths=/var/lib/scalper-research-reviewer /var/lib/scalper-learning-evidence/source-reviews465 /var/lib/scalper-learning-evidence/.codex
+ReadWritePaths=/var/lib/scalper-review-observation /var/lib/scalper-research-reviewer /var/lib/scalper-learning-evidence/source-reviews465 /var/lib/scalper-learning-evidence/.codex
 InaccessiblePaths=-/root -/etc/scalping-bot -/run/postgresql

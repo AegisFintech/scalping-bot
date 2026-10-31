@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from python.operations import research_delivery as delivery
 from python.operations import research_publisher as github
 from python.research import holding_authority as authority
 from python.research import holding_task as task
@@ -147,8 +148,11 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                     result = {
                         "status": selected["status"],
                         "invalidArchives": selected.get("invalidArchives"),
+                        "checkedAt": datetime.now(UTC).isoformat(),
+                        "brokerAuthority": False,
+                        "promotionAuthority": False,
                     }
-                    durable_json(state_path, {**result, "checkedAt": datetime.now(UTC).isoformat()})
+                    durable_json(state_path, result)
                     return result
                 request = Generation(
                     version="holding-generation-request-1.0",
@@ -188,6 +192,7 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                 "invalidArchives": read(state_path).get("invalidArchives", 0),
                 "job": active,
                 "status": generation["status"],
+                "phase": "GENERATION",
                 "baseCommit": request.baseCommit,
             }
             if generation["status"] == "GENERATED_UNVERIFIED":
@@ -251,6 +256,7 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                     )
                     reply = remote(job, "scoring", scoring.model_dump())
                     result["status"] = reply["status"]
+                    result["phase"] = "SCORING"
                     if reply["status"] == "AWAITING_INDEPENDENT_REVIEW":
                         publication = authority.publication(
                             reply,
@@ -281,7 +287,7 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                             "publicationSha256": digest,
                         }:
                             raise ValueError("HOLDING_REVIEW_RELAY_UNCONFIRMED")
-                        result.update(status="SIGNED", publicationSha256=digest)
+                        result.update(status="SIGNED", phase="PUBLISHING", publicationSha256=digest)
         result.update(
             checkedAt=datetime.now(UTC).isoformat(), brokerAuthority=False, promotionAuthority=False
         )
@@ -313,8 +319,10 @@ def main() -> None:
             "promotionAuthority": False,
         }
         durable_json(ROOT / "health.json", result)
+        delivery.publish(delivery.GENERATION, delivery.generation(ROOT, result))
         raise
     durable_json(ROOT / "health.json", result)
+    delivery.publish(delivery.GENERATION, delivery.generation(ROOT, result))
     print(encoded(result).decode())
 
 

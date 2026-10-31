@@ -62,6 +62,35 @@ try {
           closureCounts: { NEGATIVE: 2 },
         },
         publisher: { pullRequest: 123, status: "AWAITING_REVIEW" },
+        delivery: {
+          generation: {
+            checkedAt: at,
+            status: "SIGNED",
+            phase: "PUBLISHING",
+            job: "c".repeat(64),
+            publicationSha256: "d".repeat(64),
+            origin: {
+              question: '<img src=x onerror="alert(2)">',
+              start: at,
+              until: at,
+              recordedClosedRows: 2,
+              resultSha256: "e".repeat(64),
+              findingSha256: "f".repeat(64),
+            },
+          },
+          review: {
+            checkedAt: at,
+            status: "IDLE",
+            recent: [],
+            lastTerminal: {
+              pullRequest: 124,
+              status: "MERGED",
+              publicationSha256: "d".repeat(64),
+              headCommit: "a".repeat(40),
+              mergeCommit: "b".repeat(40),
+            },
+          },
+        },
       },
     };
     window.cleanup = window.render({
@@ -83,6 +112,26 @@ try {
     await page.locator("#harness-pr").getAttribute("href"),
     "https://github.com/AegisFintech/scalping-bot/pull/123",
   );
+  assert.equal(
+    await page.locator("#delivery-pr").getAttribute("href"),
+    "https://github.com/AegisFintech/scalping-bot/pull/124",
+  );
+  assert.match(
+    await page.locator("#delivery-origin").textContent(),
+    /recorded closed rows 2/,
+  );
+  assert.equal(await page.locator("#delivery-origin img").count(), 0);
+  await page.evaluate(() => {
+    window.model.harness.delivery.review.lastTerminal.publicationSha256 =
+      "0".repeat(64);
+    window.cleanup();
+    window.cleanup = window.render({
+      data: window.model,
+      parentElement: document.body,
+    });
+  });
+  await page.clock.runFor(300);
+  assert.equal(await page.locator("#delivery-pr").isVisible(), false);
   for (const width of [1920, 1440, 1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const bounds = await page.locator(".harness-card").boundingBox();

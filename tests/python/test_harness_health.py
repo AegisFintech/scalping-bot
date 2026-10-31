@@ -158,6 +158,18 @@ def test_public_monitor_whitelists_and_expires(monkeypatch, root, tmp_path):
             )
         ),
     )
+    monkeypatch.setattr(
+        h.flight_heartbeat,
+        "load",
+        lambda now: h.flight_heartbeat.Heartbeat(
+            version="flight-heartbeat-1.0",
+            checkedAt=NOW.isoformat(),
+            recordedAt=NOW.isoformat(),
+            state="RECORDING",
+            completeTickTape=False,
+            brokerAuthority=False,
+        ),
+    )
     original = h.read
 
     def read(path):

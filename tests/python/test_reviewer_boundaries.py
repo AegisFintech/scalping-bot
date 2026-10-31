@@ -136,5 +136,8 @@ def test_terminal_context_is_reconciled_after_pr_disappears_from_open_list(tmp_p
     monkeypatch.setattr(reviewer, "process", lambda *_: {"pullRequest": 42, "status": "MERGED"})
     value = reviewer.cycle(config, root)
     assert value["recent"][0]["status"] == "MERGED"
+    public = reviewer.delivery.review(value)
+    assert public.recent[0].headCommit is None
+    assert public.recent[0].publicationSha256 == job.name
     assert json.loads((job / "terminal.json").read_bytes())["status"] == "MERGED"
     assert reviewer.cycle(config, root)["lastTerminal"]["status"] == "MERGED"

@@ -1,3 +1,20 @@
+### ISSUE-466 — Delivery lineage and independent recorder health
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/466; depends #464/#465.
+- Acceptance for this installment: selected archive question/window/result/finding
+  → candidate job/publication → exact matched independent review/PR/research merge;
+  versioned public metadata, stale/null/unknown semantics and historical schema
+  compatibility. Independent recorder heartbeat must not depend on broker/account
+  dashboard freshness or expose private recordings. Tests, browser checks,
+  independent review, full qualification and reviewed pushed delivery required.
+- Status: implemented; both independent reviews approve, all2,488 tests/gates/audits
+  and four configuration checks pass;85 focused tests and fixture browser checks
+  pass. Natural scheduled cycle and restart/remote-failure proof remain separate
+  acceptance under this issue; #403 economic rollout is unqualified. No new timer
+  activated yet. #465 PR #470 merged cff21ef after both exact-head CI runs and
+  separate approval; matching installation follows this visibility delivery.
+- Evidence: `docs/research-delivery-report.md`.
+
 ### ISSUE-465 — Independent local research review and guarded delivery
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/465; depends #463/#464.

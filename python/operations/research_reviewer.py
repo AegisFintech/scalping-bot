@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from python.operations import publisher_service as admission
+from python.operations import research_delivery as delivery
 from python.operations import research_publisher as publisher
 from python.research import candidate_attestation as payoff
 from python.research import holding_task as holding
@@ -223,7 +224,11 @@ def process(number: int, envelope: bytes, config: dict[str, Any], root: Path) ->
             "reason": "REVIEW_TERMINAL_HISTORY_CHANGED",
         }
     if status["status"] in {"MERGED", "CLOSED", "BLOCKED"}:
-        return {"pullRequest": number, **status}
+        return {
+            "pullRequest": number,
+            **status,
+            "mergeCommit": pr.get("merge_commit_sha") if status["status"] == "MERGED" else None,
+        }
     if status.get("reason") == "PUBLICATION_CI_PENDING":
         return {"pullRequest": number, "status": "WAITING_CI"}
     decision = inspect_models(job, payload, digest, head)
@@ -234,7 +239,11 @@ def process(number: int, envelope: bytes, config: dict[str, Any], root: Path) ->
         status["status"] in {"MERGED", "CLOSED", "BLOCKED"}
         or status.get("reason") == "PUBLICATION_CI_PENDING"
     ):
-        return {"pullRequest": number, **status}
+        return {
+            "pullRequest": number,
+            **status,
+            "mergeCommit": pr.get("merge_commit_sha") if status["status"] == "MERGED" else None,
+        }
     if pr["draft"]:
         if (job / "ready-claim.json").exists():
             return {"pullRequest": number, "status": "READY_OUTCOME_UNKNOWN"}
@@ -344,6 +353,10 @@ def cycle(config: dict[str, Any], root: Path) -> dict[str, Any]:
                     if re.fullmatch(r"(?:REVIEW|SOURCE|PUBLICATION)_[A-Z_]{1,100}", reason)
                     else "REVIEW_DEPENDENCY_OR_OUTCOME_UNKNOWN",
                 }
+            outcome["publicationSha256"] = digest
+            context = root / digest / "context.json"
+            if context.exists():
+                outcome["headCommit"] = read(context).get("head")
             if outcome["status"] in {"MERGED", "CLOSED"}:
                 immutable(root / digest / "terminal.json", outcome)
             outcomes.append(outcome)
@@ -383,7 +396,7 @@ def main() -> None:
         raise ValueError("REVIEW_CREDENTIAL_INVALID")
     os.environ["GH_TOKEN"] = token
     try:
-        cycle(config, ROOT)
+        result = cycle(config, ROOT)
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
         reason = str(error)
         durable_json(
@@ -398,7 +411,9 @@ def main() -> None:
                 "promotionAuthority": False,
             },
         )
+        delivery.publish(delivery.REVIEW, delivery.review(read(ROOT / "health.json")))
         raise
+    delivery.publish(delivery.REVIEW, delivery.review(result))
 
 
 if __name__ == "__main__":
