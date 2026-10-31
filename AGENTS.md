@@ -47,6 +47,9 @@ supersede the current versioned policy or explicit operator instructions.
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.
   Current observation reviews: `docs/current-observation-review-report.md`; verify
   fresh completed windows and findings, not only a running timer. No implicit promotion.
+  Actual activation/veto: `docs/research-pipeline-activation-report.md`. Input domain:
+  `docs/research-input-domain-report.md`; preserve rejected reviews and exhausted
+  batches; a new allowance needs separate registration, never a ledger reset.
   Continue the dependency queue in `docs/autonomous-harness-delivery-plan.md`; a
   prerequisite is not whole-harness completion. Source verification: `docs/source-verifier-report.md`.
   Freeze exploratory jobs using `docs/experiment-registration-report.md`; unknown
@@ -62,7 +65,8 @@ supersede the current versioned policy or explicit operator instructions.
   preserve required CI/review, and keep the signing key outside publisher-owned state.
   Check final generated documentation with the real formatter; preserve existing
   publication heads when repairing templates. The recorded-payoff task is delivered;
-  do not regenerate it. Recurring generation/review remains separate pending work.
+  do not regenerate it. Scheduled holding research reached a retained review veto;
+  its successful full merge remains pending #466.
   Holding-time research: `docs/holding-research-report.md`; preserve unknown clocks,
   full cohorts and separate version1.1; elapsed holding time proves no earlier exit.
   Scheduled handoff: `docs/holding-pipeline-report.md`; the protected parent verifies

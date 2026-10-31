@@ -117,3 +117,28 @@ def test_changed_oracle_and_challenge_reject_before_execution(context, tmp_path)
     (path / "input.json").write_bytes(encoded({"module": task.MODULE, "cases": [[]] * 28}))
     with pytest.raises(ValueError, match="CHALLENGE_CHANGED"):
         scorer.attest(verified, facts, facts["rows"], trust, path, scorer.oracle_pin(), execute)
+
+
+def test_unsupported_frozen_input_rejects_before_claim_or_execution(context, tmp_path, monkeypatch):
+    verified, facts, trust = context
+    cases = task.challenges(facts["rows"])
+    cases[1] = [{"holdingMicros": "0", "net": "1" * 4301, "signedFees": None}]
+    monkeypatch.setattr(task, "challenges", lambda _: cases)
+    path = tmp_path / "unsupported"
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("unsupported numeric domain reached candidate execution")
+
+    with pytest.raises(ValueError, match="HOLDING_INPUT_INVALID"):
+        scorer.attest(verified, facts, facts["rows"], trust, path, scorer.oracle_pin(), forbidden)
+    assert (path / "input.json").exists() and not (path / "claim.json").exists()
+
+
+def test_oracle_pin_binds_the_imported_input_domain_source(tmp_path, monkeypatch):
+    monkeypatch.setattr(worker, "trusted_path", lambda _: None)
+    domain = tmp_path / "domain.py"
+    domain.write_text("first frozen domain")
+    monkeypatch.setattr(scorer.input_domain, "__file__", str(domain))
+    before = scorer.oracle_pin()
+    domain.write_text("changed input bounds")
+    assert scorer.oracle_pin() != before

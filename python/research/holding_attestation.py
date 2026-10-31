@@ -11,6 +11,7 @@ from typing import Any
 from python.research import candidate_attestation as payoff
 from python.research import holding_task as task
 from python.research import isolated_worker as worker
+from python.research import learning_evidence as input_domain
 from python.research.experiment_registry import Registry, read
 from python.research.learning_archive import bounded, immutable, unique
 from python.research.learning_evidence import MAX_BYTES, encoded
@@ -19,7 +20,12 @@ from python.research.source_verifier import VerifiedCandidate
 
 
 def oracle_pin() -> str:
-    files = {"scorer": Path(__file__), "task": Path(task.__file__), "payoff": Path(payoff.__file__)}
+    files = {
+        "scorer": Path(__file__),
+        "task": Path(task.__file__),
+        "payoff": Path(payoff.__file__),
+        "inputDomain": Path(input_domain.__file__),
+    }
     for path in files.values():
         worker.trusted_path(path.resolve(strict=True))
     return sha(encoded({name: sha(path.read_bytes()) for name, path in files.items()}))
@@ -78,6 +84,8 @@ def attest(
         cases = challenge["cases"]
         if challenge["module"] != task.MODULE or len(cases) != 28 or cases[0] != rows:
             raise ValueError("HOLDING_CHALLENGE_CHANGED")
+        for case in cases:
+            task.validate_rows(case)
         immutable(
             destination / "claim.json",
             {

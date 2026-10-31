@@ -1,31 +1,12 @@
-Reviewer launcher boundary and unknown-claim handling: [report](docs/research-launcher-report.md).
-
-Attested research preparation: [import/format convergence and retained rejection](docs/research-import-preparation-report.md).
-
-Research operational boundaries: [private CLI state and question-budget waits](docs/research-operational-waits-report.md).
-
-Research candidate lineage and independent recorder health: [delivery visibility](docs/research-delivery-report.md).
-
-Independent local review: [source/CI/approval/merge gates](docs/research-reviewer-report.md).
-
-Holding-time research: [contract](docs/holding-research-report.md), [scheduled handoff](docs/holding-pipeline-report.md). Separate automated review remains pending.
-
-Local publishing and review checks: [publisher](docs/trusted-publisher-report.md), [review checks](docs/review-admission-report.md).
-
-Implementation queue: [autonomous harness delivery plan](docs/autonomous-harness-delivery-plan.md), with bounded tasks and an explicit full-cycle completion test.
-
-Experiment registration and its authority limits: [frozen jobs](docs/experiment-registration-report.md).
-
-Generated research and independent software checks: [candidate boundary](docs/candidate-attestation-report.md).
-
-Continuous bot/research visibility and publication gates: [harness health](docs/harness-health-report.md).
-
-Current research integration: [bounded observation review](docs/current-observation-review-report.md) connects the existing evidence archive to a confined Codex review thread. Proposed experiments and automatic publishing remain separate.
-
 # Scalping bot
 
 AI-assisted XAUUSD scalping for controlled demo evaluation. One existing demo
 account and deployment; real-money live execution is disabled by default.
+
+Scheduled research has reached an independently reviewed draft; its veto and exhausted
+batch are retained. [Verified activation and remaining work](docs/research-pipeline-activation-report.md),
+[bounded input repair](docs/research-input-domain-report.md), and
+[implementation queue](docs/autonomous-harness-delivery-plan.md).
 
 The isolated research harness reports failed tool results separately from findings;
 its deployment and remaining observation are in [the research report](docs/research-failure-guidance-report.md).

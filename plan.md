@@ -1,3 +1,21 @@
+### ISSUE-480 — Align bounded input validation and independent review context
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/480; follows #464/#465/#466.
+- Acceptance: shared versioned schema matching existing archive currency/duration/
+  row bounds; reject unsupported rows before arithmetic/execution claims; exact
+  schema in generation/review context; max-value/cohort tests and protected oracle
+  fingerprint; preserve historical signatures, reviews, source and original four
+  attempts. Full qualification, independent review and reviewed pushed delivery.
+  No new generation allowance or economic activation inferred from this fix.
+- Status: eight red regressions reproduced; both independent reviews approve,
+  all2,509 tests/gates/audits and four config checks pass. Actual signed1.0/1.1
+  payloads retain exact original commits; 20,000-row and oversized-boundary cases
+  pass. Actual negative-review service restart preserves one claim/response and
+  all immutable bytes. Reviewed pushed delivery/activation follows. #479 veto and
+  original four attempts remain intact; corrective allowance is pending operator decision.
+- Evidence: `docs/research-input-domain-report.md` and
+  `docs/research-pipeline-activation-report.md`.
+
 ### ISSUE-477 — Restricted reviewer launcher
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/477; depends #465/#466.
@@ -7,12 +25,15 @@
   full qualification, four config checks, independent review and exact-head hosted
   delivery required before matching reviewer activation. Preserve #476 and retire
   only its stale draft after main changes; no unknown replay or budget increase.
-- Status: regression reproduced ENOENT; absolute launcher and boundary fixture pass.
+- Delivery: PR #478 merged `fd52cbf`; reviewer-only activation and actual scheduled
+  worker response verified. #476 closed/retired with signatures, phases and original
+  unknown input/claim hashes unchanged. Economic policy/trading processes unchanged.
+- Validation: regression reproduced ENOENT; absolute launcher and boundary fixture pass.
   Both independent reviews, 51 focused tests, all 2,496 tests/gates/audits and four
   configuration checks pass. Two earlier integration failures and separate tmpfs
   reserve failure are recorded; ignored inactive-worktree caches reclaimed without
-  weakening guards. Reviewed pushed delivery/deployment follows. Existing root
-  claim and all worker evidence remain unchanged.
+  weakening guards. The actual new review veto is retained under #480; successful
+  natural review-to-merge remains #466, not a launcher failure.
 - Evidence: `docs/research-launcher-report.md`.
 
 ### ISSUE-474 — Convergent import preparation before attestation

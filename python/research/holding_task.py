@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import re
 import secrets
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Final, Literal
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter, ValidationError
 
 from python.research import candidate_attestation as payoff
 from python.research.candidate_generation import generate as generate_task
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_archive import bounded, parse
-from python.research.learning_evidence import MAX_BYTES, Digest
+from python.research.learning_evidence import MAX_BYTES, MAX_RECORDS, Digest, Number
 from python.research.publisher_policy import GitId, folded
 from python.research.source_verifier import GitObjects, MirrorTrust
 
@@ -23,7 +24,38 @@ MODULE = "python/research/experiments/recorded_holding_payoff.py"
 NOTE = "docs/research/proposals/recorded_holding_payoff.md"
 BUCKETS = ("under_5s", "5_to_15s", "15_to_60s", "60_to_300s", "300s_plus", "unknown")
 LIMITS = (5_000_000, 15_000_000, 60_000_000, 300_000_000)
-PROMPT = """Implement standalone Python report(rows) for recorded-holding-payoff-1.0.
+INPUT_VERSION = "recorded-holding-input-1.0"
+MAX_ROWS = MAX_RECORDS * 10
+
+
+class HoldingRow(StrictModel):
+    holdingMicros: Annotated[str, Field(pattern=r"^[0-9]{1,20}$", max_length=20)] | None
+    net: Number | None
+    signedFees: Number | None
+
+
+ROWS: TypeAdapter[list[HoldingRow]] = TypeAdapter(
+    Annotated[list[HoldingRow], Field(max_length=MAX_ROWS)]
+)
+INPUT_RULES = (
+    "Supported input domain " + INPUT_VERSION + ": the trusted caller validates this JSON schema "
+    "before invoking report. Only values in this bounded domain are supported. "
+    "The archived envelope is independently limited to " + str(MAX_BYTES) + " bytes. "
+    "Report must preserve every supported row, including nulls. "
+    "Do not broaden the input domain or infer missing values. Schema="
+    + json.dumps(ROWS.json_schema(), sort_keys=True, separators=(",", ":"))
+)
+
+
+def validate_rows(rows: list[dict[str, str | None]]) -> None:
+    try:
+        ROWS.validate_python(rows, strict=True)
+    except ValidationError:
+        raise ValueError("HOLDING_INPUT_INVALID") from None
+
+
+PROMPT = (
+    """Implement standalone Python report(rows) for recorded-holding-payoff-1.0.
 Each row has holdingMicros (nonnegative integer string or null), net and signedFees
 (plain signed decimal strings or null). Holding time is from recorded closure-row
 open/close clocks; it is not evidence of an executable earlier profitable exit.
@@ -48,6 +80,9 @@ Use explicit parameter and return annotations
 for every function; the source must pass mypy --strict and Ruff check/format on
 Python3.13. Return structured code and a short rationale.
 """
+    + "\n"
+    + INPUT_RULES
+)
 
 
 class Draft(StrictModel):
@@ -78,6 +113,7 @@ def evidence(job: Path) -> tuple[dict[str, Any], list[dict[str, str | None]]]:
             )
     if [{k: r[k] for k in ("net", "signedFees")} for r in rows] != original:
         raise ValueError("HOLDING_EVIDENCE_ROWS_CHANGED")
+    validate_rows(rows)
     return {**facts, "rows": rows}, rows
 
 
@@ -113,6 +149,7 @@ def bucket(row: dict[str, str | None]) -> str:
 
 
 def expected(rows: list[dict[str, str | None]]) -> dict[str, Any]:
+    validate_rows(rows)
     classified = [(bucket(row), row) for row in rows]
     return {
         "rows": len(rows),
@@ -131,6 +168,7 @@ def expected(rows: list[dict[str, str | None]]) -> dict[str, Any]:
 
 
 def challenges(rows: list[dict[str, str | None]]) -> list[list[dict[str, str | None]]]:
+    validate_rows(rows)
     boundaries = [0, *[n - 1 for n in LIMITS], *LIMITS, 900_000_000]
     cases: list[list[dict[str, str | None]]] = [
         rows,
@@ -138,6 +176,14 @@ def challenges(rows: list[dict[str, str | None]]) -> list[list[dict[str, str | N
         [{"holdingMicros": None, "net": None, "signedFees": None}],
         [{"holdingMicros": str(n), "net": "0", "signedFees": "-7"} for n in boundaries],
     ]
+    largest = "9" * 20 + "." + "9" * 10
+    cases[3].extend(
+        [
+            {"holdingMicros": "9" * 20, "net": largest, "signedFees": "-" + largest},
+            {"holdingMicros": "0", "net": "-" + largest, "signedFees": largest},
+            {"holdingMicros": "0", "net": "0.0000000001", "signedFees": None},
+        ]
+    )
     for source in payoff.challenges([])[4:]:
         cases.append(
             [
@@ -150,6 +196,10 @@ def challenges(rows: list[dict[str, str | None]]) -> list[list[dict[str, str | N
                 for row in source
             ]
         )
+    cases[-1] = [
+        {"holdingMicros": "0", "net": largest, "signedFees": "-" + largest},
+        {"holdingMicros": "9" * 20, "net": "-" + largest, "signedFees": None},
+    ] * (MAX_ROWS // 2)
     return cases
 
 

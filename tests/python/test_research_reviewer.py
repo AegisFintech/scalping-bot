@@ -385,3 +385,22 @@ def test_worker_launcher_exists_under_actual_restricted_service_path(monkeypatch
     monkeypatch.setattr(reviewer.publisher, "command", command)
     assert reviewer.model_review(value) == {"status": "OUTCOME_UNKNOWN"}
     assert len(calls) == 1
+
+
+def test_model_review_receives_the_enforced_supported_input_domain(context, monkeypatch):
+    from python.research import holding_task
+
+    values = []
+
+    def model(value):
+        assert holding_task.INPUT_RULES in value.contract
+        values.append(value)
+        return {
+            "status": "REVIEWED",
+            "job": sha(encoded(value.model_dump())),
+            "review": answer(value),
+        }
+
+    monkeypatch.setattr(reviewer, "model_review", model)
+    assert process(context)["status"] == "READY_PENDING_RECHECK"
+    assert [v.axis for v in values] == ["standards", "spec"]

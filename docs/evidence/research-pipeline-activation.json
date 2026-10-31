@@ -1,0 +1,180 @@
+{
+  "version": "research-pipeline-activation-1.0",
+  "observedAt": "2026-10-31T06:08:51.891234+00:00",
+  "origin": {
+    "version": "natural-origin-466-1.0",
+    "trialId": "43c124d17fdbe311896a3bccdc4a8dad89b1db588557acabe63764f7a1ac4333",
+    "question": "Can the recorded USD 1,461.11 loss be reconciled to a unique broker lifecycle, attributable costs and contemporaneous protection records without assuming linkage to the UNKNOWN setup?",
+    "registeredAt": "2026-10-30T18:36:52.889590+00:00",
+    "claimedAt": "2026-10-30T18:36:53.325588+00:00",
+    "startedAt": "2026-10-30T18:37:15.638443+00:00",
+    "completedAt": "2026-10-30T18:37:15.954026+00:00",
+    "recordedAt": "2026-10-30T18:37:15.954026+00:00",
+    "executionStatus": "RETURNED",
+    "closureStatus": "CLOSED",
+    "resultSha256": "db0ce90215a2dfc20b5276d32da39db20dce38a5e70eb5a63f03089171d44b6f",
+    "findingSha256": "5e1dddf9f352ff5ce1ba8679a4eb11c82fded02d02e5c414211e835ea6ccc4ea",
+    "counterfactualCosts": null,
+    "counterfactualNet": null,
+    "independentValidation": false,
+    "originalQuestionAnswered": false,
+    "scope": "FIXED_COST_CLOCK_PREREQUISITE_NOT_ARBITRARY_QUESTION_OR_STRATEGY_TEST",
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "generation": {
+    "generationJob": "608b636cf4dbefbc088ebc0397e0e9b97220739b8a0568e1031cc3c91978f894",
+    "providerAttempt": "a8bedb9510ebbd4f7004f0ab1644a16107e2d9d2b03602afb7f1a065da24d84d",
+    "capturedAt": "2026-10-31T05:40:40.183017+00:00",
+    "claimedAt": "2026-10-31T05:40:40.185277+00:00",
+    "status": "GENERATED_UNVERIFIED",
+    "baseCommit": "fd52cbf5d326dc22bed80b1e0158d3465e015478",
+    "providerClaimSha256": "036e2ef13c4f32e9bd3f84fd1d3aae67872aaf286b99387f66fcf2fffb8ee55b"
+  },
+  "scoring": {
+    "scoringJob": "69f6a5bd6bb614aed9877486733f866b359d0590ab4541c5ef76cfeffe9592dd",
+    "status": "AWAITING_INDEPENDENT_REVIEW",
+    "attestation": {
+      "caseCount": 28,
+      "completedAt": "2026-10-31T05:42:51.689385+00:00",
+      "softwareTestsPassed": true,
+      "economicQualification": false,
+      "runtimeSha256": "5a917d905e6a98ba071377a141184d6920621cbad00045212c66b0702c0b2e33",
+      "verifierSha256": "3951cd8f7126bbd14d1ba6d9f037ee86564e1ba0cbc427deb792b52ebf642386",
+      "oracleSha256": "5093eb1cc36af706f26fb88ebb646809cf07d138cc56590396a54bacae09ac08",
+      "resultSha256": "db0ce90215a2dfc20b5276d32da39db20dce38a5e70eb5a63f03089171d44b6f",
+      "findingSha256": "5e1dddf9f352ff5ce1ba8679a4eb11c82fded02d02e5c414211e835ea6ccc4ea",
+      "rowsSha256": "b6d630442bea75db0ee81df60c421b89ea6a537cb708bd655e20b08b5431b66b"
+    }
+  },
+  "signedGeneration": {
+    "baseCommit": "fd52cbf5d326dc22bed80b1e0158d3465e015478",
+    "brokerAuthority": false,
+    "checkedAt": "2026-10-31T05:45:06.810878+00:00",
+    "job": "608b636cf4dbefbc088ebc0397e0e9b97220739b8a0568e1031cc3c91978f894",
+    "origin": {
+      "findingSha256": "5e1dddf9f352ff5ce1ba8679a4eb11c82fded02d02e5c414211e835ea6ccc4ea",
+      "question": "Can the recorded USD 1,461.11 loss be reconciled to a unique broker lifecycle, attributable costs and contemporaneous protection records without assuming linkage to the UNKNOWN setup?",
+      "recordedClosedRows": 1,
+      "resultSha256": "db0ce90215a2dfc20b5276d32da39db20dce38a5e70eb5a63f03089171d44b6f",
+      "start": "2026-10-30T18:00:00+00:00",
+      "trialId": "43c124d17fdbe311896a3bccdc4a8dad89b1db588557acabe63764f7a1ac4333",
+      "until": "2026-10-30T18:30:00+00:00"
+    },
+    "phase": "PUBLISHING",
+    "promotionAuthority": false,
+    "publicationSha256": "2b95c24a3f6b273c3f5661ec5b53191f48d0a3d3244e9d58ae424b0e5892b303",
+    "reason": null,
+    "status": "SIGNED",
+    "version": "research-generation-health-1.0"
+  },
+  "reviewerDeployment": {
+    "sourceCommit": "fd52cbf5d326dc22bed80b1e0158d3465e015478",
+    "sourceSha256": "40bf832a141eb4f9f587a2618b6c7341ba4534865a23e0a0600731e80bc3e74a",
+    "role": "independent-reviewer",
+    "previousSourceCommit": "48e2f4ff076508efd505f0c82573481fa68bd237",
+    "oldClaimUnchanged": true,
+    "workerAliasesChanged": false,
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "closedPublicationRetirement": {
+    "retiredAt": "2026-10-31T05:50:53.920930+00:00",
+    "reason": "CLOSED_STALE_PUBLICATION_AFTER_REVIEWED_LAUNCHER_FIX",
+    "publicationSha256": "98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639",
+    "envelopeSha256": "1439a93e5b0469b8407dfc5652552e82509e03c897d50999589280ef36057766",
+    "pullRequest": {
+      "author": "AegisWalletApp",
+      "draft": true,
+      "headBranch": "research/98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639",
+      "headCommit": "c709f306cd3bf05285881d085c0667c80ae91b77",
+      "merged": false,
+      "number": 476,
+      "repository": "AegisFintech/scalping-bot",
+      "state": "closed"
+    },
+    "archive": "/var/lib/scalper-publisher-retired/98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639.json",
+    "phaseHashes": {
+      "remote-pr.json": "0ff2d1a665880648e64d241220b3c9becc1c67c60d9455d761df04abf92858b1",
+      "commit.json": "73e6119f05f6f270647a4e8b23fe8d34cd0b9d55e53c71dd24185c07af5cc21e",
+      "push-intent.json": "165103fbb965dfc9a907b5d85f4b6f4531606f065eaf801613fc31d1cf7bcd71",
+      "proposal.json": "24019fa4915ebf787a299e417769bd0817a2036cdf971f0b45e7a03498450e58",
+      "push-confirmed.json": "8800b345cce0ec6afe85697e762ae196a4c6d54ff65a61f7eff5ee420b5bfb54",
+      "pr-intent.json": "b5ed51d91dd9f626cb42679bd06617be8b3dcbb4089ba058cfa5baef01b6e993"
+    },
+    "unknownRootClaimPreserved": true,
+    "historyDeleted": false,
+    "authorityReused": false,
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "oldClaimHashes": {
+    "publication.json": "98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639",
+    "context.json": "2f71f4e35d1ad71ce9ecb9dcba9666e009cfcaf15f47c034020a3b248e7567c6",
+    "standards-input.json": "ec48cc98b6e50ef9d065283501f0c404378dd82f231f6c134e940f4d07c67da7",
+    "standards-claim.json": "2239941437996f099488b5179dd685709f9a146689e59bf2167d80932bfb2a2c"
+  },
+  "existingEvidence": {
+    "frozenExistingFiles": 425,
+    "changedExistingFiles": 0,
+    "approvedConfigUnchanged": true
+  },
+  "namespaceInterruption": {
+    "syntheticSoftwareProbe": true,
+    "separateMailbox": true,
+    "durableClaimBeforeInterruption": true,
+    "actualChildExecutionObserved": true,
+    "descendantsCleared": true,
+    "restartStatus": "OUTCOME_UNKNOWN",
+    "claimSha256": "9523122a13f2ff09ae61981c45e830515f63839e44b83ac6b61d7c8c2e0efdad",
+    "sameClaimAfterRestart": true,
+    "outputAbsent": true,
+    "duplicateWorkSkipped": true,
+    "providerCalls": 0,
+    "brokerAuthority": false,
+    "publicationAuthority": false
+  },
+  "browser": {
+    "observedAt": "2026-10-31T05:17:49.079Z",
+    "panelVisible": true,
+    "stageCount": 5,
+    "deliveryFields": 1,
+    "browserErrors": []
+  },
+  "originalTradingProcessesUnchanged": {
+    "scalper-analytics": true,
+    "scalper-market-data": true,
+    "scalper-ai": true,
+    "scalper-execution": true
+  },
+  "candidatePullRequest": 479,
+  "candidateHead": "ec71b33a9431deb89f6647b4b933567294625b88",
+  "hostedRuns": {
+    "push": 41173993973,
+    "pullRequest": 41173998589
+  },
+  "modelDecision": "REQUEST_CHANGES",
+  "generationClaims": 4,
+  "generationResponses": 4,
+  "reviewClaims": 1,
+  "reviewResponses": 1,
+  "successfulNaturalMerge": false,
+  "economicQualification": false,
+  "counterfactualNet": null,
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "negativeReviewRestart": {
+    "observedAt": "2026-10-31T06:09:42.506896+00:00",
+    "newServiceInvocation": true,
+    "existingFilesByteIdentical": true,
+    "claimsBefore": 1,
+    "claimsAfter": 1,
+    "responsesBefore": 1,
+    "responsesAfter": 1,
+    "status": "MODEL_REQUEST_CHANGES",
+    "githubTransitionClaims": [],
+    "generationReplayed": false,
+    "economicQualification": false,
+    "brokerAuthority": false
+  }
+}

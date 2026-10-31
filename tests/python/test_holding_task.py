@@ -51,6 +51,7 @@ def test_independent_cases_cover_real_rows_boundaries_and_unknowns():
     actual = [row("42000000")]
     cases = task.challenges(actual)
     assert len(cases) == 28 and cases[0] == actual and cases[1] == []
+    assert len(cases[-1]) == task.MAX_ROWS
     assert task.expected(cases[2])["buckets"][-1]["payoff"]["rows"] == 1
     assert {task.bucket(r) for r in cases[3]} == set(task.BUCKETS[:-1])
 
@@ -245,3 +246,54 @@ def test_prompt_names_exact_import_symbols_and_preserves_dependency_gate():
     assert "TypedDict is not" in task.PROMPT
     with pytest.raises(ValueError, match="DEPENDENCY_FORBIDDEN"):
         task.payoff.dependencies(b"from typing import TypedDict\ndef report(rows): return {}\n")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        row("0", "1" * 4301),
+        row("0", "0." + "1" * 4301),
+        row("0", "+1"),
+        row("0", "1e2"),
+        row("0", "NaN"),
+        row("0", "1", "-" + "1" * 33),
+        row("1" * 21),
+        {**row("0"), "extra": "unsupported"},
+    ],
+)
+def test_supported_input_domain_rejects_before_decimal_work(bad):
+    with pytest.raises(ValueError, match="HOLDING_INPUT_INVALID"):
+        task.expected([bad])
+
+
+def test_input_schema_matches_archive_money_and_closed_row_limits():
+    from pydantic import TypeAdapter
+
+    from python.research.learning_evidence import MAX_RECORDS, Number, SetupObservation
+
+    schema = task.ROWS.json_schema()
+    assert (
+        schema["maxItems"]
+        == MAX_RECORDS
+        * SetupObservation.model_json_schema()["properties"]["closedTrades"]["maxItems"]
+    )
+    fields = schema["$defs"]["HoldingRow"]["properties"]
+    assert fields["net"]["anyOf"][0] == TypeAdapter(Number).json_schema()
+    assert fields["signedFees"]["anyOf"][0] == TypeAdapter(Number).json_schema()
+    assert fields["holdingMicros"]["anyOf"][0]["maxLength"] == 20
+    assert task.INPUT_RULES in task.PROMPT and task.INPUT_VERSION in task.PROMPT
+
+
+def test_maximum_supported_values_and_unknown_cohort_are_preserved():
+    largest = "99999999999999999999.9999999999"
+    result = task.expected(
+        [row("9" * 20, largest, "-" + largest), row(None, "-0.0000000001", None)]
+    )
+    assert result["rows"] == 2
+    assert result["buckets"][4]["payoff"]["net"] == largest
+    assert result["buckets"][4]["payoff"]["signedFees"] == "-" + largest
+    assert result["buckets"][5]["payoff"]["net"] == "-0.0000000001"
+    rows = [row(None, None, None)] * task.MAX_ROWS
+    assert task.expected(rows)["buckets"][5]["payoff"]["unknownNet"] == task.MAX_ROWS
+    with pytest.raises(ValueError, match="HOLDING_INPUT_INVALID"):
+        task.expected([*rows, row(None, None, None)])
