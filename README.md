@@ -1,3 +1,5 @@
+Attested research preparation: [import/format convergence and retained rejection](docs/research-import-preparation-report.md).
+
 Research operational boundaries: [private CLI state and question-budget waits](docs/research-operational-waits-report.md).
 
 Research candidate lineage and independent recorder health: [delivery visibility](docs/research-delivery-report.md).

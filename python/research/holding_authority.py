@@ -27,25 +27,21 @@ def prepare(
     trusted_path(formatter.resolve(strict=True))
     destination.mkdir(mode=0o700, parents=True, exist_ok=True)
     immutable(destination / "original-draft.json", draft.model_dump())
-    command = [
-        str(formatter),
-        "format",
-        "--isolated",
-        "--line-length",
-        "100",
-        "--stdin-filename",
-        task.MODULE,
-        "-",
-    ]
-    formatted = subprocess.run(
-        command,
-        input=draft.code.encode(),
-        capture_output=True,
-        timeout=20,
-        check=True,
-        cwd="/",
-        env={"PATH": "/usr/bin:/bin", "HOME": "/nonexistent"},
-    ).stdout
+    formatted = draft.code.encode()
+    # Import spacing is a separate Ruff check; freeze only its formatted result.
+    for action in (
+        ["check", "--isolated", "--select", "I", "--fix-only"],
+        ["format", "--isolated", "--line-length", "100"],
+    ):
+        formatted = subprocess.run(
+            [str(formatter), *action, "--stdin-filename", task.MODULE, "-"],
+            input=formatted,
+            capture_output=True,
+            timeout=20,
+            check=True,
+            cwd="/",
+            env={"PATH": "/usr/bin:/bin", "HOME": "/nonexistent"},
+        ).stdout
     if len(formatted) > 6000:
         raise ValueError("HOLDING_PREPARATION_SIZE")
     prepared = draft.model_copy(update={"code": formatted.decode()})
@@ -55,6 +51,7 @@ def prepare(
         {
             "draft": prepared.model_dump(),
             "formatterSha256": sha(formatter.resolve(strict=True).read_bytes()),
+            "normalization": "RUFF_IMPORTS_THEN_FORMAT_V1",
             "originalSha256": sha(encoded(draft.model_dump())),
         },
     )

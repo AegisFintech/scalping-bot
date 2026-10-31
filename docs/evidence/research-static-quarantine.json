@@ -1,0 +1,18 @@
+{
+  "version": "research-publication-quarantine-1.0",
+  "observedAt": "2026-10-31T04:39:00.003103+00:00",
+  "publicationSha256": "f5a69a30387ca1851350486e6cb41ae403d11798dbe11e8ab6b622d48e03ad80",
+  "envelopeSha256": "1b8348acfa6219ff27ffc658c25ced81a97b72fa27ac956f608755e4c8f621dc",
+  "baseCommit": "48e2f4ff076508efd505f0c82573481fa68bd237",
+  "reason": "KNOWN_STATIC_IMPORT_FORMAT_FAILURE",
+  "namespaceCasesPassed": 28,
+  "mypyPassed": true,
+  "localHeadStillBase": true,
+  "noCommitPushOrPrIntent": true,
+  "freshRemoteBranchAbsent404": true,
+  "exactOwnedPreparationBytes": true,
+  "checkoutPreserved": true,
+  "envelopePreserved": true,
+  "unknownOutcomeCleared": false,
+  "brokerAuthority": false
+}
