@@ -1,3 +1,20 @@
+### ISSUE-477 — Restricted reviewer launcher
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/477; depends #465/#466.
+- Acceptance: reproduce the actual production launcher under the shipped service
+  PATH without provider calls; absolute Debian launcher; preserve UID/environment,
+  capabilities, source/model/API gates and unknown claims. Regression/failure tests,
+  full qualification, four config checks, independent review and exact-head hosted
+  delivery required before matching reviewer activation. Preserve #476 and retire
+  only its stale draft after main changes; no unknown replay or budget increase.
+- Status: regression reproduced ENOENT; absolute launcher and boundary fixture pass.
+  Both independent reviews, 51 focused tests, all 2,496 tests/gates/audits and four
+  configuration checks pass. Two earlier integration failures and separate tmpfs
+  reserve failure are recorded; ignored inactive-worktree caches reclaimed without
+  weakening guards. Reviewed pushed delivery/deployment follows. Existing root
+  claim and all worker evidence remain unchanged.
+- Evidence: `docs/research-launcher-report.md`.
+
 ### ISSUE-474 — Convergent import preparation before attestation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/474; follows #472/#466.

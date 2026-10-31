@@ -1,3 +1,5 @@
+Reviewer launcher boundary and unknown-claim handling: [report](docs/research-launcher-report.md).
+
 Attested research preparation: [import/format convergence and retained rejection](docs/research-import-preparation-report.md).
 
 Research operational boundaries: [private CLI state and question-budget waits](docs/research-operational-waits-report.md).

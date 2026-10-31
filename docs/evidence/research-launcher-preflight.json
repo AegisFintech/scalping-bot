@@ -1,0 +1,32 @@
+{
+  "version": "research-launcher-preflight-1.0",
+  "issue": 477,
+  "regression": {
+    "command": ".venv/bin/pytest -q tests/python/test_research_reviewer.py -k launcher",
+    "before": "FileNotFoundError: runuser",
+    "after": "PASS",
+    "servicePath": "/usr/local/bin:/usr/bin:/bin",
+    "launcher": "/usr/sbin/runuser"
+  },
+  "actualSystemdBoundary": {
+    "status": "BOUNDARY_PASS",
+    "workerImported": true,
+    "unprivilegedUid": true,
+    "existingCodexAccess": true,
+    "credentialInaccessible": true,
+    "providerCalls": 0,
+    "restrictionChanges": false,
+    "childSubstitution": "Provider-free assertions instead of worker invocation; real captured launch/environment retained. Root diagnostics redirected to a protected log."
+  },
+  "priorPublication": {
+    "pullRequest": 476,
+    "headCommit": "c709f306cd3bf05285881d085c0667c80ae91b77",
+    "publicationSha256": "98a08499766ab90aa16f6020f2efd7f5fc726a008802fc3e4c74315c8e16c639",
+    "rootStandardsClaimPreserved": true,
+    "workerClaimsObserved": 0,
+    "replayed": false
+  },
+  "frozenRuntimeChanged": false,
+  "brokerAuthority": false,
+  "economicQualification": false
+}

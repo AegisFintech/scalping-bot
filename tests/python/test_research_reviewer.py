@@ -331,3 +331,57 @@ def test_merge_observed_after_model_reviews_keeps_actual_merge_identity(context,
     result = process(ctx)
     assert result["status"] == "MERGED" and result["mergeCommit"] == "f" * 40
     assert not ctx.calls
+
+
+def test_worker_launcher_exists_under_actual_restricted_service_path(monkeypatch):
+    import os
+    import subprocess
+    from pathlib import Path
+
+    from python.research.source_review import ReviewInput
+
+    unit = (Path(__file__).parents[2] / "systemd/scalper-research-reviewer.service").read_text()
+    service_path = next(
+        line.removeprefix("Environment=PATH=")
+        for line in unit.splitlines()
+        if line.startswith("Environment=PATH=")
+    )
+    value = ReviewInput(
+        version="research-source-review-input-1.0",
+        axis="standards",
+        publicationSha256="d" * 64,
+        headCommit="c" * 40,
+        contract="fixture",
+        source={"module.py": "pass"},
+        attestation={},
+    )
+    calls = []
+
+    def command(args, **kwargs):
+        calls.append(args)
+        # Exercise the production launcher under the shipped systemd PATH;
+        # --version never changes identity, launches a worker or calls a provider.
+        subprocess.run(
+            [args[0], "--version"],
+            env={**os.environ, "PATH": service_path},
+            check=True,
+            capture_output=True,
+            timeout=5,
+        )
+        assert args[0] == "/usr/sbin/runuser"
+        assert args[1:7] == [
+            "-u",
+            "scalper-learning",
+            "--",
+            "env",
+            "-i",
+            "--chdir=" + str(reviewer.ARTIFACT),
+        ]
+        assert args[-3:] == ["-P", "-m", "python.operations.source_review_worker"]
+        assert kwargs["data"] == encoded(value.model_dump())
+        assert kwargs["timeout"] == 210
+        return b'{"status":"OUTCOME_UNKNOWN"}'
+
+    monkeypatch.setattr(reviewer.publisher, "command", command)
+    assert reviewer.model_review(value) == {"status": "OUTCOME_UNKNOWN"}
+    assert len(calls) == 1

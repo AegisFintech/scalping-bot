@@ -69,6 +69,8 @@ supersede the current versioned policy or explicit operator instructions.
   all remote outputs before signing, workers never get GitHub/signing credentials.
   Review admission: `docs/review-admission-report.md`; missing/failed CI and stale
   approvals never authorize advancement. Drafts grant no merge/deploy authority.
+  Reviewer launch: `docs/research-launcher-report.md`; use the absolute Debian
+  launcher under the restricted PATH; unknown claims never authorize replay.
   Automated review: `docs/research-reviewer-report.md`; separate aloycwl adapter,
   two tool-disabled contexts, durable API claims and fresh exact-source gates.
   Delivery lineage: `docs/research-delivery-report.md`; match exact publication
