@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "holding-generation-request-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "task": {
+      "const": "recorded-holding-payoff-1.0",
+      "title": "Task",
+      "type": "string"
+    },
+    "baseCommit": {
+      "pattern": "^[a-f0-9]{40}$",
+      "title": "Basecommit",
+      "type": "string"
+    },
+    "experiment": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Experiment",
+      "type": "object"
+    }
+  },
+  "required": ["version", "task", "baseCommit", "experiment"],
+  "title": "Generation",
+  "type": "object"
+}

@@ -40,7 +40,9 @@ counterfactualNet:null, economicQualification:false. Net includes fees already:
 never subtract them twice. Unknown values remain counted. Preserve every row,
 including unknown holding clocks. No causal exit classification or trading advice.
 Only from decimal/from typing/from __future__ imports; no project dependencies,
-tools, reflection, network or files. Return structured code and a short rationale.
+tools, reflection, network or files. Use explicit parameter and return annotations
+for every function; the source must pass mypy --strict and Ruff check/format on
+Python3.13. Return structured code and a short rationale.
 """
 
 

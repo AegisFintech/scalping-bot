@@ -1,0 +1,26 @@
+[Unit]
+Description=Bounded research source generation (no GitHub/signing/broker authority)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=scalper-learning
+Group=scalper-learning
+WorkingDirectory=/var/lib/scalper-learning-evidence
+Environment=HOME=/var/lib/scalper-learning-evidence
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-holding-worker
+ExecStart=/opt/scalper-holding-worker/.venv/bin/python -m python.operations.holding_workers work --config /etc/scalper-holding-worker/generation.json
+UMask=0077
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=64
+CPUQuota=50%
+TimeoutStartSec=240
+KillMode=control-group
+ProtectHome=yes
+ProtectSystem=strict
+PrivateTmp=yes
+NoNewPrivileges=yes
+ReadWritePaths=/var/lib/scalper-learning-evidence/holding464 /var/lib/scalper-learning-evidence/.codex
+InaccessiblePaths=-/root -/etc/scalping-bot -/run/postgresql
