@@ -1,3 +1,17 @@
+### ISSUE-464 — Holding-time research contract and independent checks
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/464; depends #463.
+- Acceptance for this batch: new bounded holding-duration task, complete closed-row
+  denominators/unknown clocks, exact source/result/row binding, independent 28-case
+  checks, separate signed-publication1.1, historical1.0 compatibility and rejection
+  tests. Full qualification and independently reviewed pushed PR required.
+- Status: implemented; independent reviews and all2,423 tests/gates/audits plus
+  four configuration checks pass. Real recorded-archive and signed1.0 compatibility
+  probes pass. Reviewed pushed delivery follows.
+  Scheduling, remote handoff and actual unattended proof remain part of open #464;
+  this batch enables no timer, provider request, strategy change or broker mutation.
+- Evidence: `docs/holding-research-report.md`.
+
 ### ISSUE-463 — Independent-review admission evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/463; parent #431/#403.
@@ -8,7 +22,8 @@
   qualification, reviewed/pushed delivery and publisher-only activation.
 - Status: implemented;49 focused tests, full2,381-test qualification, all gates/audits,
   four config checks and both independent reviews pass. Real API probes distinguish
-  failed CI from recorded independent approval. Reviewed delivery/activation follows. No
+  failed CI from recorded independent approval. PR #467 merged64d28b8 and publisher-only
+  activation plus dedicated-service-account API probes passed. No
   automatic approval/merge or recurring generator is enabled by this batch.
 - Evidence: `docs/review-admission-report.md`.
 

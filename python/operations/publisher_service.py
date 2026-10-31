@@ -108,7 +108,7 @@ def credentials(root: Path) -> None:
     publisher.command(["gh", "auth", "setup-git", "--hostname", "github.com"])
 
 
-def checkout(job: Path, payload: publisher.Publication, artifact: Path) -> Path:
+def checkout(job: Path, payload: publisher.SignedPublication, artifact: Path) -> Path:
     repository = job / "repo"
     if not repository.exists():
         publisher.command(

@@ -1,3 +1,5 @@
+Holding-time research contract: [scope and validation](docs/holding-research-report.md). Recurring generation/review is still being implemented.
+
 Local publishing and review checks: [publisher](docs/trusted-publisher-report.md), [review checks](docs/review-admission-report.md).
 
 Implementation queue: [autonomous harness delivery plan](docs/autonomous-harness-delivery-plan.md), with bounded tasks and an explicit full-cycle completion test.
