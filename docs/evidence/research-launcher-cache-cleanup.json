@@ -1,0 +1,206 @@
+{
+  "reason": "FORWARD_DISK_RESERVE",
+  "kind": "ignored_reproducible_inactive_worktree_caches",
+  "beforeFree": 8310628352,
+  "afterFree": 8310636544,
+  "removed": [
+    {
+      "path": "/tmp/scalper-440/graphify-out",
+      "bytes": 24934992
+    },
+    {
+      "path": "/tmp/scalper-442/graphify-out",
+      "bytes": 24965340
+    },
+    {
+      "path": "/tmp/scalper-442/.mypy_cache",
+      "bytes": 14004493
+    },
+    {
+      "path": "/tmp/scalper-442/.ruff_cache",
+      "bytes": 7490
+    },
+    {
+      "path": "/tmp/scalper-candidate451/.mypy_cache",
+      "bytes": 14508256
+    },
+    {
+      "path": "/tmp/scalper-candidate451/.ruff_cache",
+      "bytes": 8766
+    },
+    {
+      "path": "/tmp/scalper-experiment-execution/.mypy_cache",
+      "bytes": 14270733
+    },
+    {
+      "path": "/tmp/scalper-experiment-execution/.ruff_cache",
+      "bytes": 8574
+    },
+    {
+      "path": "/tmp/scalper-experiment-registration/graphify-out",
+      "bytes": 41302547
+    },
+    {
+      "path": "/tmp/scalper-experiment-registration/.mypy_cache",
+      "bytes": 14246157
+    },
+    {
+      "path": "/tmp/scalper-experiment-registration/.ruff_cache",
+      "bytes": 8202
+    },
+    {
+      "path": "/tmp/scalper-health431/.mypy_cache",
+      "bytes": 14442750
+    },
+    {
+      "path": "/tmp/scalper-health431/.ruff_cache",
+      "bytes": 8886
+    },
+    {
+      "path": "/tmp/scalper-holding464/.mypy_cache",
+      "bytes": 14381325
+    },
+    {
+      "path": "/tmp/scalper-holding464/.ruff_cache",
+      "bytes": 9638
+    },
+    {
+      "path": "/tmp/scalper-isolated-worker/graphify-out",
+      "bytes": 39768258
+    },
+    {
+      "path": "/tmp/scalper-isolated-worker/.mypy_cache",
+      "bytes": 14254304
+    },
+    {
+      "path": "/tmp/scalper-isolated-worker/.ruff_cache",
+      "bytes": 7822
+    },
+    {
+      "path": "/tmp/scalper-lineage466/graphify-out",
+      "bytes": 44952964
+    },
+    {
+      "path": "/tmp/scalper-lineage466/.mypy_cache",
+      "bytes": 14573792
+    },
+    {
+      "path": "/tmp/scalper-lineage466/.ruff_cache",
+      "bytes": 10694
+    },
+    {
+      "path": "/tmp/scalper-normalization474/graphify-out",
+      "bytes": 44806647
+    },
+    {
+      "path": "/tmp/scalper-normalization474/.mypy_cache",
+      "bytes": 14467341
+    },
+    {
+      "path": "/tmp/scalper-normalization474/.ruff_cache",
+      "bytes": 10774
+    },
+    {
+      "path": "/tmp/scalper-observation-cycle/graphify-out",
+      "bytes": 40330088
+    },
+    {
+      "path": "/tmp/scalper-observation-cycle/.mypy_cache",
+      "bytes": 14307597
+    },
+    {
+      "path": "/tmp/scalper-observation-cycle/.ruff_cache",
+      "bytes": 7954
+    },
+    {
+      "path": "/tmp/scalper-operational472/graphify-out",
+      "bytes": 44742365
+    },
+    {
+      "path": "/tmp/scalper-operational472/.mypy_cache",
+      "bytes": 14471437
+    },
+    {
+      "path": "/tmp/scalper-operational472/.ruff_cache",
+      "bytes": 10710
+    },
+    {
+      "path": "/tmp/scalper-payoff452/.mypy_cache",
+      "bytes": 14192909
+    },
+    {
+      "path": "/tmp/scalper-payoff452/.ruff_cache",
+      "bytes": 9222
+    },
+    {
+      "path": "/tmp/scalper-payoff452-final/.mypy_cache",
+      "bytes": 14205197
+    },
+    {
+      "path": "/tmp/scalper-payoff452-final/.ruff_cache",
+      "bytes": 9246
+    },
+    {
+      "path": "/tmp/scalper-publisher452/.mypy_cache",
+      "bytes": 14455008
+    },
+    {
+      "path": "/tmp/scalper-publisher452/.ruff_cache",
+      "bytes": 9190
+    },
+    {
+      "path": "/tmp/scalper-publisher452-format/.mypy_cache",
+      "bytes": 14356749
+    },
+    {
+      "path": "/tmp/scalper-publisher452-format/.ruff_cache",
+      "bytes": 9214
+    },
+    {
+      "path": "/tmp/scalper-review463/.mypy_cache",
+      "bytes": 14356749
+    },
+    {
+      "path": "/tmp/scalper-review463/.ruff_cache",
+      "bytes": 9278
+    },
+    {
+      "path": "/tmp/scalper-review465/graphify-out",
+      "bytes": 44431521
+    },
+    {
+      "path": "/tmp/scalper-review465/.mypy_cache",
+      "bytes": 14414048
+    },
+    {
+      "path": "/tmp/scalper-review465/.ruff_cache",
+      "bytes": 10566
+    },
+    {
+      "path": "/tmp/scalper-schedule464/.mypy_cache",
+      "bytes": 14397709
+    },
+    {
+      "path": "/tmp/scalper-schedule464/.ruff_cache",
+      "bytes": 10118
+    },
+    {
+      "path": "/tmp/scalper-source-verifier/graphify-out",
+      "bytes": 40683264
+    },
+    {
+      "path": "/tmp/scalper-source-verifier/.mypy_cache",
+      "bytes": 14201101
+    },
+    {
+      "path": "/tmp/scalper-source-verifier/.ruff_cache",
+      "bytes": 8246
+    }
+  ],
+  "preserved": "source, current worktree graph, active process trees, evidence, frozen artifacts, runtime/rollback environments and credentials",
+  "applicableFilesystem": "/tmp tmpfs",
+  "minimumReserveBytes": 2147483648,
+  "tmpFreeAfterCleanup": 2936578048,
+  "tmpFreeBeforeCleanup": null,
+  "note": "Initial free counters captured root filesystem, which is distinct; unknown initial tmpfs free stays null."
+}

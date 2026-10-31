@@ -93,7 +93,7 @@ def test_model_adapter_strips_root_credentials_and_uses_research_context(monkeyp
 
     def command(args, *, data, timeout):
         calls.append(args)
-        assert args[:6] == ["runuser", "-u", "scalper-learning", "--", "env", "-i"]
+        assert args[:6] == ["/usr/sbin/runuser", "-u", "scalper-learning", "--", "env", "-i"]
         assert "GH_TOKEN" not in " ".join(args)
         assert "-P" in args and "--chdir=" + str(reviewer.ARTIFACT) in args
         return b'{"status":"OUTCOME_UNKNOWN"}'

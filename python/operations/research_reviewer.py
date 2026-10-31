@@ -126,7 +126,7 @@ def model_review(value: ReviewInput) -> dict[str, Any]:
         raise ValueError("REVIEW_INPUT_OVERSIZED")
     result = publisher.command(
         [
-            "runuser",
+            "/usr/sbin/runuser",
             "-u",
             "scalper-learning",
             "--",
