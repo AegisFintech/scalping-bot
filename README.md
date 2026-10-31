@@ -1,3 +1,5 @@
+Research candidate lineage and independent recorder health: [delivery visibility](docs/research-delivery-report.md).
+
 Independent local review: [source/CI/approval/merge gates](docs/research-reviewer-report.md).
 
 Holding-time research: [contract](docs/holding-research-report.md), [scheduled handoff](docs/holding-pipeline-report.md). Separate automated review remains pending.

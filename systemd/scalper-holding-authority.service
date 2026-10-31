@@ -24,5 +24,5 @@ ProtectHome=yes
 PrivateTmp=yes
 NoNewPrivileges=yes
 CapabilityBoundingSet=
-ReadWritePaths=/var/lib/scalper-candidate-authority /var/lib/scalper-publisher-queue
+ReadWritePaths=/var/lib/scalper-candidate-observation /var/lib/scalper-candidate-authority /var/lib/scalper-publisher-queue
 InaccessiblePaths=-/etc/scalping-bot -/run/postgresql -/var/lib/scalper-demo-epoch-314

@@ -318,3 +318,16 @@ def test_late_mergeability_boolean_must_still_be_verified(context, monkeypatch):
     monkeypatch.setattr(reviewer, "guard", guard)
     assert process(ctx)["status"] == "LATE_GATE_CHANGED"
     assert not ctx.calls
+
+
+def test_merge_observed_after_model_reviews_keeps_actual_merge_identity(context, monkeypatch):
+    ctx = context
+
+    def models(*args):
+        ctx.pr.update(merged=True, state="closed", merge_commit_sha="f" * 40)
+        return "APPROVED"
+
+    monkeypatch.setattr(reviewer, "inspect_models", models)
+    result = process(ctx)
+    assert result["status"] == "MERGED" and result["mergeCommit"] == "f" * 40
+    assert not ctx.calls

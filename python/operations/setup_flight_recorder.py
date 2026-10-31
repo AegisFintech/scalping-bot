@@ -13,6 +13,7 @@ import re
 import shutil
 import time
 from collections import deque
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -22,9 +23,11 @@ import httpx
 import psycopg
 from psycopg.rows import dict_row
 
+from python.operations import flight_heartbeat
 from python.operations.entry_context import context_hash, entry_context
 
 TERMINAL = {"CLOSED", "FAILED", "EXPIRED"}
+
 MAX_BYTES = 512 * 1024**2
 MIN_FREE = 2 * 1024**3
 
@@ -631,7 +634,7 @@ def main() -> None:
     seen: set[str] = set()
     stream, cursor = None, 0
     recent: deque[dict[str, Any]] = deque(maxlen=8192)
-    last_database, last_publish, last_metadata = 0.0, 0.0, 0.0
+    last_database, last_publish, last_metadata, last_heartbeat = 0.0, 0.0, 0.0, 0.0
     metadata: dict[str, Any] = {}
     storage_check = 0.0
     total_bytes = 0
@@ -826,6 +829,12 @@ def main() -> None:
                 except (OSError, ValueError):
                     pass
                 time.sleep(3)
+            finally:
+                # Public monitoring failure never changes private recorder evidence.
+                if time.monotonic() - last_heartbeat >= 1:
+                    with suppress(OSError, ValueError):
+                        flight_heartbeat.publish(directory / "status.json", datetime.now(UTC))
+                    last_heartbeat = time.monotonic()
             time.sleep(0.25)
 
 

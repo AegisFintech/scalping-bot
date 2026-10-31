@@ -19,6 +19,8 @@ from urllib.request import urlopen
 
 from pydantic import Field, model_validator
 
+from python.operations import flight_heartbeat
+from python.operations import research_delivery as delivery
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.experiment_registry import read
 from python.research.learning_archive import atomic_bytes, bounded
@@ -107,6 +109,25 @@ class HarnessHealth(StrictModel):
             "Publishing",
         ]:
             raise ValueError("HEALTH_STAGE_ROLES")
+        return self
+
+
+class RemoteHealth11(StrictModel):
+    version: Literal["research-health-1.1"]
+    core: ResearchHealth
+    review: delivery.ReviewHealth | None
+
+
+class HarnessEnvelope11(StrictModel):
+    version: Literal["harness-health-1.1"]
+    checkedAt: Instant
+    core: HarnessHealth
+    delivery: delivery.DeliveryHealth
+
+    @model_validator(mode="after")
+    def clock(self) -> HarnessEnvelope11:
+        if self.checkedAt != self.core.checkedAt or self.checkedAt != self.delivery.checkedAt:
+            raise ValueError("HEALTH_ENVELOPE_CLOCK")
         return self
 
 
@@ -349,7 +370,7 @@ def fetch_research() -> bytes:
     return raw
 
 
-def collect(now: datetime) -> HarnessHealth:
+def collect_packet(now: datetime) -> HarnessEnvelope11:
     started = monotonic()
 
     def current() -> datetime:
@@ -364,32 +385,40 @@ def collect(now: datetime) -> HarnessHealth:
     except (OSError, ValueError, TypeError):
         bot = stage("Demo", "UNAVAILABLE", None, "Read-only execution status unavailable.")
     try:
-        # Reuse the existing read-only projection; grant no access to recorder DB credentials.
-        with urlopen("http://127.0.0.1:8501/api/desk", timeout=5) as response:
-            raw = response.read(1048577)
-        if len(raw) > 1048576:
-            raise ValueError("HEALTH_DASHBOARD_OVERSIZED")
-        index = json.loads(raw)["flight"]
-        at = index["checkedAt"]
-        recorder_state: HealthState = "CURRENT" if fresh(at, current(), 10) else "STALE"
-        if index.get("available") is not True:
-            recorder_state = "UNAVAILABLE"
+        heartbeat = flight_heartbeat.load(current())
         flight = stage(
             "Flight recorder",
-            recorder_state,
-            at,
-            "Sampled recorder heartbeat via dashboard; not complete tick coverage.",
+            "BLOCKED"
+            if heartbeat.state == "GAP"
+            else "UNAVAILABLE"
+            if heartbeat.state == "UNAVAILABLE"
+            else "CURRENT",
+            heartbeat.recordedAt,
+            "Sampled recorder heartbeat: "
+            + heartbeat.state
+            + "; not complete tick coverage or broker state.",
         )
     except (OSError, ValueError, KeyError, TypeError):
-        flight = stage("Flight recorder", "UNAVAILABLE", None, "Recorder heartbeat unavailable.")
+        flight = stage(
+            "Flight recorder", "UNAVAILABLE", None, "Recorder heartbeat unavailable or stale."
+        )
+
     remote = None
+    review = None
     try:
-        remote = ResearchHealth.model_validate_json(fetch_research())
+        packet = json.loads(fetch_research())
+        if not isinstance(packet, dict):
+            raise ValueError("HEALTH_REMOTE_SHAPE")
+        if packet.get("version") == "research-health-1.1":
+            parsed = RemoteHealth11.model_validate(packet)
+            remote, review = parsed.core, parsed.review
+        else:
+            remote = ResearchHealth.model_validate(packet)
         if not fresh(remote.checkedAt, current(), 60):
             raise ValueError("HEALTH_REMOTE_STALE")
         research_stages = [remote.observation, remote.experiments]
     except (OSError, ValueError, subprocess.SubprocessError):
-        remote = None
+        remote = review = None
         research_stages = [
             stage(name, "UNAVAILABLE", None, "Remote research health unavailable.")
             for name in ["Observation", "Experiments"]
@@ -422,7 +451,7 @@ def collect(now: datetime) -> HarnessHealth:
             None,
             "No current publisher receipt. No automatic publication is inferred.",
         )
-    return HarnessHealth(
+    core = HarnessHealth(
         version="harness-health-1.0",
         checkedAt=current().isoformat(),
         stages=[bot, flight, *research_stages, publisher],
@@ -433,10 +462,36 @@ def collect(now: datetime) -> HarnessHealth:
         promotionAuthority=False,
     )
 
+    return HarnessEnvelope11(
+        version="harness-health-1.1",
+        checkedAt=core.checkedAt,
+        core=core,
+        delivery=delivery.DeliveryHealth(
+            version="research-delivery-health-1.0",
+            checkedAt=core.checkedAt,
+            generation=delivery.load(delivery.GENERATION, delivery.GenerationHealth, current()),
+            review=review,
+            brokerAuthority=False,
+            promotionAuthority=False,
+        ),
+    )
+
+
+def collect(now: datetime) -> HarnessHealth:
+    return collect_packet(now).core
+
 
 def load(path: Path, now: datetime) -> dict[str, Any]:
     try:
-        value = HarnessHealth.model_validate_json(bounded(path, LIMIT))
+        raw = json.loads(bounded(path, LIMIT))
+        if not isinstance(raw, dict):
+            raise ValueError("HEALTH_SNAPSHOT_SHAPE")
+        packet = (
+            HarnessEnvelope11.model_validate(raw)
+            if raw.get("version") == "harness-health-1.1"
+            else None
+        )
+        value = packet.core if packet else HarnessHealth.model_validate(raw)
         if not fresh(value.checkedAt, now, 180):
             raise ValueError("HEALTH_STALE")
         for item in value.stages:
@@ -451,7 +506,10 @@ def load(path: Path, now: datetime) -> dict[str, Any]:
                 value.research.closureCounts = value.research.trialId = None
         if value.stages[-1].state in {"STALE", "UNAVAILABLE"}:
             value.publisher = None
-        return value.model_dump()
+        result = value.model_dump()
+        if packet:
+            result["delivery"] = delivery.view(packet.delivery, now)
+        return result
     except (OSError, ValueError):
         return {"available": False, "reason": "Harness status unavailable or stale."}
 
@@ -465,9 +523,18 @@ def main() -> None:
         raise ValueError("HEALTH_DEDICATED_USER_REQUIRED")
     now = datetime.now(UTC)
     if args.action == "export":
-        print(encoded(export(args.path, now).model_dump()).decode())
+        print(
+            encoded(
+                RemoteHealth11(
+                    version="research-health-1.1",
+                    core=export(args.path, now),
+                    review=delivery.load(delivery.REVIEW, delivery.ReviewHealth, now),
+                ).model_dump()
+            ).decode()
+        )
     else:
-        raw = encoded(collect(now).model_dump())
+        packet = collect_packet(now)
+        raw = encoded(packet.model_dump())
         atomic_bytes(args.path, raw, replace=True)
         args.path.chmod(0o644)
         print(
@@ -475,7 +542,7 @@ def main() -> None:
                 {
                     "event": "HARNESS_HEALTH",
                     "checkedAt": now.isoformat(),
-                    "stages": {s["name"]: s["state"] for s in json.loads(raw)["stages"]},
+                    "stages": {s["name"]: s["state"] for s in json.loads(raw)["core"]["stages"]},
                 }
             ).decode()
         )

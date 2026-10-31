@@ -641,7 +641,31 @@ function controller(root) {
       }
       return stage;
     });
+    const delivery = harnessFresh ? harness.delivery : null;
+    const deliveryCurrent = (item) => {
+      const at = Date.parse(item?.checkedAt);
+      return (
+        Number.isFinite(at) &&
+        Date.now() >= at - 5000 &&
+        Date.now() <= at + 300000
+      );
+    };
+    const generation = deliveryCurrent(delivery?.generation)
+      ? delivery.generation
+      : null;
+    const review = deliveryCurrent(delivery?.review) ? delivery.review : null;
+    const matched =
+      generation?.publicationSha256 && review
+        ? [...review.recent, review.lastTerminal]
+            .filter(
+              (r) => r && r.publicationSha256 === generation.publicationSha256,
+            )
+            .at(-1)
+        : null;
     const harnessKey = JSON.stringify([
+      generation,
+      review,
+      matched,
       harnessFresh,
       harness,
       rows.map((s) => s.state),
@@ -662,6 +686,37 @@ function controller(root) {
           return row;
         }),
       );
+      text(
+        "delivery-phase",
+        generation
+          ? `Candidate ${generation.phase || "OBSERVATION"} · ${generation.status}${generation.reason ? " · " + generation.reason : ""}; independent review ${review?.status || "unavailable"}.`
+          : "Candidate generation unavailable or stale.",
+      );
+      const origin = generation?.origin;
+      text(
+        "delivery-origin",
+        origin
+          ? `Candidate question: ${origin.question} · recorded closed rows ${origin.recordedClosedRows} · ${origin.start} → ${origin.until}. Holding time proves no earlier profitable exit.`
+          : "Candidate source window unavailable.",
+      );
+      const short = (value) => value?.slice(0, 12) || "unavailable";
+      text(
+        "delivery-lineage",
+        generation
+          ? `Job ${short(generation.job)} · result ${short(origin?.resultSha256)} · finding ${short(origin?.findingSha256)} · publication ${short(generation.publicationSha256)}${matched ? " · exact head " + short(matched.headCommit) + " · research merge " + short(matched.mergeCommit) : " · no matched review receipt"}`
+          : "Candidate lineage unavailable.",
+      );
+      const deliveryPr = matched?.pullRequest;
+      $("delivery-pr").hidden =
+        !Number.isInteger(deliveryPr) ||
+        deliveryPr < 1 ||
+        deliveryPr > 999999999;
+      if (!$("delivery-pr").hidden) {
+        $("delivery-pr").href =
+          `https://github.com/AegisFintech/scalping-bot/pull/${deliveryPr}`;
+        $("delivery-pr").textContent =
+          `Matched research PR #${deliveryPr} · ${matched.status}${matched.reason ? " · " + matched.reason : ""}`;
+      }
       const research = harnessFresh ? harness.research : null;
       const currentStage = (name) =>
         rows.some(

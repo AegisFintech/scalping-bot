@@ -1,0 +1,50 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "flight-heartbeat-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "checkedAt": {
+      "title": "Checkedat",
+      "type": "string"
+    },
+    "recordedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Recordedat"
+    },
+    "state": {
+      "enum": ["RECORDING", "LAST_COMPLETED", "GAP", "UNAVAILABLE"],
+      "title": "State",
+      "type": "string"
+    },
+    "completeTickTape": {
+      "const": false,
+      "title": "Completeticktape",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "version",
+    "checkedAt",
+    "recordedAt",
+    "state",
+    "completeTickTape",
+    "brokerAuthority"
+  ],
+  "title": "Heartbeat",
+  "type": "object"
+}

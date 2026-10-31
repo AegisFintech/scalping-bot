@@ -66,7 +66,11 @@ def test_empty_or_delivered_task_waits_without_provider_calls(tmp_path, monkeypa
     assert pipeline.cycle(tmp_path, {})["status"] == "TASK_ALREADY_PRESENT"
     monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "ELIGIBLE"})
     monkeypatch.setattr(pipeline, "transfer", lambda _, request: {"status": "NO_CLOSED_ROWS"})
-    assert pipeline.cycle(tmp_path, {})["status"] == "NO_CLOSED_ROWS"
+    result = pipeline.cycle(tmp_path, {})
+    assert result["status"] == "NO_CLOSED_ROWS"
+    public = pipeline.delivery.generation(tmp_path, result)
+    assert public.status == "NO_CLOSED_ROWS" and public.checkedAt == result["checkedAt"]
+    assert public.job is public.origin is None
 
 
 def test_signed_pending_publication_never_generates_redundant_candidate(tmp_path, monkeypatch):
