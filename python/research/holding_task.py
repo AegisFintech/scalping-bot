@@ -39,8 +39,12 @@ average positive net, HALF_EVEN exactly six decimals, or null without wins);
 counterfactualNet:null, economicQualification:false. Net includes fees already:
 never subtract them twice. Unknown values remain counted. Preserve every row,
 including unknown holding clocks. No causal exit classification or trading advice.
-Only from decimal/from typing/from __future__ imports; no project dependencies,
-tools, reflection, network or files. Use explicit parameter and return annotations
+Only these imports are permitted: from decimal import Decimal, localcontext,
+ROUND_HALF_EVEN; from typing import Any, Dict, List, Optional, Tuple;
+from __future__ import annotations. No other imported symbols: TypedDict is not
+permitted. Built-in list/dict annotations or Any can express nested results.
+No project dependencies, tools, reflection, network or files.
+Use explicit parameter and return annotations
 for every function; the source must pass mypy --strict and Ruff check/format on
 Python3.13. Return structured code and a short rationale.
 """

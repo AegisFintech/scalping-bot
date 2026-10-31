@@ -242,10 +242,22 @@ def experiments(root: Path, now: datetime) -> tuple[Stage, str | None, dict[str,
         if any(r["status"] not in permitted for r in recent):
             raise ValueError("HEALTH_JOB_STATUS_UNKNOWN")
         unknown = any(r["status"] in unknown_states for r in recent)
-        state: HealthState = "BLOCKED" if value.get("admissionBlocker") or unknown else "CURRENT"
+        budget_wait = value.get("admissionBlocker") == "RESEARCH_REGISTRY_TRIAL_BUDGET"
+        state: HealthState = (
+            "BLOCKED"
+            if unknown or (value.get("admissionBlocker") and not budget_wait)
+            else "WAITING"
+            if budget_wait
+            else "CURRENT"
+        )
         detail = "Fixed-method experiments; recorded closures are trials, not trades."
         if unknown:
             detail = "Unknown remote outcome retained; queries never authorize redispatch."
+        elif budget_wait:
+            detail = (
+                "Question trial budget exhausted; waiting for a distinct attributable question. "
+                "Existing jobs still reconcile."
+            )
         elif value.get("admissionBlocker"):
             detail = "New experiment admission blocked; existing jobs still reconcile."
         claims = list((root / "experiments450").glob("*/*/claim.json"))

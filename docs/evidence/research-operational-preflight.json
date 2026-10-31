@@ -1,0 +1,52 @@
+{
+  "observedAt": "2026-10-31T04:12:02.572020+00:00",
+  "deployedSource": "4f79de7ccbc170c70af819b936bf821436c86303",
+  "privateParentHome": {
+    "before": "GITHUB_CONFIG_PERMISSION_DENIED_NO_JOB_CREATED",
+    "afterReadOnlyChecks": {
+      "sourceApi": true,
+      "mirror": true,
+      "admission": true,
+      "restrictedDiscovery": true
+    },
+    "protectHome": true,
+    "emptyCapabilities": true
+  },
+  "questionBudget": {
+    "latestReviewValidated": true,
+    "reservedTrials": 4,
+    "limit": 4,
+    "requestedTrialAlreadyRegistered": false,
+    "limitChanged": false
+  },
+  "firstNaturalGeneration": {
+    "claims": 1,
+    "responses": 1,
+    "rejected": {
+      "attemptId": "6ec4d8e4cec548afea16a03132f98d6f4e1fcf746c163506dfee7fb07f8d54ba",
+      "claimFileSha256": "9e8cd62ead6b370981999d1277583e68a8d7cf8c5d23de950de7e5c84d96b10e",
+      "responseFileSha256": "0cfa54a7dc9ab9326a73239631a0da1b293aa47c8e7a9abed8503d64641e86dd",
+      "rejectionFileSha256": "994087f9c2ac95a69a9f948d6b1e1f789753d738aa45ba7aaa7cc79dcb8fa468",
+      "status": "REJECTED",
+      "validation": "JSON_VALID_BINDINGS_MATCH_IMPORT_TYPEDDICT_FORBIDDEN"
+    },
+    "historyChanged": false
+  },
+  "separateNamespaceQualification": {
+    "syntheticSoftwareProbe": true,
+    "separateMailbox": true,
+    "durableClaimBeforeInterruption": true,
+    "actualChildExecutionObserved": true,
+    "descendantsCleared": true,
+    "restartStatus": "OUTCOME_UNKNOWN",
+    "claimSha256": "9523122a13f2ff09ae61981c45e830515f63839e44b83ac6b61d7c8c2e0efdad",
+    "sameClaimAfterRestart": true,
+    "outputAbsent": true,
+    "duplicateWorkSkipped": true,
+    "providerCalls": 0,
+    "brokerAuthority": false,
+    "publicationAuthority": false
+  },
+  "economicChange": false,
+  "brokerMutation": false
+}

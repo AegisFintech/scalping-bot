@@ -84,8 +84,13 @@ def cycle(root: Path, agenda: Path, config: Path) -> dict[str, Any]:
             # No provider request or synthetic finding: register from the real completed review.
             try:
                 registry.register(agenda / plan, approved.method(), approved.files, now)
-            except (OSError, ValueError, KeyError, TypeError):
-                admission_blocker = "RESEARCH_NEW_REGISTRATION_FAILED"
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                admission_blocker = (
+                    "RESEARCH_REGISTRY_TRIAL_BUDGET"
+                    if isinstance(error, ValueError)
+                    and str(error) == "RESEARCH_REGISTRY_TRIAL_BUDGET"
+                    else "RESEARCH_NEW_REGISTRATION_FAILED"
+                )
         jobs: list[Registration] = []
         for path in sorted(root.glob("*/*/registration.json")):
             if (path.parent / "experiment-closed.json").exists():
