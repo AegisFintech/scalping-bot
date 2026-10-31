@@ -57,7 +57,7 @@ import preparation, [#478](https://github.com/AegisFintech/scalping-bot/pull/478
 absolute reviewer launcher. Each passed local full qualification, both exact-head
 hosted checks and separate aloycwl approval before merge.
 
-Current compatible roles at verification: parent preparer`7786c38`; tc01 generation,
+Compatible roles during the initial scheduled run: parent preparer`7786c38`; tc01 generation,
 health exporter and tc02 scorer`48e2f4f`; independent reviewer`fd52cbf`; dashboard and
 recorder heartbeat`4f79de7`. These are research/observation artifacts, not competing
 trading versions. The one demo's four original trading/dependency process IDs and
@@ -117,3 +117,15 @@ the retired tc01 trading engine or treat a software pass as economic qualificati
 [Combined operational receipt](evidence/research-pipeline-activation.json) retains
 origin clocks, signed/scoring lineage, restart results, preserved file hashes and
 the explicit false successful-natural-merge/economic-qualification flags.
+
+## Input-domain follow-up
+
+The #480 fix merged and is activated on research roles from`7ba0c3b`; see
+[matching code/pin/namespace proof](research-input-domain-report.md#reviewed-activation).
+The original #479 batch is closed with its negative review/signature/claims preserved.
+All original trading processes remain unchanged; enabled research timers resumed.
+The live browser again verifies five stages and zero errors. The allowance gate
+remains explicit, with four requests/responses and no new batch. The successful
+natural merge/economic acceptance is still incomplete, regardless of these engineering
+fixes. #464 scheduling/signing and #472/#474/#477/#480 repair acceptance are complete;
+#465 positive API transitions and #466/#431 full success remain pending.

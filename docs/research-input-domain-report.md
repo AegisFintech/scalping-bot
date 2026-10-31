@@ -62,3 +62,37 @@ Commands: `PATH=/opt/scalper-node22/bin:$PATH npm run qualify`,
 deployment file, focused `.venv/bin/pytest -q tests/python/test_holding*` plus source
 review/publisher/boundary suites, Ruff/mypy and `graphify update .`. Final qualified
 source fingerprint: `a029263a3efebc7d9b2fdf0d84a772db7587ccfd3c36eecd4aab46931b245304`.
+
+## Reviewed activation
+
+[PR #481](https://github.com/AegisFintech/scalping-bot/pull/481) merged
+`7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9` after both hosted qualification runs
+[push](https://github.com/AegisFintech/scalping-bot/actions/runs/41175824377) /
+[PR](https://github.com/AegisFintech/scalping-bot/actions/runs/41175834632), exact
+head `4a4086aff54ea7ca8271400f0f2109423e4792fb` and separate aloycwl approval.
+The merge tree equals the reviewed head. Research parent, tc01 generation/reviewer/
+health and tc02 scoring now use that reviewed source. All334 deployed runtime files,
+root ownership/permissions and inventory hash match across the three machines.
+The scorer's matching composite pin is
+`5c960f183a861fed6047710256658904baecc3ba75d7e1ab3360e88a7d993a78`.
+
+A separate unprivileged tc02 software probe actually passed all28 cases, including
+maximum numeric values and20,000 rows, under the configured512MiB/no-swap/32-task/
+50% CPU service limits. Oversized input rejects. It used the unchanged frozen
+runtime/verifier, made zero provider calls, had no publication authority and did
+not override the old source review. Its unused unit is retired; code, input, claim,
+output and receipt remain preserved. [Probe/activation receipt](evidence/research-input-domain-activation.json).
+
+The first full tc02 artifact transfer was incomplete and failed its import check
+before changing the scorer alias. Only that proven unused partial copy was removed;
+a compact runtime bundle was installed, its334 files verified, then the new pin/
+alias applied. All paused timers resumed. The four original trading processes,
+credentials, accounting/history and risk/strategy remain untouched.
+
+#479 was closed as a rejected exhausted-batch draft after main changed. Its signed
+bytes, exact head, model veto and all publication phase hashes are retained in a
+protected terminal archive; no approval/merge occurred. Generation remains exactly
+four claims/four responses. The parent explicitly reports
+`HOLDING_AUTHORITY_TASK_BUDGET`; this is the batch allowance gate, not a provider
+quota or trading-content refusal. No new corrective batch is activated. Its separate
+allowance decision remains pending under #466; #480's code/activation acceptance is met.

@@ -1,0 +1,124 @@
+{
+  "version": "research-input-domain-activation-1.0",
+  "observedAt": "2026-10-31T06:32:42.316557+00:00",
+  "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+  "ciHead": "4a4086aff54ea7ca8271400f0f2109423e4792fb",
+  "qualifiedSourceSha256": "a029263a3efebc7d9b2fdf0d84a772db7587ccfd3c36eecd4aab46931b245304",
+  "roles": {
+    "main": {
+      "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+      "qualifiedSourceSha256": "a029263a3efebc7d9b2fdf0d84a772db7587ccfd3c36eecd4aab46931b245304",
+      "role": "main",
+      "previousSource": "scalper-harness-7786c38225a1",
+      "newBatchAllowance": false,
+      "ledgersReset": false,
+      "brokerAuthority": false,
+      "promotionAuthority": false
+    },
+    "tc01": {
+      "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+      "qualifiedSourceSha256": "a029263a3efebc7d9b2fdf0d84a772db7587ccfd3c36eecd4aab46931b245304",
+      "role": "generation",
+      "previousSource": "scalper-harness-48e2f4ff0765",
+      "newBatchAllowance": false,
+      "ledgersReset": false,
+      "brokerAuthority": false,
+      "promotionAuthority": false
+    },
+    "tc02": {
+      "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+      "qualifiedSourceSha256": "a029263a3efebc7d9b2fdf0d84a772db7587ccfd3c36eecd4aab46931b245304",
+      "role": "scoring",
+      "previousSource": "scalper-harness-48e2f4ff0765",
+      "newBatchAllowance": false,
+      "ledgersReset": false,
+      "brokerAuthority": false,
+      "promotionAuthority": false,
+      "oracleSha256": "5c960f183a861fed6047710256658904baecc3ba75d7e1ab3360e88a7d993a78"
+    }
+  },
+  "runtimeInventory": {
+    "main": {
+      "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+      "runtimeFilesVerified": 334,
+      "runtimeInventorySha256": "86f59726b5eae44fdbd644202acf227b8925fff900a1a5cd7ba273d90abc9d53",
+      "sourceOwnerAndPermissionsVerified": true
+    },
+    "tc01": {
+      "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+      "runtimeFilesVerified": 334,
+      "runtimeInventorySha256": "86f59726b5eae44fdbd644202acf227b8925fff900a1a5cd7ba273d90abc9d53",
+      "sourceOwnerAndPermissionsVerified": true
+    },
+    "tc02": {
+      "sourceCommit": "7ba0c3b84306a54d03f60f2b15c70d8ff04bf0b9",
+      "runtimeFilesVerified": 334,
+      "runtimeInventorySha256": "86f59726b5eae44fdbd644202acf227b8925fff900a1a5cd7ba273d90abc9d53",
+      "sourceOwnerAndPermissionsVerified": true
+    }
+  },
+  "namespaceProbe": {
+    "brokerAuthority": false,
+    "cases": 28,
+    "economicQualification": false,
+    "inputVersion": "recorded-holding-input-1.0",
+    "maximumNumericSizeTested": true,
+    "maximumRowsTested": 20000,
+    "oracleSha256": "5c960f183a861fed6047710256658904baecc3ba75d7e1ab3360e88a7d993a78",
+    "originalReviewOverridden": false,
+    "oversizedRejected": true,
+    "providerCalls": 0,
+    "publicationAuthority": false,
+    "runtimeSha256": "5a917d905e6a98ba071377a141184d6920621cbad00045212c66b0702c0b2e33",
+    "softwareTestsPassed": true,
+    "sourceCommit": "4a4086aff54ea7ca8271400f0f2109423e4792fb",
+    "verifierSha256": "3951cd8f7126bbd14d1ba6d9f037ee86564e1ba0cbc427deb792b52ebf642386",
+    "version": "research-input-domain-software-probe-1.0"
+  },
+  "retiredPublication": {
+    "retiredAt": "2026-10-31T06:25:30.599606+00:00",
+    "reason": "CLOSED_REVIEW_VETO_EXHAUSTED_ORIGINAL_BATCH",
+    "publicationSha256": "2b95c24a3f6b273c3f5661ec5b53191f48d0a3d3244e9d58ae424b0e5892b303",
+    "envelopeSha256": "7ccff2fe9356f02c6920ca552513142364c00a273f300f95c011d494aa10c970",
+    "pullRequest": {
+      "author": "AegisWalletApp",
+      "draft": true,
+      "headBranch": "research/2b95c24a3f6b273c3f5661ec5b53191f48d0a3d3244e9d58ae424b0e5892b303",
+      "headCommit": "ec71b33a9431deb89f6647b4b933567294625b88",
+      "merged": false,
+      "number": 479,
+      "repository": "AegisFintech/scalping-bot",
+      "state": "closed"
+    },
+    "archive": "/var/lib/scalper-publisher-retired/2b95c24a3f6b273c3f5661ec5b53191f48d0a3d3244e9d58ae424b0e5892b303.json",
+    "phaseHashes": {
+      "remote-pr.json": "42bbd5731c0b30a892c2c610383dacd71f7b4cfd252f9d78f90416b72167d76a",
+      "commit.json": "2255bc742378d32c26ccaf8216d4486899831b70fe70d3bea23d5b4cb4e79fab",
+      "push-intent.json": "a813f3978cf1a051341a14515207b91d399f12cdb302bef851019fe24713055d",
+      "proposal.json": "66814c9779e6d7f722c913974be212e4c82c81020791cb5095354710685e6c6f",
+      "push-confirmed.json": "266a6e3f5edf0cbc58350330df5a6d9103ec6f3da3867044c620e56ee9718f6f",
+      "pr-intent.json": "7ed72d81bf37d4e0b182e5f98d14cd205dfc4b68d6dae79d14d72afffdd24e8a"
+    },
+    "originalReviewPreserved": true,
+    "historyDeleted": false,
+    "authorityReused": false,
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "browser": {
+    "observedAt": "2026-10-31T06:31:38.526Z",
+    "panelVisible": true,
+    "stageCount": 5,
+    "deliveryFields": 1,
+    "browserErrors": []
+  },
+  "generationClaims": 4,
+  "generationResponses": 4,
+  "newAllowanceActivated": false,
+  "tradingProcessesChanged": false,
+  "frozenRuntimeChanged": false,
+  "successfulNaturalMerge": false,
+  "economicQualification": false,
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}
