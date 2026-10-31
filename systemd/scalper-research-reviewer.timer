@@ -1,0 +1,8 @@
+[Unit]
+Description=Reconcile independent research review and delivery locally
+[Timer]
+OnBootSec=90
+OnUnitInactiveSec=120
+Unit=scalper-research-reviewer.service
+[Install]
+WantedBy=timers.target

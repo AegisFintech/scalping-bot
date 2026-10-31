@@ -1,0 +1,63 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "research-source-review-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "axis": {
+      "enum": ["standards", "spec"],
+      "title": "Axis",
+      "type": "string"
+    },
+    "publicationSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Publicationsha256",
+      "type": "string"
+    },
+    "headCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Headcommit",
+      "type": "string"
+    },
+    "decision": {
+      "enum": ["APPROVE", "REQUEST_CHANGES", "ABSTAIN"],
+      "title": "Decision",
+      "type": "string"
+    },
+    "findings": {
+      "items": {
+        "maxLength": 350,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Findings",
+      "type": "array"
+    },
+    "rationale": {
+      "maxLength": 700,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "version",
+    "axis",
+    "publicationSha256",
+    "headCommit",
+    "decision",
+    "findings",
+    "rationale",
+    "economicQualification"
+  ],
+  "title": "Review",
+  "type": "object"
+}

@@ -1,0 +1,29 @@
+[Unit]
+Description=Independent authenticated research review and guarded delivery
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/opt/scalper-research-reviewer
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-research-reviewer
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+LoadCredential=github-token:/etc/scalper-research-reviewer/github-token
+ExecStart=/opt/scalper-research-reviewer/.venv/bin/python -P -m python.operations.research_reviewer
+UMask=0077
+MemoryMax=1G
+MemorySwapMax=0
+TasksMax=64
+CPUQuota=50%
+LimitFSIZE=256M
+TimeoutStartSec=480
+KillMode=control-group
+ProtectHome=yes
+ProtectSystem=strict
+PrivateTmp=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_DAC_READ_SEARCH
+ReadWritePaths=/var/lib/scalper-research-reviewer /var/lib/scalper-learning-evidence/source-reviews465 /var/lib/scalper-learning-evidence/.codex
+InaccessiblePaths=-/root -/etc/scalping-bot -/run/postgresql

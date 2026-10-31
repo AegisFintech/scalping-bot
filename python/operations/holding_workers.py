@@ -10,11 +10,12 @@ from pathlib import Path
 from typing import Any
 
 from python.codex_entry.memory import invoke_daily
+from python.operations import research_publisher as publisher
 from python.research import holding_task as task
 from python.research.experiment_registry import read
 from python.research.holding_mailbox import MAX_TRANSFER, Mailbox, discover
 from python.research.isolated_worker import WorkerTrust, trusted_path
-from python.research.learning_archive import unique
+from python.research.learning_archive import atomic_bytes, bounded, unique
 from python.research.learning_evidence import encoded
 from python.research.observation_cycle import MODEL
 
@@ -28,6 +29,20 @@ def invoke(prompt: str, job: Path) -> bytes:
         timeout=180,
         purpose="research_code",
     )
+
+
+def cache_publication(raw: bytes, directory: Path, signers: Path) -> dict[str, str]:
+    _, digest = publisher.authenticate(raw, signers)
+    if any(p.is_symlink() for p in (directory, *directory.parents)):
+        raise ValueError("REVIEW_CACHE_PATH")
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    path = directory / (digest + ".json")
+    if path.exists():
+        if bounded(path, publisher.MAX_REQUEST) != raw:
+            raise ValueError("REVIEW_CACHE_CONFLICT")
+    else:
+        atomic_bytes(path, raw, replace=False)
+    return {"status": "PUBLICATION_CACHED", "publicationSha256": digest}
 
 
 def main() -> None:
@@ -52,6 +67,16 @@ def main() -> None:
             result = box.query(request["job"])
         elif request == {"action": "discover"} and box.kind == "generation":
             result = discover(Path(config["experiments"]))
+        elif (
+            set(request) == {"action", "envelope"}
+            and request["action"] == "publication"
+            and box.kind == "generation"
+        ):
+            result = cache_publication(
+                request["envelope"].encode(),
+                Path.home() / "publications465",
+                Path(__file__).resolve().parents[2] / "policy/research-publisher-signers",
+            )
         else:
             raise ValueError("HOLDING_RECEIVE_ACTION")
     elif box.kind == "generation":

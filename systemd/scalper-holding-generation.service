@@ -10,7 +10,7 @@ WorkingDirectory=/var/lib/scalper-learning-evidence
 Environment=HOME=/var/lib/scalper-learning-evidence
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-holding-worker
-ExecStart=/opt/scalper-holding-worker/.venv/bin/python -m python.operations.holding_workers work --config /etc/scalper-holding-worker/generation.json
+ExecStart=/opt/scalper-holding-worker/.venv/bin/python -P -m python.operations.holding_workers work --config /etc/scalper-holding-worker/generation.json
 UMask=0077
 MemoryMax=512M
 MemorySwapMax=0
