@@ -225,3 +225,7 @@ def test_admission_blocks_namespace_conflicts_before_paid_dispatch(tmp_path, mon
     ).decode()
     helpers.git(directory, "update-ref", "refs/heads/main", head)
     assert task.admission(replace(trust, expected_main=head))["status"] == "TASK_PATH_CONFLICT"
+
+
+def test_generation_prompt_includes_real_static_delivery_requirements():
+    assert "mypy --strict" in task.PROMPT and "Ruff check/format" in task.PROMPT

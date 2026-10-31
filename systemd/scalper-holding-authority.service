@@ -1,0 +1,28 @@
+[Unit]
+Description=Protected research verification/signing parent (no model or broker calls)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/opt/scalper-holding-authority
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-holding-authority
+Environment=PATH=/usr/bin:/bin
+LoadCredential=github-token:/etc/scalper-publisher/github-token
+ExecStart=/opt/scalper-holding-authority/.venv/bin/python -m python.operations.holding_pipeline
+UMask=0077
+MemoryMax=1G
+MemorySwapMax=0
+TasksMax=48
+CPUQuota=50%
+TimeoutStartSec=240
+KillMode=control-group
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ReadWritePaths=/var/lib/scalper-candidate-authority /var/lib/scalper-publisher-queue
+InaccessiblePaths=-/etc/scalping-bot -/run/postgresql -/var/lib/scalper-demo-epoch-314

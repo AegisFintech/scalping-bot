@@ -65,6 +65,8 @@ supersede the current versioned policy or explicit operator instructions.
   do not regenerate it. Recurring generation/review remains separate pending work.
   Holding-time research: `docs/holding-research-report.md`; preserve unknown clocks,
   full cohorts and separate version1.1; elapsed holding time proves no earlier exit.
+  Scheduled handoff: `docs/holding-pipeline-report.md`; the protected parent verifies
+  all remote outputs before signing, workers never get GitHub/signing credentials.
   Review admission: `docs/review-admission-report.md`; missing/failed CI and stale
   approvals never authorize advancement. Drafts grant no merge/deploy authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status

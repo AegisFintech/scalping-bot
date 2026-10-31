@@ -1,4 +1,4 @@
-Holding-time research contract: [scope and validation](docs/holding-research-report.md). Recurring generation/review is still being implemented.
+Holding-time research: [contract](docs/holding-research-report.md), [scheduled handoff](docs/holding-pipeline-report.md). Separate automated review remains pending.
 
 Local publishing and review checks: [publisher](docs/trusted-publisher-report.md), [review checks](docs/review-admission-report.md).
 

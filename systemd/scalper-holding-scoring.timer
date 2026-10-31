@@ -1,0 +1,8 @@
+[Unit]
+Description=Reconcile isolated holding-time software checks
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=60
+Unit=scalper-holding-scoring.service
+[Install]
+WantedBy=timers.target

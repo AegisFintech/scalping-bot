@@ -1,3 +1,19 @@
+### ISSUE-464 — Scheduled holding-time generation and signing
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/464; depends #463 and
+  merged foundation PR #468 / b603abb.
+- Acceptance: newest complete closed-row archive independent of outcome sign;
+  protected main/source capture; durable bounded remote generation and tc02 scoring;
+  original/normalized source retention; independent full output recomputation and
+  protected signing/queue delivery; empty wait, unknown/query/restart and source-drift
+  tests, independent review/full gates and actual scheduled activation.
+- Status: implemented; both independent reviews, all2,449 full tests/gates/audits
+  and four configuration checks pass;55 focused foundation/handoff tests pass.
+  Reviewed pushed delivery/activation follows. No new timer activated yet.
+  Foundation publisher contract is deployed and existing publication reconciles MERGED.
+  #465 review scheduling and #466 natural full-cycle proof remain separate.
+- Evidence: `docs/holding-pipeline-report.md`.
+
 ### ISSUE-464 — Holding-time research contract and independent checks
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/464; depends #463.
@@ -7,7 +23,8 @@
   tests. Full qualification and independently reviewed pushed PR required.
 - Status: implemented; independent reviews and all2,423 tests/gates/audits plus
   four configuration checks pass. Real recorded-archive and signed1.0 compatibility
-  probes pass. Reviewed pushed delivery follows.
+  probes pass. PR #468 merged b603abb after both exact-head hosted checks and separate
+  aloycwl approval. Publisher-only activation passed; existing publication remains MERGED.
   Scheduling, remote handoff and actual unattended proof remain part of open #464;
   this batch enables no timer, provider request, strategy change or broker mutation.
 - Evidence: `docs/holding-research-report.md`.
