@@ -8,7 +8,7 @@ Group=scalper-experiment
 WorkingDirectory=/opt/scalper-holding-worker
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-holding-worker
-ExecStart=/opt/scalper-holding-worker/.venv/bin/python -m python.operations.holding_workers work --config /etc/scalper-holding-worker/scoring.json
+ExecStart=/opt/scalper-holding-worker/.venv/bin/python -P -m python.operations.holding_workers work --config /etc/scalper-holding-worker/scoring.json
 UMask=0077
 MemoryMax=512M
 MemorySwapMax=0

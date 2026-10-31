@@ -11,7 +11,7 @@ Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-holding-authority
 Environment=PATH=/usr/bin:/bin
 LoadCredential=github-token:/etc/scalper-publisher/github-token
-ExecStart=/opt/scalper-holding-authority/.venv/bin/python -m python.operations.holding_pipeline
+ExecStart=/opt/scalper-holding-authority/.venv/bin/python -P -m python.operations.holding_pipeline
 UMask=0077
 MemoryMax=1G
 MemorySwapMax=0

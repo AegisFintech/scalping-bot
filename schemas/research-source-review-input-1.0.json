@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "research-source-review-input-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "axis": {
+      "enum": ["standards", "spec"],
+      "title": "Axis",
+      "type": "string"
+    },
+    "publicationSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Publicationsha256",
+      "type": "string"
+    },
+    "headCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Headcommit",
+      "type": "string"
+    },
+    "contract": {
+      "maxLength": 10000,
+      "minLength": 1,
+      "title": "Contract",
+      "type": "string"
+    },
+    "source": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Source",
+      "type": "object"
+    },
+    "attestation": {
+      "additionalProperties": true,
+      "title": "Attestation",
+      "type": "object"
+    }
+  },
+  "required": [
+    "version",
+    "axis",
+    "publicationSha256",
+    "headCommit",
+    "contract",
+    "source",
+    "attestation"
+  ],
+  "title": "ReviewInput",
+  "type": "object"
+}

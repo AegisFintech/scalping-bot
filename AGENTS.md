@@ -69,6 +69,8 @@ supersede the current versioned policy or explicit operator instructions.
   all remote outputs before signing, workers never get GitHub/signing credentials.
   Review admission: `docs/review-admission-report.md`; missing/failed CI and stale
   approvals never authorize advancement. Drafts grant no merge/deploy authority.
+  Automated review: `docs/research-reviewer-report.md`; separate aloycwl adapter,
+  two tool-disabled contexts, durable API claims and fresh exact-source gates.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate

@@ -1,0 +1,121 @@
+{
+  "cacheCleanup": {
+    "reason": "FORWARD_DISK_RESERVE",
+    "beforeFree": 6060560384,
+    "afterFree": 7359651840,
+    "total": 52591984640,
+    "removed": [
+      {
+        "path": "/root/scalping-bot-upgrades/.venv",
+        "bytes": 715411456
+      },
+      {
+        "path": "/root/scalping-bot-codex-production/.venv",
+        "bytes": 715411456
+      },
+      {
+        "path": "/root/scalping-bot-upgrades/graphify-out",
+        "bytes": 24322048
+      },
+      {
+        "path": "/tmp/scalper-407-implementation/graphify-out",
+        "bytes": 40247296
+      },
+      {
+        "path": "/tmp/scalper-candidate451/graphify-out",
+        "bytes": 43114496
+      },
+      {
+        "path": "/tmp/scalper-exact-head/graphify-out",
+        "bytes": 40218624
+      },
+      {
+        "path": "/tmp/scalper-experiment-execution/graphify-out",
+        "bytes": 42774528
+      },
+      {
+        "path": "/tmp/scalper-health431/graphify-out",
+        "bytes": 43405312
+      },
+      {
+        "path": "/tmp/scalper-holding464/graphify-out",
+        "bytes": 44429312
+      },
+      {
+        "path": "/tmp/scalper-publisher452/graphify-out",
+        "bytes": 44244992
+      },
+      {
+        "path": "/tmp/scalper-publisher452-format/graphify-out",
+        "bytes": 43859968
+      },
+      {
+        "path": "/tmp/scalper-publisher452-rollout/graphify-out",
+        "bytes": 28356608
+      },
+      {
+        "path": "/tmp/scalper-review463/graphify-out",
+        "bytes": 44015616
+      },
+      {
+        "path": "/tmp/scalper-schedule464/graphify-out",
+        "bytes": 45137920
+      },
+      {
+        "path": "/root/.cache/pip",
+        "bytes": 94019584
+      },
+      {
+        "path": "/root/.npm/_cacache",
+        "bytes": 44351488
+      },
+      {
+        "path": "/root/.cache/ms-playwright/chromium-1243",
+        "bytes": 411369472
+      }
+    ],
+    "preserved": "source,locks,current runtimes,headless browser,research,broker journals,credentials,rollback artifacts"
+  },
+  "retiredRuntimeArchives": {
+    "beforeFree": 7358889984,
+    "afterFree": 8935395328,
+    "reclaimedBytes": 1576505344,
+    "archives": [
+      {
+        "release": "dashboard340",
+        "archive": "/opt/ctrader-ai-scalper/retired-runtime-archives/dashboard340-venv.tar.gz",
+        "sha256": "827680bdb2c9f9d4f125d9baaf66e7b1aa8a64122cb965e36489eb39dcbf987d",
+        "inventorySha256": "339adfb21900dfa9b36097076bc9d2ebfc06f6185aa3bb8a7d267848aef896d1",
+        "archiveBytes": 189816133,
+        "entries": 19787,
+        "restoreVerified": true
+      },
+      {
+        "release": "dashboard344",
+        "archive": "/opt/ctrader-ai-scalper/retired-runtime-archives/dashboard344-venv.tar.gz",
+        "sha256": "63524cb9c3b31368c87f1f03774c77354132b3d381acf95c77058fc1a4c3466a",
+        "inventorySha256": "339adfb21900dfa9b36097076bc9d2ebfc06f6185aa3bb8a7d267848aef896d1",
+        "archiveBytes": 189811705,
+        "entries": 19787,
+        "restoreVerified": true
+      },
+      {
+        "release": "61602fb",
+        "archive": "/opt/ctrader-ai-scalper/retired-runtime-archives/61602fb-venv.tar.gz",
+        "sha256": "65ea6d6b05314865454d9df59bf9c91eeac634505dc010560f7b25bff3a8027e",
+        "inventorySha256": "339adfb21900dfa9b36097076bc9d2ebfc06f6185aa3bb8a7d267848aef896d1",
+        "archiveBytes": 189813671,
+        "entries": 19787,
+        "restoreVerified": true
+      }
+    ],
+    "restore": "Verify archive SHA256, then tar -xzf ARCHIVE -C ORIGINAL_RELEASE as root; verify original qualification before use. Current and immediate rollback releases remain extracted."
+  },
+  "boundaryProbe": {
+    "unit": "scalper-review465-probe.service",
+    "result": "success",
+    "unprivilegedModel": true,
+    "reviewerCredentialInaccessible": true,
+    "providerCalls": 0
+  }
+}

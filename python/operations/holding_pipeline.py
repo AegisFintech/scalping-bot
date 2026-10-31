@@ -267,6 +267,20 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                             Path(config["signingKey"]),
                             main_sha,
                         )
+                        acknowledgement = transfer(
+                            "generation",
+                            {
+                                "action": "publication",
+                                "envelope": bounded(
+                                    Path(config["queue"]) / (digest + ".json"), github.MAX_REQUEST
+                                ).decode(),
+                            },
+                        )
+                        if acknowledgement != {
+                            "status": "PUBLICATION_CACHED",
+                            "publicationSha256": digest,
+                        }:
+                            raise ValueError("HOLDING_REVIEW_RELAY_UNCONFIRMED")
                         result.update(status="SIGNED", publicationSha256=digest)
         result.update(
             checkedAt=datetime.now(UTC).isoformat(), brokerAuthority=False, promotionAuthority=False

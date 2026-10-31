@@ -83,7 +83,10 @@ def test_signed_pending_publication_never_generates_redundant_candidate(tmp_path
     assert pipeline.cycle(tmp_path, {})["reason"] == "HOLDING_AWAITING_PUBLICATION"
 
 
-def test_real_source_and_signed_handoff_keeps_one_provider_call(tmp_path, monkeypatch, closed):
+@pytest.mark.parametrize("lose_relay", [False, True])
+def test_real_source_and_signed_handoff_keeps_one_provider_call(
+    tmp_path, monkeypatch, closed, lose_relay
+):
     import subprocess
 
     from tests.python import test_holding_attestation as scoring
@@ -96,6 +99,7 @@ def test_real_source_and_signed_handoff_keeps_one_provider_call(tmp_path, monkey
     generator = mailbox.Mailbox(tmp_path / "generation", "generation")
     scorer = mailbox.Mailbox(tmp_path / "scoring", "scoring")
     calls = []
+    relays = []
 
     def transfer(role, value):
         if value["action"] == "discover":
@@ -103,6 +107,19 @@ def test_real_source_and_signed_handoff_keeps_one_provider_call(tmp_path, monkey
                 "status": "ELIGIBLE",
                 "experiment": mailbox.archive(closed),
                 "invalidArchives": 2,
+            }
+        if value["action"] == "publication":
+            relays.append(value["envelope"])
+            if lose_relay and len(relays) == 1:
+                raise TimeoutError("lost readonly relay acknowledgement")
+            import base64
+
+            from python.operations import research_publisher as publisher
+
+            data = json.loads(value["envelope"])
+            return {
+                "status": "PUBLICATION_CACHED",
+                "publicationSha256": publisher.sha(base64.b64decode(data["payload"])),
             }
         box = generator if role == "generation" else scorer
         return (
@@ -142,6 +159,9 @@ def test_real_source_and_signed_handoff_keeps_one_provider_call(tmp_path, monkey
     generator.work(invoke=once)
     assert pipeline.cycle(root, config)["status"] == "QUEUED_OR_UNKNOWN"
     scorer.work(trust=worker_trust, oracle=oracle)
+    if lose_relay:
+        with pytest.raises(TimeoutError):
+            pipeline.cycle(root, config)
     value = pipeline.cycle(root, config)
     assert value["status"] == "SIGNED" and len(calls) == 1 and len(list(queue.iterdir())) == 1
     assert value["invalidArchives"] == 2

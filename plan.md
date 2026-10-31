@@ -1,3 +1,20 @@
+### ISSUE-465 — Independent local research review and guarded delivery
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/465; depends #463/#464.
+- Acceptance: existing separate aloycwl identity, authenticated signed source/current
+  scope and workflow/rule pins, two independent tool-disabled model contexts with
+  no GitHub/signing/broker credentials; durable model/ready/review/merge claims,
+  changed/dismissed/stale-head gates, late revalidation and local scheduled readback.
+  Full failure/restart tests, independent review, qualification and pushed delivery.
+- Status: implemented; both independent reviews, all2,474 tests/gates/audits and
+  four configuration checks pass. Actual systemd model/credential boundary probe
+  passes. Disk reserve recovered with verified cache/runtime cleanup; unchanged
+  source rerun passes. Reviewed pushed delivery follows; no reviewer timer activated.
+  #464 PR #469 merged fba83e1 after exact-head CI and separate approval. Generation
+  remains disabled until this controller is installed; actual #464/#465 scheduled
+  evidence and #466 natural-cycle/dashboard proof remain pending.
+- Evidence: `docs/research-reviewer-report.md`.
+
 ### ISSUE-464 — Scheduled holding-time generation and signing
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/464; depends #463 and
