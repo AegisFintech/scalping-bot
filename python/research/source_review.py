@@ -81,8 +81,6 @@ def evaluate(
     with registry.locked():
         job = registry.directory(key)
         if not job.exists():
-            if sum(p.is_dir() and len(p.name) == 64 for p in root.iterdir()) >= 8:
-                return {"status": "REVIEW_TASK_BUDGET", "job": key}
             job.mkdir(mode=0o700)
         immutable(job / "binding.json", value.model_dump())
         if (job / "review.json").exists():

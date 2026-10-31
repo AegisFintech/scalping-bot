@@ -13,6 +13,7 @@ from pydantic import Field, model_validator
 
 from python.research import holding_attestation as scorer
 from python.research import holding_task as task
+from python.research import research_pacing as pacing
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.experiment_registry import Registry, read
 from python.research.isolated_worker import WorkerTrust, bundle_digest
@@ -151,12 +152,14 @@ class Mailbox(Registry):
             if not job.exists():
                 if (
                     sum(
-                        p.is_dir() and bool(re.fullmatch(r"[a-f0-9]{64}", p.name))
+                        p.is_dir()
+                        and bool(re.fullmatch(r"[a-f0-9]{64}", p.name))
+                        and not (p / "receipt.json").exists()
                         for p in self.root.iterdir()
                     )
-                    >= 4
+                    >= 1
                 ):
-                    raise ValueError("HOLDING_MAILBOX_TASK_BUDGET")
+                    raise ValueError("HOLDING_MAILBOX_PENDING")
                 job.mkdir(mode=0o700)
             path = job / "request.json"
             if path.exists():
@@ -265,6 +268,8 @@ class Mailbox(Registry):
                 }
                 if len(encoded(result)) > MAX_TRANSFER:
                     raise ValueError("HOLDING_MAILBOX_OUTPUT_LIMIT")
+                if outcome["status"].startswith("WAITING_RESEARCH_"):
+                    return result  # Known unsent: timer retries admission, never provider replay.
                 immutable(job / "receipt.json", result)
                 return result
         return {"status": "IDLE"}
@@ -282,7 +287,8 @@ def discover(root: Path) -> dict[str, Any]:
             facts, rows = task.evidence(path.parent)
             if rows:
                 packet = read(path.parent / "input.json", MAX_BYTES)
-                eligible.append((timestamp(packet["until"]), facts["trialId"], path.parent))
+                if pacing.relevant(packet, rows):
+                    eligible.append((timestamp(packet["until"]), facts["trialId"], path.parent))
         except (ValueError, OSError, KeyError, TypeError):
             invalid += 1
     if not eligible:

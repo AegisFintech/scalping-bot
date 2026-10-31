@@ -1,3 +1,23 @@
+### ISSUE-483 — Relevant research with durable hourly pacing
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/483; depends #464/#480.
+- Acceptance: replace lifetime holding-generation cap with at most one new call/hour,
+  independently checked by parent and worker across restarts; old claims count.
+  Require changed relevant evidence/task guidance and completed XAUUSD demo rows
+  from the last seven days. Main-only drift never repeats research. Retain all
+  attempts, negative reviews, unknown-call exclusion and fixed-method registrations.
+  Bound pending intake rather than history; keep exact-source review idempotency.
+  Parent checks every15min, generation worker every5min; no provider/order forcing.
+  Tests, full qualification, four config checks, two independent reviews, pushed
+  reviewed merge and matching research-only deployment required.
+- Status: implementation and both independent reviews pass; all2,532 tests/gates/
+  audits, four configuration checks and browser freshness boundaries pass. Source
+  qualification receipt is linked below; reviewed delivery and research-only
+  activation/readback are tracked on the issue. This operator request supersedes
+  the pending holding corrective allowance, without a reset or API billing fallback.
+  Trading/economic policy remains unchanged.
+- Evidence: `docs/research-pacing-report.md`.
+
 ### ISSUE-480 — Align bounded input validation and independent review context
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/480; follows #464/#465/#466.

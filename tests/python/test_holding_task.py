@@ -129,6 +129,11 @@ def test_generation_binds_new_task_and_recovers_without_repeating_provider(tmp_p
 
     facts = {"trialId": "a" * 64, "resultSha256": "b" * 64, "findingSha256": "c" * 64, "rows": []}
     monkeypatch.setattr(task, "evidence", lambda _: (facts, []))
+    (tmp_path / "experiment").mkdir()
+    (tmp_path / "experiment" / "input.json").write_text("{}")
+    from python.research import research_pacing
+
+    monkeypatch.setattr(research_pacing, "relevant", lambda *_: True)
     calls = []
 
     def invoke(prompt, job):
@@ -156,6 +161,11 @@ def test_generation_binds_new_task_and_recovers_without_repeating_provider(tmp_p
 def test_unknown_generation_is_not_replayed(tmp_path, monkeypatch):
     facts = {"trialId": "a" * 64, "resultSha256": "b" * 64, "findingSha256": "c" * 64, "rows": []}
     monkeypatch.setattr(task, "evidence", lambda _: (facts, []))
+    (tmp_path / "experiment").mkdir()
+    (tmp_path / "experiment" / "input.json").write_text("{}")
+    from python.research import research_pacing
+
+    monkeypatch.setattr(research_pacing, "relevant", lambda *_: True)
 
     def lost(*_):
         raise TimeoutError("unknown provider outcome")

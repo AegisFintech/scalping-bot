@@ -65,5 +65,8 @@ is exhausted and preserved. #480's bounded-input repair is reviewed, deployed an
 namespace-tested. [Actual stage/negative/restart receipts](research-pipeline-activation-report.md)
 and [matching activation](research-input-domain-report.md#reviewed-activation).
 Successful positive review/merge and #403 economic qualification remain incomplete;
-new generation needs its separately registered allowance. Timers/process activity or
-these merged engineering fixes are not evidence of a profitable strategy.
+the operator has now authorized relevant, paced holding research under
+[#483](https://github.com/AegisFintech/scalping-bot/issues/483), superseding the
+pending holding allowance question. [Pacing and activation evidence](research-pacing-report.md)
+retain the original four attempts, fixed-method limits and every veto/unknown.
+Timers/process activity or merged engineering fixes are not evidence of a profitable strategy.

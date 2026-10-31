@@ -16,6 +16,7 @@ from python.operations import research_delivery as delivery
 from python.operations import research_publisher as github
 from python.research import holding_authority as authority
 from python.research import holding_task as task
+from python.research import research_pacing as pacing
 from python.research.codex_loop import timestamp
 from python.research.experiment_registry import Registry, read
 from python.research.holding_mailbox import MAX_TRANSFER, Generation, Scoring, unpack
@@ -75,7 +76,7 @@ def remote(job: Path, role: str, request: dict[str, Any]) -> dict[str, Any]:
         return dict(read(path / "response.json", MAX_TRANSFER))
     if not (path / "claim.json").exists():
         immutable(
-            path / "claim.json", {"requestSha256": key, "claimedAt": datetime.now(UTC).isoformat()}
+            path / "claim.json", {"requestSha256": key, "claimedAt": pacing.now().isoformat()}
         )
         reply = transfer(role, {"action": "submit", "request": request})
     else:
@@ -142,7 +143,18 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
             result = {**prior, "reason": "HOLDING_AWAITING_PUBLICATION"}
         else:
             active = prior.get("job")
-            if not active or prior.get("status") in {"SIGNED", "REJECTED", "SOURCE_DRIFT"}:
+            if (
+                not active
+                or prior.get("status")
+                in {
+                    "SIGNED",
+                    "REJECTED",
+                    "REJECTED_RESEARCH_EVIDENCE",
+                    "REJECTED_RESEARCH_DUPLICATE",
+                    "SOURCE_DRIFT",
+                }
+                or str(prior.get("status", "")).startswith("WAITING_RESEARCH_")
+            ):
                 selected = transfer("generation", {"action": "discover"})
                 if selected["status"] != "ELIGIBLE":
                     result = {
@@ -160,18 +172,42 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                     baseCommit=trust.expected_main,
                     experiment=selected["experiment"],
                 )
+                with tempfile.TemporaryDirectory() as directory:
+                    unpack(request.experiment, Path(directory))
+                    facts, rows = task.evidence(Path(directory))
+                    packet = read(Path(directory) / "input.json", 8 * 1024 * 1024)
+                wait = (
+                    pacing.admit(
+                        root,
+                        pacing.material(task.TASK, sha(task.PROMPT.encode()), facts),
+                        parent=True,
+                    )
+                    if pacing.relevant(packet, rows)
+                    else {"status": "WAITING_RESEARCH_EVIDENCE"}
+                )
+                if wait is not None:
+                    result = {
+                        **prior,
+                        **wait,
+                        "phase": "RESEARCH_WAIT",
+                        "checkedAt": datetime.now(UTC).isoformat(),
+                        "brokerAuthority": False,
+                        "promotionAuthority": False,
+                    }
+                    durable_json(state_path, result)
+                    return result
                 active = sha(encoded(request.model_dump()))
                 job = registry.directory(active)
-                if not job.exists():
-                    if (
-                        sum(
-                            p.is_dir() and bool(re.fullmatch(r"[a-f0-9]{64}", p.name))
-                            for p in root.iterdir()
-                        )
-                        >= 4
-                    ):
-                        raise ValueError("HOLDING_AUTHORITY_TASK_BUDGET")
-                    job.mkdir(mode=0o700)
+                job.mkdir(mode=0o700, exist_ok=True)
+                immutable(
+                    job / "pacing.json",
+                    {
+                        "requestSha256": active,
+                        "materialSha256": pacing.material(
+                            task.TASK, sha(task.PROMPT.encode()), facts
+                        ),
+                    },
+                )
                 immutable(job / "request.json", request.model_dump())
                 selection = {"invalidArchives": selected.get("invalidArchives", 0)}
                 immutable(job / ("selection-" + sha(encoded(selection)) + ".json"), selection)
@@ -311,7 +347,7 @@ def main() -> None:
         reason = str(error)
         result = {
             "reason": reason
-            if re.fullmatch(r"(?:HOLDING|SOURCE|WORKER|CANDIDATE)_[A-Z_]{1,100}", reason)
+            if re.fullmatch(r"(?:HOLDING|SOURCE|WORKER|CANDIDATE|RESEARCH)_[A-Z_]{1,100}", reason)
             else "HOLDING_DEPENDENCY_OR_OUTCOME_UNKNOWN",
             "status": "BLOCKED_OR_UNKNOWN",
             "checkedAt": datetime.now(UTC).isoformat(),

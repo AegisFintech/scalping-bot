@@ -216,6 +216,7 @@ def generate(
         measure=evidence,
         draft_model=Draft,
         files=candidate_files,
+        paced=True,
     )
 
 

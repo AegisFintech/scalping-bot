@@ -135,7 +135,7 @@ def load(path: Path, kind: type[GenerationHealth] | type[ReviewHealth], now: dat
     try:
         value = kind.model_validate_json(bounded(path, 65536))
         if (
-            not now - timedelta(seconds=300)
+            not now - timedelta(seconds=1200 if kind is GenerationHealth else 300)
             <= timestamp(value.checkedAt)
             <= now + timedelta(seconds=5)
         ):
@@ -149,7 +149,7 @@ def view(value: DeliveryHealth, now: datetime) -> dict[str, Any]:
     result = value.model_dump()
     for key in ("generation", "review"):
         item = result[key]
-        if item and not now - timedelta(seconds=300) <= timestamp(
+        if item and not now - timedelta(seconds=1200 if key == "generation" else 300) <= timestamp(
             item["checkedAt"]
         ) <= now + timedelta(seconds=5):
             result[key] = None

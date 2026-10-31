@@ -1,5 +1,11 @@
 # Scheduled research activation and retained veto
 
+Current operator authorization: [#483 relevant, paced holding research](research-pacing-report.md)
+supersedes the pending lifetime holding-allowance decision below. The following
+activation snapshots and original four attempts remain historical evidence; no
+ledger, negative review or unknown claim is reset. New activation receipts are
+recorded on #483.
+
 Verified31 October2026. One existing demo executor remains; research is not strategy
 promotion. The successful full natural merge requested by
 [#466](https://github.com/AegisFintech/scalping-bot/issues/466) is **not complete**.

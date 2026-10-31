@@ -2,7 +2,7 @@
 Description=Reconcile bounded research generation
 [Timer]
 OnBootSec=60
-OnUnitInactiveSec=60
+OnUnitInactiveSec=5min
 Unit=scalper-holding-generation.service
 [Install]
 WantedBy=timers.target
