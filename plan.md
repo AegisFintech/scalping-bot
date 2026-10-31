@@ -1,3 +1,30 @@
+### ISSUE-463 — Independent-review admission evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/463; parent #431/#403.
+- Dependencies: existing signed publisher and enforced separate reviewer/CI.
+- Acceptance: actual required checks bound to signed head/trusted Actions identity;
+  explicit missing/pending/failure/truncation; latest binding aloycwl review for that
+  head; current publisher status integration, rejection/integration tests, full
+  qualification, reviewed/pushed delivery and publisher-only activation.
+- Status: implemented;49 focused tests, full2,381-test qualification, all gates/audits,
+  four config checks and both independent reviews pass. Real API probes distinguish
+  failed CI from recorded independent approval. Reviewed delivery/activation follows. No
+  automatic approval/merge or recurring generator is enabled by this batch.
+- Evidence: `docs/review-admission-report.md`.
+
+### Remaining unattended pipeline batches
+
+- [#464](https://github.com/AegisFintech/scalping-bot/issues/464): recurring eligible
+  generation, source verification, isolated attestation and protected signing;
+  depends #463; acceptance includes a useful new bounded task, no regeneration of
+  delivered tasks, empty-eligibility wait and unknown-outcome recovery.
+- [#465](https://github.com/AegisFintech/scalping-bot/issues/465): separate authenticated
+  scheduled review and authorized delivery, source-bound decisions and durable
+  recovery; depends #463/#464; no credentials in model/code workers or economic promotion.
+- [#466](https://github.com/AegisFintech/scalping-bot/issues/466): natural full-cycle,
+  negative/restart/remote-failure proof and dashboard lineage; depends #464/#465.
+  These remain implementation work, not a timer promise or pending operator approval.
+
 ### ISSUE-452 — Signed research publication and exact-head independent review
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/452; depends on #448/#451.

@@ -127,3 +127,39 @@ def test_service_has_no_signer_broker_or_reviewer_access():
     assert "research-publisher.yml" not in [
         path.name for path in Path(".github/workflows").iterdir()
     ]
+
+
+@pytest.mark.parametrize("remote", ["OPEN", "MERGED"])
+def test_process_checks_review_only_for_open_verified_publication(
+    layout,
+    signed,  # noqa: F811
+    monkeypatch,
+    remote,
+):
+    root, queue, artifact = layout
+    envelope, signers = signed
+    (artifact / "policy").mkdir()
+    (artifact / "policy/research-publisher-signers").write_bytes(signers.read_bytes())
+    raw = json.dumps(envelope).encode()
+    _, digest = service.publisher.authenticate(raw, signers)
+    request = queue / (digest + ".json")
+    request.write_bytes(raw)
+    monkeypatch.setattr(service, "checkout", lambda *_: root)
+    monkeypatch.setattr(
+        service.publisher,
+        "publish",
+        lambda *_, **kw: {
+            "pullRequest": 42,
+            "headCommit": "a" * 40,
+            "remoteState": remote,
+        },
+    )
+
+    def admission(number, head):
+        assert remote == "OPEN" and number == 42 and head == "a" * 40
+        return {"status": "BLOCKED", "reason": "PUBLICATION_CI_FAILED"}
+
+    monkeypatch.setattr(service, "review_status", admission)
+    result = service.process(request, root, artifact, NOW)
+    assert result["status"] == ("BLOCKED" if remote == "OPEN" else "MERGED")
+    assert result["pullRequest"] == 42 and result["headCommit"] == "a" * 40

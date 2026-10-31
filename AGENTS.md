@@ -63,7 +63,8 @@ supersede the current versioned policy or explicit operator instructions.
   Check final generated documentation with the real formatter; preserve existing
   publication heads when repairing templates. The recorded-payoff task is delivered;
   do not regenerate it. Recurring generation/review remains separate pending work.
-  Drafts grant no merge/deploy authority.
+  Review admission: `docs/review-admission-report.md`; missing/failed CI and stale
+  approvals never authorize advancement. Drafts grant no merge/deploy authority.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate
