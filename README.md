@@ -3,8 +3,10 @@
 AI-assisted XAUUSD scalping for controlled demo evaluation. One existing demo
 account and deployment; real-money live execution is disabled by default.
 
-Scheduled research has reached an independently reviewed draft; its veto and exhausted
-batch are retained. [Verified activation and remaining work](docs/research-pipeline-activation-report.md),
+Scheduled research retains its independently reviewed vetoes and all prior attempts.
+[Relevant, hourly paced research](docs/research-pacing-report.md) replaces the holding
+generator’s lifetime cap. Research grants no trading or automatic economic promotion
+authority. See [activation history and remaining work](docs/research-pipeline-activation-report.md),
 [installed bounded input repair](docs/research-input-domain-report.md#reviewed-activation), and
 [implementation queue](docs/autonomous-harness-delivery-plan.md).
 

@@ -120,8 +120,8 @@ def test_conflicting_approval_and_economic_authority_reject(tmp_path):
     )
 
 
-def test_review_attempt_budget_is_durable(tmp_path):
-    for n in range(8):
+def test_review_history_does_not_block_new_exact_source_or_repeat_old_review(tmp_path):
+    for n in range(10):
         source = value(head=str(n) * 40)
         assert (
             review.evaluate(tmp_path, source, lambda *_, source=source: encoded(answer(source)))[
@@ -129,12 +129,11 @@ def test_review_attempt_budget_is_durable(tmp_path):
             ]
             == "REVIEWED"
         )
-    assert (
-        review.evaluate(tmp_path, value(head="8" * 40), lambda *_: pytest.fail("over budget"))[
-            "status"
-        ]
-        == "REVIEW_TASK_BUDGET"
-    )
+        assert (
+            review.evaluate(tmp_path, source, lambda *_: pytest.fail("duplicate review"))["status"]
+            == "REVIEWED"
+        )
+    assert len(list(tmp_path.glob("*/claim.json"))) == 10
 
 
 def test_versioned_review_schemas_match():

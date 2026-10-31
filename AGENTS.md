@@ -49,9 +49,9 @@ supersede the current versioned policy or explicit operator instructions.
   fresh completed windows and findings, not only a running timer. No implicit promotion.
   Actual activation/veto: `docs/research-pipeline-activation-report.md`. Input domain:
   `docs/research-input-domain-report.md`; preserve rejected reviews and exhausted
-  batches; a new allowance needs separate registration, never a ledger reset.
-  #480 is installed on research roles; the original holding batch remains spent.
-  Its pending corrective allowance is separate from ordinary demo readiness.
+  batches. Holding research pacing: `docs/research-pacing-report.md`; #483 replaces
+  the lifetime generation limit with relevant evidence and one-hour durable spacing.
+  Preserve every old attempt/veto; fixed-method registrations keep their limits.
   Continue the dependency queue in `docs/autonomous-harness-delivery-plan.md`; a
   prerequisite is not whole-harness completion. Source verification: `docs/source-verifier-report.md`.
   Freeze exploratory jobs using `docs/experiment-registration-report.md`; unknown
@@ -85,7 +85,7 @@ supersede the current versioned policy or explicit operator instructions.
   Preparation: `docs/research-import-preparation-report.md`; normalize imports
   before formatting/freezing and never rewrite attested bytes or unknown state.
   Operational waits: `docs/research-operational-waits-report.md`; keep parent CLI
-  state outside blocked root home and preserve four-trial limits as explicit waits.
+  state outside blocked root home; fixed-method four-trial waits remain unchanged.
   Current pipeline visibility: `docs/harness-health-report.md`; stale/missing status
   is unavailable, and monitor receipts never authorize recovery or promotion.
   Candidate execution requires the pinned, unprivileged namespace and aggregate

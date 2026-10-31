@@ -11,6 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from python.research import research_pacing as pacing
 from python.research.experiment_registry import Registry, read
 from python.research.learning_archive import immutable, unique
 from python.research.learning_evidence import encoded
@@ -28,17 +29,19 @@ def generate[D: BaseModel](
     measure: Callable[[Path], tuple[dict[str, Any], list[dict[str, str | None]]]],
     draft_model: type[D],
     files: Callable[[D, dict[str, Any], str], dict[str, bytes]],
+    paced: bool = False,
 ) -> dict[str, Any]:
     """Task definitions are trusted code; provider output cannot select them."""
     if not re.fullmatch(r"[a-f0-9]{40}", base):
         raise ValueError("CANDIDATE_BASE_INVALID")
-    facts, _ = measure(experiment)
+    facts, rows = measure(experiment)
     key = sha(encoded([task, base, facts["findingSha256"]]))
     registry = Registry(root)
     with registry.locked():
         job = registry.directory(key)
         if (
-            not job.exists()
+            not paced
+            and not job.exists()
             and len(
                 [p for p in root.iterdir() if p.is_dir() and re.fullmatch(r"[a-f0-9]{64}", p.name)]
             )
@@ -60,18 +63,29 @@ def generate[D: BaseModel](
         if (job / "claim.json").exists() and not (job / "response.json").exists():
             return {"status": "OUTCOME_UNKNOWN", "job": key}
         if not (job / "response.json").exists():
+            if paced:
+                if not pacing.relevant(read(experiment / "input.json", 8 * 1024 * 1024), rows):
+                    return {"status": "REJECTED_RESEARCH_EVIDENCE", "job": key}
+                wait = pacing.admit(root, pacing.material(task, sha(prompt_text.encode()), facts))
+                if wait is not None:
+                    if wait["status"] == "WAITING_RESEARCH_DUPLICATE":
+                        return {"status": "REJECTED_RESEARCH_DUPLICATE", "job": key}
+                    return wait
             immutable(
                 job / "request.json",
                 {
                     "promptSha256": sha(prompt_text.encode()),
-                    "payload": {"captured_at": datetime.now(UTC).isoformat(), **binding},
+                    "payload": {
+                        "captured_at": (pacing.now() if paced else datetime.now(UTC)).isoformat(),
+                        **binding,
+                    },
                 },
             )
             immutable(
                 job / "claim.json",
                 {
                     "bindingSha256": sha(encoded(binding)),
-                    "claimedAt": datetime.now(UTC).isoformat(),
+                    "claimedAt": (pacing.now() if paced else datetime.now(UTC)).isoformat(),
                 },
             )
             raw = invoke(prompt, job)

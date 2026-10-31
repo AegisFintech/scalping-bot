@@ -2,7 +2,7 @@
 Description=Reconcile bounded research generation and protected signing
 [Timer]
 OnBootSec=90
-OnUnitInactiveSec=120
+OnUnitInactiveSec=15min
 Unit=scalper-holding-authority.service
 [Install]
 WantedBy=timers.target

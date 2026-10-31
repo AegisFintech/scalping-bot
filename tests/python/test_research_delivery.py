@@ -68,7 +68,12 @@ def test_lineage_matches_only_exact_publication_and_never_promotes():
     assert value["matchedOutcome"]["mergeCommit"] == "e" * 40
     assert value["brokerAuthority"] is value["promotionAuthority"] is False
     expired = delivery.view(packet(generation(), review()), NOW + timedelta(seconds=301))
-    assert expired["generation"] is expired["review"] is expired["matchedOutcome"] is None
+    assert expired["generation"] is not None
+    assert expired["review"] is expired["matchedOutcome"] is None
+    assert (
+        delivery.view(packet(generation(), review()), NOW + timedelta(seconds=1201))["generation"]
+        is None
+    )
 
 
 def test_future_review_does_not_inherit_candidate_identity():
@@ -106,7 +111,7 @@ def test_public_metadata_rejects_private_extra_fields_and_stale_files(tmp_path):
     delivery.publish(path, generation())
     assert path.stat().st_mode & 0o777 == 0o644
     assert delivery.load(path, delivery.GenerationHealth, NOW).job == "a" * 64
-    assert delivery.load(path, delivery.GenerationHealth, NOW + timedelta(seconds=301)) is None
+    assert delivery.load(path, delivery.GenerationHealth, NOW + timedelta(seconds=1201)) is None
     value = generation().model_dump()
     value["token"] = "PRIVATE"
     path.write_bytes(encoded(value))
@@ -161,7 +166,7 @@ def test_versioned_composition_preserves_old_health_and_expires_nested_lineage(
     path.write_bytes(encoded(value.model_dump()))
     assert health.load(path, NOW)["delivery"]["matchedOutcome"]["pullRequest"] == 42
     assert health.load(path, NOW + timedelta(seconds=181))["available"] is False
-    value.delivery.generation.checkedAt = (NOW - timedelta(seconds=299)).isoformat()
+    value.delivery.generation.checkedAt = (NOW - timedelta(seconds=1199)).isoformat()
     path.write_bytes(encoded(value.model_dump()))
     assert health.load(path, NOW + timedelta(seconds=2))["delivery"]["generation"] is None
     value.checkedAt = (NOW + timedelta(seconds=1)).isoformat()

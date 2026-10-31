@@ -15,7 +15,8 @@ from tests.python.test_holding_mailbox import invoke, request
 
 
 @pytest.fixture
-def closed(tmp_path):
+def closed(tmp_path, monkeypatch):
+    monkeypatch.setattr(mailbox.pacing, "relevant", lambda *_: True)
     return helpers.closed.__wrapped__(tmp_path)
 
 
@@ -210,3 +211,49 @@ def test_source_drift_keeps_old_claims_query_only(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline, "transfer", transfer)
     assert pipeline.cycle(tmp_path, {})["existingClaims"] == {"generation": "OUTCOME_UNKNOWN"}
     assert calls == [{"action": "query", "job": "b" * 64}]
+
+
+def test_expired_unsent_archive_keeps_history_and_allows_later_relevant_guidance(
+    tmp_path, monkeypatch, closed
+):
+    from datetime import UTC, datetime, timedelta
+
+    from python.research import research_pacing as pacing
+
+    clock = datetime(2026, 10, 31, 10, tzinfo=UTC)
+    monkeypatch.setattr(pacing, "now", lambda: clock)
+    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="a" * 40))
+    monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "ELIGIBLE"})
+    box = mailbox.Mailbox(tmp_path / "generation", "generation")
+    calls = []
+
+    def transfer(role, value):
+        calls.append(value["action"])
+        if value["action"] == "discover":
+            return {"status": "ELIGIBLE", "experiment": mailbox.archive(closed)}
+        return (
+            box.submit(encoded(value["request"]))
+            if value["action"] == "submit"
+            else box.query(value["job"])
+        )
+
+    monkeypatch.setattr(pipeline, "transfer", transfer)
+    root = tmp_path / "authority"
+    assert pipeline.cycle(root, {})["status"] == "QUEUED_OR_UNKNOWN"
+    monkeypatch.setattr(pacing, "relevant", lambda *_: False)
+    assert (
+        box.work(invoke=lambda *_: pytest.fail("expired dispatch"))["status"]
+        == "REJECTED_RESEARCH_EVIDENCE"
+    )
+    assert pipeline.cycle(root, {})["status"] == "REJECTED_RESEARCH_EVIDENCE"
+    monkeypatch.setattr(pacing, "relevant", lambda *_: True)
+    clock += timedelta(hours=1)
+    assert pipeline.cycle(root, {})["status"] == "WAITING_RESEARCH_DUPLICATE"
+    monkeypatch.setattr(
+        pipeline.task, "PROMPT", pipeline.task.PROMPT + "\nReviewed relevant correction."
+    )
+    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="b" * 40))
+    assert pipeline.cycle(root, {})["status"] == "QUEUED_OR_UNKNOWN"
+    assert calls.count("submit") == 2
+    assert len(list(root.glob("*/generation/claim.json"))) == 2
+    assert not list(box.root.glob("attempts/*/claim.json"))

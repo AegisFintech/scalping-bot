@@ -642,15 +642,15 @@ function controller(root) {
       return stage;
     });
     const delivery = harnessFresh ? harness.delivery : null;
-    const deliveryCurrent = (item) => {
+    const deliveryCurrent = (item, maxAge = 300000) => {
       const at = Date.parse(item?.checkedAt);
       return (
         Number.isFinite(at) &&
         Date.now() >= at - 5000 &&
-        Date.now() <= at + 300000
+        Date.now() <= at + maxAge
       );
     };
-    const generation = deliveryCurrent(delivery?.generation)
+    const generation = deliveryCurrent(delivery?.generation, 1200000)
       ? delivery.generation
       : null;
     const review = deliveryCurrent(delivery?.review) ? delivery.review : null;

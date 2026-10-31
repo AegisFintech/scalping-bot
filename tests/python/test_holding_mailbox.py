@@ -12,6 +12,12 @@ from tests.python import test_candidate_attestation as helpers
 from tests.python import test_experiment_execution as execution
 
 
+@pytest.fixture(autouse=True)
+def transport_fixture(monkeypatch, request):
+    if "discovery" not in request.node.name:
+        monkeypatch.setattr(mailbox.pacing, "relevant", lambda *_: True)
+
+
 @pytest.fixture
 def closed(tmp_path):
     setup = execution.setup.__wrapped__(tmp_path)
@@ -111,15 +117,23 @@ def test_archive_tamper_paths_and_wrong_role_reject(closed, tmp_path):
         box.query("../escape")
 
 
-def test_mailbox_preserves_rejections_and_task_budget(closed, tmp_path):
+def test_mailbox_keeps_history_and_limits_pending_intake(closed, tmp_path):
     box = mailbox.Mailbox(tmp_path / "holding-mailbox", "generation")
-    for n in range(4):
-        value = request(closed)
-        value["baseCommit"] = str(n) * 40
-        box.submit(encoded(value))
-        assert box.work(invoke=lambda *_: b"{}")["status"] == "REJECTED"
-    value["baseCommit"] = "4" * 40
-    with pytest.raises(ValueError, match="TASK_BUDGET"):
+    value = request(closed)
+    original = box.submit(encoded(value))
+    assert box.work(invoke=lambda *_: b"{}")["status"] == "REJECTED"
+    value["baseCommit"] = "b" * 40
+    pending = box.submit(encoded(value))
+    assert (
+        box.work(invoke=lambda *_: pytest.fail("duplicate evidence"))["status"]
+        == "REJECTED_RESEARCH_DUPLICATE"
+    )
+    assert box.query(pending["job"])["status"] == "REJECTED_RESEARCH_DUPLICATE"
+    assert box.query(original["job"])["status"] == "REJECTED"
+    value["baseCommit"] = "c" * 40
+    box.submit(encoded(value))
+    value["baseCommit"] = "d" * 40
+    with pytest.raises(ValueError, match="MAILBOX_PENDING"):
         box.submit(encoded(value))
 
 
