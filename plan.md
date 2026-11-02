@@ -1,3 +1,27 @@
+### ISSUE-498 — Cost-balanced model scalping
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/498; parents #403/#402.
+- Acceptance: new policy/prompt/provider receipts and policy-scoped geometry;
+  net target reward >= modeled stop loss after actual broker costs/reserves at
+  minimum and actual volume; old groups/contracts/history intact; full tests,
+  independent review, pushed PR/CI/approval/merge and ONE-demo activation/readbacks.
+- Dependencies: #496 audited loss/cost evidence, forward migration0039, matched
+  worker/execution source and fresh context, preserved accounting/unknown claims.
+- Status:2,657-test full qualification and four configuration checks pass; both
+  independent review axes are clear. Reviewed source delivery/ONE-demo activation
+  and actual receipts are recorded on the issue. Risk ceilings, trend direction,
+  native exits, GTD/session/reconciliation remain unchanged.
+- Evidence: `docs/cost-balanced-scalp-report.md`; exact checks/delivery on issue.
+
+### ISSUE-499 — Separate narrower-entry prospective study
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/499; depends on #498.
+- Acceptance: freeze10-vs30-point candidate before future data; read-only bounded
+  causal ACK/metadata/Flight collection, all fill/nonfill/gap/unknown denominators;
+  no hypothetical fills/net profits or trading/promotion authority; reviewed
+  tested pushed delivery and persistent observer activation.
+- Status: planned next batch; never bundle this economic change into #498.
+
 ### ISSUE-496 — Latest loss and verified Flight evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/496; parent #289/#402.

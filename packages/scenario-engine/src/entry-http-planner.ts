@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { bindScalpDecision } from "./scalp-entry.js";
-import { FIXED_DEFAULTS } from "../../config/src/policy.js";
+import {
+  FIXED_DEFAULTS,
+  CODEX_STRATEGY_VERSION,
+} from "../../config/src/policy.js";
 import {
   boundedResponseText,
   ProviderFailure,
@@ -99,13 +102,18 @@ export class EntryPairHttpPlanner {
       .find((s) => s.timeframe === "M1")
       ?.candles.at(-1)?.endTime;
     if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
-    const plan = bindScalpDecision(envelope.rawResponse, {
-      ...input,
-      observedM1End,
-    });
+    const plan = bindScalpDecision(
+      envelope.rawResponse,
+      {
+        ...input,
+        observedM1End,
+      },
+      CODEX_STRATEGY_VERSION,
+    );
     validateEntryDecision(JSON.stringify(plan), {
       ...input,
       availableAt: new Date().toISOString(),
+      strategyVersion: CODEX_STRATEGY_VERSION,
     });
     return {
       model: FIXED_DEFAULTS.AI_MODEL,

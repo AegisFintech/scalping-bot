@@ -9,11 +9,14 @@ import {
   scalpDecisionSchema,
   bindScalpDecision,
 } from "../../scenario-engine/src/scalp-entry.js";
-import { CODEX_ENTRY_MODEL } from "../../config/src/policy.js";
+import {
+  CODEX_ENTRY_MODEL,
+  CODEX_STRATEGY_VERSION,
+} from "../../config/src/policy.js";
 export { CODEX_ENTRY_MODEL };
 const receipt = z
   .object({
-    version: z.literal("codex-entry-response-1.3"),
+    version: z.literal("codex-entry-response-1.6"),
     analysisId: z.string().uuid(),
     requestedModel: z.literal(CODEX_ENTRY_MODEL),
     returnedModel: z.null(),
@@ -40,7 +43,7 @@ const receipt = z
 const apiReceipt = receipt
   .omit({ memory: true })
   .extend({
-    version: z.literal("codex-entry-response-1.4"),
+    version: z.literal("codex-entry-response-1.7"),
     provider: z.literal("openai-api"),
     returnedModel: z.literal(CODEX_ENTRY_MODEL),
     inputTokens: z.number().int().nonnegative(),
@@ -52,7 +55,7 @@ const apiReceipt = receipt
 
 const fallbackReceipt = receipt
   .extend({
-    version: z.literal("codex-entry-response-1.5"),
+    version: z.literal("codex-entry-response-1.8"),
     provider: z.literal("codex-subscription"),
     fallbackReason: z.enum(["API_DAILY_LIMIT", "API_CREDIT_EXHAUSTED"]),
   })
@@ -81,7 +84,7 @@ export class CodexEntryClient {
   ) {
     if (options.localToken.length < 32)
       throw new Error("CODEX_LOCAL_AUTH_REQUIRED");
-    this.#prompt = readFileSync("prompts/entry-scalp-v1.md", "utf8").trim();
+    this.#prompt = readFileSync("prompts/entry-scalp-v2.md", "utf8").trim();
     this.#sha = createHash("sha256").update(this.#prompt).digest("hex");
     this.#fetch = options.fetchImpl ?? fetch;
     this.#now = options.now ?? Date.now;
@@ -100,14 +103,14 @@ export class CodexEntryClient {
     const body = JSON.stringify({
       version:
         this.options.provider === "openai-api"
-          ? "codex-entry-request-1.13"
-          : "codex-entry-request-1.12",
+          ? "codex-entry-request-1.15"
+          : "codex-entry-request-1.14",
       ...(this.options.provider === "openai-api"
         ? { provider: "openai-api" }
         : {}),
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-scalp-v1",
+      promptVersion: "entry-scalp-v2",
       promptSha256: this.#sha,
       payload: request.payload,
     });
@@ -161,13 +164,17 @@ export class CodexEntryClient {
         .find((s) => s.timeframe === "M1")
         ?.rows.at(-1)?.[1];
       if (typeof observed !== "string") throw new Error("CODEX_M1_REQUIRED");
-      const parsed = bindScalpDecision(value.rawResponse, {
-        observedM1End: observed,
-        analysisId: request.analysisId,
-        symbol: request.symbol,
-        capturedAt: value.capturedAt,
-        tickSize: String(request.payload.tick_size),
-      });
+      const parsed = bindScalpDecision(
+        value.rawResponse,
+        {
+          observedM1End: observed,
+          analysisId: request.analysisId,
+          symbol: request.symbol,
+          capturedAt: value.capturedAt,
+          tickSize: String(request.payload.tick_size),
+        },
+        CODEX_STRATEGY_VERSION,
+      );
       const strictEntries = JSON.parse(value.rawResponse) as unknown;
       if (
         JSON.stringify(scalpDecisionSchema.parse(strictEntries)) !==
@@ -182,7 +189,7 @@ export class CodexEntryClient {
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
         promptArtifact: {
-          version: "entry-scalp-v1",
+          version: "entry-scalp-v2",
           sha256: this.#sha,
           content: this.#prompt,
         },

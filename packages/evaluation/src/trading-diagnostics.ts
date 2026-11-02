@@ -20,7 +20,7 @@ const text = (d: Decimal) => d.toDecimalPlaces(10).toFixed();
 export function diagnosticWindow(args: readonly string[]) {
   const window = reviewWindow(
     args,
-    /^(?:0\.3\.0-fade-limit\.[123]|0\.8\.0-model-scalp\.1-codex\.1)$/,
+    /^(?:0\.3\.0-fade-limit\.[123]|0\.8\.0-model-scalp\.1-codex\.1|0\.9\.0-cost-balanced\.1-codex\.1)$/,
   );
   if (Date.parse(window.until) - Date.parse(window.from) > 31 * 86400000)
     throw new Error("DIAGNOSTIC_WINDOW_TOO_LARGE");

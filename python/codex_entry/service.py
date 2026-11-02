@@ -12,7 +12,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Any, Literal, get_args
+from typing import Annotated, Any, ClassVar, Literal, get_args
 from uuid import UUID
 
 from pydantic import Field, model_validator
@@ -400,6 +400,16 @@ class RequestV113(RequestV112):
     provider: Literal["openai-api"]
 
 
+class RequestV114(RequestV112):
+    version: Literal["codex-entry-request-1.14"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-scalp-v2"]  # type: ignore[assignment]
+
+
+class RequestV115(RequestV114):
+    version: Literal["codex-entry-request-1.15"]  # type: ignore[assignment]
+    provider: Literal["openai-api"]
+
+
 REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     Request,
     RequestV12,
@@ -414,6 +424,8 @@ REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     RequestV111,
     RequestV112,
     RequestV113,
+    RequestV114,
+    RequestV115,
 )
 REQUEST_BY_VERSION = {
     version: model
@@ -443,6 +455,8 @@ def parse_request(
     | RequestV111
     | RequestV112
     | RequestV113
+    | RequestV114
+    | RequestV115
 ):
     value = json.loads(raw)
     version = value.get("version") if isinstance(value, dict) else None
@@ -537,6 +551,8 @@ class ResponseV12(ResponseV11):
 
 
 class ScalpDecision(StrictModel):
+    maximum_target: ClassVar[Decimal] = Decimal("0.4")
+    minimum_reward_risk: ClassVar[Decimal] = Decimal("0.0571428571")
     decision: Literal["BUY", "SELL", "WAIT"]
     reason: Annotated[str, Field(min_length=1, max_length=1200)]
     entry_price: Price | None
@@ -563,9 +579,14 @@ class ScalpDecision(StrictModel):
         if not ordered or min(entry, target, stop) <= 0:
             raise ValueError("CODEX_SCALP_GEOMETRY_INVALID")
         reward, risk = abs(target - entry), abs(stop - entry)
-        if reward > Decimal("0.4") or risk > 7 or reward / risk < Decimal("0.0571428571"):
+        if reward > self.maximum_target or risk > 7 or reward / risk < self.minimum_reward_risk:
             raise ValueError("CODEX_SCALP_LIMIT_INVALID")
         return self
+
+
+class ScalpDecisionV2(ScalpDecision):
+    maximum_target: ClassVar[Decimal] = Decimal("7")
+    minimum_reward_risk: ClassVar[Decimal] = Decimal("1")
 
 
 class ResponseV13(ResponseV12):
@@ -596,6 +617,21 @@ class ResponseV15(ResponseV13):
     version: Literal["codex-entry-response-1.5"]  # type: ignore[assignment]
     provider: Literal["codex-subscription"]
     fallbackReason: Literal["API_DAILY_LIMIT", "API_CREDIT_EXHAUSTED"]
+
+
+class ResponseV16(ResponseV13):
+    version: Literal["codex-entry-response-1.6"]  # type: ignore[assignment]
+    entries: ScalpDecisionV2
+
+
+class ResponseV17(ResponseV14):
+    version: Literal["codex-entry-response-1.7"]  # type: ignore[assignment]
+    entries: ScalpDecisionV2
+
+
+class ResponseV18(ResponseV15):
+    version: Literal["codex-entry-response-1.8"]  # type: ignore[assignment]
+    entries: ScalpDecisionV2
 
 
 def invoke(prompt: str, job: Path) -> bytes:
@@ -702,7 +738,7 @@ def run(
         publish(job / "request.json", request.model_dump())
         publish(job / "prompt.json", {"text": prompt})
         fallback_reason = None
-        if isinstance(request, RequestV113):
+        if isinstance(request, (RequestV113, RequestV115)):
             from python.codex_entry import openai_api
 
             fallback_reason = openai_api.reserve(job, prompt)
@@ -725,7 +761,9 @@ def run(
                 os.close(descriptor)
         try:
             decision_model = (
-                ScalpDecision
+                ScalpDecisionV2
+                if isinstance(request, RequestV114)
+                else ScalpDecision
                 if isinstance(request, RequestV112)
                 else DirectionalDecision
                 if isinstance(request, RequestV15)
@@ -734,7 +772,7 @@ def run(
                 else Entries
             )
             api_metadata = None
-            if isinstance(request, RequestV113) and fallback_reason is None:
+            if isinstance(request, (RequestV113, RequestV115)) and fallback_reason is None:
                 from python.codex_entry import openai_api
 
                 result, api_metadata = openai_api.invoke(
@@ -774,18 +812,28 @@ def run(
                 "costAmount": None,
                 "executionAuthority": False,
             }
-            if isinstance(request, RequestV113) and fallback_reason is None:
+            if isinstance(request, (RequestV113, RequestV115)) and fallback_reason is None:
                 assert api_metadata is not None
                 response.update(api_metadata)
                 response.update(
-                    version="codex-entry-response-1.4",
+                    version="codex-entry-response-1.7"
+                    if isinstance(request, RequestV115)
+                    else "codex-entry-response-1.4",
                     provider="openai-api",
                     contextPolicy="fresh-input-v1",
                 )
-                response = ResponseV14.model_validate(response).model_dump()
+                response = (
+                    (ResponseV17 if isinstance(request, RequestV115) else ResponseV14)
+                    .model_validate(response)
+                    .model_dump()
+                )
             elif isinstance(request, RequestV13):
                 response_model = (
-                    ResponseV15
+                    ResponseV18
+                    if isinstance(request, RequestV115) and fallback_reason is not None
+                    else ResponseV16
+                    if isinstance(request, RequestV114)
+                    else ResponseV15
                     if fallback_reason is not None
                     else ResponseV13
                     if isinstance(request, RequestV112)

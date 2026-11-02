@@ -1,11 +1,11 @@
 import {
-  directionalScalpTransform,
-  validateDirectionalScalpCommands,
+  costBalancedScalpTransform,
+  costBalancedModeledCost,
+  validateCostBalancedScalpCommands,
 } from "../../../packages/strategy-candidates/src/directional-scalp.js";
 import { TechnicalContextHttpClient } from "../../../packages/analytics-client/src/technical-context.js";
 import { levelContextRequest } from "../../../packages/market-data-client/src/technical-collector.js";
 import { canonical } from "../../../packages/risk-engine/src/decimal.js";
-import { quickOcoModeledCost } from "../../../packages/strategy-candidates/src/quick-oco.js";
 import { BrokerSessionGate } from "../../../packages/market-data-client/src/session-gate.js";
 import { ORDER_LIFECYCLE } from "../../../packages/config/src/policy.js";
 import { OperationalFault } from "./operational-fault.js";
@@ -553,7 +553,7 @@ async function main(): Promise<void> {
           spread_price: canonical(
             decimal(snapshot.quote.ask).minus(decimal(snapshot.quote.bid)),
           ),
-          modeled_round_trip_cost_price: quickOcoModeledCost(snapshot),
+          modeled_round_trip_cost_price: costBalancedModeledCost(snapshot),
           cost_basis: "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
           shared_setup_risk_percent: config.baseRiskPercent,
           recent_closed_outcomes: (
@@ -585,6 +585,7 @@ async function main(): Promise<void> {
         },
       };
     },
+    strategyVersion,
   );
   let capitalMultiplier = "0";
   let capitalRiskCap = "0";
@@ -1329,7 +1330,7 @@ async function main(): Promise<void> {
               side,
             ) =>
               Promise.resolve(
-                directionalScalpTransform({
+                costBalancedScalpTransform({
                   snapshot,
                   response,
                   maximumStopDistance,
@@ -1339,7 +1340,7 @@ async function main(): Promise<void> {
           }
         : {}),
       minRiskRewardRatio: breakoutScalpActive
-        ? "0.0571428571"
+        ? "1"
         : fadeLimitActive
           ? fadeExecutionPolicy.minRiskRewardRatio
           : config.minRiskRewardRatio,
@@ -1355,7 +1356,7 @@ async function main(): Promise<void> {
         ? Number(fadeExecutionPolicy.trendFilterBars)
         : 0,
       ...(breakoutScalpActive
-        ? { commandFeeCheck: validateDirectionalScalpCommands }
+        ? { commandFeeCheck: validateCostBalancedScalpCommands }
         : {}),
       minimumExpectedNetToFeesRatio: breakoutScalpActive
         ? BREAKOUT_SCALP_RELEASE.minimumNetToFees

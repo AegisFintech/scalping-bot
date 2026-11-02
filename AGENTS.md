@@ -26,6 +26,15 @@
   existing demo deployment on tested main; tc01/tc02 are research only. Preserve
   remote dirty work, rollback artifacts, credentials and frozen research.
 
+## Current approved economic experiment
+
+Operator-approved #498 uses cost-balanced0.9 demo scalping: model target/stop<=7,
+net target reward>=modeled stop loss after broker costs and65-tick exit reserve.
+Keep single trend STOP_LIMIT/GTD, existing5% setup/2.5% leg ceilings and dynamic
+sizing. Read `docs/cost-balanced-scalp-report.md`; this is evaluation, not profit
+qualification. Historical0.8 geometry/contexts stay version-bound. #499's narrower
+entry range is research-only; current trading range remains30ticks.
+
 ## Before changing an area
 
 Read `plan.md`, the relevant report, and the matching section of

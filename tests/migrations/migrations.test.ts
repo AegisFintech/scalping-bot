@@ -101,6 +101,7 @@ describe("migrations", () => {
       "0036_directional_scalp_expiry.sql",
       "0037_broker_acknowledgement_evidence.sql",
       "0038_predispatch_recovery_evidence.sql",
+      "0039_cost_balanced_scalp.sql",
     ]);
     const sql = (
       await Promise.all(

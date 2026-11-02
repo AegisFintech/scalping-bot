@@ -32,7 +32,7 @@ const base = Date.parse(context.capturedAt);
 describe("direct entries (synthetic, no broker authority)", () => {
   it("retains the frozen v5 guidance while current dispatch uses one scalp", () => {
     const prompt = readFileSync("prompts/entry-quick-oco-v5.md", "utf8");
-    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-scalp-v1");
+    expect(ENTRY_PAIR_PROMPT.version).toBe("entry-scalp-v2");
     expect(prompt.replace(/\s+/g, " ")).toContain("use completed M1 first");
     expect(prompt.replace(/\s+/g, " ")).toContain(
       "not an anticipated reversal",
@@ -207,13 +207,13 @@ describe("direct entries (synthetic, no broker authority)", () => {
         },
       };
       const rawResponse =
-        '{"decision":"BUY","reason":"Box","entry_price":"4410","take_profit":"4410.4","stop_loss":"4403","pending_seconds":120}';
+        '{"decision":"BUY","reason":"Box","entry_price":"4410","take_profit":"4413","stop_loss":"4409","pending_seconds":120}';
       const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
       const receipt = {
         version:
           route === "api"
-            ? "codex-entry-response-1.4"
-            : "codex-entry-response-1.5",
+            ? "codex-entry-response-1.7"
+            : "codex-entry-response-1.8",
         provider: route === "api" ? "openai-api" : "codex-subscription",
         ...(route === "api"
           ? {
@@ -239,8 +239,8 @@ describe("direct entries (synthetic, no broker authority)", () => {
           decision: "BUY",
           reason: "Box",
           entry_price: "4410",
-          take_profit: "4410.4",
-          stop_loss: "4403",
+          take_profit: "4413",
+          stop_loss: "4409",
           pending_seconds: 120,
         },
         rawResponse,
@@ -292,7 +292,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
           string,
           unknown
         >;
-        expect(providerBody.version).toBe("codex-entry-request-1.13");
+        expect(providerBody.version).toBe("codex-entry-request-1.15");
         expect(providerBody.payload).toMatchObject({ market_captured_at: at });
         const compact = (
           providerBody.payload as { candles: { rows: unknown[] }[] }
@@ -306,7 +306,7 @@ describe("direct entries (synthetic, no broker authority)", () => {
           schema_version: "entry-scalp-1.0",
           entry_side: "BUY",
           buy_stop: "4410",
-          sell_stop: "4403",
+          sell_stop: "4409",
           analysis_id: input.analysisId,
         });
         expect(result.telemetry.returnedModel).toBe(
@@ -324,11 +324,11 @@ describe("direct entries (synthetic, no broker authority)", () => {
         expect(numeric.response).toMatchObject({
           entry_side: "BUY",
           buy_stop: "4410",
-          sell_stop: "4403",
+          sell_stop: "4409",
         });
         const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
         expect(numeric.promptArtifact).toEqual({
-          version: "entry-scalp-v1",
+          version: "entry-scalp-v2",
           content: prompt,
           sha256: createHash("sha256").update(prompt).digest("hex"),
         });
