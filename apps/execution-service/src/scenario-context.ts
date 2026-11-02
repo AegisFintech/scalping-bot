@@ -418,6 +418,7 @@ export class ReusableScenarioModel implements ModelProvider {
       snapshot: MarketSnapshot,
       analysisId: string,
     ) => Promise<NonNullable<EntryPlannerInput["technicalContext"]>>,
+    private readonly scalpStrategyVersion?: string,
   ) {
     this.providerPrompt = entryOnly
       ? readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim()
@@ -480,6 +481,9 @@ export class ReusableScenarioModel implements ModelProvider {
       capturedAt: row.capturedAt,
       availableAt: row.availableAt,
       tickSize: row.tickSize,
+      ...(this.scalpStrategyVersion
+        ? { strategyVersion: this.scalpStrategyVersion }
+        : {}),
     });
     if (!isEntryPlan(plan)) throw new Error("SCENARIO_ENTRY_CONTEXT_INVALID");
     const evidence = checkEntryPrices(
@@ -531,6 +535,9 @@ export class ReusableScenarioModel implements ModelProvider {
         capturedAt: existing.capturedAt,
         availableAt: existing.availableAt,
         tickSize: existing.tickSize,
+        ...(this.scalpStrategyVersion
+          ? { strategyVersion: this.scalpStrategyVersion }
+          : {}),
       });
       if (!isEntryPlan(plan)) throw new Error("SCENARIO_ENTRY_CONTEXT_INVALID");
       const evidence = checkEntryPrices(
@@ -571,6 +578,9 @@ export class ReusableScenarioModel implements ModelProvider {
           capturedAt: existing.capturedAt,
           availableAt: existing.availableAt,
           tickSize: existing.tickSize,
+          ...(this.scalpStrategyVersion
+            ? { strategyVersion: this.scalpStrategyVersion }
+            : {}),
         },
       );
       if (time(existing.availableAt) > now)
@@ -621,6 +631,9 @@ export class ReusableScenarioModel implements ModelProvider {
         capturedAt: existing.capturedAt,
         availableAt: existing.availableAt,
         tickSize: existing.tickSize,
+        ...(this.scalpStrategyVersion
+          ? { strategyVersion: this.scalpStrategyVersion }
+          : {}),
       }) as EntryWaitPlan;
       const latest = input.snapshot.candles
         .find((s) => s.timeframe === "M1")

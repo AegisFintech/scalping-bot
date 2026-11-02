@@ -1,3 +1,10 @@
+# Current cost-balanced DEMO experiment — ISSUE-498
+
+Current source/policy is0.9 cost-balanced scalping; see the
+[authoritative contract, costs and rollout](cost-balanced-scalp-report.md).
+It supersedes older current-policy statements below. Keep original contracts and
+old accepted orders unchanged; no profitability or automatic promotion claim.
+
 # ISSUE-390 — causal-smc-1.1 level map and prompt v5
 
 Operator-approved provider revision `0.7.3-quick-oco.1-codex.2` (policy

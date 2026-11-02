@@ -21,6 +21,9 @@ from python.codex_entry.service import (
     ResponseV13,
     ResponseV14,
     ResponseV15,
+    ResponseV16,
+    ResponseV17,
+    ResponseV18,
     parse_request,
     run,
 )
@@ -134,7 +137,10 @@ def create_app(
         | ResponseV12
         | ResponseV13
         | ResponseV14
-        | ResponseV15,
+        | ResponseV15
+        | ResponseV16
+        | ResponseV17
+        | ResponseV18,
     )
     async def propose(
         request: HttpRequest, authorization: Annotated[str | None, Header()] = None

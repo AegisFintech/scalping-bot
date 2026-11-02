@@ -150,7 +150,7 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(claim).toHaveBeenCalledWith(
       expect.objectContaining({
         providerEvidence: {
-          promptVersion: "entry-scalp-v1",
+          promptVersion: "entry-scalp-v2",
           promptContent: readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim(),
           requestText: JSON.stringify({
             captured_at: at(0),

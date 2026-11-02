@@ -50,18 +50,18 @@ A filled position never closes just because the pending-entry timer elapsed.
 
 | Item            | Contract                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
-| Source / policy | `0.8.0-model-scalp.1-codex.1` / `0.8.0-model-scalp.1`                                                  |
-| Provider        | API-first `gpt-6.1-sol`/low, prompt `entry-scalp-v1`; approved subscription fallback on API credit/cap |
+| Source / policy | `0.9.0-cost-balanced.1-codex.1` / `0.9.0-cost-balanced.1`                                              |
+| Provider        | API-first `gpt-6.1-sol`/low, prompt `entry-scalp-v2`; approved subscription fallback on API credit/cap |
 | Entry           | One trend-direction STOP_LIMIT, broker-acknowledged GTD,60–300s from capture                           |
-| Protection      | Model distances: TP<=0.40 price units, SL<=7.00, reward/risk>=0.0571428571                             |
+| Protection      | Model distances <=7.00; modeled net reward >= modeled stop loss after fees/65-tick reserve             |
 | Demo risk       | At most2.5% for the single order within the unchanged5% setup ceiling; costs/margin may reduce size    |
 | Evidence        | Completed M15/M5/M1, causal SMC levels, broker-only sampled DOM and flight recorder                    |
 
 Native protection is fill-relative; final absolute levels can differ after entry
-slippage. Costs and the five-tick exit allowance are modeled, not guaranteed net
+slippage. Costs and the65-tick adverse-exit reserve are modeled, not guaranteed net
 proceeds. Persistent model memory is not training. No profitability claim.
 
-See [release, tests, activation and rollback](docs/model-scalp-report.md). Source
+See [release, tests, activation and rollback](docs/cost-balanced-scalp-report.md). Source
 updates do not prove deployment: the matching operational receipt is authoritative.
 Existing accepted GTC/OCO groups retain their original orders and protection.
 

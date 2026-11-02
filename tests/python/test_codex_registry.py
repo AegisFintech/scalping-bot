@@ -10,7 +10,7 @@ import pytest
 from python.codex_entry import service as s
 
 
-@pytest.mark.parametrize("version", [f"codex-entry-request-1.{i}" for i in range(13)])
+@pytest.mark.parametrize("version", [f"codex-entry-request-1.{i}" for i in range(16)])
 def test_registered_version_reaches_its_exact_validator(
     version: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -37,6 +37,7 @@ def test_unknown_versions_reject_before_dispatch(raw: bytes) -> None:
 def test_prompt_whitelist_is_derived_from_all_existing_contracts() -> None:
     assert {
         "entry-scalp-v1",
+        "entry-scalp-v2",
         "entry-pair-v4",
         "entry-pair-v5",
         "entry-pair-v6",

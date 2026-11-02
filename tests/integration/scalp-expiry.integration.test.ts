@@ -11,12 +11,26 @@ import { EntryModeStore } from "../../apps/execution-service/src/entry-mode-stor
 import { bindScalpDecision } from "../../packages/scenario-engine/src/scalp-entry.js";
 import {
   CODEX_STRATEGY_VERSION,
+  LEGACY_SCALP_VERSION,
   CODEX_ENTRY_MODEL,
 } from "../../packages/config/src/policy.js";
 const url = process.env.TEST_DATABASE_URL;
-(url ? describe : describe.skip)(
-  "single scalp GTD authority and durable refresh (no broker)",
-  () => {
+(url ? describe : describe.skip).each([
+  {
+    strategyVersion: LEGACY_SCALP_VERSION,
+    promptVersion: "entry-scalp-v1" as const,
+    tp: "4002.4",
+    sl: "3995",
+  },
+  {
+    strategyVersion: CODEX_STRATEGY_VERSION,
+    promptVersion: "entry-scalp-v2" as const,
+    tp: "4005",
+    sl: "4001",
+  },
+])(
+  "single scalp $strategyVersion GTD authority and durable refresh (no broker)",
+  ({ strategyVersion, promptVersion, tp, sl }) => {
     const schema = `scalp_${randomUUID().replaceAll("-", "")}`;
     let admin: pg.Pool, pool: pg.Pool;
     const strategy = randomUUID();
@@ -29,7 +43,7 @@ const url = process.env.TEST_DATABASE_URL;
       await migrate(pool, path.resolve("migrations"));
       await pool.query(
         "INSERT INTO strategy_versions(id,version,code_hash,config_hash,prompt_version,schema_version,feature_version) VALUES($1,$2,'fixture','fixture','entry-scalp-execution-v1','2.1','1.1')",
-        [strategy, CODEX_STRATEGY_VERSION],
+        [strategy, strategyVersion],
       );
     }, 60000);
     afterAll(async () => {
@@ -39,7 +53,7 @@ const url = process.env.TEST_DATABASE_URL;
         await admin.end();
       }
     });
-    async function fixture() {
+    async function fixture(evidenceVersion = promptVersion) {
       const account = randomUUID(),
         symbol = randomUUID(),
         analysis = randomUUID(),
@@ -67,8 +81,8 @@ const url = process.env.TEST_DATABASE_URL;
           decision: "BUY",
           reason: "Fixture trend",
           entry_price: "4002",
-          take_profit: "4002.4",
-          stop_loss: "3995",
+          take_profit: tp,
+          stop_loss: sl,
           pending_seconds: 120,
         }),
         {
@@ -80,12 +94,13 @@ const url = process.env.TEST_DATABASE_URL;
             Math.floor(Date.parse(captured) / 60000) * 60000,
           ).toISOString(),
         },
+        strategyVersion,
       );
       if (plan.schema_version !== "entry-scalp-1.0")
         throw Error("SCALP_REQUIRED");
       const evidence = {
-        promptContent: "scalp fixture",
-        promptVersion: "entry-scalp-v1",
+        promptContent: `scalp fixture ${evidenceVersion}`,
+        promptVersion: evidenceVersion,
         requestText: "{}",
       };
       expect(
@@ -106,7 +121,7 @@ const url = process.env.TEST_DATABASE_URL;
           retryCount: 0,
           model: CODEX_ENTRY_MODEL,
           promptArtifact: {
-            version: "entry-scalp-v1",
+            version: evidenceVersion,
             content: evidence.promptContent,
             sha256: createHash("sha256")
               .update(evidence.promptContent)
@@ -141,7 +156,7 @@ const url = process.env.TEST_DATABASE_URL;
       async function intent(
         mode = "SINGLE_STOP_LIMIT",
         tif = "GTD",
-        target = "4002.4",
+        target = tp,
         side = "BUY",
       ) {
         const client = await pool.connect();
@@ -161,8 +176,8 @@ const url = process.env.TEST_DATABASE_URL;
             ],
           );
           await client.query(
-            "INSERT INTO orders(id,account_id,order_group_id,side,order_type,state,client_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,requested_volume,normalized_volume,filled_volume,expires_at,time_in_force,submission_valid_until,execution_order_type,broker_order_id) VALUES($1::uuid,$2,$3,$4,'STOP','PENDING',$1::text,true,'fixture',$1::text,4002,3995,$5,100,100,0,$6,$7,$6,'STOP_LIMIT','entry-fixture')",
-            [order, account, group, side, target, plan.valid_until, tif],
+            "INSERT INTO orders(id,account_id,order_group_id,side,order_type,state,client_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,requested_volume,normalized_volume,filled_volume,expires_at,time_in_force,submission_valid_until,execution_order_type,broker_order_id) VALUES($1::uuid,$2,$3,$4,'STOP','PENDING',$1::text,true,'fixture',$1::text,4002,$8,$5,100,100,0,$6,$7,$6,'STOP_LIMIT','entry-fixture')",
+            [order, account, group, side, target, plan.valid_until, tif, sl],
           );
           await client.query("COMMIT");
         } catch (error) {
@@ -209,8 +224,8 @@ const url = process.env.TEST_DATABASE_URL;
                   state: "OPEN",
                   volume,
                   entryPrice: "4002",
-                  stopLoss: "3995",
-                  takeProfit: "4002.4",
+                  stopLoss: sl,
+                  takeProfit: tp,
                   openedAt,
                   closedAt: null,
                   updatedAt: timestamp,
@@ -262,6 +277,11 @@ const url = process.env.TEST_DATABASE_URL;
         group,
       };
     }
+    it("never authorizes the new policy from a legacy provider context", async () => {
+      if (strategyVersion === LEGACY_SCALP_VERSION) return;
+      const x = await fixture("entry-scalp-v1");
+      await expect(x.intent()).rejects.toThrow("SCALP_GROUP_AUTHORITY_INVALID");
+    });
     it("narrows durable context lifetime and creates exactly one protected GTD intent", async () => {
       const x = await fixture();
       await x.intent();
@@ -273,10 +293,10 @@ const url = process.env.TEST_DATABASE_URL;
       expect(await x.store.claim(x.claim())).toBe(false);
     });
     it.each([
-      ["OCO_STOP_LIMIT", "GTD", "4002.4", "BUY"],
-      ["SINGLE_STOP_LIMIT", "GTC", "4002.4", "BUY"],
+      ["OCO_STOP_LIMIT", "GTD", tp, "BUY"],
+      ["SINGLE_STOP_LIMIT", "GTC", tp, "BUY"],
       ["SINGLE_STOP_LIMIT", "GTD", "4002.5", "BUY"],
-      ["SINGLE_STOP_LIMIT", "GTD", "4002.4", "SELL"],
+      ["SINGLE_STOP_LIMIT", "GTD", tp, "SELL"],
     ])(
       "rejects altered authority %s/%s/%s/%s",
       async (mode, tif, target, side) => {

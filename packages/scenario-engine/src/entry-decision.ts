@@ -93,6 +93,7 @@ export function validateEntryDecision(
     symbol: string;
     capturedAt: string;
     availableAt: string;
+    strategyVersion?: string;
     tickSize: string;
   },
 ): EntryDecisionPlan {

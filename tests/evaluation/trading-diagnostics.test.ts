@@ -127,3 +127,13 @@ it("admits the current immutable release without expanding the historical learni
     "LEARNING_WINDOW_INVALID",
   );
 });
+
+it("admits the new release as explicit diagnostics without rewriting the old cohort", () => {
+  expect(
+    diagnosticWindow([
+      "0.9.0-cost-balanced.1-codex.1",
+      "2026-11-02T00:00:00Z",
+      "2026-11-03T00:00:00Z",
+    ]).release,
+  ).toBe("0.9.0-cost-balanced.1-codex.1");
+});

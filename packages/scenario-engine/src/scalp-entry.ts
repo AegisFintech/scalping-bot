@@ -11,7 +11,11 @@ import type { ModeEntryPlan } from "./mode-entry.js";
 import { time } from "./plan.js";
 
 export { SCALP_LIMITS } from "../../config/src/policy.js";
-import { SCALP_LIMITS } from "../../config/src/policy.js";
+import {
+  SCALP_LIMITS,
+  scalpLimits,
+  LEGACY_SCALP_VERSION,
+} from "../../config/src/policy.js";
 
 const price = z
   .string()
@@ -59,7 +63,12 @@ export interface ScalpEntryPlan extends Omit<ModeEntryPlan, "schema_version"> {
 }
 type BindContext = Parameters<typeof bindDirectionalDecision>[1];
 
-export function bindScalpDecision(raw: string, context: BindContext) {
+export function bindScalpDecision(
+  raw: string,
+  context: BindContext,
+  strategyVersion = LEGACY_SCALP_VERSION,
+) {
+  const limits = scalpLimits(strategyVersion);
   if (Buffer.byteLength(raw) > 8192 || hasDuplicateObjectKeys(raw))
     throw new Error("AI_SCALP_RESPONSE_AMBIGUOUS");
   const v = scalpDecisionSchema.parse(JSON.parse(raw));
@@ -89,9 +98,9 @@ export function bindScalpDecision(raw: string, context: BindContext) {
     (v.decision === "BUY"
       ? !(stop.lt(entry) && target.gt(entry))
       : !(target.lt(entry) && stop.gt(entry))) ||
-    reward.gt(SCALP_LIMITS.maximumTargetDistance) ||
-    risk.gt(SCALP_LIMITS.maximumStopDistance) ||
-    reward.div(risk).lt(SCALP_LIMITS.minimumRiskReward) ||
+    reward.gt(limits.maximumTargetDistance) ||
+    risk.gt(limits.maximumStopDistance) ||
+    reward.div(risk).lt(limits.minimumRiskReward) ||
     ![entry, target, stop].every((p) =>
       isTickAligned(p, decimal(context.tickSize)),
     )
@@ -126,6 +135,7 @@ export function validateScalpPlan(
     symbol: string;
     capturedAt: string;
     availableAt: string;
+    strategyVersion?: string;
     tickSize: string;
   },
 ): ScalpEntryPlan {
@@ -158,6 +168,7 @@ export function validateScalpPlan(
       pending_seconds: v.pending_seconds,
     }),
     { ...context, observedM1End: context.capturedAt },
+    context.strategyVersion,
   );
   if (
     bound.schema_version !== "entry-scalp-1.0" ||

@@ -2,6 +2,7 @@ import {
   validateEntryDecision,
   type EntryDecisionPlan,
 } from "./entry-decision.js";
+import { CODEX_STRATEGY_VERSION } from "../../config/src/policy.js";
 import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
 import type {
@@ -13,8 +14,8 @@ import { entryPriceBounds } from "./entry-prices.js";
 
 /** One provider prompt identity for dispatch, HTTP verification and durable evidence. */
 export const ENTRY_PAIR_PROMPT = Object.freeze({
-  version: "entry-scalp-v1" as const,
-  path: "prompts/entry-scalp-v1.md",
+  version: "entry-scalp-v2" as const,
+  path: "prompts/entry-scalp-v2.md",
 });
 
 const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
@@ -148,6 +149,7 @@ export class EntryPairPlanner {
     validateEntryDecision(JSON.stringify(result.response), {
       ...input,
       availableAt: new Date(this.now()).toISOString(),
+      strategyVersion: CODEX_STRATEGY_VERSION,
     });
     return result;
   }
