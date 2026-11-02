@@ -95,9 +95,21 @@
           "title": "Originalfillrowsbeforecutoff",
           "type": "integer"
         },
+        "originalFillClockUnknownRows": {
+          "minimum": 0,
+          "title": "Originalfillclockunknownrows",
+          "type": "integer"
+        },
         "originalPartialAtCutoff": {
-          "title": "Originalpartialatcutoff",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Originalpartialatcutoff"
         },
         "originalDealInsideCandidateBand": {
           "minimum": 0,
@@ -183,6 +195,7 @@
         "unavailableReasons",
         "expiresAt",
         "originalFillRowsBeforeCutoff",
+        "originalFillClockUnknownRows",
         "originalPartialAtCutoff",
         "originalDealInsideCandidateBand",
         "originalDealOutsideCandidateBand",

@@ -36,7 +36,8 @@ order state **at the database snapshot**, not backdated state at the cutoff.
 Provider WAIT contexts and carry-in/linked references remain visible. Counts
 include original recorded fills, partial volume, fills without a closed-trade row,
 closed rows before cutoff, no-recorded-fill orders, missing metadata/ACK/path and
-recorded gaps. These are bounded journal observations, not proof of broker flatness
+recorded gaps. Fills with unordered clocks remain recorded unknown fills, never
+no-fill observations; partial status is null when timing is uncertain. These are bounded journal observations, not proof of broker flatness
 or a complete universe of opportunities. Role cohorts overlap between hours;
 do not add closed/carry-in rows into a portfolio return.
 

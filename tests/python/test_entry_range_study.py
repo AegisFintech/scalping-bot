@@ -313,3 +313,22 @@ def test_existing_report_hash_binding_and_retry_input_are_required(tmp_path):
     )
     with pytest.raises(ValueError, match="RANGE_RETAINED_BINDING_CONFLICT"):
         next_window(reg, tmp_path, start + timedelta(hours=3), "e" * 64)
+
+
+def test_uncertain_fill_clocks_remain_recorded_unknown_not_no_fill():
+    value = inputs()
+    raw = fixture()
+    raw["start"] = value["journal"]["start"]
+    raw["setups"][0]["originRelease"] = RELEASE
+    fill(raw)
+    raw["setups"][0]["fills"][0].update(
+        occurredAt=at(30), receivedAt=at(29), clockStatus="UNORDERED"
+    )
+    value["journal"] = model(raw).model_dump()
+    result = review(value, frozen(), "d" * 64)
+    row = result.rows[0]
+    assert result.filledOrderRecords == row.originalFillRowsBeforeCutoff == 1
+    assert result.noRecordedFillOrderRecords == 0
+    assert row.originalFillClockUnknownRows == row.originalDealRangeUnknown == 1
+    assert row.originalPartialAtCutoff is None and row.originalFillWithoutClosedTradeAtCutoff
+    assert row.originalDealInsideCandidateBand == row.originalDealOutsideCandidateBand == 0

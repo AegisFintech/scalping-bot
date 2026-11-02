@@ -103,7 +103,8 @@ class RangeRow(StrictModel):
     unavailableReasons: list[str]
     expiresAt: Instant | None
     originalFillRowsBeforeCutoff: int = Field(ge=0)
-    originalPartialAtCutoff: bool
+    originalFillClockUnknownRows: int = Field(ge=0)
+    originalPartialAtCutoff: bool | None
     originalDealInsideCandidateBand: int = Field(ge=0)
     originalDealOutsideCandidateBand: int = Field(ge=0)
     originalDealRangeUnknown: int = Field(ge=0)
@@ -261,13 +262,12 @@ def review(inputs: dict[str, Any], frozen: Registration, registration_sha: str) 
             entry = Decimal(order.entryPrice)
             direction = 1 if order.side == "BUY" else -1
             fills = [
-                v
-                for v in setup.fills
-                if v.orderId == order.id
-                and v.clockStatus == "CAUSAL"
-                and timestamp(v.receivedAt) < cutoff
+                v for v in setup.fills if v.orderId == order.id and timestamp(v.receivedAt) < cutoff
             ]
-            deals = [direction * (Decimal(v.price) - entry) for v in fills]
+            unknown_fill_clocks = sum(v.clockStatus != "CAUSAL" for v in fills)
+            deals = [
+                direction * (Decimal(v.price) - entry) for v in fills if v.clockStatus == "CAUSAL"
+            ]
             flight = inputs["flight"].get(setup.id, {"records": [], "status": "UNAVAILABLE"})
             records = flight["records"]
             if len(records) > 100000:
@@ -288,6 +288,8 @@ def review(inputs: dict[str, Any], frozen: Registration, registration_sha: str) 
                         < cutoff
                     ):
                         quotes.append(record)
+                    else:
+                        quotes.append({"kind": "GAP", "payload": {"reason": "INVALID_QUOTE_CLOCK"}})
             samples = []
             if not reasons:
                 assert (
@@ -336,16 +338,21 @@ def review(inputs: dict[str, Any], frozen: Registration, registration_sha: str) 
                     unavailableReasons=reasons,
                     expiresAt=order.expiresAt,
                     originalFillRowsBeforeCutoff=len(fills),
-                    originalPartialAtCutoff=0
-                    < sum((Decimal(v.volume) for v in fills), Decimal(0))
-                    < Decimal(order.approvedVolume),
+                    originalFillClockUnknownRows=unknown_fill_clocks,
+                    originalPartialAtCutoff=None
+                    if unknown_fill_clocks
+                    else (
+                        0
+                        < sum((Decimal(v.volume) for v in fills), Decimal(0))
+                        < Decimal(order.approvedVolume)
+                    ),
                     originalDealInsideCandidateBand=sum(d <= 10 * point for d in deals)
                     if observable and point
                     else 0,
                     originalDealOutsideCandidateBand=sum(d > 10 * point for d in deals)
                     if observable and point
                     else 0,
-                    originalDealRangeUnknown=0 if observable else len(deals),
+                    originalDealRangeUnknown=unknown_fill_clocks if observable else len(fills),
                     originalClosedRowsBeforeCutoff=sum(
                         timestamp(v.closedAt) < cutoff for v in setup.closedTrades
                     ),
