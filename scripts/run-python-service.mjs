@@ -42,7 +42,7 @@ if (definition === undefined) {
 
 const child = spawn(definition.executable, definition.arguments, {
   cwd: root,
-  env: process.env,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
   stdio: "inherit",
 });
 

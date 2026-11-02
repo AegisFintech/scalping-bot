@@ -1,0 +1,68 @@
+{
+  "scope": "ONE_DEMO_XAUUSD",
+  "release": "0.8.0-model-scalp.1-codex.1",
+  "from": "2026-10-29T00:00:00Z",
+  "until": "2026-11-02T03:45:00Z",
+  "snapshotAt": "2026-11-02T03:53:59.199Z",
+  "closed": {
+    "closed": 13,
+    "wins": 10,
+    "losses": 3,
+    "flat": 0,
+    "net": "-3773.1400000000",
+    "signedfees": "-1700.1900000000",
+    "meanwin": "93.5790000000000000",
+    "meanloss": "-1569.6433333333333333",
+    "worst": "-1658.2700000000",
+    "meanholdingseconds": "98.5951538461538462"
+  },
+  "acknowledgements": {
+    "rows": 34,
+    "firstreceived": "2026-10-29T07:44:51.366Z",
+    "lastreceived": "2026-11-02T02:22:17.118Z",
+    "stoppriceknown": 34,
+    "rangeknown": 34,
+    "tifknown": 34,
+    "expiryknown": 34,
+    "brokertimeknown": 34,
+    "invalidoptional": 0
+  },
+  "ackMetadataAvailability": "NOT_CAPTURED_BY_V1_EXPORT",
+  "economicQualification": false,
+  "flightCoverage": {
+    "currentReleaseSegments": 36,
+    "finalSegments": 36,
+    "recordedGapsAcrossSegments": 2645,
+    "closedTradeSummaryMatchCounts": {
+      "1": 13
+    },
+    "matchedSegmentGaps": 0,
+    "completeTickTape": false,
+    "counterfactualNet": null
+  },
+  "validatedRealAcknowledgementExport": {
+    "start": "2026-11-02T02:00:00Z",
+    "until": "2026-11-02T03:00:00Z",
+    "observations": 2,
+    "orderedClocks": 2,
+    "metadataAvailability": "NOT_CAPTURED",
+    "originalBrokerStateProven": false
+  },
+  "decisionDenominators": {
+    "scope": "ONE_DEMO_XAUUSD",
+    "release": "0.8.0-model-scalp.1-codex.1",
+    "from": "2026-10-29T00:00:00Z",
+    "until": "2026-11-02T03:45:00Z",
+    "snapshotAt": "2026-11-02T04:22:01.019Z",
+    "denominators": {
+      "analysisdecisions": 3796,
+      "ordergroups": 34,
+      "entryorders": 34,
+      "orderswithanyfill": 13,
+      "trades": 13,
+      "tradeoutcomesopenatcutoff": 0,
+      "groupswithoutrecordedtrade": 21
+    },
+    "basis": "ANALYSES_CREATED_IN_WINDOW_CURRENT_DATABASE_STATE_NOT_ASOF_PENDING_ORDER_RECONSTRUCTION"
+  }
+}

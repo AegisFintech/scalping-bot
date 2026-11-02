@@ -1,0 +1,8 @@
+[Unit]
+Description=Retain completed hourly broker evidence windows
+[Timer]
+OnCalendar=*-*-* *:07:00 UTC
+Persistent=true
+Unit=scalper-broker-evidence.service
+[Install]
+WantedBy=timers.target

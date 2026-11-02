@@ -18,6 +18,7 @@ def layout(tmp_path, monkeypatch):
     artifact = tmp_path / "artifact"
     artifact.mkdir()
     monkeypatch.setattr(service, "protected", lambda path: None)
+    monkeypatch.setattr("python.operations.publication_retirement.protected", lambda path: None)
     monkeypatch.setattr(service, "credentials", lambda root: None)
     return root, queue, artifact
 

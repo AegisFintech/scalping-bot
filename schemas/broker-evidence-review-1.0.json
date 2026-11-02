@@ -1,0 +1,503 @@
+{
+  "$defs": {
+    "Acknowledgement": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "eventId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "eventPayloadSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Eventpayloadsha256",
+          "type": "string"
+        },
+        "orderType": {
+          "enum": [3, 6],
+          "title": "Ordertype",
+          "type": "integer"
+        },
+        "metadataAvailability": {
+          "const": "NOT_CAPTURED",
+          "title": "Metadataavailability",
+          "type": "string"
+        },
+        "evidenceSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Evidencesha256",
+          "type": "string"
+        },
+        "stopPrice": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stopprice"
+        },
+        "slippageInPoints": {
+          "anyOf": [
+            {
+              "pattern": "^[1-9][0-9]{0,18}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Slippageinpoints"
+        },
+        "timeInForce": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Timeinforce"
+        },
+        "expirationAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expirationat"
+        },
+        "brokerUpdatedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Brokerupdatedat"
+        },
+        "receivedAt": {
+          "title": "Receivedat",
+          "type": "string"
+        },
+        "persistedAt": {
+          "title": "Persistedat",
+          "type": "string"
+        },
+        "invalidFields": {
+          "items": {
+            "enum": [
+              "stopPrice",
+              "slippageInPoints",
+              "timeInForce",
+              "expirationTimestamp",
+              "utcLastUpdateTimestamp"
+            ],
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Invalidfields",
+          "type": "array"
+        },
+        "clockStatus": {
+          "enum": ["ORDERED", "UNORDERED", "INCOMPLETE"],
+          "title": "Clockstatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "eventPayloadSha256",
+        "orderType",
+        "metadataAvailability",
+        "evidenceSha256",
+        "stopPrice",
+        "slippageInPoints",
+        "timeInForce",
+        "expirationAt",
+        "brokerUpdatedAt",
+        "receivedAt",
+        "persistedAt",
+        "invalidFields",
+        "clockStatus"
+      ],
+      "title": "Acknowledgement",
+      "type": "object"
+    },
+    "AcknowledgementPacket": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "broker-acknowledgement-evidence-1.0",
+          "title": "Schemaversion",
+          "type": "string"
+        },
+        "source": {
+          "pattern": "^[a-zA-Z0-9._-]{1,80}$",
+          "title": "Source",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "string"
+        },
+        "until": {
+          "title": "Until",
+          "type": "string"
+        },
+        "snapshotAt": {
+          "title": "Snapshotat",
+          "type": "string"
+        },
+        "observations": {
+          "items": {
+            "$ref": "#/$defs/Acknowledgement"
+          },
+          "maxItems": 500,
+          "title": "Observations",
+          "type": "array"
+        },
+        "coverage": {
+          "const": "PERSISTED_CALLBACKS_ONLY_ABSENCE_UNKNOWN",
+          "title": "Coverage",
+          "type": "string"
+        },
+        "brokerAuthority": {
+          "const": false,
+          "title": "Brokerauthority",
+          "type": "boolean"
+        },
+        "promotionAuthority": {
+          "const": false,
+          "title": "Promotionauthority",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "source",
+        "start",
+        "until",
+        "snapshotAt",
+        "observations",
+        "coverage",
+        "brokerAuthority",
+        "promotionAuthority"
+      ],
+      "title": "AcknowledgementPacket",
+      "type": "object"
+    },
+    "Association": {
+      "additionalProperties": false,
+      "properties": {
+        "acknowledgementId": {
+          "title": "Acknowledgementid",
+          "type": "string"
+        },
+        "metadataSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Metadatasha256"
+        },
+        "relationship": {
+          "enum": ["PRIOR_LOCAL_RESPONSE_WITHIN_30S", "UNAVAILABLE"],
+          "title": "Relationship",
+          "type": "string"
+        },
+        "originalBrokerStateProven": {
+          "const": false,
+          "title": "Originalbrokerstateproven",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "acknowledgementId",
+        "metadataSha256",
+        "relationship",
+        "originalBrokerStateProven"
+      ],
+      "title": "Association",
+      "type": "object"
+    },
+    "MetadataObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "broker-metadata-observation-1.0",
+          "title": "Schemaversion",
+          "type": "string"
+        },
+        "symbol": {
+          "pattern": "^[A-Z0-9._-]{1,32}$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "requestStartedAt": {
+          "title": "Requeststartedat",
+          "type": "string"
+        },
+        "responseReceivedAt": {
+          "title": "Responsereceivedat",
+          "type": "string"
+        },
+        "brokerSourceTime": {
+          "title": "Brokersourcetime",
+          "type": "null"
+        },
+        "adapterMetadataAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Adaptermetadataat"
+        },
+        "reportedSymbol": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z0-9._-]{1,32}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reportedsymbol"
+        },
+        "provenance": {
+          "const": "BROKER_METADATA_ENDPOINT_RESPONSE_NOT_ORIGINAL_ACK",
+          "title": "Provenance",
+          "type": "string"
+        },
+        "actualClosingCosts": {
+          "title": "Actualclosingcosts",
+          "type": "null"
+        },
+        "terms": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Terms",
+          "type": "object"
+        },
+        "categories": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Categories",
+          "type": "object"
+        },
+        "unavailableFields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unavailablefields",
+          "type": "array"
+        },
+        "evidenceSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Evidencesha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "symbol",
+        "requestStartedAt",
+        "responseReceivedAt",
+        "brokerSourceTime",
+        "adapterMetadataAt",
+        "reportedSymbol",
+        "provenance",
+        "actualClosingCosts",
+        "terms",
+        "categories",
+        "unavailableFields",
+        "evidenceSha256"
+      ],
+      "title": "MetadataObservation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "broker-evidence-review-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "databaseSnapshotAt": {
+      "title": "Databasesnapshotat",
+      "type": "string"
+    },
+    "acknowledgements": {
+      "$ref": "#/$defs/AcknowledgementPacket"
+    },
+    "metadataObservations": {
+      "items": {
+        "$ref": "#/$defs/MetadataObservation"
+      },
+      "title": "Metadataobservations",
+      "type": "array"
+    },
+    "associations": {
+      "items": {
+        "$ref": "#/$defs/Association"
+      },
+      "title": "Associations",
+      "type": "array"
+    },
+    "missingMetadata": {
+      "title": "Missingmetadata",
+      "type": "integer"
+    },
+    "coverage": {
+      "const": "BOUNDED_CALLBACKS_AND_LOCAL_METADATA_OBSERVATIONS_NO_INTERPOLATION",
+      "title": "Coverage",
+      "type": "string"
+    },
+    "accountScopeBasis": {
+      "const": "RECORDER_CONFIGURATION_NOT_INDEPENDENT_BROKER_IDENTITY",
+      "title": "Accountscopebasis",
+      "type": "string"
+    },
+    "actualCounterfactualCosts": {
+      "title": "Actualcounterfactualcosts",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "capturedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Capturedat"
+    },
+    "collectorSourceSha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Collectorsourcesha256"
+    },
+    "registrationSha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Registrationsha256"
+    },
+    "collectionStatus": {
+      "default": "DIAGNOSTIC",
+      "enum": ["DIAGNOSTIC", "REGISTERED_FUTURE_BASELINE"],
+      "title": "Collectionstatus",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "source",
+    "start",
+    "until",
+    "databaseSnapshotAt",
+    "acknowledgements",
+    "metadataObservations",
+    "associations",
+    "missingMetadata",
+    "coverage",
+    "accountScopeBasis",
+    "actualCounterfactualCosts",
+    "economicQualification",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "EvidenceReview",
+  "type": "object"
+}

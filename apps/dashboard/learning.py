@@ -11,12 +11,14 @@ import subprocess
 import tempfile
 import time
 import urllib.request
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 
+from apps.dashboard.learning_progress import progress
 from python.learning.budget import Policy
 
 ASSETS = Path(__file__).with_name("assets")
@@ -76,6 +78,7 @@ def load() -> dict[str, Any]:
         result["trade"] = json.loads(raw)
     except (OSError, ValueError):
         result["trade"] = None
+    result["pipeline"] = progress(datetime.now(UTC))
     return result
 
 

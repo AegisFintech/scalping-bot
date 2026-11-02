@@ -25,6 +25,7 @@ from psycopg.rows import dict_row
 
 from python.operations import flight_heartbeat
 from python.operations.entry_context import context_hash, entry_context
+from python.research import broker_metadata_evidence as metadata_evidence
 
 TERMINAL = {"CLOSED", "FAILED", "EXPIRED"}
 
@@ -711,6 +712,7 @@ def main() -> None:
                         flight.update(setup)
                     last_database = time.monotonic()
                 if time.monotonic() - last_metadata > 30:
+                    metadata_started = datetime.now(UTC)
                     response = client.post(
                         "http://127.0.0.1:8081/v1/session",
                         json={"symbol": os.environ.get("TRADING_SYMBOL", "XAUUSD")},
@@ -718,6 +720,14 @@ def main() -> None:
                     response.raise_for_status()
                     metadata = response.json()["metadata"]
                     last_metadata = time.monotonic()
+                    receipt = metadata_evidence.observation(
+                        metadata,
+                        os.environ.get("TRADING_SYMBOL", "XAUUSD"),
+                        metadata_started,
+                        datetime.now(UTC),
+                    )
+                    budget.claim(len(encoded(receipt.model_dump())))
+                    metadata_evidence.persist(directory, receipt)
                 response = client.get(
                     "http://127.0.0.1:8081/v1/flight-quotes", params={"after": cursor}
                 )

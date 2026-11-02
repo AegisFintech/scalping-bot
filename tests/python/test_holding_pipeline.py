@@ -14,6 +14,11 @@ from tests.python import test_holding_mailbox as helpers
 from tests.python.test_holding_mailbox import invoke, request
 
 
+@pytest.fixture(autouse=True)
+def no_retirement_transport_by_default(monkeypatch):
+    monkeypatch.setattr(pipeline, "retire", lambda *args, **kwargs: None)
+
+
 @pytest.fixture
 def closed(tmp_path, monkeypatch):
     monkeypatch.setattr(mailbox.pacing, "relevant", lambda *_: True)
@@ -61,7 +66,9 @@ def test_unreceived_unknown_never_resubmits(tmp_path, monkeypatch):
 
 
 def test_empty_or_delivered_task_waits_without_provider_calls(tmp_path, monkeypatch):
-    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="a" * 40))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="a" * 40)
+    )
     monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "TASK_ALREADY_PRESENT"})
     monkeypatch.setattr(pipeline, "transfer", lambda *_: pytest.fail("delivered task redispatch"))
     assert pipeline.cycle(tmp_path, {})["status"] == "TASK_ALREADY_PRESENT"
@@ -82,10 +89,15 @@ def test_signed_pending_publication_never_generates_redundant_candidate(tmp_path
         "publicationSha256": "c" * 64,
     }
     (tmp_path / "state.json").write_bytes(encoded(state))
-    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="a" * 40))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="a" * 40)
+    )
     monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "ELIGIBLE"})
     monkeypatch.setattr(pipeline, "transfer", lambda *_: pytest.fail("pending task redispatch"))
-    assert pipeline.cycle(tmp_path, {})["reason"] == "HOLDING_AWAITING_PUBLICATION"
+    assert (
+        pipeline.cycle(tmp_path, {"queue": str(tmp_path / "queue")})["reason"]
+        == "HOLDING_AWAITING_PUBLICATION"
+    )
 
 
 @pytest.mark.parametrize("lose_relay", [False, True])
@@ -175,7 +187,9 @@ def test_real_source_and_signed_handoff_keeps_one_provider_call(
 
 
 def test_protected_active_pointer_precedes_any_remote_dispatch(tmp_path, monkeypatch, closed):
-    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="a" * 40))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="a" * 40)
+    )
     monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "ELIGIBLE"})
 
     def transfer(role, value):
@@ -200,7 +214,9 @@ def test_source_drift_keeps_old_claims_query_only(tmp_path, monkeypatch):
     (job / "generation").mkdir(parents=True)
     (job / "generation" / "claim.json").write_bytes(encoded({"requestSha256": "b" * 64}))
     (tmp_path / "state.json").write_bytes(encoded({"job": job.name, "status": "OUTCOME_UNKNOWN"}))
-    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="c" * 40))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="c" * 40)
+    )
     monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "TASK_ALREADY_PRESENT"})
     calls = []
 
@@ -222,7 +238,9 @@ def test_expired_unsent_archive_keeps_history_and_allows_later_relevant_guidance
 
     clock = datetime(2026, 10, 31, 10, tzinfo=UTC)
     monkeypatch.setattr(pacing, "now", lambda: clock)
-    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="a" * 40))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="a" * 40)
+    )
     monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "ELIGIBLE"})
     box = mailbox.Mailbox(tmp_path / "generation", "generation")
     calls = []
@@ -252,8 +270,43 @@ def test_expired_unsent_archive_keeps_history_and_allows_later_relevant_guidance
     monkeypatch.setattr(
         pipeline.task, "PROMPT", pipeline.task.PROMPT + "\nReviewed relevant correction."
     )
-    monkeypatch.setattr(pipeline, "refresh", lambda _: SimpleNamespace(expected_main="b" * 40))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="b" * 40)
+    )
     assert pipeline.cycle(root, {})["status"] == "QUEUED_OR_UNKNOWN"
     assert calls.count("submit") == 2
     assert len(list(root.glob("*/generation/claim.json"))) == 2
     assert not list(box.root.glob("attempts/*/claim.json"))
+
+
+def test_terminal_publication_on_unchanged_main_returns_to_evidence_discovery(
+    tmp_path, monkeypatch
+):
+    state = {
+        "status": "SIGNED",
+        "baseCommit": "a" * 40,
+        "job": "b" * 64,
+        "publicationSha256": "c" * 64,
+    }
+    (tmp_path / "state.json").write_bytes(encoded(state))
+    monkeypatch.setattr(
+        pipeline, "refresh", lambda _: SimpleNamespace(directory=tmp_path, expected_main="a" * 40)
+    )
+    monkeypatch.setattr(pipeline.task, "admission", lambda _: {"status": "ELIGIBLE"})
+    monkeypatch.setattr(
+        pipeline,
+        "retire",
+        lambda *args, **kwargs: {
+            "reason": "PUBLICATION_TERMINAL_CONFIRMED",
+            "terminalPublication": True,
+        },
+    )
+    calls = []
+
+    def transfer(role, request):
+        calls.append(request["action"])
+        return {"status": "WAITING_RESEARCH_DUPLICATE"}
+
+    monkeypatch.setattr(pipeline, "transfer", transfer)
+    result = pipeline.cycle(tmp_path, {"queue": str(tmp_path / "queue")})
+    assert result["status"] == "WAITING_RESEARCH_DUPLICATE" and calls == ["discover"]

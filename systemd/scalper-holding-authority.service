@@ -6,6 +6,7 @@ Wants=network-online.target
 Type=oneshot
 User=root
 Group=root
+SupplementaryGroups=scalper-publisher
 WorkingDirectory=/opt/scalper-holding-authority
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=PYTHONPATH=/opt/scalper-holding-authority
@@ -27,4 +28,5 @@ PrivateTmp=yes
 NoNewPrivileges=yes
 CapabilityBoundingSet=
 ReadWritePaths=/var/lib/scalper-candidate-observation /var/lib/scalper-candidate-authority /var/lib/scalper-publisher-queue
+ReadOnlyPaths=/var/lib/scalper-publisher/jobs
 InaccessiblePaths=-/etc/scalping-bot -/run/postgresql -/var/lib/scalper-demo-epoch-314

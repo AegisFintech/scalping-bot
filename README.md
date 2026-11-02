@@ -115,6 +115,10 @@ Authentication fixtures run without root; deployment still requires private root
 
 Learning resources and the separate `/learning` console: [operator guide](docs/learning-control-report.md). API-first uses the approved US$20/day ceiling with credit/cap subscription fallback; research pauses do not pause position protection.
 
+[Current economic review and execution evidence](docs/completion489-report.md):
+research blockers and actual activity age are visible in `/learning`; future
+metadata/acknowledgement collection has no trading or promotion authority.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

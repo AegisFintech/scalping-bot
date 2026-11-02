@@ -17,3 +17,11 @@ Flight summaries matched the 67 trades by open/close times, direction and record
 At the review time the journal contained no closed `0.8.0-model-scalp.1-codex.1` trades. Do not apply old-release outcomes as if they measured the current release. Its published contract permits, but does not require, a 0.40 price-unit TP and a 7.00 price-unit SL. At exactly those distances and equal per-unit payoffs, arithmetic break-even is about 94.6% wins before costs. Actual fees, volume, execution and broker protection determine realized outcomes.
 
 The legacy diagnostic CLI admits only `0.3.0-fade-limit` releases. A version-aware, read-only review should preserve original trade and broker evidence, account for changing volume and equity, and measure actual fill-relative geometry, fees and sampled-path coverage. Design any exit or entry research around a frozen, chronological cohort with explicit missing data and unknown counterfactual costs. Economic-calendar and broker-depth data need recorded timestamps and provenance before they can support causal analysis; missing data is not evidence of a trading signal.
+
+## November2 follow-up
+
+The [current-release cohort and complete local decision denominator](completion489-report.md)
+add actual 0.8.0 outcomes, costs, fill/flight/ACK coverage, closed-net decline and
+a causal next-study plan. The older observations above retain their original cutoff.
+The diagnostic CLI now explicitly admits this current release while the historical
+learning CLI preserves its original release restriction. No strategy was promoted.
