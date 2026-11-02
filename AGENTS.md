@@ -195,6 +195,9 @@ For compressed registered-study storage/runtime pins and local /learning status,
 read `docs/study-retention-report.md`; preserve old source/registration segments
 and keep study failures separate from trading authority.
 
+Verified study511 rollout and actual normal capture: `docs/evidence/study511-activation.json`
+and `docs/evidence/study511-normal-capture.json`; economic qualification stays separate.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

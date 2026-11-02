@@ -7,10 +7,10 @@
   tests/full qualification/review/pushed PR/CI/merge and normal observer proof.
 - Dependencies: matched observer/UI source, first retained1.0 future window and
   separately frozen new future segment; current trading source/economics stay.
-- Status: both independent implementation review axes clear after runtime/capture
-  fixes; corrected full2,725-test qualification4,23 non-root tests and four
-  configuration checks pass. First1.0 normal window retained/verified; future1.1
-  activation remains. Main includes normal independently reviewed research PR512.
+- Status: complete software delivery/activation through PR513 and normal15:07UTC
+  capture:24 origins/72 rows, original bytes/hash and full measurement recomputed;
+  /learning verified.2,725 tests,23 non-root cases and independent review pass.
+  Seven-day collection continues; no fill/profit qualification is claimed.
 - Evidence: `docs/study-retention-report.md`.
 
 ### ISSUE-506 — Complete execution-aware scalping research harness
@@ -27,10 +27,10 @@
   until actual evidence; source change preserves #499 original incomplete segment.
 - Dependencies: unchanged0.9 economic policy, additive0040, source-version matched
   executor/provider, immutable study registrations and separately controlled review.
-- Status: full2,711-test qualification, four configuration checks and both fresh
-  independent review axes pass. PR510 merged/deployed; exact normal links and
-  first prospective window verified. Bounded storage/display follow-up511 remains;
-  authoritative activation receipts are on issue506 and child issues.
+- Status: complete bounded four-part engineering delivery through PR510/513,
+  exact normal WAIT links and registered capture; current /learning, independent
+  maintenance and natural reviewed PR512 cycle verified. #466 closed; #403
+  economic qualification and #499's distinct10-vs30-point question stay separate.
 - Evidence: `docs/execution-aware-harness-report.md`.
 
 ### ISSUE-504 — Prospective WAIT/context lineage

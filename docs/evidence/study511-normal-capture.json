@@ -1,0 +1,57 @@
+{
+  "version": "study511-normal-capture-1.0",
+  "verifiedAt": "2026-11-02T15:09:03.508361+00:00",
+  "scope": "ACTUAL_REGISTERED_READ_ONLY_COLLECTION_NOT_FILL_OR_PROFIT_QUALIFICATION",
+  "normalTimerLastTrigger": "Mon 2026-11-02 23:07:00 +08",
+  "collectorCheckedAt": "2026-11-02T15:07:02.242967+00:00",
+  "registrationSha256": "840cb2aae3f5741f72bf91dd4e2ef6e5658d85065824dc3f381fd8410cd4cde2",
+  "originalInputSha256": "a70d7d0256ff1649f114a7505149c624e570e4ceaed8dcc8f1b8c58ceba3bf79",
+  "gzipSha256": "b0f401c25b0ef45ed4f7f74e9e7d8dfa584549c3cd41256f228071644e69915b",
+  "reportSha256": "908f1f89c0139cb5579853b778827d1fdb3765e99cdd6c0b95393585ceb1e253",
+  "start": "2026-11-02T14:30:00+00:00",
+  "until": "2026-11-02T15:00:00+00:00",
+  "rawInputBytes": 1034760,
+  "gzipBytes": 151452,
+  "reportBytes": 36469,
+  "contexts": 24,
+  "origins": 24,
+  "rows": 72,
+  "counts": {
+    "RANGE_BREAK": {
+      "UNAVAILABLE": 19,
+      "CENSORED": 5
+    },
+    "BAR_CONFIRM": {
+      "UNAVAILABLE": 19,
+      "CENSORED": 5
+    },
+    "BREAK_RETEST": {
+      "UNAVAILABLE": 19,
+      "CENSORED": 5
+    }
+  },
+  "levelCounts": {
+    "RANGE_BREAK": {
+      "UNAVAILABLE": 24
+    },
+    "BAR_CONFIRM": {
+      "UNAVAILABLE": 24
+    },
+    "BREAK_RETEST": {
+      "UNAVAILABLE": 24
+    }
+  },
+  "reasons": {
+    "STRUCTURE_AND_RECORDED_COST_EXCEED_SEVEN_PRICE_BOUND": 57,
+    "FORWARD_PATH_INCOMPLETE": 15
+  },
+  "oneCaptureClaimOneOriginalOneReport": true,
+  "sourceAndRuntimePinsVerified": true,
+  "decompressedBytesHashVerified": true,
+  "measurementIndependentlyRecomputed": true,
+  "latestReaderCurrent": true,
+  "providerForced": false,
+  "collectorTickForced": false,
+  "brokerAuthority": false,
+  "economicQualification": false
+}
