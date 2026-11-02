@@ -34,7 +34,8 @@ Keep single trend STOP_LIMIT/GTD, existing5% setup/2.5% leg ceilings and dynamic
 sizing. Read `docs/cost-balanced-scalp-report.md`; this is evaluation, not profit
 qualification. Historical0.8 geometry/contexts stay version-bound. #499's narrower
 entry range is research-only; current trading range remains30ticks. Read
-`docs/entry-range-study-report.md` before changing its frozen point/ACK collection; retain unknown-clock fills.
+`docs/entry-range-study-report.md` before changing its frozen point/ACK collection; retain unknown-clock fills
+and keep metadata warm-up separate from the registered outcome window.
 
 ## Before changing an area
 

@@ -189,9 +189,11 @@ def main() -> None:
             if status.get("strategyVersion") != RELEASE or status.get("mode") != "demo":
                 raise ValueError("RANGE_ACTIVE_RELEASE_DRIFT")
             if args.action == "capture":
-                if timestamp(frozen.start) - timedelta(seconds=30) <= now < timestamp(frozen.until):
+                if now < timestamp(frozen.until):
                     capture(points, now, client)
-                print("READ_ONLY_POINT_RECEIPT")
+                    print("READ_ONLY_POINT_RECEIPT")
+                else:
+                    print("POINT_COLLECTION_COMPLETE")
             else:
                 print(collect(args.output, points, args.recordings, frozen, digest, now))
 

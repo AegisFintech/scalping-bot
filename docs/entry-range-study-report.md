@@ -21,8 +21,8 @@ or report changes. Source/release drift stops this observer only. No trading
 restart or accounting change is needed for activation.
 
 The dedicated existing SELECT-only Flight role runs two sandboxed oneshots:
-metadata every30seconds and collection hourly at:09. Capture begins no earlier
-than30seconds before the registered start. Each collection invocation processes
+metadata every30seconds and collection hourly at:09. Metadata warm-up begins
+after registration; outcome collection starts only at the frozen future hour. Each collection invocation processes
 one oldest missing complete hour, with at least five minutes of settling delay.
 It retains separate repeatable-read journal and acknowledgement snapshots and
 bounded hash-verified Flight prefixes, then writes immutable input/report bytes.

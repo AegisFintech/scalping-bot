@@ -135,4 +135,4 @@ Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa2
 The separate [native entry-range study](docs/entry-range-study-report.md) freezes
 10-vs30-point observational collection without changing demo orders or promoting
 a candidate. Unknown-clock fills remain visible. Actual activation/evidence is
-recorded on issue #499.
+recorded on issue #499. Metadata warm-up does not backdate outcome collection.
