@@ -147,6 +147,9 @@ independent inference/maintenance, read `docs/execution-aware-harness-report.md`
 Preserve old study segments; rebase only completed never-scored standalone
 generation with unchanged protected contracts and fresh scoring/review.
 
+Tamper fixtures must explicitly unlock their own read-only files before mutation;
+verify them as a non-root user without relaxing production permissions.
+
 For compressed registered-study storage/runtime pins and local /learning status,
 read `docs/study-retention-report.md`; preserve old source/registration segments
 and keep study failures separate from trading authority.

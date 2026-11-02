@@ -92,11 +92,16 @@ def test_tampered_binding_withholds_only_study(tmp_path, monkeypatch, change):
     observer.collect(root, reg, now, export=lambda *_: raw)
     monkeypatch.setattr(observer, "trusted_path", lambda _: None)
     if change == "compressed":
-        next(root.glob("*.input.json.gz")).write_bytes(gzip.compress(b"{}"))
+        compressed = next(root.glob("*.input.json.gz"))
+        assert compressed.stat().st_mode & 0o777 == 0o400
+        compressed.chmod(0o600)
+        compressed.write_bytes(gzip.compress(b"{}"))
     elif change == "report":
         report = next(root.glob("*.report.json"))
         value = json.loads(report.read_bytes())
         value["measurement"]["rows"][0]["observedFavorablePrice"] = "9999"
+        assert report.stat().st_mode & 0o777 == 0o400
+        report.chmod(0o600)
         report.write_bytes(encoded(value))
     elif change == "status":
         value = json.loads((root / "status.json").read_bytes())
@@ -105,6 +110,8 @@ def test_tampered_binding_withholds_only_study(tmp_path, monkeypatch, change):
     else:
         value = json.loads(path.read_bytes())
         value["sourceFiles"]["requirements.lock"] = "f" * 64
+        assert path.stat().st_mode & 0o777 == 0o444
+        path.chmod(0o600)
         path.write_bytes(encoded(value))
     result = observer.read_status(path, root, Path.cwd(), now)
     assert result["readState"] == "UNAVAILABLE" and result["latest"] is None

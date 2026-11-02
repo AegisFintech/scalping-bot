@@ -93,7 +93,7 @@ supersede the current versioned policy or explicit operator instructions.
   Check final generated documentation with the real formatter; preserve existing
   publication heads when repairing templates. The recorded-payoff task is delivered;
   do not regenerate it. Scheduled holding research reached a retained review veto;
-  PR #512 merged by scheduled controls; full-cycle lineage acceptance remains #466.
+  PR #512 completed bounded natural-cycle #466; economic acceptance #403 remains.
   Holding-time research: `docs/holding-research-report.md`; preserve unknown clocks,
   full cohorts and separate version1.1; elapsed holding time proves no earlier exit.
   Scheduled handoff: `docs/holding-pipeline-report.md`; the protected parent verifies
@@ -187,6 +187,9 @@ For execution-aware attribution, fixed breakout hypotheses, agenda/recovery and
 independent inference/maintenance, read `docs/execution-aware-harness-report.md`.
 Preserve old study segments; rebase only completed never-scored standalone
 generation with unchanged protected contracts and fresh scoring/review.
+
+Tamper fixtures must explicitly unlock their own read-only files before mutation;
+verify them as a non-root user without relaxing production permissions.
 
 For compressed registered-study storage/runtime pins and local /learning status,
 read `docs/study-retention-report.md`; preserve old source/registration segments

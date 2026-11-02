@@ -8,7 +8,8 @@
 - Dependencies: matched observer/UI source, first retained1.0 future window and
   separately frozen new future segment; current trading source/economics stay.
 - Status: both independent implementation review axes clear after runtime/capture
-  fixes; full2,725-test qualification2 and four configuration checks pass. First1.0 normal window retained/verified; future1.1
+  fixes; corrected full2,725-test qualification4,23 non-root tests and four
+  configuration checks pass. First1.0 normal window retained/verified; future1.1
   activation remains. Main includes normal independently reviewed research PR512.
 - Evidence: `docs/study-retention-report.md`.
 
@@ -295,8 +296,10 @@
   pass. PR #471 is deployed with actual browser/recorder readback; all research
   timers are active. Scheduled generation reached the retained #479 model veto;
   actual namespace interruption and negative-review restart/dedup proof pass.
-  Successful natural merge/merged lineage remain pending the corrective allowance;
-  #403 economic rollout remains unqualified. See the current activation report.
+  Bounded natural cycle completed/closed through scheduled PR512, fresh28-case
+  scoring, matching /learning lineage and duplicate-after-merge reconciliation.
+  Original question remains unanswered; #403 economics stay unqualified. See
+  `docs/evidence/natural512-cycle.json`.
 - Evidence: `docs/research-delivery-report.md`.
 
 ### ISSUE-465 — Independent local research review and guarded delivery

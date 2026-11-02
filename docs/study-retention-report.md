@@ -72,3 +72,36 @@ retest0, and24 unavailable per method. All unknown/censored rows remain. It cont
 1,043,540 original input bytes; deterministic gzip is152,559 bytes, report38,153.
 That one-window pattern projects61.11MiB/seven days, not a future guarantee; hard
 caps still enforce. Original registration/input/report/source remain unchanged.
+
+Hosted qualification at c9564b0 exposed three tamper-fixture permission failures
+(1,279 Python pass/3 fail): local root bypassed their intentionally read-only
+files, while the CI runner correctly refused the fixture writes. Fixtures now
+assert original0400/0444 modes, explicitly unlock only their temporary copies,
+and run under a separate non-root identity. Production immutability is unchanged.
+The failed hosted receipts remain retained; new exact-head checks are mandatory.
+
+The complete bounded fixed-method natural software cycle #466 is verified and
+closed: actual observation/registration/result/finding, one preserved generation,
+13 unchanged protected contracts, freshly recomputed28-case tc02 scoring, normal
+signed publication, exact-head CI, independent scheduled review/automatic PR512
+merge, duplicate-after-merge reconciliation and visible matching /learning lineage.
+Prior negative/restart/unknown-failure receipts stay unchanged. Original free-form
+question remains unanswered; this qualifies neither arbitrary strategy questions
+nor trading economics. [Exact lineage receipt](evidence/natural512-cycle.json).
+
+Local qualification3 also correctly rejected16 legacy observer fixtures when
+/tmp fell below their unchanged2GiB reserve during fixture creation (1,266 pass).
+Finished temporary fixtures and the delivered #510 worktree were removed; actual
+frozen study sources/registrations/reports and all failure logs remain. Research
+reserve checks were not relaxed; qualification4 repeats the same source.
+
+Corrected unchanged-source qualification4 passes all2,725 tests/gates/audits;
+23 focused tests also pass as the actual unprivileged reader. Both independent
+review axes clear, including factual bounded #466 closure. Original local/hosted
+failures remain recorded. [Corrected exact receipt](evidence/study511-qualification-corrected.json).
+
+The1.1 candidate was frozen14:29:48UTC before its14:30–Nov9 14:30 future batch.
+Preparation did not activate its collector; activation awaits corrected exact-head
+hosted checks and reviewed merge. Its107 Python/policy/requirements source hashes
+will be compared with merged source before activation; original aliases stay pinned.
+The correction changes test fixtures/docs only, so frozen runtime files stay exact.
