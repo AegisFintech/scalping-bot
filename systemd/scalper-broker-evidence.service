@@ -1,0 +1,23 @@
+[Unit]
+Description=Bounded read-only hourly broker evidence collection
+After=network-online.target
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+EnvironmentFile=/etc/scalper-flight/recorder.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-broker-evidence
+ExecStart=/opt/scalper-broker-evidence/.venv/bin/python -P -m python.operations.broker_evidence_review --metadata /var/lib/scalper-flight/recordings --output /var/lib/scalper-broker-evidence --registration /etc/scalper-broker-evidence/registration.json
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/scalper-flight/recordings
+ReadWritePaths=/var/lib/scalper-broker-evidence
+InaccessiblePaths=-/root -/etc/scalping-bot
+CPUQuota=25%
+MemoryMax=256M
+TasksMax=16
+TimeoutStartSec=90

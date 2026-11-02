@@ -22,6 +22,10 @@ export interface LearningRow {
 }
 
 export function learningWindow(args: readonly string[]) {
+  return reviewWindow(args, /^0\.3\.0-fade-limit\.[123]$/);
+}
+
+export function reviewWindow(args: readonly string[], releases: RegExp) {
   const [release, from, until] = args;
   const validTime = (value: string | undefined): value is string => {
     if (
@@ -38,7 +42,7 @@ export function learningWindow(args: readonly string[]) {
   if (
     args.length !== 3 ||
     release === undefined ||
-    !/^0\.3\.0-fade-limit\.[123]$/.test(release) ||
+    !releases.test(release) ||
     !validTime(from) ||
     !validTime(until) ||
     Date.parse(from) >= Date.parse(until)

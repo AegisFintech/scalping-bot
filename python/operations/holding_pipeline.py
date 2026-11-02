@@ -14,6 +14,7 @@ from typing import Any
 
 from python.operations import research_delivery as delivery
 from python.operations import research_publisher as github
+from python.operations.publication_retirement import retire
 from python.research import holding_authority as authority
 from python.research import holding_task as task
 from python.research import research_pacing as pacing
@@ -124,6 +125,26 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
         admission = task.admission(trust)
         state_path = root / "state.json"
         prior = read(state_path) if state_path.exists() else {}
+        if prior.get("publicationSha256") and prior.get("job"):
+            retired = retire(
+                registry.directory(prior["job"]),
+                Path(config["queue"]),
+                Path("/var/lib/scalper-publisher"),
+                Path(__file__).resolve().parents[2] / "policy/research-publisher-signers",
+                prior["publicationSha256"],
+                trust.expected_main,
+                datetime.now(UTC),
+                git_directory=trust.directory,
+            )
+            if retired is not None:
+                prior = {
+                    **prior,
+                    "status": "PUBLICATION_COMPLETED"
+                    if retired.get("terminalPublication")
+                    else "RETIRED_PUBLICATION",
+                    "reason": retired["reason"],
+                    "publicationRetirement": retired,
+                }
         if admission["status"] != "ELIGIBLE":
             result = {**prior, **admission, "brokerAuthority": False, "promotionAuthority": False}
             # Source drift stops new work, while existing transport claims remain query-only.
@@ -152,6 +173,8 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                     "REJECTED_RESEARCH_EVIDENCE",
                     "REJECTED_RESEARCH_DUPLICATE",
                     "SOURCE_DRIFT",
+                    "RETIRED_PUBLICATION",
+                    "PUBLICATION_COMPLETED",
                 }
                 or str(prior.get("status", "")).startswith("WAITING_RESEARCH_")
             ):
@@ -347,7 +370,9 @@ def main() -> None:
         reason = str(error)
         result = {
             "reason": reason
-            if re.fullmatch(r"(?:HOLDING|SOURCE|WORKER|CANDIDATE|RESEARCH)_[A-Z_]{1,100}", reason)
+            if re.fullmatch(
+                r"(?:HOLDING|SOURCE|WORKER|CANDIDATE|RESEARCH|PUBLICATION)_[A-Z_]{1,100}", reason
+            )
             else "HOLDING_DEPENDENCY_OR_OUTCOME_UNKNOWN",
             "status": "BLOCKED_OR_UNKNOWN",
             "checkedAt": datetime.now(UTC).isoformat(),

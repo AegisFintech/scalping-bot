@@ -112,3 +112,18 @@ it("rejects impossible protection counts and oversized fill evidence", () => {
     }),
   ).toThrow("DIAGNOSTIC_EVIDENCE_TOO_LARGE");
 });
+
+it("admits the current immutable release without expanding the historical learning contract", async () => {
+  const { learningWindow } =
+    await import("../../packages/evaluation/src/demo-learning.js");
+  const args = [
+    "0.8.0-model-scalp.1-codex.1",
+    "2026-10-29T00:00:00Z",
+    "2026-11-02T03:45:00Z",
+  ];
+  expect(diagnosticWindow(args).release).toBe(args[0]);
+  expect(() => learningWindow(args)).toThrow("LEARNING_WINDOW_INVALID");
+  expect(() => diagnosticWindow(["unknown", ...args.slice(1)])).toThrow(
+    "LEARNING_WINDOW_INVALID",
+  );
+});

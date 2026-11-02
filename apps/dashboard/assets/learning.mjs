@@ -21,6 +21,23 @@ async function call(path, body) {
   return r.json();
 }
 function render(d) {
+  const p = d.pipeline;
+  $("pipeline-health").textContent = p?.available
+    ? "Fresh observed pipeline state"
+    : "Pipeline unavailable or stale; progress withheld";
+  $("pipeline-generation").textContent = p?.generation
+    ? `Generation: ${p.generation.status} · ${p.generation.reason || ""}`
+    : "Generation status unavailable";
+  $("pipeline-publisher").textContent = p?.publisher
+    ? `Publisher: ${p.publisher.status} · ${p.publisher.reason}`
+    : "Publisher status unavailable";
+  $("pipeline-review").textContent = p?.review
+    ? `Review: ${p.review.status} · ${p.review.reason || ""} · checked ${p.review.checkedAt || "unknown"} · source ${p.review.origin || p.review.baseCommit || "unknown"}`
+    : "Review status unavailable";
+  $("pipeline-age").textContent = p?.lastPublicationActivityAt
+    ? `Last publication activity: ${p.lastPublicationActivityAt} · ${p.publicationAgeSeconds}s ago. Heartbeats do not count as progress.`
+    : "No verified publication activity time";
+
   const t = d.trade;
   $("trade").textContent = t?.budget
     ? `${t.model} · ${t.provider} · USD ${(t.budget.charged / 1e6).toFixed(4)} charged/reserved / ${(t.budget.policy.dailyLimit / 1e6).toFixed(2)} daily limit`
@@ -57,7 +74,7 @@ function render(d) {
           ? "Waiting for budget"
           : waiting
             ? waiting.status
-            : "Research admission enabled";
+            : "Resource admission enabled; see pipeline state";
   $("budget").textContent =
     `${Number(d.charged).toLocaleString()} / ${Number(d.policy.dailyLimit).toLocaleString()} tokens charged or reserved`;
   $("quota").textContent = !quotaFresh

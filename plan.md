@@ -1,3 +1,16 @@
+### ISSUE-489 — Complete research delivery and execution evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/489; dependencies #485/#486.
+- Acceptance: safely retire only authenticated unsent stale publications; preserve
+  unknown and terminal lifecycle; expose generation/review/publisher blockers and
+  actual activity age; current-release cost/flight/ACK audit; source-frozen future
+  read-only collection; immutable-release launcher default. Preserve economic policy.
+- Status: implementation, full2,609-test qualification, four config checks, browser
+  checks and fresh Standards/Spec reviews pass. Reviewed delivery and coordinated
+  operational activation pending. Natural merge (#466) and
+  independent economics (#403) remain future evidence, not implementation claims.
+- Evidence: `docs/completion489-report.md`.
+
 ### ISSUE-486 — Independent API trading and learning control room
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/486; depends #485.
@@ -10,9 +23,9 @@
   isolated worker/producer activation, full qualification, exact-source reviews,
   pushed reviewed delivery and verified research/UI rollout. Do not claim whole completion until matching rollout evidence exists.
 - Status: implementation, both fresh review axes and full qualification pass; matching
-  deployment and operational verification pending. Hosted CI exposed root-only
+  deployment and operational verification completed in PR#487 / issue#486 activation receipt. Hosted CI exposed root-only
   HTTP fixtures; portable fixtures now separately test production ownership enforcement. API model access GET200, no paid
-  model benchmark. Trading remains on existing producer pending reviewed matching activation.
+  model benchmark. Trading API activated with explicit credit/cap subscription fallback; existing core broker services preserved.
 - Evidence: `docs/learning-control-report.md`, `docs/token-usage-report.md`.
 
 ### ISSUE-485 — Token attribution and bounded model history
@@ -30,7 +43,7 @@
   fresh two-axis review, pushed reviewed delivery and isolated adapter activation.
 - Status: red regression reproduces the fifth request still using one growing
   thread. Full qualification and both reviews pass; context/usage fixes verified,
-  reviewed delivery/activation pending.
+  reviewed delivery/activation completed in PR#487 / issue#485 activation receipt.
 - Evidence: `docs/token-usage-report.md`.
 
 ### ISSUE-483 — Relevant research with durable hourly pacing

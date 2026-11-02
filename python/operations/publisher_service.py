@@ -12,6 +12,7 @@ from typing import Any
 
 from python.operations import research_publisher as publisher
 from python.operations.harness_health import PublisherHealth
+from python.operations.publication_retirement import queue_lock
 from python.research.codex_loop import timestamp
 from python.research.learning_archive import atomic_bytes, bounded, immutable
 from python.research.learning_evidence import encoded
@@ -148,7 +149,10 @@ def process(request: Path, root: Path, artifact: Path, now: datetime) -> dict[st
     if request.name != digest + ".json":
         raise ValueError("PUBLICATION_QUEUE_DIGEST_MISMATCH")
     job = root / "jobs" / digest
-    job.mkdir(parents=True, mode=0o700, exist_ok=True)
+    (root / "jobs").mkdir(mode=0o750, exist_ok=True)
+    (root / "jobs").chmod(0o750)
+    job.mkdir(mode=0o750, exist_ok=True)
+    job.chmod(0o750)
     immutable(job / "request.json", json.loads(request.read_bytes()))
     repository = checkout(job, payload, artifact)
     previous = Path.cwd()
@@ -180,6 +184,11 @@ def error_code(error: Exception) -> str:
 
 
 def cycle(root: Path, queue: Path, artifact: Path, now: datetime) -> PublisherHealth:
+    with queue_lock(queue):
+        return cycle_locked(root, queue, artifact, now)
+
+
+def cycle_locked(root: Path, queue: Path, artifact: Path, now: datetime) -> PublisherHealth:
     protected(queue)
     protected(artifact)
     protected(artifact / "policy/research-publisher-signers")

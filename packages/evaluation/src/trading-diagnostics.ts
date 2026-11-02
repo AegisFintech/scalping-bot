@@ -2,7 +2,7 @@ import { Decimal } from "decimal.js";
 import { signedDecimal } from "../../risk-engine/src/decimal.js";
 import {
   learningObservation,
-  learningWindow,
+  reviewWindow,
   type LearningRow,
 } from "./demo-learning.js";
 
@@ -18,7 +18,10 @@ export interface DiagnosticRow extends LearningRow {
 const value = (s: string) => signedDecimal(s, "DIAGNOSTIC_DECIMAL_INVALID");
 const text = (d: Decimal) => d.toDecimalPlaces(10).toFixed();
 export function diagnosticWindow(args: readonly string[]) {
-  const window = learningWindow(args);
+  const window = reviewWindow(
+    args,
+    /^(?:0\.3\.0-fade-limit\.[123]|0\.8\.0-model-scalp\.1-codex\.1)$/,
+  );
   if (Date.parse(window.until) - Date.parse(window.from) > 31 * 86400000)
     throw new Error("DIAGNOSTIC_WINDOW_TOO_LARGE");
   return window;

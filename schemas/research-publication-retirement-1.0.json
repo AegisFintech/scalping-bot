@@ -1,0 +1,78 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "research-publication-retirement-1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "publicationSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Publicationsha256",
+      "type": "string"
+    },
+    "envelopeSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Envelopesha256",
+      "type": "string"
+    },
+    "baseCommit": {
+      "title": "Basecommit",
+      "type": "string"
+    },
+    "observedMain": {
+      "title": "Observedmain",
+      "type": "string"
+    },
+    "retiredAt": {
+      "title": "Retiredat",
+      "type": "string"
+    },
+    "reason": {
+      "enum": ["PUBLICATION_ATTESTATION_STALE", "PUBLICATION_MAIN_DRIFT"],
+      "title": "Reason",
+      "type": "string"
+    },
+    "noDispatchIntent": {
+      "const": true,
+      "title": "Nodispatchintent",
+      "type": "boolean"
+    },
+    "remoteBranchAbsent": {
+      "const": true,
+      "title": "Remotebranchabsent",
+      "type": "boolean"
+    },
+    "remotePrAbsent": {
+      "const": true,
+      "title": "Remoteprabsent",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "version",
+    "publicationSha256",
+    "envelopeSha256",
+    "baseCommit",
+    "observedMain",
+    "retiredAt",
+    "reason",
+    "noDispatchIntent",
+    "remoteBranchAbsent",
+    "remotePrAbsent",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "RetirementReceipt",
+  "type": "object"
+}

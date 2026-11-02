@@ -302,28 +302,35 @@ def commit_identity(payload: SignedPublication) -> None:
     )
 
 
-def expected_commit(payload: SignedPublication, digest: str, *, legacy: bool = False) -> str:
+def expected_commit(
+    payload: SignedPublication,
+    digest: str,
+    *,
+    legacy: bool = False,
+    git_directory: Path | None = None,
+) -> str:
     """Construct Git objects with a separate index; never execute candidate code."""
+    git = ["git"] + (["--git-dir=" + str(git_directory)] if git_directory else [])
     files = payload.files()
     for path in ["README.md", "AGENTS.md"]:
         files[path] = note(
-            command(["git", "show", payload.baseCommit + ":" + path]), digest, legacy=legacy
+            command([*git, "show", payload.baseCommit + ":" + path]), digest, legacy=legacy
         )
     commit_identity(payload)
     with tempfile.TemporaryDirectory() as directory:
         old = os.environ.get("GIT_INDEX_FILE")
         os.environ["GIT_INDEX_FILE"] = str(Path(directory) / "index")
         try:
-            command(["git", "read-tree", payload.baseCommit])
+            command([*git, "read-tree", payload.baseCommit])
             for path, raw in files.items():
-                blob = command(["git", "hash-object", "-w", "--stdin"], data=raw).decode().strip()
+                blob = command([*git, "hash-object", "-w", "--stdin"], data=raw).decode().strip()
                 command(
-                    ["git", "update-index", "--add", "--cacheinfo", "100644," + blob + "," + path]
+                    [*git, "update-index", "--add", "--cacheinfo", "100644," + blob + "," + path]
                 )
-            tree = command(["git", "write-tree"]).decode().strip()
+            tree = command([*git, "write-tree"]).decode().strip()
             return (
                 command(
-                    ["git", "commit-tree", tree, "-p", payload.baseCommit],
+                    [*git, "commit-tree", tree, "-p", payload.baseCommit],
                     data=(payload.message + "\n").encode(),
                 )
                 .decode()
@@ -359,7 +366,9 @@ def confirm_pr(pr: dict[str, Any], expected_head: str, *, created: bool = False)
 
 
 def record_phase(journal: Path, phase: str, facts: dict[str, Any]) -> None:
-    journal.mkdir(parents=True, mode=0o700, exist_ok=True)
+    # The protected parent may inspect phase names, never credential contents.
+    journal.mkdir(parents=True, mode=0o750, exist_ok=True)
+    journal.chmod(0o750)
     path = journal / (phase + ".json")
     value = {"phase": phase, **facts}
     if path.exists():

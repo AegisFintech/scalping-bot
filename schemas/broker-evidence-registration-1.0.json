@@ -1,0 +1,69 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "broker-evidence-registration-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "registeredAt": {
+      "title": "Registeredat",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "economicRelease": {
+      "const": "0.8.0-model-scalp.1-codex.1",
+      "title": "Economicrelease",
+      "type": "string"
+    },
+    "sourceFiles": {
+      "additionalProperties": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Sourcefiles",
+      "type": "object"
+    },
+    "collectionOnly": {
+      "const": true,
+      "title": "Collectiononly",
+      "type": "boolean"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "registeredAt",
+    "start",
+    "until",
+    "economicRelease",
+    "sourceFiles",
+    "collectionOnly",
+    "economicQualification",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "EvidenceRegistration",
+  "type": "object"
+}
