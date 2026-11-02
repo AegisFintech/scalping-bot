@@ -18,6 +18,7 @@ from python.learning.budget import Policy
 from python.research.execution_funnel import ExecutionFunnel
 from python.research.learning_archive import atomic_bytes, bounded, unique
 from python.research.observation_cycle import sha
+from python.research.observation_scope import ObservationScope
 
 
 def meter() -> dict[str, Any]:
@@ -84,6 +85,31 @@ def recorded_funnel(job: Path) -> ExecutionFunnel | None:
         ):
             return None
         return measurement
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def recorded_observation_scope(job: Path) -> ObservationScope | None:
+    """Applicability/outcomes must bind the same verified finding as the funnel."""
+    try:
+        measurement = recorded_funnel(job)
+        if measurement is None:
+            return None
+        diagnostic = json.loads(bounded(job / "diagnostic.json", 8 * 1024 * 1024))
+        value = ObservationScope.model_validate(diagnostic.get("researchBaselineScope"))
+        if (
+            (value.packetSha256, value.sourceId, value.start, value.until)
+            != (
+                measurement.packetSha256,
+                measurement.sourceId,
+                measurement.start,
+                measurement.until,
+            )
+            or value.supportedContexts + value.unsupportedContexts != measurement.contexts
+            or value.windowClosedRows != measurement.windowClosedRows
+        ):
+            return None
+        return value
     except (OSError, ValueError, KeyError, TypeError):
         return None
 
@@ -186,6 +212,7 @@ def status() -> dict[str, Any]:
         ][:5]
     except (OSError, ValueError):
         result["publications"] = []
+    result["executionObservationScope"] = None
     result["executionFunnel"] = None
     result["executionFunnelReadState"] = "UNAVAILABLE"
     paths = list(agenda.glob("*/finding.json"))
@@ -197,6 +224,9 @@ def status() -> dict[str, Any]:
             result["executionFunnelReadState"] = state
             if state != "UNAVAILABLE":
                 result["executionFunnel"] = measured.model_dump()
+                scope = recorded_observation_scope(path.parent)
+                if scope is not None:
+                    result["executionObservationScope"] = scope.model_dump()
         finding = json.loads(bounded(path, 32768))
         result["findingRecordedAt"] = finding.get("recordedAt")
         plan = json.loads(bounded(path.parent / "plan.json", 32768))

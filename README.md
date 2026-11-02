@@ -134,6 +134,10 @@ a candidate. Unknown-clock fills remain visible. Actual activation/evidence is
 recorded on issue #499. Metadata warm-up does not backdate outcome collection.
 The linked report records2,675-test software qualification, not economic validation.
 
+[Version-aware learning evidence](docs/research-observation-scope-report.md) keeps
+unsupported historical replay separate from actual current trading decisions and
+recorded outcomes.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

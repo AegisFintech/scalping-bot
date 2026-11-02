@@ -68,6 +68,8 @@ supersede the current versioned policy or explicit operator instructions.
   requests only; no unknown retry/browser inference, preserve protections and claims.
   Current observation reviews: `docs/current-observation-review-report.md`; verify
   fresh completed windows and findings, not only a running timer. No implicit promotion.
+  Read `docs/research-observation-scope-report.md` before interpreting historical
+  baseline unavailability as a current trading cause.
   Actual activation/veto: `docs/research-pipeline-activation-report.md`. Input domain:
   `docs/research-input-domain-report.md`; preserve rejected reviews and exhausted
   batches. Holding research pacing: `docs/research-pacing-report.md`; #483 replaces

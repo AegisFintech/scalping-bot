@@ -34,9 +34,20 @@ function renderFunnel(d) {
   $("funnel-orders").textContent = f
     ? `Order rows ${f.orderRecords} · mapped broker acceptance ${f.brokerAcceptedOrderRecords} · any recorded filled volume ${f.filledOrderRecords} · partial ${f.partialOrderRecords} · window closes ${f.windowClosedRows}`
     : "";
-  $("funnel-baseline").textContent = f
-    ? `Research baseline: BUY ${f.researchBaselineDecisions.BUY ?? 0} · SELL ${f.researchBaselineDecisions.SELL ?? 0} · WAIT ${f.researchBaselineDecisions.WAIT ?? 0}. Unexecuted hypotheses; no fill/profit evidence.`
-    : "";
+  const scope =
+    f && d.executionObservationScope?.packetSha256 === f.packetSha256
+      ? d.executionObservationScope
+      : null;
+  $("funnel-baseline").textContent = !f
+    ? ""
+    : scope
+      ? `Historical baseline (${scope.legacyBaselineRelease}): ${scope.supportedContexts} supported / ${scope.unsupportedContexts} unavailable contexts. BUY ${scope.decisions.BUY ?? 0} · SELL ${scope.decisions.SELL ?? 0} · WAIT ${scope.decisions.WAIT ?? 0}. Unexecuted hypotheses; unsupported releases are not trading blockers or provider WAITs.`
+      : "Historical baseline applicability unavailable; do not infer provider WAITs or trading blockers.";
+  $("funnel-outcomes").textContent = !f
+    ? ""
+    : scope
+      ? `Recorded window closes: ${scope.windowClosedRows}. ${scope.windowOutcomes.map((v) => `${v.originRelease} ${v.currency}: net ${v.realizedNet}, signed fees ${v.signedFees}, ${v.positive} positive / ${v.negative} negative / ${v.flat} flat`).join(" · ")} Net already includes fees; close-time rows, not a cohort return.`
+      : "Recorded window outcome totals unavailable.";
   $("funnel-latency").textContent = f
     ? `Availability → acceptance: ${f.availabilityToAcceptance.known} known / ${f.availabilityToAcceptance.unknown} unknown · p50 ${f.availabilityToAcceptance.p50Micros ?? "unavailable"} µs. Local request → availability: ${f.requestToAvailability.known} known / ${f.requestToAvailability.unknown} unknown.`
     : "";

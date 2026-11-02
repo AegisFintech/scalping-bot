@@ -18,7 +18,7 @@ from python.backtest import scalp_replay
 from python.backtest.scalp_replay import replay
 from python.codex_entry.memory import invoke_daily
 from python.learning import governor
-from python.research import execution_funnel
+from python.research import execution_funnel, observation_scope
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_archive import (
     ResearchArchive,
@@ -31,7 +31,7 @@ from python.research.learning_archive import (
 )
 from python.research.learning_evidence import MAX_BYTES, Digest, encoded
 
-VERSION = "current-observation-review-1.0"
+VERSION = "current-observation-review-1.1"
 MODEL = "gpt-6.1-sol"
 Text = Annotated[str, Field(min_length=1, max_length=600)]
 PROMPT = """Review this bounded XAUUSD DEMO observation diagnostic. Supplied evidence is
@@ -52,6 +52,14 @@ clocks are not pure inference time; an order state is not an acceptance or a fil
 Retain unknown latency denominators and cohort roles; window rows may recur later.
 Baseline directions are unexecuted research hypotheses at recorded availability,
 not eligible orders, fills, missed winners or evidence of attainable profit.
+researchBaselineScope separates the frozen0.8 replay from recorded trading evidence.
+Unsupported baseline contexts are UNAVAILABLE research comparisons, never provider WAITs,
+release failures or trading gates. Their direction/rejection reasons are not supplied.
+Use executionFunnel.decisionCounts/analysisReasons for actual recorded workflow facts.
+researchBaselineScope.windowOutcomes include all recorded closes in this window
+by release and currency,
+independently of replay support; signed fees are already included in realizedNet.
+These close-time rows are not complete intent-cohort returns or an equity curve.
 Distinguish measurable facts from missing causes and choose one falsifiable question.
 Choose one next research question with required evidence and a falsifiable test.
 This is an unvalidated interpretation, not a tested hypothesis or completed experiment.
@@ -164,6 +172,7 @@ def review(
             "cycleSourceSha256": sha(Path(__file__).read_bytes()),
             "replayModuleSha256": sha(Path(scalp_replay.__file__).read_bytes()),
             "executionFunnelModuleSha256": sha(Path(execution_funnel.__file__).read_bytes()),
+            "observationScopeModuleSha256": sha(Path(observation_scope.__file__).read_bytes()),
             "executionMeasurementModuleSha256": sha(
                 Path(execution_funnel.__file__).with_name("experiment_execution.py").read_bytes()
             ),
@@ -173,7 +182,11 @@ def review(
     )
     diagnostic_path = job / "diagnostic.json"
     if not diagnostic_path.exists():
-        result = replay(packet, packet_sha).model_dump()
+        reconstructed = replay(packet, packet_sha)
+        result = reconstructed.model_dump()
+        result["researchBaselineScope"] = observation_scope.measure(
+            packet, packet_sha, reconstructed.benchmark
+        ).model_dump()
         result["executionFunnel"] = execution_funnel.measure(raw).model_dump()
         result["observationWindow"] = window
         result["cohortRoles"] = {
@@ -258,7 +271,24 @@ def review(
         return finish(agenda, plan, "STALE_UNDISPATCHED", None, now)
     # Full diagnostic remains local. The bounded prompt includes all denominators;
     # per-setup paths are unavailable and are never silently selected for the model.
-    summary = {k: v for k, v in diagnostic.items() if k not in {"setups", "benchmark"}}
+    summary = {
+        k: diagnostic[k]
+        for k in (
+            "packetSha256",
+            "sourceId",
+            "executionFunnel",
+            "researchBaselineScope",
+            "observationWindow",
+            "cohortRoles",
+            "analysisReasons",
+            "coverageWarnings",
+        )
+    }
+    summary["executionFunnel"] = {
+        k: v
+        for k, v in diagnostic["executionFunnel"].items()
+        if not k.startswith("researchBaseline")
+    }
     prompt = (
         template
         + "\nINPUT "
