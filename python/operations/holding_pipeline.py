@@ -182,6 +182,7 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                 if selected["status"] != "ELIGIBLE":
                     result = {
                         "status": selected["status"],
+                        "reason": selected.get("reason", selected["status"]),
                         "invalidArchives": selected.get("invalidArchives"),
                         "checkedAt": datetime.now(UTC).isoformat(),
                         "brokerAuthority": False,
@@ -212,6 +213,7 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                     result = {
                         **prior,
                         **wait,
+                        "reason": wait.get("reason", wait["status"]),
                         "phase": "RESEARCH_WAIT",
                         "checkedAt": datetime.now(UTC).isoformat(),
                         "brokerAuthority": False,

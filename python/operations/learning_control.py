@@ -15,7 +15,9 @@ from typing import Any
 from python.codex_entry.memory import Rpc, server_command
 from python.learning import governor
 from python.learning.budget import Policy
+from python.research.execution_funnel import ExecutionFunnel
 from python.research.learning_archive import atomic_bytes, bounded, unique
+from python.research.observation_cycle import sha
 
 
 def meter() -> dict[str, Any]:
@@ -62,6 +64,28 @@ def meter() -> dict[str, Any]:
         }
     finally:
         rpc.close()
+
+
+def recorded_funnel(job: Path) -> ExecutionFunnel | None:
+    """Expose only the validated measurement bound to this exact recorded finding."""
+    try:
+        raw = bounded(job / "diagnostic.json", 8 * 1024 * 1024)
+        finding = json.loads(bounded(job / "finding.json", 32768))
+        plan = json.loads(bounded(job / "plan.json", 32768))
+        value = json.loads(raw).get("executionFunnel")
+        if value is None:
+            return None
+        measurement = ExecutionFunnel.model_validate(value)
+        if (
+            sha(raw) != finding["interpretation"]["diagnosticSha256"]
+            or sha(raw) != plan["diagnosticSha256"]
+            or measurement.packetSha256 != plan["packetSha256"]
+            or (measurement.start, measurement.until) != (plan["start"], plan["until"])
+        ):
+            return None
+        return measurement
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
 
 
 def status() -> dict[str, Any]:
@@ -162,9 +186,17 @@ def status() -> dict[str, Any]:
         ][:5]
     except (OSError, ValueError):
         result["publications"] = []
+    result["executionFunnel"] = None
+    result["executionFunnelReadState"] = "UNAVAILABLE"
     paths = list(agenda.glob("*/finding.json"))
     if paths:
         path = max(paths, key=lambda p: p.stat().st_mtime_ns)
+        measured = recorded_funnel(path.parent)
+        if measured is not None:
+            state = measured.observation_state(datetime.now(UTC))
+            result["executionFunnelReadState"] = state
+            if state != "UNAVAILABLE":
+                result["executionFunnel"] = measured.model_dump()
         finding = json.loads(bounded(path, 32768))
         result["findingRecordedAt"] = finding.get("recordedAt")
         plan = json.loads(bounded(path.parent / "plan.json", 32768))

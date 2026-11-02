@@ -161,6 +161,9 @@ use the private Access-protected origin, retain write-origin checks and preserve
 original registrations when separately freezing repaired capture source. Actual
 activation is recorded in `docs/evidence/completion491-activation.json`.
 
+For observation execution funnels, source/finding bindings and current wait reasons,
+read `docs/execution-research-report.md`; preserve unknowns and all frozen methods.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

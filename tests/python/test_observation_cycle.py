@@ -246,3 +246,15 @@ def test_slot_cooldown_does_not_reserve_resource_budget(tmp_path, monkeypatch):
         run(tmp_path, value, invoke=lambda *_: pytest.fail("provider"))["status"]
         == "REVIEW_COOLDOWN"
     )
+
+
+def test_zero_closed_trade_review_gets_measured_execution_funnel(tmp_path):
+    def inspect(prompt, directory):
+        diagnostic = json.loads(prompt.split("\nINPUT ", 1)[1])["diagnostic"]
+        funnel = diagnostic["executionFunnel"]
+        assert funnel["decisionCounts"] == {"WAIT": 1}
+        assert funnel["windowClosedRows"] == 0 and funnel["orderRecords"] == 0
+        assert funnel["counterfactualNet"] is None and not funnel["economicQualification"]
+        return answer(prompt, directory)
+
+    assert run(tmp_path, packet(), invoke=inspect)["status"] == "CLOSED"

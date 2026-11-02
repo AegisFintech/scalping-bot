@@ -1,0 +1,78 @@
+{
+  "classification": "READ_ONLY_OPERATOR_PROBE_NOT_SCHEDULED_REVIEW",
+  "capturedAt": "2026-11-02T06:23:22.520837+00:00",
+  "measurement": {
+    "schemaVersion": "execution-funnel-1.0",
+    "packetSha256": "f9d980dda1397c08b1221791a96f7616a82c1101150c47b2002ec872da5d3fcc",
+    "sourceId": "scalper-epoch314",
+    "start": "2026-11-02T05:30:00+00:00",
+    "until": "2026-11-02T06:00:00+00:00",
+    "journalSnapshotAt": "2026-11-02T06:02:03.819059+00:00",
+    "contexts": 25,
+    "analyses": 50,
+    "setups": 0,
+    "orderRecords": 0,
+    "brokerAcceptedOrderRecords": 0,
+    "filledOrderRecords": 0,
+    "partialOrderRecords": 0,
+    "recordedFillRows": 0,
+    "windowClosedRows": 0,
+    "decisionCounts": {
+      "WAIT": 25
+    },
+    "researchBaselineDefinition": "completed-m15-m5-trend-m1-five-bars-one-tick-1.0",
+    "researchBaselineDecisions": {
+      "BUY": 16,
+      "WAIT": 9
+    },
+    "researchBaselineReasons": {
+      "SAME_RECORDED_AVAILABILITY_NOT_AN_ALTERNATE_REQUEST_STREAM": 16,
+      "CONTEXT_UNAVAILABLE_OR_UNORDERED": 2,
+      "BASELINE_TREND_DISAGREES": 7
+    },
+    "researchBaselineCounterfactualFill": null,
+    "analysisStates": {
+      "DEFERRED": 50
+    },
+    "analysisReasons": {
+      "SCENARIO_WAIT_REFRESH_STARTED": 25,
+      "SCENARIO_CODEX_WAIT": 25
+    },
+    "setupStates": {},
+    "orderStates": {},
+    "roleCounts": {
+      "contexts": {
+        "OBSERVED_WINDOW": 25
+      },
+      "analyses": {
+        "OBSERVED_WINDOW": 50
+      },
+      "setups": {},
+      "flight": {}
+    },
+    "requestToAvailability": {
+      "known": 23,
+      "unknown": 2,
+      "p50Micros": "5012646",
+      "p95Micros": "7794367",
+      "maximumMicros": "7854392"
+    },
+    "availabilityToAcceptance": {
+      "known": 0,
+      "unknown": 0,
+      "p50Micros": null,
+      "p95Micros": null,
+      "maximumMicros": null
+    },
+    "latencyBasis": "LOCAL_CONTEXT_CLOCKS_AND_MAPPED_CAUSAL_BROKER_ACCEPTANCE",
+    "quantiles": "NEAREST_RANK",
+    "coverage": "ALL_PACKET_ROWS_WITH_ROLES_NOT_NEW_TRADES_OR_MARKET_OPPORTUNITIES",
+    "counterfactualNet": null,
+    "economicQualification": false,
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "providerRequestsForced": 0,
+  "brokerCommands": 0,
+  "sourceDeployedAtProbe": false
+}

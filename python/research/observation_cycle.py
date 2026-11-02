@@ -18,6 +18,7 @@ from python.backtest import scalp_replay
 from python.backtest.scalp_replay import replay
 from python.codex_entry.memory import invoke_daily
 from python.learning import governor
+from python.research import execution_funnel
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_archive import (
     ResearchArchive,
@@ -45,6 +46,13 @@ and linked records can recur in later windows: never sum packet totals as new tr
 Separate recorded closed-row statistics from complete-cohort performance. Historical
 memory and prior questions are not fresh facts or model training. No profitability
 claim, risk change, forced trades, polarity flip or economic activation is authorized.
+When the execution funnel is supplied, diagnose WAIT, validation, native acceptance,
+expiry and recorded fills even with no closed trades. Local request/availability
+clocks are not pure inference time; an order state is not an acceptance or a fill.
+Retain unknown latency denominators and cohort roles; window rows may recur later.
+Baseline directions are unexecuted research hypotheses at recorded availability,
+not eligible orders, fills, missed winners or evidence of attainable profit.
+Distinguish measurable facts from missing causes and choose one falsifiable question.
 Choose one next research question with required evidence and a falsifiable test.
 This is an unvalidated interpretation, not a tested hypothesis or completed experiment.
 """
@@ -155,6 +163,10 @@ def review(
             "packetSha256": packet_sha,
             "cycleSourceSha256": sha(Path(__file__).read_bytes()),
             "replayModuleSha256": sha(Path(scalp_replay.__file__).read_bytes()),
+            "executionFunnelModuleSha256": sha(Path(execution_funnel.__file__).read_bytes()),
+            "executionMeasurementModuleSha256": sha(
+                Path(execution_funnel.__file__).with_name("experiment_execution.py").read_bytes()
+            ),
             "promptSha256": sha(template.encode()),
             "scope": "DESCRIPTIVE_REVIEW_NOT_PROSPECTIVE_EXPERIMENT",
         },
@@ -162,6 +174,7 @@ def review(
     diagnostic_path = job / "diagnostic.json"
     if not diagnostic_path.exists():
         result = replay(packet, packet_sha).model_dump()
+        result["executionFunnel"] = execution_funnel.measure(raw).model_dump()
         result["observationWindow"] = window
         result["cohortRoles"] = {
             family: dict(Counter(row.cohortRole for row in getattr(packet, family)))
