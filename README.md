@@ -121,6 +121,7 @@ metadata/acknowledgement collection has no trading or promotion authority.
 
 The [private learning console](docs/completion491-report.md) relies on existing
 Cloudflare Access, with no second admin-key prompt; control write checks remain.
+[Verified deployment](docs/evidence/completion491-activation.json).
 
 <!-- research-publication -->
 

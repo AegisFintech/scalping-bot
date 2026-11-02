@@ -158,7 +158,8 @@ receipts and explicit unqualified/missing evidence. Phase contents stay private.
 
 For `/learning` access or metadata receipt hashing, read `docs/completion491-report.md`;
 use the private Access-protected origin, retain write-origin checks and preserve
-original registrations when separately freezing repaired capture source.
+original registrations when separately freezing repaired capture source. Actual
+activation is recorded in `docs/evidence/completion491-activation.json`.
 
 <!-- research-publication -->
 

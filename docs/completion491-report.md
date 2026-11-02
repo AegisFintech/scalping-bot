@@ -67,3 +67,26 @@ All four sample/deployed config checks pass. An earlier full run reached the
 worktree were removed, with all reports/logs retained. The final full rerun passes.
 Exact-source push/CI/review and deployed private-origin/real-receipt readbacks
 complete delivery; future qualification is separate from software completion. No trading economic/risk policy changes.
+
+## Verified activation
+
+PR#492 merged and code sourcec8029f87321c18849d46cce67c9b05056ec1381c is
+running, with qualified fingerprintde5b20dc94d37dbe87c4ac6a2cf93e19e2d394391b6d000bbd801449e65f86a6.
+[Sanitized runtime receipt](evidence/completion491-activation.json),
+[operational issue receipt](https://github.com/AegisFintech/scalping-bot/issues/491#issuecomment-6569620117).
+
+Live browser opens without a local admin key, emits no JS errors, and rejects a
+cross-origin control request403. Origin remains loopback with no nginx8501 route;
+Cloudflare policy remains operator-managed. Main desk assets are byte-identical.
+The full immutable release verifies after execution. All four core PIDs stayed
+unchanged; recorder/collector/publisher/parent timers are active. Fresh actual
+metadata validates, the old partial retirement receipt is preserved and its
+private/same-mount envelope copies match;4,147 prior files remain unchanged.
+
+The original registration is unchanged and repaired source was separately frozen
+at05:10:20Z November2 before the November3–10 UTC batch. Hour04:00–05:00 retained
+zero ACK rows, which does not prove no fills or a flat account. A future genuine
+ACK/metadata association remains #407. Publisher MERGED is historical PR#461,
+not the natural holding cycle proof in #466. Generation waits on duplicate data;
+its retained reason still describes the completed retirement. No paid generation
+was forced. Independent economic qualification remains #403.
