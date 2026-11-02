@@ -70,7 +70,8 @@ supersede the current versioned policy or explicit operator instructions.
   fresh completed windows and findings, not only a running timer. No implicit promotion.
   Read `docs/research-observation-scope-report.md` before interpreting historical
   baseline unavailability as a current trading cause; keep actual outcomes
-  independent of legacy replay eligibility.
+  independent of legacy replay eligibility. For prospective context journaling,
+  read `docs/wait-context-tracing-plan.md`; do not infer old links from timing.
   Actual activation/veto: `docs/research-pipeline-activation-report.md`. Input domain:
   `docs/research-input-domain-report.md`; preserve rejected reviews and exhausted
   batches. Holding research pacing: `docs/research-pacing-report.md`; #483 replaces
