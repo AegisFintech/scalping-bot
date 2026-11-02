@@ -15,6 +15,7 @@ from typing import Any
 from python.operations import research_delivery as delivery
 from python.operations import research_publisher as github
 from python.operations.publication_retirement import retire
+from python.research import generation_recovery
 from python.research import holding_authority as authority
 from python.research import holding_task as task
 from python.research import research_pacing as pacing
@@ -126,8 +127,13 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
         state_path = root / "state.json"
         prior = read(state_path) if state_path.exists() else {}
         if prior.get("publicationSha256") and prior.get("job"):
+            retirement_job = registry.directory(prior["job"])
+            if prior.get("deliveryCommit"):
+                if not re.fullmatch(r"[a-f0-9]{40}", prior["deliveryCommit"]):
+                    raise ValueError("HOLDING_DELIVERY_COMMIT_INVALID")
+                retirement_job = retirement_job / ("delivery-" + prior["deliveryCommit"])
             retired = retire(
-                registry.directory(prior["job"]),
+                retirement_job,
                 Path(config["queue"]),
                 Path("/var/lib/scalper-publisher"),
                 Path(__file__).resolve().parents[2] / "policy/research-publisher-signers",
@@ -164,7 +170,12 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
             result = {**prior, "reason": "HOLDING_AWAITING_PUBLICATION"}
         else:
             active = prior.get("job")
-            if (
+            resume_unscored = bool(
+                active
+                and prior.get("status") in {"SOURCE_DRIFT", "WAITING_RESEARCH_DUPLICATE"}
+                and generation_recovery.resumable(registry.directory(active))
+            )
+            if not resume_unscored and (
                 not active
                 or prior.get("status")
                 in {
@@ -246,6 +257,8 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                         "checkedAt": datetime.now(UTC).isoformat(),
                     },
                 )
+            if not isinstance(active, str):
+                raise ValueError("HOLDING_ACTIVE_JOB_MISSING")
             job = registry.directory(active)
             request = Generation.model_validate(read(job / "request.json", MAX_TRANSFER))
             generation = remote(job, "generation", request.model_dump())
@@ -257,7 +270,9 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                 "baseCommit": request.baseCommit,
             }
             if generation["status"] == "GENERATED_UNVERIFIED":
-                if request.baseCommit != trust.expected_main:
+                if request.baseCommit != trust.expected_main and not generation_recovery.resumable(
+                    job
+                ):
                     result["status"] = "SOURCE_DRIFT"
                 else:
                     unpack(request.experiment, job / "experiment")
@@ -297,6 +312,17 @@ def cycle(root: Path, config: dict[str, Any]) -> dict[str, Any]:
                         generated["claim.json"]
                     )["bindingSha256"] != sha(encoded(binding)):
                         raise ValueError("HOLDING_GENERATED_BINDING")
+                    if request.baseCommit != trust.expected_main:
+                        if not pacing.relevant(
+                            read(job / "experiment" / "input.json", 8 * 1024 * 1024), facts["rows"]
+                        ):
+                            raise ValueError("HOLDING_REBASE_EVIDENCE_STALE")
+                        job, draft = generation_recovery.prepare_rebase(
+                            job, draft, facts, trust, generated
+                        )
+                        result.update(
+                            baseCommit=trust.expected_main, deliveryCommit=trust.expected_main
+                        )
                     verified = authority.prepare(
                         draft, facts, trust, job / "prepared", Path(config["formatter"])
                     )

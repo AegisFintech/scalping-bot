@@ -1,0 +1,214 @@
+{
+  "$defs": {
+    "Latency": {
+      "additionalProperties": false,
+      "properties": {
+        "known": {
+          "minimum": 0,
+          "title": "Known",
+          "type": "integer"
+        },
+        "unknown": {
+          "minimum": 0,
+          "title": "Unknown",
+          "type": "integer"
+        },
+        "p50Micros": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P50Micros"
+        },
+        "p95Micros": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P95Micros"
+        },
+        "maximumMicros": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maximummicros"
+        }
+      },
+      "required": [
+        "known",
+        "unknown",
+        "p50Micros",
+        "p95Micros",
+        "maximumMicros"
+      ],
+      "title": "Latency",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "execution-research-agenda-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "providerStates": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Providerstates",
+      "type": "object"
+    },
+    "providerFailures": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Providerfailures",
+      "type": "object"
+    },
+    "completedFailures": {
+      "minimum": 0,
+      "title": "Completedfailures",
+      "type": "integer"
+    },
+    "incompleteContexts": {
+      "minimum": 0,
+      "title": "Incompletecontexts",
+      "type": "integer"
+    },
+    "waitChecks": {
+      "minimum": 0,
+      "title": "Waitchecks",
+      "type": "integer"
+    },
+    "exactlyLinkedWaitChecks": {
+      "minimum": 0,
+      "title": "Exactlylinkedwaitchecks",
+      "type": "integer"
+    },
+    "unavailableWaitLinks": {
+      "minimum": 0,
+      "title": "Unavailablewaitlinks",
+      "type": "integer"
+    },
+    "captureToRequest": {
+      "$ref": "#/$defs/Latency"
+    },
+    "entryAvailabilityRemaining": {
+      "$ref": "#/$defs/Latency"
+    },
+    "stage": {
+      "enum": [
+        "WAIT_EVIDENCE",
+        "MEASURE_ENTRY_PATHS",
+        "REVIEW_EXECUTION",
+        "REPAIR_OBSERVABILITY"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "questionId": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Questionid",
+      "type": "string"
+    },
+    "question": {
+      "title": "Question",
+      "type": "string"
+    },
+    "requiredEvidence": {
+      "title": "Requiredevidence",
+      "type": "string"
+    },
+    "falsification": {
+      "title": "Falsification",
+      "type": "string"
+    },
+    "nextAction": {
+      "title": "Nextaction",
+      "type": "string"
+    },
+    "engineeringPublication": {
+      "const": "EXISTING_INDEPENDENT_REVIEW_PIPELINE_ONLY",
+      "title": "Engineeringpublication",
+      "type": "string"
+    },
+    "economicActivation": {
+      "const": "SEPARATE_VERSIONED_REVIEW_REQUIRED",
+      "title": "Economicactivation",
+      "type": "string"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packetSha256",
+    "start",
+    "until",
+    "providerStates",
+    "providerFailures",
+    "completedFailures",
+    "incompleteContexts",
+    "waitChecks",
+    "exactlyLinkedWaitChecks",
+    "unavailableWaitLinks",
+    "captureToRequest",
+    "entryAvailabilityRemaining",
+    "stage",
+    "questionId",
+    "question",
+    "requiredEvidence",
+    "falsification",
+    "nextAction",
+    "engineeringPublication",
+    "economicActivation"
+  ],
+  "title": "HarnessAgenda",
+  "type": "object"
+}

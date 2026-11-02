@@ -107,6 +107,13 @@ export interface StoredContext {
   reason: string | null;
 }
 export interface ContextStore {
+  /** Exact context consulted by a local check; never inferred from nearby clocks. */
+  consultation?(input: {
+    analysisId: string;
+    contextId: string;
+    reason: string;
+    observedAt: string;
+  }): Promise<void>;
   retireEntries?(
     id: string,
     evidence: EntryRetirementEvidence,
@@ -142,8 +149,47 @@ export class PostgresContextStore implements ContextStore {
       accountId: string;
       symbolId: string;
       mode: string;
+      strategyVersionId?: string;
     },
   ) {}
+  async consultation(input: {
+    analysisId: string;
+    contextId: string;
+    reason: string;
+    observedAt: string;
+  }): Promise<void> {
+    const result = await this.pool.query(
+      `INSERT INTO analysis_context_consultations
+       (analysis_id,context_id,account_id,symbol_id,mode,reason,observed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (analysis_id) DO NOTHING RETURNING analysis_id`,
+      [
+        input.analysisId,
+        input.contextId,
+        this.scope.accountId,
+        this.scope.symbolId,
+        this.scope.mode,
+        input.reason,
+        input.observedAt,
+      ],
+    );
+    if (result.rowCount === 1) return;
+    const prior = await this.pool.query(
+      `SELECT 1 FROM analysis_context_consultations WHERE analysis_id=$1
+       AND context_id=$2 AND account_id=$3 AND symbol_id=$4 AND mode=$5
+       AND reason=$6 AND observed_at=$7`,
+      [
+        input.analysisId,
+        input.contextId,
+        this.scope.accountId,
+        this.scope.symbolId,
+        this.scope.mode,
+        input.reason,
+        input.observedAt,
+      ],
+    );
+    if (prior.rowCount !== 1) throw new Error("SCENARIO_CONSULTATION_CONFLICT");
+  }
   retireEntries(
     id: string,
     evidence: EntryRetirementEvidence,
@@ -176,8 +222,16 @@ export class PostgresContextStore implements ContextStore {
          AND NOT EXISTS(SELECT 1 FROM positions p WHERE p.order_group_id=g.id AND p.state<>'CLOSED')
          AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))) AS closed_at,
       (SELECT max(g.updated_at) FROM order_groups g WHERE g.context_plan_id=c.id AND ${zeroFillTerminalProof}) AS zero_fill_terminal_at
-      FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3 ORDER BY requested_at DESC LIMIT 1`,
-      [this.scope.accountId, this.scope.symbolId, this.scope.mode],
+      FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3
+      AND ($4::uuid IS NULL OR EXISTS(SELECT 1 FROM analysis_runs source
+        WHERE source.id=c.source_analysis_id AND source.strategy_version_id=$4))
+      ORDER BY requested_at DESC LIMIT 1`,
+      [
+        this.scope.accountId,
+        this.scope.symbolId,
+        this.scope.mode,
+        this.scope.strategyVersionId ?? null,
+      ],
     );
     const r = result.rows[0] as
       | {
@@ -645,6 +699,12 @@ export class ReusableScenarioModel implements ModelProvider {
         now < waitDue
       ) {
         this.nextEvaluationAt = Math.max(now + 5_000, waitDue);
+        await this.store.consultation?.({
+          analysisId: String(input.payload.analysis_id),
+          contextId: existing.id,
+          reason: "SCENARIO_CODEX_WAIT",
+          observedAt: new Date(now).toISOString(),
+        });
         return "SCENARIO_CODEX_WAIT";
       }
     }

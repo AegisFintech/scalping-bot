@@ -1,3 +1,22 @@
+### ISSUE-506 — Complete execution-aware scalping research harness
+
+- Parent: https://github.com/AegisFintech/scalping-bot/issues/506.
+- Children: exact lineage #504; registered breakout hypotheses #507; evidence-led
+  agenda/autonomous recovery #508; independent execution/protection #509.
+- Acceptance: exact scoped durable prospective WAIT links and complete latency/
+  failure attribution; three causal cost-aware hypotheses with frozen future
+  collection; normal review and /learning agenda; resume only completed never-scored
+  standalone code across main-only drift with new scoring/review, no paid replay;
+  actual inference/maintenance regression; full tests/review/push/CI/merge and
+  ONE-demo/read-only research activation. Natural #466 and economics #403 stay open
+  until actual evidence; source change preserves #499 original incomplete segment.
+- Dependencies: unchanged0.9 economic policy, additive0040, source-version matched
+  executor/provider, immutable study registrations and separately controlled review.
+- Status: full2,711-test qualification, four configuration checks and both fresh
+  independent review axes pass. Reviewed remote delivery/activation and actual
+  new-source receipts remain to verify; authoritative updates are on issue506.
+- Evidence: `docs/execution-aware-harness-report.md`.
+
 ### ISSUE-504 — Prospective WAIT/context lineage
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/504; parent #402/#289.

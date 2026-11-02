@@ -18,7 +18,7 @@ from python.backtest import scalp_replay
 from python.backtest.scalp_replay import replay
 from python.codex_entry.memory import invoke_daily
 from python.learning import governor
-from python.research import execution_funnel, observation_scope
+from python.research import breakout_hypotheses, execution_funnel, harness_agenda, observation_scope
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_archive import (
     ResearchArchive,
@@ -31,7 +31,7 @@ from python.research.learning_archive import (
 )
 from python.research.learning_evidence import MAX_BYTES, Digest, encoded
 
-VERSION = "current-observation-review-1.1"
+VERSION = "current-observation-review-1.2"
 MODEL = "gpt-6.1-sol"
 Text = Annotated[str, Field(min_length=1, max_length=600)]
 PROMPT = """Review this bounded XAUUSD DEMO observation diagnostic. Supplied evidence is
@@ -61,6 +61,13 @@ by release and currency,
 independently of replay support; signed fees are already included in realizedNet.
 These close-time rows are not complete intent-cohort returns or an equity curve.
 Distinguish measurable facts from missing causes and choose one falsifiable question.
+executionResearch provides a deterministic agenda, context state/failure counts and
+three fixed completed-bar breakout diagnostics. A completed FAILED context with UNKNOWN
+model decision is not proof of an unfinished request or unknown provider dispatch.
+Follow the evidence-led next action and acknowledge missing exact context links.
+Candle thresholds are not entries/fills, and subsequent bar excursions are not profit.
+These diagnostics use already observed data; only a separately frozen future
+registration is prospective. Do not claim a natural research-to-code merge.
 Choose one next research question with required evidence and a falsifiable test.
 This is an unvalidated interpretation, not a tested hypothesis or completed experiment.
 """
@@ -173,6 +180,8 @@ def review(
             "replayModuleSha256": sha(Path(scalp_replay.__file__).read_bytes()),
             "executionFunnelModuleSha256": sha(Path(execution_funnel.__file__).read_bytes()),
             "observationScopeModuleSha256": sha(Path(observation_scope.__file__).read_bytes()),
+            "breakoutModuleSha256": sha(Path(breakout_hypotheses.__file__).read_bytes()),
+            "agendaModuleSha256": sha(Path(harness_agenda.__file__).read_bytes()),
             "executionMeasurementModuleSha256": sha(
                 Path(execution_funnel.__file__).with_name("experiment_execution.py").read_bytes()
             ),
@@ -187,7 +196,14 @@ def review(
         result["researchBaselineScope"] = observation_scope.measure(
             packet, packet_sha, reconstructed.benchmark
         ).model_dump()
-        result["executionFunnel"] = execution_funnel.measure(raw).model_dump()
+        funnel = execution_funnel.measure(raw)
+        result["executionFunnel"] = funnel.model_dump()
+        breakout = breakout_hypotheses.measure(packet, packet_sha)
+        agenda_value = harness_agenda.measure(packet, funnel, breakout)
+        result["executionResearch"] = {
+            "agenda": agenda_value.model_dump(),
+            "breakout": breakout.model_dump(),
+        }
         result["observationWindow"] = window
         result["cohortRoles"] = {
             family: dict(Counter(row.cohortRole for row in getattr(packet, family)))
@@ -289,6 +305,12 @@ def review(
         for k, v in diagnostic["executionFunnel"].items()
         if not k.startswith("researchBaseline")
     }
+    if "executionResearch" in diagnostic:
+        research = diagnostic["executionResearch"]
+        summary["executionResearch"] = harness_agenda.model_summary(
+            harness_agenda.HarnessAgenda.model_validate(research["agenda"]),
+            breakout_hypotheses.BreakoutMeasurement.model_validate(research["breakout"]),
+        )
     prompt = (
         template
         + "\nINPUT "

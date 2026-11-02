@@ -8,6 +8,7 @@ import { z } from "zod";
 import {
   POLICY_VERSION,
   CODEX_STRATEGY_VERSION,
+  PREVIOUS_COST_BALANCED_VERSION,
   HISTORICAL_CODEX_FADE_VERSION,
 } from "../packages/config/src/policy.js";
 
@@ -146,6 +147,7 @@ export function parseObservationArguments(args: string[]): {
   if (
     (release !== POLICY_VERSION &&
       release !== CODEX_STRATEGY_VERSION &&
+      release !== PREVIOUS_COST_BALANCED_VERSION &&
       release !== HISTORICAL_CODEX_FADE_VERSION &&
       release !== "0.3.0-fade-limit.3" &&
       !/^0\.[0-9]+\.[0-9]+-market-stop\.[0-9]+$/.test(release)) ||

@@ -197,20 +197,22 @@ describe("unattended observer release selection", () => {
   });
 });
 
-it("observes the exact Codex breakout identity and rejects a different release", () => {
-  const current = "0.9.0-cost-balanced.1-codex.1";
-  expect(
-    parseObservationArguments([
-      "--release",
-      current,
-      "--hours",
-      "24",
-      "--output",
-      "/tmp/observer-fixture.json",
-    ]).release,
-  ).toBe(current);
-  expect(
-    observation({ ...status, strategyVersion: current }, current).available,
-  ).toBe(true);
-  expect(observation(status, current).available).toBe(false);
-});
+it.each(["0.9.0-cost-balanced.1-codex.1", "0.9.0-cost-balanced.1-codex.2"])(
+  "observes the exact Codex identity %s and rejects a different release",
+  (current) => {
+    expect(
+      parseObservationArguments([
+        "--release",
+        current,
+        "--hours",
+        "24",
+        "--output",
+        "/tmp/observer-fixture.json",
+      ]).release,
+    ).toBe(current);
+    expect(
+      observation({ ...status, strategyVersion: current }, current).available,
+    ).toBe(true);
+    expect(observation(status, current).available).toBe(false);
+  },
+);

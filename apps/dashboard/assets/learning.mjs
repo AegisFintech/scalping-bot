@@ -25,6 +25,31 @@ function renderFunnel(d) {
   const f = ["CURRENT", "STALE"].includes(funnelState)
     ? d.executionFunnel
     : null;
+  const research =
+    f &&
+    d.executionResearch?.agenda?.packetSha256 === f.packetSha256 &&
+    d.executionResearch?.breakout?.packetSha256 === f.packetSha256
+      ? d.executionResearch
+      : null;
+  $("research-stage").textContent = research
+    ? `RECORDED ${funnelState} · ${research.agenda.stage}`
+    : "Research agenda unavailable";
+  $("research-facts").textContent = research
+    ? `WAIT checks ${research.agenda.waitChecks}: ${research.agenda.exactlyLinkedWaitChecks} exact links / ${research.agenda.unavailableWaitLinks} unavailable. Completed failures ${research.agenda.completedFailures}; incomplete contexts ${research.agenda.incompleteContexts}.`
+    : "";
+  $("research-hypotheses").textContent = research
+    ? Object.entries(research.breakout.counts)
+        .map(
+          ([name, counts]) =>
+            `${name}: ${Object.entries(counts)
+              .map(([state, count]) => `${state} ${count}`)
+              .join(", ")}`,
+        )
+        .join(" · ")
+    : "";
+  $("research-next").textContent = research
+    ? `${research.agenda.question} Next: ${research.agenda.nextAction}`
+    : "";
   $("funnel-window").textContent = f
     ? `RECORDED ${funnelState} · Window ${f.start} to ${f.until} · snapshot ${f.journalSnapshotAt}`
     : "Recorded execution measurement unavailable";
@@ -49,7 +74,7 @@ function renderFunnel(d) {
       ? `Recorded window closes: ${scope.windowClosedRows}. ${scope.windowOutcomes.map((v) => `${v.originRelease} ${v.currency}: net ${v.realizedNet}, signed fees ${v.signedFees}, ${v.positive} positive / ${v.negative} negative / ${v.flat} flat`).join(" · ")} Net already includes fees; close-time rows, not a cohort return.`
       : "Recorded window outcome totals unavailable.";
   $("funnel-latency").textContent = f
-    ? `Availability → acceptance: ${f.availabilityToAcceptance.known} known / ${f.availabilityToAcceptance.unknown} unknown · p50 ${f.availabilityToAcceptance.p50Micros ?? "unavailable"} µs. Local request → availability: ${f.requestToAvailability.known} known / ${f.requestToAvailability.unknown} unknown.`
+    ? `Availability → acceptance: ${f.availabilityToAcceptance.known} known / ${f.availabilityToAcceptance.unknown} unknown · p50 ${f.availabilityToAcceptance.p50Micros ?? "unavailable"} µs. Local request → availability: ${f.requestToAvailability.known} known / ${f.requestToAvailability.unknown} unknown · p50 ${f.requestToAvailability.p50Micros ?? "unavailable"} / p95 ${f.requestToAvailability.p95Micros ?? "unavailable"} µs. Workflow clocks, not pure inference time.`
     : "";
 }
 
