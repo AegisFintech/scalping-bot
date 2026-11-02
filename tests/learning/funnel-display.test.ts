@@ -41,6 +41,28 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
     },
     executionFunnelReadState: "CURRENT",
     executionFunnel: measurement,
+    registeredStudy: {
+      readState: "CURRENT",
+      status: "RECORDED",
+      checkedAt: "2026-11-02T15:07:00+00:00",
+      ageSeconds: 8,
+      sourceId: "scalper-epoch314",
+      registrationSha256: "a".repeat(64),
+      release: "0.9.0-cost-balanced.1-codex.2",
+      start: "2026-11-02T14:30:00+00:00",
+      until: "2026-11-09T14:30:00+00:00",
+      retainedWindows: 1,
+      expectedWindows: 336,
+      storageBytes: 1048576,
+      storageLimitBytes: 268435456,
+      freeBytes: 3221225472,
+      latest: {
+        until: "2026-11-02T15:00:00+00:00",
+        origins: 25,
+        counts: { RANGE_BREAK: { OBSERVED: 4, CENSORED: 2, UNAVAILABLE: 3 } },
+        levelCounts: { RANGE_BREAK: { SAME_BAR_AMBIGUOUS: 2, NO_LEVEL: 4 } },
+      },
+    },
     executionResearch: {
       agenda: {
         packetSha256: measurement.packetSha256,
@@ -110,6 +132,23 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
   );
   expect(text("research-next")).toContain("<script>untrusted</script>");
   expect(text("research-hypotheses")).toContain("OBSERVED 4");
+  expect(text("study-state")).toContain("CURRENT · RECORDED");
+  expect(text("study-window")).toContain("retained 1/336");
+  expect(text("study-storage")).toContain("1.00 / 256 MiB");
+  expect(text("study-storage")).toContain("3.00 GiB / 2 GiB reserve");
+  expect(text("study-result")).toContain("25 overlapping context origins");
+  expect(text("study-result")).toContain("CENSORED 2, UNAVAILABLE 3");
+  expect(text("study-result")).toContain("SAME_BAR_AMBIGUOUS 2");
+  expect(text("study-state")).toContain("8s ago");
+  expect(text("study-window")).toContain("registration " + "a".repeat(64));
+  (data.registeredStudy as Record<string, unknown>).readState = "STALE";
+  await scheduled();
+  expect(text("study-state")).toContain("STALE · RECORDED");
+  expect(text("study-result")).toContain("CENSORED 2");
+  data.registeredStudy = { readState: "UNAVAILABLE" };
+  await scheduled();
+  expect(text("study-state")).toContain("unavailable");
+  expect(text("study-result")).toBe("");
   expect(text("funnel-baseline")).toContain("BUY 16");
   expect(text("funnel-baseline")).toContain("Unexecuted hypotheses");
   expect(text("funnel-latency")).toContain("23 known / 2 unknown");

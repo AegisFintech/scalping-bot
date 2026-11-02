@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from apps.dashboard.learning_progress import progress
 from python.learning.budget import Policy
+from python.operations.breakout_observer import read_status
 
 ASSETS = Path(__file__).with_name("assets")
 SSH = Path("/etc/scalper-learning-ui/ssh.conf")
@@ -73,6 +74,12 @@ def load() -> dict[str, Any]:
     except (OSError, ValueError):
         result["trade"] = None
     result["pipeline"] = progress(datetime.now(UTC))
+    result["registeredStudy"] = read_status(
+        Path("/etc/scalper-breakout507-v2/registration.json"),
+        Path("/var/lib/scalper-breakout507-v2"),
+        Path("/opt/scalper-breakout507-v2"),
+        datetime.now(UTC),
+    )
     return result
 
 
