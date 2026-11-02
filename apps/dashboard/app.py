@@ -10,6 +10,8 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from apps.dashboard.background import BackgroundReader
 from apps.dashboard.landscape_model import landscape_model
+from apps.dashboard.learning import load as load_learning
+from apps.dashboard.learning import router as learning_router
 from apps.dashboard.snapshot import load_snapshot
 
 ASSETS = Path(__file__).with_name("assets")
@@ -27,14 +29,18 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     # start a provider call or broker command, nor multiply database polling.
     reader = BackgroundReader(load_snapshot, interval=2)
     application.state.reader = reader
+    learning_reader = BackgroundReader(load_learning, interval=10)
+    application.state.learning_reader = learning_reader
     reader.poll()
     try:
         yield
     finally:
         reader.close()
+        learning_reader.close()
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(learning_router)
 
 
 @app.get("/", response_class=HTMLResponse)

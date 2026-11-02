@@ -28,6 +28,7 @@ def invoke(prompt: str, job: Path) -> bytes:
         model=MODEL,
         timeout=180,
         purpose="research_code",
+        effort="medium",
     )
 
 

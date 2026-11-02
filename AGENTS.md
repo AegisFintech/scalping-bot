@@ -5,7 +5,9 @@
 - Own the whole XAUUSD scalping bot and research harness: diagnose root causes,
   inspect related failures, finish fixes, tests, commit/push, reviewed merge,
   safe deployment and post-deployment verification without repeated prompts.
-- Use the time and tokens needed. Be proactive and bold within verified demo
+- Use enough context to finish correctly; avoid replaying long logs or completed
+  conversation. Batch independent reads and wait/poll in bounded scripts. Use fresh
+  context for required reviewers; never fork the full history. Be proactive within demo
   authority; reliable operation comes before tuning returns. Prefer small,
   complete changes and remove only proven unused code/services.
 - Own the research agenda: investigate costs, execution, entries, exits and external
@@ -15,6 +17,8 @@
 - Do not guess missing facts. Inspect available evidence first; ask the operator
   when information, external data or a decision is genuinely missing. Existing
   authorization covers safe recovery/restarts; it does not waive safeguards.
+- Test authentication independently of the runner UID; separately assert the
+  production root-ownership and private-permission checks.
 - Keep replies very short: result or blocker first, detailed evidence linked.
   Report unresolved work honestly; never promise background work without a
   verified persistent service. Monitor its health, not merely its process status.
@@ -45,6 +49,11 @@ supersede the current versioned policy or explicit operator instructions.
 - Research, exports, autonomous publishing or tc01/tc02 integration:
   `docs/harness-integration-plan.md`, `docs/learning-evidence-bridge-report.md`,
   `docs/publisher-policy-report.md`, `docs/research-failure-guidance-report.md`.
+  Token/context policy: `docs/token-usage-report.md`; four trading/one research
+  completed turns, safe rollover, no reset/replay of unknown state. Resource lanes
+  and `/learning`: `docs/learning-control-report.md`; separate API/subscription
+  budgets, API-first with authorized credit/cap subscription fallback on future gated
+  requests only; no unknown retry/browser inference, preserve protections and claims.
   Current observation reviews: `docs/current-observation-review-report.md`; verify
   fresh completed windows and findings, not only a running timer. No implicit promotion.
   Actual activation/veto: `docs/research-pipeline-activation-report.md`. Input domain:

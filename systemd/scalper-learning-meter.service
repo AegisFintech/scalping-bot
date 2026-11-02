@@ -1,0 +1,28 @@
+[Unit]
+Description=Read subscription quota without model inference
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=scalper-learning
+Group=scalper-learning
+WorkingDirectory=/var/lib/scalper-learning-evidence
+Environment=HOME=/var/lib/scalper-learning-evidence
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-holding-worker
+ExecStart=/opt/scalper-holding-worker/.venv/bin/python -P -m python.operations.learning_control meter
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-learning-evidence
+InaccessiblePaths=-/root -/etc/scalping-bot -/run/postgresql
+CPUQuota=25%
+MemoryMax=256M
+MemorySwapMax=0
+TasksMax=32
+TimeoutStartSec=45
+KillMode=control-group
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

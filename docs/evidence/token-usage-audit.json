@@ -1,0 +1,305 @@
+{
+  "main": {
+    "windowStart": "2026-10-30T10:54:00.381419+00:00",
+    "windowEnd": "2026-10-31T10:54:00.381419+00:00",
+    "method": "Deduplicated cumulative deltas; initial/reset event uses last usage; cached input is included in input; reasoning included in output. Local counters are not subscription billing.",
+    "counts": {
+      "files": 30
+    },
+    "groups": [
+      {
+        "kind": "interactive",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "input_tokens": 245713994,
+        "cached_input_tokens": 242419584,
+        "output_tokens": 958513,
+        "reasoning_output_tokens": 668726,
+        "total_tokens": 246672507,
+        "calls": 1067,
+        "last6h_calls": 505,
+        "last6h_input": 108530028,
+        "last6h_output": 335272,
+        "uncached_input": 3294410
+      },
+      {
+        "kind": "trading-entry",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "input_tokens": 81630843,
+        "cached_input_tokens": 68271488,
+        "output_tokens": 46824,
+        "reasoning_output_tokens": 2843,
+        "total_tokens": 81677667,
+        "calls": 438,
+        "last6h_calls": 0,
+        "uncached_input": 13359355
+      },
+      {
+        "kind": "interactive",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "input_tokens": 26234744,
+        "cached_input_tokens": 25946240,
+        "output_tokens": 104889,
+        "reasoning_output_tokens": 68059,
+        "total_tokens": 26339633,
+        "calls": 163,
+        "last6h_calls": 0,
+        "uncached_input": 288504
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "input_tokens": 12900203,
+        "cached_input_tokens": 12158208,
+        "output_tokens": 39810,
+        "reasoning_output_tokens": 10408,
+        "total_tokens": 12940013,
+        "calls": 268,
+        "last6h_calls": 83,
+        "last6h_input": 3654980,
+        "last6h_output": 11032,
+        "uncached_input": 741995
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "input_tokens": 2443426,
+        "cached_input_tokens": 2265600,
+        "output_tokens": 8577,
+        "reasoning_output_tokens": 952,
+        "total_tokens": 2452003,
+        "calls": 53,
+        "last6h_calls": 0,
+        "uncached_input": 177826
+      }
+    ],
+    "topSessions": [
+      {
+        "kind": "interactive",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "calls": 1230,
+        "input_tokens": 271948738,
+        "cached_input_tokens": 268365824,
+        "output_tokens": 1063402,
+        "reasoning_output_tokens": 736785,
+        "total_tokens": 273012140
+      },
+      {
+        "kind": "trading-entry",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 438,
+        "input_tokens": 81630843,
+        "cached_input_tokens": 68271488,
+        "output_tokens": 46824,
+        "reasoning_output_tokens": 2843,
+        "total_tokens": 81677667
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "calls": 28,
+        "input_tokens": 1404310,
+        "cached_input_tokens": 1365376,
+        "output_tokens": 3269,
+        "reasoning_output_tokens": 624,
+        "total_tokens": 1407579
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "calls": 22,
+        "input_tokens": 1233963,
+        "cached_input_tokens": 1188352,
+        "output_tokens": 2601,
+        "reasoning_output_tokens": 656,
+        "total_tokens": 1236564
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "calls": 20,
+        "input_tokens": 1199303,
+        "cached_input_tokens": 1143808,
+        "output_tokens": 3300,
+        "reasoning_output_tokens": 1530,
+        "total_tokens": 1202603
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "calls": 17,
+        "input_tokens": 1118152,
+        "cached_input_tokens": 1060608,
+        "output_tokens": 3532,
+        "reasoning_output_tokens": 1234,
+        "total_tokens": 1121684
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "calls": 16,
+        "input_tokens": 873704,
+        "cached_input_tokens": 828288,
+        "output_tokens": 1939,
+        "reasoning_output_tokens": 451,
+        "total_tokens": 875643
+      },
+      {
+        "kind": "subagent",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "calls": 17,
+        "input_tokens": 858725,
+        "cached_input_tokens": 817024,
+        "output_tokens": 2754,
+        "reasoning_output_tokens": 337,
+        "total_tokens": 861479
+      }
+    ]
+  },
+  "tc01": {
+    "windowStart": "2026-10-30T10:54:02.394034+00:00",
+    "windowEnd": "2026-10-31T10:54:02.394034+00:00",
+    "method": "Deduplicated cumulative deltas; initial/reset event uses last usage; cached input is included in input; reasoning included in output. Local counters are not subscription billing.",
+    "counts": {
+      "files": 7
+    },
+    "groups": [
+      {
+        "kind": "observation-research",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "input_tokens": 1399704,
+        "cached_input_tokens": 1025024,
+        "output_tokens": 24927,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 1424631,
+        "calls": 50,
+        "last6h_calls": 12,
+        "last6h_input": 253965,
+        "last6h_output": 5638,
+        "uncached_input": 374680
+      },
+      {
+        "kind": "holding-generation",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "input_tokens": 45877,
+        "cached_input_tokens": 17408,
+        "output_tokens": 7889,
+        "reasoning_output_tokens": 1118,
+        "total_tokens": 53766,
+        "calls": 5,
+        "last6h_calls": 3,
+        "last6h_input": 30863,
+        "last6h_output": 4345,
+        "uncached_input": 28469
+      },
+      {
+        "kind": "source-review",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "input_tokens": 10080,
+        "cached_input_tokens": 0,
+        "output_tokens": 347,
+        "reasoning_output_tokens": 96,
+        "total_tokens": 10427,
+        "calls": 1,
+        "last6h_calls": 1,
+        "last6h_input": 10080,
+        "last6h_output": 347,
+        "uncached_input": 10080
+      }
+    ],
+    "topSessions": [
+      {
+        "kind": "observation-research",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 26,
+        "input_tokens": 1005877,
+        "cached_input_tokens": 721920,
+        "output_tokens": 12929,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 1018806
+      },
+      {
+        "kind": "observation-research",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 22,
+        "input_tokens": 372599,
+        "cached_input_tokens": 295936,
+        "output_tokens": 9746,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 382345
+      },
+      {
+        "kind": "holding-generation",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 3,
+        "input_tokens": 30579,
+        "cached_input_tokens": 17408,
+        "output_tokens": 4633,
+        "reasoning_output_tokens": 434,
+        "total_tokens": 35212
+      },
+      {
+        "kind": "observation-research",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 2,
+        "input_tokens": 21228,
+        "cached_input_tokens": 7168,
+        "output_tokens": 2252,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 23480
+      },
+      {
+        "kind": "source-review",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 1,
+        "input_tokens": 10080,
+        "cached_input_tokens": 0,
+        "output_tokens": 347,
+        "reasoning_output_tokens": 96,
+        "total_tokens": 10427
+      },
+      {
+        "kind": "holding-generation",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 1,
+        "input_tokens": 7817,
+        "cached_input_tokens": 0,
+        "output_tokens": 1490,
+        "reasoning_output_tokens": 396,
+        "total_tokens": 9307
+      },
+      {
+        "kind": "holding-generation",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "calls": 1,
+        "input_tokens": 7481,
+        "cached_input_tokens": 0,
+        "output_tokens": 1766,
+        "reasoning_output_tokens": 288,
+        "total_tokens": 9247
+      }
+    ]
+  }
+}

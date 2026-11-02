@@ -1,0 +1,91 @@
+:root {
+  color-scheme: dark;
+  font: 16px/1.5 system-ui;
+  background: #080f18;
+  color: #dfebfa;
+}
+body {
+  margin: 0;
+}
+header,
+main {
+  max-width: 1500px;
+  margin: auto;
+  padding: 24px;
+}
+header {
+  border-bottom: 1px solid #293c53;
+}
+a {
+  color: #66d9cf;
+}
+h1 {
+  font-size: 2rem;
+  margin: 12px 0;
+}
+h2 {
+  font-size: 1.05rem;
+  color: #80c9ff;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+article {
+  background: #111f30;
+  border: 1px solid #293c53;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+label {
+  display: block;
+  margin: 12px 0;
+}
+input:not([type="checkbox"]),
+select,
+textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: #080f18;
+  border: 1px solid #58718e;
+  border-radius: 6px;
+  color: #fff;
+  font: inherit;
+}
+button {
+  background: #66d9cf;
+  color: #07121b;
+  padding: 11px 22px;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+small {
+  display: block;
+  color: #b2c6dd;
+  margin-top: 14px;
+}
+#state {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px solid #66d9cf;
+  border-radius: 20px;
+}
+#message {
+  color: #ffd08a;
+}
+@media (max-width: 800px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  header,
+  main {
+    padding: 16px;
+  }
+}

@@ -24,3 +24,5 @@ PrivateTmp=yes
 NoNewPrivileges=yes
 ReadWritePaths=/var/lib/scalper-learning-evidence/holding464 /var/lib/scalper-learning-evidence/.codex
 InaccessiblePaths=-/root -/etc/scalping-bot -/run/postgresql
+# Shared resource ledger, separate from frozen generation evidence.
+ReadWritePaths=/var/lib/scalper-learning-evidence/learning-control

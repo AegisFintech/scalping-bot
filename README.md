@@ -3,6 +3,9 @@
 AI-assisted XAUUSD scalping for controlled demo evaluation. One existing demo
 account and deployment; real-money live execution is disabled by default.
 
+[Token usage and bounded context](docs/token-usage-report.md): full fresh market
+inputs stay intact; old chart history no longer accumulates all day.
+
 Scheduled research retains its independently reviewed vetoes and all prior attempts.
 [Relevant, hourly paced research](docs/research-pacing-report.md) replaces the holding
 generator’s lifetime cap. Research grants no trading or automatic economic promotion
@@ -43,14 +46,14 @@ A filled position never closes just because the pending-entry timer elapsed.
 
 ## Current source contract
 
-| Item            | Contract                                                                                            |
-| --------------- | --------------------------------------------------------------------------------------------------- |
-| Source / policy | `0.8.0-model-scalp.1-codex.1` / `0.8.0-model-scalp.1`                                               |
-| Provider        | Subscription Codex, `gpt-6.1-sol`, prompt `entry-scalp-v1`, no API fallback                         |
-| Entry           | One trend-direction STOP_LIMIT, broker-acknowledged GTD,60–300s from capture                        |
-| Protection      | Model distances: TP<=0.40 price units, SL<=7.00, reward/risk>=0.0571428571                          |
-| Demo risk       | At most2.5% for the single order within the unchanged5% setup ceiling; costs/margin may reduce size |
-| Evidence        | Completed M15/M5/M1, causal SMC levels, broker-only sampled DOM and flight recorder                 |
+| Item            | Contract                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| Source / policy | `0.8.0-model-scalp.1-codex.1` / `0.8.0-model-scalp.1`                                                  |
+| Provider        | API-first `gpt-6.1-sol`/low, prompt `entry-scalp-v1`; approved subscription fallback on API credit/cap |
+| Entry           | One trend-direction STOP_LIMIT, broker-acknowledged GTD,60–300s from capture                           |
+| Protection      | Model distances: TP<=0.40 price units, SL<=7.00, reward/risk>=0.0571428571                             |
+| Demo risk       | At most2.5% for the single order within the unchanged5% setup ceiling; costs/margin may reduce size    |
+| Evidence        | Completed M15/M5/M1, causal SMC levels, broker-only sampled DOM and flight recorder                    |
 
 Native protection is fill-relative; final absolute levels can differ after entry
 slippage. Costs and the five-tick exit allowance are modeled, not guaranteed net
@@ -107,6 +110,10 @@ The [broker acknowledgement design](docs/broker-acknowledgement-design.md) descr
 The [exact-head qualification report](docs/exact-head-checks-report.md) records active main protection and its independent-review limitation.
 
 Distributed experiment delivery is tracked in [the execution report](docs/experiment-execution-report.md). Real registered jobs have remote execution/independent-check/closure evidence; periodic activation is recorded separately. Generated strategy improvement remains a separate milestone.
+
+Authentication fixtures run without root; deployment still requires private root-owned control credentials.
+
+Learning resources and the separate `/learning` console: [operator guide](docs/learning-control-report.md). API-first uses the approved US$20/day ceiling with credit/cap subscription fallback; research pauses do not pause position protection.
 
 <!-- research-publication -->
 

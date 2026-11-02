@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Scalper · Learning</title>
+    <link rel="stylesheet" href="/learning/assets/learning.css" />
+    <script type="module" src="/learning/assets/learning.mjs"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/">← Trading desk</a>
+      <h1>Learning control room</h1>
+      <p>Research evidence, resource budgets and your direction</p>
+      <span id="state">Authenticate to view research</span>
+    </header>
+    <main>
+      <form id="login">
+        <label
+          >Admin token
+          <input
+            id="token"
+            type="password"
+            autocomplete="current-password"
+            required /></label
+        ><button>Unlock</button>
+      </form>
+      <section id="board" hidden>
+        <article>
+          <h2>Trading API · separate budget</h2>
+          <p id="trade">Unavailable</p>
+          <form id="trade-controls">
+            <fieldset id="trade-fields" disabled>
+              <label
+                >Daily API limit · USD
+                <input
+                  id="trade-limit"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  required /></label
+              ><label
+                ><input id="trade-paused" type="checkbox" /> Pause new API
+                analysis</label
+              ><button>Save API resource settings</button>
+            </fieldset>
+          </form>
+          <small
+            >API cost is estimated from reported usage. Remaining provider
+            credit is not assumed. Learning pauses do not pause position
+            protection.</small
+          >
+        </article>
+        <div class="grid">
+          <article>
+            <h2>Learning resources</h2>
+            <div id="budget">Unavailable</div>
+            <div id="quota">Quota unavailable</div>
+            <div id="model"></div>
+            <p id="tokens">Token breakdown unavailable</p>
+            <small
+              >Local token admission budget includes cached input. Reported
+              subscription quota is separate; USD charges are unknown.</small
+            >
+          </article>
+          <article>
+            <h2>Current work</h2>
+            <div id="tasks">Unavailable</div>
+            <p id="next"></p>
+          </article>
+          <article>
+            <h2>Latest finding</h2>
+            <p id="summary"></p>
+            <p id="question"></p>
+            <small id="finding-time"></small>
+            <p id="evidence"></p>
+            <p id="falsification"></p>
+          </article>
+          <article>
+            <h2>Attempts and publications</h2>
+            <div id="publications"></div>
+            <div id="history"></div>
+          </article>
+        </div>
+        <article>
+          <h2>Your direction</h2>
+          <form id="controls">
+            <label
+              >Priority
+              <select id="focus">
+                <option value="execution">Execution quality</option>
+                <option value="costs">Costs</option>
+                <option value="entries">Entry quality</option>
+                <option value="exits">Exits / profit giveback</option>
+                <option value="data_quality">Data quality</option>
+                <option value="external_data">External data</option>
+              </select></label
+            ><label
+              >Daily learning token budget
+              <input
+                id="limit"
+                type="number"
+                min="1"
+                max="1000000000"
+                step="1"
+                required /></label
+            ><label
+              >Guidance for next new work
+              <textarea
+                id="guidance"
+                maxlength="1000"
+                rows="4"
+              ></textarea></label
+            ><label
+              ><input id="paused" type="checkbox" /> Pause new learning
+              admissions</label
+            ><button>Save direction and budget</button
+            ><small
+              >Already admitted work may finish. Changing direction does not
+              rewrite existing experiments, reset unknowns or alter trading
+              risk.</small
+            >
+          </form>
+        </article>
+        <p id="message" role="status"></p>
+      </section>
+    </main>
+  </body>
+</html>

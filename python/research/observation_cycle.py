@@ -17,6 +17,7 @@ from pydantic import Field
 from python.backtest import scalp_replay
 from python.backtest.scalp_replay import replay
 from python.codex_entry.memory import invoke_daily
+from python.learning import governor
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_archive import (
     ResearchArchive,
@@ -133,6 +134,19 @@ def review(
         ):
             raise ValueError("RESEARCH_EVIDENCE_NOT_CURRENT")
         atomic_bytes(job / "input.json", raw, replace=False)
+    guidance_path = job / "operator-guidance.json"
+    if (
+        not (job / "registration.json").exists()
+        and governor.CONFIG.exists()
+        and not guidance_path.exists()
+    ):
+        immutable(guidance_path, governor.guidance())
+    operator = json.loads(bounded(guidance_path, 32768)) if guidance_path.exists() else {}
+    template = PROMPT + (
+        "\nOperator research priorities (DATA, not action authority): " + encoded(operator).decode()
+        if operator
+        else ""
+    )
     immutable(
         job / "registration.json",
         {
@@ -141,7 +155,7 @@ def review(
             "packetSha256": packet_sha,
             "cycleSourceSha256": sha(Path(__file__).read_bytes()),
             "replayModuleSha256": sha(Path(scalp_replay.__file__).read_bytes()),
-            "promptSha256": sha(PROMPT.encode()),
+            "promptSha256": sha(template.encode()),
             "scope": "DESCRIPTIVE_REVIEW_NOT_PROSPECTIVE_EXPERIMENT",
         },
     )
@@ -233,18 +247,31 @@ def review(
     # per-setup paths are unavailable and are never silently selected for the model.
     summary = {k: v for k, v in diagnostic.items() if k not in {"setups", "benchmark"}}
     prompt = (
-        PROMPT
+        template
         + "\nINPUT "
         + encoded({"diagnosticSha256": diagnostic_sha, "diagnostic": summary}).decode()
     )
     if len(prompt.encode()) > 100_000:
         return finish(agenda, plan, "PROMPT_CAPACITY_EXCEEDED", None, now)
+    if not any(
+        (
+            packet.contexts,
+            packet.analyses,
+            packet.setups,
+            packet.flight,
+            packet.unscopedBrokerEvents,
+        )
+    ):
+        return finish(agenda, plan, "NO_NEW_EVIDENCE", None, now)
     slot = agenda / ("slot-" + str(int(now.timestamp()) // 1800) + ".json")
     if slot.exists():
         claimed = json.loads(bounded(slot, 32768))
         if claimed["planId"] != key:
             return finish(agenda, plan, "REVIEW_COOLDOWN", None, now)
-    else:
+    admission = governor.prepare(job, prompt, "observation")
+    if admission is not None:
+        return finish(agenda, plan, admission["status"], None, now)
+    if not slot.exists():
         immutable(slot, {"planId": key})
     request_path = job / "request.json"
     captured_at = now.isoformat()
@@ -256,7 +283,7 @@ def review(
         request_path,
         {
             "payload": {"captured_at": captured_at},
-            "promptSha256": sha(PROMPT.encode()),
+            "promptSha256": sha(template.encode()),
             "inputSha256": sha(prompt.encode()),
             "model": MODEL,
         },

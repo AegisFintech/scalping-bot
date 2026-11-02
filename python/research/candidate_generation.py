@@ -11,6 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from python.learning import governor
 from python.research import research_pacing as pacing
 from python.research.experiment_registry import Registry, read
 from python.research.learning_archive import immutable, unique
@@ -71,6 +72,9 @@ def generate[D: BaseModel](
                     if wait["status"] == "WAITING_RESEARCH_DUPLICATE":
                         return {"status": "REJECTED_RESEARCH_DUPLICATE", "job": key}
                     return wait
+            admission = governor.prepare(job, prompt, "generation")
+            if admission is not None:
+                return admission
             immutable(
                 job / "request.json",
                 {

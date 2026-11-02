@@ -395,6 +395,11 @@ class RequestV112(RequestV111):
     payload: PayloadScalp
 
 
+class RequestV113(RequestV112):
+    version: Literal["codex-entry-request-1.13"]  # type: ignore[assignment]
+    provider: Literal["openai-api"]
+
+
 REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     Request,
     RequestV12,
@@ -408,6 +413,7 @@ REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     RequestV110,
     RequestV111,
     RequestV112,
+    RequestV113,
 )
 REQUEST_BY_VERSION = {
     version: model
@@ -436,6 +442,7 @@ def parse_request(
     | RequestV110
     | RequestV111
     | RequestV112
+    | RequestV113
 ):
     value = json.loads(raw)
     version = value.get("version") if isinstance(value, dict) else None
@@ -566,6 +573,31 @@ class ResponseV13(ResponseV12):
     entries: ScalpDecision  # type: ignore[assignment]
 
 
+class ResponseV14(StrictModel):
+    version: Literal["codex-entry-response-1.4"]
+    provider: Literal["openai-api"]
+    analysisId: str
+    requestedModel: Literal["gpt-6.1-sol"]
+    returnedModel: Literal["gpt-6.1-sol"]
+    promptSha256: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
+    capturedAt: str
+    receivedAt: str
+    entries: ScalpDecision
+    rawResponse: Annotated[str, Field(max_length=8192)]
+    inputTokens: Annotated[int, Field(ge=0)]
+    outputTokens: Annotated[int, Field(ge=0)]
+    costAmount: None
+    providerRequestId: Annotated[str, Field(min_length=1, max_length=128)]
+    contextPolicy: Literal["fresh-input-v1"]
+    executionAuthority: Literal[False]
+
+
+class ResponseV15(ResponseV13):
+    version: Literal["codex-entry-response-1.5"]  # type: ignore[assignment]
+    provider: Literal["codex-subscription"]
+    fallbackReason: Literal["API_DAILY_LIMIT", "API_CREDIT_EXHAUSTED"]
+
+
 def invoke(prompt: str, job: Path) -> bytes:
     if os.geteuid() == 0 or not job.resolve().is_relative_to(Path.home().resolve()):
         raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
@@ -669,6 +701,11 @@ def run(
         )
         publish(job / "request.json", request.model_dump())
         publish(job / "prompt.json", {"text": prompt})
+        fallback_reason = None
+        if isinstance(request, RequestV113):
+            from python.codex_entry import openai_api
+
+            fallback_reason = openai_api.reserve(job, prompt)
         publish(
             job / "claim.json",
             {
@@ -676,6 +713,7 @@ def run(
                 "input_sha256": hashlib.sha256(raw).hexdigest(),
                 "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                 "requested_model": MODEL,
+                **({"fallbackReason": fallback_reason} if fallback_reason else {}),
             },
         )
         # Persist both directory entries before a potentially billable dispatch.
@@ -695,7 +733,14 @@ def run(
                 if isinstance(request, RequestV13)
                 else Entries
             )
-            if isinstance(request, RequestV13) and call is invoke:
+            api_metadata = None
+            if isinstance(request, RequestV113) and fallback_reason is None:
+                from python.codex_entry import openai_api
+
+                result, api_metadata = openai_api.invoke(
+                    prompt, job, decision_model.model_json_schema()
+                )
+            elif isinstance(request, RequestV13) and call is invoke:
                 from python.codex_entry.memory import invoke_daily
 
                 result = invoke_daily(
@@ -729,9 +774,20 @@ def run(
                 "costAmount": None,
                 "executionAuthority": False,
             }
-            if isinstance(request, RequestV13):
+            if isinstance(request, RequestV113) and fallback_reason is None:
+                assert api_metadata is not None
+                response.update(api_metadata)
+                response.update(
+                    version="codex-entry-response-1.4",
+                    provider="openai-api",
+                    contextPolicy="fresh-input-v1",
+                )
+                response = ResponseV14.model_validate(response).model_dump()
+            elif isinstance(request, RequestV13):
                 response_model = (
-                    ResponseV13
+                    ResponseV15
+                    if fallback_reason is not None
+                    else ResponseV13
                     if isinstance(request, RequestV112)
                     else ResponseV12
                     if isinstance(request, RequestV15)
@@ -739,6 +795,8 @@ def run(
                 )
                 response["version"] = get_args(response_model.model_fields["version"].annotation)[0]
                 response["memory"] = json.loads(read_bounded(job / "memory-result.json"))
+                if fallback_reason:
+                    response.update(provider="codex-subscription", fallbackReason=fallback_reason)
                 response = response_model.model_validate(response).model_dump()
             else:
                 response = Response.model_validate(response).model_dump()

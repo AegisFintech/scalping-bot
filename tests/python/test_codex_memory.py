@@ -183,16 +183,18 @@ def daily(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     return run
 
 
-def test_resume_exact_daily_thread_and_compact(daily: Any) -> None:
-    jobs = [daily() for _ in range(m.COMPACT_EVERY + 1)]
-    assert sum(method == "thread/start" for method, _ in FakeRpc.calls) == 1
-    assert sum(method == "thread/resume" for method, _ in FakeRpc.calls) == m.COMPACT_EVERY
-    assert sum(method == "thread/compact/start" for method, _ in FakeRpc.calls) == 1
+def test_daily_history_rotates_after_four_completed_requests_without_compaction(daily: Any) -> None:
+    jobs = [daily() for _ in range(5)]
     receipts = [json.loads((job / "memory-result.json").read_text()) for job in jobs]
-    assert len({r["threadId"] for r in receipts}) == 1
-    assert receipts[-1]["compacted"] is True
+    assert len({r["threadId"] for r in receipts[:4]}) == 1
+    assert receipts[4]["threadId"] != receipts[3]["threadId"]
+    assert sum(method == "thread/compact/start" for method, _ in FakeRpc.calls) == 0
+    assert (jobs[-1] / "context-rotation.json").exists()
     next_job = daily("2026-10-20")
-    assert json.loads((next_job / "memory-result.json").read_text())["threadId"] != "thread1"
+    assert (
+        json.loads((next_job / "memory-result.json").read_text())["threadId"]
+        != receipts[-1]["threadId"]
+    )
 
 
 def test_unknown_dispatch_is_not_replayed_and_busy_thread_blocks(
@@ -790,3 +792,224 @@ def test_generated_research_uses_separate_tool_disabled_thread(daily: Any) -> No
     assert len(starts) == 2
     assert "research source text" in starts[1]["baseInstructions"]
     assert "Never use tools" in starts[1]["baseInstructions"]
+
+
+def test_legacy_context_rotates_only_after_confirmed_idle_completion(
+    daily: Any, tmp_path: Path
+) -> None:
+    first = daily()
+    path = next(tmp_path.rglob("state.json"))
+    state = json.loads(path.read_text())
+    state.pop("contextPolicy")
+    path.write_text(json.dumps(state))
+    second = daily()
+    receipt = json.loads((second / "context-rotation.json").read_text())
+    assert receipt["reason"] == "LEGACY_POLICY_TRANSITION"
+    assert (
+        receipt["previousThreadId"]
+        == json.loads((first / "memory-result.json").read_text())["threadId"]
+    )
+    assert len(list(first.glob("memory-result.json"))) == 1
+
+
+def test_pending_context_never_rotates_even_over_turn_limit(daily: Any, tmp_path: Path) -> None:
+    daily()
+    path = next(tmp_path.rglob("state.json"))
+    state = json.loads(path.read_text())
+    state.update(turns=20, pending=True)
+    path.write_text(json.dumps(state))
+    job = daily()
+    assert not (job / "context-rotation.json").exists()
+    assert (
+        json.loads((job / "memory-dispatch.json").read_text())["priorOutcomeMayBeUnknown"] is True
+    )
+    assert sum(method == "thread/start" for method, _ in FakeRpc.calls) == 1
+
+
+def test_rotation_resume_failure_never_falls_back(
+    daily: Any, tmp_path: Path, monkeypatch: Any
+) -> None:
+    for _ in range(4):
+        daily()
+    original = FakeRpc.request
+
+    def rejected(self: Any, method: str, params: Any) -> Any:
+        if method == "thread/resume":
+            raise ValueError("CODEX_RPC_REJECTED")
+        return original(self, method, params)
+
+    monkeypatch.setattr(FakeRpc, "request", rejected)
+    with pytest.raises(ValueError, match="RPC_REJECTED"):
+        daily()
+    assert sum(method == "thread/start" for method, _ in FakeRpc.calls) == 1
+
+
+def test_usage_receipt_is_optional_and_not_billing_authority(daily: Any) -> None:
+    job = daily()
+    value = json.loads((job / "token-usage.json").read_text())
+    assert value["tokens"] is value["costAmount"] is value["subscriptionCharge"] is None
+
+
+def test_usage_notification_is_bound_to_current_thread_and_turn() -> None:
+    value = {
+        "inputTokens": 10,
+        "cachedInputTokens": 7,
+        "outputTokens": 3,
+        "reasoningOutputTokens": 2,
+        "totalTokens": 13,
+    }
+    messages = [
+        {
+            "method": "thread/tokenUsage/updated",
+            "params": {
+                "threadId": "other",
+                "turnId": "turn",
+                "tokenUsage": {"last": {**value, "inputTokens": 99}},
+            },
+        },
+        {
+            "method": "thread/tokenUsage/updated",
+            "params": {"threadId": "thread", "turnId": "old", "tokenUsage": {"last": value}},
+        },
+        {
+            "method": "thread/tokenUsage/updated",
+            "params": {"threadId": "thread", "turnId": "turn", "tokenUsage": {"last": value}},
+        },
+        {
+            "method": "item/completed",
+            "params": {
+                "threadId": "thread",
+                "turnId": "turn",
+                "item": {"id": "answer", "type": "agentMessage", "text": "ok"},
+            },
+        },
+        {
+            "method": "turn/completed",
+            "params": {"threadId": "thread", "turn": {"id": "turn", "status": "completed"}},
+        },
+    ]
+    rpc = object.__new__(m.Rpc)
+    rpc.pending = messages
+    assert rpc.completed("thread", "turn") == ("turn", "ok")
+    assert rpc.usage == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        None,
+        [],
+        {},
+        {"inputTokens": True},
+        {
+            "inputTokens": 1,
+            "cachedInputTokens": 2,
+            "outputTokens": 0,
+            "reasoningOutputTokens": 0,
+            "totalTokens": 1,
+        },
+        {
+            "inputTokens": 1,
+            "cachedInputTokens": 0,
+            "outputTokens": 1,
+            "reasoningOutputTokens": 2,
+            "totalTokens": 2,
+        },
+        {
+            "inputTokens": -1,
+            "cachedInputTokens": 0,
+            "outputTokens": 0,
+            "reasoningOutputTokens": 0,
+            "totalTokens": -1,
+        },
+    ],
+)
+def test_invalid_usage_remains_unknown(value: Any) -> None:
+    assert m.token_usage(value) is None
+
+
+@pytest.mark.parametrize(
+    "status", [None, {}, {"type": "unknown"}, {"type": "systemError"}, {"type": "notLoaded"}]
+)
+def test_rollover_requires_explicit_verified_idle(
+    daily: Any, tmp_path: Path, monkeypatch: Any, status: Any
+) -> None:
+    for _ in range(4):
+        daily()
+    original = FakeRpc.request
+
+    def ambiguous(self: Any, method: str, params: Any) -> Any:
+        reply = original(self, method, params)
+        if method == "thread/resume":
+            if status is None:
+                reply["thread"].pop("status")
+            else:
+                reply["thread"]["status"] = status
+        return reply
+
+    monkeypatch.setattr(FakeRpc, "request", ambiguous)
+    with pytest.raises(ValueError, match="PREVIOUS_TURN_UNRESOLVED"):
+        daily()
+    assert sum(method == "thread/start" for method, _ in FakeRpc.calls) == 1
+    assert sum(method == "turn/start" for method, _ in FakeRpc.calls) == 4
+    assert not list(tmp_path.rglob("context-rotation.json"))
+
+
+def test_replacement_must_also_be_verified_idle(
+    daily: Any, tmp_path: Path, monkeypatch: Any
+) -> None:
+    for _ in range(4):
+        daily()
+    original = FakeRpc.request
+
+    def ambiguous(self: Any, method: str, params: Any) -> Any:
+        reply = original(self, method, params)
+        if method == "thread/start":
+            reply["thread"]["status"] = {"type": "systemError"}
+        return reply
+
+    monkeypatch.setattr(FakeRpc, "request", ambiguous)
+    with pytest.raises(ValueError, match="THREAD_MISMATCH"):
+        daily()
+    assert sum(method == "turn/start" for method, _ in FakeRpc.calls) == 4
+    assert json.loads(next(tmp_path.rglob("state.json")).read_text())["turns"] == 4
+
+
+@pytest.mark.parametrize("usage", [None, [], {}, {"last": None}])
+def test_optional_malformed_notification_cannot_break_completed_turn(usage: Any) -> None:
+    rpc = object.__new__(m.Rpc)
+    rpc.pending = [
+        {
+            "method": "thread/tokenUsage/updated",
+            "params": {"threadId": "t", "turnId": "new", "tokenUsage": usage},
+        },
+        {
+            "method": "item/completed",
+            "params": {
+                "threadId": "t",
+                "turnId": "new",
+                "item": {"id": "a", "type": "agentMessage", "text": "ok"},
+            },
+        },
+        {
+            "method": "turn/completed",
+            "params": {"threadId": "t", "turn": {"id": "new", "status": "completed"}},
+        },
+    ]
+    assert rpc.completed("t", "new") == ("new", "ok")
+    assert rpc.usage is None
+
+
+def test_research_rolls_over_each_completed_request_and_blocks_unknown_context(daily):
+    first, second = daily(purpose="research"), daily(purpose="research")
+    a = json.loads((first / "memory-result.json").read_text())
+    b = json.loads((second / "memory-result.json").read_text())
+    assert a["threadId"] != b["threadId"]
+    FakeRpc.fail_turn = True
+    with pytest.raises(ValueError, match="TIMEOUT_UNKNOWN"):
+        daily(purpose="research")
+    FakeRpc.fail_turn = False
+    calls = sum(method == "turn/start" for method, _ in FakeRpc.calls)
+    with pytest.raises(ValueError, match="RESEARCH_CONTEXT_UNRESOLVED"):
+        daily(purpose="research")
+    assert sum(method == "turn/start" for method, _ in FakeRpc.calls) == calls

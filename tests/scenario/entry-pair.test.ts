@@ -147,240 +147,270 @@ describe("direct entries (synthetic, no broker authority)", () => {
     expect(response.buy_stop.risk_reward_ratio).toBe("0.5");
     expect(response.setup_tags).toEqual(["DIRECT_ENTRY_PAIR_OCO"]);
   });
-  it("serves Codex through the production factory with unknown returned identity and immutable prompt", async () => {
-    const at = new Date(
-      Math.floor(Date.now() / 900_000) * 900_000,
-    ).toISOString();
-    const now = Date.parse(at);
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date(now));
-    const chart = analysisChart();
-    const candles: CandleSeries[] = (["M1", "M5", "M15"] as const).map(
-      (frame) => {
-        const period = { M1: 60_000, M5: 300_000, M15: 900_000 }[frame];
-        return {
-          timeframe: frame,
-          candles: Array.from(
-            { length: { M1: 720, M5: 576, M15: 480 }[frame] },
-            (_, index) => {
-              const remaining = { M1: 720, M5: 576, M15: 480 }[frame] - index;
-              return {
-                startTime: new Date(now - period * remaining).toISOString(),
-                endTime: new Date(now - period * (remaining - 1)).toISOString(),
-                open: "4405",
-                high: "4406",
-                low: "4404",
-                close: "4405",
-                volume: null,
-                complete: true,
-                qualityFlags: [],
-              };
-            },
-          ),
-        };
-      },
-    );
-    const input = {
-      ...context,
-      capturedAt: at,
-      candles,
-      chart: {
-        ...chart,
-        candleCounts: { M1: 1, M5: 1, M15: 1 },
-        latestEndTimes: { M1: at, M5: at, M15: at },
-      },
-      quote: { bid: "4404.95", ask: "4405.15", sourceTime: at, receivedAt: at },
-      minimumStopDistance: "0.01",
-      technicalContext: {
-        evidence: { fixture: true },
-        inputSha256: "a".repeat(64),
-        marketCapturedAt: at,
-      },
-    };
-    const rawResponse =
-      '{"decision":"BUY","reason":"Box","entry_price":"4410","take_profit":"4410.4","stop_loss":"4403","pending_seconds":120}';
-    const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
-    const receipt = {
-      version: "codex-entry-response-1.3",
-      analysisId: input.analysisId,
-      requestedModel: "gpt-6.1-sol",
-      returnedModel: null,
-      promptSha256: createHash("sha256").update(promptText).digest("hex"),
-      capturedAt: at,
-      receivedAt: at,
-      entries: {
-        decision: "BUY",
-        reason: "Box",
-        entry_price: "4410",
-        take_profit: "4410.4",
-        stop_loss: "4403",
-        pending_seconds: 120,
-      },
-      memory: {
-        day: at.slice(0, 10),
-        threadId: "thread1",
-        turnId: "turn1",
-        compacted: false,
-      },
-      rawResponse,
-      inputTokens: null,
-      outputTokens: null,
-      costAmount: null,
-      executionAuthority: false,
-    };
-    const fetchImpl = vi.fn<typeof fetch>(() =>
-      Promise.resolve(Response.json(receipt)),
-    );
-    const beforeDispatch = vi.fn(async () => {});
-    const server = createAiServer(
-      createProductionAiOptions(
-        {
-          AI_MODEL: "gpt-6.1-sol",
-          AI_PROVIDER: "codex-subscription",
-          CODEX_ENTRY_LOCAL_TOKEN: "x".repeat(32),
-        },
-        beforeDispatch,
-        fetchImpl,
-      ),
-    );
-    try {
-      const http = new EntryPairHttpPlanner(
-        "http://127.0.0.1:8082",
-        async (url, init) => {
-          if (typeof init?.body !== "string") throw new Error("fixture-body");
-          const result = await server.inject({
-            method: "POST",
-            url: new URL(url instanceof Request ? url.url : url).pathname,
-            payload: JSON.parse(init.body) as object,
-          });
-          return new Response(result.body, {
-            status: result.statusCode,
-            headers: { "content-type": "application/json" },
-          });
-        },
-      );
-      const result = await http.generate({
-        ...input,
-        chart: null,
-        schemaVersion: "2.0",
-      });
-      const providerBodyValue = fetchImpl.mock.calls[0]?.[1]?.body;
-      if (typeof providerBodyValue !== "string")
-        throw new Error("fixture-provider-body");
-      const providerBody = JSON.parse(providerBodyValue) as Record<
-        string,
-        unknown
-      >;
-      expect(providerBody.version).toBe("codex-entry-request-1.12");
-      expect(providerBody.payload).toMatchObject({ market_captured_at: at });
-      const compact = (
-        providerBody.payload as { candles: { rows: unknown[] }[] }
-      ).candles;
-      expect(compact.map((s) => s.rows.length)).toEqual([12, 12, 12]);
-      expect(fetchImpl.mock.calls[0]?.[0]).toBe(
-        "http://127.0.0.1:8084/v1/entry-proposals",
-      );
-      expect(beforeDispatch).toHaveBeenCalledOnce();
-      expect(result.response).toMatchObject({
-        schema_version: "entry-scalp-1.0",
-        entry_side: "BUY",
-        buy_stop: "4410",
-        sell_stop: "4403",
-        analysis_id: input.analysisId,
-      });
-      expect(result.telemetry.returnedModel).toBeNull();
-      expect(result.telemetry.costAmount).toBeNull();
-      expect(result.rawResponse).toBe(rawResponse);
-      const numeric = await http.generate({
-        ...input,
-        chart: null,
-        schemaVersion: "2.0",
-      });
-      expect(numeric.response).toMatchObject({
-        entry_side: "BUY",
-        buy_stop: "4410",
-        sell_stop: "4403",
-      });
-      const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
-      expect(numeric.promptArtifact).toEqual({
-        version: "entry-scalp-v1",
-        content: prompt,
-        sha256: createHash("sha256").update(prompt).digest("hex"),
-      });
-      const requestBody = fetchImpl.mock.calls.at(-1)?.[1]?.body;
-      if (typeof requestBody !== "string") throw new Error("fixture-body");
-      const request = JSON.parse(requestBody) as { promptSha256: string };
-      expect(request.promptSha256).toBe(receipt.promptSha256);
-      for (const url of ["/v1/scenario", "/v1/analyze"]) {
-        const disabled = await server.inject({
-          method: "POST",
-          url,
-          payload: {},
-        });
-        expect(disabled.statusCode).toBe(503);
-      }
-      for (const mismatch of [
-        { version: "entry-pair-v1" },
-        { content: "unreviewed prompt" },
-        { sha256: "0".repeat(64) },
-      ]) {
-        const mismatched = new EntryPairHttpPlanner(
-          "http://127.0.0.1:8082",
-          () =>
-            Promise.resolve(
-              Response.json({
-                ...numeric,
-                promptArtifact: { ...numeric.promptArtifact, ...mismatch },
-              }),
+  it.each(["api", "subscription"] as const)(
+    "serves %s proposals through the production factory with immutable prompt",
+    async (route) => {
+      const at = new Date(
+        Math.floor(Date.now() / 900_000) * 900_000,
+      ).toISOString();
+      const now = Date.parse(at);
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(now));
+      const chart = analysisChart();
+      const candles: CandleSeries[] = (["M1", "M5", "M15"] as const).map(
+        (frame) => {
+          const period = { M1: 60_000, M5: 300_000, M15: 900_000 }[frame];
+          return {
+            timeframe: frame,
+            candles: Array.from(
+              { length: { M1: 720, M5: 576, M15: 480 }[frame] },
+              (_, index) => {
+                const remaining = { M1: 720, M5: 576, M15: 480 }[frame] - index;
+                return {
+                  startTime: new Date(now - period * remaining).toISOString(),
+                  endTime: new Date(
+                    now - period * (remaining - 1),
+                  ).toISOString(),
+                  open: "4405",
+                  high: "4406",
+                  low: "4404",
+                  close: "4405",
+                  volume: null,
+                  complete: true,
+                  qualityFlags: [],
+                };
+              },
             ),
-        );
-        await expect(
-          mismatched.generate({ ...input, chart: null, schemaVersion: "2.0" }),
-        ).rejects.toThrow("SCENARIO_PROMPT_MISMATCH");
-      }
-      const missingVersion = await server.inject({
-        method: "POST",
-        url: "/v2/entry-pair",
-        payload: { ...input, chart: null },
-      });
-      expect(missingVersion.statusCode).toBe(400);
-      const legacyWithoutImage = await server.inject({
-        method: "POST",
-        url: "/v1/entry-pair",
-        payload: { ...input, chart: null, schemaVersion: "2.0" },
-      });
-      expect(legacyWithoutImage.statusCode).toBe(400);
-      fetchImpl.mockResolvedValueOnce(
-        Response.json({ ...receipt, requestedModel: "grok-4.5" }),
+          };
+        },
       );
-      await expect(
-        http.generate({ ...input, chart: null, schemaVersion: "2.0" }),
-      ).rejects.toThrow("AI_ANALYSIS_FAILED");
-      // Only the explicitly required-context path admits the expanded recipe.
-      expect(() =>
-        validateScenarioMarket({ ...input, chart: null }, () => now, false),
-      ).toThrow("SCENARIO_TIMEFRAMES_INVALID");
-      const oversized = await server.inject({
-        method: "POST",
-        url: "/v2/entry-pair",
-        payload: {
+      const input = {
+        ...context,
+        capturedAt: at,
+        candles,
+        chart: {
+          ...chart,
+          candleCounts: { M1: 1, M5: 1, M15: 1 },
+          latestEndTimes: { M1: at, M5: at, M15: at },
+        },
+        quote: {
+          bid: "4404.95",
+          ask: "4405.15",
+          sourceTime: at,
+          receivedAt: at,
+        },
+        minimumStopDistance: "0.01",
+        technicalContext: {
+          evidence: { fixture: true },
+          inputSha256: "a".repeat(64),
+          marketCapturedAt: at,
+        },
+      };
+      const rawResponse =
+        '{"decision":"BUY","reason":"Box","entry_price":"4410","take_profit":"4410.4","stop_loss":"4403","pending_seconds":120}';
+      const promptText = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
+      const receipt = {
+        version:
+          route === "api"
+            ? "codex-entry-response-1.4"
+            : "codex-entry-response-1.5",
+        provider: route === "api" ? "openai-api" : "codex-subscription",
+        ...(route === "api"
+          ? {
+              contextPolicy: "fresh-input-v1",
+              providerRequestId: "resp_fixture",
+            }
+          : {
+              fallbackReason: "API_DAILY_LIMIT",
+              memory: {
+                day: at.slice(0, 10),
+                threadId: "thread",
+                turnId: "turn",
+                compacted: false,
+              },
+            }),
+        analysisId: input.analysisId,
+        requestedModel: "gpt-6.1-sol",
+        returnedModel: route === "api" ? "gpt-6.1-sol" : null,
+        promptSha256: createHash("sha256").update(promptText).digest("hex"),
+        capturedAt: at,
+        receivedAt: at,
+        entries: {
+          decision: "BUY",
+          reason: "Box",
+          entry_price: "4410",
+          take_profit: "4410.4",
+          stop_loss: "4403",
+          pending_seconds: 120,
+        },
+        rawResponse,
+        inputTokens: route === "api" ? 100 : null,
+        outputTokens: route === "api" ? 20 : null,
+        costAmount: null,
+        executionAuthority: false,
+      };
+      const fetchImpl = vi.fn<typeof fetch>(() =>
+        Promise.resolve(Response.json(receipt)),
+      );
+      const beforeDispatch = vi.fn(async () => {});
+      const server = createAiServer(
+        createProductionAiOptions(
+          {
+            AI_MODEL: "gpt-6.1-sol",
+            AI_PROVIDER: "codex-subscription",
+            CODEX_ENTRY_LOCAL_TOKEN: "x".repeat(32),
+          },
+          beforeDispatch,
+          fetchImpl,
+        ),
+      );
+      try {
+        const http = new EntryPairHttpPlanner(
+          "http://127.0.0.1:8082",
+          async (url, init) => {
+            if (typeof init?.body !== "string") throw new Error("fixture-body");
+            const result = await server.inject({
+              method: "POST",
+              url: new URL(url instanceof Request ? url.url : url).pathname,
+              payload: JSON.parse(init.body) as object,
+            });
+            return new Response(result.body, {
+              status: result.statusCode,
+              headers: { "content-type": "application/json" },
+            });
+          },
+        );
+        const result = await http.generate({
           ...input,
           chart: null,
           schemaVersion: "2.0",
-          candles: input.candles.map((series) => ({
-            ...series,
-            candles: [series.candles[0], ...series.candles],
-          })),
-        },
-      });
-      expect(oversized.statusCode).toBe(503);
-      expect(oversized.json()).toMatchObject({
-        reason: "SCENARIO_TIMEFRAMES_INVALID",
-      });
-      expect(fetchImpl).toHaveBeenCalledTimes(3);
-    } finally {
-      await server.close();
-      vi.useRealTimers();
-    }
-  });
+        });
+        const providerBodyValue = fetchImpl.mock.calls[0]?.[1]?.body;
+        if (typeof providerBodyValue !== "string")
+          throw new Error("fixture-provider-body");
+        const providerBody = JSON.parse(providerBodyValue) as Record<
+          string,
+          unknown
+        >;
+        expect(providerBody.version).toBe("codex-entry-request-1.13");
+        expect(providerBody.payload).toMatchObject({ market_captured_at: at });
+        const compact = (
+          providerBody.payload as { candles: { rows: unknown[] }[] }
+        ).candles;
+        expect(compact.map((s) => s.rows.length)).toEqual([12, 12, 12]);
+        expect(fetchImpl.mock.calls[0]?.[0]).toBe(
+          "http://127.0.0.1:8084/v1/entry-proposals",
+        );
+        expect(beforeDispatch).toHaveBeenCalledOnce();
+        expect(result.response).toMatchObject({
+          schema_version: "entry-scalp-1.0",
+          entry_side: "BUY",
+          buy_stop: "4410",
+          sell_stop: "4403",
+          analysis_id: input.analysisId,
+        });
+        expect(result.telemetry.returnedModel).toBe(
+          route === "api" ? "gpt-6.1-sol" : null,
+        );
+        expect(result.telemetry.inputTokens).toBe(route === "api" ? 100 : null);
+        expect(providerBody.provider).toBe("openai-api");
+        expect(result.telemetry.costAmount).toBeNull();
+        expect(result.rawResponse).toBe(rawResponse);
+        const numeric = await http.generate({
+          ...input,
+          chart: null,
+          schemaVersion: "2.0",
+        });
+        expect(numeric.response).toMatchObject({
+          entry_side: "BUY",
+          buy_stop: "4410",
+          sell_stop: "4403",
+        });
+        const prompt = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
+        expect(numeric.promptArtifact).toEqual({
+          version: "entry-scalp-v1",
+          content: prompt,
+          sha256: createHash("sha256").update(prompt).digest("hex"),
+        });
+        const requestBody = fetchImpl.mock.calls.at(-1)?.[1]?.body;
+        if (typeof requestBody !== "string") throw new Error("fixture-body");
+        const request = JSON.parse(requestBody) as { promptSha256: string };
+        expect(request.promptSha256).toBe(receipt.promptSha256);
+        for (const url of ["/v1/scenario", "/v1/analyze"]) {
+          const disabled = await server.inject({
+            method: "POST",
+            url,
+            payload: {},
+          });
+          expect(disabled.statusCode).toBe(503);
+        }
+        for (const mismatch of [
+          { version: "entry-pair-v1" },
+          { content: "unreviewed prompt" },
+          { sha256: "0".repeat(64) },
+        ]) {
+          const mismatched = new EntryPairHttpPlanner(
+            "http://127.0.0.1:8082",
+            () =>
+              Promise.resolve(
+                Response.json({
+                  ...numeric,
+                  promptArtifact: { ...numeric.promptArtifact, ...mismatch },
+                }),
+              ),
+          );
+          await expect(
+            mismatched.generate({
+              ...input,
+              chart: null,
+              schemaVersion: "2.0",
+            }),
+          ).rejects.toThrow("SCENARIO_PROMPT_MISMATCH");
+        }
+        const missingVersion = await server.inject({
+          method: "POST",
+          url: "/v2/entry-pair",
+          payload: { ...input, chart: null },
+        });
+        expect(missingVersion.statusCode).toBe(400);
+        const legacyWithoutImage = await server.inject({
+          method: "POST",
+          url: "/v1/entry-pair",
+          payload: { ...input, chart: null, schemaVersion: "2.0" },
+        });
+        expect(legacyWithoutImage.statusCode).toBe(400);
+        fetchImpl.mockResolvedValueOnce(
+          Response.json({ ...receipt, requestedModel: "grok-4.5" }),
+        );
+        await expect(
+          http.generate({ ...input, chart: null, schemaVersion: "2.0" }),
+        ).rejects.toThrow("AI_ANALYSIS_FAILED");
+        // Only the explicitly required-context path admits the expanded recipe.
+        expect(() =>
+          validateScenarioMarket({ ...input, chart: null }, () => now, false),
+        ).toThrow("SCENARIO_TIMEFRAMES_INVALID");
+        const oversized = await server.inject({
+          method: "POST",
+          url: "/v2/entry-pair",
+          payload: {
+            ...input,
+            chart: null,
+            schemaVersion: "2.0",
+            candles: input.candles.map((series) => ({
+              ...series,
+              candles: [series.candles[0], ...series.candles],
+            })),
+          },
+        });
+        expect(oversized.statusCode).toBe(503);
+        expect(oversized.json()).toMatchObject({
+          reason: "SCENARIO_TIMEFRAMES_INVALID",
+        });
+        expect(fetchImpl).toHaveBeenCalledTimes(3);
+      } finally {
+        await server.close();
+        vi.useRealTimers();
+      }
+    },
+  );
 });

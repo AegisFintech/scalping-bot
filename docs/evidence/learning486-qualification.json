@@ -1,0 +1,245 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "37855e1755d9549e8e5c6273f3ebdf6f329f1f83d92c71dd37e57373a23ec710",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "results": [
+    {
+      "label": "postgres-bindir",
+      "executable": "pg_config",
+      "args": ["--bindir"],
+      "code": 0,
+      "elapsedMs": 19
+    },
+    {
+      "label": "test-certificate",
+      "executable": "openssl",
+      "args": [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-days",
+        "1",
+        "-subj",
+        "/CN=localhost",
+        "-addext",
+        "subjectAltName=DNS:localhost,IP:127.0.0.1",
+        "-keyout",
+        "/tmp/scalper-qualification-shito6/server.key",
+        "-out",
+        "/tmp/scalper-qualification-shito6/server.crt"
+      ],
+      "code": 0,
+      "elapsedMs": 205
+    },
+    {
+      "label": "postgres-uid",
+      "executable": "id",
+      "args": ["-u", "postgres"],
+      "code": 0,
+      "elapsedMs": 11
+    },
+    {
+      "label": "postgres-gid",
+      "executable": "id",
+      "args": ["-g", "postgres"],
+      "code": 0,
+      "elapsedMs": 11
+    },
+    {
+      "label": "database-init",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/initdb",
+        "-D",
+        "/tmp/scalper-qualification-shito6/database",
+        "-U",
+        "scalper_qualification",
+        "--auth-local=trust",
+        "--auth-host=trust",
+        "--no-locale",
+        "--encoding=UTF8"
+      ],
+      "code": 0,
+      "elapsedMs": 840
+    },
+    {
+      "label": "database-start",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-shito6/database",
+        "-l",
+        "/tmp/scalper-qualification-shito6/postgres.log",
+        "-o",
+        "-h 127.0.0.1 -p 37165 -k /tmp/scalper-qualification-shito6 -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-shito6/server.crt -c ssl_key_file=/tmp/scalper-qualification-shito6/server.key",
+        "-w",
+        "start"
+      ],
+      "code": 0,
+      "elapsedMs": 127
+    },
+    {
+      "label": "format",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "**/*.{ts,mjs,json,md,yml,yaml}"
+      ],
+      "code": 0,
+      "elapsedMs": 41045
+    },
+    {
+      "label": "lint",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": ["node_modules/eslint/bin/eslint.js", "."],
+      "code": 0,
+      "elapsedMs": 59655
+    },
+    {
+      "label": "types",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.json"
+      ],
+      "code": 0,
+      "elapsedMs": 24271
+    },
+    {
+      "label": "build",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.build.json",
+        "--outDir",
+        "/tmp/scalper-qualification-shito6/build"
+      ],
+      "code": 0,
+      "elapsedMs": 22181
+    },
+    {
+      "label": "node-tests",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--exclude",
+        "**/*.integration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "code": 0,
+      "elapsedMs": 95770
+    },
+    {
+      "label": "python-format",
+      "executable": "/tmp/scalper-token485/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 46
+    },
+    {
+      "label": "python-lint",
+      "executable": "/tmp/scalper-token485/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 41
+    },
+    {
+      "label": "python-types",
+      "executable": "/tmp/scalper-token485/.venv/bin/python",
+      "args": ["-m", "mypy", "python", "apps/dashboard"],
+      "code": 0,
+      "elapsedMs": 947
+    },
+    {
+      "label": "secrets",
+      "executable": "bash",
+      "args": ["scripts/secret-scan.sh"],
+      "code": 0,
+      "elapsedMs": 250
+    },
+    {
+      "label": "npm-audit",
+      "executable": "npm",
+      "args": ["audit", "--audit-level=high"],
+      "code": 0,
+      "elapsedMs": 4143
+    },
+    {
+      "label": "python-audit",
+      "executable": "/tmp/scalper-token485/.venv/bin/python",
+      "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+      "code": 0,
+      "elapsedMs": 11784
+    },
+    {
+      "label": "database-lifecycle",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration",
+        "--maxWorkers=1",
+        "--testTimeout=60000"
+      ],
+      "code": 0,
+      "elapsedMs": 34609
+    },
+    {
+      "label": "python-tests",
+      "executable": "/tmp/scalper-token485/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/python", "-q"],
+      "code": 0,
+      "elapsedMs": 45111
+    },
+    {
+      "label": "database-stop",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-shito6/database",
+        "-m",
+        "immediate",
+        "-w",
+        "stop"
+      ],
+      "code": 0,
+      "elapsedMs": 122
+    }
+  ]
+}

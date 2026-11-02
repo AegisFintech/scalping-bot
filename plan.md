@@ -1,3 +1,38 @@
+### ISSUE-486 — Independent API trading and learning control room
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/486; depends #485.
+- Acceptance: explicit Sol/low API proposals with private credentials, conservative
+  USD reservations/unknown persistence and operator cap; subscription research
+  admission/token/quota monitor, fresh resolved context, no-evidence wait, pause
+  and frozen observation guidance; independent authenticated `/learning` with
+  task/finding/usage/PR visibility, existing `/` and execution policy preserved.
+- Dependencies: operator-approved US$20/day API ceiling and financial/cap subscription fallback; matching
+  isolated worker/producer activation, full qualification, exact-source reviews,
+  pushed reviewed delivery and verified research/UI rollout. Do not claim whole completion until matching rollout evidence exists.
+- Status: implementation, both fresh review axes and full qualification pass; matching
+  deployment and operational verification pending. Hosted CI exposed root-only
+  HTTP fixtures; portable fixtures now separately test production ownership enforcement. API model access GET200, no paid
+  model benchmark. Trading remains on existing producer pending reviewed matching activation.
+- Evidence: `docs/learning-control-report.md`, `docs/token-usage-report.md`.
+
+### ISSUE-485 — Token attribution and bounded model history
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/485; follows #483.
+- Acceptance: measure input/cache/output without double-counting; bound worker
+  context to four trading/one research completed requests through safe rollover; resume/verify
+  old context first, never replace pending/busy/corrupt/failed resume; retain complete
+  current market inputs, all old sessions/claims and execution/risk policy. Journal
+  optional matching token usage without fabricated costs or execution gates. Scope
+  development auto-compaction64k to this repo and keep handoffs concise.
+- Dependencies: existing day/model/prompt pins, unknown-outcome/cooldown and exact-
+  source independent review. No paid benchmark, forced calls, history/accounting
+  reset, new model or strategy promotion. Full qualification/four config checks,
+  fresh two-axis review, pushed reviewed delivery and isolated adapter activation.
+- Status: red regression reproduces the fifth request still using one growing
+  thread. Full qualification and both reviews pass; context/usage fixes verified,
+  reviewed delivery/activation pending.
+- Evidence: `docs/token-usage-report.md`.
+
 ### ISSUE-483 — Relevant research with durable hourly pacing
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/483; depends #464/#480.

@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh learning quota every five minutes
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=5min
+AccuracySec=15s
+Persistent=true
+Unit=scalper-learning-meter.service
+
+[Install]
+WantedBy=timers.target

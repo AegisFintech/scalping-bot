@@ -37,7 +37,28 @@ const receipt = z
   })
   .strict();
 
-/** Subscription proposal transport; never owns broker execution authority. */
+const apiReceipt = receipt
+  .omit({ memory: true })
+  .extend({
+    version: z.literal("codex-entry-response-1.4"),
+    provider: z.literal("openai-api"),
+    returnedModel: z.literal(CODEX_ENTRY_MODEL),
+    inputTokens: z.number().int().nonnegative(),
+    outputTokens: z.number().int().nonnegative(),
+    providerRequestId: z.string().min(1).max(128),
+    contextPolicy: z.literal("fresh-input-v1"),
+  })
+  .strict();
+
+const fallbackReceipt = receipt
+  .extend({
+    version: z.literal("codex-entry-response-1.5"),
+    provider: z.literal("codex-subscription"),
+    fallbackReason: z.enum(["API_DAILY_LIMIT", "API_CREDIT_EXHAUSTED"]),
+  })
+  .strict();
+
+/** Explicitly selected proposal transport; never owns broker execution authority. */
 export class CodexEntryClient {
   readonly #prompt: string;
   readonly #sha: string;
@@ -52,6 +73,7 @@ export class CodexEntryClient {
   constructor(
     private readonly options: {
       readonly localToken: string;
+      readonly provider?: "subscription" | "openai-api";
       readonly fetchImpl?: typeof fetch;
       readonly beforeDispatch: (symbol: string) => Promise<void>;
       readonly now?: () => number;
@@ -76,7 +98,13 @@ export class CodexEntryClient {
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
     const body = JSON.stringify({
-      version: "codex-entry-request-1.12",
+      version:
+        this.options.provider === "openai-api"
+          ? "codex-entry-request-1.13"
+          : "codex-entry-request-1.12",
+      ...(this.options.provider === "openai-api"
+        ? { provider: "openai-api" }
+        : {}),
       analysisId: request.analysisId,
       symbol: request.symbol,
       promptVersion: "entry-scalp-v1",
@@ -108,13 +136,17 @@ export class CodexEntryClient {
       );
       if (!response.ok) throw new Error("CODEX_UNAVAILABLE_OR_UNKNOWN");
       const raw = await boundedResponseText(response, 16_384);
-      const value = receipt.parse(JSON.parse(raw));
+      const value =
+        this.options.provider === "openai-api"
+          ? z.union([apiReceipt, fallbackReceipt]).parse(JSON.parse(raw))
+          : receipt.parse(JSON.parse(raw));
       const ended = this.#now();
       if (
         value.analysisId !== request.analysisId ||
         value.promptSha256 !== this.#sha ||
         value.capturedAt !== request.payload.captured_at ||
-        value.memory.day !== value.capturedAt.slice(0, 10) ||
+        ("memory" in value &&
+          value.memory.day !== value.capturedAt.slice(0, 10)) ||
         ended < started ||
         ended - started > 95_000 ||
         Date.parse(value.receivedAt) < started ||
@@ -156,13 +188,16 @@ export class CodexEntryClient {
         },
         telemetry: {
           requestedModel: CODEX_ENTRY_MODEL,
-          returnedModel: null,
+          returnedModel: value.returnedModel,
           inputProfile: "structured",
           requestBytes: Buffer.byteLength(body),
           responseBytes: Buffer.byteLength(raw),
-          inputTokens: null,
-          outputTokens: null,
-          totalTokens: null,
+          inputTokens: value.inputTokens,
+          outputTokens: value.outputTokens,
+          totalTokens:
+            value.inputTokens === null || value.outputTokens === null
+              ? null
+              : value.inputTokens + value.outputTokens,
           costAmount: null,
           costCurrency: null,
           costSource: "unavailable",

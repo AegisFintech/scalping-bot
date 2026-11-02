@@ -268,7 +268,10 @@ class Mailbox(Registry):
                 }
                 if len(encoded(result)) > MAX_TRANSFER:
                     raise ValueError("HOLDING_MAILBOX_OUTPUT_LIMIT")
-                if outcome["status"].startswith("WAITING_RESEARCH_"):
+                if outcome["status"].startswith(("WAITING_RESEARCH_", "WAITING_LEARNING_")):
+                    from python.research.learning_archive import atomic_bytes
+
+                    atomic_bytes(job / "waiting-status.json", encoded(result), replace=True)
                     return result  # Known unsent: timer retries admission, never provider replay.
                 immutable(job / "receipt.json", result)
                 return result
