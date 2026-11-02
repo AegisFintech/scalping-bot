@@ -149,4 +149,4 @@ generation with unchanged protected contracts and fresh scoring/review.
 
 <!-- research-publication -->
 
-Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.
+Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
