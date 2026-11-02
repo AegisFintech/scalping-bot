@@ -1,0 +1,359 @@
+{
+  "$defs": {
+    "RangeRow": {
+      "additionalProperties": false,
+      "properties": {
+        "setupId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Setupid",
+          "type": "string"
+        },
+        "orderId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Orderid",
+          "type": "string"
+        },
+        "cohortRole": {
+          "enum": ["OBSERVED_WINDOW", "CARRY_IN", "LINKED_REFERENCE"],
+          "title": "Cohortrole",
+          "type": "string"
+        },
+        "orderStateAtSnapshot": {
+          "title": "Orderstateatsnapshot",
+          "type": "string"
+        },
+        "contextAvailableAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Contextavailableat"
+        },
+        "acknowledgedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acknowledgedat"
+        },
+        "metadataSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Metadatasha256"
+        },
+        "pointSize": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pointsize"
+        },
+        "eligibility": {
+          "enum": ["OBSERVABLE", "UNAVAILABLE"],
+          "title": "Eligibility",
+          "type": "string"
+        },
+        "unavailableReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unavailablereasons",
+          "type": "array"
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expiresat"
+        },
+        "originalFillRowsBeforeCutoff": {
+          "minimum": 0,
+          "title": "Originalfillrowsbeforecutoff",
+          "type": "integer"
+        },
+        "originalFillClockUnknownRows": {
+          "minimum": 0,
+          "title": "Originalfillclockunknownrows",
+          "type": "integer"
+        },
+        "originalPartialAtCutoff": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Originalpartialatcutoff"
+        },
+        "originalDealInsideCandidateBand": {
+          "minimum": 0,
+          "title": "Originaldealinsidecandidateband",
+          "type": "integer"
+        },
+        "originalDealOutsideCandidateBand": {
+          "minimum": 0,
+          "title": "Originaldealoutsidecandidateband",
+          "type": "integer"
+        },
+        "originalDealRangeUnknown": {
+          "minimum": 0,
+          "title": "Originaldealrangeunknown",
+          "type": "integer"
+        },
+        "originalClosedRowsBeforeCutoff": {
+          "minimum": 0,
+          "title": "Originalclosedrowsbeforecutoff",
+          "type": "integer"
+        },
+        "originalFillWithoutClosedTradeAtCutoff": {
+          "title": "Originalfillwithoutclosedtradeatcutoff",
+          "type": "boolean"
+        },
+        "flightGapRecords": {
+          "minimum": 0,
+          "title": "Flightgaprecords",
+          "type": "integer"
+        },
+        "flightStatus": {
+          "enum": ["VERIFIED_SAMPLED_PREFIX", "UNAVAILABLE"],
+          "title": "Flightstatus",
+          "type": "string"
+        },
+        "usableExecutableSamples": {
+          "minimum": 0,
+          "title": "Usableexecutablesamples",
+          "type": "integer"
+        },
+        "sampledPricesInBaselineBand": {
+          "minimum": 0,
+          "title": "Sampledpricesinbaselineband",
+          "type": "integer"
+        },
+        "sampledPricesInCandidateBand": {
+          "minimum": 0,
+          "title": "Sampledpricesincandidateband",
+          "type": "integer"
+        },
+        "pathCoverage": {
+          "const": "INCOMPLETE_SAMPLED_PATH_NO_NONFILL_OR_TRIGGER_PROOF",
+          "title": "Pathcoverage",
+          "type": "string"
+        },
+        "candidateFill": {
+          "title": "Candidatefill",
+          "type": "null"
+        },
+        "candidateNet": {
+          "title": "Candidatenet",
+          "type": "null"
+        },
+        "candidateCosts": {
+          "title": "Candidatecosts",
+          "type": "null"
+        },
+        "candidateMargin": {
+          "title": "Candidatemargin",
+          "type": "null"
+        }
+      },
+      "required": [
+        "setupId",
+        "orderId",
+        "cohortRole",
+        "orderStateAtSnapshot",
+        "contextAvailableAt",
+        "acknowledgedAt",
+        "metadataSha256",
+        "pointSize",
+        "eligibility",
+        "unavailableReasons",
+        "expiresAt",
+        "originalFillRowsBeforeCutoff",
+        "originalFillClockUnknownRows",
+        "originalPartialAtCutoff",
+        "originalDealInsideCandidateBand",
+        "originalDealOutsideCandidateBand",
+        "originalDealRangeUnknown",
+        "originalClosedRowsBeforeCutoff",
+        "originalFillWithoutClosedTradeAtCutoff",
+        "flightGapRecords",
+        "flightStatus",
+        "usableExecutableSamples",
+        "sampledPricesInBaselineBand",
+        "sampledPricesInCandidateBand",
+        "pathCoverage",
+        "candidateFill",
+        "candidateNet",
+        "candidateCosts",
+        "candidateMargin"
+      ],
+      "title": "RangeRow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "entry-range-report-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "registrationSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Registrationsha256",
+      "type": "string"
+    },
+    "inputSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Inputsha256",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "journalSnapshotAt": {
+      "title": "Journalsnapshotat",
+      "type": "string"
+    },
+    "acknowledgementSnapshotAt": {
+      "title": "Acknowledgementsnapshotat",
+      "type": "string"
+    },
+    "baselinePoints": {
+      "const": 30,
+      "title": "Baselinepoints",
+      "type": "integer"
+    },
+    "candidatePoints": {
+      "const": 10,
+      "title": "Candidatepoints",
+      "type": "integer"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/RangeRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "allContextRecords": {
+      "minimum": 0,
+      "title": "Allcontextrecords",
+      "type": "integer"
+    },
+    "waitContextRecords": {
+      "minimum": 0,
+      "title": "Waitcontextrecords",
+      "type": "integer"
+    },
+    "setupRoleCounts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Setuprolecounts",
+      "type": "object"
+    },
+    "orderRecords": {
+      "minimum": 0,
+      "title": "Orderrecords",
+      "type": "integer"
+    },
+    "filledOrderRecords": {
+      "minimum": 0,
+      "title": "Filledorderrecords",
+      "type": "integer"
+    },
+    "noRecordedFillOrderRecords": {
+      "minimum": 0,
+      "title": "Norecordedfillorderrecords",
+      "type": "integer"
+    },
+    "unavailableOrderRecords": {
+      "minimum": 0,
+      "title": "Unavailableorderrecords",
+      "type": "integer"
+    },
+    "coverage": {
+      "const": "BOUNDED_OBSERVATION_WITH_OPEN_GAP_AND_UNKNOWN_DENOMINATORS",
+      "title": "Coverage",
+      "type": "string"
+    },
+    "originalBrokerMetadataProven": {
+      "const": false,
+      "title": "Originalbrokermetadataproven",
+      "type": "boolean"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "registrationSha256",
+    "inputSha256",
+    "start",
+    "until",
+    "journalSnapshotAt",
+    "acknowledgementSnapshotAt",
+    "baselinePoints",
+    "candidatePoints",
+    "rows",
+    "allContextRecords",
+    "waitContextRecords",
+    "setupRoleCounts",
+    "orderRecords",
+    "filledOrderRecords",
+    "noRecordedFillOrderRecords",
+    "unavailableOrderRecords",
+    "coverage",
+    "originalBrokerMetadataProven",
+    "economicQualification",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "RangeReport",
+  "type": "object"
+}

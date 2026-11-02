@@ -1,0 +1,98 @@
+{
+  "issue": 499,
+  "qualified": true,
+  "sourceSha256": "d3e346b938a96f6ea98ffa46e21306fea6d744b6495e31d00ea8d08504d5f552",
+  "qualifiedSourceCommit": "50540bb22f40bbaca348f9baba35ac33a295b44e",
+  "command": "PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs",
+  "nodeTests": 1285,
+  "postgresTests": 157,
+  "pythonTests": 1233,
+  "totalTests": 2675,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "standardsReview": "NO_REMAINING_P1_P2",
+  "specReview": "NO_REMAINING_P1_P2",
+  "economicQualification": false,
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}

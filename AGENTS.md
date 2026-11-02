@@ -33,7 +33,10 @@ net target reward>=modeled stop loss after broker costs and65-tick exit reserve.
 Keep single trend STOP_LIMIT/GTD, existing5% setup/2.5% leg ceilings and dynamic
 sizing. Read `docs/cost-balanced-scalp-report.md`; this is evaluation, not profit
 qualification. Historical0.8 geometry/contexts stay version-bound. #499's narrower
-entry range is research-only; current trading range remains30ticks.
+entry range is research-only; current trading range remains30ticks. Read
+`docs/entry-range-study-report.md` before changing frozen point/ACK collection.
+Keep unknown-clock fills and separate metadata warm-up from outcome windows.
+Software qualification never qualifies the entry range economically.
 
 ## Before changing an area
 
