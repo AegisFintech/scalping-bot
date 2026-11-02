@@ -164,6 +164,9 @@ activation is recorded in `docs/evidence/completion491-activation.json`.
 For observation execution funnels, source/finding bindings and current wait reasons,
 read `docs/execution-research-report.md`; preserve unknowns and all frozen methods.
 
+Latest loss/Flight reconstruction: `docs/loss496-review.md`; a sampled gross-positive
+mark is not net profit, and broker pips, price units and fees must stay explicit.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

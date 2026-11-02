@@ -1,3 +1,17 @@
+### ISSUE-496 — Latest loss and verified Flight evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/496; parent #289/#402.
+- Acceptance: complete fixed-cutoff cohort, exact latest fill/cost/protection/ACK
+  reconciliation, verified executable-side Flight paths and unknown exit economics;
+  preserve original evidence and trading, deliver a reviewed pushed report.
+- Dependencies: existing SELECT-only exporters, retained Flight chains and #494
+  scheduled review. No forced provider/order or new collection deployment.
+- Status: all14 closed outcomes/28 deals reconcile; latest sampled path has no
+  positive mark, fill-relative protection matches and late-acceptance hypothesis
+  is falsified. No reproduced software defect. Report/source unchanged qualification
+  and authoritative reviewed delivery status are retained on the linked issue.
+- Evidence: `docs/loss496-review.md`, `docs/evidence/loss496-review.json`.
+
 ### ISSUE-494 — Fresh execution research and explicit waits
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/494.
