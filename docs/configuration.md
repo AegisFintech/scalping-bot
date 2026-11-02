@@ -391,3 +391,7 @@ demo accounting transition. The final populated environment changes only
 `DATABASE_URL`; all other values and dynamic money-management policy are retained.
 Current state, baseline audit, restore proof and rollback requirements are in the
 [fresh local demo report](fresh-local-demo-report.md).
+
+## API-first proposal transport and learning resources
+
+The legacy AI_PROVIDER routing label remains unchanged; request1.13 and receipts1.4/1.5 record actual API/subscription routing. Root-only provider policy holds the operator-approved US$20/day API ceiling and authorized subscription fallback. API credentials are systemd credentials, never copied into the dashboard or research environment. Learning has a separate token/quota ledger and `/learning` controls. See [deployment and rollback](learning-control-report.md).

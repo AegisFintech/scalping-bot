@@ -532,3 +532,7 @@ read-only collector caches expanded completed history (720 M1 / 576 M5 / 480 M15
 this is not the active trading collector or provider input. Candidate/NO_SETUP
 research output cannot authorize execution. See [definitions and boundaries](technical-context-report.md);
 registered inference comparison is #349. Current v5 workers/studies remain unchanged.
+
+## Independent model resource lanes
+
+The proposal worker adds explicit API-first request1.13 and API/subscription fallback receipts1.4/1.5 without changing deterministic scalp execution. Subscription research uses a separate admission ledger and quota meter. `/learning` has isolated assets, authenticated resource controls and a lazy bounded read worker; `/` stays intact. The worker, console and research roles share no API key or execution authority. See [resource boundaries and deployment](learning-control-report.md).

@@ -1,0 +1,3 @@
+# Scope development history limits to this repository; worker overrides stay separate.
+model_auto_compact_token_limit = 64000
+compact_prompt = "Write a concise handoff of at most 1500 tokens for the active task. Preserve current user directives, safety boundaries, decisions, relevant file paths, exact validation/source status, unresolved blockers and next steps. Link durable reports instead of copying logs or historical conversation. Keep unknown evidence explicit. Never include credentials."

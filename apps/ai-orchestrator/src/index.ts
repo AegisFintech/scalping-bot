@@ -168,6 +168,7 @@ export function createProductionAiOptions(
   )
     throw new Error("AI_PROVIDER_POLICY_MISMATCH");
   const client = new CodexEntryClient({
+    provider: "openai-api",
     localToken: environment.CODEX_ENTRY_LOCAL_TOKEN ?? "",
     beforeDispatch,
     ...(fetchImpl === undefined ? {} : { fetchImpl }),

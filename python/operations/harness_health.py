@@ -152,6 +152,14 @@ def observation(root: Path, now: datetime) -> tuple[Stage, str | None, str | Non
                 None,
                 None,
             )
+        if value["status"] == "NO_NEW_EVIDENCE" or str(value["status"]).startswith(
+            "WAITING_LEARNING_"
+        ):
+            return (
+                stage("Observation", "WAITING", at, "Research admission: " + value["status"]),
+                None,
+                None,
+            )
         if value["status"] != "CLOSED":
             return (
                 stage(

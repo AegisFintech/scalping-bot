@@ -10,12 +10,15 @@ import selectors
 import signal
 import subprocess
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from python.learning import governor
 from python.research.codex_loop import publish, read_bounded
 
-COMPACT_EVERY = 8
+MAX_THREAD_TURNS = 4
+CONTEXT_POLICY = "bounded-turns-v2"
 MAX_MESSAGE = 256_000
 MAX_TOTAL = 2_000_000
 
@@ -27,6 +30,7 @@ class Rpc:
         self.buffer = b""
         self.total = 0
         self.pending: list[dict[str, Any]] = []
+        self.usage: dict[str, int] | None = None
         self.selector = selectors.DefaultSelector()
         assert process.stdout is not None and process.stdin is not None
         self.selector.register(process.stdout, selectors.EVENT_READ)
@@ -100,6 +104,7 @@ class Rpc:
             self.pending.append(message)
 
     def completed(self, thread: str, turn: str | None, *, compact: bool = False) -> tuple[str, str]:
+        self.usage = None
         texts: dict[str, str] = {}
         compacted = False
         compact_turn: str | None = None
@@ -116,6 +121,9 @@ class Rpc:
             if turn is not None and event_turn is not None and event_turn != turn:
                 # Resume streams retained history; old turns cannot satisfy this request.
                 continue
+            if method == "thread/tokenUsage/updated" and event_turn == turn and turn is not None:
+                usage = params.get("tokenUsage")
+                self.usage = token_usage(usage.get("last") if isinstance(usage, dict) else None)
             if method == "item/completed":
                 item = params.get("item", {})
                 if (
@@ -143,6 +151,8 @@ class Rpc:
                     return str(result["id"]), ""
                 if len(texts) != 1:
                     raise ValueError("CODEX_FINAL_ANSWER_AMBIGUOUS")
+                if self.usage is not None and self.usage["totalTokens"] == 0:
+                    self.usage = None
                 return str(result["id"]), next(iter(texts.values()))
 
     def close(self) -> None:
@@ -166,45 +176,36 @@ def state_write(path: Path, state: dict[str, Any]) -> None:
         os.close(descriptor)
 
 
-def invoke_daily(
-    prompt: str,
-    job: Path,
-    *,
-    schema: dict[str, Any],
-    model: str,
-    timeout: int = 90,
-    purpose: Literal["entries", "research", "research_code"] = "entries",
-) -> bytes:
-    if os.geteuid() == 0 or not job.resolve().is_relative_to(Path.home().resolve()):
-        raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
-    request = json.loads(read_bounded(job / "request.json"))
-    day = request["payload"]["captured_at"][:10]
-    material = model + request["promptSha256"]
-    if purpose != "entries":
-        material = purpose + ":" + material
-    pin = hashlib.sha256(material.encode()).hexdigest()[:16]
-    directory = job.parent / "memory" / f"{day}-{pin}"
-    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    # Fixed cwd is essential: per-job directories would change resumed context.
-    work = directory / "work"
-    work.mkdir(mode=0o700, exist_ok=True)
-    state_path = directory / "state.json"
-    state = json.loads(read_bounded(state_path)) if state_path.exists() else None
-    if state is not None and (
-        state.get("day") != day
-        or state.get("pin") != pin
-        or not isinstance(state.get("turns"), int)
-        or state["turns"] < 0
-        or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", state.get("threadId", ""))
+def token_usage(value: Any) -> dict[str, int] | None:
+    """Optional server telemetry, never an execution or billing authority."""
+    keys = (
+        "inputTokens",
+        "cachedInputTokens",
+        "outputTokens",
+        "reasoningOutputTokens",
+        "totalTokens",
+    )
+    if not isinstance(value, dict) or any(
+        type(value.get(k)) is not int or value[k] < 0 for k in keys
     ):
-        raise ValueError("CODEX_MEMORY_STATE_INVALID")
+        return None
+    if (
+        value["cachedInputTokens"] > value["inputTokens"]
+        or value["reasoningOutputTokens"] > value["outputTokens"]
+        or value["totalTokens"] != value["inputTokens"] + value["outputTokens"]
+    ):
+        return None
+    return {k: value[k] for k in keys}
+
+
+def server_command(model: str, effort: str = "low") -> list[str]:
     command = ["codex", "app-server", "--listen", "stdio://"]
     config: dict[str, Any] = {
         "model": model,
         "approval_policy": "never",
         "sandbox_mode": "read-only",
         "web_search": "disabled",
-        "model_reasoning_effort": "low",
+        "model_reasoning_effort": effort,
         "project_doc_max_bytes": 0,
         "features.shell_tool": False,
         "features.unified_exec": False,
@@ -230,6 +231,48 @@ def invoke_daily(
             config[f"mcp_servers.{name}.enabled"] = False
     for key, value in config.items():
         command.extend(["-c", key + "=" + json.dumps(value)])
+    return command
+
+
+def invoke_daily(
+    prompt: str,
+    job: Path,
+    *,
+    schema: dict[str, Any],
+    model: str,
+    timeout: int = 90,
+    purpose: Literal["entries", "research", "research_code"] = "entries",
+    effort: Literal["low", "medium"] = "low",
+) -> bytes:
+    if os.geteuid() == 0 or not job.resolve().is_relative_to(Path.home().resolve()):
+        raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
+    request = json.loads(read_bounded(job / "request.json"))
+    day = request["payload"]["captured_at"][:10]
+    material = model + request["promptSha256"]
+    if purpose != "entries":
+        material = purpose + ":" + material
+    pin = hashlib.sha256(material.encode()).hexdigest()[:16]
+    directory = job.parent / "memory" / f"{day}-{pin}"
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # Fixed cwd is essential: per-job directories would change resumed context.
+    work = directory / "work"
+    work.mkdir(mode=0o700, exist_ok=True)
+    state_path = directory / "state.json"
+    state = json.loads(read_bounded(state_path)) if state_path.exists() else None
+    if state is not None and (
+        state.get("day") != day
+        or state.get("pin") != pin
+        or type(state.get("turns")) is not int
+        or state["turns"] < 0
+        or state.get("contextPolicy") not in {None, CONTEXT_POLICY}
+        or ("effort" in state and state["effort"] not in {"low", "medium"})
+        or ("pending" in state and type(state["pending"]) is not bool)
+        or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", state.get("threadId", ""))
+    ):
+        raise ValueError("CODEX_MEMORY_STATE_INVALID")
+    if state is not None and state.get("pending") and state.get("effort", "low") != effort:
+        raise ValueError("CODEX_MEMORY_EFFORT_UNRESOLVED")
+    command = server_command(model, effort)
     process = subprocess.Popen(
         command,
         cwd=work,
@@ -280,18 +323,51 @@ def invoke_daily(
             state is not None and thread != state["threadId"]
         ):
             raise ValueError("CODEX_THREAD_MISMATCH")
-        if result["thread"].get("status", {}).get("type") == "active":
+        if result["thread"].get("status", {}).get("type") != "idle":
             raise ValueError("CODEX_PREVIOUS_TURN_UNRESOLVED")
-        state = state or {"day": day, "pin": pin, "threadId": thread, "turns": 0}
+        if purpose != "entries" and state is not None and state.get("pending") is not False:
+            raise ValueError("CODEX_RESEARCH_CONTEXT_UNRESOLVED")
+        if (
+            state is not None
+            and state.get("pending") is False
+            and (
+                state["turns"] >= (MAX_THREAD_TURNS if purpose == "entries" else 1)
+                or state.get("contextPolicy") != CONTEXT_POLICY
+                or state.get("effort", "low") != effort
+            )
+        ):
+            # Planned, journaled rollover: old idle thread and every job stay intact.
+            result = rpc.request("thread/start", {**common, "ephemeral": False})
+            next_thread = result["thread"]["id"]
+            if (
+                not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", next_thread)
+                or next_thread == thread
+                or result["thread"].get("status", {}).get("type") != "idle"
+            ):
+                raise ValueError("CODEX_THREAD_MISMATCH")
+            publish(
+                job / "context-rotation.json",
+                {
+                    "contextPolicy": CONTEXT_POLICY,
+                    "previousThreadId": thread,
+                    "threadId": next_thread,
+                    "completedTurns": state["turns"],
+                    "reason": "COMPLETED_TURN_LIMIT"
+                    if state.get("contextPolicy") == CONTEXT_POLICY
+                    else "LEGACY_POLICY_TRANSITION",
+                },
+            )
+            thread, state = next_thread, None
+        state = state or {
+            "day": day,
+            "pin": pin,
+            "threadId": thread,
+            "turns": 0,
+            "pending": False,
+            "contextPolicy": CONTEXT_POLICY,
+            "effort": effort,
+        }
         state_write(state_path, state)
-        compacted = False
-        if state["turns"] >= COMPACT_EVERY:
-            rpc.request("thread/compact/start", {"threadId": thread})
-            compact_id, _ = rpc.completed(thread, None, compact=True)
-            publish(job / "compaction.json", {"threadId": thread, "turnId": compact_id})
-            state["turns"] = 0
-            state_write(state_path, state)
-            compacted = True
         # Persist provenance before dispatch; no unknown turn is replayed.
         publish(
             job / "memory-dispatch.json",
@@ -303,19 +379,39 @@ def invoke_daily(
         )
         state["pending"] = True
         state_write(state_path, state)
+        if purpose != "entries":
+            governor.dispatch(job)
         reply = rpc.request(
             "turn/start",
             {
                 "threadId": thread,
                 "model": model,
-                "effort": "low",
+                "effort": effort,
                 "input": [{"type": "text", "text": prompt, "text_elements": []}],
                 "outputSchema": schema,
             },
         )
         turn = reply["turn"]["id"]
         _, text = rpc.completed(thread, turn)
-        memory = {"day": day, "threadId": thread, "turnId": turn, "compacted": compacted}
+        if purpose != "entries":
+            governor.complete(job, getattr(rpc, "usage", None))
+        publish(
+            job / "token-usage.json",
+            {
+                "version": "codex-token-usage-1.0",
+                "recordedAt": datetime.now(UTC).isoformat(),
+                "capturedAt": request["payload"]["captured_at"],
+                "threadId": thread,
+                "turnId": turn,
+                "tokens": getattr(rpc, "usage", None),
+                "model": model,
+                "effort": effort,
+                "purpose": purpose,
+                "costAmount": None,
+                "subscriptionCharge": None,
+            },
+        )
+        memory = {"day": day, "threadId": thread, "turnId": turn, "compacted": False}
         publish(job / "memory-result.json", memory)
         state["turns"] += 1
         state["pending"] = False

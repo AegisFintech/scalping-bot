@@ -169,8 +169,11 @@ gates, manufacture a trade or increase risk to maintain frequency.
   positions or unresolved events, unique durable claim). Never rearm an old map.
   Derived local proposals are not paid provider requests.
 - Daily Codex threads are isolated and pinned to model/prompt/day with serialized
-  durable claims and bounded compaction. Memory never replaces fresh evidence or
-  changes risk; summaries never replace the immutable journal. A new prompt/hash/day
+  durable claims. `bounded-turns-v2` rotates after four trading/one research completed requests only
+  after exact idle verification and a durable rotation receipt; an explicit safe
+  legacy transition replaces the old compaction policy. Pending/unknown/error
+  states never justify rollover; all old sessions remain. Memory never replaces
+  fresh evidence or changes risk; summaries never replace the immutable journal. A new prompt/hash/day
   uses a new thread; never resume an old prompt's thread as current authority or
   silently replace a thread after corrupt state or resume failure.
 - Prompt/request/response/schema versions are additive. Old prompt bytes, schemas,

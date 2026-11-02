@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from python.learning import governor
 from python.operations import publisher_service as admission
 from python.operations import research_delivery as delivery
 from python.operations import research_publisher as publisher
@@ -120,8 +121,8 @@ def fetch_envelope(digest: str, config: dict[str, Any]) -> bytes:
     return bounded(root / (digest + ".json"), publisher.MAX_REQUEST)
 
 
-def model_review(value: ReviewInput) -> dict[str, Any]:
-    raw = encoded(value.model_dump())
+def model_review(value: ReviewInput, *, admission_only: bool = False) -> dict[str, Any]:
+    raw = encoded({**value.model_dump(), **({"admissionOnly": True} if admission_only else {})})
     if len(raw) > 64000:
         raise ValueError("REVIEW_INPUT_OVERSIZED")
     result = publisher.command(
@@ -187,6 +188,12 @@ def inspect_models(job: Path, payload: publisher.SignedPublication, digest: str,
             if (job / (axis + "-claim.json")).exists():
                 result = saved_model(value)
             else:
+                if governor.CONFIG.exists():
+                    admission = model_review(value, admission_only=True)
+                    if admission.get("job") != sha(encoded(value.model_dump())):
+                        raise ValueError("REVIEW_ADMISSION_BINDING")
+                    if admission.get("status") != "ADMITTED":
+                        return str(admission.get("status", "WAITING_LEARNING_UNKNOWN"))
                 immutable(
                     job / (axis + "-claim.json"), {"inputSha256": sha(encoded(value.model_dump()))}
                 )

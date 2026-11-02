@@ -404,3 +404,24 @@ def test_model_review_receives_the_enforced_supported_input_domain(context, monk
     monkeypatch.setattr(reviewer, "model_review", model)
     assert process(context)["status"] == "READY_PENDING_RECHECK"
     assert [v.axis for v in values] == ["standards", "spec"]
+
+
+def test_resource_wait_precedes_root_axis_claim(context, monkeypatch, tmp_path):
+    from python.learning import governor
+
+    marker = tmp_path / "resource-policy.json"
+    marker.write_text("{}")
+    monkeypatch.setattr(governor, "CONFIG", marker)
+    calls = []
+
+    def reserve(value, *, admission_only=False):
+        assert admission_only
+        calls.append(value.axis)
+        return {"status": "WAITING_LEARNING_PAUSED", "job": sha(encoded(value.model_dump()))}
+
+    monkeypatch.setattr(reviewer, "model_review", reserve)
+    result = process(context)
+    assert "WAITING_LEARNING_PAUSED" in str(result)
+    assert calls == ["standards"]
+    assert not list(tmp_path.rglob("standards-claim.json"))
+    assert context.calls == []

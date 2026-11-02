@@ -10,6 +10,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field, model_validator
 
+from python.learning import governor
 from python.research.codex_loop import StrictModel
 from python.research.experiment_registry import Registry, read
 from python.research.learning_archive import immutable, unique
@@ -92,6 +93,9 @@ def evaluate(
             if len(prompt.encode()) > 64000:
                 raise ValueError("REVIEW_INPUT_OVERSIZED")
             if not (job / "response.json").exists():
+                admission = governor.prepare(job, prompt, "review")
+                if admission is not None:
+                    return {**admission, "job": key}
                 immutable(
                     job / "request.json",
                     {

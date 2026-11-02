@@ -87,7 +87,9 @@ def main() -> None:
             Path.home() / "health.json", {"checkedAt": datetime.now(UTC).isoformat(), **status}
         )
         print(status["status"])
-        if status["status"] not in {"CLOSED", "REVIEW_COOLDOWN"}:
+        if status["status"] not in {"CLOSED", "REVIEW_COOLDOWN", "NO_NEW_EVIDENCE"} and not status[
+            "status"
+        ].startswith("WAITING_LEARNING_"):
             raise SystemExit(1)
     except Exception as error:
         reason = (

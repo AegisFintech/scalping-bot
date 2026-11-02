@@ -1,0 +1,230 @@
+"""Separate learning view and authenticated controls; no inference on browser reads."""
+
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+import resource
+import secrets
+import subprocess
+import tempfile
+import time
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
+
+from python.learning.budget import Policy
+
+ASSETS = Path(__file__).with_name("assets")
+ADMIN = Path("/etc/scalper-learning-ui/admin-token")
+SSH = Path("/etc/scalper-learning-ui/ssh.conf")
+router = APIRouter()
+COOKIE = "learning_session"
+HEADERS = {
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; "
+    "style-src 'self'; frame-ancestors 'none'; base-uri 'none'",
+}
+
+
+def remote(value: dict[str, Any]) -> dict[str, Any]:
+    raw = json.dumps(value, ensure_ascii=False).encode()
+    if len(raw) > 8192:
+        raise ValueError("LEARNING_CONTROL_OVERSIZED")
+
+    def limit() -> None:
+        resource.setrlimit(resource.RLIMIT_FSIZE, (65537, 65537))
+
+    with tempfile.TemporaryFile() as output:
+        subprocess.run(
+            ["ssh", "-F", str(SSH), "learning-control"],
+            input=raw,
+            stdout=output,
+            stderr=subprocess.DEVNULL,
+            timeout=8,
+            check=True,
+            preexec_fn=limit,
+            env={"HOME": "/root", "PATH": "/usr/bin:/bin", "LANG": "C.UTF-8"},
+        )
+        output.seek(0)
+        data = output.read(65537)
+    if len(data) > 65536:
+        raise ValueError("LEARNING_STATUS_OVERSIZED")
+    return dict(json.loads(data))
+
+
+def load() -> dict[str, Any]:
+    try:
+        result = remote({"action": "status"})
+    except (OSError, ValueError, subprocess.SubprocessError):
+        result = {"available": False, "reason": "LEARNING_UNAVAILABLE"}
+    try:
+        token_path = Path("/etc/scalper-learning-ui/provider-control-token")
+        token = secret(token_path).decode()
+        req = urllib.request.Request(
+            "http://127.0.0.1:8084/v1/provider-status", headers={"Authorization": "Bearer " + token}
+        )
+        with urllib.request.urlopen(req, timeout=3) as reply:
+            raw = reply.read(65537)
+        if len(raw) > 65536:
+            raise ValueError("PROVIDER_STATUS_OVERSIZED")
+        result["trade"] = json.loads(raw)
+    except (OSError, ValueError):
+        result["trade"] = None
+    return result
+
+
+def secret(path: Path | None = None) -> bytes:
+    path = path or ADMIN
+    if path.is_symlink() or path.stat().st_uid != 0 or path.stat().st_mode & 0o077:
+        raise ValueError("LEARNING_AUTH_INVALID")
+    value = path.read_bytes().strip()
+    if len(value) < 32:
+        raise ValueError("LEARNING_AUTH_INVALID")
+    return value
+
+
+def session(request: Request) -> bool:
+    value = request.cookies.get(COOKIE, "")
+    if len(value) > 512:
+        return False
+    try:
+        payload, signature = value.rsplit(".", 1)
+        at, nonce = payload.split(":")
+        return bool(
+            nonce
+            and 0 <= time.time() - int(at) < 28800
+            and hmac.compare_digest(
+                signature, hmac.new(secret(), payload.encode(), hashlib.sha256).hexdigest()
+            )
+        )
+    except (ValueError, OSError):
+        return False
+
+
+def write_origin(request: Request) -> None:
+    host = request.headers.get("host", "")
+    if (
+        request.headers.get("origin") not in {"http://" + host, "https://" + host}
+        or request.headers.get("x-learning-control") != "1"
+    ):
+        raise HTTPException(403, "LEARNING_ORIGIN_REQUIRED")
+
+
+async def body(request: Request) -> dict[str, Any]:
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw) > 8192:
+            raise HTTPException(413, "LEARNING_INPUT_OVERSIZED")
+    try:
+        value = json.loads(raw)
+        if not isinstance(value, dict):
+            raise ValueError()
+        return value
+    except ValueError:
+        raise HTTPException(422, "LEARNING_INPUT_INVALID") from None
+
+
+@router.get("/learning")
+@router.get("/learning/")
+def page() -> FileResponse:
+    return FileResponse(ASSETS / "learning.html", headers=HEADERS)
+
+
+@router.get("/learning/assets/{name}")
+def asset(name: str) -> FileResponse:
+    if name not in {"learning.css", "learning.mjs"}:
+        raise HTTPException(404)
+    return FileResponse(
+        ASSETS / name,
+        media_type="text/css" if name.endswith(".css") else "text/javascript",
+        headers=HEADERS,
+    )
+
+
+@router.post("/api/learning/login")
+async def login(request: Request) -> JSONResponse:
+    write_origin(request)
+    value = await body(request)
+    supplied = value.get("token")
+    try:
+        valid = isinstance(supplied, str) and hmac.compare_digest(supplied.encode(), secret())
+    except (OSError, ValueError):
+        valid = False
+    if not valid:
+        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
+    payload = str(int(time.time())) + ":" + secrets.token_hex(16)
+    cookie = payload + "." + hmac.new(secret(), payload.encode(), hashlib.sha256).hexdigest()
+    response = JSONResponse({"authenticated": True}, headers=HEADERS)
+    response.set_cookie(
+        COOKIE,
+        cookie,
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="strict",
+        max_age=28800,
+        path="/",
+    )
+    return response
+
+
+@router.get("/api/learning")
+def current(request: Request) -> JSONResponse:
+    if not session(request):
+        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
+    result = request.app.state.learning_reader.poll()
+    return JSONResponse(
+        {"readState": result.state, "data": result.value if result.state == "ready" else None},
+        headers=HEADERS,
+    )
+
+
+@router.post("/api/learning/control")
+async def control(request: Request) -> JSONResponse:
+    write_origin(request)
+    if not session(request):
+        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
+    value = await body(request)
+    try:
+        policy = Policy.model_validate(value)
+        if "sk-" in policy.guidance or "PRIVATE KEY" in policy.guidance:
+            raise ValueError()
+        result = remote({"action": "update", "policy": policy.model_dump()})
+    except (ValueError, OSError, subprocess.SubprocessError):
+        raise HTTPException(503, "LEARNING_CONTROL_UNAVAILABLE") from None
+    return JSONResponse(result, headers=HEADERS)
+
+
+@router.post("/api/learning/trading-control")
+async def trading_control(request: Request) -> JSONResponse:
+    write_origin(request)
+    if not session(request):
+        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
+    value = await body(request)
+    if (
+        set(value) != {"paused", "dailyLimitMicroUsd"}
+        or type(value["paused"]) is not bool
+        or type(value["dailyLimitMicroUsd"]) is not int
+    ):
+        raise HTTPException(422, "PROVIDER_CONTROL_INVALID")
+    try:
+        token = secret(Path("/etc/scalper-learning-ui/provider-control-token")).decode()
+        req = urllib.request.Request(
+            "http://127.0.0.1:8084/v1/provider-control",
+            data=json.dumps(value).encode(),
+            headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=3) as reply:
+            raw = reply.read(65537)
+        if len(raw) > 65536:
+            raise ValueError()
+        return JSONResponse(json.loads(raw), headers=HEADERS)
+    except (OSError, ValueError):
+        raise HTTPException(503, "PROVIDER_CONTROL_UNAVAILABLE") from None

@@ -228,3 +228,21 @@ def test_changed_interpretation_cannot_be_attributed_to_saved_response(tmp_path:
     with pytest.raises(ValueError, match="FINDING_BINDING_INVALID"):
         run(tmp_path, packet(), invoke=lambda *_: pytest.fail("call"))
     assert not (directory / "closed.json").exists()
+
+
+def test_empty_observations_wait_without_paid_interpretation(tmp_path: Path) -> None:
+    value = packet(contexts=[])
+    status = run(tmp_path, value, invoke=lambda *_: pytest.fail("empty research dispatch"))
+    assert status["status"] == "NO_NEW_EVIDENCE"
+    assert not list(tmp_path.rglob("claim.json"))
+    assert (job(tmp_path) / "diagnostic.json").exists()
+
+
+def test_slot_cooldown_does_not_reserve_resource_budget(tmp_path, monkeypatch):
+    run(tmp_path, packet())
+    monkeypatch.setattr(c.governor, "prepare", lambda *_: pytest.fail("cooldown reserved tokens"))
+    value = packet(start="2026-10-28T00:01:00+00:00")
+    assert (
+        run(tmp_path, value, invoke=lambda *_: pytest.fail("provider"))["status"]
+        == "REVIEW_COOLDOWN"
+    )
