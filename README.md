@@ -128,11 +128,11 @@ Cloudflare Access, with no second admin-key prompt; control write checks remain.
 [Execution research visibility](docs/execution-research-report.md) separates recorded
 WAIT/nonfill/latency measurements from code-generation waits and unexecuted baselines.
 
-<!-- research-publication -->
-
-Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.
-
 The separate [native entry-range study](docs/entry-range-study-report.md) freezes
 10-vs30-point observational collection without changing demo orders or promoting
 a candidate. Unknown-clock fills remain visible. Actual activation/evidence is
 recorded on issue #499. Metadata warm-up does not backdate outcome collection.
+
+<!-- research-publication -->
+
+Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.
