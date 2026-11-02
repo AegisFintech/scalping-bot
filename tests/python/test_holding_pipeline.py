@@ -266,7 +266,13 @@ def test_expired_unsent_archive_keeps_history_and_allows_later_relevant_guidance
     assert pipeline.cycle(root, {})["status"] == "REJECTED_RESEARCH_EVIDENCE"
     monkeypatch.setattr(pacing, "relevant", lambda *_: True)
     clock += timedelta(hours=1)
-    assert pipeline.cycle(root, {})["status"] == "WAITING_RESEARCH_DUPLICATE"
+    state = json.loads((root / "state.json").read_text())
+    state["reason"] = "PUBLICATION_ATTESTATION_STALE"
+    state["publicationRetirement"] = {"reason": "PUBLICATION_ATTESTATION_STALE"}
+    (root / "state.json").write_bytes(encoded(state))
+    waiting = pipeline.cycle(root, {})
+    assert waiting["status"] == waiting["reason"] == "WAITING_RESEARCH_DUPLICATE"
+    assert waiting["publicationRetirement"] == state["publicationRetirement"]
     monkeypatch.setattr(
         pipeline.task, "PROMPT", pipeline.task.PROMPT + "\nReviewed relevant correction."
     )
@@ -310,3 +316,4 @@ def test_terminal_publication_on_unchanged_main_returns_to_evidence_discovery(
     monkeypatch.setattr(pipeline, "transfer", transfer)
     result = pipeline.cycle(tmp_path, {"queue": str(tmp_path / "queue")})
     assert result["status"] == "WAITING_RESEARCH_DUPLICATE" and calls == ["discover"]
+    assert result["reason"] == "WAITING_RESEARCH_DUPLICATE"

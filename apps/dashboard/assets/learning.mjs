@@ -20,13 +20,41 @@ async function call(path, body) {
     );
   return r.json();
 }
+function renderFunnel(d) {
+  const funnelState = d.executionFunnelReadState ?? "UNAVAILABLE";
+  const f = ["CURRENT", "STALE"].includes(funnelState)
+    ? d.executionFunnel
+    : null;
+  $("funnel-window").textContent = f
+    ? `RECORDED ${funnelState} · Window ${f.start} to ${f.until} · snapshot ${f.journalSnapshotAt}`
+    : "Recorded execution measurement unavailable";
+  $("funnel-decisions").textContent = f
+    ? `Context rows ${f.contexts}: BUY ${f.decisionCounts.BUY ?? 0} · SELL ${f.decisionCounts.SELL ?? 0} · WAIT ${f.decisionCounts.WAIT ?? 0} · UNKNOWN ${f.decisionCounts.UNKNOWN ?? 0}`
+    : "";
+  $("funnel-orders").textContent = f
+    ? `Order rows ${f.orderRecords} · mapped broker acceptance ${f.brokerAcceptedOrderRecords} · any recorded filled volume ${f.filledOrderRecords} · partial ${f.partialOrderRecords} · window closes ${f.windowClosedRows}`
+    : "";
+  $("funnel-baseline").textContent = f
+    ? `Research baseline: BUY ${f.researchBaselineDecisions.BUY ?? 0} · SELL ${f.researchBaselineDecisions.SELL ?? 0} · WAIT ${f.researchBaselineDecisions.WAIT ?? 0}. Unexecuted hypotheses; no fill/profit evidence.`
+    : "";
+  $("funnel-latency").textContent = f
+    ? `Availability → acceptance: ${f.availabilityToAcceptance.known} known / ${f.availabilityToAcceptance.unknown} unknown · p50 ${f.availabilityToAcceptance.p50Micros ?? "unavailable"} µs. Local request → availability: ${f.requestToAvailability.known} known / ${f.requestToAvailability.unknown} unknown.`
+    : "";
+}
+
+function withhold(message) {
+  renderFunnel({});
+  $("board").hidden = true;
+  $("state").textContent = message;
+}
+
 function render(d) {
   const p = d.pipeline;
   $("pipeline-health").textContent = p?.available
     ? "Fresh observed pipeline state"
     : "Pipeline unavailable or stale; progress withheld";
   $("pipeline-generation").textContent = p?.generation
-    ? `Generation: ${p.generation.status} · ${p.generation.reason || ""}`
+    ? `Code generation: ${p.generation.status} · ${p.generation.reason || ""}`
     : "Generation status unavailable";
   $("pipeline-publisher").textContent = p?.publisher
     ? `Publisher: ${p.publisher.status} · ${p.publisher.reason}`
@@ -37,6 +65,8 @@ function render(d) {
   $("pipeline-age").textContent = p?.lastPublicationActivityAt
     ? `Last publication activity: ${p.lastPublicationActivityAt} · ${p.publicationAgeSeconds}s ago. Heartbeats do not count as progress.`
     : "No verified publication activity time";
+
+  renderFunnel(d);
 
   const t = d.trade;
   $("trade").textContent = t?.budget
@@ -108,17 +138,17 @@ function render(d) {
   $("next").textContent = d.observation
     ? `Observation: ${d.observation.status} · ${d.observation.blocker || ""} · next ${d.observation.scheduledNextReviewAt || "unavailable"}`
     : "Research status unavailable; no progress inferred.";
-  const f = d.finding || {};
-  $("summary").textContent = f.summary || "No verified finding available";
-  $("question").textContent = f.nextQuestion || "";
+  const finding = d.finding || {};
+  $("summary").textContent = finding.summary || "No verified finding available";
+  $("question").textContent = finding.nextQuestion || "";
   $("finding-time").textContent = d.findingRecordedAt
     ? `Recorded ${d.findingRecordedAt} · window ${d.findingWindow?.start || "unknown"} to ${d.findingWindow?.until || "unknown"}`
     : "Finding time unavailable";
-  $("evidence").textContent = f.requiredEvidence
-    ? `Required evidence: ${f.requiredEvidence}`
+  $("evidence").textContent = finding.requiredEvidence
+    ? `Required evidence: ${finding.requiredEvidence}`
     : "";
-  $("falsification").textContent = f.falsificationTest
-    ? `Rejection rule: ${f.falsificationTest}`
+  $("falsification").textContent = finding.falsificationTest
+    ? `Rejection rule: ${finding.falsificationTest}`
     : "";
   $("history").replaceChildren(
     ...(d.recent || []).map((r) => {
@@ -140,11 +170,12 @@ async function poll() {
   busy = true;
   try {
     const v = await call("/api/learning");
-    $("board").hidden = false;
-    if (v.data) render(v.data);
-    else $("state").textContent = `Evidence ${v.readState}; values withheld`;
+    if (v.data) {
+      $("board").hidden = false;
+      render(v.data);
+    } else withhold(`Evidence ${v.readState}; values withheld`);
   } catch (e) {
-    $("state").textContent = e.message;
+    withhold(e.message);
   } finally {
     busy = false;
   }

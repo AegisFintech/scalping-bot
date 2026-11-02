@@ -123,6 +123,9 @@ The [private learning console](docs/completion491-report.md) relies on existing
 Cloudflare Access, with no second admin-key prompt; control write checks remain.
 [Verified deployment](docs/evidence/completion491-activation.json).
 
+[Execution research visibility](docs/execution-research-report.md) separates recorded
+WAIT/nonfill/latency measurements from code-generation waits and unexecuted baselines.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

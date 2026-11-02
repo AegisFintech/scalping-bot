@@ -1,3 +1,18 @@
+### ISSUE-494 — Fresh execution research and explicit waits
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/494.
+- Acceptance: new observation diagnostics/prompts measure complete recorded entry
+  funnel, baseline hypotheses and known/unknown clocks; bound typed display to
+  finding/plan/window with explicit stale/unavailable/read-failure handling; correct
+  current admission reason while retaining retirement proof and every old claim.
+- Dependencies: matching source-pinned observer/controller/dashboard deployment,
+  normal fresh-window review and actual prompt/claim/finding/closure readback.
+- Status: measured implementation, regression checks and both independent review
+  axes complete. Qualification is recorded in the report; authoritative reviewed
+  delivery/activation status and exact receipt remain on the linked issue.
+  Trading policy, cadence, budgets, old study pins and unknown claims are unchanged.
+- Evidence: `docs/execution-research-report.md`.
+
 ### ISSUE-491 — Private learning console and metadata receipt repair
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/491; follows PR#490.

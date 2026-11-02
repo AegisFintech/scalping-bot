@@ -1,0 +1,312 @@
+{
+  "$defs": {
+    "Latency": {
+      "additionalProperties": false,
+      "properties": {
+        "known": {
+          "minimum": 0,
+          "title": "Known",
+          "type": "integer"
+        },
+        "unknown": {
+          "minimum": 0,
+          "title": "Unknown",
+          "type": "integer"
+        },
+        "p50Micros": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P50Micros"
+        },
+        "p95Micros": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P95Micros"
+        },
+        "maximumMicros": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maximummicros"
+        }
+      },
+      "required": [
+        "known",
+        "unknown",
+        "p50Micros",
+        "p95Micros",
+        "maximumMicros"
+      ],
+      "title": "Latency",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "execution-funnel-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "sourceId": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "journalSnapshotAt": {
+      "title": "Journalsnapshotat",
+      "type": "string"
+    },
+    "contexts": {
+      "minimum": 0,
+      "title": "Contexts",
+      "type": "integer"
+    },
+    "analyses": {
+      "minimum": 0,
+      "title": "Analyses",
+      "type": "integer"
+    },
+    "setups": {
+      "minimum": 0,
+      "title": "Setups",
+      "type": "integer"
+    },
+    "orderRecords": {
+      "minimum": 0,
+      "title": "Orderrecords",
+      "type": "integer"
+    },
+    "brokerAcceptedOrderRecords": {
+      "minimum": 0,
+      "title": "Brokeracceptedorderrecords",
+      "type": "integer"
+    },
+    "filledOrderRecords": {
+      "minimum": 0,
+      "title": "Filledorderrecords",
+      "type": "integer"
+    },
+    "partialOrderRecords": {
+      "minimum": 0,
+      "title": "Partialorderrecords",
+      "type": "integer"
+    },
+    "recordedFillRows": {
+      "minimum": 0,
+      "title": "Recordedfillrows",
+      "type": "integer"
+    },
+    "windowClosedRows": {
+      "minimum": 0,
+      "title": "Windowclosedrows",
+      "type": "integer"
+    },
+    "decisionCounts": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Decisioncounts",
+      "type": "object"
+    },
+    "researchBaselineDefinition": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+      "title": "Researchbaselinedefinition",
+      "type": "string"
+    },
+    "researchBaselineDecisions": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Researchbaselinedecisions",
+      "type": "object"
+    },
+    "researchBaselineReasons": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Researchbaselinereasons",
+      "type": "object"
+    },
+    "researchBaselineCounterfactualFill": {
+      "title": "Researchbaselinecounterfactualfill",
+      "type": "null"
+    },
+    "analysisStates": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Analysisstates",
+      "type": "object"
+    },
+    "analysisReasons": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Analysisreasons",
+      "type": "object"
+    },
+    "setupStates": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Setupstates",
+      "type": "object"
+    },
+    "orderStates": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Orderstates",
+      "type": "object"
+    },
+    "roleCounts": {
+      "additionalProperties": {
+        "patternProperties": {
+          "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "propertyNames": {
+        "enum": ["contexts", "analyses", "setups", "flight"]
+      },
+      "title": "Rolecounts",
+      "type": "object"
+    },
+    "requestToAvailability": {
+      "$ref": "#/$defs/Latency"
+    },
+    "availabilityToAcceptance": {
+      "$ref": "#/$defs/Latency"
+    },
+    "latencyBasis": {
+      "const": "LOCAL_CONTEXT_CLOCKS_AND_MAPPED_CAUSAL_BROKER_ACCEPTANCE",
+      "title": "Latencybasis",
+      "type": "string"
+    },
+    "quantiles": {
+      "const": "NEAREST_RANK",
+      "title": "Quantiles",
+      "type": "string"
+    },
+    "coverage": {
+      "const": "ALL_PACKET_ROWS_WITH_ROLES_NOT_NEW_TRADES_OR_MARKET_OPPORTUNITIES",
+      "title": "Coverage",
+      "type": "string"
+    },
+    "counterfactualNet": {
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packetSha256",
+    "sourceId",
+    "start",
+    "until",
+    "journalSnapshotAt",
+    "contexts",
+    "analyses",
+    "setups",
+    "orderRecords",
+    "brokerAcceptedOrderRecords",
+    "filledOrderRecords",
+    "partialOrderRecords",
+    "recordedFillRows",
+    "windowClosedRows",
+    "decisionCounts",
+    "researchBaselineDefinition",
+    "researchBaselineDecisions",
+    "researchBaselineReasons",
+    "researchBaselineCounterfactualFill",
+    "analysisStates",
+    "analysisReasons",
+    "setupStates",
+    "orderStates",
+    "roleCounts",
+    "requestToAvailability",
+    "availabilityToAcceptance",
+    "latencyBasis",
+    "quantiles",
+    "coverage",
+    "counterfactualNet",
+    "economicQualification",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "ExecutionFunnel",
+  "type": "object"
+}
