@@ -15,7 +15,7 @@ from typing import Any, Literal
 from python.operations import research_publisher as publisher
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.isolated_worker import trusted_path as protected
-from python.research.learning_archive import bounded, immutable, unique
+from python.research.learning_archive import atomic_bytes, bounded, immutable, unique
 from python.research.learning_evidence import Digest, Instant, encoded
 from python.research.observation_cycle import sha
 
@@ -71,15 +71,23 @@ def retire(
     with queue_lock(queue):
         queued = queue / (digest + ".json")
         archived = job / "retired-envelope.json"
+        retired_directory = queue / "retired"
+        if retired_directory.is_symlink():
+            raise ValueError("PUBLICATION_RETIREMENT_CONFLICT")
+        if retired_directory.exists():
+            protected(retired_directory)
+        retired_envelope = retired_directory / (digest + ".json")
         receipt = job / "publication-retirement.json"
         signed = json.loads(bounded(job / "signed.json", 8192), object_pairs_hook=unique)
         if signed.get("publicationSha256") != digest:
             raise ValueError("PUBLICATION_RETIREMENT_BINDING")
-        if archived.exists():
+        if not queued.exists() and (archived.exists() or retired_envelope.exists()):
             if (
-                queued.exists()
+                not archived.exists()
+                or not retired_envelope.exists()
                 or not receipt.exists()
                 or sha(bounded(archived, publisher.MAX_REQUEST)) != signed["envelopeSha256"]
+                or sha(bounded(retired_envelope, publisher.MAX_REQUEST)) != signed["envelopeSha256"]
             ):
                 raise ValueError("PUBLICATION_RETIREMENT_CONFLICT")
             result = RetirementReceipt.model_validate_json(bounded(receipt, 8192)).model_dump()
@@ -177,8 +185,20 @@ def retire(
         else:
             result = RetirementReceipt.model_validate(result).model_dump()
             immutable(receipt, result)
-        os.rename(queued, archived)
-        for directory in (job, queue):
+        # systemd mounts queue and private authority separately: cross-mount rename
+        # is EXDEV even on one backing filesystem. Copy evidence first, then move
+        # atomically inside the queue mount; retain both on interrupted completion.
+        if archived.exists():
+            if bounded(archived, publisher.MAX_REQUEST) != raw:
+                raise ValueError("PUBLICATION_RETIREMENT_CONFLICT")
+        else:
+            atomic_bytes(archived, raw, replace=False)
+        retired_directory.mkdir(mode=0o700, exist_ok=True)
+        protected(retired_directory)
+        if retired_envelope.exists():
+            raise ValueError("PUBLICATION_RETIREMENT_CONFLICT")
+        os.rename(queued, retired_envelope)
+        for directory in (job, queue, retired_directory):
             descriptor = os.open(directory, os.O_DIRECTORY)
             try:
                 os.fsync(descriptor)

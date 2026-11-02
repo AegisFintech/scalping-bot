@@ -130,3 +130,23 @@ def test_confirmed_terminal_publication_is_preserved_and_does_not_block_rollover
         is True
     )
     assert confirmed and (queue / (digest + ".json")).read_bytes() == raw
+
+
+def test_hardened_separate_mounts_never_require_cross_mount_rename(layout, monkeypatch):
+    import errno
+    from pathlib import Path
+
+    job, queue, state, signers, digest, raw = layout
+    original = lifecycle.os.rename
+
+    def namespace_rename(source, target):
+        if not Path(target).is_relative_to(queue):
+            raise OSError(errno.EXDEV, "separate systemd bind mounts")
+        return original(source, target)
+
+    monkeypatch.setattr(lifecycle.os, "rename", namespace_rename)
+    result = lifecycle.retire(job, queue, state, signers, digest, "a" * 40, NOW + timedelta(days=2))
+    assert result["noDispatchIntent"]
+    assert (queue / "retired" / (digest + ".json")).read_bytes() == raw
+    assert (job / "retired-envelope.json").read_bytes() == raw
+    assert not (queue / (digest + ".json")).exists()

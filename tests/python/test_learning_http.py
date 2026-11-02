@@ -10,13 +10,6 @@ from apps.dashboard.background import PollResult
 
 
 def client(tmp_path, monkeypatch):
-    token = tmp_path / "admin"
-    token.write_text("fixture-admin-" + ("a" * 32))
-    token.chmod(0o600)
-    monkeypatch.setattr(learning, "ADMIN", token)
-    # Exercise HTTP auth independently of the CI user's UID. Ownership itself
-    # is tested below, without weakening the production root-only requirement.
-    monkeypatch.setattr(learning, "secret", lambda _path=None: token.read_bytes().strip())
     app = FastAPI()
     app.include_router(learning.router)
 
@@ -25,11 +18,13 @@ def client(tmp_path, monkeypatch):
             return PollResult({"policy": {"paused": False}}, "ready", 1)
 
     app.state.learning_reader = Reader()
-    return TestClient(app), token.read_text()
+    return TestClient(app)
 
 
-def test_learning_authentication_csrf_and_read_only_polling(tmp_path, monkeypatch):
-    web, token = client(tmp_path, monkeypatch)
+def test_access_protected_learning_has_no_local_login_and_keeps_csrf_and_bounded_reads(
+    tmp_path, monkeypatch
+):
+    web = client(tmp_path, monkeypatch)
     monkeypatch.setattr(
         learning,
         "remote",
@@ -38,16 +33,11 @@ def test_learning_authentication_csrf_and_read_only_polling(tmp_path, monkeypatc
     assert web.get("/learning").status_code == 200
     assert web.get("/learning/assets/learning.mjs").status_code == 200
     assert web.get("/learning/assets/.env").status_code == 404
-    assert web.get("/api/learning").status_code == 401
-    assert web.post("/api/learning/login", json={"token": token}).status_code == 403
-    headers = {"origin": "http://testserver", "x-learning-control": "1"}
-    assert (
-        web.post("/api/learning/login", json={"token": "wrong"}, headers=headers).status_code == 401
-    )
-    response = web.post("/api/learning/login", json={"token": token}, headers=headers)
-    assert response.status_code == 200 and token not in response.text
-    assert "HttpOnly" in response.headers["set-cookie"]
     assert web.get("/api/learning").status_code == 200
+    assert 'id="login"' not in web.get("/learning").text
+    assert web.post("/api/learning/login", json={"token": "unused"}).status_code == 404
+    assert web.post("/api/learning/control", json={}).status_code == 403
+    assert web.post("/api/learning/trading-control", json={}).status_code == 403
     assert (
         web.post(
             "/api/learning/control",
@@ -58,10 +48,9 @@ def test_learning_authentication_csrf_and_read_only_polling(tmp_path, monkeypatc
     )
 
 
-def test_authenticated_direction_is_typed_and_audited_at_receiver(tmp_path, monkeypatch):
-    web, token = client(tmp_path, monkeypatch)
+def test_access_protected_direction_is_typed_and_audited_at_receiver(tmp_path, monkeypatch):
+    web = client(tmp_path, monkeypatch)
     headers = {"origin": "http://testserver", "x-learning-control": "1"}
-    web.post("/api/learning/login", json={"token": token}, headers=headers)
     calls = []
     monkeypatch.setattr(learning, "remote", lambda v: calls.append(v) or {"saved": True})
     policy = {
@@ -93,7 +82,7 @@ def test_authenticated_direction_is_typed_and_audited_at_receiver(tmp_path, monk
         (0, 0o100600, True, False),
     ],
 )
-def test_admin_secret_requires_root_private_regular_path(owner, mode, symlink, valid):
+def test_provider_control_secret_requires_root_private_regular_path(owner, mode, symlink, valid):
     path = Mock()
     path.is_symlink.return_value = symlink
     path.stat.return_value = SimpleNamespace(st_uid=owner, st_mode=mode)

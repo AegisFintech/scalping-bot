@@ -1,3 +1,15 @@
+### ISSUE-491 — Private learning console and metadata receipt repair
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/491; follows PR#490.
+- Acceptance: remove redundant app login behind operator-managed Cloudflare Access;
+  retain private origin, write checks and provider secrets; canonicalize actual
+  adapter timestamp before hashing; preserve original frozen registration and
+  independently freeze repaired future collection; support systemd same-mount
+  atomic retirement and interrupted receipt recovery; verify real deployment.
+- Status:47 focused tests, full2,614-test qualification, all config checks, browser
+  and both fresh review axes pass; pushed reviewed delivery/rollout pending. Trading policy remains unchanged.
+- Evidence: `docs/completion491-report.md`.
+
 ### ISSUE-489 — Complete research delivery and execution evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/489; dependencies #485/#486.

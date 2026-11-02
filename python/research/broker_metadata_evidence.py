@@ -125,6 +125,8 @@ def observation(
     try:
         if not isinstance(adapter_time, str) or timestamp(adapter_time) > received:
             adapter_time = None
+        else:
+            adapter_time = timestamp(adapter_time).isoformat()
     except ValueError:
         adapter_time = None
     reported = metadata.get("symbolName")

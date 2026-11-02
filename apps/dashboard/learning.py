@@ -1,15 +1,11 @@
-"""Separate learning view and authenticated controls; no inference on browser reads."""
+"""Learning controls behind Cloudflare Access; browser reads never run inference."""
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 import resource
-import secrets
 import subprocess
 import tempfile
-import time
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,10 +18,8 @@ from apps.dashboard.learning_progress import progress
 from python.learning.budget import Policy
 
 ASSETS = Path(__file__).with_name("assets")
-ADMIN = Path("/etc/scalper-learning-ui/admin-token")
 SSH = Path("/etc/scalper-learning-ui/ssh.conf")
 router = APIRouter()
-COOKIE = "learning_session"
 HEADERS = {
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
@@ -82,32 +76,13 @@ def load() -> dict[str, Any]:
     return result
 
 
-def secret(path: Path | None = None) -> bytes:
-    path = path or ADMIN
+def secret(path: Path) -> bytes:
     if path.is_symlink() or path.stat().st_uid != 0 or path.stat().st_mode & 0o077:
         raise ValueError("LEARNING_AUTH_INVALID")
     value = path.read_bytes().strip()
     if len(value) < 32:
         raise ValueError("LEARNING_AUTH_INVALID")
     return value
-
-
-def session(request: Request) -> bool:
-    value = request.cookies.get(COOKIE, "")
-    if len(value) > 512:
-        return False
-    try:
-        payload, signature = value.rsplit(".", 1)
-        at, nonce = payload.split(":")
-        return bool(
-            nonce
-            and 0 <= time.time() - int(at) < 28800
-            and hmac.compare_digest(
-                signature, hmac.new(secret(), payload.encode(), hashlib.sha256).hexdigest()
-            )
-        )
-    except (ValueError, OSError):
-        return False
 
 
 def write_origin(request: Request) -> None:
@@ -151,36 +126,8 @@ def asset(name: str) -> FileResponse:
     )
 
 
-@router.post("/api/learning/login")
-async def login(request: Request) -> JSONResponse:
-    write_origin(request)
-    value = await body(request)
-    supplied = value.get("token")
-    try:
-        valid = isinstance(supplied, str) and hmac.compare_digest(supplied.encode(), secret())
-    except (OSError, ValueError):
-        valid = False
-    if not valid:
-        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
-    payload = str(int(time.time())) + ":" + secrets.token_hex(16)
-    cookie = payload + "." + hmac.new(secret(), payload.encode(), hashlib.sha256).hexdigest()
-    response = JSONResponse({"authenticated": True}, headers=HEADERS)
-    response.set_cookie(
-        COOKIE,
-        cookie,
-        httponly=True,
-        secure=request.url.scheme == "https",
-        samesite="strict",
-        max_age=28800,
-        path="/",
-    )
-    return response
-
-
 @router.get("/api/learning")
 def current(request: Request) -> JSONResponse:
-    if not session(request):
-        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
     result = request.app.state.learning_reader.poll()
     return JSONResponse(
         {"readState": result.state, "data": result.value if result.state == "ready" else None},
@@ -191,8 +138,6 @@ def current(request: Request) -> JSONResponse:
 @router.post("/api/learning/control")
 async def control(request: Request) -> JSONResponse:
     write_origin(request)
-    if not session(request):
-        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
     value = await body(request)
     try:
         policy = Policy.model_validate(value)
@@ -207,8 +152,6 @@ async def control(request: Request) -> JSONResponse:
 @router.post("/api/learning/trading-control")
 async def trading_control(request: Request) -> JSONResponse:
     write_origin(request)
-    if not session(request):
-        raise HTTPException(401, "LEARNING_UNAUTHORIZED")
     value = await body(request)
     if (
         set(value) != {"paused", "dailyLimitMicroUsd"}

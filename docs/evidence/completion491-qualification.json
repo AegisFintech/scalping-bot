@@ -1,0 +1,110 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "de5b20dc94d37dbe87c4ac6a2cf93e19e2d394391b6d000bbd801449e65f86a6",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "results": [
+    {
+      "label": "postgres-bindir",
+      "code": 0,
+      "elapsedMs": 20
+    },
+    {
+      "label": "test-certificate",
+      "code": 0,
+      "elapsedMs": 330
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0,
+      "elapsedMs": 10
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0,
+      "elapsedMs": 15
+    },
+    {
+      "label": "database-init",
+      "code": 0,
+      "elapsedMs": 923
+    },
+    {
+      "label": "database-start",
+      "code": 0,
+      "elapsedMs": 168
+    },
+    {
+      "label": "format",
+      "code": 0,
+      "elapsedMs": 28778
+    },
+    {
+      "label": "lint",
+      "code": 0,
+      "elapsedMs": 42211
+    },
+    {
+      "label": "types",
+      "code": 0,
+      "elapsedMs": 16178
+    },
+    {
+      "label": "build",
+      "code": 0,
+      "elapsedMs": 13472
+    },
+    {
+      "label": "node-tests",
+      "code": 0,
+      "elapsedMs": 107705
+    },
+    {
+      "label": "python-format",
+      "code": 0,
+      "elapsedMs": 96
+    },
+    {
+      "label": "python-lint",
+      "code": 0,
+      "elapsedMs": 65
+    },
+    {
+      "label": "python-types",
+      "code": 0,
+      "elapsedMs": 969
+    },
+    {
+      "label": "secrets",
+      "code": 0,
+      "elapsedMs": 519
+    },
+    {
+      "label": "npm-audit",
+      "code": 0,
+      "elapsedMs": 120203
+    },
+    {
+      "label": "python-audit",
+      "code": 0,
+      "elapsedMs": 19285
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0,
+      "elapsedMs": 52097
+    },
+    {
+      "label": "python-tests",
+      "code": 0,
+      "elapsedMs": 48558
+    },
+    {
+      "label": "database-stop",
+      "code": 0,
+      "elapsedMs": 116
+    }
+  ]
+}

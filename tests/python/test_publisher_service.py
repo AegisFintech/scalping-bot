@@ -164,3 +164,16 @@ def test_process_checks_review_only_for_open_verified_publication(
     result = service.process(request, root, artifact, NOW)
     assert result["status"] == ("BLOCKED" if remote == "OPEN" else "MERGED")
     assert result["pullRequest"] == 42 and result["headCommit"] == "a" * 40
+
+
+def test_retired_root_archive_is_not_a_new_publication(layout):
+    root, queue, artifact = layout
+    retired = queue / "retired"
+    retired.mkdir(mode=0o700)
+    (retired / ("a" * 64 + ".json")).write_text("retained bytes")
+    assert service.cycle(root, queue, artifact, NOW).status == "IDLE"
+    (retired / ("a" * 64 + ".json")).unlink()
+    retired.rmdir()
+    retired.symlink_to(artifact, target_is_directory=True)
+    with pytest.raises(ValueError, match="QUEUE_ENTRY_INVALID"):
+        service.cycle(root, queue, artifact, NOW)

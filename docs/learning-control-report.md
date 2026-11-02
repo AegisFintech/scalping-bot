@@ -78,11 +78,13 @@ input/cache/output/reasoning, work and admission status, findings/window clocks,
 publication links, next observation time and operator direction. Missing evidence
 is explicit. GET requests never trigger inference, research jobs or broker commands.
 
-An independent root-owned0600 admin token at
-`/etc/scalper-learning-ui/admin-token` unlocks an eight-hour HttpOnly/SameSiteStrict
-session. Retrieve it privately over SSH; never paste it into issues or logs.
-Writes require same-origin and an explicit control header. Tokens/keys stay out of
-responses. The console uses a dedicated forced SSH key to tc01's nonprivileged
+The operator's Cloudflare Access protects `/learning` and `/api/learning` at
+its private tunnel ingress. There is no second application login or session token.
+The dashboard listener remains127.0.0.1:8501; the checked nginx configuration has
+no route to that port. Access policy ownership stays at Cloudflare; deploy this
+console only behind the protected private ingress. This does not prove that an
+arbitrary future public proxy is protected: verify origin exposure on every rollout.
+Writes require same-origin and an explicit control header. Private provider-control credentials stay out of responses. The console uses a dedicated forced SSH key to tc01's nonprivileged
 `learning_control receive` command, with fixed HOME/PYTHONPATH; no arbitrary remote
 command or paths. API resource controls use a separate credential, not the proposal
 token; they can lower the root cap/pause analysis, never increase it or change risk.
@@ -103,7 +105,8 @@ require a versioned forward migration; preserve these directories in rollback.
    Grant generation service write access only to that new control directory.
 2. Install `scalper-learning-meter.service/timer`; verify an actual read-only quota
    refresh, then ordinary learning timers. No forced provider benchmark.
-3. Provision the console's independent credentials/forced-key receiver. Start only
+3. Provision the private provider-control credential/forced-key receiver and verify
+   the Access-protected private origin. No local admin key is required. Start only
    the new dashboard release and verify actual process cwd and served assets;
    retain the four core trading services.
 4. Ship isolated entry adapter with provider-control credential. With API policy

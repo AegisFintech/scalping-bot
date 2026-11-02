@@ -192,7 +192,12 @@ def cycle_locked(root: Path, queue: Path, artifact: Path, now: datetime) -> Publ
     protected(queue)
     protected(artifact)
     protected(artifact / "policy/research-publisher-signers")
-    requests = sorted(queue.iterdir())
+    retired = queue / "retired"
+    if retired.is_symlink() or (retired.exists() and not retired.is_dir()):
+        raise ValueError("PUBLICATION_QUEUE_ENTRY_INVALID")
+    if retired.exists():
+        protected(retired)
+    requests = sorted(path for path in queue.iterdir() if path.name != "retired")
     if len(requests) > MAX_JOBS:
         raise ValueError("PUBLICATION_QUEUE_LIMIT")
     if any(not re.fullmatch(r"[a-f0-9]{64}\.json", item.name) for item in requests):
