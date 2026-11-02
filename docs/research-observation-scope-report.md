@@ -72,3 +72,22 @@ legacy behavior and unavailable/stale browser rendering. The full required
 `PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs`, independent reviews,
 exact-head delivery and actual scheduled activation readbacks are recorded on
 issue502. Software success does not establish an economic improvement.
+
+## Qualified source
+
+Full `PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs` passes1,285 Node +157
+PostgreSQL +1,240 Python =2,682 tests and all required format/lint/types/build,
+schema/migration/replay/fail-closed, secret and npm/pip dependency-audit gates.
+[Exact source/evidence receipt](evidence/research502-qualification.json).
+Both independent Standards and Spec reviews have no remaining P1/P2.48 focused
+Python checks and the browser-rendering fixture pass. Final documentation keeps
+the same executable fingerprint; formatting, secret scan and actual publisher
+footer compatibility are rechecked. Hosted checks must pass on the final head.
+One existing Starlette/httpx deprecation warning remains.
+
+The original09:00–09:30Z input/registration/diagnostic/finding/closure hashes are
+retained in the receipt, with25 actual WAITs and25 unsupported legacy baseline
+cases. The frozen replay/scorer/task bytes match the preceding main exactly.
+The initial new regression failed before implementation as intended; early
+formatting and duplicate-test fixture corrections preceded final qualification.
+No production strategy was trialled by these software checks.

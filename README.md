@@ -136,7 +136,8 @@ The linked report records2,675-test software qualification, not economic validat
 
 [Version-aware learning evidence](docs/research-observation-scope-report.md) keeps
 unsupported historical replay separate from actual current trading decisions and
-recorded outcomes.
+recorded outcomes. Its report records software qualification separately from
+economic acceptance.
 
 <!-- research-publication -->
 

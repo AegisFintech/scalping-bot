@@ -1,0 +1,122 @@
+{
+  "issue": 502,
+  "qualified": true,
+  "qualifiedSourceCommit": "8856137a1a0c143bf04e02dad95b33457a9b60b7",
+  "sourceSha256": "48e17478d2437d6fb8c507b8046b10d646dc426143b9faa083e7d7d15dc88269",
+  "command": "PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs",
+  "nodeTests": 1285,
+  "postgresTests": 157,
+  "pythonTests": 1240,
+  "totalTests": 2682,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "originalObservation": {
+    "window": {
+      "start": "2026-11-02T09:00:00+00:00",
+      "until": "2026-11-02T09:30:00+00:00"
+    },
+    "hashes": {
+      "input.json": "600497bf923722f67d8998fc86f45a7130d5a2e15e1be630b252b0f5422d28d6",
+      "registration.json": "38ab593a4853b34524fb6fc5431bb1a508680070449a204954604e719e556959",
+      "diagnostic.json": "99be15ccccbbc17c34892139c02d1ba169db268c860c0fbae00bfc701edc246d",
+      "finding.json": "1a12565192285701e5b68e7d5c0080d634bdcbe10c6d1ba30ec701714a1658a5",
+      "closed.json": "ff1980799d94a82f8ea269d6c77959d1fc97a1d8f1a91dc74e24b4a9e48bd144"
+    },
+    "recordedDecisions": {
+      "WAIT": 25
+    },
+    "legacyBaselineReasons": {
+      "CONTEXT_RELEASE_UNSUPPORTED": 25
+    }
+  },
+  "frozenFilesUnchanged": {
+    "python/backtest/scalp_replay.py": "e6c6bddfcb5cb308727a311038eabb9afef80b2d6b1314c0e3f0090a266ec4b0",
+    "python/research/experiment_execution.py": "951ffd727baa6eda3c6a71254f16e3e3853a164221f001cae313e149ff1a600f",
+    "python/research/holding_task.py": "85e4c9966769401c12f499ea9cb6e7b28de124b4fef187d5241b34686349de42"
+  },
+  "standardsReview": "NO_REMAINING_P1_P2",
+  "specReview": "NO_REMAINING_P1_P2",
+  "economicQualification": false,
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}

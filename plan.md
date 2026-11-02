@@ -6,7 +6,8 @@
   trading, claims and499 study unchanged; verified scope in learning UI; full
   qualification/review/delivery and new normal scheduled finding.
 - Dependencies: current0.9 observation evidence and existing half-hour feed.
-- Status: regression reproduced; additive scope/prompt/UI correction implemented.
+- Status:2,682-test full qualification and independent Standards/Spec pass;
+  command/results are in the report. Regression reproduced and corrected.
   Exact qualification, delivery and activation state are recorded on the issue.
 - Evidence: `docs/research-observation-scope-report.md`.
 
