@@ -28,6 +28,8 @@ Continuous operational verification remains in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431).
 See the [quantitative review](docs/quantitative-review-426.md) for recent demo
 payoffs and flight-recorder limits.
+The [latest loss reconstruction](docs/loss496-review.md) verifies all14 current-release
+closed paths and separates broker pips, actual fees and sampled exit evidence.
 
 ## Workflow
 

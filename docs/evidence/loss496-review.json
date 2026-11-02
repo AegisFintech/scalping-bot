@@ -1,0 +1,747 @@
+{
+  "kind": "DESCRIPTIVE_DEMO_NOT_PROSPECTIVE_QUALIFICATION",
+  "release": "0.8.0-model-scalp.1-codex.1",
+  "from": "2026-10-29T00:00:00Z",
+  "until": "2026-11-02T06:45:00Z",
+  "sourceCommit": "47fd3d6a515d75769acb86e3101592c11b008d1f",
+  "inputs": {
+    "closed-diagnostic.json": "d51264cca93df95dfeef1a4a958c1f24777dffb15104dce30dc3e424a4b188cc",
+    "export_fill_evidence.json": "e533da65fbce5a561d261b948e43d097caf94deaa0ae0bbc8816a566f6c78070",
+    "export_entry_evidence.json": "1ec12f2953b0bcee77e7804e0b27410ab19433ed77550026d3175899173021f1",
+    "fill-gap-review.json": "e2c70a62c160ad55022088d5c01a944c3dcfb720d53eb6c841e98df7f39530f6",
+    "decision-denominators.json": "afa761d87e6b998584611aa016ce9d394d17326b6127ea9db6eb78d1a8d9eaa2",
+    "acknowledgements.json": "78b090267bc3bc0197dc70f4e7c356aa54f841f7db2d81e9072c7ee0003bcca7",
+    "metadata-20261102T060820183090-4d6444712476afbe.json": "cf8c6285ac112ecf5bc50be3aa8cf21d524959bfb8c4a94bd20e6e83a72463f6",
+    "reconstruct.py": "8aa87d7ea41309798b9e5d5f79e3a71e7a77f3582a4bde63ccefba5ed4b5e8c4",
+    "finalize.py": "3ba4e880c92d803e63ae0d804a04def56c2de5e87874f5876cb290d5bbd39ccc"
+  },
+  "closed": {
+    "count": 14,
+    "positive": 10,
+    "negative": 4,
+    "flat": 0,
+    "gross": "-3372.18",
+    "signedCosts": "-1876.64",
+    "net": "-5248.82",
+    "meanPositive": "93.579",
+    "meanNegative": "-1546.1525",
+    "observedPositiveShare": "0.7142857142857142857142857143",
+    "arithmeticBreakEvenAtObservedMeanPayoffs": "0.9429302907213772498729212679",
+    "approvedBudgetIsActualStopRisk": false,
+    "accountReturn": null
+  },
+  "intentCreatedCohort": {
+    "setups": 36,
+    "states": {
+      "CLOSED": 14,
+      "EXPIRED": 14,
+      "FAILED": 8
+    },
+    "snapshotScope": "SEPARATE_REPEATABLE_READ_PER_SETUP"
+  },
+  "fillDiagnostics": {
+    "summary": {
+      "ENTRY": {
+        "byVolume": {
+          "300+": {
+            "max": "0.3",
+            "median": "0.2",
+            "min": "0.12",
+            "n": 14
+          }
+        },
+        "fills": 14,
+        "levelSlippage": null,
+        "quoteDelayMs": {
+          "max": "313",
+          "median": "278",
+          "min": "223",
+          "n": 14
+        },
+        "quoteGap": {
+          "max": "0.3",
+          "median": "0.2",
+          "min": "0.12",
+          "n": 14
+        },
+        "triggerGap": {
+          "max": "0.3",
+          "median": "0.235",
+          "min": "0.12",
+          "n": 14
+        },
+        "visibleDepthShortfalls": 0,
+        "visibleWalkGap": null
+      },
+      "NATIVE_AT_OR_BEYOND_SL": {
+        "byVolume": {
+          "300+": {
+            "max": "0.45",
+            "median": "0.28",
+            "min": "0.22",
+            "n": 4
+          }
+        },
+        "fills": 4,
+        "levelSlippage": {
+          "max": "0.46",
+          "median": "0.33",
+          "min": "0.28",
+          "n": 4
+        },
+        "quoteDelayMs": {
+          "max": "312",
+          "median": "279",
+          "min": "255",
+          "n": 4
+        },
+        "quoteGap": {
+          "max": "0.45",
+          "median": "0.28",
+          "min": "0.22",
+          "n": 4
+        },
+        "triggerGap": null,
+        "visibleDepthShortfalls": 0,
+        "visibleWalkGap": null
+      },
+      "NATIVE_AT_OR_BEYOND_TP": {
+        "byVolume": {
+          "300+": {
+            "max": "0.49",
+            "median": "0.205",
+            "min": "0.14",
+            "n": 10
+          }
+        },
+        "fills": 10,
+        "levelSlippage": {
+          "max": "0",
+          "median": "-0.02",
+          "min": "-0.09",
+          "n": 10
+        },
+        "quoteDelayMs": {
+          "max": "317",
+          "median": "276.5",
+          "min": "219",
+          "n": 10
+        },
+        "quoteGap": {
+          "max": "0.49",
+          "median": "0.205",
+          "min": "0.14",
+          "n": 10
+        },
+        "triggerGap": null,
+        "visibleDepthShortfalls": 0,
+        "visibleWalkGap": null
+      },
+      "tpCrossings": {
+        "crossedWithoutTpFillMaxExcursion": {
+          "max": "0.08",
+          "median": "0.08",
+          "min": "0.08",
+          "n": 1
+        },
+        "filledAtTp": {
+          "max": "0.52",
+          "median": "0.245",
+          "min": "0.15",
+          "n": 10
+        },
+        "filledLagSeconds": {
+          "max": "0.317",
+          "median": "0.2765",
+          "min": "0.219",
+          "n": 10
+        }
+      }
+    },
+    "flightQuotePoints": 4374,
+    "visibleDepthSupplied": false
+  },
+  "closedPaths": [
+    {
+      "setup": "5161c7d433ad3ce709d2f626",
+      "direction": "SELL",
+      "openedAt": "2026-10-29T07:45:02.695000+00:00",
+      "closedAt": "2026-10-29T07:45:05.710000+00:00",
+      "realizedNet": "106.1100000000",
+      "signedFees": "-161.8900000000",
+      "chainRecords": 103,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 8,
+      "sampledPositiveGrossMarks": 4,
+      "bestSampledGrossPriceMove": "0.6000000000",
+      "worstSampledGrossPriceMove": "-0.2000000000",
+      "entryFill": "4027.3000000000",
+      "entryTrigger": "4027.4700000000",
+      "closingFill": "4026.9000000000",
+      "lastBrokerSl": "4029.12",
+      "lastBrokerTp": "4026.9",
+      "protectionObservedAt": "2026-10-29T07:45:05.528000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 5,
+          "mfePips": "60.000000000000000000",
+          "maePips": "-5.000000000000000000",
+          "bestModeledNetPips": "35.83800000000",
+          "timeProfitableSeconds": "1.083"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "9c3d35d9788f08bb9f8159e5",
+      "direction": "SELL",
+      "openedAt": "2026-10-29T16:36:00.752000+00:00",
+      "closedAt": "2026-10-29T16:37:46.384000+00:00",
+      "realizedNet": "-1589.5500000000",
+      "signedFees": "-179.6100000000",
+      "chainRecords": 504,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 218,
+      "sampledPositiveGrossMarks": 5,
+      "bestSampledGrossPriceMove": "0.1400000000",
+      "worstSampledGrossPriceMove": "-1.6400000000",
+      "entryFill": "4011.8300000000",
+      "entryTrigger": "4012.0500000000",
+      "closingFill": "4013.7200000000",
+      "lastBrokerSl": "4013.38",
+      "lastBrokerTp": "4011.43",
+      "protectionObservedAt": "2026-10-29T16:37:45.789000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 217,
+          "mfePips": "14.000000000000000000",
+          "maePips": "-164.000000000000000000",
+          "bestModeledNetPips": "-10.07056000000",
+          "timeProfitableSeconds": "0"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "4823b37758617f5142827ba5",
+      "direction": "SELL",
+      "openedAt": "2026-10-29T17:58:15.636000+00:00",
+      "closedAt": "2026-10-29T17:59:25.841000+00:00",
+      "realizedNet": "104.0600000000",
+      "signedFees": "-132.0100000000",
+      "chainRecords": 268,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 122,
+      "sampledPositiveGrossMarks": 3,
+      "bestSampledGrossPriceMove": "0.7000000000",
+      "worstSampledGrossPriceMove": "-0.8100000000",
+      "entryFill": "4007.8200000000",
+      "entryTrigger": "4008.0300000000",
+      "closingFill": "4007.3900000000",
+      "lastBrokerSl": "4010.17",
+      "lastBrokerTp": "4007.42",
+      "protectionObservedAt": "2026-10-29T17:59:25.161000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 120,
+          "mfePips": "70.000000000000000000",
+          "maePips": "-81.000000000000000000",
+          "bestModeledNetPips": "45.95518000000",
+          "timeProfitableSeconds": "0.736"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "3032ff19993c757a13299c75",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T02:42:51.670000+00:00",
+      "closedAt": "2026-10-30T02:43:53.497000+00:00",
+      "realizedNet": "94.9700000000",
+      "signedFees": "-134.2200000000",
+      "chainRecords": 293,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 131,
+      "sampledPositiveGrossMarks": 17,
+      "bestSampledGrossPriceMove": "0.6600000000",
+      "worstSampledGrossPriceMove": "-1.2100000000",
+      "entryFill": "4002.0000000000",
+      "entryTrigger": "4002.2500000000",
+      "closingFill": "4001.5900000000",
+      "lastBrokerSl": "4004.3",
+      "lastBrokerTp": "4001.6",
+      "protectionObservedAt": "2026-10-30T02:43:51.965000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 130,
+          "mfePips": "66.000000000000000000",
+          "maePips": "-121.000000000000000000",
+          "bestModeledNetPips": "41.98998000000",
+          "timeProfitableSeconds": "3.306"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "9ac2188bb757ebdb6f50a8d3",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T02:54:10.056000+00:00",
+      "closedAt": "2026-10-30T02:56:45.854000+00:00",
+      "realizedNet": "-1658.2700000000",
+      "signedFees": "-159.7700000000",
+      "chainRecords": 568,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 279,
+      "sampledPositiveGrossMarks": 0,
+      "bestSampledGrossPriceMove": "-0.1600000000",
+      "worstSampledGrossPriceMove": "-1.8000000000",
+      "entryFill": "3997.1400000000",
+      "entryTrigger": "3997.4300000000",
+      "closingFill": "3999.3900000000",
+      "lastBrokerSl": "3998.93",
+      "lastBrokerTp": "3996.74",
+      "protectionObservedAt": "2026-10-30T02:56:44.378000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 277,
+          "mfePips": "0",
+          "maePips": "-180.000000000000000000",
+          "bestModeledNetPips": "-39.98332000000",
+          "timeProfitableSeconds": "0"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "a70812cdf7d751ba4ef92381",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T06:54:31.441000+00:00",
+      "closedAt": "2026-10-30T06:54:51.240000+00:00",
+      "realizedNet": "90.4700000000",
+      "signedFees": "-126.4200000000",
+      "chainRecords": 163,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 43,
+      "sampledPositiveGrossMarks": 37,
+      "bestSampledGrossPriceMove": "0.7500000000",
+      "worstSampledGrossPriceMove": "-0.2500000000",
+      "entryFill": "3983.1400000000",
+      "entryTrigger": "3983.3600000000",
+      "closingFill": "3982.7300000000",
+      "lastBrokerSl": "3985.55",
+      "lastBrokerTp": "3982.74",
+      "protectionObservedAt": "2026-10-30T06:54:49.652000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 42,
+          "mfePips": "75.000000000000000000",
+          "maePips": "-24.000000000000000000",
+          "bestModeledNetPips": "51.10341000000",
+          "timeProfitableSeconds": "1.809"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "3ae237e00dd02b1cc26e0970",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T06:57:50.408000+00:00",
+      "closedAt": "2026-10-30T07:03:48.762000+00:00",
+      "realizedNet": "86.9500000000",
+      "signedFees": "-108.7000000000",
+      "chainRecords": 1122,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 774,
+      "sampledPositiveGrossMarks": 112,
+      "bestSampledGrossPriceMove": "0.9200000000",
+      "worstSampledGrossPriceMove": "-2.1600000000",
+      "entryFill": "3982.1000000000",
+      "entryTrigger": "3982.2700000000",
+      "closingFill": "3981.6700000000",
+      "lastBrokerSl": "3985.05",
+      "lastBrokerTp": "3981.7",
+      "protectionObservedAt": "2026-10-30T07:03:47.733000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 770,
+          "mfePips": "92.000000000000000000",
+          "maePips": "-216.000000000000000000",
+          "bestModeledNetPips": "68.11016000000",
+          "timeProfitableSeconds": "14.242"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "28b9c9fbf594d5f2fba8f8b1",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T12:56:53.745000+00:00",
+      "closedAt": "2026-10-30T12:56:58.458000+00:00",
+      "realizedNet": "120.2800000000",
+      "signedFees": "-128.1200000000",
+      "chainRecords": 157,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 11,
+      "sampledPositiveGrossMarks": 9,
+      "bestSampledGrossPriceMove": "0.6800000000",
+      "worstSampledGrossPriceMove": "-0.1500000000",
+      "entryFill": "3954.6700000000",
+      "entryTrigger": "3954.7900000000",
+      "closingFill": "3954.2100000000",
+      "lastBrokerSl": "3957.02",
+      "lastBrokerTp": "3954.27",
+      "protectionObservedAt": "2026-10-30T12:56:58.435000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 8,
+          "mfePips": "68.000000000000000000",
+          "maePips": "0",
+          "bestModeledNetPips": "44.27402000000",
+          "timeProfitableSeconds": "2.543"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "135a1a72cbeb16341172e9e4",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T14:15:53.647000+00:00",
+      "closedAt": "2026-10-30T14:17:36.807000+00:00",
+      "realizedNet": "71.3500000000",
+      "signedFees": "-95.1100000000",
+      "chainRecords": 476,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 267,
+      "sampledPositiveGrossMarks": 59,
+      "bestSampledGrossPriceMove": "0.6500000000",
+      "worstSampledGrossPriceMove": "-2.8900000000",
+      "entryFill": "3904.1200000000",
+      "entryTrigger": "3904.4000000000",
+      "closingFill": "3903.7100000000",
+      "lastBrokerSl": "3907.55",
+      "lastBrokerTp": "3903.72",
+      "protectionObservedAt": "2026-10-30T14:17:35.345000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 265,
+          "mfePips": "65.000000000000000000",
+          "maePips": "-289.000000000000000000",
+          "bestModeledNetPips": "41.57723000000",
+          "timeProfitableSeconds": "7.747"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "90a12aa14ff115131920a0d1",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T15:40:39.213000+00:00",
+      "closedAt": "2026-10-30T15:40:59.021000+00:00",
+      "realizedNet": "61.0300000000",
+      "signedFees": "-86.1700000000",
+      "chainRecords": 151,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 45,
+      "sampledPositiveGrossMarks": 35,
+      "bestSampledGrossPriceMove": "0.5900000000",
+      "worstSampledGrossPriceMove": "-0.3400000000",
+      "entryFill": "3902.7700000000",
+      "entryTrigger": "3903.0700000000",
+      "closingFill": "3902.3700000000",
+      "lastBrokerSl": "3906.65",
+      "lastBrokerTp": "3902.37",
+      "protectionObservedAt": "2026-10-30T15:40:58.700000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 42,
+          "mfePips": "59.000000000000000000",
+          "maePips": "-23.000000000000000000",
+          "bestModeledNetPips": "35.58515000000",
+          "timeProfitableSeconds": "4.786"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "4fb235432349bbcff1e4e52d",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T15:46:51.342000+00:00",
+      "closedAt": "2026-10-30T15:47:00.112000+00:00",
+      "realizedNet": "106.9800000000",
+      "signedFees": "-115.7700000000",
+      "chainRecords": 104,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 16,
+      "sampledPositiveGrossMarks": 12,
+      "bestSampledGrossPriceMove": "0.6000000000",
+      "worstSampledGrossPriceMove": "-0.2400000000",
+      "entryFill": "3897.9600000000",
+      "entryTrigger": "3898.1500000000",
+      "closingFill": "3897.5100000000",
+      "lastBrokerSl": "3900.62",
+      "lastBrokerTp": "3897.56",
+      "protectionObservedAt": "2026-10-30T15:46:59.801000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 15,
+          "mfePips": "60.000000000000000000",
+          "maePips": "-24.000000000000000000",
+          "bestModeledNetPips": "36.61404000000",
+          "timeProfitableSeconds": "1.863"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "6a3be1daae01757240d217c5",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T17:44:05.348000+00:00",
+      "closedAt": "2026-10-30T17:47:22.921000+00:00",
+      "realizedNet": "93.5900000000",
+      "signedFees": "-84.7700000000",
+      "chainRecords": 734,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 472,
+      "sampledPositiveGrossMarks": 19,
+      "bestSampledGrossPriceMove": "0.6300000000",
+      "worstSampledGrossPriceMove": "-3.5700000000",
+      "entryFill": "3881.2600000000",
+      "entryTrigger": "3881.5300000000",
+      "closingFill": "3880.7700000000",
+      "lastBrokerSl": "3885.2",
+      "lastBrokerTp": "3880.86",
+      "protectionObservedAt": "2026-10-30T17:47:22.544000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 470,
+          "mfePips": "63.000000000000000000",
+          "maePips": "-357.000000000000000000",
+          "bestModeledNetPips": "39.71433000000",
+          "timeProfitableSeconds": "1.462"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "49a8bdab325e61b08f985787",
+      "direction": "SELL",
+      "openedAt": "2026-10-30T18:15:08.149000+00:00",
+      "closedAt": "2026-10-30T18:18:01.232000+00:00",
+      "realizedNet": "-1461.1100000000",
+      "signedFees": "-187.6300000000",
+      "chainRecords": 549,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 316,
+      "sampledPositiveGrossMarks": 39,
+      "bestSampledGrossPriceMove": "0.4900000000",
+      "worstSampledGrossPriceMove": "-1.3600000000",
+      "entryFill": "3879.1400000000",
+      "entryTrigger": "3879.4300000000",
+      "closingFill": "3880.7200000000",
+      "lastBrokerSl": "3880.44",
+      "lastBrokerTp": "3878.74",
+      "protectionObservedAt": "2026-10-30T18:18:00.689000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 316,
+          "mfePips": "49.000000000000000000",
+          "maePips": "-136.000000000000000000",
+          "bestModeledNetPips": "25.72663000000",
+          "timeProfitableSeconds": "4.790"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false
+    },
+    {
+      "setup": "9b7a64156d87eadfebb96498",
+      "direction": "BUY",
+      "openedAt": "2026-11-02T06:08:36.917000+00:00",
+      "closedAt": "2026-11-02T06:09:03.553000+00:00",
+      "realizedNet": "-1475.6800000000",
+      "signedFees": "-176.4500000000",
+      "chainRecords": 171,
+      "chainGapRecords": 0,
+      "sealed": true,
+      "sampledExecutablePoints": 47,
+      "sampledPositiveGrossMarks": 0,
+      "bestSampledGrossPriceMove": "-0.2500000000",
+      "worstSampledGrossPriceMove": "-1.4200000000",
+      "entryFill": "3916.8600000000",
+      "entryTrigger": "3916.5800000000",
+      "closingFill": "3915.1300000000",
+      "lastBrokerSl": "3915.45",
+      "lastBrokerTp": "3917.26",
+      "protectionObservedAt": "2026-11-02T06:09:02.526000+00:00",
+      "exactExitCause": null,
+      "counterfactualNet": null,
+      "continuousTickTape": false,
+      "lastSampledQuoteBeforeEntry": {
+        "delayMs": 310,
+        "gap": "0.26",
+        "origin": "FLIGHT",
+        "price": "3916.6",
+        "quoteAt": "2026-11-02T06:08:36.607000+00:00",
+        "spread": "0.08"
+      },
+      "lastSampledQuoteBeforeClose": {
+        "delayMs": 255,
+        "gap": "0.31",
+        "origin": "FLIGHT",
+        "price": "3915.44",
+        "quoteAt": "2026-11-02T06:09:03.298000+00:00",
+        "spread": "0.05"
+      },
+      "nativeEntryAcknowledgement": {
+        "brokerUpdatedAt": "2026-11-02T06:08:23.617000+00:00",
+        "receivedAt": "2026-11-02T06:08:23.767000+00:00",
+        "persistedAt": "2026-11-02T06:08:24.049991+00:00",
+        "clockStatus": "ORDERED",
+        "orderType": 6,
+        "stopPrice": "3916.58",
+        "slippageInPoints": "30",
+        "timeInForce": 1,
+        "expirationAt": "2026-11-02T06:10:04.616000+00:00",
+        "metadataAvailability": "NOT_CAPTURED",
+        "evidenceSha256": "3b652f0c1c820c5a88073cdf7ec9902fcbda34831c8fccb73c392710305b8498"
+      },
+      "independentMetadataReceipt": {
+        "responseReceivedAt": "2026-11-02T06:08:20.183090+00:00",
+        "provenance": "BROKER_METADATA_ENDPOINT_RESPONSE_NOT_ORIGINAL_ACK",
+        "brokerSourceTime": null,
+        "actualClosingCosts": null,
+        "terms": {
+          "commissionMinimum": "0",
+          "commissionRate": "30",
+          "maxVolume": "1000000",
+          "minVolume": "100",
+          "pipSize": "0.01",
+          "pnlConversionFeeRate": "0",
+          "quoteToAccountConversionRate": "1",
+          "tickSize": "0.01",
+          "tickValue": "0.0001",
+          "volumeScale": "0.01",
+          "volumeStep": "100"
+        },
+        "categories": {
+          "accountAsset": "USD",
+          "baseAsset": "XAU",
+          "commissionType": "USD_PER_MILLION_USD",
+          "minimumAsset": "USD",
+          "minimumType": "QUOTE_CURRENCY",
+          "quoteAsset": "USD"
+        },
+        "evidenceSha256": "4d6444712476afbe526242ad11ef0fd49312e5637a9ddb009457945298fc789d"
+      },
+      "withinObservedEntryRange": true,
+      "units": "751",
+      "pipSizeFromSeparateReceipt": "0.01",
+      "targetPriceDistance": "0.40",
+      "stopPriceDistance": "1.41",
+      "targetBrokerPips": "40",
+      "stopBrokerPips": "141",
+      "actualFeeEquivalentBrokerPips": "23.49533954727030625832223702",
+      "actualFeeOverNominalTargetGross": "0.5873834886817576564580559254",
+      "nominalTargetGross": "300.40",
+      "actualFeesAreCounterfactualFees": false,
+      "retainedSummaryMetrics": [
+        {
+          "samples": 46,
+          "mfePips": "0",
+          "maePips": "-142.000000000000000000",
+          "bestModeledNetPips": "-49.50038000000",
+          "timeProfitableSeconds": "0"
+        }
+      ],
+      "summaryIsExecutableCloseProof": false,
+      "offlineOnlineClockDifference": {
+        "firstOfflineMarkSourceAt": "2026-11-02T06:08:37.321000+00:00",
+        "firstOfflineMarkReceivedAt": "2026-11-02T06:08:37.472000+00:00",
+        "firstRecorderObservedFilledLifecycleAt": "2026-11-02T06:08:38.246318+00:00",
+        "offlineMarksBeforeRecorderFilledLifecycle": 1
+      }
+    }
+  ],
+  "counterfactualNet": null,
+  "providerCost": null,
+  "economicQualification": false,
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "evidenceVersion": "loss-review-evidence-496-v1",
+  "decisionCreatedCohort": {
+    "scope": "ONE_DEMO_XAUUSD",
+    "release": "0.8.0-model-scalp.1-codex.1",
+    "from": "2026-10-29T00:00:00Z",
+    "until": "2026-11-02T06:45:00Z",
+    "snapshotAt": "2026-11-02T06:48:21.229Z",
+    "denominators": {
+      "analysisdecisions": 4058,
+      "ordergroups": 36,
+      "entryorders": 36,
+      "orderswithanyfill": 14,
+      "trades": 14,
+      "tradeoutcomesopenatcutoff": 0,
+      "groupswithoutrecordedtrade": 22
+    },
+    "basis": "ANALYSES_CREATED_IN_WINDOW_CURRENT_DATABASE_STATE_NOT_ASOF_PENDING_ORDER_RECONSTRUCTION"
+  },
+  "expiryHypothesisCheck": {
+    "acceptedAt": "2026-11-02T06:06:14.028000+00:00",
+    "expiryAt": "2026-11-02T06:07:56.735000+00:00",
+    "acceptanceBeforeDeadlineSeconds": "102.707",
+    "lateAcceptanceHypothesis": "FALSIFIED_FOR_THIS_EXPIRED_ORDER",
+    "nonfillCause": null,
+    "originalModelFindingRewritten": false
+  }
+}
