@@ -110,3 +110,10 @@ steps; actual runtime receipts are recorded on issue#489 after rollout.
 Implementation completion is distinct from future outcomes: #466 still requires a
 natural independently reviewed merge; #403 still requires independent economic
 qualification. Neither can be forced by replaying old data or manufacturing a trade.
+
+## Activation closure
+
+Reviewed delivery and operational verification completed through PR#490 and
+PR#492, including repairs discovered in actual rollout. See the
+[verified activation](completion491-report.md#verified-activation). #489 and the
+bounded quantitative review #426 are closed; future #407/#466/#403 remain open.

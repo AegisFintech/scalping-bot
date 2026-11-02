@@ -7,7 +7,9 @@
   independently freeze repaired future collection; support systemd same-mount
   atomic retirement and interrupted receipt recovery; verify real deployment.
 - Status:47 focused tests, full2,614-test qualification, all config checks, browser
-  and both fresh review axes pass; pushed reviewed delivery/rollout pending. Trading policy remains unchanged.
+  and both fresh review axes pass. PR#492 merged; reviewed sourcec8029f8 deployed,
+  no-key browser/real metadata/retirement/immutable-release checks pass. Trading
+  policy remains unchanged. Activation: https://github.com/AegisFintech/scalping-bot/issues/491#issuecomment-6569620117.
 - Evidence: `docs/completion491-report.md`.
 
 ### ISSUE-489 — Complete research delivery and execution evidence
@@ -19,7 +21,7 @@
   read-only collection; immutable-release launcher default. Preserve economic policy.
 - Status: implementation, full2,609-test qualification, four config checks, browser
   checks and fresh Standards/Spec reviews pass. Reviewed delivery and coordinated
-  operational activation pending. Natural merge (#466) and
+  operational activation completed in PR#492 and the #491 receipt. Natural merge (#466) and
   independent economics (#403) remain future evidence, not implementation claims.
 - Evidence: `docs/completion489-report.md`.
 

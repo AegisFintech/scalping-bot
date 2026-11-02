@@ -1,0 +1,82 @@
+{
+  "sourceCommit": "c8029f87321c18849d46cce67c9b05056ec1381c",
+  "qualifiedSourceSha256": "de5b20dc94d37dbe87c4ac6a2cf93e19e2d394391b6d000bbd801449e65f86a6",
+  "runtimeFiles": 1216,
+  "historicalFilesUnchanged": 4147,
+  "registeredAt": "2026-11-02T05:10:20.360204+00:00",
+  "futureWindow": {
+    "start": "2026-11-03T00:00:00+00:00",
+    "until": "2026-11-10T00:00:00+00:00"
+  },
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "verification": {
+    "sourceCommit": "c8029f87321c18849d46cce67c9b05056ec1381c",
+    "retirementCompletedAndCopiesMatch": true,
+    "originalRegistrationUnchanged": true,
+    "metadataReceiptValidated": true,
+    "metadataObservedAt": "2026-11-02T05:10:59.028092+00:00",
+    "metadataBrokerSourceTime": null,
+    "hourlyWindow": {
+      "start": "2026-11-02T04:00:00+00:00",
+      "until": "2026-11-02T05:00:00+00:00",
+      "acknowledgements": 0,
+      "missingMetadata": 0
+    },
+    "collectionStatus": "DIAGNOSTIC",
+    "economicQualification": false,
+    "corePidsUnchanged": true,
+    "flightHealth": {
+      "state": "LAST_COMPLETED",
+      "checkedAt": "2026-11-02T05:11:00.360591+00:00"
+    },
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "access": {
+    "noLocalAdminKeyRequired": true,
+    "dashboardLoopbackOnly": true,
+    "nginxDashboardRoutes": 0,
+    "cloudflareAccessPolicy": "OPERATOR_MANAGED",
+    "browserErrors": 0,
+    "crossOriginWriteStatus": 403,
+    "mainAssetsUnchanged": true
+  },
+  "hourlyAckCoverage": "PERSISTED_CALLBACKS_ONLY_ABSENCE_UNKNOWN",
+  "pairedFutureAcknowledgementObserved": false,
+  "publisher": {
+    "status": "MERGED",
+    "pullRequest": 461,
+    "scope": "HISTORICAL_RECORDED_PAYOFF_TASK_NOT_466_PROOF"
+  },
+  "generation": {
+    "status": "WAITING_RESEARCH_DUPLICATE",
+    "observedReason": "PUBLICATION_ATTESTATION_STALE",
+    "interpretation": "Retirement reason remains in retained state; present pacing waits on unchanged eligible evidence."
+  },
+  "delivery": {
+    "implementationPullRequests": [490, 492],
+    "requiredChecks": "BOTH_EXACT_HEAD_PUSH_AND_PR_PASSED",
+    "separateReviewer": "aloycwl"
+  },
+  "futureRegistration": {
+    "schemaVersion": "broker-evidence-registration-1.0",
+    "registeredAt": "2026-11-02T05:10:20.360204+00:00",
+    "start": "2026-11-03T00:00:00+00:00",
+    "until": "2026-11-10T00:00:00+00:00",
+    "economicRelease": "0.8.0-model-scalp.1-codex.1",
+    "sourceFiles": {
+      "python/operations/broker_evidence_review.py": "6b538eeabd95912ad4155df7edb676bd28f7c90940ebfdda614edbe5d8aeab6a",
+      "python/operations/export_broker_acknowledgements.py": "f794b7191bfca8e40dfff948685adb85f1dc021dd2a612ff86876bd5ed47360a",
+      "python/operations/setup_flight_recorder.py": "055d6f032fd72a0da0fc459f50137a74554d19c68e195ab2245d4e7bf79e629c",
+      "python/research/broker_metadata_evidence.py": "5d76765ea7077a7943333fcca1a94776e3cfe391b49631693497de46399f0b07",
+      "python/research/broker_acknowledgement_evidence.py": "10e984b95cfae2d415df7ba065aff1a5ac2ccdca4daf4d44fcaa813a9eb5a9a3",
+      "packages/config/src/policy.ts": "5dfa77ce07eaf06ce9d438ddec4eb6d1cdff2c489b41085dc7c2cd9332877cf6"
+    },
+    "collectionOnly": true,
+    "economicQualification": false,
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "originalRegistrationSha256": "3f9a9ef679e55e8562f10d5370f75592122434c67a5b259aa1bf85a3cdad3fde"
+}
