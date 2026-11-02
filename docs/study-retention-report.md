@@ -105,3 +105,59 @@ Preparation did not activate its collector; activation awaits corrected exact-he
 hosted checks and reviewed merge. Its107 Python/policy/requirements source hashes
 will be compared with merged source before activation; original aliases stay pinned.
 The correction changes test fixtures/docs only, so frozen runtime files stay exact.
+
+## Reviewed activation
+
+PR513 corrected head28d5744 passed both hosted exact-head checks and separate
+aloycwl approval, merging asbb9a66e. The verified study511-ui artifact replaced only
+the dashboard; all four trading PIDs/cwds and private environment remained exact.
+Post-start artifact verification passed. The provider and Flight stayed on their
+existing reviewed source. Browser checks at1440/390px confirm the registered
+source/age/storage display, correct waits, unchanged Access-only login behavior,
+403 on foreign-origin writes and zero JavaScript errors.
+
+At14:43UTC the dedicated observer's initial operator warm-up verified source and
+executing runtime and returned WAITING_WINDOW without exporting a packet. This
+is an initialization check, not normal-window or economic proof. Its unchanged
+calendar timer schedules the first compressed normal window at15:07UTC. Original
+1.0 source/registration/two normal13:30–14:30 windows remain exact, with its
+uncollected tail explicitly censored. All107 frozen Python/policy/requirements
+files match merged source despite the test-only correction; no alias was repointed.
+[Activation receipt](evidence/study511-activation.json).
+
+The external partial Graphify review's three advisories were checked:1.0 is read
+with its preserved original code/schema, never imported into1.1; actual generated
+registration bytes, canonical model serialization and safe-failure hashing match;
+package pinning explicitly records installed versions, not all library code bytes.
+All11,047 inspected frozen-runtime entries are root-owned and not group/world
+writable. No claim of complete library-code hashing is made. AST updates and the
+two independent full implementation review axes remain distinct from that partial
+external review.
+
+A second normal14:35 review bound its14:00–14:30 input/prompt/response/finding/closure:
+20 WAITs with20 exact links,1 completed SCENARIO_INPUT_STALE and1 incomplete
+context. The failed context's captured-to-request interval is3.211654s, above the
+existing3s input guard; later normal READY/WAIT evidence verifies recovery. These
+are workflow records, not paid-call counts. No freshness limit or cooldown was
+relaxed, and the failure is not attributed to an old broker or provider-policy error.
+
+## Actual normal compressed capture
+
+The normal15:07 timer retained14:30–15:00, with one durable capture claim, one
+compressed original and one immutable report. Original1,034,760 bytes compressed
+to151,452; report36,469. Decompressed input SHA, registration/source/runtime pins
+and report SHA match; independently recomputing every row reproduces the report.
+All24 context origins/72 rows remain: each method has19 unavailable structural/
+recorded-cost-bound cases and5 incomplete forward paths. No observed executable
+entry, counterfactual fill/net or profitable edge is inferred.
+[Exact normal receipt](evidence/study511-normal-capture.json). The earlier warm-up
+receipt deliberately retains its historical normalCaptureVerified=false; this
+separate actual receipt supplies normal-window proof without rewriting history.
+
+The live /learning display verifies the same CURRENT registration/window,24 origins
+and unavailable/censored counts at desktop/mobile widths; extra login absent,
+foreign-origin writes403 and zero browser errors. Trading processes/paths and
+private environment remain unchanged. Final documentation is source-identical to
+the corrected2,725-test qualified implementation; exact-head hosted checks and
+independent review still precede delivery. Issues506/507/511 close only after this
+receipt is delivered; the remaining7-day collection is not economic qualification.
