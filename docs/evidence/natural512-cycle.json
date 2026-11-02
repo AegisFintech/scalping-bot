@@ -1,0 +1,31 @@
+{
+  "brokerAuthority": false,
+  "economicQualification": false,
+  "experimentWindow": {
+    "start": "2026-11-02T06:00:00+00:00",
+    "until": "2026-11-02T06:30:00+00:00"
+  },
+  "findingSha256": "ffbc6de957eab4c911f03061814e8456cd47a7db3d34bebaef24f6f292114383",
+  "generationClaimedAt": "2026-11-02T06:51:16.058810+00:00",
+  "independentChallengeCasesRecomputed": 28,
+  "negativeRestartAndUnknownProof": "docs/evidence/research-pipeline-activation.json retained",
+  "newGenerationCall": false,
+  "normalParentAfterMerge": "TASK_ALREADY_PRESENT/PUBLICATION_TERMINAL_CONFIRMED",
+  "originalGenerationArtifactsUnchanged": true,
+  "originalQuestionAnswered": false,
+  "protectedContractsUnchanged": 13,
+  "publication": {
+    "headCommit": "71551c993f5a1922c034507f2cfa40d75d8516dc",
+    "mergeCommit": "44a04842e5dd35dc199e4953c81a535f7b441942",
+    "publicationSha256": "fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88",
+    "pullRequest": 512,
+    "reason": null,
+    "status": "MERGED"
+  },
+  "resultSha256": "b3c8b5f84b7b797afeb8b5cb5d4aad28a449a7020e5f5b5a7ffe2d03ab12798d",
+  "scope": "FIXED_METHOD_COST_CLOCK_AND_RECORDED_HOLDING_PAYOFF_SOFTWARE_NOT_ARBITRARY_QUESTION_OR_ECONOMIC_QUALIFICATION",
+  "tc02CompletedAt": "2026-11-02T13:19:16.084813+00:00",
+  "trialId": "b7dace75f4fad12e79da2b759a6dc31876325cf14d3e6e1768a791453e435e38",
+  "uiVisible": true,
+  "verifiedAt": "2026-11-02T14:24:54.950368+00:00"
+}

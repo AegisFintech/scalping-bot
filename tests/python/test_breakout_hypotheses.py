@@ -15,7 +15,13 @@ from tests.python.test_scalp_replay import at, fixture, model
 
 def dataset():
     value = fixture()
-    value.update(start=at(0), until=at(1800), journalSnapshotAt=at(1801), exportedAt=at(1860))
+    value.update(
+        sourceId="scalper-epoch314",
+        start=at(0),
+        until=at(1800),
+        journalSnapshotAt=at(1801),
+        exportedAt=at(1860),
+    )
     value["setups"] = []
     value["flight"] = []
     origin = value["contexts"][0]
@@ -211,7 +217,11 @@ def test_future_registration_source_drift_and_retry_keep_original_bytes(
     raw = encoded(packet.model_dump())
     result = collect(root, reg, until + timedelta(minutes=6), export=lambda *_: raw)
     assert result["status"] == "RECORDED"
-    before = {p.name: p.read_bytes() for p in root.glob("*.json") if p.name != "status.json"}
+    before = {
+        p.name: p.read_bytes()
+        for p in root.glob("*")
+        if p.is_file() and p.name not in {"status.json", ".lock"}
+    }
     assert (
         collect(root, reg, until + timedelta(minutes=7), export=lambda *_: pytest.fail("replay"))[
             "status"
@@ -219,7 +229,9 @@ def test_future_registration_source_drift_and_retry_keep_original_bytes(
         == "COLLECTION_COMPLETE_NOT_QUALIFIED"
     )
     assert before == {
-        p.name: p.read_bytes() for p in root.glob("*.json") if p.name != "status.json"
+        p.name: p.read_bytes()
+        for p in root.glob("*")
+        if p.is_file() and p.name not in {"status.json", ".lock"}
     }
     monkeypatch.setattr("python.operations.breakout_observer.source_hashes", lambda: {})
     assert collect(root, reg, until + timedelta(minutes=8))["status"] == "SOURCE_DRIFT"

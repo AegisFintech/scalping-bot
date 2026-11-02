@@ -7,15 +7,15 @@ User=scalper-flight
 Group=scalper-flight
 EnvironmentFile=/etc/scalper-flight/recorder.env
 Environment=PYTHONDONTWRITEBYTECODE=1
-Environment=PYTHONPATH=/opt/scalper-breakout507
-ExecStart=/opt/scalper-breakout507/.venv/bin/python -P -m python.operations.breakout_observer collect --registration /etc/scalper-breakout507/registration.json --root /var/lib/scalper-breakout507
+Environment=PYTHONPATH=/opt/scalper-breakout507-v2
+ExecStart=/opt/scalper-breakout507-v2/.venv/bin/python -P -m python.operations.breakout_observer collect --registration /etc/scalper-breakout507-v2/registration.json --root /var/lib/scalper-breakout507-v2
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadOnlyPaths=/var/lib/scalper-flight/recordings
-ReadWritePaths=/var/lib/scalper-breakout507
+ReadWritePaths=/var/lib/scalper-breakout507-v2
 InaccessiblePaths=-/root -/etc/scalping-bot -/etc/scalper-learning-ui -/var/lib/scalper-publisher
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 CapabilityBoundingSet=

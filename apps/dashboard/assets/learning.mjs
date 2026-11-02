@@ -20,7 +20,34 @@ async function call(path, body) {
     );
   return r.json();
 }
+function countsText(groups) {
+  return Object.entries(groups ?? {})
+    .map(
+      ([name, counts]) =>
+        `${name}: ${Object.entries(counts)
+          .map(([state, count]) => `${state} ${count}`)
+          .join(", ")}`,
+    )
+    .join(" · ");
+}
 function renderFunnel(d) {
+  const study = ["CURRENT", "STALE"].includes(d.registeredStudy?.readState)
+    ? d.registeredStudy
+    : null;
+  $("study-state").textContent = study
+    ? `${study.readState} · ${study.status} · checked ${study.checkedAt} (${study.ageSeconds}s ago)`
+    : "Registered study unavailable";
+  $("study-window").textContent = study
+    ? `${study.sourceId} · registration ${study.registrationSha256} · ${study.release} · ${study.start} to ${study.until} · retained ${study.retainedWindows}/${study.expectedWindows} windows`
+    : "";
+  $("study-storage").textContent = study
+    ? `Storage ${(study.storageBytes / 1048576).toFixed(2)} / ${(study.storageLimitBytes / 1048576).toFixed(0)} MiB · original inputs compressed · disk free ${(study.freeBytes / 1073741824).toFixed(2)} GiB / 2 GiB reserve`
+    : "";
+  $("study-result").textContent = study?.latest
+    ? `Latest verified window ends ${study.latest.until} · ${study.latest.origins} overlapping context origins. Thresholds ${countsText(study.latest.counts)}. Recorded level sequence ${countsText(study.latest.levelCounts)}. No executable fills or profit inferred.`
+    : study
+      ? "No verified completed window yet"
+      : "";
   const funnelState = d.executionFunnelReadState ?? "UNAVAILABLE";
   const f = ["CURRENT", "STALE"].includes(funnelState)
     ? d.executionFunnel
@@ -38,14 +65,7 @@ function renderFunnel(d) {
     ? `WAIT checks ${research.agenda.waitChecks}: ${research.agenda.exactlyLinkedWaitChecks} exact links / ${research.agenda.unavailableWaitLinks} unavailable. Completed failures ${research.agenda.completedFailures}; incomplete contexts ${research.agenda.incompleteContexts}.`
     : "";
   $("research-hypotheses").textContent = research
-    ? Object.entries(research.breakout.counts)
-        .map(
-          ([name, counts]) =>
-            `${name}: ${Object.entries(counts)
-              .map(([state, count]) => `${state} ${count}`)
-              .join(", ")}`,
-        )
-        .join(" · ")
+    ? countsText(research.breakout.counts)
     : "";
   $("research-next").textContent = research
     ? `${research.agenda.question} Next: ${research.agenda.nextAction}`

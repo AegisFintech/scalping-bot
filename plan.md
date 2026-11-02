@@ -1,3 +1,18 @@
+### ISSUE-511 — Bounded registered-study storage and actual learning visibility
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/511; parents #507/#508.
+- Acceptance: bounded exact-byte gzip retention, pre-write capacity checks, safe
+  failure state, source/runtime-pinned1.1 future registration; verified current/
+  stale/unavailable local study panel; old source/registrations/reports unchanged;
+  tests/full qualification/review/pushed PR/CI/merge and normal observer proof.
+- Dependencies: matched observer/UI source, first retained1.0 future window and
+  separately frozen new future segment; current trading source/economics stay.
+- Status: both independent implementation review axes clear after runtime/capture
+  fixes; corrected full2,725-test qualification4,23 non-root tests and four
+  configuration checks pass. First1.0 normal window retained/verified; future1.1
+  activation remains. Main includes normal independently reviewed research PR512.
+- Evidence: `docs/study-retention-report.md`.
+
 ### ISSUE-506 — Complete execution-aware scalping research harness
 
 - Parent: https://github.com/AegisFintech/scalping-bot/issues/506.
@@ -13,8 +28,9 @@
 - Dependencies: unchanged0.9 economic policy, additive0040, source-version matched
   executor/provider, immutable study registrations and separately controlled review.
 - Status: full2,711-test qualification, four configuration checks and both fresh
-  independent review axes pass. Reviewed remote delivery/activation and actual
-  new-source receipts remain to verify; authoritative updates are on issue506.
+  independent review axes pass. PR510 merged/deployed; exact normal links and
+  first prospective window verified. Bounded storage/display follow-up511 remains;
+  authoritative activation receipts are on issue506 and child issues.
 - Evidence: `docs/execution-aware-harness-report.md`.
 
 ### ISSUE-504 — Prospective WAIT/context lineage
@@ -24,8 +40,8 @@
   evidence and read-only export; explicit missing legacy links; tests/review/CI;
   coordinated code-version/frozen-study rollout and actual new scheduled proof.
 - Dependencies: #502 corrected review; #499 source-freeze compatibility.
-- Status: measured gap and bounded plan recorded; instrumentation NOT implemented.
-  Current trading continues; no historical inference/backfill or forced calls.
+- Status: complete/closed through PR510 and actual normal14:02 export /14:05
+  review:25 WAIT checks,25 exact links,0 missing; old unknowns preserved.
 - Evidence: `docs/wait-context-tracing-plan.md`.
 
 ### ISSUE-502 — Version-aware observation evidence
@@ -280,8 +296,10 @@
   pass. PR #471 is deployed with actual browser/recorder readback; all research
   timers are active. Scheduled generation reached the retained #479 model veto;
   actual namespace interruption and negative-review restart/dedup proof pass.
-  Successful natural merge/merged lineage remain pending the corrective allowance;
-  #403 economic rollout remains unqualified. See the current activation report.
+  Bounded natural cycle completed/closed through scheduled PR512, fresh28-case
+  scoring, matching /learning lineage and duplicate-after-merge reconciliation.
+  Original question remains unanswered; #403 economics stay unqualified. See
+  `docs/evidence/natural512-cycle.json`.
 - Evidence: `docs/research-delivery-report.md`.
 
 ### ISSUE-465 — Independent local research review and guarded delivery

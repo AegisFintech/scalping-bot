@@ -1,0 +1,125 @@
+{
+  "qualificationVersion": "1.0",
+  "qualified": true,
+  "sourceSha256": "bd33d5ea52feac7cdac7259eb1574f2321d92a5e5654c7928e7a687385e9527c",
+  "nodeSha256": "1a638b0fe2b68da0489276aca95526c5122fc61ba54d6a2d0d00c1c92ab7b876",
+  "pythonSha256": "273cb29e073b748379ba546affa562283ed795f84ff230349e12ce610e60975c",
+  "nodeVersion": "v22.23.2",
+  "scope": "SOFTWARE_QUALIFICATION_NOT_ECONOMIC_PROOF",
+  "command": "PATH=/opt/scalper-node22/bin:$PATH PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs",
+  "nodeTests": 1286,
+  "postgresTests": 157,
+  "pythonTests": 1282,
+  "totalTests": 2725,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0,
+      "elapsedMs": 19
+    },
+    {
+      "label": "test-certificate",
+      "code": 0,
+      "elapsedMs": 273
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0,
+      "elapsedMs": 10
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0,
+      "elapsedMs": 9
+    },
+    {
+      "label": "database-init",
+      "code": 0,
+      "elapsedMs": 718
+    },
+    {
+      "label": "database-start",
+      "code": 0,
+      "elapsedMs": 126
+    },
+    {
+      "label": "format",
+      "code": 0,
+      "elapsedMs": 28234
+    },
+    {
+      "label": "lint",
+      "code": 0,
+      "elapsedMs": 37790
+    },
+    {
+      "label": "types",
+      "code": 0,
+      "elapsedMs": 14905
+    },
+    {
+      "label": "build",
+      "code": 0,
+      "elapsedMs": 16545
+    },
+    {
+      "label": "node-tests",
+      "code": 0,
+      "elapsedMs": 146727
+    },
+    {
+      "label": "python-format",
+      "code": 0,
+      "elapsedMs": 118
+    },
+    {
+      "label": "python-lint",
+      "code": 0,
+      "elapsedMs": 128
+    },
+    {
+      "label": "python-types",
+      "code": 0,
+      "elapsedMs": 1057
+    },
+    {
+      "label": "secrets",
+      "code": 0,
+      "elapsedMs": 278
+    },
+    {
+      "label": "npm-audit",
+      "code": 0,
+      "elapsedMs": 4836
+    },
+    {
+      "label": "python-audit",
+      "code": 0,
+      "elapsedMs": 11492
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0,
+      "elapsedMs": 36416
+    },
+    {
+      "label": "python-tests",
+      "code": 0,
+      "elapsedMs": 50480
+    },
+    {
+      "label": "database-stop",
+      "code": 0,
+      "elapsedMs": 131
+    }
+  ],
+  "independentStandards": "CLEAR_AFTER_RUNTIME_CAPTURE_CORRECTIONS",
+  "independentSpec": "CLEAR_AFTER_VISIBILITY_CORRECTIONS",
+  "configurationChecks": "SAMPLE_AND_DEPLOYMENT_POLICY_AND_STARTUP_PASS",
+  "astGraph": {
+    "nodes": 17563,
+    "edges": 29657,
+    "communities": 1039,
+    "apiCalls": 0
+  }
+}
