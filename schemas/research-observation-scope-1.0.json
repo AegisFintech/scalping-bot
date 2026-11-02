@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "WindowOutcomes": {
+      "additionalProperties": false,
+      "properties": {
+        "originRelease": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Originrelease",
+          "type": "string"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3,8}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "rows": {
+          "minimum": 0,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "positive": {
+          "minimum": 0,
+          "title": "Positive",
+          "type": "integer"
+        },
+        "negative": {
+          "minimum": 0,
+          "title": "Negative",
+          "type": "integer"
+        },
+        "flat": {
+          "minimum": 0,
+          "title": "Flat",
+          "type": "integer"
+        },
+        "realizedNet": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Realizednet",
+          "type": "string"
+        },
+        "signedFees": {
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,40})?$",
+          "title": "Signedfees",
+          "type": "string"
+        }
+      },
+      "required": [
+        "originRelease",
+        "currency",
+        "rows",
+        "positive",
+        "negative",
+        "flat",
+        "realizedNet",
+        "signedFees"
+      ],
+      "title": "WindowOutcomes",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "research-observation-scope-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "sourceId": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "legacyBaselineRelease": {
+      "const": "0.8.0-model-scalp.1-codex.1",
+      "title": "Legacybaselinerelease",
+      "type": "string"
+    },
+    "contextReleaseCounts": {
+      "patternProperties": {
+        "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Contextreleasecounts",
+      "type": "object"
+    },
+    "supportedContexts": {
+      "minimum": 0,
+      "title": "Supportedcontexts",
+      "type": "integer"
+    },
+    "unsupportedContexts": {
+      "minimum": 0,
+      "title": "Unsupportedcontexts",
+      "type": "integer"
+    },
+    "decisions": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Decisions",
+      "type": "object"
+    },
+    "reasons": {
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_:.-]{0,159}$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "Reasons",
+      "type": "object"
+    },
+    "unsupportedIsTradingGate": {
+      "const": false,
+      "title": "Unsupportedistradinggate",
+      "type": "boolean"
+    },
+    "unsupportedIsProviderWait": {
+      "const": false,
+      "title": "Unsupportedisproviderwait",
+      "type": "boolean"
+    },
+    "closedRowsInPacket": {
+      "minimum": 0,
+      "title": "Closedrowsinpacket",
+      "type": "integer"
+    },
+    "uniqueClosedRowsInPacket": {
+      "minimum": 0,
+      "title": "Uniqueclosedrowsinpacket",
+      "type": "integer"
+    },
+    "duplicateClosedRows": {
+      "minimum": 0,
+      "title": "Duplicateclosedrows",
+      "type": "integer"
+    },
+    "windowClosedRows": {
+      "minimum": 0,
+      "title": "Windowclosedrows",
+      "type": "integer"
+    },
+    "windowOutcomes": {
+      "items": {
+        "$ref": "#/$defs/WindowOutcomes"
+      },
+      "title": "Windowoutcomes",
+      "type": "array"
+    },
+    "outcomeBasis": {
+      "const": "RECORDED_WINDOW_CLOSES_BY_RELEASE_CURRENCY_NOT_COHORT_RETURN",
+      "title": "Outcomebasis",
+      "type": "string"
+    },
+    "baselineBasis": {
+      "const": "SUPPORTED_HISTORICAL_RELEASE_ONLY_UNEXECUTED_HYPOTHESES",
+      "title": "Baselinebasis",
+      "type": "string"
+    },
+    "counterfactualFill": {
+      "title": "Counterfactualfill",
+      "type": "null"
+    },
+    "counterfactualNet": {
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packetSha256",
+    "sourceId",
+    "start",
+    "until",
+    "legacyBaselineRelease",
+    "contextReleaseCounts",
+    "supportedContexts",
+    "unsupportedContexts",
+    "decisions",
+    "reasons",
+    "unsupportedIsTradingGate",
+    "unsupportedIsProviderWait",
+    "closedRowsInPacket",
+    "uniqueClosedRowsInPacket",
+    "duplicateClosedRows",
+    "windowClosedRows",
+    "windowOutcomes",
+    "outcomeBasis",
+    "baselineBasis",
+    "counterfactualFill",
+    "counterfactualNet",
+    "economicQualification",
+    "brokerAuthority",
+    "promotionAuthority"
+  ],
+  "title": "ObservationScope",
+  "type": "object"
+}

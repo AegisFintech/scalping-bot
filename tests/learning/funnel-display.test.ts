@@ -16,6 +16,7 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
   let missing = false;
   let offline = false;
   const measurement = {
+    packetSha256: "a".repeat(64),
     start: "2026-11-02T05:30:00+00:00",
     until: "2026-11-02T06:00:00+00:00",
     journalSnapshotAt: "2026-11-02T06:02:00+00:00",
@@ -40,6 +41,25 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
     },
     executionFunnelReadState: "CURRENT",
     executionFunnel: measurement,
+    executionObservationScope: {
+      packetSha256: measurement.packetSha256,
+      legacyBaselineRelease: "0.8.0-model-scalp.1-codex.1",
+      supportedContexts: 25,
+      unsupportedContexts: 0,
+      decisions: { BUY: 16, WAIT: 9 },
+      windowClosedRows: 1,
+      windowOutcomes: [
+        {
+          originRelease: "0.9.0-cost-balanced.1-codex.1",
+          currency: "USD",
+          realizedNet: "-12.34",
+          signedFees: "-1.23",
+          positive: 0,
+          negative: 1,
+          flat: 0,
+        },
+      ],
+    },
   };
   runInNewContext(readFileSync("apps/dashboard/assets/learning.mjs", "utf8"), {
     document: { getElementById: (id: string) => elements.get(id) ?? null },
@@ -69,6 +89,25 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
   expect(text("funnel-baseline")).toContain("BUY 16");
   expect(text("funnel-baseline")).toContain("Unexecuted hypotheses");
   expect(text("funnel-latency")).toContain("23 known / 2 unknown");
+  expect(text("funnel-outcomes")).toContain("net -12.34");
+  expect(text("funnel-outcomes")).toContain("Net already includes fees");
+  data.executionObservationScope = {
+    packetSha256: measurement.packetSha256,
+    legacyBaselineRelease: "0.8.0-model-scalp.1-codex.1",
+    supportedContexts: 0,
+    unsupportedContexts: 25,
+    decisions: {},
+    windowClosedRows: 0,
+    windowOutcomes: [],
+  };
+  await scheduled();
+  expect(text("funnel-baseline")).toContain("0 supported / 25 unavailable");
+  expect(text("funnel-baseline")).toContain("not trading blockers");
+  data.executionObservationScope = null;
+  await scheduled();
+  expect(text("funnel-baseline")).toContain("applicability unavailable");
+  expect(text("funnel-baseline")).not.toContain("BUY 16");
+  expect(text("funnel-outcomes")).toContain("totals unavailable");
   data.executionFunnelReadState = "STALE";
   await scheduled();
   expect(text("funnel-window")).toContain("RECORDED STALE");
@@ -81,6 +120,7 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
       "funnel-decisions",
       "funnel-orders",
       "funnel-baseline",
+      "funnel-outcomes",
       "funnel-latency",
     ])
       expect(text(id)).toBe("");

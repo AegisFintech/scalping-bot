@@ -1,3 +1,16 @@
+### ISSUE-502 — Version-aware observation evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/502; parent #402/#466.
+- Acceptance: actual decisions/outcomes distinct from unsupported historical
+  baseline; all release/currency/unknown denominators preserved; frozen methods,
+  trading, claims and499 study unchanged; verified scope in learning UI; full
+  qualification/review/delivery and new normal scheduled finding.
+- Dependencies: current0.9 observation evidence and existing half-hour feed.
+- Status:2,682-test full qualification and independent Standards/Spec pass;
+  command/results are in the report. Regression reproduced and corrected.
+  Exact qualification, delivery and activation state are recorded on the issue.
+- Evidence: `docs/research-observation-scope-report.md`.
+
 ### ISSUE-498 — Cost-balanced model scalping
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/498; parents #403/#402.
