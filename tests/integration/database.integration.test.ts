@@ -258,6 +258,7 @@ describe("PostgreSQL migrations integration", () => {
         "0037",
         "0038",
         "0039",
+        "0040",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {
@@ -827,6 +828,17 @@ describe("PostgreSQL migrations integration", () => {
       const currentContext = await contextStore.latest();
       expect(currentContext?.state).toBe("REQUESTING");
       expect(currentContext?.requestedModel).toBe(FIXED_DEFAULTS.AI_MODEL);
+      const newSource = new PostgresContextStore(isolated, {
+        accountId: demoAccountId,
+        symbolId,
+        mode: "demo",
+        strategyVersionId: randomUUID(),
+      });
+      expect(await newSource.latest()).toBeNull();
+      // A new source cannot reuse old context authority or evade scope-wide cooldown.
+      expect(await newSource.claim({ ...contextClaim, id: randomUUID() })).toBe(
+        false,
+      );
       const evidence = await isolated.query(
         `SELECT e.request_text,e.response_text,p.content
         FROM context_provider_evidence e JOIN provider_prompt_artifacts p ON p.content_sha256=e.prompt_sha256

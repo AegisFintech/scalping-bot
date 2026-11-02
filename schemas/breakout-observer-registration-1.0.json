@@ -1,0 +1,94 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "breakout-observer-registration-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "registeredAt": {
+      "title": "Registeredat",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "sourceFiles": {
+      "additionalProperties": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Sourcefiles",
+      "type": "object"
+    },
+    "release": {
+      "const": "0.9.0-cost-balanced.1-codex.2",
+      "title": "Release",
+      "type": "string"
+    },
+    "definitions": {
+      "const": "FIVE_M1_RANGE_ONE_TICK_BUFFER_M5_THREE_CLOSE_DIRECTION_FIVE_FUTURE_M1",
+      "title": "Definitions",
+      "type": "string"
+    },
+    "exitReference": {
+      "const": "OPPOSITE_RANGE_PLUS_TICK_TARGET_STOP_DISTANCE_PLUS_TWICE_RECORDED_COST_MAX_SEVEN",
+      "default": "OPPOSITE_RANGE_PLUS_TICK_TARGET_STOP_DISTANCE_PLUS_TWICE_RECORDED_COST_MAX_SEVEN",
+      "title": "Exitreference",
+      "type": "string"
+    },
+    "candidates": {
+      "items": {
+        "enum": ["RANGE_BREAK", "BAR_CONFIRM", "BREAK_RETEST"],
+        "type": "string"
+      },
+      "title": "Candidates",
+      "type": "array"
+    },
+    "counterfactualFill": {
+      "default": null,
+      "title": "Counterfactualfill",
+      "type": "null"
+    },
+    "counterfactualNet": {
+      "default": null,
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "registeredAt",
+    "start",
+    "until",
+    "sourceFiles",
+    "release",
+    "definitions",
+    "candidates"
+  ],
+  "title": "Registration",
+  "type": "object"
+}

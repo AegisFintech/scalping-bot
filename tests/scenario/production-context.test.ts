@@ -7,6 +7,7 @@ import {
   type ContextStore,
   type StoredContext,
 } from "../../apps/execution-service/src/scenario-context.js";
+import { IndependentMaintenance } from "../../apps/execution-service/src/independent-maintenance.js";
 import { evaluateScenarioExecutionWindow } from "../../apps/execution-service/src/automatic-analysis-schedule.js";
 import { scenarioOco } from "../../packages/scenario-engine/src/oco.js";
 import { validateSemantics } from "../../packages/risk-engine/src/model-validator.js";
@@ -505,6 +506,13 @@ describe("reusable production context (synthetic contract tests, not strategy ev
     expect(model.canEvaluate).toBe(false);
     expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_PENDING");
     expect(generate).toHaveBeenCalledTimes(1);
+    const protect = vi.fn(() => Promise.resolve());
+    const maintenance = new IndependentMaintenance(protect);
+    await maintenance.run();
+    await maintenance.run();
+    expect(protect).toHaveBeenCalledTimes(2);
+    expect(store.row?.state).toBe("REQUESTING");
+    expect(generate).toHaveBeenCalledTimes(1);
     now = base + 40_000;
     const plan = { ...fixture.plan, analysis_id: store.row!.id };
     release({
@@ -834,6 +842,7 @@ describe("restart-safe explicit WAIT scheduling", () => {
       latest: () => Promise.resolve(row),
       claim: vi.fn(() => Promise.resolve(false)),
       finish: vi.fn(async () => {}),
+      consultation: vi.fn(() => Promise.resolve()),
     };
     const planner = { generate: vi.fn() };
     const model = new ReusableScenarioModel(
@@ -866,6 +875,14 @@ describe("restart-safe explicit WAIT scheduling", () => {
       ],
     };
     expect(await model.prepare(next)).toBe("SCENARIO_CODEX_WAIT");
+    expect(store.consultation).toHaveBeenCalledWith({
+      analysisId: String(next.payload.analysis_id),
+      contextId: row.id,
+      reason: "SCENARIO_CODEX_WAIT",
+      observedAt: at(80),
+    });
+    store.consultation.mockRejectedValueOnce(new Error("STORAGE_UNAVAILABLE"));
+    await expect(model.prepare(next)).rejects.toThrow("STORAGE_UNAVAILABLE");
     expect(store.claim).not.toHaveBeenCalled();
     now = base + 100_000;
     const restarted = new ReusableScenarioModel(

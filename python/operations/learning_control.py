@@ -15,7 +15,9 @@ from typing import Any
 from python.codex_entry.memory import Rpc, server_command
 from python.learning import governor
 from python.learning.budget import Policy
+from python.research.breakout_hypotheses import BreakoutMeasurement
 from python.research.execution_funnel import ExecutionFunnel
+from python.research.harness_agenda import HarnessAgenda
 from python.research.learning_archive import atomic_bytes, bounded, unique
 from python.research.observation_cycle import sha
 from python.research.observation_scope import ObservationScope
@@ -110,6 +112,28 @@ def recorded_observation_scope(job: Path) -> ObservationScope | None:
         ):
             return None
         return value
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def recorded_harness(job: Path) -> dict[str, Any] | None:
+    """Use only agenda/results bound to the same independently checked window."""
+    try:
+        funnel = recorded_funnel(job)
+        if funnel is None:
+            return None
+        raw = json.loads(bounded(job / "diagnostic.json", 8 * 1024 * 1024))["executionResearch"]
+        agenda = HarnessAgenda.model_validate(raw["agenda"])
+        breakout = BreakoutMeasurement.model_validate(raw["breakout"])
+        binding = (funnel.packetSha256, funnel.start, funnel.until)
+        if any((v.packetSha256, v.start, v.until) != binding for v in (agenda, breakout)):
+            return None
+        if (
+            sum(agenda.providerStates.values()) != funnel.contexts
+            or breakout.contextsInPacket != funnel.contexts
+        ):
+            return None
+        return {"agenda": agenda.model_dump(), "breakout": breakout.model_dump(exclude={"rows"})}
     except (OSError, ValueError, KeyError, TypeError):
         return None
 
@@ -213,6 +237,7 @@ def status() -> dict[str, Any]:
     except (OSError, ValueError):
         result["publications"] = []
     result["executionObservationScope"] = None
+    result["executionResearch"] = None
     result["executionFunnel"] = None
     result["executionFunnelReadState"] = "UNAVAILABLE"
     paths = list(agenda.glob("*/finding.json"))
@@ -224,6 +249,7 @@ def status() -> dict[str, Any]:
             result["executionFunnelReadState"] = state
             if state != "UNAVAILABLE":
                 result["executionFunnel"] = measured.model_dump()
+                result["executionResearch"] = recorded_harness(path.parent)
                 scope = recorded_observation_scope(path.parent)
                 if scope is not None:
                     result["executionObservationScope"] = scope.model_dump()

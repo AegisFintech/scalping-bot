@@ -142,6 +142,11 @@ economic acceptance.
 The [prospective context-tracing plan](docs/wait-context-tracing-plan.md) records
 missing WAIT/context links without inferring historical associations.
 
+For execution-aware attribution, fixed breakout hypotheses, agenda/recovery and
+independent inference/maintenance, read `docs/execution-aware-harness-report.md`.
+Preserve old study segments; rebase only completed never-scored standalone
+generation with unchanged protected contracts and fresh scoring/review.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

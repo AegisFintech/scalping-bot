@@ -508,6 +508,7 @@ async function main(): Promise<void> {
     accountId: identity.accountId,
     symbolId: identity.symbolId,
     mode: config.tradingMode,
+    strategyVersionId: identity.strategyVersionId,
   });
   const model = new ReusableScenarioModel(
     contextStore,

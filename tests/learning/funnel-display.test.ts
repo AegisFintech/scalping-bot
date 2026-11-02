@@ -41,6 +41,23 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
     },
     executionFunnelReadState: "CURRENT",
     executionFunnel: measurement,
+    executionResearch: {
+      agenda: {
+        packetSha256: measurement.packetSha256,
+        stage: "MEASURE_ENTRY_PATHS",
+        waitChecks: 25,
+        exactlyLinkedWaitChecks: 25,
+        unavailableWaitLinks: 0,
+        completedFailures: 1,
+        incompleteContexts: 0,
+        question: "<script>untrusted</script>",
+        nextAction: "Collect the fixed future study",
+      },
+      breakout: {
+        packetSha256: measurement.packetSha256,
+        counts: { RANGE_BREAK: { OBSERVED: 4, CENSORED: 2 } },
+      },
+    },
     executionObservationScope: {
       packetSha256: measurement.packetSha256,
       legacyBaselineRelease: "0.8.0-model-scalp.1-codex.1",
@@ -86,6 +103,13 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
     "Code generation: WAITING_RESEARCH_DUPLICATE",
   );
   expect(text("funnel-orders")).toContain("Order rows 0");
+  expect(text("research-stage")).toContain("MEASURE_ENTRY_PATHS");
+  expect(text("research-facts")).toContain("25 exact links / 0 unavailable");
+  expect(text("research-facts")).toContain(
+    "Completed failures 1; incomplete contexts 0",
+  );
+  expect(text("research-next")).toContain("<script>untrusted</script>");
+  expect(text("research-hypotheses")).toContain("OBSERVED 4");
   expect(text("funnel-baseline")).toContain("BUY 16");
   expect(text("funnel-baseline")).toContain("Unexecuted hypotheses");
   expect(text("funnel-latency")).toContain("23 known / 2 unknown");
@@ -103,11 +127,14 @@ it("renders recorded measurement separately and clears unavailable or unclassifi
   await scheduled();
   expect(text("funnel-baseline")).toContain("0 supported / 25 unavailable");
   expect(text("funnel-baseline")).toContain("not trading blockers");
+  data.executionResearch = null;
   data.executionObservationScope = null;
   await scheduled();
   expect(text("funnel-baseline")).toContain("applicability unavailable");
   expect(text("funnel-baseline")).not.toContain("BUY 16");
   expect(text("funnel-outcomes")).toContain("totals unavailable");
+  expect(text("research-stage")).toContain("unavailable");
+  expect(text("research-facts")).toBe("");
   data.executionFunnelReadState = "STALE";
   await scheduled();
   expect(text("funnel-window")).toContain("RECORDED STALE");

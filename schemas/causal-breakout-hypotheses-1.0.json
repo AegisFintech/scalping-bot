@@ -1,0 +1,310 @@
+{
+  "$defs": {
+    "CandidateObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "contextId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Contextid",
+          "type": "string"
+        },
+        "candidate": {
+          "enum": ["RANGE_BREAK", "BAR_CONFIRM", "BREAK_RETEST"],
+          "title": "Candidate",
+          "type": "string"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "enum": ["BUY", "SELL"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Direction"
+        },
+        "boundary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Boundary"
+        },
+        "modeledOutcomeCostPrice": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Modeledoutcomecostprice"
+        },
+        "structuralStop": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Structuralstop"
+        },
+        "costBalancedTarget": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Costbalancedtarget"
+        },
+        "status": {
+          "enum": ["OBSERVED", "NO_EVENT", "CENSORED", "UNAVAILABLE"],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "eventBarEnd": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Eventbarend"
+        },
+        "firstRecordedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Firstrecordedat"
+        },
+        "usableForwardBars": {
+          "maximum": 5,
+          "minimum": 0,
+          "title": "Usableforwardbars",
+          "type": "integer"
+        },
+        "observedFavorablePrice": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observedfavorableprice"
+        },
+        "observedAdversePrice": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observedadverseprice"
+        },
+        "levelSequence": {
+          "enum": [
+            "TARGET_LEVEL_FIRST",
+            "STOP_LEVEL_FIRST",
+            "SAME_BAR_AMBIGUOUS",
+            "NO_LEVEL",
+            "UNAVAILABLE"
+          ],
+          "title": "Levelsequence",
+          "type": "string"
+        },
+        "counterfactualFill": {
+          "default": null,
+          "title": "Counterfactualfill",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": [
+        "contextId",
+        "candidate",
+        "direction",
+        "boundary",
+        "modeledOutcomeCostPrice",
+        "structuralStop",
+        "costBalancedTarget",
+        "status",
+        "reason",
+        "eventBarEnd",
+        "firstRecordedAt",
+        "usableForwardBars",
+        "observedFavorablePrice",
+        "observedAdversePrice",
+        "levelSequence"
+      ],
+      "title": "CandidateObservation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "causal-breakout-hypotheses-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "contextsInPacket": {
+      "minimum": 0,
+      "title": "Contextsinpacket",
+      "type": "integer"
+    },
+    "availabilityWindowContexts": {
+      "minimum": 0,
+      "title": "Availabilitywindowcontexts",
+      "type": "integer"
+    },
+    "contextStates": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Contextstates",
+      "type": "object"
+    },
+    "sourceReleases": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Sourcereleases",
+      "type": "object"
+    },
+    "counts": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "title": "Counts",
+      "type": "object"
+    },
+    "levelCounts": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "title": "Levelcounts",
+      "type": "object"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/CandidateObservation"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "conflictingCandles": {
+      "minimum": 0,
+      "title": "Conflictingcandles",
+      "type": "integer"
+    },
+    "pathInputStates": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Pathinputstates",
+      "type": "object"
+    },
+    "coverage": {
+      "const": "RETAINED_COMPLETED_BARS_NOT_TICKS_OR_EXECUTABLE_FILLS",
+      "title": "Coverage",
+      "type": "string"
+    },
+    "costBasis": {
+      "const": "RECORDED_MIN_VOLUME_COST_PLUS_EXIT_RESERVE_NOT_ACTUAL_FEES",
+      "title": "Costbasis",
+      "type": "string"
+    },
+    "counterfactualNet": {
+      "default": null,
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packetSha256",
+    "start",
+    "until",
+    "contextsInPacket",
+    "availabilityWindowContexts",
+    "contextStates",
+    "sourceReleases",
+    "counts",
+    "levelCounts",
+    "rows",
+    "conflictingCandles",
+    "pathInputStates",
+    "coverage",
+    "costBasis"
+  ],
+  "title": "BreakoutMeasurement",
+  "type": "object"
+}

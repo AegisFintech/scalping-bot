@@ -1,0 +1,9 @@
+[Unit]
+Description=Evaluate one completed registered breakout window
+[Timer]
+OnCalendar=*-*-* *:07,37:00 UTC
+AccuracySec=1s
+Persistent=true
+Unit=scalper-breakout-observer.service
+[Install]
+WantedBy=timers.target

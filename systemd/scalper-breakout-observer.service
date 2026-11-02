@@ -1,0 +1,30 @@
+[Unit]
+Description=Read-only registered causal breakout study
+After=network-online.target
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+EnvironmentFile=/etc/scalper-flight/recorder.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-breakout507
+ExecStart=/opt/scalper-breakout507/.venv/bin/python -P -m python.operations.breakout_observer collect --registration /etc/scalper-breakout507/registration.json --root /var/lib/scalper-breakout507
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/scalper-flight/recordings
+ReadWritePaths=/var/lib/scalper-breakout507
+InaccessiblePaths=-/root -/etc/scalping-bot -/etc/scalper-learning-ui -/var/lib/scalper-publisher
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+CPUQuota=20%
+MemoryMax=384M
+TasksMax=16
+TimeoutStartSec=90
+[Install]
+WantedBy=multi-user.target

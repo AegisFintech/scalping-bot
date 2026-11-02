@@ -264,6 +264,8 @@ def export(
                 OR c.id IN (SELECT context_plan_id FROM order_groups
                   WHERE analysis_id=ANY(%s::uuid[]))
                 OR c.id IN (SELECT context_plan_id FROM model_requests
+                  WHERE analysis_id=ANY(%s::uuid[]))
+                OR c.id IN (SELECT context_id FROM analysis_context_consultations
                   WHERE analysis_id=ANY(%s::uuid[])))
             ORDER BY c.requested_at,c.id""",
             (
@@ -275,6 +277,7 @@ def export(
                 until,
                 start,
                 until,
+                analysis_ids,
                 analysis_ids,
                 analysis_ids,
                 analysis_ids,
@@ -295,8 +298,10 @@ def export(
             links = read(
                 """SELECT id FROM scenario_contexts WHERE source_analysis_id=%s
                 UNION SELECT context_plan_id id FROM model_requests
-                WHERE analysis_id=%s AND context_plan_id IS NOT NULL""",
-                (a["id"], a["id"]),
+                WHERE analysis_id=%s AND context_plan_id IS NOT NULL
+                UNION SELECT context_id id FROM analysis_context_consultations
+                WHERE analysis_id=%s AND account_id=%s AND symbol_id=%s AND mode='demo'""",
+                (a["id"], a["id"], a["id"], aid, sid),
                 20,
             )
             analyses.append(
