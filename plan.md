@@ -1,3 +1,14 @@
+### ISSUE-504 — Prospective WAIT/context lineage
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/504; parent #402/#289.
+- Acceptance: exact consulted-context association, additive durable/idempotent
+  evidence and read-only export; explicit missing legacy links; tests/review/CI;
+  coordinated code-version/frozen-study rollout and actual new scheduled proof.
+- Dependencies: #502 corrected review; #499 source-freeze compatibility.
+- Status: measured gap and bounded plan recorded; instrumentation NOT implemented.
+  Current trading continues; no historical inference/backfill or forced calls.
+- Evidence: `docs/wait-context-tracing-plan.md`.
+
 ### ISSUE-502 — Version-aware observation evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/502; parent #402/#466.

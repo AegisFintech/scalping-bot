@@ -139,6 +139,9 @@ unsupported historical replay separate from actual current trading decisions and
 recorded outcomes. Its report records software qualification separately from
 economic acceptance.
 
+The [prospective context-tracing plan](docs/wait-context-tracing-plan.md) records
+missing WAIT/context links without inferring historical associations.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.
