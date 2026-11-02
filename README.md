@@ -119,6 +119,9 @@ Learning resources and the separate `/learning` console: [operator guide](docs/l
 research blockers and actual activity age are visible in `/learning`; future
 metadata/acknowledgement collection has no trading or promotion authority.
 
+The [private learning console](docs/completion491-report.md) relies on existing
+Cloudflare Access, with no second admin-key prompt; control write checks remain.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

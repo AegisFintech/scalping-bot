@@ -32,3 +32,17 @@ def test_bad_terms_are_explicit_unknowns_and_clock_or_hash_corruption_rejects():
         m.observation(data, "XAUUSD", NOW, NOW - timedelta(seconds=1))
     with pytest.raises(ValueError):
         m.MetadataObservation.model_validate(value.model_dump() | {"symbol": "DIFFERENT"})
+
+
+@pytest.mark.parametrize(
+    "adapter_time",
+    ["2026-10-28T10:00:00Z", "2026-10-28T10:00:00.000Z", "2026-10-28T10:00:00+00:00"],
+)
+def test_real_adapter_utc_spelling_is_canonical_before_hashing(adapter_time):
+    from datetime import UTC, datetime
+
+    at = datetime(2026, 10, 28, 10, tzinfo=UTC)
+    data = {**metadata(), "symbolName": "XAUUSD", "metadataTime": adapter_time}
+    value = m.observation(data, "XAUUSD", at, at)
+    assert value.adapterMetadataAt == at.isoformat()
+    assert m.MetadataObservation.model_validate_json(value.model_dump_json()) == value

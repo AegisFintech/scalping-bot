@@ -156,6 +156,10 @@ For unsent-publication retirement, pipeline progress and prospective ACK/metadat
 evidence, read `docs/completion489-report.md`; preserve unknown claims, immutable
 receipts and explicit unqualified/missing evidence. Phase contents stay private.
 
+For `/learning` access or metadata receipt hashing, read `docs/completion491-report.md`;
+use the private Access-protected origin, retain write-origin checks and preserve
+original registrations when separately freezing repaired capture source.
+
 <!-- research-publication -->
 
 Research-only delivery `ddaba508ad0cb363994bebbdcb0265262c14dd8edff266084eb53fa21a40a199`; no execution or promotion authority.

@@ -15,7 +15,7 @@ async function call(path, body) {
   if (!r.ok)
     throw new Error(
       r.status === 401
-        ? "Authentication required"
+        ? "Cloudflare Access authentication required"
         : "Request unavailable; no change confirmed",
     );
   return r.json();
@@ -140,7 +140,6 @@ async function poll() {
   busy = true;
   try {
     const v = await call("/api/learning");
-    $("login").hidden = true;
     $("board").hidden = false;
     if (v.data) render(v.data);
     else $("state").textContent = `Evidence ${v.readState}; values withheld`;
@@ -150,16 +149,6 @@ async function poll() {
     busy = false;
   }
 }
-$("login").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  try {
-    await call("/api/learning/login", { token: $("token").value });
-    $("token").value = "";
-    await poll();
-  } catch (e) {
-    $("state").textContent = e.message;
-  }
-});
 $("controls").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
