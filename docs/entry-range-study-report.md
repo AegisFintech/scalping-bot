@@ -69,3 +69,27 @@ inputs/reports. Existing Flight, provider, execution and dashboard are untouched
 Actual qualification, independent reviews, pushed delivery, frozen registration
 and service readbacks are recorded on the issue. Tests alone are not qualification
 of either entry range.
+
+## Source qualification
+
+`PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs` passes all required format,
+lint, TypeScript/Python types, build, schema/migration/replay/fail-closed, secret
+scan and npm/Python dependency-audit gates:1,285 Node +157 PostgreSQL +1,233 Python
+=2,675 tests. [Exact validation](evidence/entry-range-study-validation.json).
+Both independent Standards and Spec reviews have no remaining P1/P2.
+
+The18 focused study tests include native point/tick differences, causal ACK and
+metadata failures, immutable retries, source drift and uncertain fill clocks.
+Review caught uncertain fills disappearing from the no-fill denominator; they
+now remain unknown and partial status is null. The first complete local/hosted
+run then caught our README paragraph after the protected publisher trailer; it
+was moved before the unchanged trailer and the actual publisher formatter test
+passes. Two earlier local runs were deliberately interrupted before completion
+for documentation/warm-up corrections; they are not passing qualifications.
+One upstream Starlette/httpx deprecation warning remains.
+
+Final documentation delivery preserves the same qualified executable fingerprint;
+formatting, publisher-template compatibility and secret checks run again, with
+full hosted qualification required on the final exact PR head. Actual merge,
+registration and observer activation receipts are linked from the issue; source
+qualification does not establish either entry range's economic performance.

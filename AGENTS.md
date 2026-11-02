@@ -36,6 +36,7 @@ qualification. Historical0.8 geometry/contexts stay version-bound. #499's narrow
 entry range is research-only; current trading range remains30ticks. Read
 `docs/entry-range-study-report.md` before changing frozen point/ACK collection.
 Keep unknown-clock fills and separate metadata warm-up from outcome windows.
+Software qualification never qualifies the entry range economically.
 
 ## Before changing an area
 

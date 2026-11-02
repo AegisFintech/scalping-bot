@@ -20,7 +20,8 @@
   causal ACK/metadata/Flight collection, all fill/nonfill/gap/unknown denominators;
   no hypothetical fills/net profits or trading/promotion authority; reviewed
   tested pushed delivery and persistent observer activation.
-- Status: additive observer implemented; qualification/review/delivery and
+- Status:2,675-test full qualification passes; Standards/Spec clear. Exact
+  command/results are in `docs/entry-range-study-report.md`; delivery and
   prospective activation are recorded on the issue. Economic acceptance remains
   future-dependent; never bundle this experiment into #498.
 - Evidence: `docs/entry-range-study-report.md`.

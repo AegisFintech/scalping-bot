@@ -132,6 +132,7 @@ The separate [native entry-range study](docs/entry-range-study-report.md) freeze
 10-vs30-point observational collection without changing demo orders or promoting
 a candidate. Unknown-clock fills remain visible. Actual activation/evidence is
 recorded on issue #499. Metadata warm-up does not backdate outcome collection.
+The linked report records2,675-test software qualification, not economic validation.
 
 <!-- research-publication -->
 
