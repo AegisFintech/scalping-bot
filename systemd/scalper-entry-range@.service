@@ -1,0 +1,28 @@
+[Unit]
+Description=Read-only prospective entry-range observation (%i)
+After=network-online.target
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+EnvironmentFile=/etc/scalper-flight/recorder.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-entry-range499
+ExecStart=/opt/scalper-entry-range499/.venv/bin/python -P -m python.operations.entry_range_study %i --registration /etc/scalper-entry-range499/registration.json --output /var/lib/scalper-entry-range499
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/scalper-flight/recordings
+ReadWritePaths=/var/lib/scalper-entry-range499
+InaccessiblePaths=-/root -/etc/scalping-bot -/etc/scalper-learning-ui -/var/lib/scalper-publisher
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+CPUQuota=20%
+MemoryMax=384M
+TasksMax=16
+TimeoutStartSec=90

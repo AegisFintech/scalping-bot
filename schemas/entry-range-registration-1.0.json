@@ -1,0 +1,75 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "entry-range-registration-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "registeredAt": {
+      "title": "Registeredat",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "economicRelease": {
+      "const": "0.9.0-cost-balanced.1-codex.1",
+      "title": "Economicrelease",
+      "type": "string"
+    },
+    "baselinePoints": {
+      "const": 30,
+      "title": "Baselinepoints",
+      "type": "integer"
+    },
+    "candidatePoints": {
+      "const": 10,
+      "title": "Candidatepoints",
+      "type": "integer"
+    },
+    "sourceFiles": {
+      "additionalProperties": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Sourcefiles",
+      "type": "object"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "registeredAt",
+    "start",
+    "until",
+    "economicRelease",
+    "baselinePoints",
+    "candidatePoints",
+    "sourceFiles",
+    "brokerAuthority",
+    "promotionAuthority",
+    "economicQualification"
+  ],
+  "title": "Registration",
+  "type": "object"
+}

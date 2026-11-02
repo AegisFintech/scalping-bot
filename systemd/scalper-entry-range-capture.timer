@@ -1,0 +1,9 @@
+[Unit]
+Description=Timestamp native point-size evidence every30seconds
+[Timer]
+OnCalendar=*-*-* *:*:00,30 UTC
+AccuracySec=1s
+Persistent=true
+Unit=scalper-entry-range@capture.service
+[Install]
+WantedBy=timers.target

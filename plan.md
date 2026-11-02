@@ -20,7 +20,10 @@
   causal ACK/metadata/Flight collection, all fill/nonfill/gap/unknown denominators;
   no hypothetical fills/net profits or trading/promotion authority; reviewed
   tested pushed delivery and persistent observer activation.
-- Status: planned next batch; never bundle this economic change into #498.
+- Status: additive observer implemented; qualification/review/delivery and
+  prospective activation are recorded on the issue. Economic acceptance remains
+  future-dependent; never bundle this experiment into #498.
+- Evidence: `docs/entry-range-study-report.md`.
 
 ### ISSUE-496 — Latest loss and verified Flight evidence
 
