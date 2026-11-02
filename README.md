@@ -111,6 +111,8 @@ The [exact-head qualification report](docs/exact-head-checks-report.md) records 
 
 Distributed experiment delivery is tracked in [the execution report](docs/experiment-execution-report.md). Real registered jobs have remote execution/independent-check/closure evidence; periodic activation is recorded separately. Generated strategy improvement remains a separate milestone.
 
+Authentication fixtures run without root; deployment still requires private root-owned control credentials.
+
 Learning resources and the separate `/learning` console: [operator guide](docs/learning-control-report.md). API-first uses the approved US$20/day ceiling with credit/cap subscription fallback; research pauses do not pause position protection.
 
 <!-- research-publication -->

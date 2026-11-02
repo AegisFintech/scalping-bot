@@ -17,6 +17,8 @@
 - Do not guess missing facts. Inspect available evidence first; ask the operator
   when information, external data or a decision is genuinely missing. Existing
   authorization covers safe recovery/restarts; it does not waive safeguards.
+- Test authentication independently of the runner UID; separately assert the
+  production root-ownership and private-permission checks.
 - Keep replies very short: result or blocker first, detailed evidence linked.
   Report unresolved work honestly; never promise background work without a
   verified persistent service. Monitor its health, not merely its process status.

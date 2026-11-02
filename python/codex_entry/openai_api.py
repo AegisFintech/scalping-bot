@@ -181,7 +181,7 @@ def invoke(prompt: str, job: Path, schema: dict[str, Any]) -> tuple[bytes, dict[
                 json.dumps(rejection).encode(),
                 replace=True,
             )
-        if error.code in {401, 402, 403, 429}:
+        if error.code in {401, 402, 403} or credit_exhausted:
             policy = Policy.model_validate(local.snapshot()["policy"])
             local.update(policy.model_copy(update={"paused": True}))
         local.settle(job.name, None)

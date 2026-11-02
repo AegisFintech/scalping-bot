@@ -23,7 +23,8 @@ Public monetary cost stays null; private charging is a conservative estimate,
 not an invoice or credit-balance query. Standard model rates currently used:
 input2.50/M (includes potential cache-write allowance), cached input0.10/M,
 output10/M. [Official model reference](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
-HTTP401/402/403/429 pauses new API admission; unknown dispatches retain reservations
+Authentication/billing denial pauses new API admission; ordinary rate limiting
+retains the existing durable cooldown and automatic re-evaluation. unknown dispatches retain reservations
 without retry. Protective trading maintenance remains independent of the provider.
 
 The operator additionally authorized API-first subscription fallback. Root policy
@@ -156,3 +157,5 @@ those are not claimed as successful qualification.
 
 Reviewed merge, isolated deployment, quota refresh and actual natural provider
 receipt verification are required next. No paid benchmark or order is forced.
+
+Hosted CI caught root-owned HTTP fixture assumptions. The corrected fixtures pass as root and as the restricted entry UID; separate ownership/permissions/symlink rejection tests retain production checks. A second review also confirms transient429 errors retain normal cooldown without a permanent pause or financial fallback. Updated full local qualification passes2,586 tests (1,276 Node,147 database,1,163 Python).

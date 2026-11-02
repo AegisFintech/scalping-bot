@@ -1,3 +1,7 @@
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -10,6 +14,9 @@ def client(tmp_path, monkeypatch):
     token.write_text("fixture-admin-" + ("a" * 32))
     token.chmod(0o600)
     monkeypatch.setattr(learning, "ADMIN", token)
+    # Exercise HTTP auth independently of the CI user's UID. Ownership itself
+    # is tested below, without weakening the production root-only requirement.
+    monkeypatch.setattr(learning, "secret", lambda _path=None: token.read_bytes().strip())
     app = FastAPI()
     app.include_router(learning.router)
 
@@ -75,3 +82,24 @@ def test_authenticated_direction_is_typed_and_audited_at_receiver(tmp_path, monk
         web.post("/api/learning/control", content=b"x" * 8193, headers=headers).status_code == 413
     )
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("owner", "mode", "symlink", "valid"),
+    [
+        (0, 0o100600, False, True),
+        (1000, 0o100600, False, False),
+        (0, 0o100644, False, False),
+        (0, 0o100600, True, False),
+    ],
+)
+def test_admin_secret_requires_root_private_regular_path(owner, mode, symlink, valid):
+    path = Mock()
+    path.is_symlink.return_value = symlink
+    path.stat.return_value = SimpleNamespace(st_uid=owner, st_mode=mode)
+    path.read_bytes.return_value = b"fixture-credential-" + b"x" * 32
+    if valid:
+        assert learning.secret(path) == path.read_bytes.return_value
+    else:
+        with pytest.raises(ValueError, match="AUTH_INVALID"):
+            learning.secret(path)

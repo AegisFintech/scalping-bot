@@ -192,7 +192,7 @@ def test_api_controls_use_separate_authority_and_cannot_raise_root_ceiling(tmp_p
     assert budget.snapshot()["policy"]["dailyLimit"] == 2_000_000
 
 
-@pytest.mark.parametrize("code", [401, 403, 429])
+@pytest.mark.parametrize("code", [401, 403])
 def test_api_auth_or_credit_failure_pauses_only_new_analysis(tmp_path, monkeypatch, code):
     import urllib.error
 
@@ -307,3 +307,34 @@ def test_daily_api_limit_can_select_subscription_but_manual_pause_cannot(tmp_pat
     other.mkdir()
     with pytest.raises(ValueError, match="BUDGET_WAIT"):
         api.reserve(other, "fresh")
+
+
+def test_transient_rate_limit_keeps_cooldown_without_permanent_pause_or_fallback(
+    tmp_path, monkeypatch
+):
+    import io
+    import urllib.error
+
+    job, budget, _ = setup(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        api, "settings", lambda: {"dailyLimitMicroUsd": 1_000_000, "subscriptionFallback": True}
+    )
+
+    class Opener:
+        def open(self, *_args, **_kwargs):
+            raise urllib.error.HTTPError(
+                "https://api.openai.com/v1/responses",
+                429,
+                "rate",
+                {},
+                io.BytesIO(b'{"error":{"code":"rate_limit_exceeded"}}'),
+            )
+
+    monkeypatch.setattr(api.urllib.request, "build_opener", lambda *_: Opener())
+    with pytest.raises(ValueError, match="UNAVAILABLE_OR_UNKNOWN"):
+        api.invoke("fresh", job, {})
+    assert budget.snapshot()["policy"]["paused"] is False
+    assert budget.snapshot()["recent"][0]["status"] == "UNKNOWN"
+    assert not (budget.path.parent / "credit-exhausted.json").exists()
+    with pytest.raises(ValueError, match="ALREADY_CLAIMED"):
+        api.invoke("fresh", job, {})

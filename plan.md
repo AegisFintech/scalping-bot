@@ -10,7 +10,8 @@
   isolated worker/producer activation, full qualification, exact-source reviews,
   pushed reviewed delivery and verified research/UI rollout. Do not claim whole completion until matching rollout evidence exists.
 - Status: implementation, both fresh review axes and full qualification pass; matching
-  deployment and operational verification pending. API model access GET200, no paid
+  deployment and operational verification pending. Hosted CI exposed root-only
+  HTTP fixtures; portable fixtures now separately test production ownership enforcement. API model access GET200, no paid
   model benchmark. Trading remains on existing producer pending reviewed matching activation.
 - Evidence: `docs/learning-control-report.md`, `docs/token-usage-report.md`.
 
