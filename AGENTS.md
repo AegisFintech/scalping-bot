@@ -227,6 +227,8 @@ Full finite-protocol qualification:2,814 tests/no skips, both exact-head reviews
 
 Rollout audit correction: normal restart preserves native pending orders; emergency/expiry handling remains unchanged. Requalification follows this source correction.
 
+Corrected finite-protocol source qualifies2,815 tests/no skips; both reviews clear. Normal restart preserves pending orders. Read `docs/evidence/demo-trial-final-validation.json`; activation and natural two-trial proof remain separate.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

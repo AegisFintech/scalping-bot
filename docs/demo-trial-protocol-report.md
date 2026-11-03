@@ -178,3 +178,26 @@ are rejected, and native GTD expiry, emergency/ownership cancellation and filled
 protection remain unchanged. No existing pending order was cancelled in this
 audit. Auto-merge was withheld; source requalification and fresh review are required.
 The earlier2814-test receipt remains valid only for its recorded earlier source.
+
+## Final corrected source qualification
+
+At225cb319, the fresh complete `PATH=/opt/scalper-node22/bin:$PATH npm run qualify`
+passes2,815 tests:1,319 Node/schema/replay,164 TLS PostgreSQL lifecycle,1,332 Python,
+no skips. All formatting, lint/types, build, secret and dependency-audit gates pass.
+Both independent reviews are CLEAR at that exact source, and all four actual/sample
+policy/startup checks pass. Source39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b
+is authoritative for rollout; the earlier7e148109 receipt is historical.
+[Final receipt](evidence/demo-trial-final-validation.json).
+
+Two intervening runs are retained as failures: temporary release copies pushed
+/tmp below the observer tests'2GiB reserve; removing only our unused staging
+dependencies, completed merged worktrees and stopped synthetic prototype database
+restored headroom. A subsequent vulnerability-service TLS reset stopped the audit.
+No guard was disabled, production record removed or failed run called qualified;
+the final whole-source rerun passed.
+[Failure receipts](evidence/demo-trial-rollout-failures.json).
+
+Issue526 separately adds read-only Singapore-day close-deal scorecards and a bounded
+natural-trial witness. Its19 focused tests pass in its own worktree; its full review/
+qualification and read-only deployment remain pending. It must not alter the frozen
+0.10 executor source, registrations, risk or broker authority.
