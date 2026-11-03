@@ -570,7 +570,14 @@ async function main(): Promise<void> {
     if (recorderTimer !== null) clearInterval(recorderTimer);
     await captureInFlight;
     if (recorder !== null) await recorder.stop();
-    await idleTape.stop().catch(() => undefined);
+    await idleTape.stop().catch(() => {
+      console.warn(
+        JSON.stringify({
+          event_name: "idle_tape_close_failed",
+          reason_code: idleTape.status.lastError,
+        }),
+      );
+    });
     await app.close();
     await adapter.disconnect();
   };

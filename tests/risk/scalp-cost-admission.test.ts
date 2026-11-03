@@ -1,10 +1,14 @@
 import { expect, it } from "vitest";
 import {
   costBalancedPayoffEvidence,
+  validateCostBalancedScalpCommands,
   costBalancedScalpTransform,
 } from "../../packages/strategy-candidates/src/directional-scalp.js";
 import { metadata, response } from "../helpers/breakout-candidate.js";
-import type { MarketSnapshot } from "../../packages/contracts/src/index.js";
+import type {
+  MarketSnapshot,
+  PendingOrderCommand,
+} from "../../packages/contracts/src/index.js";
 it("decomposes fees and reserve without labelling either as an actual debit", () => {
   const m = metadata();
   const e = costBalancedPayoffEvidence(
@@ -52,4 +56,54 @@ it("keeps volume-dependent broker minimum commissions and conversion in the cost
   expect(() =>
     costBalancedPayoffEvidence(m, "bad", "4004", "3999", m.minVolume),
   ).toThrow();
+});
+
+it("computes a fee-consistent threshold and retains actual-volume rejection evidence", () => {
+  const m = metadata();
+  const value = costBalancedPayoffEvidence(
+    m,
+    "4000",
+    "4001",
+    "3999",
+    m.minVolume,
+  );
+  expect(value.minimum_target_distance_price).not.toBeNull();
+  const threshold = Number(value.minimum_target_distance_price);
+  const again = costBalancedPayoffEvidence(
+    m,
+    "4000",
+    String(4000 + threshold),
+    "3999",
+    m.minVolume,
+  );
+  expect(Number(again.modeled_target_shortfall_price)).toBeLessThan(1e-9);
+  const c = {
+    side: "BUY",
+    entryPrice: "4000",
+    takeProfit: "4001",
+    stopLoss: "3999",
+    volume: "200",
+    executionOrderType: "STOP_LIMIT",
+    timeInForce: "GTD",
+  } as PendingOrderCommand;
+  const result = validateCostBalancedScalpCommands([c], m);
+  expect(result.approved).toBe(false);
+  expect(result.evidence).toHaveLength(1);
+  expect(result.evidence[0]).toMatchObject({
+    volume: "200",
+    evidence_version: "scalp-cost-admission-1.0",
+    target_distance_price: "1",
+  });
+});
+it("withholds an unverified threshold beyond the policy ceiling", () => {
+  const m = metadata();
+  const value = costBalancedPayoffEvidence(
+    m,
+    "4000",
+    "4001",
+    "3993",
+    m.minVolume,
+  );
+  expect(value.minimum_target_distance_price).toBeNull();
+  expect(value.target_threshold_status).toBe("UNAVAILABLE_AT_POLICY_CEILING");
 });

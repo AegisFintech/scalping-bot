@@ -5,7 +5,15 @@ const addFormats = formatsModule.default as unknown as (
 ) => Ajv2020;
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+  truncate,
+  stat,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
@@ -15,7 +23,7 @@ import type { FlightQuoteObservation } from "../../packages/contracts/src/flight
 const space = vi.hoisted(() => ({ free: 8 * 1024 ** 3 }));
 vi.mock("node:fs/promises", async (original) => ({
   ...(await original<object>()),
-  statfs: async () => ({ bavail: space.free, bsize: 1 }),
+  statfs: () => Promise.resolve({ bavail: space.free, bsize: 1 }),
 }));
 const directories: string[] = [];
 async function tape() {
@@ -68,7 +76,7 @@ it("retains idle side clocks, reconnects, original update order and independentl
     .toString()
     .trim()
     .split("\n")
-    .map((s) => JSON.parse(s));
+    .map((s) => JSON.parse(s) as Record<string, unknown>);
   const ajv = new Ajv2020({ allErrors: true });
   addFormats(ajv);
   const update = ajv.compile(
@@ -87,7 +95,7 @@ it("retains idle side clocks, reconnects, original update order and independentl
     bidReceivedAt: null,
     askSourceTime: "2026-11-03T00:00:00.200Z",
   });
-  const manifest = JSON.parse(
+  const manifest: unknown = JSON.parse(
     await readFile(path.join(r.directory, file + ".manifest.json"), "utf8"),
   );
   expect(manifest).toMatchObject({
@@ -135,4 +143,49 @@ it("bounds callback backlog and marks drops instead of allocating without limit"
   expect(r.status.pendingUpdates).toBe(2048);
   expect(r.status.droppedUpdates).toBe(52);
   await r.stop();
+});
+it("invalidates side provenance even when reconnect is dropped by a full queue", async () => {
+  const r = await tape();
+  for (let i = 0; i < 2048; i++) r.observe(event("2026-11-03T00:00:00.000Z"));
+  r.observe({
+    ...event("2026-11-03T00:00:00.050Z"),
+    kind: "RECONNECT",
+    symbolName: null,
+    bidUpdated: false,
+    askUpdated: false,
+  });
+  await r.flush();
+  r.observe(event("2026-11-03T00:00:00.100Z", false, true));
+  await r.stop();
+  const names = (await readdir(r.directory))
+    .filter((n) => n.endsWith(".jsonl.gz"))
+    .sort();
+  const last = gunzipSync(await readFile(path.join(r.directory, names.at(-1)!)))
+    .toString()
+    .trim();
+  expect(JSON.parse(last)).toMatchObject({
+    sequence: 2050,
+    bidSourceTime: null,
+    bidReceivedAt: null,
+    askSourceTime: "2026-11-03T00:00:00.100Z",
+  });
+});
+it("counts orphan temporary bytes against capacity without deleting them", async () => {
+  const r = await tape();
+  const orphan = path.join(r.directory, "idle-orphan.jsonl.gz.tmp");
+  await writeFile(orphan, "");
+  await truncate(orphan, 257 * 1024 ** 2);
+  r.observe(event("2026-11-03T00:00:00.000Z"));
+  await expect(r.stop()).rejects.toThrow("IDLE_TAPE_CAPACITY");
+  expect((await stat(orphan)).size).toBe(257 * 1024 ** 2);
+  expect(r.status.lastError).toBe("IDLE_TAPE_CAPACITY");
+});
+it("latches first final-write I/O failure in health", async () => {
+  const good = await tape();
+  const invalid = path.join(good.directory, "file");
+  await writeFile(invalid, "occupied");
+  const r = new IdleQuoteRecorder(invalid, "XAUUSD", "fixture");
+  r.observe(event("2026-11-03T00:00:00.000Z"));
+  await expect(r.stop()).rejects.toThrow();
+  expect(r.status.lastError).toBe("IDLE_TAPE_IO_FAILURE");
 });
