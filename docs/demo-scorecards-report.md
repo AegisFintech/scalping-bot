@@ -127,8 +127,18 @@ At07:47:02UTC the first allocation naturally completed:4 actual fills/4closed
 outcomes, net-699.87USD including fees,20WAIT/0failed/0incomplete. It registered
 ENTRY_RANGE_5 as its actual future-start successor. The restart receipt now binds
 to that completed allocation. This is one distinct completed profile, not the
-required two. [First completion](evidence/demo-first-natural-completion.json). Full qualification, independent review, push/CI/merge and separate
-read-only activation must be recorded before declaring this issue complete.
+required two. [First completion](evidence/demo-first-natural-completion.json). Full qualification passes2,845 tests (1321 Node/164 TLS PostgreSQL lifecycle/1360 Python),
+no skips. Formatting/lint/types/build/schema/replay/lifecycle/secrets and both
+dependency audits pass. All four policy/startup configuration checks pass. Both
+independent review axes are CLEAR at2d9ec56.11 existing moderate npm advisories
+and the existing Starlette/httpx deprecation warning remain disclosed.
+`npm run qualify` raw receipt is hashed in the
+[validation receipt](evidence/demo-scorecards-validation.json).
+
+Before merge, pushed exact-head CI/separate aloycwl approval remain required.
+Actual read-only activation/readbacks are recorded on
+[issue526](https://github.com/AegisFintech/scalping-bot/issues/526) after delivery;
+source qualification is not that activation or the second natural trial.
 The initial systemd static probe failed because its not-yet-installed source alias
 was absent; repeat against the real deployed artifact. No test skip or economic
 promotion is authorized. Keep the parent natural proof pending until actual evidence.

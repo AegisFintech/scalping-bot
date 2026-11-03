@@ -1,0 +1,157 @@
+{
+  "version": "demo-scorecards-validation-1.0",
+  "qualified": true,
+  "qualifiedHead": "2d9ec56782fc410948781ed29a4fc70b062c4bc0",
+  "qualifiedSourceSha256": "02c4e54721b591601a899cb534671fd135217c09869232b9fa242ac2b3ce5a76",
+  "rawQualificationSha256": "0ff8f0ea599587587e1e856d9e6ab95f3a337925b34b813313b3ea6ab2e03d49",
+  "counts": {
+    "node-tests": 1321,
+    "database-lifecycle": 164,
+    "python-tests": 1360
+  },
+  "totalTests": 2845,
+  "skipped": 0,
+  "command": "npm run qualify",
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0,
+      "elapsedMs": 23
+    },
+    {
+      "label": "test-certificate",
+      "code": 0,
+      "elapsedMs": 385
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0,
+      "elapsedMs": 9
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0,
+      "elapsedMs": 9
+    },
+    {
+      "label": "database-init",
+      "code": 0,
+      "elapsedMs": 910
+    },
+    {
+      "label": "database-start",
+      "code": 0,
+      "elapsedMs": 127
+    },
+    {
+      "label": "format",
+      "code": 0,
+      "elapsedMs": 50894
+    },
+    {
+      "label": "lint",
+      "code": 0,
+      "elapsedMs": 55877
+    },
+    {
+      "label": "types",
+      "code": 0,
+      "elapsedMs": 16507
+    },
+    {
+      "label": "build",
+      "code": 0,
+      "elapsedMs": 13330
+    },
+    {
+      "label": "node-tests",
+      "code": 0,
+      "elapsedMs": 128876
+    },
+    {
+      "label": "python-format",
+      "code": 0,
+      "elapsedMs": 411
+    },
+    {
+      "label": "python-lint",
+      "code": 0,
+      "elapsedMs": 236
+    },
+    {
+      "label": "python-types",
+      "code": 0,
+      "elapsedMs": 7013
+    },
+    {
+      "label": "secrets",
+      "code": 0,
+      "elapsedMs": 335
+    },
+    {
+      "label": "npm-audit",
+      "code": 0,
+      "elapsedMs": 5417
+    },
+    {
+      "label": "python-audit",
+      "code": 0,
+      "elapsedMs": 15262
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0,
+      "elapsedMs": 50297
+    },
+    {
+      "label": "python-tests",
+      "code": 0,
+      "elapsedMs": 51627
+    },
+    {
+      "label": "database-stop",
+      "code": 0,
+      "elapsedMs": 125
+    }
+  ],
+  "configurationChecks": {
+    "samplePolicy": true,
+    "sampleStartup": true,
+    "populatedPolicy": true,
+    "populatedStartup": true,
+    "sampleSettings": 16,
+    "populatedSettings": 19,
+    "protectedFileUnchanged": true
+  },
+  "independentReviews": {
+    "standards": "CLEAR",
+    "spec": "CLEAR",
+    "head": "2d9ec56782fc410948781ed29a4fc70b062c4bc0"
+  },
+  "browserPreview": {
+    "checkedAt": "2026-11-03T07:48:25.919Z",
+    "hasDailyScorecard": false,
+    "pageErrors": 0,
+    "layouts": [
+      {
+        "width": 1440,
+        "noHorizontalOverflow": true
+      },
+      {
+        "width": 390,
+        "noHorizontalOverflow": true
+      }
+    ],
+    "recordedNet": null,
+    "closeDeals": null,
+    "naturalTrialEvidence": null
+  },
+  "knownAuditLimits": [
+    "11 existing moderate npm advisories; high-severity gate passes.",
+    "Existing Starlette/httpx deprecation warning."
+  ],
+  "sourceOnly": true,
+  "actualReadOnlyActivationPending": true,
+  "economicQualification": false,
+  "brokerAuthority": false
+}

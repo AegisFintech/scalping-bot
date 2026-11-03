@@ -216,7 +216,8 @@ Use exact existing terminal-proof functions for nonfill counts, distinguish
 unsent/open/unproven groups, and test root ownership independently of runner UID.
 The browser-clock regression uses an explicit typed Date override; long evidence
 wraps on mobile and desktop. First natural completion/successor proof is retained
-in `docs/evidence/demo-first-natural-completion.json`; two-trial proof stays pending.
+in `docs/evidence/demo-first-natural-completion.json`; two-trial proof stays pending. Read-only source qualifies2,845 tests/no skips;
+see `docs/evidence/demo-scorecards-validation.json` and issue526 for activation.
 
 Related implementation reports: [cost/tape measurement](docs/experiment-measurement-report.md),
 [current-contract screening](docs/current-demo-runner-report.md), and

@@ -2,7 +2,8 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/526; parent515/520; depends on519.
 - Acceptance: bounded read-only Singapore-day actual close-deal net, fees included, partial-day/open/unknown/cashflow separation; frozen completion receipts and separately protected actual restart proof; existing /learning visibility; tests, qualification, two-axis review, pushed exact-head CI/approval/merge and read-only activation. No economic promotion or executor-source change.
-- Status: read-only daily/retained-trial views, schemas and real TypeScript→Python UTC tape repair implemented; focused tests and actual DB/tape readbacks pass. Full qualification/review/delivery and separate read-only activation pending. Executor remains frozen at39588e87; parent natural proof remains OPEN.
+- Status: full2,845-test/no-skip qualification and both independent review axes pass; four configuration checks and real DB/tape/browser-preview probes pass. PR527 source delivery/CI/approval and separate read-only activation follow. Executor stays frozen at39588e87. One distinct filled allocation naturally completed with actual successor/restart proof; parent515/520 remain OPEN for the second.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/527. Exact validation: docs/evidence/demo-scorecards-validation.json. Actual read-only activation is recorded on issue526 after delivery.
 
 ### ISSUE-519 / ISSUE-520 — Finite registered recurring demo trials
 
