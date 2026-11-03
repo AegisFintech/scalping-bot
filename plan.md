@@ -1,3 +1,19 @@
+### ISSUE-515 — Recurring net-expectancy DEMO experiments
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/515.
+- Planning PR: https://github.com/AegisFintech/scalping-bot/pull/516; does not close #515.
+- Dependencies: #289 cost/execution evidence; #400 current-contract runner;
+  #403 reviewed finite demo catalogue; #402 recurring experiment selection.
+- Acceptance: source-frozen small entry/TP/SL/timing batches, realistic and explicit
+  base/stress costs, actual single-bot demo outcomes, then automatic selection of
+  a DIFFERENT eligible experiment; all negative/unknown results retained. Natural
+  two-distinct-trial/restart proof and daily cashflow-separated scorecards required.
+- Status: researched concrete plan delivered for review; implementation remains
+  OPEN. This document changes no settings, active trial, risk or broker authority.
+  Demo trial admission and statistical economic qualification are distinct.
+- Evidence: `docs/net-expectancy-experiment-plan.md` and
+  `docs/net-expectancy-primary-research.md`.
+
 ### ISSUE-511 — Bounded registered-study storage and actual learning visibility
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/511; parents #507/#508.
