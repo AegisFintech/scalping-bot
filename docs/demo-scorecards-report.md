@@ -117,7 +117,17 @@ proposal/nonfill denominators and a root-owner test gap; these were corrected.
 The initial qualification was deliberately interrupted during lint to address
 those review findings; its unsuccessful receipt is retained separately. Hosted
 checks then caught a missing TypeScript `override` on the VM test clock; that
-fixture correction requires fresh qualification, rather than waiving the check. Full qualification, independent review, push/CI/merge and separate
+fixture correction requires fresh qualification, rather than waiving the check.
+A real browser also reproduced horizontal overflow at1440px and390px on the old
+learning page. Wrapping `pre` evidence and allowing grid cards to shrink resolves
+both widths in a browser preview; the final real deployed check remains required.
+The superseded run was stopped after types passed, before this responsive repair.
+
+At07:47:02UTC the first allocation naturally completed:4 actual fills/4closed
+outcomes, net-699.87USD including fees,20WAIT/0failed/0incomplete. It registered
+ENTRY_RANGE_5 as its actual future-start successor. The restart receipt now binds
+to that completed allocation. This is one distinct completed profile, not the
+required two. [First completion](evidence/demo-first-natural-completion.json). Full qualification, independent review, push/CI/merge and separate
 read-only activation must be recorded before declaring this issue complete.
 The initial systemd static probe failed because its not-yet-installed source alias
 was absent; repeat against the real deployed artifact. No test skip or economic

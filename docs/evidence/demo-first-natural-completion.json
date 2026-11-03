@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "demo-first-natural-completion-1.0",
+  "checkedAt": "2026-11-03T07:47:58.317697+00:00",
+  "controllerVerifiedAt": "2026-11-03T07:47:57.749Z",
+  "nextAction": "EVALUATE_FRESH_OPPORTUNITIES",
+  "trials": [
+    {
+      "profile_id": "ENTRY_RANGE_5",
+      "profile_sha256": "cbc1fffa6f728b9f1f0f3ec2f9be26e96ebd744674adb42af96ded17fb9e98f9",
+      "source_sha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+      "catalogue_sha256": "0ff4268fcfe1c73e9c2dcc87ce461c9029e80bd4404194aabcfc2f9022da9e8f",
+      "cycle": 0,
+      "ordinal": 1,
+      "registered_at": "2026-11-03T07:47:02.617Z",
+      "starts_at": "2026-11-03T07:47:03.617Z",
+      "state": "ACTIVE",
+      "completed_at": null,
+      "market_open_ms": "49393",
+      "proposals": 0,
+      "provider_claims": 0,
+      "waits": 0,
+      "entry_fill_events": 0,
+      "closes": 0,
+      "realized_net": null,
+      "review": null
+    },
+    {
+      "profile_id": "ENTRY_RANGE_3",
+      "profile_sha256": "2e043cb4d87476ec85dee7dc765f1223280c1e97d5507abcdd165b760310a22e",
+      "source_sha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+      "catalogue_sha256": "0ff4268fcfe1c73e9c2dcc87ce461c9029e80bd4404194aabcfc2f9022da9e8f",
+      "cycle": 0,
+      "ordinal": 0,
+      "registered_at": "2026-11-03T06:44:09.430Z",
+      "starts_at": "2026-11-03T06:44:10.430Z",
+      "state": "COMPLETED",
+      "completed_at": "2026-11-03T07:47:02.564Z",
+      "market_open_ms": "3601990",
+      "proposals": 31,
+      "provider_claims": 0,
+      "waits": 20,
+      "entry_fill_events": 4,
+      "closes": 4,
+      "realized_net": "-699.8700000000",
+      "review": {
+        "waits": 20,
+        "observedNet": "-699.8700000000",
+        "nextProfileId": "ENTRY_RANGE_5",
+        "interpretation": "NONPOSITIVE_OBSERVED_NET_UNQUALIFIED",
+        "closedPositions": 4,
+        "failedProposals": 0,
+        "incompleteContexts": 0
+      }
+    }
+  ],
+  "actualRestartReceiptSha256": "dba7dce04d10cc724ff08db7cceb0c0cc5832139c80770bc0f993cbe2a301588",
+  "twoDistinctCompletedFilledAllocations": false,
+  "economicQualification": false,
+  "brokerAuthority": false
+}
