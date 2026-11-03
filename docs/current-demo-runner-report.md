@@ -50,3 +50,9 @@ All sums run in an isolated100-digit Decimal context, including30-significant-di
 mismatch regressions. Only freshly updated relevant-side evidence after acceptance
 can produce a trigger observation. The complete focused suite covers these boundary
 failures; they are not trading losses or qualification successes before correction.
+
+Final chronology regressions additionally require provider availability before
+intent, acceptance before terminal evidence, and monotonic relevant-side source
+clocks.31 focused current/idle tests and the three-module mypy check pass.
+
+Full combined qualification passes: 1302 Node, 157 database and 1313 Python tests (2772 total), every required gate and dependency audit. Independent Standards and Spec reviews found no remaining blocker after chronology corrections. Receipt: `docs/evidence/current-demo-runner-validation.json`. This source is not activated and does not close the natural experiment acceptance criteria.
