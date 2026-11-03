@@ -172,6 +172,13 @@ For strategy-bound detached provider completion (#521), read
 use typed provider fixtures with explicit resolved promises. Full2,727-test
 source qualification is recorded in `docs/evidence/context-policy-validation.json`.
 
+For current-contract conditional screening and finite trial definitions (#518),
+read `docs/current-demo-runner-report.md`; cutoff, side clocks, remaining volume
+and exact signed-cost reconciliation must fail unknown on contradictions;
+never reorder relevant-side source clocks into an eligibility path.
+Full combined qualification:2,772 tests; receipt
+`docs/evidence/current-demo-runner-validation.json`. Activation remains separate.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

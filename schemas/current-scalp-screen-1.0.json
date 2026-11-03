@@ -1,0 +1,328 @@
+{
+  "$defs": {
+    "EntryScreen": {
+      "additionalProperties": false,
+      "properties": {
+        "contextId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Contextid",
+          "type": "string"
+        },
+        "profileSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Profilesha256",
+          "type": "string"
+        },
+        "proposalSource": {
+          "enum": ["CODEX", "LOCAL_RANGE"],
+          "title": "Proposalsource",
+          "type": "string"
+        },
+        "status": {
+          "enum": ["PROPOSED", "WAIT", "UNAVAILABLE"],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "availableAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Availableat"
+        },
+        "side": {
+          "anyOf": [
+            {
+              "enum": ["BUY", "SELL"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Side"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entry"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stop"
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expiresat"
+        },
+        "modeledTargetNet": {
+          "default": null,
+          "title": "Modeledtargetnet",
+          "type": "null"
+        },
+        "counterfactualFill": {
+          "default": null,
+          "title": "Counterfactualfill",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": [
+        "contextId",
+        "profileSha256",
+        "proposalSource",
+        "status",
+        "reason",
+        "availableAt"
+      ],
+      "title": "EntryScreen",
+      "type": "object"
+    },
+    "Reconstruction": {
+      "additionalProperties": false,
+      "properties": {
+        "setupId": {
+          "pattern": "^[0-9a-f]{24}$",
+          "title": "Setupid",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "UNSUPPORTED",
+            "UNKNOWN",
+            "PENDING",
+            "OPEN",
+            "PARTIAL_OPEN",
+            "CLOSED",
+            "ZERO_FILL_TERMINAL"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "recordedEntryFills": {
+          "default": 0,
+          "title": "Recordedentryfills",
+          "type": "integer"
+        },
+        "filledVolume": {
+          "default": "0",
+          "title": "Filledvolume",
+          "type": "string"
+        },
+        "providerAvailableAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provideravailableat"
+        },
+        "brokerAcceptedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Brokeracceptedat"
+        },
+        "recordedClosedNet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recordedclosednet"
+        },
+        "signedFees": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Signedfees"
+        },
+        "nativeProtectionHistoryAvailable": {
+          "default": false,
+          "title": "Nativeprotectionhistoryavailable",
+          "type": "boolean"
+        },
+        "counterfactualFill": {
+          "default": null,
+          "title": "Counterfactualfill",
+          "type": "null"
+        },
+        "counterfactualNet": {
+          "default": null,
+          "title": "Counterfactualnet",
+          "type": "null"
+        }
+      },
+      "required": ["setupId", "status", "reasons"],
+      "title": "Reconstruction",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "current-scalp-screen-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "profileSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Profilesha256",
+      "type": "string"
+    },
+    "classification": {
+      "const": "CONDITIONAL_SCREENING_AND_RECORDED_RECONSTRUCTION",
+      "title": "Classification",
+      "type": "string"
+    },
+    "screens": {
+      "items": {
+        "$ref": "#/$defs/EntryScreen"
+      },
+      "title": "Screens",
+      "type": "array"
+    },
+    "counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Counts",
+      "type": "object"
+    },
+    "reconstruction": {
+      "items": {
+        "$ref": "#/$defs/Reconstruction"
+      },
+      "title": "Reconstruction",
+      "type": "array"
+    },
+    "actualStates": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Actualstates",
+      "type": "object"
+    },
+    "counterfactualFill": {
+      "default": null,
+      "title": "Counterfactualfill",
+      "type": "null"
+    },
+    "counterfactualNet": {
+      "default": null,
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packetSha256",
+    "profileSha256",
+    "classification",
+    "screens",
+    "counts",
+    "reconstruction",
+    "actualStates"
+  ],
+  "title": "CurrentReport",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
