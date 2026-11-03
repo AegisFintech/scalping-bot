@@ -203,7 +203,8 @@ For the unfinished recurring strategy-experiment programme (#515), read
 a planning/audit PR cannot close it.
 
 For numeric admission diagnostics and bounded idle quote evidence (#517), read
-`docs/experiment-measurement-report.md`; sampled updates never establish fills.
+`docs/experiment-measurement-report.md`; preserve dropped-update provenance,
+orphan-file capacity and schema-bound nested cost_admission evidence.
 
 For current-contract conditional screening and finite trial definitions (#518),
 read `docs/current-demo-runner-report.md`; no experiment is activated by a report.

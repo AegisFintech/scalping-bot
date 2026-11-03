@@ -18,7 +18,6 @@ const compress = promisify(gzip);
 const MAX_BYTES = 256 * 1024 * 1024;
 const SEGMENT_BYTES = 1024 * 1024;
 const FREE_RESERVE = 2 * 1024 * 1024 * 1024;
-const FILE = /^idle-[a-f0-9-]+-\d{8}\.jsonl\.gz(?:\.manifest\.json)?$/;
 export class IdleQuoteRecorder {
   readonly streamId = randomUUID();
   #queue = Promise.resolve();
@@ -67,6 +66,27 @@ export class IdleQuoteRecorder {
   observe(event: FlightQuoteObservation): void {
     if (event.kind !== "RECONNECT" && event.symbolName !== this.symbol) return;
     const sequence = ++this.#sequence;
+    if (event.kind === "RECONNECT") {
+      this.#bidSource = null;
+      this.#askSource = null;
+      this.#bidReceived = null;
+      this.#askReceived = null;
+    } else {
+      if (event.bidUpdated) {
+        this.#bidSource = event.sourceTime;
+        this.#bidReceived = event.receivedAt;
+      }
+      if (event.askUpdated) {
+        this.#askSource = event.sourceTime;
+        this.#askReceived = event.receivedAt;
+      }
+    }
+    const clocks = {
+      bidSourceTime: this.#bidSource,
+      askSourceTime: this.#askSource,
+      bidReceivedAt: this.#bidReceived,
+      askReceivedAt: this.#askReceived,
+    };
     if (this.#stopped || this.#failed || this.#pending >= 2048) {
       this.#dropped++;
       this.#error ??= "IDLE_TAPE_QUEUE_OR_STOPPED";
@@ -87,21 +107,6 @@ export class IdleQuoteRecorder {
           (this.#lastAt !== null && at < this.#lastAt)
         )
           throw new Error("IDLE_TAPE_RECEIVE_ORDER");
-        if (value.kind === "RECONNECT") {
-          this.#bidSource = null;
-          this.#askSource = null;
-          this.#bidReceived = null;
-          this.#askReceived = null;
-        } else {
-          if (value.bidUpdated) {
-            this.#bidSource = value.sourceTime;
-            this.#bidReceived = value.receivedAt;
-          }
-          if (value.askUpdated) {
-            this.#askSource = value.sourceTime;
-            this.#askReceived = value.receivedAt;
-          }
-        }
         if (
           this.#lastAt !== null &&
           Math.floor(at / 300000) !== Math.floor(this.#lastAt / 300000)
@@ -113,10 +118,7 @@ export class IdleQuoteRecorder {
           sequence,
           source: this.source,
           ...value,
-          bidSourceTime: this.#bidSource,
-          askSourceTime: this.#askSource,
-          bidReceivedAt: this.#bidReceived,
-          askReceivedAt: this.#askReceived,
+          ...clocks,
         });
         this.#rows.push(row);
         this.#bytes += Buffer.byteLength(row) + 1;
@@ -137,7 +139,16 @@ export class IdleQuoteRecorder {
       });
   }
   async flush(): Promise<void> {
-    this.#queue = this.#queue.then(() => this.#seal());
+    this.#queue = this.#queue
+      .then(() => this.#seal())
+      .catch((error: unknown) => {
+        this.#failed = true;
+        this.#error =
+          error instanceof Error && /^IDLE_TAPE_[A-Z_]+$/.test(error.message)
+            ? error.message
+            : "IDLE_TAPE_IO_FAILURE";
+        throw error;
+      });
     await this.#queue;
   }
   async stop(): Promise<void> {
@@ -160,8 +171,7 @@ export class IdleQuoteRecorder {
     }
     let used = 0;
     for (const name of names)
-      if (FILE.test(name))
-        used += (await stat(path.join(this.directory, name))).size;
+      used += (await stat(path.join(this.directory, name))).size;
     const raw = Buffer.from(this.#rows.join("\n") + "\n");
     const compressed = await compress(raw, { level: 6 });
     if (used + compressed.length + 4096 > MAX_BYTES) {
