@@ -4,6 +4,7 @@
 - Dependencies: reviewed/merged #522 detached policy, #523 measurement, #524 current runner.
 - Acceptance: versioned finite profiles in ONE executor; immutable future registration/source/context/range; unchanged risk/protection/cooldowns; exact terminal/fresh reconciliation switching; recurring different profiles and read-only learning visibility; full qualification, independent review, push/merge, matched activation and actual natural evidence.
 - Status: implemented source; first full run failed migration inventory/guard detection, corrected. Independent review found two HTTP P1 gaps and one clock-evidence P2, corrected with boundary regressions; final full qualification/re-review/activation pending. Parent515 and children stay open until their actual acceptance evidence exists.
+- Source PR: https://github.com/AegisFintech/scalping-bot/pull/525 (draft until full checks). Both source re-reviews clear at7322e7b; only explicit migration/prompt inventory assertions and documentation changed afterward.
 - Report: `docs/demo-trial-protocol-report.md`. No reset, forced trade or profitability claim.
 
 ### ISSUE-518 — Current-contract screening and finite hypotheses

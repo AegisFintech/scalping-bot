@@ -128,3 +128,17 @@ requires the new tables/file; only those exact reviewed trigger statements are
 exempted, leaving destructive SQL rejected. Historical migration bytes stay intact.
 This failed run is retained separately; final full qualification and re-review are
 required before activation. No broker/provider forcing or deployment occurred.
+
+The corrected7322e7b full run passed all1,318 Node tests and every preceding
+check/audit, then the TLS database suite passed162 and failed two copies of its
+separate migration inventory assertion. It also needed0041. That explicit list
+is corrected; no SQL or trading behavior changed in this correction. Remaining
+Python checks and final combined qualification still require completion.
+
+A separate full Python preflight passed1,319 tests, skipped12 database-required
+cases without TEST_DATABASE_URL, and found one stale prompt-inventory assertion
+that omitted entry-scalp-v3. The derived runtime whitelist was already correct;
+the explicit assertion is updated. The final TLS-qualified run must include all
+database-required cases with no skips. Broker preflight verifies XAUUSD digits2,
+pipPosition2, pip/tick0.01, native volume step100 and minimum stop distance0; no
+pip/point conversion is assumed from a convention or a price screenshot.

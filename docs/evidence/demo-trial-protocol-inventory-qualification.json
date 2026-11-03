@@ -1,0 +1,95 @@
+{
+  "version": "demo-trial-inventory-qualification-1.0",
+  "qualified": false,
+  "sourceCommit": "7322e7b276e734975bc6dba401d5c82ffc7629ab",
+  "sourceSha256": "9089a2ee39b45247257a320abb45070a6cc57895aa4a69d8212b99885cec935a",
+  "rawQualificationSha256": "f6e493f18f78c7e9b580dbee9bf912afb079e81ab3d4377532e10a259a1b0842",
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 1
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "nodeTests": {
+    "passed": 1318,
+    "failed": 0
+  },
+  "databaseTests": {
+    "passed": 162,
+    "failed": 2
+  },
+  "failures": ["Two integration migration inventory assertions omitted0041"],
+  "runtimeActivated": false
+}

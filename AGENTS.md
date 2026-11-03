@@ -220,8 +220,8 @@ never reorder relevant-side source clocks into an eligibility path.
 Full combined qualification:2,772 tests; receipt
 `docs/evidence/current-demo-runner-validation.json`. Activation remains separate.
 
-Review regressions cover both real HTTP boundaries and durable excluded-clock
-receipts; see `docs/demo-trial-protocol-report.md`.
+Review regressions cover both real HTTP boundaries, durable excluded-clock
+receipts and complete migration/prompt inventories; see `docs/demo-trial-protocol-report.md`.
 
 <!-- research-publication -->
 
