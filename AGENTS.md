@@ -199,7 +199,8 @@ Verified study511 rollout and actual normal capture: `docs/evidence/study511-act
 and `docs/evidence/study511-normal-capture.json`; economic qualification stays separate.
 
 For the unfinished recurring strategy-experiment programme (#515), read
-`docs/net-expectancy-experiment-plan.md`; a planning/audit PR cannot close it.
+`docs/net-expectancy-experiment-plan.md` ([planning PR #516](https://github.com/AegisFintech/scalping-bot/pull/516));
+a planning/audit PR cannot close it.
 
 <!-- research-publication -->
 

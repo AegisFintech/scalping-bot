@@ -1,6 +1,7 @@
 ### ISSUE-515 — Recurring net-expectancy DEMO experiments
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/515.
+- Planning PR: https://github.com/AegisFintech/scalping-bot/pull/516; does not close #515.
 - Dependencies: #289 cost/execution evidence; #400 current-contract runner;
   #403 reviewed finite demo catalogue; #402 recurring experiment selection.
 - Acceptance: source-frozen small entry/TP/SL/timing batches, realistic and explicit
