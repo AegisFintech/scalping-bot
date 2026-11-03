@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -223,6 +224,30 @@ def test_actual_restart_can_precede_completed_allocation_proof(tmp_path):
     assert r["actualRestartRecorded"]
     assert not r["actualRestartProofBound"]
     assert not r["engineeringMilestoneObserved"]
+
+
+@pytest.mark.parametrize("owner", [0, 1001])
+def test_restart_receipt_owner_is_checked_independently_of_runner(tmp_path, monkeypatch, owner):
+    p = tmp_path / "restart.json"
+    expected = proof(status())
+    p.write_bytes(encoded(expected.model_dump(mode="json")))
+    p.chmod(0o644)
+    original = Path.lstat
+
+    def metadata(path):
+        info = original(path)
+        if path == p:
+            fields = list(info)
+            fields[4] = owner
+            return os.stat_result(fields)
+        return info
+
+    monkeypatch.setattr(Path, "lstat", metadata)
+    if owner == 0:
+        assert restart(p, NOW) == expected
+    else:
+        with pytest.raises(ValueError, match="PROTECTION_INVALID"):
+            restart(p, NOW)
 
 
 @pytest.mark.parametrize("model", [Scorecard, Completion, RestartProof, WitnessStatus])

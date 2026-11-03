@@ -125,7 +125,7 @@ function renderTrials(value) {
   $("trial-results").textContent = trials
     .map(
       (t) =>
-        `${t.profile_id} [cycle ${t.cycle}, slot ${t.ordinal}] ${t.state} | ${t.proposals} proposals / ${t.provider_claims} provider claims / ${t.waits} WAIT | ${t.entry_fill_events} entry fill events / ${t.closes} closed outcomes | net ${t.realized_net ?? "unavailable"} | ${t.review?.interpretation ?? "allocation not reviewed"} | clock receipts ${t.clock_receipts}; last ${t.last_clock_receipt ? `${t.last_clock_receipt.reason}: ${t.last_clock_receipt.from} to ${t.last_clock_receipt.until}; credited0ms` : "none"}`,
+        `${t.profile_id} [cycle ${t.cycle}, slot ${t.ordinal}] ${t.state} | ${t.proposals} proposals / ${t.provider_claims} provider claims / ${t.waits} WAIT | ${t.entry_fill_events} entry fill events / ${t.closes} closed outcomes | net ${t.realized_net ?? "unavailable"} | ${t.review?.interpretation ?? "allocation not reviewed"} | frozen review: ${t.review?.failedProposals ?? "unavailable"} failed / ${t.review?.incompleteContexts ?? "unavailable"} incomplete | clock receipts ${t.clock_receipts}; last ${t.last_clock_receipt ? `${t.last_clock_receipt.reason}: ${t.last_clock_receipt.from} to ${t.last_clock_receipt.until}; credited0ms` : "none"}`,
     )
     .join("\n");
 }
@@ -140,6 +140,14 @@ function renderDays(value) {
         .map(
           (d) =>
             `${d.day} ${d.completeCalendarDay ? "full calendar interval" : "partial day"} | net ${d.recordedNet} | ${d.closeDeals} close deals (${d.winningCloseDeals}+ / ${d.losingCloseDeals}- / ${d.flatCloseDeals} flat) | signed fees already included ${d.signedFeesIncluded} | worst close deal ${d.worstCloseDeal ?? "none"}`,
+        )
+        .join("\n")
+    : "";
+  $("days-trial-outcomes").textContent = fresh
+    ? value.trialOutcomes
+        .map(
+          (t) =>
+            `${t.profileId} ${t.state} · source ${t.sourceSha256} / profile ${t.profileSha256} | ${t.proposals} proposals / ${t.providerClaims} provider claims / ${t.waits} WAIT / ${t.failedProposals} failed / ${t.incompleteContexts} incomplete | ${t.groups} groups: ${t.provenZeroFillGroups} proven zero-fill / ${t.provenUnsentGroups} proven unsent / ${t.provenClosedGroups} proven closed / ${t.unprovenGroups} open or unproven`,
         )
         .join("\n")
     : "";

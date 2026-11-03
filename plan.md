@@ -9,7 +9,7 @@
 - Issues: https://github.com/AegisFintech/scalping-bot/issues/519 and https://github.com/AegisFintech/scalping-bot/issues/520; parent515.
 - Dependencies: reviewed/merged #522 detached policy, #523 measurement, #524 current runner.
 - Acceptance: versioned finite profiles in ONE executor; immutable future registration/source/context/range; unchanged risk/protection/cooldowns; exact terminal/fresh reconciliation switching; recurring different profiles and read-only learning visibility; full qualification, independent review, push/merge, matched activation and actual natural evidence.
-- Status: PR525 merged atccbb1aaf after full2,815 tests/no skips, exact-head CI and independent approval. ONE matched demo activated; actual entry fills, native protection and restart/dedup proof verified. Parent515/520 remain OPEN pending two distinct naturally filled/completed allocations and successor proof. See docs/evidence/demo-trial-rollout.json.
+- Status: PR525 merged atccbb1aaf after full2,815 tests/no skips, exact-head CI and independent approval. ONE matched demo activated; actual entry fills, native protection and restart/dedup proof verified. Bounded protocol519 and callback521 are closed; parent520 remains open. Parent515/520 remain OPEN pending two distinct naturally filled/completed allocations and successor proof. See docs/evidence/demo-trial-rollout.json.
 - Source PR: https://github.com/AegisFintech/scalping-bot/pull/525 (corrected source reviews CLEAR at225cb319;2,815-test qualification passed). Activation remains separate.
 - Report: `docs/demo-trial-protocol-report.md`. No reset, forced trade or profitability claim.
 

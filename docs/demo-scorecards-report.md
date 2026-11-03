@@ -69,6 +69,15 @@ or overwritten completed report. Missing/stale/failing observer data stays unava
 A latest-window proof is not whole-harness completion or economic qualification.
 The existing /learning adds these views; the landscape layout remains unchanged.
 
+The latest26 trial census reads existing qualified SQL terminal-proof functions:
+proven zero-fill groups, proven unsent groups, proven closed groups and the
+remaining open/unproven groups stay distinct. Proposals, provider claims, WAIT,
+failed and REQUESTING contexts retain their trial/profile/source attribution.
+No proposal-minus-fill inference is used. Completion receipts retain proposal/claim
+denominators and the frozen failure/unknown review; nonfills absent from the
+frozen controller contract are explicitly null there, separate from the fresh
+DB census. Root ownership is tested independently of the runner UID.
+
 ## Real writer/reader boundary repair
 
 The actual TypeScript tape writer emitted ISO UTC `Z`. Python normalizes these
@@ -102,8 +111,11 @@ positive modeled proceeds; the empirical loss tail is retained for later researc
 
 ## Qualification and deployment
 
-Focused scorecard/witness, stale/offline UI, real writer/reader and actual read-only
-DB probes pass. Full qualification, independent review, push/CI/merge and separate
+Focused scorecard/witness (including33 Python tests), stale/offline UI, real
+writer/reader and actual read-only DB probes pass. The first review found missing
+proposal/nonfill denominators and a root-owner test gap; these were corrected.
+The initial qualification was deliberately interrupted during lint to address
+those review findings; its unsuccessful receipt is retained separately. Full qualification, independent review, push/CI/merge and separate
 read-only activation must be recorded before declaring this issue complete.
 The initial systemd static probe failed because its not-yet-installed source alias
 was absent; repeat against the real deployed artifact. No test skip or economic

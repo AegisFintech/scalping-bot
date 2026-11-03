@@ -22,6 +22,24 @@ it("withholds stale day/proof observations independently and clears them when of
       realizedLedgerDrawdownLowerBound: "0",
       scopeUnresolvedEvents: 0,
       openJournalPositions: 1,
+      trialOutcomes: [
+        {
+          profileId: "ENTRY_RANGE_3",
+          state: "ACTIVE",
+          sourceSha256: "a".repeat(64),
+          profileSha256: "b".repeat(64),
+          proposals: 10,
+          providerClaims: 0,
+          waits: 3,
+          failedProposals: 1,
+          incompleteContexts: 1,
+          groups: 5,
+          provenZeroFillGroups: 1,
+          provenUnsentGroups: 1,
+          provenClosedGroups: 2,
+          unprovenGroups: 1,
+        },
+      ],
       days: [
         {
           day: "2026-11-04",
@@ -71,11 +89,15 @@ it("withholds stale day/proof observations independently and clears them when of
   await vi.waitFor(() => expect(text("days-results")).toContain("net 93.00"));
   expect(text("days-results")).toContain("partial day");
   expect(text("days-results")).toContain("already included -7.00");
+  expect(text("days-trial-outcomes")).toContain(
+    "1 proven zero-fill / 1 proven unsent / 2 proven closed / 1 open or unproven",
+  );
   expect(text("trial-evidence")).toContain("proof pending");
   expect(text("trial-evidence")).toContain("restart recorded: no");
   now += 31000;
   await scheduled();
   expect(text("days-results")).toBe("");
+  expect(text("days-trial-outcomes")).toBe("");
   expect(text("trial-evidence")).toContain("proof pending");
   now += 150000;
   await scheduled();

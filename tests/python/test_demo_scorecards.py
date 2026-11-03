@@ -4,7 +4,7 @@ from decimal import Decimal
 import psycopg
 import pytest
 
-from python.operations.demo_scorecards import CloseDeal, bounds, load, summarize
+from python.operations.demo_scorecards import CloseDeal, TrialOutcomes, bounds, load, summarize
 
 NOW = datetime(2026, 11, 3, 17, tzinfo=UTC)
 START = NOW - timedelta(days=2)
@@ -130,3 +130,26 @@ def test_database_unavailable_withholds_scorecard(monkeypatch):
 
     monkeypatch.setattr("psycopg.connect", unavailable)
     assert load(NOW) is None
+
+
+def test_nonfill_denominators_distinguish_proven_unsent_closed_and_unproven():
+    counts = dict(
+        trialId="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        profileId="ENTRY_RANGE_3",
+        profileSha256="a" * 64,
+        sourceSha256="b" * 64,
+        state="ACTIVE",
+        proposals=10,
+        providerClaims=0,
+        waits=3,
+        failedProposals=1,
+        incompleteContexts=1,
+        groups=5,
+        provenZeroFillGroups=1,
+        provenUnsentGroups=1,
+        provenClosedGroups=2,
+        unprovenGroups=1,
+    )
+    assert TrialOutcomes.model_validate(counts).provenZeroFillGroups == 1
+    with pytest.raises(ValueError, match="TRIAL_DENOMINATORS"):
+        TrialOutcomes.model_validate({**counts, "unprovenGroups": 0})

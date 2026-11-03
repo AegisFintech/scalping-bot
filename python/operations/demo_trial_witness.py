@@ -76,6 +76,12 @@ class Completion(StrictModel):
     completedAt: Instant
     entryFillEvents: Annotated[int, Field(strict=True, ge=0)]
     closedPositions: Annotated[int, Field(strict=True, ge=0)]
+    proposals: Annotated[int, Field(strict=True, ge=0)]
+    providerClaims: Annotated[int, Field(strict=True, ge=0)]
+    provenZeroFillGroups: None = None
+    nonfillBasis: Literal["UNAVAILABLE_IN_FROZEN_CONTROLLER_CONTRACT"] = (
+        "UNAVAILABLE_IN_FROZEN_CONTROLLER_CONTRACT"
+    )
     review: TrialReview
     brokerAuthority: Literal[False]
     promotionAuthority: Literal[False]
@@ -159,6 +165,8 @@ def receipt(row: TrialRow) -> dict[str, Any]:
         "completedAt": row.completed_at.isoformat(),
         "entryFillEvents": row.entry_fill_events,
         "closedPositions": row.closes,
+        "proposals": row.proposals,
+        "providerClaims": row.provider_claims,
         # This review was frozen by the database at completion, before late provider receipts.
         "review": row.review.model_dump(mode="json"),
         "brokerAuthority": False,

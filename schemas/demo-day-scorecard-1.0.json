@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "$defs": {
     "Day": {
       "additionalProperties": false,
@@ -85,6 +86,104 @@
       ],
       "title": "Day",
       "type": "object"
+    },
+    "TrialOutcomes": {
+      "additionalProperties": false,
+      "properties": {
+        "trialId": {
+          "pattern": "^[a-f0-9-]{36}$",
+          "title": "Trialid",
+          "type": "string"
+        },
+        "profileId": {
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Profilesha256",
+          "type": "string"
+        },
+        "sourceSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sourcesha256",
+          "type": "string"
+        },
+        "state": {
+          "enum": ["ACTIVE", "DRAINING", "COMPLETED"],
+          "title": "State",
+          "type": "string"
+        },
+        "proposals": {
+          "minimum": 0,
+          "title": "Proposals",
+          "type": "integer"
+        },
+        "providerClaims": {
+          "minimum": 0,
+          "title": "Providerclaims",
+          "type": "integer"
+        },
+        "waits": {
+          "minimum": 0,
+          "title": "Waits",
+          "type": "integer"
+        },
+        "failedProposals": {
+          "minimum": 0,
+          "title": "Failedproposals",
+          "type": "integer"
+        },
+        "incompleteContexts": {
+          "minimum": 0,
+          "title": "Incompletecontexts",
+          "type": "integer"
+        },
+        "groups": {
+          "minimum": 0,
+          "title": "Groups",
+          "type": "integer"
+        },
+        "provenZeroFillGroups": {
+          "minimum": 0,
+          "title": "Provenzerofillgroups",
+          "type": "integer"
+        },
+        "provenUnsentGroups": {
+          "minimum": 0,
+          "title": "Provenunsentgroups",
+          "type": "integer"
+        },
+        "provenClosedGroups": {
+          "minimum": 0,
+          "title": "Provenclosedgroups",
+          "type": "integer"
+        },
+        "unprovenGroups": {
+          "minimum": 0,
+          "title": "Unprovengroups",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "trialId",
+        "profileId",
+        "profileSha256",
+        "sourceSha256",
+        "state",
+        "proposals",
+        "providerClaims",
+        "waits",
+        "failedProposals",
+        "incompleteContexts",
+        "groups",
+        "provenZeroFillGroups",
+        "provenUnsentGroups",
+        "provenClosedGroups",
+        "unprovenGroups"
+      ],
+      "title": "TrialOutcomes",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -137,6 +236,14 @@
       "maxItems": 7,
       "minItems": 1,
       "title": "Days",
+      "type": "array"
+    },
+    "trialOutcomes": {
+      "items": {
+        "$ref": "#/$defs/TrialOutcomes"
+      },
+      "maxItems": 26,
+      "title": "Trialoutcomes",
       "type": "array"
     },
     "recordedNet": {
@@ -250,6 +357,7 @@
     "until",
     "currency",
     "days",
+    "trialOutcomes",
     "recordedNet",
     "realizedLedgerDrawdownLowerBound",
     "completePositiveDays",
@@ -259,6 +367,5 @@
     "openJournalPositions"
   ],
   "title": "Scorecard",
-  "type": "object",
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "type": "object"
 }
