@@ -98,3 +98,12 @@ def test_unchanged_preacceptance_side_is_not_a_new_trigger():
     assert result["firstObservedTriggerAt"] is None
     assert result["firstObservedRangeEligibleAt"] is None
     assert result["gaps"] == 1
+
+
+def test_reversed_side_source_clock_cannot_invent_trigger_then_range():
+    result = run(
+        [update(7, "4000.3"), update(8, "4000.05", 2, askSourceTime=at(6), askReceivedAt=at(8))]
+    )
+    assert result["firstObservedTriggerAt"] == at(7)
+    assert result["firstObservedRangeEligibleAt"] is None
+    assert result["gaps"] == 1

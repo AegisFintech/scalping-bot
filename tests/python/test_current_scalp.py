@@ -251,3 +251,26 @@ def test_large_decimal_mismatch_is_not_rounded_into_reconciliation():
     group["closedTrades"][0]["realizedNet"] = "12345678901234567889.3000000001"
     assert reconstruct(model(value))[0].status == "CLOSED"
     assert getcontext().prec == precision
+
+
+def test_intent_and_terminal_events_follow_original_provider_and_acceptance():
+    from python.research.learning_evidence import identity
+
+    value = current()
+    value["setups"][0]["createdAt"] = at(4)
+    assert "INTENT_PRECEDES_PROVIDER_AVAILABILITY" in reconstruct(model(value))[0].reasons
+    value = current()
+    group = value["setups"][0]
+    event = group["brokerEvents"][0].copy()
+    group["state"] = "FAILED"
+    group["orders"][0]["state"] = "CANCELLED"
+    event.update(
+        id=identity("terminal-event"),
+        executionType=5,
+        occurredAt=at(6),
+        receivedAt=at(8),
+        persistedAt=at(9),
+    )
+    group["brokerEvents"].append(event)
+    row = reconstruct(model(value))[0]
+    assert row.status == "UNKNOWN" and "TERMINAL_PRECEDES_ACCEPTANCE" in row.reasons

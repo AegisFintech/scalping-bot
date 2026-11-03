@@ -216,6 +216,8 @@ def _reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             row.reasons.append("CONTEXT_AVAILABILITY_UNAVAILABLE")
         else:
             row.providerAvailableAt = context.availableAt
+            if timestamp(group.createdAt) < timestamp(context.availableAt):
+                row.reasons.append("INTENT_PRECEDES_PROVIDER_AVAILABILITY")
             if (
                 context.decision != order.side
                 or any(
@@ -288,6 +290,14 @@ def _reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             and timestamp(h.observedAt) <= cutoff
             for h in group.protectionHistory
         )
+        if row.brokerAcceptedAt is not None and any(
+            e.orderId == order.id
+            and not e.closingOrder
+            and e.executionType in (5, 6, 7)
+            and timestamp(e.occurredAt) < timestamp(row.brokerAcceptedAt)
+            for e in group.brokerEvents
+        ):
+            row.reasons.append("TERMINAL_PRECEDES_ACCEPTANCE")
         terminal = any(
             e.orderId == order.id
             and not e.closingOrder

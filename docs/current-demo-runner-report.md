@@ -50,3 +50,7 @@ All sums run in an isolated100-digit Decimal context, including30-significant-di
 mismatch regressions. Only freshly updated relevant-side evidence after acceptance
 can produce a trigger observation. The complete focused suite covers these boundary
 failures; they are not trading losses or qualification successes before correction.
+
+Final chronology regressions additionally require provider availability before
+intent, acceptance before terminal evidence, and monotonic relevant-side source
+clocks.31 focused current/idle tests and the three-module mypy check pass.

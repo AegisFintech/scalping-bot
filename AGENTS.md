@@ -208,7 +208,8 @@ orphan-file capacity and schema-bound nested cost_admission evidence.
 
 For current-contract conditional screening and finite trial definitions (#518),
 read `docs/current-demo-runner-report.md`; cutoff, side clocks, remaining volume
-and exact signed-cost reconciliation must fail unknown on contradictions.
+and exact signed-cost reconciliation must fail unknown on contradictions;
+never reorder relevant-side source clocks into an eligibility path.
 
 <!-- research-publication -->
 

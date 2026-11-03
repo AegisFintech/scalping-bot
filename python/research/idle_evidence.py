@@ -106,6 +106,7 @@ def eligibility(
     eligible: str | None = None
     gaps = 0
     previous: Update | None = None
+    last_side_source: str | None = None
     endpoint = timestamp(expires_at)
     for row in rows:
         received = timestamp(row.receivedAt)
@@ -136,6 +137,10 @@ def eligibility(
         ):
             gaps += 1
             continue
+        if last_side_source is not None and timestamp(source) <= timestamp(last_side_source):
+            gaps += 1
+            continue
+        last_side_source = source
         if received >= endpoint:
             continue
         p, e = Decimal(price), Decimal(entry)
