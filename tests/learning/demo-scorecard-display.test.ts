@@ -68,7 +68,7 @@ it("withholds stale day/proof observations independently and clears them when of
   runInNewContext(readFileSync("apps/dashboard/assets/learning.mjs", "utf8"), {
     document: { getElementById: (id: string) => elements.get(id) ?? null },
     Date: class extends Date {
-      static now() {
+      static override now() {
         return now;
       }
     },

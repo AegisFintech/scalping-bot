@@ -214,6 +214,7 @@ updating these readers. Completed facts, losses, zero-fill trials and gaps remai
 Actual broker metadata/signed fees override historical flat-commission assumptions.
 Use exact existing terminal-proof functions for nonfill counts, distinguish
 unsent/open/unproven groups, and test root ownership independently of runner UID.
+The browser-clock regression uses an explicit typed Date override.
 
 Related implementation reports: [cost/tape measurement](docs/experiment-measurement-report.md),
 [current-contract screening](docs/current-demo-runner-report.md), and

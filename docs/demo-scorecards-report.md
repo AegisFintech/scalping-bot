@@ -115,7 +115,9 @@ Focused scorecard/witness (including33 Python tests), stale/offline UI, real
 writer/reader and actual read-only DB probes pass. The first review found missing
 proposal/nonfill denominators and a root-owner test gap; these were corrected.
 The initial qualification was deliberately interrupted during lint to address
-those review findings; its unsuccessful receipt is retained separately. Full qualification, independent review, push/CI/merge and separate
+those review findings; its unsuccessful receipt is retained separately. Hosted
+checks then caught a missing TypeScript `override` on the VM test clock; that
+fixture correction requires fresh qualification, rather than waiving the check. Full qualification, independent review, push/CI/merge and separate
 read-only activation must be recorded before declaring this issue complete.
 The initial systemd static probe failed because its not-yet-installed source alias
 was absent; repeat against the real deployed artifact. No test skip or economic
