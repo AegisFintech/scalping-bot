@@ -225,6 +225,8 @@ receipts and complete migration/prompt inventories; see `docs/demo-trial-protoco
 
 Full finite-protocol qualification:2,814 tests/no skips, both exact-head reviews clear; see `docs/evidence/demo-trial-protocol-validation.json`. Matched deployment and natural two-trial proof remain separate.
 
+Rollout audit correction: normal restart preserves native pending orders; emergency/expiry handling remains unchanged. Requalification follows this source correction.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

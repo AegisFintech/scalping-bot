@@ -30,6 +30,16 @@ function check(content: string, args: readonly string[] = []) {
 }
 
 describe("concise environment and read-only preflight", () => {
+  it("preserves accepted pending orders on normal restart and rejects cancellation overrides", () => {
+    const environment = resolveRuntimeEnvironment({ TRADING_MODE: "demo" });
+    expect(environment.SHUTDOWN_CANCEL_PENDING).toBe("false");
+    expect(() =>
+      resolveRuntimeEnvironment({
+        TRADING_MODE: "demo",
+        SHUTDOWN_CANCEL_PENDING: "true",
+      }),
+    ).toThrow("CONFIG_POLICY_CONFLICT:SHUTDOWN_CANCEL_PENDING:");
+  });
   it("keeps the template concise and stopped with the exact model fixed in code", () => {
     const template = parse(readFileSync(".env.sample"));
     expect(Object.keys(template).sort()).toEqual([...OPERATOR_KEYS].sort());

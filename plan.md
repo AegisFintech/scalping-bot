@@ -3,7 +3,7 @@
 - Issues: https://github.com/AegisFintech/scalping-bot/issues/519 and https://github.com/AegisFintech/scalping-bot/issues/520; parent515.
 - Dependencies: reviewed/merged #522 detached policy, #523 measurement, #524 current runner.
 - Acceptance: versioned finite profiles in ONE executor; immutable future registration/source/context/range; unchanged risk/protection/cooldowns; exact terminal/fresh reconciliation switching; recurring different profiles and read-only learning visibility; full qualification, independent review, push/merge, matched activation and actual natural evidence.
-- Status: full2,814-test qualification/no skips and both exact-head independent reviews CLEAR; HTTP/clock/inventory regressions corrected. Source push/CI/merge and matched activation follow; parent515/520 stay OPEN pending actual two-distinct-filled natural allocations and restart/dedup proof.
+- Status: prior2,814-test qualification/reviews pass. Pre-activation audit reproduced normal shutdown cancelling accepted GTD contrary to documented restart contract; default corrected with rejection regression. Auto-merge withheld for full requalification/fresh review. No0.10 activation yet; parent515/520 stay OPEN pending natural two-distinct-filled allocation and restart/dedup proof.
 - Source PR: https://github.com/AegisFintech/scalping-bot/pull/525 (source reviews CLEAR at b078892; full qualification passed). Activation remains separate.
 - Report: `docs/demo-trial-protocol-report.md`. No reset, forced trade or profitability claim.
 

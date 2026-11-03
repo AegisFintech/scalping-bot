@@ -166,3 +166,15 @@ This verifies real packet compatibility, not offloaded execution or strategy qua
 PR525 and matched operational activation follow these checks. Source delivery alone
 does not complete parent515/520; natural two-distinct-filled allocations and restart/
 dedup proof are still required. No account/history reset or forced trade occurred.
+
+## Rollout audit: normal restart must preserve native pending orders
+
+Before any0.10 registration/deployment, the rollout audit found that fixed
+SHUTDOWN_CANCEL_PENDING=true made the existing shutdown path cancel accepted
+GTD orders. This contradicted the documented normal-restart contract and would
+confound trial restart evidence. A new configuration regression reproduced true
+where false was required. The default is now false, conflicting true overrides
+are rejected, and native GTD expiry, emergency/ownership cancellation and filled
+protection remain unchanged. No existing pending order was cancelled in this
+audit. Auto-merge was withheld; source requalification and fresh review are required.
+The earlier2814-test receipt remains valid only for its recorded earlier source.
