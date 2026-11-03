@@ -20,3 +20,6 @@ success. Frozen observers keep their original source/registration/evidence.
 The initial full check stopped at require-await in the synthetic test adapter;
 it was corrected to return Promise.resolve explicitly. This was a check failure,
 not a strategy failure or a qualification success.
+
+The subsequent type check also required the fixture prompt identity to remain
+a literal, matching the real AiAnalysisResult contract; corrected before final gates.

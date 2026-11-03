@@ -1025,7 +1025,7 @@ it.each([
         latencyMs: 5,
         retryCount: 0,
         promptArtifact: {
-          version: "entry-scalp-v2",
+          version: "entry-scalp-v2" as const,
           content: "fixture",
           sha256: "a".repeat(64),
         },
