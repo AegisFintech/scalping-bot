@@ -45,3 +45,11 @@ to preserve a strict schema independently from legacy journal fields. The target
 reevaluates price-dependent commission with bounded bisection; when no threshold
 is verified within the policy ceiling, it stays null. New regressions cover these
 cases. Initial mock typing/lint/import failures were corrected before qualification.
+
+Full `PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs` passes:1,300 Node +157
+DB +1,282 Python =2,739 tests, every required format/lint/type/build/schema/replay/
+migration/fail-closed/lifecycle/secret/audit gate. Both review axes are clear after
+corrections. [Exact receipt](evidence/experiment-measurement-validation.json).
+Hosted exact-head checks and matched activation remain required. Recorder health,
+retained original bytes and frozen-study preservation are rollout acceptance,
+not replaced by this source receipt. Issue517 stays open until that proof.

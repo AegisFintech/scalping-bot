@@ -5,8 +5,9 @@
 - Acceptance: numeric rejection/cost decomposition, bounded side-clock idle tape,
   source/hash/gap/storage manifests, tests/review/full qualification/pushed PR and
   matched one-demo health readbacks. No strategy/risk change or fake fill evidence.
-- Status: implementation and focused regression/schema checks pass; full gates,
-  independent review and activation pending. Existing complete cost audit retained.
+- Status: full2,739-test qualification and both independent reviews pass; reviewed
+  remote delivery and matched activation/readbacks remain pending. Existing signed
+  cost audit retained; source receipt is not actual new execution calibration.
 - Evidence: `docs/experiment-measurement-report.md`.
 
 ### ISSUE-518/519/520 — Recurring experiment implementation queue
