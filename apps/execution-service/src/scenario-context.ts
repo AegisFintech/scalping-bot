@@ -831,6 +831,9 @@ export class ReusableScenarioModel implements ModelProvider {
             capturedAt: input.snapshot.serverTime,
             availableAt: new Date(this.now()).toISOString(),
             tickSize: input.snapshot.metadata.tickSize,
+            ...(this.scalpStrategyVersion
+              ? { strategyVersion: this.scalpStrategyVersion }
+              : {}),
           },
         );
         await this.store.finish(id, { ...result, response: plan }, null);
