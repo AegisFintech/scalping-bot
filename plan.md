@@ -29,6 +29,19 @@
 - Status: authorized implementation in progress; no new economic activation yet.
   Parent515 needs actual two-distinct-trial broker and restart/dedup evidence.
 
+### ISSUE-521 — Preserve strategy policy at detached completion
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/521; parent #515.
+- PR: https://github.com/AegisFintech/scalping-bot/pull/522.
+- Dependencies: current0.9 validator and existing detached request lifecycle.
+- Acceptance: reproduce current multi-unit target failure at actual callback,
+  preserve historical rejection, full qualification/review/push/CI and verified
+  matched activation without economics, risk, history or frozen-study changes.
+- Status: regression reproduced/fixed; full qualification2,727 tests and both
+  independent reviews pass. PushedPR522 awaits hosted checks/review; activation
+  remains pending and the issue stays open until verified.
+- Evidence: `docs/context-policy-completion-report.md`.
+
 ### ISSUE-515 — Recurring net-expectancy DEMO experiments
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/515.
