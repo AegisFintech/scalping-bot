@@ -24,6 +24,8 @@
 
 ### ISSUE-518/519/520 — Recurring experiment implementation queue
 
+- #518 combined source qualifies:2,772 tests, all gates/audits, independent reviews clear; receipt `docs/evidence/current-demo-runner-validation.json`. Remote delivery and protocol activation follow; no economic qualification claim.
+
 - Issues: https://github.com/AegisFintech/scalping-bot/issues/518 (causal runner),
   https://github.com/AegisFintech/scalping-bot/issues/519 (finite demo catalogue),
   https://github.com/AegisFintech/scalping-bot/issues/520 (controller and learning).
