@@ -198,36 +198,30 @@ and keep study failures separate from trading authority.
 Verified study511 rollout and actual normal capture: `docs/evidence/study511-activation.json`
 and `docs/evidence/study511-normal-capture.json`; economic qualification stays separate.
 
-For the unfinished recurring strategy-experiment programme (#515), read
-`docs/net-expectancy-experiment-plan.md` ([planning PR #516](https://github.com/AegisFintech/scalping-bot/pull/516));
-a planning/audit PR cannot close it.
+## Current demo experiment and evidence
 
-For numeric admission diagnostics and bounded idle quote evidence (#517), read
-`docs/experiment-measurement-report.md`; preserve dropped-update provenance,
-orphan-file capacity and schema-bound nested cost_admission evidence. Full2,739-test
-source qualification is retained; combined2,741-test #521 dependency receipt:
-`docs/evidence/experiment-measurement-combined-validation.json`.
+The [finite registered trials](docs/demo-trial-protocol-report.md) are active in
+ONE demo on reviewed PR525/source39588e87. Normal restart preserves orders;
+actual fills, native protection and restart/dedup readbacks are retained in the
+[rollout receipt](docs/evidence/demo-trial-rollout.json). Parent515/520 stay OPEN
+until two distinct allocations naturally fill, complete and register successors.
+Software qualification and a positive trade do not establish a profitable strategy.
 
-For strategy-bound detached provider completion (#521), read
-`docs/context-policy-completion-report.md`; preserve historical validation and
-use typed provider fixtures with explicit resolved promises. Full2,727-test
-source qualification is recorded in `docs/evidence/context-policy-validation.json`.
+[Daily scorecards and retained trial proof](docs/demo-scorecards-report.md) add
+read-only /learning visibility and repair the actual idle-tape UTC reader boundary.
+Keep the executor/provider/Flight source and active registrations frozen when
+updating these readers. Completed facts, losses, zero-fill trials and gaps remain.
+Actual broker metadata/signed fees override historical flat-commission assumptions.
+Use exact existing terminal-proof functions for nonfill counts, distinguish
+unsent/open/unproven groups, and test root ownership independently of runner UID.
+The browser-clock regression uses an explicit typed Date override; long evidence
+wraps on mobile and desktop. First natural completion/successor proof is retained
+in `docs/evidence/demo-first-natural-completion.json`; two-trial proof stays pending. Read-only source qualifies2,845 tests/no skips;
+see `docs/evidence/demo-scorecards-validation.json` and issue526 for activation.
 
-For current-contract conditional screening and finite trial definitions (#518),
-read `docs/current-demo-runner-report.md`; cutoff, side clocks, remaining volume
-and exact signed-cost reconciliation must fail unknown on contradictions;
-never reorder relevant-side source clocks into an eligibility path.
-Full combined qualification:2,772 tests; receipt
-`docs/evidence/current-demo-runner-validation.json`. Activation remains separate.
-
-Review regressions cover both real HTTP boundaries, durable excluded-clock
-receipts and complete migration/prompt inventories; see `docs/demo-trial-protocol-report.md`.
-
-Full finite-protocol qualification:2,814 tests/no skips, both exact-head reviews clear; see `docs/evidence/demo-trial-protocol-validation.json`. Matched deployment and natural two-trial proof remain separate.
-
-Rollout audit correction: normal restart preserves native pending orders; emergency/expiry handling remains unchanged. Requalification follows this source correction.
-
-Corrected finite-protocol source qualifies2,815 tests/no skips; both reviews clear. Normal restart preserves pending orders. Read `docs/evidence/demo-trial-final-validation.json`; activation and natural two-trial proof remain separate.
+Related implementation reports: [cost/tape measurement](docs/experiment-measurement-report.md),
+[current-contract screening](docs/current-demo-runner-report.md), and
+[detached policy validation](docs/context-policy-completion-report.md).
 
 <!-- research-publication -->
 

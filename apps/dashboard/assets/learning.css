@@ -33,11 +33,16 @@ h2 {
   gap: 18px;
 }
 article {
+  min-width: 0;
   background: #111f30;
   border: 1px solid #293c53;
   border-radius: 14px;
   padding: 22px;
   margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+pre {
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 label {

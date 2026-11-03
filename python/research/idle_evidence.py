@@ -66,8 +66,8 @@ def read_segment(
         or len(rows) != manifest.get("updates")
         or rows[0].sequence != manifest.get("firstSequence")
         or rows[-1].sequence != manifest.get("lastSequence")
-        or rows[0].receivedAt != manifest.get("firstReceivedAt")
-        or rows[-1].receivedAt != manifest.get("lastReceivedAt")
+        or timestamp(rows[0].receivedAt) != timestamp(manifest.get("firstReceivedAt"))
+        or timestamp(rows[-1].receivedAt) != timestamp(manifest.get("lastReceivedAt"))
     ):
         raise ValueError("IDLE_EVIDENCE_MANIFEST_COUNTS")
     previous = rows[0]

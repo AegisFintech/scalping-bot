@@ -1,0 +1,32 @@
+[Unit]
+Description=Read-only registered demo allocation evidence
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+StateDirectory=scalper-demo-trial-witness
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/scalper-demo-trial-witness
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-demo-scorecards
+ExecStart=/opt/scalper-demo-scorecards/.venv/bin/python -P -m python.operations.demo_trial_witness
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-demo-trial-witness
+InaccessiblePaths=-/root -/opt/ctrader-ai-scalper -/run/postgresql -/etc/scalping-bot -/etc/scalper-codex-entry -/var/lib/scalper-research
+IPAddressDeny=any
+IPAddressAllow=localhost
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CPUQuota=25%
+MemoryMax=192M
+MemorySwapMax=0
+TasksMax=16
+LimitFSIZE=1M
+TimeoutStartSec=20
+TimeoutStopSec=5
+KillMode=control-group

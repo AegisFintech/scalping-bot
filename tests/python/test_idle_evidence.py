@@ -86,6 +86,16 @@ def test_verified_original_bytes_and_wrong_source_or_tamper(tmp_path: Path):
     (tmp_path / (name + ".manifest.json")).write_text(json.dumps(manifest))
     rows, _ = read_segment(tmp_path, name, "fixture")
     assert len(rows) == 1
+    manifest["firstReceivedAt"] = at(6).replace("+00:00", "Z")
+    manifest["lastReceivedAt"] = at(6).replace("+00:00", "Z")
+    (tmp_path / (name + ".manifest.json")).write_text(json.dumps(manifest))
+    assert len(read_segment(tmp_path, name, "fixture")[0]) == 1
+    manifest["firstReceivedAt"] = at(7)
+    (tmp_path / (name + ".manifest.json")).write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="MANIFEST_COUNTS"):
+        read_segment(tmp_path, name, "fixture")
+    manifest["firstReceivedAt"] = at(6)
+    (tmp_path / (name + ".manifest.json")).write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="BINDING"):
         read_segment(tmp_path, name, "other-source")
     (tmp_path / name).write_bytes(raw + b"tamper")

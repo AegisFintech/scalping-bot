@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "demo-trial-rollout-1.0",
+  "checkedAt": "2026-11-03T07:24:50.654812+00:00",
+  "mainCommit": "ccbb1aafba360f3d1df090094c4e1c156bb6cfe3",
+  "sourceSha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+  "strategyVersion": "0.10.0-demo-trials.1-codex.1",
+  "qualifiedTests": 2815,
+  "mode": "demo",
+  "oneExecutor": true,
+  "accountingReset": false,
+  "historicalClosedCohortsPreserved": true,
+  "applicationSchemaCreatePrivilege": false,
+  "observerRegistrationSha256": "840cb2aae3f5741f72bf91dd4e2ef6e5658d85065824dc3f381fd8410cd4cde2",
+  "observerHandoverSha256": "f1df02f5808d04a5c8d73c101a8f9f61668a2da3f30d75681537592054e2356d",
+  "restartProofSha256": "dba7dce04d10cc724ff08db7cceb0c0cc5832139c80770bc0f993cbe2a301588",
+  "restart": {
+    "schemaVersion": "demo-trial-restart-proof-1.0",
+    "sourceSha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+    "trialId": "c220ba43-230c-46b5-afb1-46e611e4527a",
+    "beforePid": 1119695,
+    "afterPid": 1125319,
+    "beforeAt": "2026-11-03T07:08:36.127Z",
+    "afterAt": "2026-11-03T07:08:48.138Z",
+    "originalTrialHeadRetained": true,
+    "originalGroupIdentitiesRetained": true,
+    "noShutdownCancellation": true,
+    "uniqueContextClaimsVerified": true,
+    "oldPidExited": true,
+    "brokerAuthority": false
+  },
+  "idleTape": {
+    "verifiedIdleSegmentSha256": "e314ca7ba7e511c7c73a3de41e1efbf53ba9ea3ddb08e8996680a4875c7bc811",
+    "updates": 136,
+    "firstSequence": 1,
+    "lastSequence": 136,
+    "droppedUpdates": 0,
+    "completeTickTape": false,
+    "remoteArchiveVerified": false,
+    "readerDeliveryPending": true
+  },
+  "nativeReadback": {
+    "checkedAt": "2026-11-03T07:24:50.548Z",
+    "orders": [
+      {
+        "side": "SELL",
+        "execution_order_type": "STOP_LIMIT",
+        "time_in_force": "GTD",
+        "entry_range_points": 30,
+        "intended_target_price_distance": "1.0000000000",
+        "state": "FILLED",
+        "entry_fill_events": 1
+      },
+      {
+        "side": "SELL",
+        "execution_order_type": "STOP_LIMIT",
+        "time_in_force": "GTD",
+        "entry_range_points": 30,
+        "intended_target_price_distance": "1.0000000000",
+        "state": "CANCELLED",
+        "entry_fill_events": 0
+      },
+      {
+        "side": "SELL",
+        "execution_order_type": "STOP_LIMIT",
+        "time_in_force": "GTD",
+        "entry_range_points": 30,
+        "intended_target_price_distance": "1.0000000000",
+        "state": "FILLED",
+        "entry_fill_events": 1
+      },
+      {
+        "side": "SELL",
+        "execution_order_type": "STOP_LIMIT",
+        "time_in_force": "GTD",
+        "entry_range_points": 30,
+        "intended_target_price_distance": "1.0000000000",
+        "state": "FILLED",
+        "entry_fill_events": 1
+      }
+    ],
+    "modeledCostDiagnosticRows": 20
+  },
+  "naturalTwoTrialProof": false,
+  "economicQualification": false,
+  "counterfactualNet": null,
+  "execution": {
+    "operationalReady": true,
+    "startupChecksPassed": true,
+    "tradingEnabled": true,
+    "reasonCodes": [],
+    "operationalFault": null
+  },
+  "trialSnapshot": [
+    {
+      "profile_id": "ENTRY_RANGE_3",
+      "profile_sha256": "2e043cb4d87476ec85dee7dc765f1223280c1e97d5507abcdd165b760310a22e",
+      "source_sha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+      "registered_at": "2026-11-03T06:44:09.430Z",
+      "starts_at": "2026-11-03T06:44:10.430Z",
+      "state": "ACTIVE",
+      "proposals": 21,
+      "provider_claims": 0,
+      "waits": 16,
+      "entry_fill_events": 3,
+      "closes": 3,
+      "realized_net": "-1213.6100000000",
+      "market_open_ms": "2402297",
+      "clock_receipts": 2
+    }
+  ],
+  "processes": [
+    {
+      "name": "scalper-analytics",
+      "state": "online",
+      "restarts": 0,
+      "cwd": "/opt/ctrader-ai-scalper/releases/trials519-main"
+    },
+    {
+      "name": "scalper-market-data",
+      "state": "online",
+      "restarts": 0,
+      "cwd": "/opt/ctrader-ai-scalper/releases/trials519-main"
+    },
+    {
+      "name": "scalper-ai",
+      "state": "online",
+      "restarts": 0,
+      "cwd": "/opt/ctrader-ai-scalper/releases/trials519-main"
+    },
+    {
+      "name": "scalper-execution",
+      "state": "online",
+      "restarts": 1,
+      "cwd": "/opt/ctrader-ai-scalper/releases/trials519-main"
+    },
+    {
+      "name": "scalper-dashboard",
+      "state": "online",
+      "restarts": 0,
+      "cwd": "/opt/ctrader-ai-scalper/releases/trials519-main"
+    }
+  ],
+  "limitations": [
+    "One active profile; two distinct natural completed filled allocations still pending.",
+    "Real tape reader UTC comparison corrected only in pending issue526; original writer bytes/manifests unchanged.",
+    "Flight paths are sampled and the losing path has gaps; no shorter-target winner is inferred.",
+    "Closed broker net includes signed fees; actual model spend/open broker closing proceeds remain separate."
+  ]
+}
