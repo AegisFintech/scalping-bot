@@ -202,6 +202,12 @@ For the unfinished recurring strategy-experiment programme (#515), read
 `docs/net-expectancy-experiment-plan.md` ([planning PR #516](https://github.com/AegisFintech/scalping-bot/pull/516));
 a planning/audit PR cannot close it.
 
+For numeric admission diagnostics and bounded idle quote evidence (#517), read
+`docs/experiment-measurement-report.md`; preserve dropped-update provenance,
+orphan-file capacity and schema-bound nested cost_admission evidence. Full2,739-test
+source qualification is retained; combined2,741-test #521 dependency receipt:
+`docs/evidence/experiment-measurement-combined-validation.json`.
+
 For strategy-bound detached provider completion (#521), read
 `docs/context-policy-completion-report.md`; preserve historical validation and
 use typed provider fixtures with explicit resolved promises. Full2,727-test

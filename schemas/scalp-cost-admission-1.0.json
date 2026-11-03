@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_version": {
+      "const": "scalp-cost-admission-1.0"
+    },
+    "volume": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "target_distance_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "stop_distance_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "modeled_commission_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "modeled_exit_reserve_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "modeled_target_conversion_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "modeled_target_net_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "modeled_stop_loss_price": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "minimum_target_distance_price": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "modeled_target_shortfall_price": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "modeled_break_even_win_fraction": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "spread_deducted_again": {
+      "const": false
+    },
+    "actual_exit_cost": {
+      "type": "null"
+    },
+    "guaranteed_closing_proceeds": {
+      "const": false
+    },
+    "target_threshold_status": {
+      "enum": ["UNAVAILABLE_AT_POLICY_CEILING", "VERIFIED_COST_THRESHOLD"]
+    }
+  },
+  "required": [
+    "evidence_version",
+    "volume",
+    "target_distance_price",
+    "stop_distance_price",
+    "modeled_commission_price",
+    "modeled_exit_reserve_price",
+    "modeled_target_conversion_price",
+    "modeled_target_net_price",
+    "modeled_stop_loss_price",
+    "minimum_target_distance_price",
+    "modeled_target_shortfall_price",
+    "modeled_break_even_win_fraction",
+    "spread_deducted_again",
+    "actual_exit_cost",
+    "guaranteed_closing_proceeds",
+    "target_threshold_status"
+  ]
+}

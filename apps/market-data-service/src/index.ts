@@ -1,3 +1,5 @@
+import path from "node:path";
+import { IdleQuoteRecorder } from "./idle-quote-recorder.js";
 import { FlightQuoteBuffer } from "./flight-quote-buffer.js";
 import {
   CandidateHistoryCache,
@@ -445,7 +447,18 @@ async function main(): Promise<void> {
   const flightQuotes = new FlightQuoteBuffer(
     environment.TRADING_SYMBOL ?? "XAUUSD",
   );
-  adapter.onQuoteObservation((event) => flightQuotes.observe(event));
+  const idleTape = new IdleQuoteRecorder(
+    path.resolve(
+      environment.LOCAL_MARKET_RECORD_DIRECTORY ?? ".runtime/market-data",
+      "idle-quotes",
+    ),
+    environment.TRADING_SYMBOL ?? "XAUUSD",
+    environment.CODE_VERSION ?? "unidentified-source",
+  );
+  adapter.onQuoteObservation((event) => {
+    flightQuotes.observe(event);
+    idleTape.observe(event);
+  });
   const recorder = localRecordingEnabled
     ? new LocalMarketRecorder({
         managedRetention: true,
@@ -529,7 +542,10 @@ async function main(): Promise<void> {
       5_000,
       "MAX_CANDLE_SKEW_MS",
     ),
-    localRecorderStatus: () => recorder?.status ?? { enabled: false },
+    localRecorderStatus: () => ({
+      ...(recorder?.status ?? { enabled: false }),
+      idleTape: idleTape.status,
+    }),
   });
   const recovery = new SessionRecovery({
     probe: async () => {
@@ -554,6 +570,14 @@ async function main(): Promise<void> {
     if (recorderTimer !== null) clearInterval(recorderTimer);
     await captureInFlight;
     if (recorder !== null) await recorder.stop();
+    await idleTape.stop().catch(() => {
+      console.warn(
+        JSON.stringify({
+          event_name: "idle_tape_close_failed",
+          reason_code: idleTape.status.lastError,
+        }),
+      );
+    });
     await app.close();
     await adapter.disconnect();
   };

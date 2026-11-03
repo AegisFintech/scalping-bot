@@ -79,6 +79,28 @@ function check(
   return cost.evidence;
 }
 
+function rejectedPayoff(
+  input: Parameters<typeof directionalScalpTransform>[0],
+  balanced: boolean,
+): Record<string, unknown> {
+  if (!balanced || input.side === undefined) return {};
+  const leg =
+    input.side === "BUY" ? input.response.buy_stop : input.response.sell_stop;
+  try {
+    return {
+      cost_admission: costBalancedPayoffEvidence(
+        input.snapshot.metadata,
+        leg.entry_price,
+        leg.take_profit,
+        leg.stop_loss,
+        input.snapshot.metadata.minVolume,
+      ),
+    };
+  } catch {
+    return { cost_evidence_unavailable: true };
+  }
+}
+
 /** Validate supplied exits; never replace, widen or reprice model geometry. */
 export function directionalScalpTransform(
   input: {
@@ -124,7 +146,7 @@ export function directionalScalpTransform(
       accepted: false,
       response: null,
       reasonCodes: [code],
-      details: { code },
+      details: { code, ...rejectedPayoff(input, balanced) },
     };
   }
 }
@@ -140,7 +162,25 @@ export function validateDirectionalScalpCommands(
     const c = commands[0]!;
     if (c.executionOrderType !== "STOP_LIMIT" || c.timeInForce !== "GTD")
       throw new Error("SCALP_LIFETIME_INVALID");
-    evidence.push({
+    const diagnostic: Record<string, unknown> = {
+      side: c.side,
+      volume: c.volume,
+    };
+    if (balanced) {
+      try {
+        diagnostic.cost_admission = costBalancedPayoffEvidence(
+          metadata,
+          c.entryPrice,
+          c.takeProfit,
+          c.stopLoss,
+          c.volume,
+        );
+      } catch {
+        diagnostic.cost_evidence_unavailable = true;
+      }
+      evidence.push(diagnostic);
+    }
+    const approved = {
       side: c.side,
       volume: c.volume,
       ...check(
@@ -152,7 +192,9 @@ export function validateDirectionalScalpCommands(
         c.volume,
         balanced,
       ),
-    });
+    };
+    if (balanced) Object.assign(diagnostic, approved);
+    else evidence.push(approved);
     return { approved: true, reasonCodes: [] as string[], evidence };
   } catch (error) {
     return {
@@ -221,4 +263,80 @@ export function costBalancedModeledCost(snapshot: MarketSnapshot): string {
   return canonical(
     v.fees.plus(v.reserve).toDecimalPlaces(10, Decimal.ROUND_UP),
   );
+}
+
+/** Numeric admission evidence, not actual costs or a counterfactual execution. */
+export function costBalancedPayoffEvidence(
+  metadata: SymbolMetadata,
+  entry: string,
+  target: string,
+  stop: string,
+  volume: string,
+) {
+  const e = decimal(entry),
+    reward = decimal(target).minus(e).abs(),
+    risk = decimal(stop).minus(e).abs();
+  const v = balancedPayoff(metadata, e, reward, risk, decimal(volume));
+  const satisfies = (distance: ReturnType<typeof decimal>) => {
+    const candidate = balancedPayoff(
+      metadata,
+      e,
+      distance,
+      risk,
+      decimal(volume),
+    );
+    return (
+      candidate.netReward.gt(0) &&
+      candidate.netReward.gte(
+        candidate.netLoss.mul(COST_BALANCED_SCALP_LIMITS.minimumNetRewardRisk),
+      )
+    );
+  };
+  let low = decimal("0"),
+    high = decimal(COST_BALANCED_SCALP_LIMITS.maximumTargetDistance);
+  let required: ReturnType<typeof decimal> | null = null;
+  if (satisfies(high)) {
+    for (let i = 0; i < 64; i++) {
+      const mid = low.plus(high).div(2);
+      if (satisfies(mid)) high = mid;
+      else low = mid;
+    }
+    required = high.toDecimalPlaces(10, Decimal.ROUND_UP);
+  }
+  return {
+    evidence_version: "scalp-cost-admission-1.0",
+    volume,
+    target_distance_price: canonical(reward),
+    stop_distance_price: canonical(risk),
+    modeled_commission_price: canonical(v.fees),
+    modeled_exit_reserve_price: canonical(v.reserve),
+    modeled_target_conversion_price: canonical(reward.mul(v.conversion)),
+    modeled_target_net_price: canonical(v.netReward),
+    modeled_stop_loss_price: canonical(v.netLoss),
+    target_threshold_status:
+      required === null
+        ? "UNAVAILABLE_AT_POLICY_CEILING"
+        : "VERIFIED_COST_THRESHOLD",
+    minimum_target_distance_price:
+      required === null ? null : canonical(required),
+    modeled_target_shortfall_price:
+      required === null
+        ? null
+        : canonical(
+            Decimal.max(0, required.minus(reward)).toDecimalPlaces(
+              10,
+              Decimal.ROUND_UP,
+            ),
+          ),
+    modeled_break_even_win_fraction: v.netReward.gt(0)
+      ? canonical(
+          v.netLoss
+            .div(v.netLoss.plus(v.netReward))
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
+        )
+      : null,
+    spread_deducted_again: false,
+    actual_exit_cost: null,
+    guaranteed_closing_proceeds: false,
+  };
 }

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "idle-quote-manifest-1.0"
+    },
+    "file": {
+      "type": "string"
+    },
+    "streamId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source": {
+      "type": "string"
+    },
+    "sourceProvenance": {
+      "const": "PROCESS_CODE_VERSION_NOT_INDEPENDENTLY_VERIFIED"
+    },
+    "symbol": {
+      "type": "string"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "uncompressedSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "compressedBytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updates": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "firstSequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastSequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "firstReceivedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lastReceivedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "droppedUpdates": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastError": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "continuousTickTape": {
+      "const": false
+    },
+    "remoteArchiveVerified": {
+      "const": false
+    },
+    "automaticEviction": {
+      "const": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "file",
+    "streamId",
+    "source",
+    "sourceProvenance",
+    "symbol",
+    "sha256",
+    "uncompressedSha256",
+    "compressedBytes",
+    "updates",
+    "firstSequence",
+    "lastSequence",
+    "firstReceivedAt",
+    "lastReceivedAt",
+    "droppedUpdates",
+    "lastError",
+    "continuousTickTape",
+    "remoteArchiveVerified",
+    "automaticEviction"
+  ]
+}
