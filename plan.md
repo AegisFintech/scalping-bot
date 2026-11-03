@@ -1,3 +1,23 @@
+### ISSUE-517 — Cost admission and idle quote evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/517; parent #515.
+- Dependencies: #289 existing signed-deal audit; same market-data callback.
+- Acceptance: numeric rejection/cost decomposition, bounded side-clock idle tape,
+  source/hash/gap/storage manifests, tests/review/full qualification/pushed PR and
+  matched one-demo health readbacks. No strategy/risk change or fake fill evidence.
+- Status: implementation and focused regression/schema checks pass; full gates,
+  independent review and activation pending. Existing complete cost audit retained.
+- Evidence: `docs/experiment-measurement-report.md`.
+
+### ISSUE-518/519/520 — Recurring experiment implementation queue
+
+- Issues: https://github.com/AegisFintech/scalping-bot/issues/518 (causal runner),
+  https://github.com/AegisFintech/scalping-bot/issues/519 (finite demo catalogue),
+  https://github.com/AegisFintech/scalping-bot/issues/520 (controller and learning).
+- Acceptance/dependencies: `docs/net-expectancy-experiment-plan.md` and each issue.
+- Status: authorized implementation in progress; no new economic activation yet.
+  Parent515 needs actual two-distinct-trial broker and restart/dedup evidence.
+
 ### ISSUE-515 — Recurring net-expectancy DEMO experiments
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/515.

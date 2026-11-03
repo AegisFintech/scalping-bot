@@ -79,6 +79,26 @@ function check(
   return cost.evidence;
 }
 
+function rejectedPayoff(
+  input: Parameters<typeof directionalScalpTransform>[0],
+  balanced: boolean,
+): Record<string, unknown> {
+  if (!balanced || input.side === undefined) return {};
+  const leg =
+    input.side === "BUY" ? input.response.buy_stop : input.response.sell_stop;
+  try {
+    return costBalancedPayoffEvidence(
+      input.snapshot.metadata,
+      leg.entry_price,
+      leg.take_profit,
+      leg.stop_loss,
+      input.snapshot.metadata.minVolume,
+    );
+  } catch {
+    return { cost_evidence_unavailable: true };
+  }
+}
+
 /** Validate supplied exits; never replace, widen or reprice model geometry. */
 export function directionalScalpTransform(
   input: {
@@ -124,7 +144,7 @@ export function directionalScalpTransform(
       accepted: false,
       response: null,
       reasonCodes: [code],
-      details: { code },
+      details: { code, ...rejectedPayoff(input, balanced) },
     };
   }
 }
@@ -221,4 +241,53 @@ export function costBalancedModeledCost(snapshot: MarketSnapshot): string {
   return canonical(
     v.fees.plus(v.reserve).toDecimalPlaces(10, Decimal.ROUND_UP),
   );
+}
+
+/** Numeric admission evidence, not actual costs or a counterfactual execution. */
+export function costBalancedPayoffEvidence(
+  metadata: SymbolMetadata,
+  entry: string,
+  target: string,
+  stop: string,
+  volume: string,
+) {
+  const e = decimal(entry),
+    reward = decimal(target).minus(e).abs(),
+    risk = decimal(stop).minus(e).abs();
+  const v = balancedPayoff(metadata, e, reward, risk, decimal(volume));
+  const required = v.netLoss
+    .mul(COST_BALANCED_SCALP_LIMITS.minimumNetRewardRisk)
+    .plus(v.fees)
+    .plus(v.reserve)
+    .div(decimal("1").minus(v.conversion));
+  return {
+    evidence_version: "scalp-cost-admission-1.0",
+    volume,
+    target_distance_price: canonical(reward),
+    stop_distance_price: canonical(risk),
+    modeled_commission_price: canonical(v.fees),
+    modeled_exit_reserve_price: canonical(v.reserve),
+    modeled_target_conversion_price: canonical(reward.mul(v.conversion)),
+    modeled_target_net_price: canonical(v.netReward),
+    modeled_stop_loss_price: canonical(v.netLoss),
+    minimum_target_distance_price: canonical(
+      required.toDecimalPlaces(10, Decimal.ROUND_UP),
+    ),
+    modeled_target_shortfall_price: canonical(
+      Decimal.max(0, required.minus(reward)).toDecimalPlaces(
+        10,
+        Decimal.ROUND_UP,
+      ),
+    ),
+    modeled_break_even_win_fraction: v.netReward.gt(0)
+      ? canonical(
+          v.netLoss
+            .div(v.netLoss.plus(v.netReward))
+            .toDecimalPlaces(10, Decimal.ROUND_UP),
+        )
+      : null,
+    spread_deducted_again: false,
+    actual_exit_cost: null,
+    guaranteed_closing_proceeds: false,
+  };
 }

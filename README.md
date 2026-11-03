@@ -161,6 +161,9 @@ For the unfinished recurring strategy-experiment programme (#515), read
 `docs/net-expectancy-experiment-plan.md` ([planning PR #516](https://github.com/AegisFintech/scalping-bot/pull/516));
 a planning/audit PR cannot close it.
 
+For numeric admission diagnostics and bounded idle quote evidence (#517), read
+`docs/experiment-measurement-report.md`; sampled updates never establish fills.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
