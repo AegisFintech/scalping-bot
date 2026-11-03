@@ -162,7 +162,8 @@ For the unfinished recurring strategy-experiment programme (#515), read
 a planning/audit PR cannot close it.
 
 For strategy-bound detached provider completion (#521), read
-`docs/context-policy-completion-report.md`; preserve historical validation.
+`docs/context-policy-completion-report.md`; preserve historical validation and
+use explicit resolved promises in synchronous test adapters.
 
 <!-- research-publication -->
 

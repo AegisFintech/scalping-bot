@@ -991,30 +991,46 @@ it.each([
   "retains configured scalp policy at detached completion (%s)",
   async (version, expected) => {
     const store = memory();
-    const generate = vi.fn(async (i: EntryPlannerInput) => ({
-      response: {
-        schema_version: "entry-scalp-1.0" as const,
-        analysis_id: i.analysisId,
-        symbol: i.symbol,
-        captured_at: i.capturedAt,
-        valid_until: at(120),
-        buy_stop: "4406",
-        sell_stop: "4405",
-        entry_side: "BUY" as const,
-        reason: "Synthetic completed trend continuation",
-        take_profit: "4409",
-        stop_loss: "4405",
-        pending_seconds: 120,
-      },
-      rawResponse: "synthetic fixture",
-      latencyMs: 5,
-      retryCount: 0,
-      promptArtifact: {
-        version: "entry-scalp-v2",
-        content: "fixture",
-        sha256: "a".repeat(64),
-      },
-    }));
+    const generate = vi.fn((i: EntryPlannerInput) =>
+      Promise.resolve({
+        response: {
+          schema_version: "entry-scalp-1.0" as const,
+          analysis_id: i.analysisId,
+          symbol: i.symbol,
+          captured_at: i.capturedAt,
+          valid_until: at(120),
+          buy_stop: "4406",
+          sell_stop: "4405",
+          entry_side: "BUY" as const,
+          reason: "Synthetic completed trend continuation",
+          take_profit: "4409",
+          stop_loss: "4405",
+          pending_seconds: 120,
+        },
+        rawResponse: "synthetic fixture",
+        model: "gpt-6.1-sol",
+        telemetry: {
+          requestedModel: "gpt-6.1-sol",
+          returnedModel: "gpt-6.1-sol",
+          inputProfile: "structured" as const,
+          requestBytes: 1,
+          responseBytes: 1,
+          inputTokens: null,
+          outputTokens: null,
+          totalTokens: null,
+          costAmount: null,
+          costCurrency: null,
+          costSource: "unavailable" as const,
+        },
+        latencyMs: 5,
+        retryCount: 0,
+        promptArtifact: {
+          version: "entry-scalp-v2",
+          content: "fixture",
+          sha256: "a".repeat(64),
+        },
+      }),
+    );
     const model = new ReusableScenarioModel(
       store,
       { generate },

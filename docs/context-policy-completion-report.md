@@ -16,3 +16,7 @@ and financial history are unchanged. Full qualification, independent review and
 required hosted checks precede activation. Rollout uses a matched tested release;
 record exact artifact/source and scoped broker readiness separately from software
 success. Frozen observers keep their original source/registration/evidence.
+
+The initial full check stopped at require-await in the synthetic test adapter;
+it was corrected to return Promise.resolve explicitly. This was a check failure,
+not a strategy failure or a qualification success.
