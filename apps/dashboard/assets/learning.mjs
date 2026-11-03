@@ -100,6 +100,8 @@ function renderFunnel(d) {
 
 function withhold(message) {
   renderTrials(null);
+  renderDays(null);
+  renderTrialEvidence(null);
   renderFunnel({});
   $("board").hidden = true;
   $("state").textContent = message;
@@ -127,8 +129,32 @@ function renderTrials(value) {
     )
     .join("\n");
 }
+function renderDays(value) {
+  const age = Date.now() - Date.parse(value?.checkedAt);
+  const fresh = Number.isFinite(age) && age >= -5000 && age <= 30000;
+  $("days-state").textContent = fresh
+    ? `${value.currency} · ${value.release} · recorded net ${value.recordedNet} · realized ledger drawdown lower bound ${value.realizedLedgerDrawdownLowerBound} · unresolved events ${value.scopeUnresolvedEvents} / open journal positions ${value.openJournalPositions}`
+    : "Daily scorecard unavailable or stale";
+  $("days-results").textContent = fresh
+    ? value.days
+        .map(
+          (d) =>
+            `${d.day} ${d.completeCalendarDay ? "full calendar interval" : "partial day"} | net ${d.recordedNet} | ${d.closeDeals} close deals (${d.winningCloseDeals}+ / ${d.losingCloseDeals}- / ${d.flatCloseDeals} flat) | signed fees already included ${d.signedFeesIncluded} | worst close deal ${d.worstCloseDeal ?? "none"}`,
+        )
+        .join("\n")
+    : "";
+}
+function renderTrialEvidence(value) {
+  const age = Date.now() - Date.parse(value?.checkedAt);
+  const fresh = Number.isFinite(age) && age >= -5000 && age <= 180000;
+  $("trial-evidence").textContent = fresh
+    ? `Latest-window loop proof ${value.engineeringMilestoneObserved ? "observed" : "pending"} · ${value.retainedCompletedAllocations} completed allocation files retained · latest bounded window: ${value.windowFilledCompletedAllocations} filled completed allocations / ${value.windowDistinctFilledProfilesWithNextAction} different profiles with next action · restart recorded: ${value.actualRestartRecorded ? "yes" : "no"}; bound to a completed allocation: ${value.actualRestartProofBound ? "yes" : "pending"} · source ${value.sourceSha256 ?? "unavailable"}. This does not qualify profitability.`
+    : "Natural trial evidence unavailable or stale";
+}
 function render(d) {
   renderTrials(d.demoTrials);
+  renderDays(d.dayScorecard);
+  renderTrialEvidence(d.naturalTrialEvidence);
   const p = d.pipeline;
   $("pipeline-health").textContent = p?.available
     ? "Fresh observed pipeline state"

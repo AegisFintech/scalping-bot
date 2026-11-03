@@ -17,6 +17,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from apps.dashboard.learning_progress import progress
 from python.learning.budget import Policy
 from python.operations.breakout_observer import read_status
+from python.operations.demo_scorecards import load as load_scorecard
+from python.operations.demo_trial_witness import read_status as read_trial_witness
 from python.research.demo_trial_status import TrialStatus
 
 ASSETS = Path(__file__).with_name("assets")
@@ -85,6 +87,8 @@ def load() -> dict[str, Any]:
     except (OSError, ValueError):
         result["demoTrials"] = None
     result["pipeline"] = progress(datetime.now(UTC))
+    result["dayScorecard"] = load_scorecard(datetime.now(UTC))
+    result["naturalTrialEvidence"] = read_trial_witness(datetime.now(UTC))
     result["registeredStudy"] = read_status(
         Path("/etc/scalper-breakout507-v2/registration.json"),
         Path("/var/lib/scalper-breakout507-v2"),

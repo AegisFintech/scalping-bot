@@ -1,0 +1,171 @@
+{
+  "$defs": {
+    "TrialReview": {
+      "additionalProperties": false,
+      "properties": {
+        "closedPositions": {
+          "minimum": 0,
+          "title": "Closedpositions",
+          "type": "integer"
+        },
+        "observedNet": {
+          "anyOf": [
+            {
+              "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observednet"
+        },
+        "interpretation": {
+          "enum": [
+            "NO_CLOSED_SAMPLE",
+            "POSITIVE_OBSERVED_NET_UNQUALIFIED",
+            "NONPOSITIVE_OBSERVED_NET_UNQUALIFIED"
+          ],
+          "title": "Interpretation",
+          "type": "string"
+        },
+        "waits": {
+          "minimum": 0,
+          "title": "Waits",
+          "type": "integer"
+        },
+        "failedProposals": {
+          "minimum": 0,
+          "title": "Failedproposals",
+          "type": "integer"
+        },
+        "incompleteContexts": {
+          "minimum": 0,
+          "title": "Incompletecontexts",
+          "type": "integer"
+        },
+        "nextProfileId": {
+          "title": "Nextprofileid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "closedPositions",
+        "observedNet",
+        "interpretation",
+        "waits",
+        "failedProposals",
+        "incompleteContexts",
+        "nextProfileId"
+      ],
+      "title": "TrialReview",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "demo-trial-completion-witness-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "trialId": {
+      "pattern": "^[a-f0-9-]{36}$",
+      "title": "Trialid",
+      "type": "string"
+    },
+    "profileId": {
+      "pattern": "^[A-Z][A-Z0-9_]{1,31}$",
+      "title": "Profileid",
+      "type": "string"
+    },
+    "profileSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Profilesha256",
+      "type": "string"
+    },
+    "sourceSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sourcesha256",
+      "type": "string"
+    },
+    "catalogueSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Cataloguesha256",
+      "type": "string"
+    },
+    "cycle": {
+      "minimum": 0,
+      "title": "Cycle",
+      "type": "integer"
+    },
+    "ordinal": {
+      "maximum": 12,
+      "minimum": 0,
+      "title": "Ordinal",
+      "type": "integer"
+    },
+    "registeredAt": {
+      "title": "Registeredat",
+      "type": "string"
+    },
+    "startsAt": {
+      "title": "Startsat",
+      "type": "string"
+    },
+    "completedAt": {
+      "title": "Completedat",
+      "type": "string"
+    },
+    "entryFillEvents": {
+      "minimum": 0,
+      "title": "Entryfillevents",
+      "type": "integer"
+    },
+    "closedPositions": {
+      "minimum": 0,
+      "title": "Closedpositions",
+      "type": "integer"
+    },
+    "review": {
+      "$ref": "#/$defs/TrialReview"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "trialId",
+    "profileId",
+    "profileSha256",
+    "sourceSha256",
+    "catalogueSha256",
+    "cycle",
+    "ordinal",
+    "registeredAt",
+    "startsAt",
+    "completedAt",
+    "entryFillEvents",
+    "closedPositions",
+    "review",
+    "brokerAuthority",
+    "promotionAuthority",
+    "economicQualification"
+  ],
+  "title": "Completion",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

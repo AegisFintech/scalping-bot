@@ -5,6 +5,7 @@ const addFormats = formatsModule.default as unknown as (
 ) => Ajv2020;
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import {
   mkdtemp,
   readdir,
@@ -52,6 +53,36 @@ afterEach(async () => {
   await Promise.all(
     directories.splice(0).map((p) => rm(p, { recursive: true, force: true })),
   );
+});
+it("round-trips real writer UTC timestamps through the Python evidence reader", async () => {
+  const recorder = await tape();
+  recorder.observe(event("2026-11-03T00:00:00.000Z"));
+  recorder.observe(event("2026-11-03T00:00:00.100Z", true, false));
+  await recorder.stop();
+  const name = (await readdir(recorder.directory)).find((f) =>
+    f.endsWith(".jsonl.gz"),
+  )!;
+  const result = spawnSync(
+    path.resolve(".venv/bin/python"),
+    [
+      "-P",
+      "-c",
+      "from pathlib import Path;import sys;from python.research.idle_evidence import read_segment;rows,_=read_segment(Path(sys.argv[1]),sys.argv[2],'fixture-source');print(len(rows))",
+      recorder.directory,
+      name,
+    ],
+    {
+      encoding: "utf8",
+      timeout: 10000,
+      env: {
+        ...process.env,
+        PYTHONPATH: process.cwd(),
+        PYTHONDONTWRITEBYTECODE: "1",
+      },
+    },
+  );
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout.trim()).toBe("2");
 });
 it("retains idle side clocks, reconnects, original update order and independently verified compressed bytes", async () => {
   const r = await tape();

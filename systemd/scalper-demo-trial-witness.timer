@@ -1,0 +1,10 @@
+[Unit]
+Description=Retain natural registered demo evidence every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:45
+Persistent=true
+Unit=scalper-demo-trial-witness.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "demo-trial-restart-proof-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "sourceSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sourcesha256",
+      "type": "string"
+    },
+    "trialId": {
+      "pattern": "^[a-f0-9-]{36}$",
+      "title": "Trialid",
+      "type": "string"
+    },
+    "beforePid": {
+      "exclusiveMinimum": 0,
+      "title": "Beforepid",
+      "type": "integer"
+    },
+    "afterPid": {
+      "exclusiveMinimum": 0,
+      "title": "Afterpid",
+      "type": "integer"
+    },
+    "beforeAt": {
+      "title": "Beforeat",
+      "type": "string"
+    },
+    "afterAt": {
+      "title": "Afterat",
+      "type": "string"
+    },
+    "originalTrialHeadRetained": {
+      "const": true,
+      "title": "Originaltrialheadretained",
+      "type": "boolean"
+    },
+    "originalGroupIdentitiesRetained": {
+      "const": true,
+      "title": "Originalgroupidentitiesretained",
+      "type": "boolean"
+    },
+    "noShutdownCancellation": {
+      "const": true,
+      "title": "Noshutdowncancellation",
+      "type": "boolean"
+    },
+    "uniqueContextClaimsVerified": {
+      "const": true,
+      "title": "Uniquecontextclaimsverified",
+      "type": "boolean"
+    },
+    "oldPidExited": {
+      "const": true,
+      "title": "Oldpidexited",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sourceSha256",
+    "trialId",
+    "beforePid",
+    "afterPid",
+    "beforeAt",
+    "afterAt",
+    "originalTrialHeadRetained",
+    "originalGroupIdentitiesRetained",
+    "noShutdownCancellation",
+    "uniqueContextClaimsVerified",
+    "oldPidExited",
+    "brokerAuthority"
+  ],
+  "title": "RestartProof",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

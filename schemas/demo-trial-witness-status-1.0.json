@@ -1,0 +1,88 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "demo-trial-witness-status-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "checkedAt": {
+      "title": "Checkedat",
+      "type": "string"
+    },
+    "sourceSha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Sourcesha256"
+    },
+    "retainedCompletedAllocations": {
+      "maximum": 512,
+      "minimum": 0,
+      "title": "Retainedcompletedallocations",
+      "type": "integer"
+    },
+    "windowFilledCompletedAllocations": {
+      "maximum": 26,
+      "minimum": 0,
+      "title": "Windowfilledcompletedallocations",
+      "type": "integer"
+    },
+    "windowDistinctFilledProfilesWithNextAction": {
+      "maximum": 26,
+      "minimum": 0,
+      "title": "Windowdistinctfilledprofileswithnextaction",
+      "type": "integer"
+    },
+    "actualRestartRecorded": {
+      "title": "Actualrestartrecorded",
+      "type": "boolean"
+    },
+    "actualRestartProofBound": {
+      "title": "Actualrestartproofbound",
+      "type": "boolean"
+    },
+    "engineeringMilestoneObserved": {
+      "title": "Engineeringmilestoneobserved",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "economicQualification": {
+      "const": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "checkedAt",
+    "sourceSha256",
+    "retainedCompletedAllocations",
+    "windowFilledCompletedAllocations",
+    "windowDistinctFilledProfilesWithNextAction",
+    "actualRestartRecorded",
+    "actualRestartProofBound",
+    "engineeringMilestoneObserved",
+    "brokerAuthority",
+    "promotionAuthority",
+    "economicQualification"
+  ],
+  "title": "WitnessStatus",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

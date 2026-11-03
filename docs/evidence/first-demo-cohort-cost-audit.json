@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "first-demo-cohort-cost-audit-1.0",
+  "cutoff": "2026-11-03T07:24:50.548Z",
+  "strategyVersion": "0.10.0-demo-trials.1-codex.1",
+  "profile": "ENTRY_RANGE_3",
+  "cohortBasis": "ALL_FIRST_THREE_FULLY_CLOSED_POSITIONS",
+  "commissionMetadata": {
+    "type": "USD_PER_MILLION_USD",
+    "ratePerSide": "30",
+    "volumeScale": "0.01",
+    "contractSizeUnitsPerLot": "100",
+    "brokerPipSize": "0.01"
+  },
+  "rows": [
+    {
+      "openedAt": "2026-11-03T06:52:11.918Z",
+      "closedAt": "2026-11-03T06:55:54.142Z",
+      "direction": "SHORT",
+      "nativeVolume": "28400.0000000000",
+      "units": "284.000000000000",
+      "lots": "2.840000000000",
+      "gross": "298.2000000000",
+      "signedCommission": "-66.6900000000",
+      "net": "231.5100000000",
+      "swap": "0.0000000000",
+      "conversionFee": "0.0000000000",
+      "commissionPerLot": "23.48239437",
+      "formulaCommissionBeforeBrokerRounding": "66.69294120",
+      "formulaMatchesWithinOneCent": true,
+      "exitPriceImpliedByUsdLinearPnl": "3913.3800000000"
+    },
+    {
+      "openedAt": "2026-11-03T06:59:04.512Z",
+      "closedAt": "2026-11-03T07:06:14.983Z",
+      "direction": "SHORT",
+      "nativeVolume": "36900.0000000000",
+      "units": "369.000000000000",
+      "lots": "3.690000000000",
+      "gross": "372.6900000000",
+      "signedCommission": "-86.5900000000",
+      "net": "286.1000000000",
+      "swap": "0.0000000000",
+      "conversionFee": "0.0000000000",
+      "commissionPerLot": "23.46612466",
+      "formulaCommissionBeforeBrokerRounding": "86.59430010",
+      "formulaMatchesWithinOneCent": true,
+      "exitPriceImpliedByUsdLinearPnl": "3910.7100000000"
+    },
+    {
+      "openedAt": "2026-11-03T07:07:32.177Z",
+      "closedAt": "2026-11-03T07:09:55.974Z",
+      "direction": "SHORT",
+      "nativeVolume": "51300.0000000000",
+      "units": "513.000000000000",
+      "lots": "5.130000000000",
+      "gross": "-1610.8200000000",
+      "signedCommission": "-120.4000000000",
+      "net": "-1731.2200000000",
+      "swap": "0.0000000000",
+      "conversionFee": "0.0000000000",
+      "commissionPerLot": "23.46978558",
+      "formulaCommissionBeforeBrokerRounding": "120.41197560",
+      "formulaMatchesWithinOneCent": false,
+      "exitPriceImpliedByUsdLinearPnl": "3913.5900000000"
+    }
+  ],
+  "totals": {
+    "gross": "-939.93",
+    "signedFeesAlreadyIncluded": "-273.68",
+    "net": "-1213.61",
+    "winningPositions": 2,
+    "losingPositions": 1
+  },
+  "flight": [
+    {
+      "file": "flight-172fdcf9ea25a9a32cc1129c-20261103T065046544632.summary.json",
+      "checkedAt": "2026-11-03T06:56:24.728365+00:00",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 0,
+      "records": 867,
+      "costBasis": "MODELED_BROKER_COMMISSION_EXCLUDES_UNKNOWN_SWAP_SLIPPAGE",
+      "legs": [
+        {
+          "side": "SELL",
+          "samples": 438,
+          "entry": "3914.43000000000000000000",
+          "mfePips": "121.000000000000000000",
+          "maePips": "-116.000000000000000000",
+          "bestModeledNetPips": "97.51705000000",
+          "closestTpPips": "15.00000000",
+          "timeProfitableSeconds": "64.291"
+        }
+      ],
+      "closedRows": [
+        {
+          "direction": "SHORT",
+          "realizedNet": null,
+          "fees": null,
+          "openedAt": null,
+          "closedAt": null,
+          "net": "231.5100000000",
+          "realized_pnl": null
+        }
+      ]
+    },
+    {
+      "file": "flight-681570252d739e122c9c7f61-20261103T065616381889.summary.json",
+      "checkedAt": "2026-11-03T06:58:01.942869+00:00",
+      "state": "FAILED",
+      "final": true,
+      "gaps": 2,
+      "records": 236,
+      "costBasis": "MODELED_BROKER_COMMISSION_EXCLUDES_UNKNOWN_SWAP_SLIPPAGE",
+      "legs": [],
+      "closedRows": []
+    },
+    {
+      "file": "flight-f6a5ca5aac571e873cd14b1a-20261103T065851674234.summary.json",
+      "checkedAt": "2026-11-03T07:06:45.003418+00:00",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 0,
+      "records": 1300,
+      "costBasis": "MODELED_BROKER_COMMISSION_EXCLUDES_UNKNOWN_SWAP_SLIPPAGE",
+      "legs": [
+        {
+          "side": "SELL",
+          "samples": 913,
+          "entry": "3911.72000000000000000000",
+          "mfePips": "117.000000000000000000",
+          "maePips": "-166.000000000000000000",
+          "bestModeledNetPips": "93.53319000000",
+          "closestTpPips": "3.00000000",
+          "timeProfitableSeconds": "89.872"
+        }
+      ],
+      "closedRows": [
+        {
+          "direction": "SHORT",
+          "realizedNet": null,
+          "fees": null,
+          "openedAt": null,
+          "closedAt": null,
+          "net": "286.1000000000",
+          "realized_pnl": null
+        }
+      ]
+    },
+    {
+      "file": "flight-615d0c4603cca156b2bcdb6c-20261103T070706911929.summary.json",
+      "checkedAt": "2026-11-03T07:10:26.335398+00:00",
+      "state": "CLOSED",
+      "final": true,
+      "gaps": 17,
+      "records": 501,
+      "costBasis": "MODELED_BROKER_COMMISSION_EXCLUDES_UNKNOWN_SWAP_SLIPPAGE",
+      "legs": [
+        {
+          "side": "SELL",
+          "samples": 257,
+          "entry": "3910.45000000000000000000",
+          "mfePips": "0",
+          "maePips": "-264.000000000000000000",
+          "bestModeledNetPips": "-44.46333000000",
+          "closestTpPips": "121.00000000",
+          "timeProfitableSeconds": "0"
+        }
+      ],
+      "closedRows": [
+        {
+          "direction": "SHORT",
+          "realizedNet": null,
+          "fees": null,
+          "openedAt": null,
+          "closedAt": null,
+          "net": "-1731.2200000000",
+          "realized_pnl": null
+        }
+      ]
+    }
+  ],
+  "counterfactualNet": null,
+  "economicQualification": false,
+  "limitations": [
+    "First three closes are descriptive, not a strategy estimate.",
+    "The losing Flight trace has17 gap records and no retained favourable excursion; unobserved intervals remain unknown.",
+    "Actual exit causes are not inferred from P/L.",
+    "Hypothetical earlier closes have unknown fills/slippage/costs."
+  ],
+  "primaryPricingReference": "https://ic.com/lp/en/trade-gold"
+}

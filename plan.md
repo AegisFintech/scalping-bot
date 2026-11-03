@@ -2,14 +2,14 @@
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/526; parent515/520; depends on519.
 - Acceptance: bounded read-only Singapore-day actual close-deal net, fees included, partial-day/open/unknown/cashflow separation; frozen completion receipts and separately protected actual restart proof; existing /learning visibility; tests, qualification, two-axis review, pushed exact-head CI/approval/merge and read-only activation. No economic promotion or executor-source change.
-- Status: isolated worktree implementation;19 focused tests pass. Full qualification/review and activation pending; parent natural proof remains OPEN.
+- Status: read-only daily/retained-trial views, schemas and real TypeScript→Python UTC tape repair implemented; focused tests and actual DB/tape readbacks pass. Full qualification/review/delivery and separate read-only activation pending. Executor remains frozen at39588e87; parent natural proof remains OPEN.
 
 ### ISSUE-519 / ISSUE-520 — Finite registered recurring demo trials
 
 - Issues: https://github.com/AegisFintech/scalping-bot/issues/519 and https://github.com/AegisFintech/scalping-bot/issues/520; parent515.
 - Dependencies: reviewed/merged #522 detached policy, #523 measurement, #524 current runner.
 - Acceptance: versioned finite profiles in ONE executor; immutable future registration/source/context/range; unchanged risk/protection/cooldowns; exact terminal/fresh reconciliation switching; recurring different profiles and read-only learning visibility; full qualification, independent review, push/merge, matched activation and actual natural evidence.
-- Status: corrected source225cb319 passes full2,815 tests/no skips, all gates and both independent reviews; all four config checks pass. Storage/network failed attempts retained separately. Final source delivery/CI/merge and matched activation follow; parent515/520 remain OPEN pending two distinct naturally filled/completed allocations and restart/dedup proof.
+- Status: PR525 merged atccbb1aaf after full2,815 tests/no skips, exact-head CI and independent approval. ONE matched demo activated; actual entry fills, native protection and restart/dedup proof verified. Parent515/520 remain OPEN pending two distinct naturally filled/completed allocations and successor proof. See docs/evidence/demo-trial-rollout.json.
 - Source PR: https://github.com/AegisFintech/scalping-bot/pull/525 (corrected source reviews CLEAR at225cb319;2,815-test qualification passed). Activation remains separate.
 - Report: `docs/demo-trial-protocol-report.md`. No reset, forced trade or profitability claim.
 
@@ -20,8 +20,7 @@
 - Acceptance: causal current baseline reconstruction and explicit unknown execution,
   finite single-dimension catalogue, verified side-clock tape, lifecycle/cost/gap/
   compatibility tests, schema/docs/full qualification/review/pushed delivery.
-- Status: separate modules and nine-profile definition implemented; focused checks
-  pass. Full qualification/review/remote delivery pending; no trading activation.
+- Status: source delivered through reviewed PR524/525; full2,772-test runner and combined2,815-test protocol qualification pass. Actual native fills now recorded. Operational idle-reader UTC boundary repair is in526; close after reviewed reader delivery/readback.
 - Evidence: `docs/current-demo-runner-report.md`.
 
 ### ISSUE-517 — Cost admission and idle quote evidence

@@ -1,0 +1,264 @@
+{
+  "$defs": {
+    "Day": {
+      "additionalProperties": false,
+      "properties": {
+        "day": {
+          "format": "date",
+          "title": "Day",
+          "type": "string"
+        },
+        "since": {
+          "title": "Since",
+          "type": "string"
+        },
+        "until": {
+          "title": "Until",
+          "type": "string"
+        },
+        "completeCalendarDay": {
+          "title": "Completecalendarday",
+          "type": "boolean"
+        },
+        "recordedNet": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Recordednet",
+          "type": "string"
+        },
+        "signedFeesIncluded": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Signedfeesincluded",
+          "type": "string"
+        },
+        "closeDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Closedeals",
+          "type": "integer"
+        },
+        "winningCloseDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Winningclosedeals",
+          "type": "integer"
+        },
+        "losingCloseDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Losingclosedeals",
+          "type": "integer"
+        },
+        "flatCloseDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Flatclosedeals",
+          "type": "integer"
+        },
+        "worstCloseDeal": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Worstclosedeal"
+        }
+      },
+      "required": [
+        "day",
+        "since",
+        "until",
+        "completeCalendarDay",
+        "recordedNet",
+        "signedFeesIncluded",
+        "closeDeals",
+        "winningCloseDeals",
+        "losingCloseDeals",
+        "flatCloseDeals",
+        "worstCloseDeal"
+      ],
+      "title": "Day",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "demo-day-scorecard-1.0",
+      "default": "demo-day-scorecard-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "checkedAt": {
+      "title": "Checkedat",
+      "type": "string"
+    },
+    "since": {
+      "title": "Since",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "timezone": {
+      "const": "Asia/Singapore",
+      "default": "Asia/Singapore",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "release": {
+      "const": "0.10.0-demo-trials.1-codex.1",
+      "default": "0.10.0-demo-trials.1-codex.1",
+      "title": "Release",
+      "type": "string"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3,8}$",
+      "title": "Currency",
+      "type": "string"
+    },
+    "basis": {
+      "const": "RECORDED_CLOSE_DEALS_NOT_ACCOUNT_RETURN",
+      "default": "RECORDED_CLOSE_DEALS_NOT_ACCOUNT_RETURN",
+      "title": "Basis",
+      "type": "string"
+    },
+    "days": {
+      "items": {
+        "$ref": "#/$defs/Day"
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "title": "Days",
+      "type": "array"
+    },
+    "recordedNet": {
+      "maxLength": 32,
+      "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+      "title": "Recordednet",
+      "type": "string"
+    },
+    "realizedLedgerDrawdownLowerBound": {
+      "maxLength": 32,
+      "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+      "title": "Realizedledgerdrawdownlowerbound",
+      "type": "string"
+    },
+    "completePositiveDays": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Completepositivedays"
+    },
+    "completeNegativeDays": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Completenegativedays"
+    },
+    "completeFlatDays": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Completeflatdays"
+    },
+    "scopeUnresolvedEvents": {
+      "minimum": 0,
+      "title": "Scopeunresolvedevents",
+      "type": "integer"
+    },
+    "openJournalPositions": {
+      "minimum": 0,
+      "title": "Openjournalpositions",
+      "type": "integer"
+    },
+    "externalCashflows": {
+      "default": null,
+      "title": "Externalcashflows",
+      "type": "null"
+    },
+    "openBrokerMark": {
+      "default": null,
+      "title": "Openbrokermark",
+      "type": "null"
+    },
+    "actualModelSpend": {
+      "default": null,
+      "title": "Actualmodelspend",
+      "type": "null"
+    },
+    "accountReturn": {
+      "default": null,
+      "title": "Accountreturn",
+      "type": "null"
+    },
+    "equityDrawdown": {
+      "default": null,
+      "title": "Equitydrawdown",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "checkedAt",
+    "since",
+    "until",
+    "currency",
+    "days",
+    "recordedNet",
+    "realizedLedgerDrawdownLowerBound",
+    "completePositiveDays",
+    "completeNegativeDays",
+    "completeFlatDays",
+    "scopeUnresolvedEvents",
+    "openJournalPositions"
+  ],
+  "title": "Scorecard",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
