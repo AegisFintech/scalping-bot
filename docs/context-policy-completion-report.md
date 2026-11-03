@@ -23,3 +23,11 @@ not a strategy failure or a qualification success.
 
 The subsequent type check also required the fixture prompt identity to remain
 a literal, matching the real AiAnalysisResult contract; corrected before final gates.
+
+Final full `PYTHONDONTWRITEBYTECODE=1 node scripts/qualify.mjs` passes all gates:
+1,288 Node +157 database +1,282 Python =2,727 tests, including format/lint/types/
+build/schema/migrations/replay/fail-closed, isolated DB lifecycle, secret scan and
+both dependency audits. [Exact source receipt](evidence/context-policy-validation.json).
+Both fresh review axes clear. [PR522](https://github.com/AegisFintech/scalping-bot/pull/522)
+requires hosted exact-head success and separate review before merge. Activation
+is still pending; this engineering fix is not an economic experiment result.

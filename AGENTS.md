@@ -204,7 +204,8 @@ a planning/audit PR cannot close it.
 
 For strategy-bound detached provider completion (#521), read
 `docs/context-policy-completion-report.md`; preserve historical validation and
-use typed provider fixtures with explicit resolved promises.
+use typed provider fixtures with explicit resolved promises. Full2,727-test
+source qualification is recorded in `docs/evidence/context-policy-validation.json`.
 
 <!-- research-publication -->
 
