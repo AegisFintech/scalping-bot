@@ -142,3 +142,27 @@ the explicit assertion is updated. The final TLS-qualified run must include all
 database-required cases with no skips. Broker preflight verifies XAUUSD digits2,
 pipPosition2, pip/tick0.01, native volume step100 and minimum stop distance0; no
 pip/point conversion is assumed from a convention or a price screenshot.
+
+## Final qualification and real read-only runner
+
+At b078892, `PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed all
+2,814 tests:1,318 Node/schema/replay,164 TLS PostgreSQL lifecycle and1,332 Python,
+with no skips. Formatting, lint/types, build, secret scan and both required dependency
+audit gates passed. Eleven moderate npm advisories remain below the existing high
+gate; the existing Starlette/httpx deprecation warning remains. Both independent
+review axes are CLEAR at that exact head. All four sample/populated deployment
+policy/startup checks pass without configuration changes.
+[Exact receipt](evidence/demo-trial-protocol-validation.json).
+
+The actual SELECT-only exported05:00–05:30UTC packet was processed by the new
+current runner for all nine profiles:25 contexts,23 recorded Codex WAITs and two
+unavailable contexts; each local profile had12 conditional proposals,11 WAITs and
+two unavailable contexts. There were no actual setups in that window; every
+counterfactual fill/net remains null. The retained complete nine-profile report
+hashes to de5a381068d9f9003acd4b38823d8a6eae0f0ba112203ac8cba2153d186634cf,
+input90680dc45923a5fd735d0728d4ea7acaed3e12d8360d9c22f9acc9f2a29ee0eb.
+This verifies real packet compatibility, not offloaded execution or strategy quality.
+
+PR525 and matched operational activation follow these checks. Source delivery alone
+does not complete parent515/520; natural two-distinct-filled allocations and restart/
+dedup proof are still required. No account/history reset or forced trade occurred.

@@ -184,6 +184,8 @@ Full combined qualification:2,772 tests; receipt
 Review regressions cover both real HTTP boundaries, durable excluded-clock
 receipts and complete migration/prompt inventories; see `docs/demo-trial-protocol-report.md`.
 
+Full finite-protocol qualification:2,814 tests/no skips, both exact-head reviews clear; see `docs/evidence/demo-trial-protocol-validation.json`. Matched deployment and natural two-trial proof remain separate.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
