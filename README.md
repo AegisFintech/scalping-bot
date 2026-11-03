@@ -161,6 +161,9 @@ For the unfinished recurring strategy-experiment programme (#515), read
 `docs/net-expectancy-experiment-plan.md` ([planning PR #516](https://github.com/AegisFintech/scalping-bot/pull/516));
 a planning/audit PR cannot close it.
 
+For strategy-bound detached provider completion (#521), read
+`docs/context-policy-completion-report.md`; preserve historical validation.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

@@ -1,3 +1,14 @@
+### ISSUE-521 — Preserve strategy policy at detached completion
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/521; parent #515.
+- Dependencies: current0.9 validator and existing detached request lifecycle.
+- Acceptance: reproduce current multi-unit target failure at actual callback,
+  preserve historical rejection, full qualification/review/push/CI and verified
+  matched activation without economics, risk, history or frozen-study changes.
+- Status: regression reproduced; matching configured version now passes all49
+  production-context tests. Full qualification/delivery/activation pending.
+- Evidence: `docs/context-policy-completion-report.md`.
+
 ### ISSUE-515 — Recurring net-expectancy DEMO experiments
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/515.

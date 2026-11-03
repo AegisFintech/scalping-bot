@@ -983,3 +983,54 @@ it("admits a sixty-second scalp after ordinary inference latency without the leg
   expect(result.response.buy_stop.expires_at).toBe(at(60));
   expect(generate).not.toHaveBeenCalled();
 });
+
+it.each([
+  ["0.9.0-cost-balanced.1-codex.2", "READY"],
+  ["0.8.0-model-scalp.1-codex.1", "FAILED"],
+])(
+  "retains configured scalp policy at detached completion (%s)",
+  async (version, expected) => {
+    const store = memory();
+    const generate = vi.fn(async (i: EntryPlannerInput) => ({
+      response: {
+        schema_version: "entry-scalp-1.0" as const,
+        analysis_id: i.analysisId,
+        symbol: i.symbol,
+        captured_at: i.capturedAt,
+        valid_until: at(120),
+        buy_stop: "4406",
+        sell_stop: "4405",
+        entry_side: "BUY" as const,
+        reason: "Synthetic completed trend continuation",
+        take_profit: "4409",
+        stop_loss: "4405",
+        pending_seconds: 120,
+      },
+      rawResponse: "synthetic fixture",
+      latencyMs: 5,
+      retryCount: 0,
+      promptArtifact: {
+        version: "entry-scalp-v2",
+        content: "fixture",
+        sha256: "a".repeat(64),
+      },
+    }));
+    const model = new ReusableScenarioModel(
+      store,
+      { generate },
+      () => base + 1000,
+      () => {},
+      true,
+      undefined,
+      undefined,
+      version,
+    );
+    expect(await model.prepare(input())).toBe("SCENARIO_REFRESH_STARTED");
+    await model.settled();
+    expect(store.row?.state, store.row?.reason ?? "").toBe(expected);
+    expect(generate).toHaveBeenCalledOnce();
+    if (expected === "READY")
+      expect(store.row?.plan).toMatchObject({ take_profit: "4409" });
+    else expect(store.row?.reason).toBe("AI_SCALP_GEOMETRY_INVALID");
+  },
+);
