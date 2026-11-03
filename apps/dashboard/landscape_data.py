@@ -17,7 +17,7 @@ def landscape_events(
         ),
         (
             "context",
-            """SELECT id,requested_at,available_at,completed_at,state,reason,
+            """SELECT id,requested_at,available_at,completed_at,state,reason,requested_model,
               plan->>'schema_version' AS plan_schema, plan->>'entry_side' AS entry_side,
               CASE WHEN plan->>'schema_version' IN
                 ('entry-wait-1.0','entry-direction-1.0','entry-modes-1.0','entry-scalp-1.0')

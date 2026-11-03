@@ -40,7 +40,7 @@ wait -> completed OHLC / quotes / DOM -> local technical context -> Codex propos
 unfilled expiry -> exact zero-fill broker proof -> fresh market analysis
 ```
 
-Codex proposes direction, entry, TP, SL and pending lifetime. Code owns execution,
+A registered trial selects Codex or an explicit local trend-range proposal. Code owns execution,
 broker precision, costs, margin, ownership, dynamic sizing and reconciliation.
 WAIT, stale data, closed sessions, active exposure or uncertainty prevent new orders.
 Broker history and reconciliation reject missing or mismatched account identity.
@@ -48,22 +48,23 @@ A filled position never closes just because the pending-entry timer elapsed.
 
 ## Current source contract
 
-| Item            | Contract                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------ |
-| Source / policy | `0.9.0-cost-balanced.1-codex.1` / `0.9.0-cost-balanced.1`                                              |
-| Provider        | API-first `gpt-6.1-sol`/low, prompt `entry-scalp-v2`; approved subscription fallback on API credit/cap |
-| Entry           | One trend-direction STOP_LIMIT, broker-acknowledged GTD,60–300s from capture                           |
-| Protection      | Model distances <=7.00; modeled net reward >= modeled stop loss after fees/65-tick reserve             |
-| Demo risk       | At most2.5% for the single order within the unchanged5% setup ceiling; costs/margin may reduce size    |
-| Evidence        | Completed M15/M5/M1, causal SMC levels, broker-only sampled DOM and flight recorder                    |
+| Item            | Contract                                                                 |
+| --------------- | ------------------------------------------------------------------------ |
+| Source / policy | `0.10.0-demo-trials.1-codex.1` / `0.10.0-demo-trials.1`                  |
+| Proposal        | Explicit CODEX Sol API-first or registered LOCAL_RANGE; no WAIT fallback |
+| Entry           | One trend STOP_LIMIT, original completed range, registered60/180s GTD    |
+| Protection      | Structural five-M1 stop <=7; fixed profile TP0.4/0.6/1 price units       |
+| Demo risk       | At most2.5% single leg inside5% setup; dynamic costs/margin/volume       |
+| Evidence        | Completed M15/M5/M1, SMC/DOM, bounded idle tape and flight recorder      |
 
-Native protection is fill-relative; final absolute levels can differ after entry
-slippage. Costs and the65-tick adverse-exit reserve are modeled, not guaranteed net
-proceeds. Persistent model memory is not training. No profitability claim.
+Target admission uses the declared5-tick base allowance; stress evidence and stop
+sizing retain65ticks. None guarantees closing proceeds. Realized net includes signed
+broker fees. `/learning` shows registered trials, source, waits, fills, net and next
+action; stale values are withheld. Persistent model memory is not training.
 
-See [release, tests, activation and rollback](docs/cost-balanced-scalp-report.md). Source
-updates do not prove deployment: the matching operational receipt is authoritative.
-Existing accepted GTC/OCO groups retain their original orders and protection.
+See [protocol, tests, activation requirements and rollback](docs/demo-trial-protocol-report.md).
+Source updates do not prove deployment. Historical registrations, orders, native
+protection and broker/accounting history remain unchanged. No profitability claim.
 
 ## Development and verification
 

@@ -572,9 +572,13 @@ export class PostgresDecisionTrail implements DecisionTrail {
     const client = await this.#options.pool.connect();
     try {
       await client.query("BEGIN");
+      let proposalModel = this.#options.model;
       if (timing.contextPlanId !== undefined) {
-        const plan = await client.query(
-          `SELECT id FROM scenario_contexts WHERE id=$1 AND account_id=$2 AND symbol_id=$3 AND mode=$4 AND state='READY' AND valid_until >= $5`,
+        const plan = await client.query<{
+          id: string;
+          requested_model: string;
+        }>(
+          `SELECT id,requested_model FROM scenario_contexts WHERE id=$1 AND account_id=$2 AND symbol_id=$3 AND mode=$4 AND state='READY' AND valid_until >= $5`,
           [
             timing.contextPlanId,
             this.#options.accountId,
@@ -585,6 +589,9 @@ export class PostgresDecisionTrail implements DecisionTrail {
         );
         if (plan.rowCount !== 1 || timing.telemetry !== undefined)
           throw new Error("CONTEXT_PLAN_SCOPE_INVALID");
+        proposalModel = String(
+          plan.rows[0]?.requested_model ?? this.#options.model,
+        );
       }
       await client.query(
         `INSERT INTO model_requests
@@ -600,7 +607,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
           analysisId,
           requestId,
           this.#options.apiStyle,
-          this.#options.model,
+          proposalModel,
           this.#options.promptVersion,
           this.#options.schemaVersion,
           this.#options.payloadMode,
@@ -792,8 +799,8 @@ export class PostgresDecisionTrail implements DecisionTrail {
           `INSERT INTO orders
             (id, account_id, order_group_id, side, order_type, state, client_order_id, strategy_owned,
              strategy_label, idempotency_key, entry_price, stop_loss, take_profit,
-             requested_volume, normalized_volume, expires_at, time_in_force, submission_valid_until, execution_order_type)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+             requested_volume, normalized_volume, expires_at, time_in_force, submission_valid_until, execution_order_type, entry_range_points)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
           [
             randomUUID(),
             this.#options.accountId,
@@ -814,6 +821,7 @@ export class PostgresDecisionTrail implements DecisionTrail {
             orderTimeInForce(command),
             command.expiresAt,
             pendingOrderType(command),
+            command.entryRangePoints ?? null,
           ],
         );
       }

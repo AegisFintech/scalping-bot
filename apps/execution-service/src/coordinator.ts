@@ -283,6 +283,7 @@ export type PlacementControls = Pick<
 >;
 
 export interface CoordinatorOptions {
+  readonly beforeAnalysis?: () => Promise<void>;
   readonly marketSession?: () => Promise<MarketSessionStatus>;
   /** Production entry-pair contract: omit strategy filters, retain broker/risk integrity. */
   readonly entryPairMode?: boolean;
@@ -334,7 +335,8 @@ export interface CoordinatorOptions {
     | "entry-quick-oco-execution-v2"
     | "entry-quick-oco-execution-v3"
     | "entry-quick-oco-execution-v4"
-    | "entry-scalp-execution-v1";
+    | "entry-scalp-execution-v1"
+    | "demo-trial-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly commandFeeCheck?: (
@@ -561,6 +563,7 @@ export class AnalysisCoordinator {
         return await reject([
           initialSession.reasonCode ?? "MARKET_SESSION_UNAVAILABLE",
         ]);
+      await this.#options.beforeAnalysis?.();
       await this.#options.trail.start({
         analysisId,
         mode: this.#options.mode,
@@ -894,6 +897,7 @@ export class AnalysisCoordinator {
           preferredOrderExpirySeconds: this.#options.preferredExpirySeconds,
         },
       });
+      await this.#options.beforeAnalysis?.();
       const providerSession = await this.#options.marketSession?.();
       if (providerSession !== undefined) {
         await this.#options.trail.validation(
@@ -1595,6 +1599,7 @@ export class AnalysisCoordinator {
       if (!placementGate.allowed)
         return await reject(placementGate.reasonCodes);
 
+      await this.#options.beforeAnalysis?.();
       const placementSession = await this.#options.marketSession?.();
       if (placementSession !== undefined) {
         await this.#options.trail.validation(

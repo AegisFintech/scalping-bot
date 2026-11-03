@@ -1,3 +1,11 @@
+# Current finite DEMO experiment source — ISSUE-519 / ISSUE-520
+
+Source0.10.0-demo-trials.1-codex.1 uses the reviewed finite catalogue, immutable
+future registrations and one existing executor. Read [the current protocol](demo-trial-protocol-report.md).
+No environment-tuned profiles or new credentials. API-first Sol/credit fallback,
+dynamic5% setup/2.5% leg and65-tick stop sizing remain. Actual activation requires
+the protected matched release/source receipt; old policy sections are historical.
+
 # Current cost-balanced DEMO experiment — ISSUE-498
 
 Current source/policy is0.9 cost-balanced scalping; see the

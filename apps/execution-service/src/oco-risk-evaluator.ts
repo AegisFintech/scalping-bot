@@ -40,6 +40,7 @@ export interface OcoRiskEvaluatorOptions {
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly adverseSlippagePoints?: string;
   readonly modelDefinedScalp?: boolean;
+  readonly entryRangePoints?: () => "10" | "30";
   readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabelPrefix?: string;
   readonly riskMultiplier?: () => string;
@@ -509,6 +510,9 @@ export class OcoRiskEvaluator {
             perLegRiskPercent: percent,
             directionalRisk: { ...risk, estimatedMargin: canonical(exact) },
             directionalCommand: {
+              ...(this.#options.entryRangePoints
+                ? { entryRangePoints: this.#options.entryRangePoints() }
+                : {}),
               executionOrderType: this.#options.executionOrderType as
                 "STOP_LIMIT" | "LIMIT",
               timeInForce: this.#options.modelDefinedScalp ? "GTD" : "GTC",

@@ -66,3 +66,16 @@ it("keeps the previous economic schema frozen and incompatible with the new sour
   );
   expect(previous(executionRiskPolicy("demo"))).toBe(false);
 });
+
+it("exposes the finite trial policy additively and preserves existing risk ceilings", () => {
+  const current = new Ajv2020({ strict: true }).compile(
+    JSON.parse(
+      readFileSync("schemas/risk-policy-2.2.json", "utf8"),
+    ) as AnySchema,
+  );
+  const p = executionRiskPolicy("demo", "0.10.0-demo-trials.1-codex.1");
+  expect(current(p)).toBe(true);
+  expect(validate(p)).toBe(false);
+  expect(p.setupRiskPercent).toBe("5");
+  expect(current({ ...p, setupRiskPercent: "10" })).toBe(false);
+});

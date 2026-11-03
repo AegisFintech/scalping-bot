@@ -77,6 +77,7 @@ export interface ExecutionStatus {
 }
 
 export interface ExecutionServerOptions {
+  readonly demoTrials?: () => Promise<unknown>;
   readonly flightSource?: {
     readonly mode: string;
     readonly strategyVersion: string;
@@ -155,6 +156,15 @@ export function createExecutionServer(
       : reply
           .code(503)
           .send({ status: "not_ready", reason_codes: status.reasonCodes });
+  });
+  app.get("/v1/demo-trials", async (_request, reply) => {
+    if (!options.demoTrials)
+      return reply.code(404).send({ reason: "DEMO_TRIAL_NOT_ACTIVE" });
+    try {
+      return await options.demoTrials();
+    } catch {
+      return reply.code(503).send({ reason: "DEMO_TRIAL_STATUS_UNAVAILABLE" });
+    }
   });
   app.get("/v1/status", () => options.status());
   app.get("/v1/open-position-monitor", async (_request, reply) => {

@@ -1,3 +1,7 @@
+import {
+  trialPrompt,
+  trialProfile,
+} from "../../strategy-candidates/src/demo-trial.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { z } from "zod";
@@ -12,6 +16,7 @@ import {
 import {
   CODEX_ENTRY_MODEL,
   CODEX_STRATEGY_VERSION,
+  DEMO_TRIAL_STRATEGY_VERSION,
 } from "../../config/src/policy.js";
 export { CODEX_ENTRY_MODEL };
 const receipt = z
@@ -61,6 +66,16 @@ const fallbackReceipt = receipt
   })
   .strict();
 
+const trialReceipt = receipt.extend({
+  version: z.literal("codex-entry-response-1.9"),
+});
+const trialApiReceipt = apiReceipt.extend({
+  version: z.literal("codex-entry-response-1.10"),
+});
+const trialFallbackReceipt = fallbackReceipt.extend({
+  version: z.literal("codex-entry-response-1.11"),
+});
+
 /** Explicitly selected proposal transport; never owns broker execution authority. */
 export class CodexEntryClient {
   readonly #prompt: string;
@@ -76,6 +91,7 @@ export class CodexEntryClient {
   constructor(
     private readonly options: {
       readonly localToken: string;
+      readonly trialProtocol?: boolean;
       readonly provider?: "subscription" | "openai-api";
       readonly fetchImpl?: typeof fetch;
       readonly beforeDispatch: (symbol: string) => Promise<void>;
@@ -100,18 +116,43 @@ export class CodexEntryClient {
       !z.string().uuid().safeParse(request.analysisId).success
     )
       throw new Error("CODEX_NUMERIC_REQUEST_REQUIRED");
+    const experiment = request.experiment;
+    if (
+      this.options.trialProtocol === true
+        ? experiment === undefined
+        : experiment !== undefined
+    )
+      throw new Error("AI_DEMO_PROTOCOL_MISMATCH");
+    if (
+      experiment !== undefined &&
+      trialProfile(experiment).proposalSource !== "CODEX"
+    )
+      throw new Error("AI_DEMO_CODEX_SOURCE_REQUIRED");
+    const artifact =
+      experiment === undefined
+        ? {
+            version: "entry-scalp-v2" as const,
+            content: this.#prompt,
+            sha256: this.#sha,
+          }
+        : trialPrompt(experiment);
     const body = JSON.stringify({
       version:
-        this.options.provider === "openai-api"
-          ? "codex-entry-request-1.15"
-          : "codex-entry-request-1.14",
+        experiment !== undefined
+          ? this.options.provider === "openai-api"
+            ? "codex-entry-request-1.17"
+            : "codex-entry-request-1.16"
+          : this.options.provider === "openai-api"
+            ? "codex-entry-request-1.15"
+            : "codex-entry-request-1.14",
       ...(this.options.provider === "openai-api"
         ? { provider: "openai-api" }
         : {}),
       analysisId: request.analysisId,
       symbol: request.symbol,
-      promptVersion: "entry-scalp-v2",
-      promptSha256: this.#sha,
+      promptVersion: artifact.version,
+      promptSha256: artifact.sha256,
+      ...(experiment === undefined ? {} : { experiment }),
       payload: request.payload,
     });
     if (Buffer.byteLength(body) > 128_000)
@@ -140,13 +181,19 @@ export class CodexEntryClient {
       if (!response.ok) throw new Error("CODEX_UNAVAILABLE_OR_UNKNOWN");
       const raw = await boundedResponseText(response, 16_384);
       const value =
-        this.options.provider === "openai-api"
-          ? z.union([apiReceipt, fallbackReceipt]).parse(JSON.parse(raw))
-          : receipt.parse(JSON.parse(raw));
+        experiment !== undefined
+          ? this.options.provider === "openai-api"
+            ? z
+                .union([trialApiReceipt, trialFallbackReceipt])
+                .parse(JSON.parse(raw))
+            : trialReceipt.parse(JSON.parse(raw))
+          : this.options.provider === "openai-api"
+            ? z.union([apiReceipt, fallbackReceipt]).parse(JSON.parse(raw))
+            : receipt.parse(JSON.parse(raw));
       const ended = this.#now();
       if (
         value.analysisId !== request.analysisId ||
-        value.promptSha256 !== this.#sha ||
+        value.promptSha256 !== artifact.sha256 ||
         value.capturedAt !== request.payload.captured_at ||
         ("memory" in value &&
           value.memory.day !== value.capturedAt.slice(0, 10)) ||
@@ -173,7 +220,9 @@ export class CodexEntryClient {
           capturedAt: value.capturedAt,
           tickSize: String(request.payload.tick_size),
         },
-        CODEX_STRATEGY_VERSION,
+        experiment === undefined
+          ? CODEX_STRATEGY_VERSION
+          : DEMO_TRIAL_STRATEGY_VERSION,
       );
       const strictEntries = JSON.parse(value.rawResponse) as unknown;
       if (
@@ -188,11 +237,7 @@ export class CodexEntryClient {
         latencyMs: ended - started,
         retryCount: 0,
         model: CODEX_ENTRY_MODEL,
-        promptArtifact: {
-          version: "entry-scalp-v2",
-          sha256: this.#sha,
-          content: this.#prompt,
-        },
+        promptArtifact: artifact,
         telemetry: {
           requestedModel: CODEX_ENTRY_MODEL,
           returnedModel: value.returnedModel,

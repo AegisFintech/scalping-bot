@@ -30,7 +30,12 @@ from python.codex_entry.service import (
 
 
 def create_app(
-    root: Path, prompt: str, token: str, *, prompt_version: str = "entry-pair-v4"
+    root: Path,
+    prompt: str,
+    token: str,
+    *,
+    prompt_version: str = "entry-pair-v4",
+    trial_source_sha256: str | None = None,
 ) -> FastAPI:
     if len(token) < 32:
         raise ValueError("CODEX_LOCAL_AUTH_REQUIRED")
@@ -161,6 +166,10 @@ def create_app(
         except Exception:
             raise HTTPException(status_code=422, detail="CODEX_REQUEST_INVALID") from None
         try:
+            if trial_source_sha256 is not None:
+                return await run_in_threadpool(
+                    run, validated, root, prompt, trial_source_sha256=trial_source_sha256
+                )
             return await run_in_threadpool(run, validated, root, prompt)
         except Exception:
             # Do not disclose model output, paths, credentials or raw CLI errors.
@@ -185,7 +194,28 @@ def main() -> None:
     expected = Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).stem
     if expected not in SUPPORTED_PROMPTS:
         raise ValueError("CODEX_PROMPT_VERSION_INVALID")
-    app = create_app(root, prompt, os.environ["CODEX_ENTRY_LOCAL_TOKEN"], prompt_version=expected)
+    source_sha256 = None
+    if expected == "entry-scalp-v3":
+        manifest = (
+            Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).resolve().parents[1]
+            / "release-manifest.json"
+        )
+        if manifest.is_symlink() or manifest.stat().st_uid != 0 or manifest.stat().st_mode & 0o022:
+            raise ValueError("CODEX_DEMO_SOURCE_MANIFEST_INVALID")
+        source_sha256 = json.loads(manifest.read_text())["sourceSha256"]
+        if (
+            not isinstance(source_sha256, str)
+            or len(source_sha256) != 64
+            or any(c not in "0123456789abcdef" for c in source_sha256)
+        ):
+            raise ValueError("CODEX_DEMO_SOURCE_MANIFEST_INVALID")
+    app = create_app(
+        root,
+        prompt,
+        os.environ["CODEX_ENTRY_LOCAL_TOKEN"],
+        prompt_version=expected,
+        trial_source_sha256=source_sha256,
+    )
     uvicorn.run(
         app,
         host="127.0.0.1",

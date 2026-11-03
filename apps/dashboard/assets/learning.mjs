@@ -99,12 +99,36 @@ function renderFunnel(d) {
 }
 
 function withhold(message) {
+  renderTrials(null);
   renderFunnel({});
   $("board").hidden = true;
   $("state").textContent = message;
 }
 
+function renderTrials(value) {
+  const stamp = Date.parse(value?.controllerVerifiedAt),
+    age = Date.now() - stamp;
+  const fresh = Number.isFinite(age) && age >= -5000 && age <= 30000;
+  $("trial-state").textContent = fresh
+    ? `EXPERIMENTAL · ${value.reason ?? "Controller current"}`
+    : "Trial controller unavailable or stale";
+  const trials = fresh && Array.isArray(value.trials) ? value.trials : [];
+  const current = trials.find((t) => t.state !== "COMPLETED");
+  $("trial-current").textContent = current
+    ? `${current.profile_id} · ${current.definition.proposalSource} · target ${current.definition.targetDistance} price units / structural stop +${current.definition.stopBufferTicks} ticks · range ${current.definition.entryRangePoints} points · expiry ${current.definition.pendingSeconds}s · source ${current.source_sha256}`
+    : "No verified active trial";
+  $("trial-next").textContent = current
+    ? `${current.state} · ${current.closes} closed outcomes · ${Math.floor(Number(current.market_open_ms) / 60000)}/60 open minutes · next: ${current.state === "DRAINING" ? "wait for terminal proof and fresh reconciliation, then register next profile" : `evaluate fresh opportunities; next profile ${value.nextProfileId} after allocation and reconciliation`}`
+    : "";
+  $("trial-results").textContent = trials
+    .map(
+      (t) =>
+        `${t.profile_id} [cycle ${t.cycle}, slot ${t.ordinal}] ${t.state} | ${t.proposals} proposals / ${t.provider_claims} provider claims / ${t.waits} WAIT | ${t.entry_fill_events} entry fill events / ${t.closes} closed outcomes | net ${t.realized_net ?? "unavailable"} | ${t.review?.interpretation ?? "allocation not reviewed"}`,
+    )
+    .join("\n");
+}
 function render(d) {
+  renderTrials(d.demoTrials);
   const p = d.pipeline;
   $("pipeline-health").textContent = p?.available
     ? "Fresh observed pipeline state"

@@ -1,3 +1,9 @@
+import {
+  canonicalJson,
+  trialProfile,
+  trialPrompt,
+  type TrialBinding,
+} from "../../../packages/strategy-candidates/src/demo-trial.js";
 import type { ScalpEntryPlan } from "../../../packages/scenario-engine/src/scalp-entry.js";
 import type { ModeEntryPlan } from "../../../packages/scenario-engine/src/mode-entry.js";
 import {
@@ -120,6 +126,7 @@ export interface ContextStore {
   ): Promise<boolean>;
   latest(): Promise<StoredContext | null>;
   claim(input: {
+    experiment?: TrialBinding;
     id: string;
     sourceAnalysisId: string;
     capturedAt: string;
@@ -150,6 +157,7 @@ export class PostgresContextStore implements ContextStore {
       symbolId: string;
       mode: string;
       strategyVersionId?: string;
+      trial?: () => TrialBinding;
     },
   ) {}
   async consultation(input: {
@@ -204,7 +212,7 @@ export class PostgresContextStore implements ContextStore {
       (SELECT r.evidence->'reasonCodes' FROM context_entry_retirements r WHERE r.context_id=c.id) AS entry_retirement_reasons,
       c.refresh_after_entry_context_id IS NOT NULL AS entry_replacement,
       EXISTS(SELECT 1 FROM order_groups g WHERE g.context_plan_id=c.id) AS consumed,
-      (SELECT count(*)::int FROM scenario_contexts x WHERE x.account_id=c.account_id AND x.symbol_id=c.symbol_id AND x.mode=c.mode AND x.requested_at>=clock_timestamp()-interval '24 hours') AS calls_24h
+      (SELECT count(*)::int FROM scenario_contexts x WHERE x.account_id=c.account_id AND x.symbol_id=c.symbol_id AND x.mode=c.mode AND x.requested_model<>'local-range-v1' AND x.requested_at>=clock_timestamp()-interval '24 hours') AS calls_24h
       FROM scenario_contexts c WHERE c.account_id=$1 AND c.symbol_id=$2 AND c.mode=$3 ORDER BY c.requested_at DESC LIMIT 1`,
       [this.scope.accountId, this.scope.symbolId, this.scope.mode],
     );
@@ -223,6 +231,7 @@ export class PostgresContextStore implements ContextStore {
          AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.order_group_id=g.id AND o.state NOT IN ('FILLED','CANCELLED','EXPIRED','REJECTED'))) AS closed_at,
       (SELECT max(g.updated_at) FROM order_groups g WHERE g.context_plan_id=c.id AND ${zeroFillTerminalProof}) AS zero_fill_terminal_at
       FROM scenario_contexts c WHERE account_id=$1 AND symbol_id=$2 AND mode=$3
+      AND ($5::uuid IS NULL OR EXISTS(SELECT 1 FROM demo_trial_contexts dt WHERE dt.context_id=c.id AND dt.trial_id=$5))
       AND ($4::uuid IS NULL OR EXISTS(SELECT 1 FROM analysis_runs source
         WHERE source.id=c.source_analysis_id AND source.strategy_version_id=$4))
       ORDER BY requested_at DESC LIMIT 1`,
@@ -231,6 +240,7 @@ export class PostgresContextStore implements ContextStore {
         this.scope.symbolId,
         this.scope.mode,
         this.scope.strategyVersionId ?? null,
+        this.scope.trial?.().trialId ?? null,
       ],
     );
     const r = result.rows[0] as
@@ -275,6 +285,7 @@ export class PostgresContextStore implements ContextStore {
         };
   }
   async claim(input: {
+    experiment?: TrialBinding;
     id: string;
     sourceAnalysisId: string;
     capturedAt: string;
@@ -289,6 +300,11 @@ export class PostgresContextStore implements ContextStore {
       promptVersion: string;
     };
   }): Promise<boolean> {
+    if (
+      input.experiment !== undefined &&
+      canonicalJson(input.experiment) !== canonicalJson(this.scope.trial?.())
+    )
+      throw new Error("SCENARIO_DEMO_BINDING_CHANGED");
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
@@ -351,7 +367,10 @@ export class PostgresContextStore implements ContextStore {
           input.capturedAt,
           input.tickSize,
           input.sourceAnalysisId,
-          FIXED_DEFAULTS.AI_MODEL,
+          input.experiment &&
+          trialProfile(input.experiment).proposalSource === "LOCAL_RANGE"
+            ? "local-range-v1"
+            : FIXED_DEFAULTS.AI_MODEL,
           input.afterContextId ?? null,
           input.afterEntryContextId ?? null,
           input.completedM1End ?? null,
@@ -376,6 +395,14 @@ export class PostgresContextStore implements ContextStore {
           [input.id, evidence.promptContent, evidence.requestText],
         );
       }
+      if (result.rowCount === 1 && input.experiment !== undefined) {
+        if (input.experiment.trialId !== this.scope.trial?.().trialId)
+          throw new Error("SCENARIO_DEMO_TRIAL_CHANGED");
+        await client.query(
+          "INSERT INTO demo_trial_contexts(context_id,trial_id) VALUES($1,$2)",
+          [input.id, input.experiment.trialId],
+        );
+      }
       await client.query("COMMIT");
       return result.rowCount === 1;
     } catch (error) {
@@ -395,9 +422,19 @@ export class PostgresContextStore implements ContextStore {
     const usage = result?.telemetry ?? telemetry;
     const parsed =
       usage === undefined ? null : providerTelemetrySchema.parse(usage);
+    const expectedModel =
+      this.scope.trial === undefined
+        ? FIXED_DEFAULTS.AI_MODEL
+        : (
+            await this.pool.query<{ requested_model: string }>(
+              "SELECT requested_model FROM scenario_contexts WHERE id=$1 AND account_id=$2 AND symbol_id=$3 AND mode=$4",
+              [id, this.scope.accountId, this.scope.symbolId, this.scope.mode],
+            )
+          ).rows[0]?.requested_model;
     if (
-      (parsed !== null && parsed.requestedModel !== FIXED_DEFAULTS.AI_MODEL) ||
-      (result !== null && result.model !== FIXED_DEFAULTS.AI_MODEL)
+      !expectedModel ||
+      (parsed !== null && parsed.requestedModel !== expectedModel) ||
+      (result !== null && result.model !== expectedModel)
     )
       throw new Error("SCENARIO_PROVIDER_IDENTITY_MISMATCH");
     const client = await this.pool.connect();
@@ -473,29 +510,45 @@ export class ReusableScenarioModel implements ModelProvider {
       analysisId: string,
     ) => Promise<NonNullable<EntryPlannerInput["technicalContext"]>>,
     private readonly scalpStrategyVersion?: string,
+    private readonly trial?: () => TrialBinding,
   ) {
     this.providerPrompt = entryOnly
       ? readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim()
       : null;
     const content = readFileSync(
-      entryOnly
-        ? "prompts/entry-scalp-execution-v1.md"
-        : "prompts/scenario-execution-v2.md",
+      trial
+        ? "prompts/demo-trial-execution-v1.md"
+        : entryOnly
+          ? "prompts/entry-scalp-execution-v1.md"
+          : "prompts/scenario-execution-v2.md",
       "utf8",
     ).trim();
     this.artifact = {
-      version: entryOnly
-        ? ("entry-scalp-execution-v1" as const)
-        : ("scenario-execution-v2" as const),
+      version: trial
+        ? ("demo-trial-execution-v1" as const)
+        : entryOnly
+          ? ("entry-scalp-execution-v1" as const)
+          : ("scenario-execution-v2" as const),
       content,
       sha256: createHash("sha256").update(content).digest("hex"),
     };
+  }
+  private get providerArtifact() {
+    return this.trial
+      ? trialPrompt(this.trial())
+      : { content: this.providerPrompt!, version: ENTRY_PAIR_PROMPT.version };
+  }
+  private get proposalModel() {
+    return this.trial &&
+      trialProfile(this.trial()).proposalSource === "LOCAL_RANGE"
+      ? "local-range-v1"
+      : FIXED_DEFAULTS.AI_MODEL;
   }
   private currentProviderPrompt(row: StoredContext): boolean {
     return (
       !this.entryOnly ||
       row.providerPromptSha256 ===
-        createHash("sha256").update(this.providerPrompt!).digest("hex")
+        createHash("sha256").update(this.providerArtifact.content).digest("hex")
     );
   }
   private get priceCheckOptions() {
@@ -573,7 +626,7 @@ export class ReusableScenarioModel implements ModelProvider {
       existing?.state === "READY" &&
       !existing.consumed &&
       existing.retiredAt == null &&
-      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      existing.requestedModel === this.proposalModel &&
       this.currentProviderPrompt(existing) &&
       isEntryPlan(existing.plan) &&
       time(existing.validUntil) >= now + submissionReserveMs
@@ -612,7 +665,7 @@ export class ReusableScenarioModel implements ModelProvider {
     if (
       existing !== null &&
       existing.state === "READY" &&
-      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      existing.requestedModel === this.proposalModel &&
       this.currentProviderPrompt(existing) &&
       !existing.consumed &&
       existing.retiredAt == null &&
@@ -675,7 +728,7 @@ export class ReusableScenarioModel implements ModelProvider {
       !existing.consumed &&
       existing.plan?.schema_version === "entry-wait-1.0" &&
       this.currentProviderPrompt(existing) &&
-      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL
+      existing.requestedModel === this.proposalModel
     ) {
       if (existing.availableAt === null)
         throw new Error("SCENARIO_WAIT_CONTEXT_INVALID");
@@ -702,10 +755,15 @@ export class ReusableScenarioModel implements ModelProvider {
         await this.store.consultation?.({
           analysisId: String(input.payload.analysis_id),
           contextId: existing.id,
-          reason: "SCENARIO_CODEX_WAIT",
+          reason:
+            this.proposalModel === "local-range-v1"
+              ? "SCENARIO_LOCAL_WAIT"
+              : "SCENARIO_CODEX_WAIT",
           observedAt: new Date(now).toISOString(),
         });
-        return "SCENARIO_CODEX_WAIT";
+        return this.proposalModel === "local-range-v1"
+          ? "SCENARIO_LOCAL_WAIT"
+          : "SCENARIO_CODEX_WAIT";
       }
     }
     const afterTerminal =
@@ -723,7 +781,7 @@ export class ReusableScenarioModel implements ModelProvider {
       now <
         time(existing.requestedAt) +
           SCENARIO_REQUEST_POLICY.dispatchCooldownMs &&
-      existing.requestedModel === FIXED_DEFAULTS.AI_MODEL &&
+      existing.requestedModel === this.proposalModel &&
       this.currentProviderPrompt(existing);
     const due =
       waitDue !== null
@@ -755,6 +813,7 @@ export class ReusableScenarioModel implements ModelProvider {
       throw new Error("SCENARIO_CHART_MISSING");
     const id = randomUUID();
     const plannerInput: EntryPlannerInput = {
+      ...(this.trial ? { experiment: this.trial() } : {}),
       analysisId: id,
       symbol: input.snapshot.metadata.symbolName,
       capturedAt: input.snapshot.serverTime,
@@ -781,13 +840,16 @@ export class ReusableScenarioModel implements ModelProvider {
             technicalContext: await this.technicalContext(input.snapshot, id),
           }),
       ...(this.entryOnly && input.chart === null
-        ? { schemaVersion: "2.0" as const }
+        ? { schemaVersion: this.trial ? ("3.0" as const) : ("2.0" as const) }
         : {}),
     };
     if (
       !(await this.store.claim({
         id,
         sourceAnalysisId: String(input.payload.analysis_id),
+        ...(plannerInput.experiment
+          ? { experiment: plannerInput.experiment }
+          : {}),
         capturedAt: input.snapshot.serverTime,
         tickSize: input.snapshot.metadata.tickSize,
         ...(this.entryOnly
@@ -801,8 +863,8 @@ export class ReusableScenarioModel implements ModelProvider {
           ? {
               providerEvidence: {
                 requestText: JSON.stringify(entryProviderPayload(plannerInput)),
-                promptContent: this.providerPrompt!,
-                promptVersion: ENTRY_PAIR_PROMPT.version,
+                promptContent: this.providerArtifact.content,
+                promptVersion: this.providerArtifact.version,
               },
             }
           : {}),

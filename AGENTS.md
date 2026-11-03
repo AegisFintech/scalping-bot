@@ -28,15 +28,15 @@
 
 ## Current approved economic experiment
 
-Operator-approved #498 uses cost-balanced0.9 demo scalping: model target/stop<=7,
-net target reward>=modeled stop loss after broker costs and65-tick exit reserve.
-Keep single trend STOP_LIMIT/GTD, existing5% setup/2.5% leg ceilings and dynamic
-sizing. Read `docs/cost-balanced-scalp-report.md`; this is evaluation, not profit
-qualification. Historical0.8 geometry/contexts stay version-bound. #499's narrower
-entry range is research-only; current trading range remains30ticks. Read
-`docs/entry-range-study-report.md` before changing frozen point/ACK collection.
-Keep unknown-clock fills and separate metadata warm-up from outcome windows.
-Software qualification never qualifies the entry range economically.
+Operator-approved #515/#519/#520 adds finite registered0.10 DEMO trials in the
+ONE existing executor. Read `docs/demo-trial-protocol-report.md`. Freeze source,
+profile and future start before proposals; only exact terminal proof plus fresh
+reconciliation permits switching. Preserve5% setup/2.5% single-leg ceilings and
+65-tick sizing reserve. Base target allowance5ticks is an experiment, not actual
+cost or economic qualification. Codex WAIT never falls back locally; LOCAL_RANGE
+is a separately registered source, never a paid call. Keep parent515 open until
+two distinct completed allocations have actual fills, outcomes and restart proof.
+Old registrations/orders remain immutable; verify source activation separately.
 
 ## Before changing an area
 

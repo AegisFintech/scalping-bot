@@ -1,3 +1,8 @@
+import {
+  trialPrompt,
+  trialGeometry,
+} from "../../strategy-candidates/src/demo-trial.js";
+import { DEMO_TRIAL_STRATEGY_VERSION } from "../../config/src/policy.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { bindScalpDecision } from "./scalp-entry.js";
@@ -30,7 +35,11 @@ export class EntryPairHttpPlanner {
     try {
       response = await this.fetchImpl(
         new URL(
-          input.chart === null ? "/v2/entry-pair" : "/v1/entry-pair",
+          input.experiment !== undefined
+            ? "/v3/entry-pair"
+            : input.chart === null
+              ? "/v2/entry-pair"
+              : "/v1/entry-pair",
           this.baseUrl,
         ),
         {
@@ -38,7 +47,11 @@ export class EntryPairHttpPlanner {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             ...input,
-            ...(input.chart === null ? { schemaVersion: "2.0" } : {}),
+            ...(input.chart === null
+              ? {
+                  schemaVersion: input.experiment === undefined ? "2.0" : "3.0",
+                }
+              : {}),
           }),
           signal: AbortSignal.timeout(
             SCENARIO_REQUEST_POLICY.providerTimeoutMs +
@@ -79,11 +92,14 @@ export class EntryPairHttpPlanner {
     )
       throw new Error("SCENARIO_ORCHESTRATOR_ENVELOPE_INVALID");
     const content = readFileSync(ENTRY_PAIR_PROMPT.path, "utf8").trim();
-    const expected = {
-      version: ENTRY_PAIR_PROMPT.version,
-      content,
-      sha256: createHash("sha256").update(content).digest("hex"),
-    };
+    const expected =
+      input.experiment === undefined
+        ? {
+            version: ENTRY_PAIR_PROMPT.version,
+            content,
+            sha256: createHash("sha256").update(content).digest("hex"),
+          }
+        : trialPrompt(input.experiment);
     const artifact = envelope.promptArtifact as typeof expected | undefined;
     if (
       artifact?.version !== expected.version ||
@@ -102,18 +118,25 @@ export class EntryPairHttpPlanner {
       .find((s) => s.timeframe === "M1")
       ?.candles.at(-1)?.endTime;
     if (observedM1End === undefined) throw new Error("SCENARIO_M1_REQUIRED");
+    if (input.experiment !== undefined)
+      trialGeometry(input, input.experiment, JSON.parse(envelope.rawResponse));
     const plan = bindScalpDecision(
       envelope.rawResponse,
       {
         ...input,
         observedM1End,
       },
-      CODEX_STRATEGY_VERSION,
+      input.experiment === undefined
+        ? CODEX_STRATEGY_VERSION
+        : DEMO_TRIAL_STRATEGY_VERSION,
     );
     validateEntryDecision(JSON.stringify(plan), {
       ...input,
       availableAt: new Date().toISOString(),
-      strategyVersion: CODEX_STRATEGY_VERSION,
+      strategyVersion:
+        input.experiment === undefined
+          ? CODEX_STRATEGY_VERSION
+          : DEMO_TRIAL_STRATEGY_VERSION,
     });
     return {
       model: FIXED_DEFAULTS.AI_MODEL,

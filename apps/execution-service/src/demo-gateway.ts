@@ -1,3 +1,4 @@
+import { DEMO_TRIAL_STRATEGY_VERSION } from "../../../packages/config/src/policy.js";
 import {
   brokerOrderTypeNumber,
   pendingOrderType,
@@ -451,7 +452,7 @@ export class CTraderDemoGateway implements ExecutionGateway {
     if (kind === "LIMIT") return this.#options.client.placeLimit(command);
     return this.#options.client.placeStopLimit(
       command,
-      this.#options.maxSlippagePoints,
+      command.entryRangePoints ?? this.#options.maxSlippagePoints,
     );
   }
 
@@ -678,6 +679,20 @@ export class CTraderDemoGateway implements ExecutionGateway {
   }
 
   #assertPlacementEnabled(commands: readonly PendingOrderCommand[]): void {
+    for (const command of commands) {
+      const trial =
+        command.strategyLabel ===
+        `ctrader-ai-scalper:${DEMO_TRIAL_STRATEGY_VERSION}`;
+      if (
+        trial
+          ? !(
+              command.entryRangePoints === "10" ||
+              command.entryRangePoints === "30"
+            )
+          : command.entryRangePoints !== undefined
+      )
+        throw new Error("DEMO_TRIAL_ENTRY_RANGE_INVALID");
+    }
     if (!this.#options.placementEnabled)
       throw new Error("DEMO_ORDER_PLACEMENT_DISABLED");
     if (this.#options.acknowledgement !== DEMO_ACKNOWLEDGEMENT)
@@ -881,7 +896,9 @@ export class CTraderDemoGateway implements ExecutionGateway {
       const points = deviation.div(this.#options.tickSize);
       const basisPoints = deviation.div(entry).mul(10_000);
       if (
-        points.gt(this.#options.maxSlippagePoints) ||
+        points.gt(
+          tracked.command.entryRangePoints ?? this.#options.maxSlippagePoints,
+        ) ||
         basisPoints.gt(this.#options.maxSlippageBps)
       ) {
         this.#uncertainReason = "DEMO_FILL_SLIPPAGE_EXCEEDED";

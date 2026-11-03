@@ -1084,6 +1084,58 @@ describe("one protected directional entry", () => {
     executionOrderType: "STOP_LIMIT" as const,
     timeInForce: "GTC" as const,
   });
+  it("retains an actual fill outside its narrower registered range", async () => {
+    const client = new MockClient(),
+      gateway = new CTraderDemoGateway({
+        client,
+        symbolId: "7",
+        symbolName: "XAUUSD",
+        tickSize: "0.01",
+        maxSlippagePoints: "30",
+        maxSlippageBps: "2",
+        placementEnabled: true,
+        acknowledgement: DEMO_ACKNOWLEDGEMENT,
+        marketSession: () => Promise.resolve(sessionStatus("OPEN")),
+      });
+    await gateway.placeDirectional({
+      ...request("BUY"),
+      strategyLabel: "ctrader-ai-scalper:0.10.0-demo-trials.1-codex.1",
+      timeInForce: "GTD",
+      entryRangePoints: "10",
+    });
+    client.fill("client-BUY", 2001.15);
+    await expect(gateway.reconcile("XAUUSD")).resolves.toMatchObject({
+      certain: false,
+      reasonCodes: ["DEMO_FILL_SLIPPAGE_EXCEEDED"],
+    });
+  });
+  it("uses only an immutable registered trial range and rejects hidden legacy overrides", async () => {
+    const label = "ctrader-ai-scalper:0.10.0-demo-trials.1-codex.1";
+    for (const range of ["10", "30"] as const) {
+      const client = new MockClient();
+      await single(client).placeDirectional({
+        ...request("BUY"),
+        strategyLabel: label,
+        timeInForce: "GTD",
+        entryRangePoints: range,
+      });
+      expect(client.placementSlippagePoints).toEqual([range]);
+    }
+    const client = new MockClient();
+    await expect(
+      single(client).placeDirectional({
+        ...request("BUY"),
+        strategyLabel: label,
+      }),
+    ).rejects.toThrow("ENTRY_RANGE_INVALID");
+    await expect(
+      single(client).placeDirectional({
+        ...request("BUY"),
+        entryRangePoints: "10",
+      }),
+    ).rejects.toThrow("ENTRY_RANGE_INVALID");
+    expect(client.placementSlippagePoints).toEqual([]);
+  });
   it("passes a directional GTD stop-limit and its exact expiry to the broker", async () => {
     const client = new MockClient(),
       gateway = single(client),

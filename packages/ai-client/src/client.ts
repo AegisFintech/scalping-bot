@@ -1,3 +1,4 @@
+import type { TrialBinding } from "../../strategy-candidates/src/demo-trial.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
@@ -48,6 +49,7 @@ export interface AiClientOptions<T = ModelResponse> {
 }
 
 export interface AiAnalysisRequest {
+  readonly experiment?: TrialBinding;
   readonly analysisId: string;
   readonly symbol: string;
   readonly payload: Readonly<Record<string, unknown>>;
