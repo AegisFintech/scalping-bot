@@ -53,3 +53,9 @@ corrections. [Exact receipt](evidence/experiment-measurement-validation.json).
 Hosted exact-head checks and matched activation remain required. Recorder health,
 retained original bytes and frozen-study preservation are rollout acceptance,
 not replaced by this source receipt. Issue517 stays open until that proof.
+
+Combined source including reviewed #521 passes a fresh complete qualification:
+1,302 Node +157 DB +1,282 Python =2,741 tests, all gates and audits. The earlier
+standalone receipt remains intact. [Combined receipt](evidence/experiment-measurement-combined-validation.json).
+[PR523](https://github.com/AegisFintech/scalping-bot/pull/523) requires hosted
+exact-head checks and approval; actual activation is still pending.
