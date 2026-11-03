@@ -259,6 +259,7 @@ describe("PostgreSQL migrations integration", () => {
         "0038",
         "0039",
         "0040",
+        "0041",
       ]);
       const stoppedConfig = loadExecutionConfig({});
       const registryInput = {

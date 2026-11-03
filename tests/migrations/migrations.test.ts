@@ -38,6 +38,12 @@ const requiredTables = [
   "automatic_analysis_intervals",
   "analysis_chart_artifacts",
   "local_unsent_entry_proofs",
+  "demo_trial_catalogues",
+  "demo_trial_profiles",
+  "demo_trials",
+  "demo_trial_heads",
+  "demo_trial_contexts",
+  "demo_trial_events",
 ];
 const directory = path.resolve("migrations");
 
@@ -103,6 +109,7 @@ describe("migrations", () => {
       "0038_predispatch_recovery_evidence.sql",
       "0039_cost_balanced_scalp.sql",
       "0040_context_consultations.sql",
+      "0041_demo_trial_protocol.sql",
     ]);
     const sql = (
       await Promise.all(
@@ -120,7 +127,7 @@ describe("migrations", () => {
     for (const file of files) {
       const sql = await readFile(path.resolve("migrations", file), "utf8");
       // This reviewed trigger forbids truncation; it never executes TRUNCATE.
-      const checkedSql = sql
+      let checkedSql = sql
         .replace(
           "CREATE TRIGGER context_consultation_no_truncate BEFORE TRUNCATE ON analysis_context_consultations\n  FOR EACH STATEMENT EXECUTE FUNCTION guard_context_consultation();",
           "",
@@ -129,6 +136,45 @@ describe("migrations", () => {
           "CREATE TRIGGER predispatch_recovery_evidence_no_truncate BEFORE TRUNCATE ON predispatch_recovery_evidence\n  FOR EACH STATEMENT EXECUTE FUNCTION reject_predispatch_recovery_evidence_mutation();",
           "",
         );
+      if (file === "0041_demo_trial_protocol.sql") {
+        const guards = [
+          [
+            "demo_catalogue_no_truncate",
+            "demo_trial_catalogues",
+            "immutable_demo_trial_definition",
+          ],
+          [
+            "demo_profile_no_truncate",
+            "demo_trial_profiles",
+            "immutable_demo_trial_definition",
+          ],
+          [
+            "demo_trial_event_no_truncate",
+            "demo_trial_events",
+            "immutable_demo_trial_evidence",
+          ],
+          [
+            "demo_trial_context_no_truncate",
+            "demo_trial_contexts",
+            "immutable_demo_trial_evidence",
+          ],
+          [
+            "demo_trial_no_truncate",
+            "demo_trials",
+            "guard_demo_trial_progress",
+          ],
+          [
+            "demo_trial_head_no_truncate",
+            "demo_trial_heads",
+            "guard_demo_trial_head",
+          ],
+        ];
+        for (const [name, table, handler] of guards) {
+          const statement = `CREATE TRIGGER ${name} BEFORE TRUNCATE ON ${table} FOR EACH STATEMENT EXECUTE FUNCTION ${handler}();`;
+          expect(checkedSql).toContain(statement);
+          checkedSql = checkedSql.replace(statement, "");
+        }
+      }
       expect(checkedSql).not.toMatch(
         /\b(?:DROP\s+(?:TABLE|COLUMN)|TRUNCATE|DELETE\s+FROM)\b/i,
       );

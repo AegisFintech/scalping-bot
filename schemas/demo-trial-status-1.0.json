@@ -1,0 +1,446 @@
+{
+  "$id": "demo-trial-status-1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ClockReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "format": "date-time",
+          "title": "From",
+          "type": "string"
+        },
+        "until": {
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "CONTROLLER_RESUMED",
+            "OBSERVATION_GAP",
+            "SESSION_UNAVAILABLE_STARTED",
+            "SESSION_UNAVAILABLE_ENDED"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "sessionState": {
+          "enum": ["OPEN", "CLOSED", "UNAVAILABLE"],
+          "title": "Sessionstate",
+          "type": "string"
+        },
+        "creditedMilliseconds": {
+          "const": 0,
+          "title": "Creditedmilliseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "from",
+        "until",
+        "reason",
+        "sessionState",
+        "creditedMilliseconds"
+      ],
+      "title": "ClockReceipt",
+      "type": "object"
+    },
+    "Profile": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Z][A-Z0-9_]{1,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "proposalSource": {
+          "enum": ["CODEX", "LOCAL_RANGE"],
+          "title": "Proposalsource",
+          "type": "string"
+        },
+        "rangeBars": {
+          "enum": [3, 5],
+          "title": "Rangebars",
+          "type": "integer"
+        },
+        "targetDistance": {
+          "enum": ["0.4", "0.6", "1"],
+          "title": "Targetdistance",
+          "type": "string"
+        },
+        "stopBufferTicks": {
+          "enum": [0, 5, 10],
+          "title": "Stopbufferticks",
+          "type": "integer"
+        },
+        "pendingSeconds": {
+          "enum": [60, 180],
+          "title": "Pendingseconds",
+          "type": "integer"
+        },
+        "entryRangePoints": {
+          "enum": [10, 30],
+          "title": "Entryrangepoints",
+          "type": "integer"
+        },
+        "baseExitReservePoints": {
+          "const": 5,
+          "title": "Baseexitreservepoints",
+          "type": "integer"
+        },
+        "stressExitReservePoints": {
+          "const": 65,
+          "title": "Stressexitreservepoints",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "proposalSource",
+        "rangeBars",
+        "targetDistance",
+        "stopBufferTicks",
+        "pendingSeconds",
+        "entryRangePoints",
+        "baseExitReservePoints",
+        "stressExitReservePoints"
+      ],
+      "title": "Profile",
+      "type": "object"
+    },
+    "TrialReview": {
+      "additionalProperties": false,
+      "properties": {
+        "closedPositions": {
+          "minimum": 0,
+          "title": "Closedpositions",
+          "type": "integer"
+        },
+        "observedNet": {
+          "anyOf": [
+            {
+              "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observednet"
+        },
+        "interpretation": {
+          "enum": [
+            "NO_CLOSED_SAMPLE",
+            "POSITIVE_OBSERVED_NET_UNQUALIFIED",
+            "NONPOSITIVE_OBSERVED_NET_UNQUALIFIED"
+          ],
+          "title": "Interpretation",
+          "type": "string"
+        },
+        "waits": {
+          "minimum": 0,
+          "title": "Waits",
+          "type": "integer"
+        },
+        "failedProposals": {
+          "minimum": 0,
+          "title": "Failedproposals",
+          "type": "integer"
+        },
+        "incompleteContexts": {
+          "minimum": 0,
+          "title": "Incompletecontexts",
+          "type": "integer"
+        },
+        "nextProfileId": {
+          "title": "Nextprofileid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "closedPositions",
+        "observedNet",
+        "interpretation",
+        "waits",
+        "failedProposals",
+        "incompleteContexts",
+        "nextProfileId"
+      ],
+      "title": "TrialReview",
+      "type": "object"
+    },
+    "TrialRow": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-f0-9-]{36}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "profile_id": {
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Profile Sha256",
+          "type": "string"
+        },
+        "catalogue_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Catalogue Sha256",
+          "type": "string"
+        },
+        "source_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        },
+        "cycle": {
+          "minimum": 0,
+          "title": "Cycle",
+          "type": "integer"
+        },
+        "ordinal": {
+          "maximum": 12,
+          "minimum": 0,
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "registered_at": {
+          "format": "date-time",
+          "title": "Registered At",
+          "type": "string"
+        },
+        "starts_at": {
+          "format": "date-time",
+          "title": "Starts At",
+          "type": "string"
+        },
+        "state": {
+          "enum": ["ACTIVE", "DRAINING", "COMPLETED"],
+          "title": "State",
+          "type": "string"
+        },
+        "market_open_ms": {
+          "pattern": "^[0-9]{1,7}$",
+          "title": "Market Open Ms",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completed At"
+        },
+        "retirement_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Retirement Reason"
+        },
+        "definition": {
+          "$ref": "#/$defs/Profile"
+        },
+        "proposals": {
+          "minimum": 0,
+          "title": "Proposals",
+          "type": "integer"
+        },
+        "provider_claims": {
+          "minimum": 0,
+          "title": "Provider Claims",
+          "type": "integer"
+        },
+        "waits": {
+          "minimum": 0,
+          "title": "Waits",
+          "type": "integer"
+        },
+        "entry_fill_events": {
+          "minimum": 0,
+          "title": "Entry Fill Events",
+          "type": "integer"
+        },
+        "closes": {
+          "minimum": 0,
+          "title": "Closes",
+          "type": "integer"
+        },
+        "realized_net": {
+          "anyOf": [
+            {
+              "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Realized Net"
+        },
+        "review": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrialReview"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "session_state": {
+          "enum": ["OPEN", "CLOSED", "UNAVAILABLE"],
+          "title": "Session State",
+          "type": "string"
+        },
+        "clock_receipts": {
+          "minimum": 0,
+          "title": "Clock Receipts",
+          "type": "integer"
+        },
+        "last_clock_receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClockReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "profile_id",
+        "profile_sha256",
+        "catalogue_sha256",
+        "source_sha256",
+        "cycle",
+        "ordinal",
+        "registered_at",
+        "starts_at",
+        "state",
+        "market_open_ms",
+        "observed_at",
+        "completed_at",
+        "retirement_reason",
+        "definition",
+        "proposals",
+        "provider_claims",
+        "waits",
+        "entry_fill_events",
+        "closes",
+        "realized_net",
+        "review",
+        "session_state",
+        "clock_receipts",
+        "last_clock_receipt"
+      ],
+      "title": "TrialRow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "demo-trial-status-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "observedAt": {
+      "format": "date-time",
+      "title": "Observedat",
+      "type": "string"
+    },
+    "controllerVerifiedAt": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Controllerverifiedat"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "experimental": {
+      "const": true,
+      "title": "Experimental",
+      "type": "boolean"
+    },
+    "nextProfileId": {
+      "title": "Nextprofileid",
+      "type": "string"
+    },
+    "nextAction": {
+      "enum": [
+        "WAIT_FOR_TERMINAL_PROOF_THEN_REGISTER_NEXT",
+        "WAIT_FOR_CONTROLLER_OR_RECONCILIATION",
+        "EVALUATE_FRESH_OPPORTUNITIES"
+      ],
+      "title": "Nextaction",
+      "type": "string"
+    },
+    "netIncludesSignedFees": {
+      "const": true,
+      "title": "Netincludessignedfees",
+      "type": "boolean"
+    },
+    "actualFutureCosts": {
+      "title": "Actualfuturecosts",
+      "type": "null"
+    },
+    "trials": {
+      "items": {
+        "$ref": "#/$defs/TrialRow"
+      },
+      "maxItems": 26,
+      "title": "Trials",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "observedAt",
+    "controllerVerifiedAt",
+    "reason",
+    "experimental",
+    "nextProfileId",
+    "nextAction",
+    "netIncludesSignedFees",
+    "actualFutureCosts",
+    "trials"
+  ],
+  "title": "TrialStatus",
+  "type": "object"
+}

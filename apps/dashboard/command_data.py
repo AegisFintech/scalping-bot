@@ -11,7 +11,8 @@ def command_data(
     focus = rows(
         """SELECT ar.id AS analysis_id, ar.candle_snapshot_id, ar.analysis_time,
              ar.state AS analysis_state, og.state AS group_state, sc.plan,
-             sc.captured_at, sc.available_at, sc.valid_until, sv.version AS strategy_version,
+             sc.requested_model, sc.captured_at, sc.available_at, sc.valid_until,
+             sv.version AS strategy_version,
              CASE WHEN octet_length(ce.request_text)<=128000
                THEN ce.request_text END AS provider_input,
              ind.features, ind.acceptable AS analytics_acceptable, ind.generated_at
@@ -51,7 +52,11 @@ def command_data(
                 exact = provider_candles(parsed)
                 if exact:
                     data["candles"] = exact
-                    evidence["chart_source"] = "Recorded Codex input"
+                    evidence["chart_source"] = (
+                        "Recorded local input"
+                        if evidence.get("requested_model") == "local-range-v1"
+                        else "Recorded Codex input"
+                    )
                     evidence["chart_at"] = evidence.get("captured_at")
             except (ValueError, TypeError, KeyError):
                 pass  # Retain explicitly labelled execution candles; never guess model input.

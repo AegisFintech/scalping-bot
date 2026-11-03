@@ -1,0 +1,264 @@
+{
+  "version": "demo-trial-final-validation-1.0",
+  "qualified": true,
+  "qualifiedHead": "225cb3191ffed759976a1ba2c01c425d8edf9df1",
+  "qualifiedSourceSha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+  "rawQualificationSha256": "3fcadcd6be74a038e6e87fd6cf23d804b43c27937e65f274e4afe2db4da132d2",
+  "counts": {
+    "node-tests": 1319,
+    "database-lifecycle": 164,
+    "python-tests": 1332
+  },
+  "totalTests": 2815,
+  "skipped": 0,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "executable": "pg_config",
+      "args": ["--bindir"],
+      "code": 0,
+      "elapsedMs": 21
+    },
+    {
+      "label": "test-certificate",
+      "executable": "openssl",
+      "args": [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-days",
+        "1",
+        "-subj",
+        "/CN=localhost",
+        "-addext",
+        "subjectAltName=DNS:localhost,IP:127.0.0.1",
+        "-keyout",
+        "/tmp/scalper-qualification-lWYsdj/server.key",
+        "-out",
+        "/tmp/scalper-qualification-lWYsdj/server.crt"
+      ],
+      "code": 0,
+      "elapsedMs": 292
+    },
+    {
+      "label": "postgres-uid",
+      "executable": "id",
+      "args": ["-u", "postgres"],
+      "code": 0,
+      "elapsedMs": 10
+    },
+    {
+      "label": "postgres-gid",
+      "executable": "id",
+      "args": ["-g", "postgres"],
+      "code": 0,
+      "elapsedMs": 10
+    },
+    {
+      "label": "database-init",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/initdb",
+        "-D",
+        "/tmp/scalper-qualification-lWYsdj/database",
+        "-U",
+        "scalper_qualification",
+        "--auth-local=trust",
+        "--auth-host=trust",
+        "--no-locale",
+        "--encoding=UTF8"
+      ],
+      "code": 0,
+      "elapsedMs": 678
+    },
+    {
+      "label": "database-start",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-lWYsdj/database",
+        "-l",
+        "/tmp/scalper-qualification-lWYsdj/postgres.log",
+        "-o",
+        "-h 127.0.0.1 -p 42469 -k /tmp/scalper-qualification-lWYsdj -c ssl=on -c ssl_cert_file=/tmp/scalper-qualification-lWYsdj/server.crt -c ssl_key_file=/tmp/scalper-qualification-lWYsdj/server.key",
+        "-w",
+        "start"
+      ],
+      "code": 0,
+      "elapsedMs": 123
+    },
+    {
+      "label": "format",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "**/*.{ts,mjs,json,md,yml,yaml}"
+      ],
+      "code": 0,
+      "elapsedMs": 26224
+    },
+    {
+      "label": "lint",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": ["node_modules/eslint/bin/eslint.js", "."],
+      "code": 0,
+      "elapsedMs": 43893
+    },
+    {
+      "label": "types",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.json"
+      ],
+      "code": 0,
+      "elapsedMs": 21978
+    },
+    {
+      "label": "build",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.build.json",
+        "--outDir",
+        "/tmp/scalper-qualification-lWYsdj/build"
+      ],
+      "code": 0,
+      "elapsedMs": 18967
+    },
+    {
+      "label": "node-tests",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--exclude",
+        "**/*.integration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "code": 0,
+      "elapsedMs": 119115
+    },
+    {
+      "label": "python-format",
+      "executable": "/tmp/scalper-demo-trials/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 49
+    },
+    {
+      "label": "python-lint",
+      "executable": "/tmp/scalper-demo-trials/.venv/bin/python",
+      "args": [
+        "-m",
+        "ruff",
+        "check",
+        "python",
+        "apps/dashboard",
+        "tests/python"
+      ],
+      "code": 0,
+      "elapsedMs": 50
+    },
+    {
+      "label": "python-types",
+      "executable": "/tmp/scalper-demo-trials/.venv/bin/python",
+      "args": ["-m", "mypy", "python", "apps/dashboard"],
+      "code": 0,
+      "elapsedMs": 497
+    },
+    {
+      "label": "secrets",
+      "executable": "bash",
+      "args": ["scripts/secret-scan.sh"],
+      "code": 0,
+      "elapsedMs": 311
+    },
+    {
+      "label": "npm-audit",
+      "executable": "npm",
+      "args": ["audit", "--audit-level=high"],
+      "code": 0,
+      "elapsedMs": 4818
+    },
+    {
+      "label": "python-audit",
+      "executable": "/tmp/scalper-demo-trials/.venv/bin/python",
+      "args": ["-m", "pip_audit", "-r", "requirements.lock"],
+      "code": 0,
+      "elapsedMs": 12602
+    },
+    {
+      "label": "database-lifecycle",
+      "executable": "/opt/scalper-node22/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration",
+        "--maxWorkers=1",
+        "--testTimeout=60000"
+      ],
+      "code": 0,
+      "elapsedMs": 41247
+    },
+    {
+      "label": "python-tests",
+      "executable": "/tmp/scalper-demo-trials/.venv/bin/python",
+      "args": ["-m", "pytest", "tests/python", "-q"],
+      "code": 0,
+      "elapsedMs": 48950
+    },
+    {
+      "label": "database-stop",
+      "executable": "runuser",
+      "args": [
+        "-u",
+        "postgres",
+        "--",
+        "/usr/lib/postgresql/18/bin/pg_ctl",
+        "-D",
+        "/tmp/scalper-qualification-lWYsdj/database",
+        "-m",
+        "immediate",
+        "-w",
+        "stop"
+      ],
+      "code": 0,
+      "elapsedMs": 120
+    }
+  ],
+  "reviews": {
+    "standards": "CLEAR at 225cb319",
+    "spec": "CLEAR at 225cb319"
+  },
+  "configuration": "All four sample/protected populated policy/startup checks passed; no environment changes.",
+  "notes": [
+    "Normal shutdown preserves native accepted GTD/GTC; true override rejected.",
+    "Earlier successful receipt has an older source hash, retained separately.",
+    "One later run hit test-directory reserve; own unused staging/merged worktrees removed, production data untouched.",
+    "Another run stopped on vulnerability-service connection reset; gate not waived. Fresh full run passed.",
+    "Eleven moderate npm advisories and existing Starlette/httpx deprecation remain.",
+    "Software qualification is not natural-trial or economic qualification."
+  ]
+}

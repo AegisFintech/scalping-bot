@@ -1,4 +1,10 @@
-import { COST_BALANCED_SCALP_LIMITS } from "../../../packages/config/src/policy.js";
+import { catalogueSha256 } from "../../../packages/config/src/demo-catalogue.js";
+import {
+  COST_BALANCED_SCALP_LIMITS,
+  DEMO_TRIAL_SCALP_LIMITS,
+  DEMO_TRIAL_STRATEGY_VERSION,
+  FIXED_DEFAULTS,
+} from "../../../packages/config/src/policy.js";
 import { createHash } from "node:crypto";
 
 import { Decimal } from "decimal.js";
@@ -332,14 +338,28 @@ export function loadExecutionConfig(
 function configurationHash(
   config: ExecutionConfig,
   includeAutomationAuthority: boolean,
+  strategyVersion: string,
 ): string {
+  const trial = strategyVersion === DEMO_TRIAL_STRATEGY_VERSION;
   return createHash("sha256")
     .update(
       JSON.stringify({
         orderLifecycle: ORDER_LIFECYCLE,
-        scalpProposalLimits: COST_BALANCED_SCALP_LIMITS,
-        strategyRelease: BREAKOUT_SCALP_RELEASE,
-        riskPolicy: executionRiskPolicy(config.tradingMode),
+        scalpProposalLimits: trial
+          ? DEMO_TRIAL_SCALP_LIMITS
+          : COST_BALANCED_SCALP_LIMITS,
+        strategyRelease: trial
+          ? {
+              strategyVersion,
+              catalogueSha256,
+              targetCostPolicy: "POSITIVE_BASE_5_STRESS_65",
+              allocation: "20_CLOSES_OR_3600_OPEN_SECONDS",
+              adverseSlippagePoints: "65",
+              orderType: "STOP_LIMIT",
+              timeInForce: "GTD",
+            }
+          : BREAKOUT_SCALP_RELEASE,
+        riskPolicy: executionRiskPolicy(config.tradingMode, strategyVersion),
         appEnv: config.appEnv,
         instanceId: config.instanceId,
         tradingMode: config.tradingMode,
@@ -378,11 +398,17 @@ function configurationHash(
 }
 
 /** Bind controls/audit to the full safety configuration, including automation authority. */
-export function safetyConfigHash(config: ExecutionConfig): string {
-  return configurationHash(config, true);
+export function safetyConfigHash(
+  config: ExecutionConfig,
+  strategyVersion: string = FIXED_DEFAULTS.STRATEGY_VERSION,
+): string {
+  return configurationHash(config, true, strategyVersion);
 }
 
 /** Starting/stopping the scheduler does not redefine immutable strategy economics. */
-export function strategyConfigHash(config: ExecutionConfig): string {
-  return configurationHash(config, false);
+export function strategyConfigHash(
+  config: ExecutionConfig,
+  strategyVersion: string = FIXED_DEFAULTS.STRATEGY_VERSION,
+): string {
+  return configurationHash(config, false, strategyVersion);
 }

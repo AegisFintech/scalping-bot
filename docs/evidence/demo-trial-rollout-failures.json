@@ -1,0 +1,173 @@
+{
+  "version": "demo-trial-rollout-failures-1.0",
+  "runs": [
+    {
+      "rawQualificationSha256": "0e43f331939a5670634b18d168cff7484712480cecb77071c526aba3a1e011d6",
+      "sourceSha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+      "qualified": false,
+      "reason": "Python observer tests rejected /tmp free space below2GiB after temporary staging copies",
+      "checks": [
+        {
+          "label": "postgres-bindir",
+          "code": 0
+        },
+        {
+          "label": "test-certificate",
+          "code": 0
+        },
+        {
+          "label": "postgres-uid",
+          "code": 0
+        },
+        {
+          "label": "postgres-gid",
+          "code": 0
+        },
+        {
+          "label": "database-init",
+          "code": 0
+        },
+        {
+          "label": "database-start",
+          "code": 0
+        },
+        {
+          "label": "format",
+          "code": 0
+        },
+        {
+          "label": "lint",
+          "code": 0
+        },
+        {
+          "label": "types",
+          "code": 0
+        },
+        {
+          "label": "build",
+          "code": 0
+        },
+        {
+          "label": "node-tests",
+          "code": 0
+        },
+        {
+          "label": "python-format",
+          "code": 0
+        },
+        {
+          "label": "python-lint",
+          "code": 0
+        },
+        {
+          "label": "python-types",
+          "code": 0
+        },
+        {
+          "label": "secrets",
+          "code": 0
+        },
+        {
+          "label": "npm-audit",
+          "code": 0
+        },
+        {
+          "label": "python-audit",
+          "code": 0
+        },
+        {
+          "label": "database-lifecycle",
+          "code": 0
+        },
+        {
+          "label": "python-tests",
+          "code": 1
+        },
+        {
+          "label": "database-stop",
+          "code": 0
+        }
+      ]
+    },
+    {
+      "rawQualificationSha256": "3d5953182f78b169690571efa401bfa098a27df33dedf7f4cd38165b6e2a72c0",
+      "sourceSha256": "39588e8734f9f0b3d952ffeec2f7f1906417bd8e7b66824cc220e73e8e21848b",
+      "qualified": false,
+      "reason": "Python vulnerability-service TLS connection reset; no audit gate waived",
+      "checks": [
+        {
+          "label": "postgres-bindir",
+          "code": 0
+        },
+        {
+          "label": "test-certificate",
+          "code": 0
+        },
+        {
+          "label": "postgres-uid",
+          "code": 0
+        },
+        {
+          "label": "postgres-gid",
+          "code": 0
+        },
+        {
+          "label": "database-init",
+          "code": 0
+        },
+        {
+          "label": "database-start",
+          "code": 0
+        },
+        {
+          "label": "format",
+          "code": 0
+        },
+        {
+          "label": "lint",
+          "code": 0
+        },
+        {
+          "label": "types",
+          "code": 0
+        },
+        {
+          "label": "build",
+          "code": 0
+        },
+        {
+          "label": "node-tests",
+          "code": 0
+        },
+        {
+          "label": "python-format",
+          "code": 0
+        },
+        {
+          "label": "python-lint",
+          "code": 0
+        },
+        {
+          "label": "python-types",
+          "code": 0
+        },
+        {
+          "label": "secrets",
+          "code": 0
+        },
+        {
+          "label": "npm-audit",
+          "code": 0
+        },
+        {
+          "label": "python-audit",
+          "code": 1
+        },
+        {
+          "label": "database-stop",
+          "code": 0
+        }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,8 @@ import { parse } from "dotenv";
 import {
   resolveRuntimeEnvironment,
   POLICY_VERSION,
+  DEMO_TRIAL_STRATEGY_VERSION,
+  DEMO_TRIAL_POLICY_VERSION,
   OPERATOR_KEYS,
 } from "../packages/config/src/policy.js";
 import { loadExecutionConfig } from "../apps/execution-service/src/config.js";
@@ -27,7 +29,10 @@ try {
     JSON.stringify({
       valid: true,
       scope: startup ? "execution_configuration" : "policy_compatibility",
-      policy: POLICY_VERSION,
+      policy:
+        resolved.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION
+          ? DEMO_TRIAL_POLICY_VERSION
+          : POLICY_VERSION,
       normalSettings: OPERATOR_KEYS.length,
       fileSettings: Object.keys(source).length,
       requestedModel: resolved.AI_MODEL,

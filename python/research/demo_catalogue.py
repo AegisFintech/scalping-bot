@@ -8,8 +8,7 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
-from python.research.codex_loop import StrictModel
-from python.research.learning_evidence import encoded
+from python.research.codex_loop import StrictModel, encoded
 
 
 class Profile(StrictModel):

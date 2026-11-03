@@ -1,3 +1,11 @@
+# Finite DEMO experiment policy0.10
+
+The [registered trial protocol](demo-trial-protocol-report.md) supersedes older
+current-policy descriptions below. Shared demo setup5%, single leg2.5%, dynamic
+fees/margin/volume and65-tick stop sizing remain. Positive base target admission
+uses5ticks, with stress target/loss evidence retained; actual future costs remain
+unknown. This is a controlled demo experiment, not a profitability qualification.
+
 # Current cost-balanced DEMO experiment — ISSUE-498
 
 Current source/policy is0.9 cost-balanced scalping; see the

@@ -41,7 +41,7 @@ function controller(root) {
     ["idle", "◇", "Ready / wait", "Safety gates", "#b7a0ff"],
     ["download", "⇣", "Market data", "Completed OHLC", "#83dbe3"],
     ["process", "⌁", "Process", "Indicators & risk", "#8abfff"],
-    ["ai", "✦", "Codex", "Entry proposals", "#d49eea"],
+    ["ai", "✦", "Proposals", "Decision source", "#d49eea"],
     ["orders", "⇄", "Place entry", "STOP_LIMIT / GTD", "#f1c47c"],
     ["position", "◎", "Manage trade", "Broker SL / TP", "#64e5ba"],
   ];

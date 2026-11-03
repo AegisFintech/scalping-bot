@@ -22,7 +22,11 @@ from python.research.learning_evidence import (
     encoded,
 )
 
-CURRENT = {"0.9.0-cost-balanced.1-codex.1", "0.9.0-cost-balanced.1-codex.2"}
+CURRENT = {
+    "0.9.0-cost-balanced.1-codex.1",
+    "0.9.0-cost-balanced.1-codex.2",
+    "0.10.0-demo-trials.1-codex.1",
+}
 
 
 class EntryScreen(StrictModel):
@@ -68,6 +72,9 @@ def screen(context: ContextObservation, profile: Profile, cutoff: str) -> EntryS
         )
     ):
         result.reason = "CONTEXT_NOT_KNOWN_AT_CUTOFF"
+        return result
+    if profile.proposalSource == "CODEX" and context.requestedModel != "gpt-6.1-sol":
+        result.reason = "RECORDED_CODEX_SOURCE_UNAVAILABLE"
         return result
     market = context.market
     rows = {f.timeframe: f.rows for f in market.candles}

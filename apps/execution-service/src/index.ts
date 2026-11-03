@@ -1,5 +1,10 @@
+import { DemoTrials, demoTrialSource } from "./demo-trials.js";
+import { DemoTrialPlanner } from "../../../packages/strategy-candidates/src/demo-trial-planner.js";
+import { trialProfile } from "../../../packages/strategy-candidates/src/demo-trial.js";
 import {
   costBalancedScalpTransform,
+  demoTrialScalpTransform,
+  validateDemoTrialScalpCommands,
   costBalancedModeledCost,
   validateCostBalancedScalpCommands,
 } from "../../../packages/strategy-candidates/src/directional-scalp.js";
@@ -21,6 +26,9 @@ import "dotenv/config";
 import {
   resolveRuntimeEnvironment,
   POLICY_VERSION,
+  DEMO_TRIAL_POLICY_VERSION,
+  DEMO_TRIAL_STRATEGY_VERSION,
+  DEMO_TRIAL_SCALP_LIMITS,
   QUICK_OCO,
   executionRiskPolicy,
   FADE_LIMIT_RELEASE,
@@ -374,10 +382,15 @@ async function main(): Promise<void> {
   ) {
     throw new Error("SHADOW_OR_LIVE_MODE_REQUIRES_LIVE_DATA_CONNECTION");
   }
-  const configHash = safetyConfigHash(config);
   const strategyVersion =
     environment.STRATEGY_VERSION ?? CODEX_STRATEGY_VERSION;
+  const configHash = safetyConfigHash(config, strategyVersion);
+  const demoTrialsActive = strategyVersion === DEMO_TRIAL_STRATEGY_VERSION;
+  const policyVersion = demoTrialsActive
+    ? DEMO_TRIAL_POLICY_VERSION
+    : POLICY_VERSION;
   const breakoutScalpActive =
+    demoTrialsActive ||
     strategyVersion === BREAKOUT_SCALP_RELEASE.strategyVersion;
   const fadeLimitActive = strategyVersion.startsWith("0.3.0");
   if (breakoutScalpActive && config.tradingMode !== "demo")
@@ -401,8 +414,10 @@ async function main(): Promise<void> {
     codeHash: createHash("sha256")
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
-    configHash: strategyConfigHash(config),
-    promptVersion: "entry-scalp-execution-v1",
+    configHash: strategyConfigHash(config, strategyVersion),
+    promptVersion: demoTrialsActive
+      ? "demo-trial-execution-v1"
+      : "entry-scalp-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -504,18 +519,25 @@ async function main(): Promise<void> {
       `http://127.0.0.1:${environment.ANALYTICS_PORT ?? "8090"}`,
     timeoutMs: 15_000,
   });
+  let demoTrials: DemoTrials | null = null;
+  const trialBinding = () => {
+    if (!demoTrials) throw new Error("DEMO_TRIAL_INITIALIZING");
+    return demoTrials.binding();
+  };
+  const httpPlanner = new EntryPairHttpPlanner(
+    environment.AI_ORCHESTRATOR_BASE_URL ??
+      `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
+  );
   const contextStore = new PostgresContextStore(pool, {
     accountId: identity.accountId,
     symbolId: identity.symbolId,
     mode: config.tradingMode,
     strategyVersionId: identity.strategyVersionId,
+    ...(demoTrialsActive ? { trial: trialBinding } : {}),
   });
   const model = new ReusableScenarioModel(
     contextStore,
-    new EntryPairHttpPlanner(
-      environment.AI_ORCHESTRATOR_BASE_URL ??
-        `http://127.0.0.1:${environment.AI_ORCHESTRATOR_PORT ?? "8082"}`,
-    ),
+    demoTrialsActive ? new DemoTrialPlanner(httpPlanner) : httpPlanner,
     Date.now,
     (reason) =>
       logger.log("warn", {
@@ -554,7 +576,21 @@ async function main(): Promise<void> {
           spread_price: canonical(
             decimal(snapshot.quote.ask).minus(decimal(snapshot.quote.bid)),
           ),
-          modeled_round_trip_cost_price: costBalancedModeledCost(snapshot),
+          modeled_round_trip_cost_price: demoTrialsActive
+            ? canonical(
+                decimal(costBalancedModeledCost(snapshot)).minus(
+                  decimal(snapshot.metadata.tickSize).mul(60),
+                ),
+              )
+            : costBalancedModeledCost(snapshot),
+          ...(demoTrialsActive
+            ? {
+                modeled_stress_round_trip_cost_price:
+                  costBalancedModeledCost(snapshot),
+                base_exit_reserve_ticks: 5,
+                stress_exit_reserve_ticks: 65,
+              }
+            : {}),
           cost_basis: "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
           shared_setup_risk_percent: config.baseRiskPercent,
           recent_closed_outcomes: (
@@ -587,6 +623,7 @@ async function main(): Promise<void> {
       };
     },
     strategyVersion,
+    demoTrialsActive ? trialBinding : undefined,
   );
   let capitalMultiplier = "0";
   let capitalRiskCap = "0";
@@ -595,6 +632,13 @@ async function main(): Promise<void> {
     new OcoRiskEvaluator({
       operatorEntryModes: true,
       modelDefinedScalp: breakoutScalpActive,
+      ...(demoTrialsActive
+        ? {
+            entryRangePoints: () =>
+              String(trialProfile(trialBinding()).entryRangePoints) as
+                "10" | "30",
+          }
+        : {}),
       executionOrderType,
       adverseSlippagePoints: activeExecutionPolicy.adverseSlippagePoints,
       timeInForce: breakoutScalpActive ? "GTD" : ORDER_LIFECYCLE.timeInForce,
@@ -618,7 +662,9 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: "entry-scalp-execution-v1",
+    promptVersion: demoTrialsActive
+      ? "demo-trial-execution-v1"
+      : "entry-scalp-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1282,6 +1328,33 @@ async function main(): Promise<void> {
   ) {
     throw new Error("CONFIG_ORDER_EXPIRY_RANGE_INVALID");
   }
+  if (demoTrialsActive)
+    demoTrials = new DemoTrials(
+      pool,
+      {
+        accountId: identity.accountId,
+        symbolId: identity.symbolId,
+        mode: config.tradingMode,
+        strategyVersionId: identity.strategyVersionId,
+      },
+      demoTrialSource(),
+      async () => (await sessionGate.check()).state,
+      async () => {
+        const s = await safety();
+        return (
+          s.startupChecksPassed &&
+          s.serviceHealthy &&
+          s.accountReconciled &&
+          s.reconciliationCertain &&
+          s.relevantPositionCount === 0 &&
+          s.relevantPendingOrderCount === 0 &&
+          !s.partialFillPresent &&
+          !s.cancellationPending &&
+          s.previousAnalysisExpired &&
+          !s.operationalRiskLockout
+        );
+      },
+    );
   const admissionModes = { read: () => entryModes.readForAdmission() };
   const coordinator = new EntryModeCoordinator(admissionModes, (selection) => {
     if (breakoutScalpActive && selection.mode !== "SINGLE_STOP_LIMIT")
@@ -1289,6 +1362,9 @@ async function main(): Promise<void> {
     const profile = entryModeProfile(selection.mode);
     const selectedRisk = createRisk(profile.orderType);
     return new AnalysisCoordinator({
+      ...(demoTrialsActive
+        ? { beforeAnalysis: () => demoTrials!.check() }
+        : {}),
       marketSession: () => sessionGate.check(),
       entryPairMode: true,
       directionalEntryOnly: profile.single,
@@ -1316,7 +1392,9 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: "entry-scalp-execution-v1",
+      promptVersion: demoTrialsActive
+        ? "demo-trial-execution-v1"
+        : "entry-scalp-execution-v1",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,
@@ -1331,7 +1409,10 @@ async function main(): Promise<void> {
               side,
             ) =>
               Promise.resolve(
-                costBalancedScalpTransform({
+                (demoTrialsActive
+                  ? (v: Parameters<typeof demoTrialScalpTransform>[0]) =>
+                      demoTrialScalpTransform(v, trialProfile(trialBinding()))
+                  : costBalancedScalpTransform)({
                   snapshot,
                   response,
                   maximumStopDistance,
@@ -1341,7 +1422,9 @@ async function main(): Promise<void> {
           }
         : {}),
       minRiskRewardRatio: breakoutScalpActive
-        ? "1"
+        ? demoTrialsActive
+          ? DEMO_TRIAL_SCALP_LIMITS.minimumRiskReward
+          : "1"
         : fadeLimitActive
           ? fadeExecutionPolicy.minRiskRewardRatio
           : config.minRiskRewardRatio,
@@ -1357,7 +1440,16 @@ async function main(): Promise<void> {
         ? Number(fadeExecutionPolicy.trendFilterBars)
         : 0,
       ...(breakoutScalpActive
-        ? { commandFeeCheck: validateCostBalancedScalpCommands }
+        ? {
+            commandFeeCheck: demoTrialsActive
+              ? (commands, metadata) =>
+                  validateDemoTrialScalpCommands(
+                    commands,
+                    metadata,
+                    trialProfile(trialBinding()),
+                  )
+              : validateCostBalancedScalpCommands,
+          }
         : {}),
       minimumExpectedNetToFeesRatio: breakoutScalpActive
         ? BREAKOUT_SCALP_RELEASE.minimumNetToFees
@@ -1564,9 +1656,9 @@ async function main(): Promise<void> {
           ),
         )
         .catch(() => null),
-      policyVersion: POLICY_VERSION,
+      policyVersion,
       profitExit: { mode: QUICK_OCO.profitExitMode, guaranteedNet: false },
-      riskPolicy: executionRiskPolicy(config.tradingMode),
+      riskPolicy: executionRiskPolicy(config.tradingMode, strategyVersion),
       accountType: connectionMode,
       emergencyStopped:
         current.environmentEmergencyStop ||
@@ -1723,10 +1815,11 @@ async function main(): Promise<void> {
     }
   };
   const app = createExecutionServer({
+    ...(demoTrialsActive ? { demoTrials: () => demoTrials!.summary() } : {}),
     flightSource: {
       mode: config.tradingMode,
       strategyVersion,
-      policyVersion: POLICY_VERSION,
+      policyVersion,
     },
     coordinator,
     maintenance,
@@ -2033,6 +2126,12 @@ async function main(): Promise<void> {
     timer.unref();
   }, alignedDelayMs);
   alignmentTimer.unref();
+  const trialTimer = demoTrialsActive
+    ? setInterval(() => {
+        void demoTrials!.tick();
+      }, 15000)
+    : null;
+  trialTimer?.unref();
   const spreadSampler = new SpreadObservationSampler({
     symbol: config.symbol,
     providerSymbolId: executionSymbolId,
@@ -2111,6 +2210,10 @@ async function main(): Promise<void> {
   scheduleObservabilityFlush();
   const shutdown = async (): Promise<void> => {
     clearTimeout(alignmentTimer);
+    if (trialTimer) {
+      clearInterval(trialTimer);
+      await demoTrials!.settled();
+    }
     if (timer !== null) clearInterval(timer);
     clearInterval(spreadTimer);
     clearInterval(observabilityTimer);

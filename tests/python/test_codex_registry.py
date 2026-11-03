@@ -38,6 +38,7 @@ def test_prompt_whitelist_is_derived_from_all_existing_contracts() -> None:
     assert {
         "entry-scalp-v1",
         "entry-scalp-v2",
+        "entry-scalp-v3",
         "entry-pair-v4",
         "entry-pair-v5",
         "entry-pair-v6",

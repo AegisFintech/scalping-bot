@@ -1,3 +1,18 @@
+### ISSUE-526 — Daily demo scorecards and retained natural evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/526; parent515/520; depends on519.
+- Acceptance: bounded read-only Singapore-day actual close-deal net, fees included, partial-day/open/unknown/cashflow separation; frozen completion receipts and separately protected actual restart proof; existing /learning visibility; tests, qualification, two-axis review, pushed exact-head CI/approval/merge and read-only activation. No economic promotion or executor-source change.
+- Status: isolated worktree implementation;19 focused tests pass. Full qualification/review and activation pending; parent natural proof remains OPEN.
+
+### ISSUE-519 / ISSUE-520 — Finite registered recurring demo trials
+
+- Issues: https://github.com/AegisFintech/scalping-bot/issues/519 and https://github.com/AegisFintech/scalping-bot/issues/520; parent515.
+- Dependencies: reviewed/merged #522 detached policy, #523 measurement, #524 current runner.
+- Acceptance: versioned finite profiles in ONE executor; immutable future registration/source/context/range; unchanged risk/protection/cooldowns; exact terminal/fresh reconciliation switching; recurring different profiles and read-only learning visibility; full qualification, independent review, push/merge, matched activation and actual natural evidence.
+- Status: corrected source225cb319 passes full2,815 tests/no skips, all gates and both independent reviews; all four config checks pass. Storage/network failed attempts retained separately. Final source delivery/CI/merge and matched activation follow; parent515/520 remain OPEN pending two distinct naturally filled/completed allocations and restart/dedup proof.
+- Source PR: https://github.com/AegisFintech/scalping-bot/pull/525 (corrected source reviews CLEAR at225cb319;2,815-test qualification passed). Activation remains separate.
+- Report: `docs/demo-trial-protocol-report.md`. No reset, forced trade or profitability claim.
+
 ### ISSUE-518 — Current-contract screening and finite hypotheses
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/518; parent #515.
@@ -18,13 +33,13 @@
   source/hash/gap/storage manifests, tests/review/full qualification/pushed PR and
   matched one-demo health readbacks. No strategy/risk change or fake fill evidence.
 - Status: standalone2,739 and combined #5212,741-test qualification pass; both
-  review axes clear. PushedPR523 awaits current-head checks/review. Matched
+  review axes clear. PR523 merged after exact checks and independent approval. Matched
   activation/readbacks remain pending; prior cost audit/evidence retained.
 - Evidence: `docs/experiment-measurement-report.md`.
 
 ### ISSUE-518/519/520 — Recurring experiment implementation queue
 
-- #518 combined source qualifies:2,772 tests, all gates/audits, independent reviews clear; receipt `docs/evidence/current-demo-runner-validation.json`. Remote delivery and protocol activation follow; no economic qualification claim.
+- #518 combined source qualifies:2,772 tests, all gates/audits, independent reviews clear; receipt `docs/evidence/current-demo-runner-validation.json`. PR524 merged; the real read-only runner processed all nine profiles against the05:00–05:30UTC packet. Protocol activation follows; no economic qualification claim.
 
 - Issues: https://github.com/AegisFintech/scalping-bot/issues/518 (causal runner),
   https://github.com/AegisFintech/scalping-bot/issues/519 (finite demo catalogue),
@@ -42,7 +57,7 @@
   preserve historical rejection, full qualification/review/push/CI and verified
   matched activation without economics, risk, history or frozen-study changes.
 - Status: regression reproduced/fixed; full qualification2,727 tests and both
-  independent reviews pass. PushedPR522 awaits hosted checks/review; activation
+  independent reviews pass. PR522 merged after hosted checks and independent approval; activation
   remains pending and the issue stays open until verified.
 - Evidence: `docs/context-policy-completion-report.md`.
 

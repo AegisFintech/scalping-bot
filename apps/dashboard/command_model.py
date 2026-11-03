@@ -89,6 +89,11 @@ def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
     plan = (snapshot.get("evidence") or {}).get("plan") or {}
     result = []
     scalp = plan.get("schema_version") == "entry-scalp-1.0"
+    name = (
+        "Local"
+        if (snapshot.get("evidence") or {}).get("requested_model") == "local-range-v1"
+        else "Codex"
+    )
     refs = (("BUY", "buy_stop"), ("SELL", "sell_stop"))
     for side, key in refs:
         if scalp and side != plan.get("entry_side"):
@@ -96,7 +101,7 @@ def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
         proposed = plan.get(key)
         proposed = proposed.get("entry_price") if isinstance(proposed, dict) else proposed
         if number(proposed) is not None:
-            label = f"Codex {side} entry" if scalp else f"Codex {side} breakout"
+            label = f"{name} {side} entry" if scalp else f"Codex {side} breakout"
             if plan.get("schema_version") == "entry-modes-1.0":
                 label = "Codex upper range" if side == "BUY" else "Codex lower range"
             if (
@@ -117,7 +122,7 @@ def levels(snapshot: dict[str, Any], now: datetime) -> list[dict[str, str]]:
             if number(plan.get(key)) is not None:
                 result.append(
                     {
-                        "label": f"Codex proposed {label}",
+                        "label": f"{name} proposed {label}",
                         "price": str(plan[key]),
                         "side": str(plan.get("entry_side")),
                         "role": "proposal_protection",

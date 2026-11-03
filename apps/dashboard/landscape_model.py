@@ -76,21 +76,26 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                 "Applies to new setups only; accepted orders retain their recorded mode.",
             )
         if kind == "context":
+            local = row.get("requested_model") == "local-range-v1"
+            source = "engine" if local else "codex"
+            name = "Local range" if local else "Codex"
             emit(
                 row,
                 row.get("requested_at"),
-                "codex",
-                "Provider request claimed",
-                "Durable local claim; not proof of provider receipt.",
+                source,
+                "Local proposal claimed" if local else "Provider request claimed",
+                "Registered deterministic source; no provider request."
+                if local
+                else "Durable local claim; not proof of provider receipt.",
             )
             if row.get("state") == "READY":
                 emit(
                     row,
                     row.get("available_at"),
-                    "codex",
-                    "Codex chose WAIT"
+                    source,
+                    f"{name} chose WAIT"
                     if row.get("plan_schema") == "entry-wait-1.0"
-                    else f"Codex single scalp · {row.get('entry_side')}"
+                    else f"{name} single scalp · {row.get('entry_side')}"
                     if row.get("plan_schema") == "entry-scalp-1.0"
                     else f"Codex range · {row.get('entry_side')} trend judgment"
                     if row.get("plan_schema") in {"entry-direction-1.0", "entry-modes-1.0"}
@@ -115,8 +120,8 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                 emit(
                     row,
                     row.get("completed_at"),
-                    "codex",
-                    "Provider request failed",
+                    source,
+                    "Local proposal failed" if local else "Provider request failed",
                     codes(row.get("reason"))
                     or "Recorded failure; no valid result authorizes a new order.",
                 )

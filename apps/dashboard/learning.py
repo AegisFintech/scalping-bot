@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from apps.dashboard.learning_progress import progress
 from python.learning.budget import Policy
 from python.operations.breakout_observer import read_status
+from python.research.demo_trial_status import TrialStatus
 
 ASSETS = Path(__file__).with_name("assets")
 SSH = Path("/etc/scalper-learning-ui/ssh.conf")
@@ -73,6 +74,16 @@ def load() -> dict[str, Any]:
         result["trade"] = json.loads(raw)
     except (OSError, ValueError):
         result["trade"] = None
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8080/v1/demo-trials", timeout=3) as reply:
+            raw = reply.read(131073)
+        if len(raw) > 131072:
+            raise ValueError("DEMO_TRIAL_STATUS_OVERSIZED")
+        result["demoTrials"] = TrialStatus.model_validate_json(raw).model_dump(
+            mode="json", by_alias=True
+        )
+    except (OSError, ValueError):
+        result["demoTrials"] = None
     result["pipeline"] = progress(datetime.now(UTC))
     result["registeredStudy"] = read_status(
         Path("/etc/scalper-breakout507-v2/registration.json"),

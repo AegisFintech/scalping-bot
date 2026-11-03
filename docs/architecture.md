@@ -1,3 +1,12 @@
+# Current finite DEMO trial integration
+
+The existing execution service owns the finite trial head, registration clock and
+terminal reconciliation. Proposal source selection uses the same analysis/risk/
+broker lifecycle; research workers have no broker or promotion authority. Exact
+prompt/context links and per-command range freeze decisions across profile changes.
+Read [the protocol and rollback](demo-trial-protocol-report.md). Source implementation,
+matched activation and natural experimental evidence are separate milestones.
+
 # Current cost-balanced DEMO experiment — ISSUE-498
 
 Current source/policy is0.9 cost-balanced scalping; see the

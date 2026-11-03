@@ -1,3 +1,4 @@
+import type { TrialProfile } from "./demo-trial.js";
 import { Decimal } from "decimal.js";
 import type {
   MarketSnapshot,
@@ -7,6 +8,7 @@ import type {
 } from "../../contracts/src/index.js";
 import {
   COST_BALANCED_SCALP_LIMITS,
+  DEMO_TRIAL_SCALP_LIMITS,
   QUICK_OCO,
 } from "../../config/src/policy.js";
 import {
@@ -26,8 +28,14 @@ function check(
   metadata: SymbolMetadata,
   volume: string,
   balanced = false,
+  trial?: TrialProfile,
+  volumeStage: "MINIMUM_DIAGNOSTIC" | "ACTUAL" = "ACTUAL",
 ) {
-  const limits = balanced ? COST_BALANCED_SCALP_LIMITS : SCALP_LIMITS;
+  const limits = trial
+    ? DEMO_TRIAL_SCALP_LIMITS
+    : balanced
+      ? COST_BALANCED_SCALP_LIMITS
+      : SCALP_LIMITS;
   const e = decimal(entry),
     t = decimal(target),
     s = decimal(stop),
@@ -48,8 +56,31 @@ function check(
   )
     throw new Error("SCALP_PROTECTION_INVALID");
   const cost = quickOcoCost(metadata, e, t, decimal(volume));
-  if (cost.netPrice.lt(decimal(metadata.pipSize).mul(QUICK_OCO.netTargetPips)))
+  if (
+    (!trial || volumeStage === "ACTUAL") &&
+    cost.netPrice.lt(decimal(metadata.pipSize).mul(QUICK_OCO.netTargetPips))
+  )
     throw new Error("SCALP_NET_OBJECTIVE_UNAFFORDABLE");
+  if (trial) {
+    if (!reward.eq(trial.targetDistance))
+      throw new Error("SCALP_TRIAL_TARGET_MISMATCH");
+    const evidence = trialPayoffEvidence(
+      metadata,
+      entry,
+      target,
+      stop,
+      volume,
+      trial,
+    );
+    if (
+      volumeStage === "ACTUAL" &&
+      decimal(evidence.modeled_base_target_net_price).lt(
+        decimal(metadata.pipSize).mul(QUICK_OCO.netTargetPips),
+      )
+    )
+      throw new Error("SCALP_TRIAL_TARGET_UNAFFORDABLE");
+    return { ...cost.evidence, trial_cost_admission: evidence };
+  }
   if (balanced) {
     const { netReward, netLoss, fees, reserve, perPrice, conversion } =
       balancedPayoff(metadata, e, reward, risk, decimal(volume));
@@ -110,6 +141,7 @@ export function directionalScalpTransform(
     side?: "BUY" | "SELL";
   },
   balanced = false,
+  trial?: TrialProfile,
 ) {
   try {
     if (input.side === undefined) throw new Error("SCALP_DIRECTION_REQUIRED");
@@ -130,12 +162,19 @@ export function directionalScalpTransform(
       input.snapshot.metadata,
       input.snapshot.metadata.minVolume,
       balanced,
+      trial,
+      trial ? "MINIMUM_DIAGNOSTIC" : "ACTUAL",
     );
     return {
       accepted: true,
       response: input.response,
       reasonCodes: [] as string[],
-      details: { code: "SINGLE_SCALP_MODEL_GEOMETRY", ...evidence },
+      details: {
+        code: trial
+          ? "SINGLE_SCALP_TRIAL_GEOMETRY_PENDING_VOLUME_CHECK"
+          : "SINGLE_SCALP_MODEL_GEOMETRY",
+        ...evidence,
+      },
     };
   } catch (error) {
     const code =
@@ -146,7 +185,31 @@ export function directionalScalpTransform(
       accepted: false,
       response: null,
       reasonCodes: [code],
-      details: { code, ...rejectedPayoff(input, balanced) },
+      details: {
+        code,
+        ...rejectedPayoff(input, balanced),
+        ...(() => {
+          if (!trial || !input.side) return {};
+          try {
+            const leg =
+              input.side === "BUY"
+                ? input.response.buy_stop
+                : input.response.sell_stop;
+            return {
+              trial_cost_admission: trialPayoffEvidence(
+                input.snapshot.metadata,
+                leg.entry_price,
+                leg.take_profit,
+                leg.stop_loss,
+                input.snapshot.metadata.minVolume,
+                trial,
+              ),
+            };
+          } catch {
+            return { trial_cost_evidence_unavailable: true };
+          }
+        })(),
+      },
     };
   }
 }
@@ -155,6 +218,7 @@ export function validateDirectionalScalpCommands(
   commands: readonly PendingOrderCommand[],
   metadata: SymbolMetadata,
   balanced = false,
+  trial?: TrialProfile,
 ) {
   const evidence: Record<string, unknown>[] = [];
   try {
@@ -180,6 +244,19 @@ export function validateDirectionalScalpCommands(
       }
       evidence.push(diagnostic);
     }
+    if (trial) {
+      if (c.entryRangePoints !== String(trial.entryRangePoints))
+        throw new Error("SCALP_TRIAL_RANGE_MISMATCH");
+      diagnostic.trial_cost_admission = trialPayoffEvidence(
+        metadata,
+        c.entryPrice,
+        c.takeProfit,
+        c.stopLoss,
+        c.volume,
+        trial,
+      );
+      evidence.push(diagnostic);
+    }
     const approved = {
       side: c.side,
       volume: c.volume,
@@ -191,9 +268,10 @@ export function validateDirectionalScalpCommands(
         metadata,
         c.volume,
         balanced,
+        trial,
       ),
     };
-    if (balanced) Object.assign(diagnostic, approved);
+    if (balanced || trial) Object.assign(diagnostic, approved);
     else evidence.push(approved);
     return { approved: true, reasonCodes: [] as string[], evidence };
   } catch (error) {
@@ -225,14 +303,16 @@ function balancedPayoff(
   reward: ReturnType<typeof decimal>,
   risk: ReturnType<typeof decimal>,
   quantity: ReturnType<typeof decimal>,
+  reservePoints: string = COST_BALANCED_SCALP_LIMITS.exitReservePoints,
+  entryPoints: string = COST_BALANCED_SCALP_LIMITS.entryRangePoints,
 ) {
   const tick = decimal(metadata.tickSize),
     perPrice = decimal(metadata.tickValue).mul(quantity).div(tick);
   if (tick.lte(0) || perPrice.lte(0) || quantity.lte(0))
     throw new Error("SCALP_COST_METADATA_INVALID");
-  const reserve = tick.mul(COST_BALANCED_SCALP_LIMITS.exitReservePoints);
+  const reserve = tick.mul(reservePoints);
   const bound = entry
-    .plus(tick.mul(COST_BALANCED_SCALP_LIMITS.entryRangePoints))
+    .plus(tick.mul(entryPoints))
     .plus(reward)
     .plus(risk)
     .plus(reserve);
@@ -340,3 +420,70 @@ export function costBalancedPayoffEvidence(
     guaranteed_closing_proceeds: false,
   };
 }
+
+/** Distinct experimental target allowance; stress loss reserve remains unchanged. */
+export function trialPayoffEvidence(
+  metadata: SymbolMetadata,
+  entry: string,
+  target: string,
+  stop: string,
+  volume: string,
+  profile: TrialProfile,
+) {
+  if (
+    !Number.isSafeInteger(metadata.digits) ||
+    metadata.digits < 0 ||
+    metadata.digits > 10 ||
+    !decimal(metadata.tickSize).eq(decimal("10").pow(-metadata.digits))
+  )
+    throw new Error("SCALP_TRIAL_POINT_BASIS_UNSUPPORTED");
+  const e = decimal(entry),
+    reward = decimal(target).minus(e).abs(),
+    risk = decimal(stop).minus(e).abs();
+  const base = balancedPayoff(
+    metadata,
+    e,
+    reward,
+    risk,
+    decimal(volume),
+    String(profile.baseExitReservePoints),
+    String(profile.entryRangePoints),
+  );
+  const stress = balancedPayoff(
+    metadata,
+    e,
+    reward,
+    risk,
+    decimal(volume),
+    String(profile.stressExitReservePoints),
+    String(profile.entryRangePoints),
+  );
+  return {
+    evidence_version: "demo-trial-cost-1.0",
+    volume,
+    target_distance_price: canonical(reward),
+    stop_distance_price: canonical(risk),
+    modeled_base_target_net_price: canonical(base.netReward),
+    modeled_stress_target_net_price: canonical(stress.netReward),
+    modeled_stress_stop_loss_price: canonical(stress.netLoss),
+    modeled_base_commission_price: canonical(base.fees),
+    modeled_stress_commission_price: canonical(stress.fees),
+    base_exit_reserve_price: canonical(base.reserve),
+    stress_exit_reserve_price: canonical(stress.reserve),
+    modeled_break_even_win_fraction: base.netReward.gt(0)
+      ? canonical(stress.netLoss.div(stress.netLoss.plus(base.netReward)))
+      : null,
+    spread_deducted_again: false,
+    actual_exit_cost: null,
+    guaranteed_closing_proceeds: false,
+  };
+}
+export const demoTrialScalpTransform = (
+  input: Parameters<typeof directionalScalpTransform>[0],
+  profile: TrialProfile,
+) => directionalScalpTransform(input, false, profile);
+export const validateDemoTrialScalpCommands = (
+  commands: readonly PendingOrderCommand[],
+  metadata: SymbolMetadata,
+  profile: TrialProfile,
+) => validateDirectionalScalpCommands(commands, metadata, false, profile);

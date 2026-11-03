@@ -274,3 +274,18 @@ def test_intent_and_terminal_events_follow_original_provider_and_acceptance():
     group["brokerEvents"].append(event)
     row = reconstruct(model(value))[0]
     assert row.status == "UNKNOWN" and "TERMINAL_PRECEDES_ACCEPTANCE" in row.reasons
+
+
+def test_new_trial_recorded_release_keeps_source_identity_separate():
+    value = current()
+    value["contexts"][0]["originRelease"] = "0.10.0-demo-trials.1-codex.1"
+    value["setups"][0]["originRelease"] = "0.10.0-demo-trials.1-codex.1"
+    assert reconstruct(model(value))[0].status == "PENDING"
+    packet = dataset()
+    context = packet.contexts[0].model_copy(deep=True)
+    context.originRelease = "0.10.0-demo-trials.1-codex.1"
+    context.requestedModel = "local-range-v1"
+    assert (
+        screen(context, load().profiles[0], packet.until).reason
+        == "RECORDED_CODEX_SOURCE_UNAVAILABLE"
+    )

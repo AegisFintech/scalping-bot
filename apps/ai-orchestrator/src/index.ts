@@ -1,5 +1,8 @@
 import { CodexEntryClient } from "../../../packages/ai-client/src/codex-entry-client.js";
-import { FIXED_DEFAULTS } from "../../../packages/config/src/policy.js";
+import {
+  DEMO_TRIAL_STRATEGY_VERSION,
+  FIXED_DEFAULTS,
+} from "../../../packages/config/src/policy.js";
 import { ProviderFailure } from "../../../packages/ai-client/src/telemetry.js";
 import type { ScenarioPlanner } from "../../../packages/scenario-engine/src/planner.js";
 import { EntryPairPlanner } from "../../../packages/scenario-engine/src/entry-planner.js";
@@ -22,6 +25,7 @@ export interface AiServerOptions {
   readonly client?: OpenAiCompatibleClient;
   readonly scenarioPlanner?: ScenarioPlanner;
   readonly entryPairPlanner?: EntryPairPlanner;
+  readonly trialEntryPlanner?: EntryPairPlanner;
 }
 
 export function normalizeAiAnalysisError(error: unknown): string {
@@ -52,11 +56,15 @@ export function aiReasoningEffort(
 
 export function createAiServer(options: AiServerOptions): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 5_600_000 });
-  for (const version of ["v1", "v2"] as const)
+  for (const version of ["v1", "v2", "v3"] as const)
     app.post<{ Body: Parameters<EntryPairPlanner["generate"]>[0] }>(
       `/${version}/entry-pair`,
       async (request, reply) => {
-        if (options.entryPairPlanner === undefined)
+        const planner =
+          version === "v3"
+            ? options.trialEntryPlanner
+            : options.entryPairPlanner;
+        if (planner === undefined)
           return reply.code(503).send({ reason: "SCENARIO_NOT_CONFIGURED" });
         try {
           if (
@@ -73,9 +81,20 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
             return reply
               .code(400)
               .send({ reason: "SCENARIO_NUMERIC_CONTRACT_REQUIRED" });
-          return reply.send(
-            await options.entryPairPlanner.generate(request.body),
-          );
+          if (
+            version === "v3" &&
+            (request.body.chart !== null ||
+              request.body.schemaVersion !== "3.0" ||
+              request.body.experiment === undefined)
+          )
+            return reply
+              .code(400)
+              .send({ reason: "SCENARIO_DEMO_CONTRACT_REQUIRED" });
+          if (version !== "v3" && request.body.experiment !== undefined)
+            return reply
+              .code(400)
+              .send({ reason: "SCENARIO_DEMO_CONTRACT_REQUIRED" });
+          return reply.send(await planner.generate(request.body));
         } catch (error) {
           return reply.code(503).send({
             reason:
@@ -86,7 +105,7 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
             ...(error instanceof ProviderFailure
               ? {
                   telemetry: error.telemetry,
-                  ...(version === "v2" && error.rawResponse !== undefined
+                  ...(version !== "v1" && error.rawResponse !== undefined
                     ? { rawResponse: error.rawResponse }
                     : {}),
                 }
@@ -121,7 +140,8 @@ export function createAiServer(options: AiServerOptions): FastifyInstance {
     if (
       options.client?.circuitOpen ||
       options.scenarioPlanner?.client.circuitOpen ||
-      options.entryPairPlanner?.client.circuitOpen
+      options.entryPairPlanner?.client.circuitOpen ||
+      options.trialEntryPlanner?.client.circuitOpen
     )
       return reply
         .code(503)
@@ -169,12 +189,15 @@ export function createProductionAiOptions(
     throw new Error("AI_PROVIDER_POLICY_MISMATCH");
   const client = new CodexEntryClient({
     provider: "openai-api",
+    trialProtocol: environment.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION,
     localToken: environment.CODEX_ENTRY_LOCAL_TOKEN ?? "",
     beforeDispatch,
     ...(fetchImpl === undefined ? {} : { fetchImpl }),
   });
   return {
-    entryPairPlanner: new EntryPairPlanner({
+    [environment.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION
+      ? "trialEntryPlanner"
+      : "entryPairPlanner"]: new EntryPairPlanner({
       client,
       requireTechnicalContext: true,
     }),

@@ -7,6 +7,8 @@ export const HISTORICAL_BREAKOUT_VERSION = "0.4.0-breakout-scalp.1-codex.1";
 export const LEGACY_SCALP_VERSION = "0.8.0-model-scalp.1-codex.1";
 export const PREVIOUS_COST_BALANCED_VERSION = "0.9.0-cost-balanced.1-codex.1";
 export const CODEX_STRATEGY_VERSION = "0.9.0-cost-balanced.1-codex.2";
+export const DEMO_TRIAL_STRATEGY_VERSION = "0.10.0-demo-trials.1-codex.1";
+export const DEMO_TRIAL_POLICY_VERSION = "0.10.0-demo-trials.1";
 export const HISTORICAL_CODEX_FADE_VERSION = "0.3.0-fade-limit.3-codex.1";
 /** Provider revision preserves every v3 economic constant and admission threshold. */
 export function usesFadeV3(version: string): boolean {
@@ -38,7 +40,13 @@ export const COST_BALANCED_SCALP_LIMITS = Object.freeze({
   exitReservePoints: "65",
   entryRangePoints: "30",
 });
+export const DEMO_TRIAL_SCALP_LIMITS = Object.freeze({
+  ...SCALP_LIMITS,
+  maximumTargetDistance: "1",
+});
 export function scalpLimits(strategyVersion: string = LEGACY_SCALP_VERSION) {
+  if (strategyVersion === DEMO_TRIAL_STRATEGY_VERSION)
+    return DEMO_TRIAL_SCALP_LIMITS;
   if (strategyVersion === LEGACY_SCALP_VERSION) return SCALP_LIMITS;
   if (
     strategyVersion === CODEX_STRATEGY_VERSION ||
@@ -107,9 +115,15 @@ export function enforcesLossLimits(mode: TradingMode): boolean {
   return mode !== "demo";
 }
 
-export function executionRiskPolicy(mode: TradingMode): RiskPolicy {
+export function executionRiskPolicy(
+  mode: TradingMode,
+  strategyVersion?: string,
+): RiskPolicy {
   return {
-    version: POLICY_VERSION,
+    version:
+      strategyVersion === DEMO_TRIAL_STRATEGY_VERSION
+        ? DEMO_TRIAL_POLICY_VERSION
+        : POLICY_VERSION,
     mode,
     lossLimitsEnforced: enforcesLossLimits(mode),
     ...MONEY_MANAGEMENT,
@@ -132,7 +146,7 @@ export const FIXED_DEFAULTS = {
   AUTOMATIC_ANALYSIS_COMPLETED_BASELINE: "0",
   AUTOMATIC_DEMO_CLOSED_TRADE_LIMIT: "0",
   AUTOMATIC_DEMO_CLOSED_TRADE_BASELINE: "0",
-  SHUTDOWN_CANCEL_PENDING: "true",
+  SHUTDOWN_CANCEL_PENDING: "false",
   RUNTIME_CONTROL_POLL_SECONDS: "2",
   ANALYSIS_INTERVAL_SECONDS: "5",
   ANALYSIS_SCHEDULER_LEAD_MS: "1000",
@@ -231,8 +245,8 @@ export const FIXED_DEFAULTS = {
   SERVER_STATS_INTERVAL_SECONDS: "10",
   NETWORK_INTERFACE: "",
   TRUST_PROXY: "false",
-  STRATEGY_VERSION: CODEX_STRATEGY_VERSION,
-  CODE_VERSION: "0.9.0-cost-balanced.1-observation.1",
+  STRATEGY_VERSION: DEMO_TRIAL_STRATEGY_VERSION,
+  CODE_VERSION: "0.10.0-demo-trials.1",
   MODEL_INPUT_PROFILE: "structured",
   MAX_DRAWDOWN_PERCENT: MONEY_MANAGEMENT.drawdownLimitPercent,
 } as const;

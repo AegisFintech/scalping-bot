@@ -1,8 +1,13 @@
+import { trialGeometry } from "../../strategy-candidates/src/demo-trial.js";
+import type { TrialBinding } from "../../strategy-candidates/src/demo-trial.js";
 import {
   validateEntryDecision,
   type EntryDecisionPlan,
 } from "./entry-decision.js";
-import { CODEX_STRATEGY_VERSION } from "../../config/src/policy.js";
+import {
+  DEMO_TRIAL_STRATEGY_VERSION,
+  CODEX_STRATEGY_VERSION,
+} from "../../config/src/policy.js";
 import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
 import type {
@@ -24,7 +29,8 @@ const ENTRY_PAIR_REQUEST_POLICY = Object.freeze({
 
 export type EntryPlannerInput = Omit<ScenarioInput, "chart"> & {
   readonly chart: ScenarioInput["chart"] | null;
-  readonly schemaVersion?: "2.0";
+  readonly schemaVersion?: "2.0" | "3.0";
+  readonly experiment?: TrialBinding;
   readonly pipSize?: string;
   readonly maximumStopDistance?: string;
   readonly minimumProtectionDistance?: string;
@@ -130,12 +136,15 @@ export class EntryPairPlanner {
   ): Promise<AiAnalysisResult<EntryDecisionPlan>> {
     if (this.requireTechnicalContext && input.technicalContext === undefined)
       throw new Error("SCENARIO_TECHNICAL_CONTEXT_REQUIRED");
-    if (input.chart === null && input.schemaVersion !== "2.0")
+    if (
+      input.chart === null &&
+      input.schemaVersion !== (input.experiment === undefined ? "2.0" : "3.0")
+    )
       throw new Error("SCENARIO_NUMERIC_CONTRACT_REQUIRED");
     validateScenarioMarket(
       input,
       this.now,
-      input.schemaVersion !== "2.0",
+      input.schemaVersion !== "2.0" && input.schemaVersion !== "3.0",
       this.requireTechnicalContext ? TECHNICAL_HISTORY_COUNTS : undefined,
     );
     if (input.quote === undefined || input.minimumStopDistance === undefined)
@@ -145,11 +154,19 @@ export class EntryPairPlanner {
       symbol: input.symbol,
       chart: input.chart,
       payload: entryProviderPayload(input),
+      ...(input.experiment === undefined
+        ? {}
+        : { experiment: input.experiment }),
     });
+    if (input.experiment !== undefined)
+      trialGeometry(input, input.experiment, JSON.parse(result.rawResponse));
     validateEntryDecision(JSON.stringify(result.response), {
       ...input,
       availableAt: new Date(this.now()).toISOString(),
-      strategyVersion: CODEX_STRATEGY_VERSION,
+      strategyVersion:
+        input.experiment === undefined
+          ? CODEX_STRATEGY_VERSION
+          : DEMO_TRIAL_STRATEGY_VERSION,
     });
     return result;
   }

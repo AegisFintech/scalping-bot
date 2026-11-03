@@ -312,3 +312,20 @@ def test_external_intervention_feedback_withholds_unverified_result(
     assert "External intervention" not in dict(
         landscape_model(value, "unavailable", NOW)["factors"]
     )
+
+
+def test_local_wait_is_not_a_paid_provider_claim() -> None:
+    row = {
+        "id": "local-wait",
+        "kind": "context",
+        "requested_model": "local-range-v1",
+        "state": "READY",
+        "requested_at": NOW - timedelta(seconds=20),
+        "available_at": NOW - timedelta(seconds=10),
+        "plan_schema": "entry-wait-1.0",
+        "wait_reason": "Trend unresolved",
+    }
+    events = event_tape([row], NOW)
+    assert any(e["title"] == "Local proposal claimed" for e in events)
+    assert any(e["title"] == "Local range chose WAIT" for e in events)
+    assert all(e["source"] == "engine" for e in events)

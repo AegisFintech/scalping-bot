@@ -27,7 +27,8 @@ export interface RiskPolicy {
     | "0.7.2-quick-oco.1"
     | "0.7.3-quick-oco.1"
     | "0.8.0-model-scalp.1"
-    | "0.9.0-cost-balanced.1";
+    | "0.9.0-cost-balanced.1"
+    | "0.10.0-demo-trials.1";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
@@ -274,6 +275,9 @@ export interface ModelPromptArtifact {
     | "entry-quick-oco-v5"
     | "entry-scalp-v1"
     | "entry-scalp-v2"
+    | "entry-scalp-v3"
+    | "demo-local-range-v1"
+    | "demo-trial-execution-v1"
     | "entry-modes-execution-v1"
     | "entry-quick-oco-execution-v1"
     | "entry-quick-oco-execution-v2"
@@ -395,6 +399,8 @@ export interface PendingOrderCommand {
   readonly expiresAt: IsoTimestamp;
   readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabel: string;
+  /** Immutable native-point range for registered demo trials only. */
+  readonly entryRangePoints?: "10" | "30";
 }
 
 export type GatewayKind = "paper" | "ctrader-demo" | "shadow" | "ctrader-live";
