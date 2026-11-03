@@ -42,7 +42,7 @@ class EntryScreen(StrictModel):
     counterfactualNet: None = None
 
 
-def screen(context: ContextObservation, profile: Profile) -> EntryScreen:
+def screen(context: ContextObservation, profile: Profile, cutoff: str) -> EntryScreen:
     result = EntryScreen(
         contextId=context.id,
         profileSha256=profile.digest(),
@@ -58,6 +58,16 @@ def screen(context: ContextObservation, profile: Profile) -> EntryScreen:
         or context.market is None
         or context.availableAt is None
     ):
+        return result
+    if any(
+        timestamp(t) > timestamp(cutoff)
+        for t in (
+            context.requestedAt,
+            context.availableAt,
+            context.completedAt or context.availableAt,
+        )
+    ):
+        result.reason = "CONTEXT_NOT_KNOWN_AT_CUTOFF"
         return result
     market = context.market
     rows = {f.timeframe: f.rows for f in market.candles}
@@ -146,6 +156,12 @@ class Reconstruction(StrictModel):
 
 
 def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
+    with localcontext() as arithmetic:
+        arithmetic.prec = 100
+        return _reconstruct(packet)
+
+
+def _reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
     contexts = {c.id: c for c in packet.contexts}
     cutoff = timestamp(packet.until)
     results = []
@@ -161,8 +177,27 @@ def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             row.status, row.reasons = "UNSUPPORTED", ["VERSION_OR_CARDINALITY_UNSUPPORTED"]
             continue
         order = group.orders[0]
-        if timestamp(group.updatedAt) > cutoff:
-            row.reasons.append("GROUP_STATE_NOT_KNOWN_AT_CUTOFF")
+        if timestamp(group.updatedAt) > cutoff or timestamp(order.updatedAt) > cutoff:
+            row.reasons.append("GROUP_OR_ORDER_STATE_NOT_KNOWN_AT_CUTOFF")
+        if Decimal(order.approvedVolume) <= 0 or Decimal(order.filledVolume) < 0:
+            row.reasons.append("ORDER_VOLUME_INVALID")
+        if len({e.id for e in group.brokerEvents}) != len(group.brokerEvents):
+            row.reasons.append("BROKER_EVENT_IDENTITY_DUPLICATE_OR_CONFLICT")
+        if any(
+            timestamp(e.persistedAt) > cutoff
+            or (e.resolvedAt is not None and timestamp(e.resolvedAt) > cutoff)
+            for e in group.brokerEvents
+        ):
+            row.reasons.append("BROKER_EVENT_NOT_KNOWN_AT_CUTOFF")
+        if any(
+            e.orderId == order.id
+            and not e.closingOrder
+            and e.executionType in (5, 6, 7)
+            and (e.executionType, order.state)
+            not in {(5, "CANCELLED"), (6, "EXPIRED"), (7, "REJECTED")}
+            for e in group.brokerEvents
+        ):
+            row.reasons.append("TERMINAL_BROKER_STATE_CONFLICT")
         context = contexts.get(group.contextId or "")
         if (
             order.orderType != "STOP_LIMIT"
@@ -207,6 +242,13 @@ def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
         ]
         if accepts:
             row.brokerAcceptedAt = min((e.occurredAt for e in accepts), key=timestamp)
+            if any(e.orderType != 6 for e in accepts):
+                row.reasons.append("BROKER_ACCEPTED_ORDER_TYPE_INVALID")
+            if timestamp(row.brokerAcceptedAt) < timestamp(group.createdAt) or (
+                order.expiresAt is not None
+                and timestamp(row.brokerAcceptedAt) >= timestamp(order.expiresAt)
+            ):
+                row.reasons.append("ACCEPTANCE_OUTSIDE_INTENT_LIFETIME")
         else:
             row.reasons.append("ORIGINAL_ACCEPTANCE_UNAVAILABLE")
         if (
@@ -240,8 +282,11 @@ def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             for e in group.brokerEvents
         ):
             row.reasons.append("BROKER_UNRESOLVED")
-        row.nativeProtectionHistoryAvailable = group.protectionHistoryComplete and bool(
-            group.protectionHistory
+        row.nativeProtectionHistoryAvailable = group.protectionHistoryComplete and any(
+            timestamp(h.persistedAt) <= cutoff
+            and h.observedAt is not None
+            and timestamp(h.observedAt) <= cutoff
+            for h in group.protectionHistory
         )
         terminal = any(
             e.orderId == order.id
@@ -284,10 +329,73 @@ def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
         ):
             row.reasons.append("POSITION_OR_CLOSE_IDENTITY_INCOMPLETE")
             continue
+        if positions != {p.positionId for p in group.currentProtection} or len(positions) != 1:
+            row.reasons.append("POSITION_EVIDENCE_INCOMPLETE")
+            continue
+        if any(
+            p.side != order.side
+            or Decimal(p.volume) < 0
+            or Decimal(p.entryPrice) <= 0
+            or p.observedAt is None
+            or timestamp(p.observedAt) > cutoff
+            for p in group.currentProtection
+        ):
+            row.reasons.append("POSITION_SIDE_VOLUME_OR_CLOCK_INVALID")
+            continue
+        cumulative: dict[str, Decimal] = {}
+        chronology_invalid = False
+        for d in sorted(closes.values(), key=lambda d: timestamp(d.occurredAt)):
+            cumulative[d.positionId] = cumulative.get(d.positionId, Decimal(0)) + Decimal(
+                d.closedVolume
+            )
+            available = sum(
+                (
+                    Decimal(f.volume)
+                    for f in fills.values()
+                    if f.positionId == d.positionId
+                    and timestamp(f.occurredAt) <= timestamp(d.occurredAt)
+                ),
+                Decimal(0),
+            )
+            if (
+                Decimal(d.closedVolume) <= 0
+                or d.positionId not in positions
+                or timestamp(d.recordedAt) < timestamp(d.occurredAt)
+                or cumulative[d.positionId] > available
+            ):
+                chronology_invalid = True
+        if chronology_invalid:
+            row.reasons.append("CLOSE_VOLUME_OR_CHRONOLOGY_INVALID")
+            continue
+        if any(
+            p.observedAt is not None
+            and timestamp(p.observedAt)
+            < max(
+                [timestamp(f.receivedAt) for f in fills.values() if f.positionId == p.positionId]
+                + [timestamp(d.recordedAt) for d in closes.values() if d.positionId == p.positionId]
+            )
+            for p in group.currentProtection
+        ):
+            row.reasons.append("POSITION_OBSERVATION_PRECEDES_LEDGER")
+            continue
+        first_fill = min(timestamp(f.occurredAt) for f in fills.values())
+        if any(
+            timestamp(t.openedAt) != first_fill
+            or timestamp(t.closedAt) < timestamp(t.openedAt)
+            or t.direction != ("LONG" if order.side == "BUY" else "SHORT")
+            for t in trades.values()
+        ):
+            row.reasons.append("TRADE_CLOCK_OR_DIRECTION_INVALID")
+            continue
         closed_volume = sum((Decimal(d.closedVolume) for d in closes.values()), Decimal(0))
         if (
             group.state == "CLOSED"
-            and trades
+            and len(trades) == 1
+            and all(
+                timestamp(t.closedAt)
+                >= max((timestamp(d.occurredAt) for d in closes.values()), default=first_fill)
+                for t in trades.values()
+            )
             and closed_volume == volume
             and all(
                 sum(
@@ -330,6 +438,21 @@ def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             )
         elif group.state == "CLOSED" or trades or closed_volume > volume:
             row.reasons.append("CLOSE_PROOF_INCOMPLETE")
+        elif any(
+            p.positionState != "OPEN"
+            or Decimal(p.volume) <= 0
+            or Decimal(p.volume)
+            != sum(
+                (Decimal(f.volume) for f in fills.values() if f.positionId == p.positionId),
+                Decimal(0),
+            )
+            - sum(
+                (Decimal(d.closedVolume) for d in closes.values() if d.positionId == p.positionId),
+                Decimal(0),
+            )
+            for p in group.currentProtection
+        ):
+            row.reasons.append("OPEN_POSITION_REMAINING_VOLUME_MISMATCH")
         else:
             row.status = (
                 "PARTIAL_OPEN"
@@ -364,7 +487,7 @@ class CurrentReport(StrictModel):
 
 
 def report(packet: LearningEvidence, profile: Profile) -> dict[str, Any]:
-    rows = [screen(c, profile) for c in packet.contexts]
+    rows = [screen(c, profile, packet.until) for c in packet.contexts]
     facts = reconstruct(packet)
     return CurrentReport(
         schemaVersion="current-scalp-screen-1.0",

@@ -130,6 +130,9 @@ def eligibility(
             or price is None
             or not timestamp(source) <= timestamp(receive) <= received
             or received - timestamp(source) > timedelta(seconds=3)
+            or timestamp(source) < timestamp(accepted_at)
+            or timestamp(receive) < timestamp(accepted_at)
+            or not (row.askUpdated if side == "BUY" else row.bidUpdated)
         ):
             gaps += 1
             continue

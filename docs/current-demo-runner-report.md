@@ -42,3 +42,11 @@ fills, manual closes/signed fees, immutable hashes, stale side clocks, nonfill
 observations and catalogue dimensions. Full qualification, independent review and
 future matched activation remain separate. The protocol/controller are #519/#520;
 parent515 stays open until actual natural distinct-trial evidence exists.
+
+Review corrections: the packet cutoff now censors future provider availability,
+order/resolution/protection state; exact broker type, duplicate/terminal conflicts,
+position-side/remaining-volume and per-position close chronology fail unknown.
+All sums run in an isolated100-digit Decimal context, including30-significant-digit
+mismatch regressions. Only freshly updated relevant-side evidence after acceptance
+can produce a trigger observation. The complete focused suite covers these boundary
+failures; they are not trading losses or qualification successes before correction.

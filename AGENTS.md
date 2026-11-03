@@ -207,7 +207,8 @@ For numeric admission diagnostics and bounded idle quote evidence (#517), read
 orphan-file capacity and schema-bound nested cost_admission evidence.
 
 For current-contract conditional screening and finite trial definitions (#518),
-read `docs/current-demo-runner-report.md`; no experiment is activated by a report.
+read `docs/current-demo-runner-report.md`; cutoff, side clocks, remaining volume
+and exact signed-cost reconciliation must fail unknown on contradictions.
 
 <!-- research-publication -->
 

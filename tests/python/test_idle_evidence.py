@@ -91,3 +91,10 @@ def test_verified_original_bytes_and_wrong_source_or_tamper(tmp_path: Path):
     (tmp_path / name).write_bytes(raw + b"tamper")
     with pytest.raises(ValueError, match="BINDING"):
         read_segment(tmp_path, name, "fixture")
+
+
+def test_unchanged_preacceptance_side_is_not_a_new_trigger():
+    result = run([update(6, "4000", askUpdated=False, askSourceTime=at(4), askReceivedAt=at(4))])
+    assert result["firstObservedTriggerAt"] is None
+    assert result["firstObservedRangeEligibleAt"] is None
+    assert result["gaps"] == 1
