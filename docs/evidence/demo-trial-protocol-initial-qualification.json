@@ -1,0 +1,76 @@
+{
+  "version": "demo-trial-initial-qualification-1.0",
+  "qualified": false,
+  "sourceCommit": "f4720f3356f445f178feafa995ca715299e731b1",
+  "sourceSha256": "228c35943150c0b045926f02b200c38765792f03735c9d220a79a60ff315532e",
+  "rawQualificationSha256": "0b5eb762fbd1a50597072db0886b655e8e56cab018bae33414a68c16bdfd735a",
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 1
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "nodeTests": {
+    "passed": 1315,
+    "failed": 2
+  },
+  "failures": [
+    "0041 absent from migration inventory",
+    "Protective BEFORE TRUNCATE statements not yet exactly allowlisted"
+  ],
+  "reviews": {
+    "standards": {
+      "P1": 2,
+      "topic": "two actual HTTP boundaries"
+    },
+    "spec": {
+      "P2": 1,
+      "topic": "retained excluded-clock receipts"
+    }
+  },
+  "runtimeActivated": false
+}

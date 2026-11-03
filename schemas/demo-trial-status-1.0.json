@@ -2,6 +2,50 @@
   "$id": "demo-trial-status-1.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "ClockReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "format": "date-time",
+          "title": "From",
+          "type": "string"
+        },
+        "until": {
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "CONTROLLER_RESUMED",
+            "OBSERVATION_GAP",
+            "SESSION_UNAVAILABLE_STARTED",
+            "SESSION_UNAVAILABLE_ENDED"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "sessionState": {
+          "enum": ["OPEN", "CLOSED", "UNAVAILABLE"],
+          "title": "Sessionstate",
+          "type": "string"
+        },
+        "creditedMilliseconds": {
+          "const": 0,
+          "title": "Creditedmilliseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "from",
+        "until",
+        "reason",
+        "sessionState",
+        "creditedMilliseconds"
+      ],
+      "title": "ClockReceipt",
+      "type": "object"
+    },
     "Profile": {
       "additionalProperties": false,
       "properties": {
@@ -261,6 +305,26 @@
               "type": "null"
             }
           ]
+        },
+        "session_state": {
+          "enum": ["OPEN", "CLOSED", "UNAVAILABLE"],
+          "title": "Session State",
+          "type": "string"
+        },
+        "clock_receipts": {
+          "minimum": 0,
+          "title": "Clock Receipts",
+          "type": "integer"
+        },
+        "last_clock_receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClockReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -285,7 +349,10 @@
         "entry_fill_events",
         "closes",
         "realized_net",
-        "review"
+        "review",
+        "session_state",
+        "clock_receipts",
+        "last_clock_receipt"
       ],
       "title": "TrialRow",
       "type": "object"

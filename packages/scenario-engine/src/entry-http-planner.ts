@@ -27,6 +27,7 @@ export class EntryPairHttpPlanner {
   constructor(
     private readonly baseUrl: string,
     private readonly fetchImpl = fetch,
+    private readonly now = Date.now,
   ) {}
   async generate(
     input: EntryPlannerInput,
@@ -103,7 +104,7 @@ export class EntryPairHttpPlanner {
     const artifact = envelope.promptArtifact as typeof expected | undefined;
     if (
       artifact?.version !== expected.version ||
-      artifact.content !== content ||
+      artifact.content !== expected.content ||
       artifact.sha256 !== expected.sha256
     )
       throw new Error("SCENARIO_PROMPT_MISMATCH");
@@ -132,7 +133,7 @@ export class EntryPairHttpPlanner {
     );
     validateEntryDecision(JSON.stringify(plan), {
       ...input,
-      availableAt: new Date().toISOString(),
+      availableAt: new Date(this.now()).toISOString(),
       strategyVersion:
         input.experiment === undefined
           ? CODEX_STRATEGY_VERSION

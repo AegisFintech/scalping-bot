@@ -1338,7 +1338,7 @@ async function main(): Promise<void> {
         strategyVersionId: identity.strategyVersionId,
       },
       demoTrialSource(),
-      async () => (await sessionGate.check()).state === "OPEN",
+      async () => (await sessionGate.check()).state,
       async () => {
         const s = await safety();
         return (

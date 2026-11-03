@@ -165,3 +165,21 @@ def test_single_scalp_does_not_display_invalidation_as_another_entry() -> None:
         "Codex proposed TP",
     }
     assert not any(r.get("role") in {"range_upper", "range_lower"} for r in rows)
+
+
+def test_registered_local_proposals_are_never_labelled_as_codex() -> None:
+    snapshot = {
+        "evidence": {
+            "requested_model": "local-range-v1",
+            "plan": {
+                "schema_version": "entry-scalp-1.0",
+                "entry_side": "BUY",
+                "buy_stop": "4010",
+                "take_profit": "4011",
+                "stop_loss": "4008",
+            },
+        }
+    }
+    labels = {r["label"] for r in levels(snapshot, NOW)}
+    assert {"Local BUY entry", "Local proposed TP", "Local proposed SL"} <= labels
+    assert not any("Codex" in label for label in labels)

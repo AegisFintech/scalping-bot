@@ -79,7 +79,9 @@ def load() -> dict[str, Any]:
             raw = reply.read(131073)
         if len(raw) > 131072:
             raise ValueError("DEMO_TRIAL_STATUS_OVERSIZED")
-        result["demoTrials"] = TrialStatus.model_validate_json(raw).model_dump(mode="json")
+        result["demoTrials"] = TrialStatus.model_validate_json(raw).model_dump(
+            mode="json", by_alias=True
+        )
     except (OSError, ValueError):
         result["demoTrials"] = None
     result["pipeline"] = progress(datetime.now(UTC))

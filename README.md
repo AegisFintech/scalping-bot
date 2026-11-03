@@ -57,7 +57,8 @@ A filled position never closes just because the pending-entry timer elapsed.
 | Demo risk       | At most2.5% single leg inside5% setup; dynamic costs/margin/volume       |
 | Evidence        | Completed M15/M5/M1, SMC/DOM, bounded idle tape and flight recorder      |
 
-Target admission uses the declared5-tick base allowance; stress evidence and stop
+Native protection stays fill-relative; proposed structural prices and actual
+broker levels are recorded separately. Target admission uses the declared5-tick base allowance; stress evidence and stop
 sizing retain65ticks. None guarantees closing proceeds. Realized net includes signed
 broker fees. `/learning` shows registered trials, source, waits, fills, net and next
 action; stale values are withheld. Persistent model memory is not training.
@@ -179,6 +180,9 @@ and exact signed-cost reconciliation must fail unknown on contradictions;
 never reorder relevant-side source clocks into an eligibility path.
 Full combined qualification:2,772 tests; receipt
 `docs/evidence/current-demo-runner-validation.json`. Activation remains separate.
+
+Review regressions cover both real HTTP boundaries and durable excluded-clock
+receipts; see `docs/demo-trial-protocol-report.md`.
 
 <!-- research-publication -->
 

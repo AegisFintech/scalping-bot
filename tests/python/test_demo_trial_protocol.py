@@ -160,3 +160,76 @@ def test_trial_status_schema_matches_typed_read_only_boundary() -> None:
     schema.pop("$id")
     schema.pop("$schema")
     assert schema == TrialStatus.model_json_schema()
+
+
+@pytest.mark.parametrize("branch", ["subscription", "api", "fallback"])
+def test_actual_http_accepts_every_new_trial_receipt_without_legacy_union_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, branch: str
+) -> None:
+    from fastapi.testclient import TestClient
+
+    from python.codex_entry import api, openai_api
+
+    req = trial_request(branch != "subscription")
+    if branch == "api":
+        monkeypatch.setattr(openai_api, "reserve", lambda *_: None)
+        monkeypatch.setattr(
+            openai_api,
+            "invoke",
+            lambda *_: (
+                json.dumps(PROPOSAL).encode(),
+                {
+                    "requestedModel": s.MODEL,
+                    "returnedModel": s.MODEL,
+                    "inputTokens": 10,
+                    "outputTokens": 2,
+                    "costAmount": None,
+                    "providerRequestId": "fixture",
+                },
+            ),
+        )
+    elif branch == "fallback":
+        monkeypatch.setattr(openai_api, "reserve", lambda *_: "API_CREDIT_EXHAUSTED")
+    result = s.run(
+        req, tmp_path / "worker", PROMPT, now=lambda: NOW, call=call, trial_source_sha256="b" * 64
+    )
+    invoked = []
+
+    def transport(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        assert kwargs["trial_source_sha256"] == "b" * 64
+        invoked.append(args[0].analysisId)
+        return result
+
+    monkeypatch.setattr(api, "run", transport)
+    app = TestClient(
+        api.create_app(
+            tmp_path / "http",
+            PROMPT,
+            "x" * 64,
+            prompt_version="entry-scalp-v3",
+            trial_source_sha256="b" * 64,
+        ),
+        raise_server_exceptions=False,
+    )
+    response = app.post(
+        "/v1/entry-proposals",
+        json=req.model_dump(),
+        headers={"authorization": "Bearer " + "x" * 64},
+    )
+    assert response.status_code == 200, response.text
+    assert (
+        response.json()["version"]
+        == {
+            "subscription": "codex-entry-response-1.9",
+            "api": "codex-entry-response-1.10",
+            "fallback": "codex-entry-response-1.11",
+        }[branch]
+    )
+    assert response.json()["entries"] == PROPOSAL and response.json()["executionAuthority"] is False
+    assert (
+        app.post(
+            "/v1/entry-proposals", json=req.model_dump(), headers={"authorization": "Bearer wrong"}
+        ).status_code
+        == 401
+    )
+    assert invoked == [req.analysisId]

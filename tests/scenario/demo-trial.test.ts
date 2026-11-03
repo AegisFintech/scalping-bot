@@ -1,3 +1,5 @@
+import { EntryPairHttpPlanner } from "../../packages/scenario-engine/src/entry-http-planner.js";
+import { trialClockReceipt } from "../../apps/execution-service/src/demo-trials.js";
 import { spawnSync } from "node:child_process";
 import { expect, it } from "vitest";
 import type { CandleSeries } from "../../packages/contracts/src/index.js";
@@ -266,12 +268,29 @@ it("routes the exact registered prompt over the new API contract and closes lega
     }),
   });
   try {
-    const result = await app.inject({
-      method: "POST",
-      url: "/v3/entry-pair",
-      payload: input,
+    const executor = new EntryPairHttpPlanner(
+      "http://fixture",
+      async (url, init) => {
+        if (!(url instanceof URL) || typeof init?.body !== "string")
+          throw new Error("fixture transport required");
+        const reply = await app.inject({
+          method: "POST",
+          url: url.pathname,
+          headers: { "content-type": "application/json" },
+          payload: init.body,
+        });
+        return new Response(reply.body, {
+          status: reply.statusCode,
+          headers: { "content-type": "application/json" },
+        });
+      },
+      clock,
+    );
+    const result = await executor.generate(input);
+    expect(result.response).toMatchObject({
+      schema_version: "entry-scalp-1.0",
+      entry_side: "BUY",
     });
-    expect(result.statusCode, result.body).toBe(200);
     expect(dispatched).toBe(1);
     expect(
       (
@@ -286,4 +305,44 @@ it("routes the exact registered prompt over the new API contract and closes lega
   } finally {
     await app.close();
   }
+});
+
+it("retains excluded observation and unavailable-session boundaries without credit", () => {
+  const at = (ms: number) => new Date(ms);
+  expect(
+    trialClockReceipt(at(0), at(31000), "OPEN", "OPEN", false, null),
+  ).toMatchObject({
+    reason: "OBSERVATION_GAP",
+    from: at(0).toISOString(),
+    until: at(31000).toISOString(),
+    creditedMilliseconds: 0,
+  });
+  expect(
+    trialClockReceipt(at(0), at(15000), "OPEN", "OPEN", false, null),
+  ).toBeNull();
+  expect(
+    trialClockReceipt(at(0), at(15000), "OPEN", "UNAVAILABLE", false, null)
+      ?.reason,
+  ).toBe("SESSION_UNAVAILABLE_STARTED");
+  expect(
+    trialClockReceipt(
+      at(30000),
+      at(45000),
+      "UNAVAILABLE",
+      "OPEN",
+      false,
+      at(0),
+    ),
+  ).toMatchObject({
+    reason: "SESSION_UNAVAILABLE_ENDED",
+    from: at(0).toISOString(),
+    creditedMilliseconds: 0,
+  });
+  expect(
+    trialClockReceipt(at(30000), at(45000), "UNAVAILABLE", "OPEN", true, at(0)),
+  ).toMatchObject({
+    reason: "CONTROLLER_RESUMED",
+    from: at(0).toISOString(),
+    creditedMilliseconds: 0,
+  });
 });

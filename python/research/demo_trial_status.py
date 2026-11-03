@@ -28,6 +28,19 @@ class TrialReview(StrictModel):
     nextProfileId: str
 
 
+class ClockReceipt(StrictModel):
+    from_: AwareDatetime = Field(alias="from")
+    until: AwareDatetime
+    reason: Literal[
+        "CONTROLLER_RESUMED",
+        "OBSERVATION_GAP",
+        "SESSION_UNAVAILABLE_STARTED",
+        "SESSION_UNAVAILABLE_ENDED",
+    ]
+    sessionState: Literal["OPEN", "CLOSED", "UNAVAILABLE"]
+    creditedMilliseconds: Literal[0]
+
+
 class TrialRow(StrictModel):
     id: Annotated[str, Field(pattern=r"^[a-f0-9-]{36}$")]
     profile_id: str
@@ -51,6 +64,9 @@ class TrialRow(StrictModel):
     closes: Count
     realized_net: Money | None
     review: TrialReview | None
+    session_state: Literal["OPEN", "CLOSED", "UNAVAILABLE"]
+    clock_receipts: Count
+    last_clock_receipt: ClockReceipt | None
 
     @model_validator(mode="after")
     def consistent(self) -> TrialRow:

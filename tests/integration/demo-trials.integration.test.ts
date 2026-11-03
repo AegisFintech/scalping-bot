@@ -68,7 +68,7 @@ const url = process.env.TEST_DATABASE_URL;
       const modes = new EntryModeStore(pool, scope);
       await modes.initialize();
       let safe = true,
-        open = true;
+        open: "OPEN" | "CLOSED" | "UNAVAILABLE" = "OPEN";
       const controller = new DemoTrials(
         pool,
         scope,
@@ -110,8 +110,11 @@ const url = process.env.TEST_DATABASE_URL;
         setSafe: (v: boolean) => {
           safe = v;
         },
+        setUnavailable: () => {
+          open = "UNAVAILABLE";
+        },
         setOpen: (v: boolean) => {
-          open = v;
+          open = v ? "OPEN" : "CLOSED";
         },
       };
     }
@@ -451,12 +454,47 @@ const url = process.env.TEST_DATABASE_URL;
         pool,
         x.scope,
         "b".repeat(64),
-        () => Promise.resolve(true),
+        () => Promise.resolve("OPEN"),
         () => Promise.resolve(true),
       );
       await restarted.tick();
       expect(restarted.binding().profileId).toBe("ENTRY_RANGE_5");
       expect(restarted.binding().trialId).not.toBe(first.trialId);
+    });
+    it("durably records unknown-session intervals and recovery without inventing clock credit", async () => {
+      const x = await fixture(true);
+      await new Promise((r) => setTimeout(r, 20));
+      await x.controller.tick();
+      const id = x.controller.binding().trialId;
+      const before = (await x.controller.summary()).trials[0]!;
+      x.setUnavailable();
+      await x.controller.tick();
+      const unavailable = (await x.controller.summary()).trials[0]!;
+      expect(unavailable.market_open_ms).toBe(before.market_open_ms);
+      expect(unavailable.session_state).toBe("UNAVAILABLE");
+      expect(unavailable.last_clock_receipt).toMatchObject({
+        reason: "SESSION_UNAVAILABLE_STARTED",
+        creditedMilliseconds: 0,
+      });
+      await x.controller.tick();
+      expect((await x.controller.summary()).trials[0]?.clock_receipts).toBe(
+        unavailable.clock_receipts,
+      );
+      const restart = new DemoTrials(
+        pool,
+        x.scope,
+        "b".repeat(64),
+        () => Promise.resolve("OPEN"),
+        () => Promise.resolve(true),
+      );
+      await restart.tick();
+      expect(restart.binding().trialId).toBe(id);
+      expect(
+        (await restart.summary()).trials[0]?.last_clock_receipt,
+      ).toMatchObject({
+        reason: "CONTROLLER_RESUMED",
+        creditedMilliseconds: 0,
+      });
     });
     it("registers future, resumes exact head across restart and serializes duplicates", async () => {
       const x = await fixture();
@@ -464,7 +502,7 @@ const url = process.env.TEST_DATABASE_URL;
         pool,
         x.scope,
         "b".repeat(64),
-        () => Promise.resolve(true),
+        () => Promise.resolve("OPEN"),
         () => Promise.resolve(true),
       );
       await Promise.all([x.controller.tick(), restarted.tick()]);
@@ -513,7 +551,7 @@ const url = process.env.TEST_DATABASE_URL;
         pool,
         x.scope,
         "c".repeat(64),
-        () => Promise.resolve(true),
+        () => Promise.resolve("OPEN"),
         () => Promise.resolve(true),
       );
       await changed.tick();

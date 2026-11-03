@@ -39,7 +39,9 @@ CREATE TABLE demo_trials (
  registered_at timestamptz NOT NULL DEFAULT clock_timestamp(), starts_at timestamptz NOT NULL,
  mode_revision uuid NOT NULL, state text NOT NULL CHECK(state IN ('ACTIVE','DRAINING','COMPLETED')),
  market_open_ms bigint NOT NULL DEFAULT 0 CHECK(market_open_ms BETWEEN 0 AND 3630000),
- observed_at timestamptz NOT NULL DEFAULT clock_timestamp(), last_session_open boolean NOT NULL DEFAULT false,
+ observed_at timestamptz NOT NULL DEFAULT clock_timestamp(), last_session_state text NOT NULL DEFAULT 'UNAVAILABLE' CHECK(last_session_state IN('OPEN','CLOSED','UNAVAILABLE')),
+ unavailable_since timestamptz DEFAULT clock_timestamp(),
+ CHECK((last_session_state='UNAVAILABLE')=(unavailable_since IS NOT NULL)),
  completed_at timestamptz, retirement_reason text,
  UNIQUE(account_id,symbol_id,mode,cycle,ordinal), CHECK(starts_at>registered_at),
  CHECK((state='COMPLETED')=(completed_at IS NOT NULL))
@@ -60,6 +62,7 @@ CREATE TABLE demo_trial_events (
  trial_id uuid NOT NULL REFERENCES demo_trials(id), recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  kind text NOT NULL, details jsonb NOT NULL
 );
+CREATE INDEX demo_trial_events_trial_sequence ON demo_trial_events(trial_id,sequence DESC);
 CREATE FUNCTION immutable_demo_trial_evidence() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'DEMO_TRIAL_EVIDENCE_IMMUTABLE'; END IF;
@@ -88,6 +91,7 @@ BEGIN
    IF (NEW.id,NEW.account_id,NEW.symbol_id,NEW.mode,NEW.strategy_version_id,NEW.source_sha256,NEW.catalogue_sha256,NEW.profile_id,NEW.profile_sha256,NEW.cycle,NEW.ordinal,NEW.registered_at,NEW.starts_at,NEW.mode_revision)
      IS DISTINCT FROM (OLD.id,OLD.account_id,OLD.symbol_id,OLD.mode,OLD.strategy_version_id,OLD.source_sha256,OLD.catalogue_sha256,OLD.profile_id,OLD.profile_sha256,OLD.cycle,OLD.ordinal,OLD.registered_at,OLD.starts_at,OLD.mode_revision)
      OR OLD.state='COMPLETED' OR NEW.observed_at<OLD.observed_at OR NEW.observed_at>clock_timestamp()
+     OR (NEW.market_open_ms>OLD.market_open_ms AND (NEW.last_session_state<>'OPEN' OR OLD.last_session_state<>'OPEN' OR NEW.observed_at-OLD.observed_at>interval '30 seconds' OR OLD.state<>'ACTIVE'))
      OR NEW.market_open_ms<OLD.market_open_ms
      OR NEW.market_open_ms-OLD.market_open_ms>LEAST(30000,GREATEST(0,ceil(extract(epoch FROM (NEW.observed_at-OLD.observed_at))*1000))+1)
      OR (OLD.state='DRAINING' AND NEW.state NOT IN ('DRAINING','COMPLETED'))
@@ -111,7 +115,7 @@ END $$;
 CREATE TRIGGER demo_trial_state_audit AFTER INSERT OR UPDATE ON demo_trials FOR EACH ROW EXECUTE FUNCTION audit_demo_trial_state();
 CREATE FUNCTION guard_demo_trial_head() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
- IF TG_OP='DELETE' OR TG_OP='TRUNCATE' THEN RAISE EXCEPTION 'DEMO_TRIAL_HEAD_IMMUTABLE'; END IF;
+ IF TG_OP NOT IN ('INSERT','UPDATE') THEN RAISE EXCEPTION 'DEMO_TRIAL_HEAD_IMMUTABLE'; END IF;
  IF NOT EXISTS(SELECT 1 FROM demo_trials t WHERE t.id=NEW.trial_id AND t.account_id=NEW.account_id AND t.symbol_id=NEW.symbol_id AND t.mode=NEW.mode AND t.state='ACTIVE')
    THEN RAISE EXCEPTION 'DEMO_TRIAL_HEAD_SCOPE_INVALID'; END IF;
  IF TG_OP='UPDATE' AND ((NEW.account_id,NEW.symbol_id,NEW.mode) IS DISTINCT FROM (OLD.account_id,OLD.symbol_id,OLD.mode)

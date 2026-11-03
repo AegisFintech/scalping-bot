@@ -28,7 +28,7 @@ export class DemoTrials {
       strategyVersionId: string;
     },
     private readonly sourceSha256: string,
-    private readonly sessionOpen: () => Promise<boolean>,
+    private readonly sessionState: () => Promise<TrialSessionState>,
     private readonly safeToSwitch: () => Promise<boolean>,
     private readonly now = Date.now,
   ) {
@@ -65,7 +65,8 @@ export class DemoTrials {
     return this.task;
   }
   private async advance(): Promise<void> {
-    const open = await this.sessionOpen();
+    const session = await this.sessionState();
+    const open = session === "OPEN";
     const client = await this.pool.connect();
     let switchNeeded = false;
     try {
@@ -104,19 +105,27 @@ export class DemoTrials {
           this.observed &&
             row.state === "ACTIVE" &&
             open &&
-            row.last_session_open,
+            row.last_session_state === "OPEN",
         );
-        if (!this.observed)
+        const receipt = trialClockReceipt(
+          row.observed_at,
+          row.now,
+          row.last_session_state,
+          session,
+          !this.observed,
+          row.unavailable_since,
+        );
+        if (receipt)
           await client.query(
-            "INSERT INTO demo_trial_events(trial_id,kind,details) VALUES($1,'CONTROLLER_RESUMED',jsonb_build_object('creditedGapMilliseconds',0))",
-            [row.id],
+            "INSERT INTO demo_trial_events(trial_id,kind,details) VALUES($1,'CLOCK_GAP',$2::jsonb)",
+            [row.id, JSON.stringify(receipt)],
           );
         const total = Number(row.market_open_ms) + elapsed;
         const draining =
           row.state !== "ACTIVE" || total >= 3600000 || row.closes >= 20;
         await client.query(
-          "UPDATE demo_trials SET observed_at=clock_timestamp(),last_session_open=$2,market_open_ms=$3,state=$4 WHERE id=$1",
-          [row.id, open, total, draining ? "DRAINING" : "ACTIVE"],
+          "UPDATE demo_trials SET observed_at=clock_timestamp(),last_session_state=$2,unavailable_since=CASE WHEN $2='UNAVAILABLE' THEN COALESCE(unavailable_since,observed_at) ELSE NULL END,market_open_ms=$3,state=$4 WHERE id=$1",
+          [row.id, session, total, draining ? "DRAINING" : "ACTIVE"],
         );
         row = {
           ...row,
@@ -237,7 +246,9 @@ export class DemoTrials {
       ordinal: number;
       [key: string]: unknown;
     }>(
-      `SELECT t.id,t.profile_id,t.profile_sha256,t.catalogue_sha256,t.source_sha256,t.cycle,t.ordinal,t.registered_at,t.starts_at,t.state,t.market_open_ms,t.observed_at,t.completed_at,t.retirement_reason,p.definition,
+      `SELECT t.id,t.profile_id,t.profile_sha256,t.catalogue_sha256,t.source_sha256,t.cycle,t.ordinal,t.registered_at,t.starts_at,t.state,t.market_open_ms,t.observed_at,t.completed_at,t.retirement_reason,p.definition,t.last_session_state AS session_state,
+      (SELECT count(*)::int FROM demo_trial_events e WHERE e.trial_id=t.id AND e.kind='CLOCK_GAP') AS clock_receipts,
+      (SELECT e.details FROM demo_trial_events e WHERE e.trial_id=t.id AND e.kind='CLOCK_GAP' ORDER BY e.sequence DESC LIMIT 1) AS last_clock_receipt,
       (SELECT e.details->'review' FROM demo_trial_events e WHERE e.trial_id=t.id AND e.kind='COMPLETED' ORDER BY e.sequence DESC LIMIT 1) AS review,
       (SELECT count(*)::int FROM demo_trial_contexts dc WHERE dc.trial_id=t.id) AS proposals,
       (SELECT count(*)::int FROM demo_trial_contexts dc JOIN scenario_contexts c ON c.id=dc.context_id WHERE dc.trial_id=t.id AND c.requested_model<>'local-range-v1') AS provider_claims,
@@ -287,7 +298,8 @@ type Row = {
   cycle: number;
   ordinal: number;
   market_open_ms: string;
-  last_session_open: boolean;
+  last_session_state: TrialSessionState;
+  unavailable_since: Date | null;
   observed_at: Date;
   now: Date;
   registered_at: Date;
@@ -344,4 +356,36 @@ export function demoTrialSource(path = "release-manifest.json"): string {
   )
     throw new Error("DEMO_TRIAL_RELEASE_SOURCE_INVALID");
   return value.sourceSha256;
+}
+
+export type TrialSessionState = "OPEN" | "CLOSED" | "UNAVAILABLE";
+/** Boundaries of excluded observations; never reconstruct lost market-open time. */
+export function trialClockReceipt(
+  previous: Date,
+  current: Date,
+  priorSession: TrialSessionState,
+  session: TrialSessionState,
+  resumed: boolean,
+  unavailableSince: Date | null,
+) {
+  const reason = resumed
+    ? "CONTROLLER_RESUMED"
+    : current.getTime() - previous.getTime() > 30000
+      ? "OBSERVATION_GAP"
+      : session === "UNAVAILABLE" && priorSession !== "UNAVAILABLE"
+        ? "SESSION_UNAVAILABLE_STARTED"
+        : session !== "UNAVAILABLE" && priorSession === "UNAVAILABLE"
+          ? "SESSION_UNAVAILABLE_ENDED"
+          : null;
+  if (reason === null) return null;
+  return {
+    from: (priorSession === "UNAVAILABLE" && session !== "UNAVAILABLE"
+      ? (unavailableSince ?? previous)
+      : previous
+    ).toISOString(),
+    until: current.toISOString(),
+    reason,
+    sessionState: session,
+    creditedMilliseconds: 0 as const,
+  };
 }

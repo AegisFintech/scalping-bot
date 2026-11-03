@@ -11,7 +11,8 @@ def command_data(
     focus = rows(
         """SELECT ar.id AS analysis_id, ar.candle_snapshot_id, ar.analysis_time,
              ar.state AS analysis_state, og.state AS group_state, sc.plan,
-             sc.requested_model, sc.captured_at, sc.available_at, sc.valid_until, sv.version AS strategy_version,
+             sc.requested_model, sc.captured_at, sc.available_at, sc.valid_until,
+             sv.version AS strategy_version,
              CASE WHEN octet_length(ce.request_text)<=128000
                THEN ce.request_text END AS provider_input,
              ind.features, ind.acceptable AS analytics_acceptable, ind.generated_at

@@ -16,7 +16,9 @@ entry comparison uses CODEX, original3-M1 and original5-M1 boundaries plus one
 native tick; two successive completed-M5 close changes define trend direction.
 All share the opposite last-five-M1 extreme as stop, buffer0/5/10ticks, target
 1/0.4/0.6 GOLD PRICE UNITS,60/180-second capture-based GTD and10/30 native-point
-STOP_LIMIT ranges. Entries are never quote-clamped, reversed or manufactured.
+STOP_LIMIT ranges. Native protection retains fill-relative distances, so actual
+broker levels can differ from proposed structural anchors after entry slippage.
+Both are recorded separately. Entries are never quote-clamped, reversed or manufactured.
 Codex uses supplied SMC/DOM/context and the registered exit definition. Its WAIT
 or failure never falls back to local geometry. LOCAL_RANGE is a separately selected
 and labelled deterministic trial, with no provider dispatch and null token/cost
@@ -105,3 +107,24 @@ alias. Drain safely and review source drift before starting a separately version
 programme; restoring code does not authorize resetting history or completing an
 uncertain group. No live execution, risk increase, martingale, polarity switch or
 profitability claim is authorized by this programme.
+
+## Independent pre-activation review
+
+Standards review found two P1 transport gaps at f4720f3: FastAPI omitted the three
+new receipt classes, and the executor HTTP adapter compared dynamic content with
+the historical template. Both are corrected. New tests traverse the actual Python
+HTTP response union for subscription/API/fallback and the full Node executor-to-
+orchestrator adapter, rather than only mocking the outer response.
+
+Spec review found one P2: excluded observation gaps lacked immutable receipts.
+The controller now records bounded from/until/reason/session/zero-credit evidence,
+keeps unavailable interval starts across restarts, exposes clock receipts in learning,
+and forbids SQL clock credit across non-open, oversized or draining intervals.
+
+Initial full qualification on f4720f3 passed format/lint/types/build, then failed two
+migration tests: the inventory omitted0041 and the anti-destructive scanner treated
+its six protective no-truncate triggers as destructive commands. The inventory now
+requires the new tables/file; only those exact reviewed trigger statements are
+exempted, leaving destructive SQL rejected. Historical migration bytes stay intact.
+This failed run is retained separately; final full qualification and re-review are
+required before activation. No broker/provider forcing or deployment occurred.
