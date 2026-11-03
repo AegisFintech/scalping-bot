@@ -1,3 +1,14 @@
+### ISSUE-518 — Current-contract screening and finite hypotheses
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/518; parent #515.
+- Dependencies: #517 idle evidence and actual cost diagnostics; frozen old oracles.
+- Acceptance: causal current baseline reconstruction and explicit unknown execution,
+  finite single-dimension catalogue, verified side-clock tape, lifecycle/cost/gap/
+  compatibility tests, schema/docs/full qualification/review/pushed delivery.
+- Status: separate modules and nine-profile definition implemented; focused checks
+  pass. Full qualification/review/remote delivery pending; no trading activation.
+- Evidence: `docs/current-demo-runner-report.md`.
+
 ### ISSUE-517 — Cost admission and idle quote evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/517; parent #515.

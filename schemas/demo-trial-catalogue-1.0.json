@@ -1,0 +1,177 @@
+{
+  "$defs": {
+    "Batch": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": ["ENTRY", "TP", "SL", "TTL", "RANGE"],
+          "title": "Id",
+          "type": "string"
+        },
+        "profiles": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 2,
+          "title": "Profiles",
+          "type": "array"
+        }
+      },
+      "required": ["id", "profiles"],
+      "title": "Batch",
+      "type": "object"
+    },
+    "Profile": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Z][A-Z0-9_]{1,31}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "proposalSource": {
+          "enum": ["CODEX", "LOCAL_RANGE"],
+          "title": "Proposalsource",
+          "type": "string"
+        },
+        "rangeBars": {
+          "enum": [3, 5],
+          "title": "Rangebars",
+          "type": "integer"
+        },
+        "targetDistance": {
+          "enum": ["0.4", "0.6", "1"],
+          "title": "Targetdistance",
+          "type": "string"
+        },
+        "stopBufferTicks": {
+          "enum": [0, 5, 10],
+          "title": "Stopbufferticks",
+          "type": "integer"
+        },
+        "pendingSeconds": {
+          "enum": [60, 180],
+          "title": "Pendingseconds",
+          "type": "integer"
+        },
+        "entryRangePoints": {
+          "enum": [10, 30],
+          "title": "Entryrangepoints",
+          "type": "integer"
+        },
+        "baseExitReservePoints": {
+          "const": 5,
+          "title": "Baseexitreservepoints",
+          "type": "integer"
+        },
+        "stressExitReservePoints": {
+          "const": 65,
+          "title": "Stressexitreservepoints",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "proposalSource",
+        "rangeBars",
+        "targetDistance",
+        "stopBufferTicks",
+        "pendingSeconds",
+        "entryRangePoints",
+        "baseExitReservePoints",
+        "stressExitReservePoints"
+      ],
+      "title": "Profile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "demo-trial-catalogue-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "status": {
+      "const": "EXPERIMENTAL_NOT_CHAMPION",
+      "title": "Status",
+      "type": "string"
+    },
+    "maximumCloses": {
+      "const": 20,
+      "title": "Maximumcloses",
+      "type": "integer"
+    },
+    "maximumMarketOpenSeconds": {
+      "const": 3600,
+      "title": "Maximummarketopenseconds",
+      "type": "integer"
+    },
+    "stopAnchorBars": {
+      "const": 5,
+      "title": "Stopanchorbars",
+      "type": "integer"
+    },
+    "m5TrendCloses": {
+      "const": 3,
+      "title": "M5Trendcloses",
+      "type": "integer"
+    },
+    "entryBufferTicks": {
+      "const": 1,
+      "title": "Entrybufferticks",
+      "type": "integer"
+    },
+    "maximumStopDistance": {
+      "const": "7",
+      "title": "Maximumstopdistance",
+      "type": "string"
+    },
+    "setupRiskPercentCeiling": {
+      "const": "5",
+      "title": "Setupriskpercentceiling",
+      "type": "string"
+    },
+    "singleLegRiskPercentCeiling": {
+      "const": "2.5",
+      "title": "Singlelegriskpercentceiling",
+      "type": "string"
+    },
+    "profiles": {
+      "items": {
+        "$ref": "#/$defs/Profile"
+      },
+      "maxItems": 16,
+      "minItems": 3,
+      "title": "Profiles",
+      "type": "array"
+    },
+    "batches": {
+      "items": {
+        "$ref": "#/$defs/Batch"
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "title": "Batches",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "status",
+    "maximumCloses",
+    "maximumMarketOpenSeconds",
+    "stopAnchorBars",
+    "m5TrendCloses",
+    "entryBufferTicks",
+    "maximumStopDistance",
+    "setupRiskPercentCeiling",
+    "singleLegRiskPercentCeiling",
+    "profiles",
+    "batches"
+  ],
+  "title": "Catalogue",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

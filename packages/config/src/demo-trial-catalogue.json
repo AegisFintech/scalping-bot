@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "demo-trial-catalogue-1.0",
+  "status": "EXPERIMENTAL_NOT_CHAMPION",
+  "maximumCloses": 20,
+  "maximumMarketOpenSeconds": 3600,
+  "stopAnchorBars": 5,
+  "m5TrendCloses": 3,
+  "entryBufferTicks": 1,
+  "maximumStopDistance": "7",
+  "setupRiskPercentCeiling": "5",
+  "singleLegRiskPercentCeiling": "2.5",
+  "profiles": [
+    {
+      "id": "ENTRY_CODEX",
+      "proposalSource": "CODEX",
+      "rangeBars": 5,
+      "targetDistance": "1",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "ENTRY_RANGE_3",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 3,
+      "targetDistance": "1",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "ENTRY_RANGE_5",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "1",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "TP_040",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "0.4",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "TP_060",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "0.6",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "SL_005",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "1",
+      "stopBufferTicks": 5,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "SL_010",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "1",
+      "stopBufferTicks": 10,
+      "pendingSeconds": 180,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "TTL_060",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "1",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 60,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    },
+    {
+      "id": "RANGE_010",
+      "proposalSource": "LOCAL_RANGE",
+      "rangeBars": 5,
+      "targetDistance": "1",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 180,
+      "entryRangePoints": 10,
+      "baseExitReservePoints": 5,
+      "stressExitReservePoints": 65
+    }
+  ],
+  "batches": [
+    {
+      "id": "ENTRY",
+      "profiles": ["ENTRY_CODEX", "ENTRY_RANGE_3", "ENTRY_RANGE_5"]
+    },
+    {
+      "id": "TP",
+      "profiles": ["ENTRY_RANGE_5", "TP_040", "TP_060"]
+    },
+    {
+      "id": "SL",
+      "profiles": ["ENTRY_RANGE_5", "SL_005", "SL_010"]
+    },
+    {
+      "id": "TTL",
+      "profiles": ["ENTRY_RANGE_5", "TTL_060"]
+    },
+    {
+      "id": "RANGE",
+      "profiles": ["ENTRY_RANGE_5", "RANGE_010"]
+    }
+  ]
+}
