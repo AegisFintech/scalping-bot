@@ -42,9 +42,11 @@ it("retains numeric rejection evidence and never changes the supplied proposal",
   expect(result.accepted).toBe(false);
   expect(result.reasonCodes).toContain("SCALP_NET_REWARD_BELOW_RISK");
   expect(result.details).toMatchObject({
-    evidence_version: "scalp-cost-admission-1.0",
-    target_distance_price: "1",
-    stop_distance_price: "1",
+    cost_admission: {
+      evidence_version: "scalp-cost-admission-1.0",
+      target_distance_price: "1",
+      stop_distance_price: "1",
+    },
   });
   expect(JSON.stringify(r)).toBe(before);
 });
@@ -91,8 +93,10 @@ it("computes a fee-consistent threshold and retains actual-volume rejection evid
   expect(result.evidence).toHaveLength(1);
   expect(result.evidence[0]).toMatchObject({
     volume: "200",
-    evidence_version: "scalp-cost-admission-1.0",
-    target_distance_price: "1",
+    cost_admission: {
+      evidence_version: "scalp-cost-admission-1.0",
+      target_distance_price: "1",
+    },
   });
 });
 it("withholds an unverified threshold beyond the policy ceiling", () => {

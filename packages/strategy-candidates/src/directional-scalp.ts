@@ -87,13 +87,15 @@ function rejectedPayoff(
   const leg =
     input.side === "BUY" ? input.response.buy_stop : input.response.sell_stop;
   try {
-    return costBalancedPayoffEvidence(
-      input.snapshot.metadata,
-      leg.entry_price,
-      leg.take_profit,
-      leg.stop_loss,
-      input.snapshot.metadata.minVolume,
-    );
+    return {
+      cost_admission: costBalancedPayoffEvidence(
+        input.snapshot.metadata,
+        leg.entry_price,
+        leg.take_profit,
+        leg.stop_loss,
+        input.snapshot.metadata.minVolume,
+      ),
+    };
   } catch {
     return { cost_evidence_unavailable: true };
   }
@@ -166,15 +168,12 @@ export function validateDirectionalScalpCommands(
     };
     if (balanced) {
       try {
-        Object.assign(
-          diagnostic,
-          costBalancedPayoffEvidence(
-            metadata,
-            c.entryPrice,
-            c.takeProfit,
-            c.stopLoss,
-            c.volume,
-          ),
+        diagnostic.cost_admission = costBalancedPayoffEvidence(
+          metadata,
+          c.entryPrice,
+          c.takeProfit,
+          c.stopLoss,
+          c.volume,
         );
       } catch {
         diagnostic.cost_evidence_unavailable = true;

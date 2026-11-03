@@ -163,7 +163,7 @@ a planning/audit PR cannot close it.
 
 For numeric admission diagnostics and bounded idle quote evidence (#517), read
 `docs/experiment-measurement-report.md`; preserve dropped-update provenance,
-orphan-file capacity and actual-volume rejection evidence.
+orphan-file capacity and schema-bound nested cost_admission evidence.
 
 <!-- research-publication -->
 

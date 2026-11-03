@@ -40,7 +40,8 @@ Independent review corrections: callback side state is now snapshotted before
 bounded queue admission, so even a dropped reconnect invalidates later provenance.
 Orphan temporary bytes count against capacity. Final-flush faults latch sanitized
 health and emit a safe shutdown event. Actual-volume command failures retain the
-same numeric diagnostics as minimum-volume checks. The target threshold now
+same numeric diagnostics as minimum-volume checks, nested under cost_admission
+to preserve a strict schema independently from legacy journal fields. The target threshold now
 reevaluates price-dependent commission with bounded bisection; when no threshold
 is verified within the policy ceiling, it stays null. New regressions cover these
 cases. Initial mock typing/lint/import failures were corrected before qualification.
