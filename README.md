@@ -188,6 +188,8 @@ Current provider/monitoring repair and loss-coverage limits: [ISSUE-528 report](
 
 [Loss-control diagnostics](docs/loss-control-study-report.md) preserve full journal denominators while studying structural loss admission, holding time and failed breakouts. Signals are not hypothetical profits or trading authority.
 
+[Position-state clock and R:R diagnostics](docs/position-clock-rr-report.md) separate lifecycle time from protection observations and prepare two gross R:R hypotheses without changing active trades.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

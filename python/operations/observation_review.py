@@ -16,7 +16,7 @@ from python.research.learning_evidence import MAX_BYTES, encoded
 from python.research.observation_cycle import run, safe_reason
 
 
-def feed(destination: Path, now: datetime) -> None:
+def feed(destination: Path, now: datetime, *, with_position_clocks: bool = False) -> None:
     import psycopg
     from psycopg.rows import dict_row
 
@@ -30,6 +30,7 @@ def feed(destination: Path, now: datetime) -> None:
         row_factory=dict_row,
         options="-c default_transaction_read_only=on -c statement_timeout=10000",
     ) as connection:
+        clocks: dict[str, str] = {}
         packet = export(
             connection,
             os.environ["ACCOUNT_KEY_HASH"],
@@ -38,7 +39,18 @@ def feed(destination: Path, now: datetime) -> None:
             until - timedelta(minutes=30),
             until,
             flight_directory=Path("/var/lib/scalper-flight/recordings"),
+            position_clocks=clocks if with_position_clocks else None,
         )
+    if with_position_clocks:
+        from python.research.position_clock_evidence import PositionClockEvidence
+
+        evidence = PositionClockEvidence.bind(packet, clocks)
+        target = destination.with_name("position-clocks.json")
+        raw = encoded(evidence.model_dump())
+        if len(raw) > MAX_BYTES:
+            raise ValueError("POSITION_CLOCK_FEED_OVERSIZED")
+        atomic_bytes(target, raw, replace=True)
+        target.chmod(0o640)
     atomic_bytes(destination, encoded(packet.model_dump()), replace=True)
     destination.chmod(0o640)
 
@@ -70,14 +82,14 @@ def fetch() -> bytes:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["feed", "review"])
+    parser.add_argument("action", choices=["feed", "feed-clocks", "review"])
     parser.add_argument("path", type=Path)
     args = parser.parse_args()
     if os.geteuid() == 0:
         raise ValueError("RESEARCH_DEDICATED_USER_REQUIRED")
     now = datetime.now(UTC)
-    if args.action == "feed":
-        feed(args.path, now)
+    if args.action in {"feed", "feed-clocks"}:
+        feed(args.path, now, with_position_clocks=args.action == "feed-clocks")
         print("RESEARCH_FEED_EXPORTED")
         return
     try:

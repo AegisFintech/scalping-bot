@@ -1,3 +1,14 @@
+### ISSUE-532 — Separate position-state clocks and prepare R:R diagnostics
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/532; parent529.
+- Acceptance: actual clock reproduction, same-snapshot typed envelope, versioned
+  reconstruction and gross1:1/1:1.5 target hypotheses, preserved legacy contracts,
+  failure tests/full qualification/review/CI/merge and isolated future registration.
+- Status: full2,885 tests/no skips, four configuration checks and both independent
+  reviews pass. Reviewed delivery and isolated activation follow; actual economic/
+  early-exit execution remains separate.
+- Report: `docs/position-clock-rr-report.md`.
+
 ### ISSUE-529 — Future loss-control evaluation
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/529; depends on528 and

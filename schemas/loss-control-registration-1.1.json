@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "loss-control-registration-1.1",
+      "default": "loss-control-registration-1.1",
+      "title": "Version",
+      "type": "string"
+    },
+    "registeredAt": {
+      "title": "Registeredat",
+      "type": "string"
+    },
+    "start": {
+      "title": "Start",
+      "type": "string"
+    },
+    "until": {
+      "title": "Until",
+      "type": "string"
+    },
+    "sourceSha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sourcesha256",
+      "type": "string"
+    },
+    "method": {
+      "const": "loss-control-screen-1.1",
+      "default": "loss-control-screen-1.1",
+      "title": "Method",
+      "type": "string"
+    },
+    "candidates": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Candidates",
+      "type": "object"
+    },
+    "sourceId": {
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "registeredAt",
+    "start",
+    "until",
+    "sourceSha256",
+    "candidates",
+    "sourceId"
+  ],
+  "title": "RegistrationV11",
+  "type": "object"
+}
