@@ -5,8 +5,13 @@
 - Acceptance: freeze structural-loss,180-second holding and failed-breakout candidates;
   causal runner tests, complete denominators and explicit continue/repair/insufficient/
   retire findings; independent review before any broker execution or promotion.
-- Status: bounded design recorded; implementation/registration is not activated.
-  Missing November4 paths cannot qualify candidates. See528 report.
+- Status: read-only diagnostics and future-window collector implemented; strict trial
+  market projection repairs the empty-candle feed. Full2,877 tests/no skips,
+  four config checks and independent reviews pass; reviewed delivery/activation follow. Actual exit authority and economic qualification remain separate.
+- Evidence: `docs/loss-control-study-report.md`. Missing November4 paths stay censored.
+
+- Parent515/520 engineering milestones are closed; natural multi-profile/restart
+  proof and deployed528 reader receipts are recorded on issue528. Economic403 remains open.
 
 ### ISSUE-528 — Repair provider and monitoring failures
 

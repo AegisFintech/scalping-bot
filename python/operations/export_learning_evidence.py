@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
-from python.codex_entry.service import PayloadScalp
+from python.codex_entry.service import PayloadScalp, TrialPayload
 from python.operations.entry_context import timestamp
 from python.research import learning_evidence as contract
 
@@ -99,7 +99,21 @@ def context(row: dict[str, Any], cohort_role: str) -> dict[str, Any]:
     market = None
     if row.get("provider_input") is not None:
         try:
-            market = PayloadScalp.model_validate_json(row["provider_input"]).model_dump()
+            if row["origin_release"] == "0.10.0-demo-trials.1-codex.1":
+                trial = TrialPayload.model_validate_json(row["provider_input"])
+                # Keep the immutable 1.0 research projection; exact stress fields
+                # remain in the hashed provider input, not a new risk estimate.
+                projected = trial.model_dump()
+                for field in (
+                    "modeled_stress_round_trip_cost_price",
+                    "base_exit_reserve_ticks",
+                    "stress_exit_reserve_ticks",
+                ):
+                    del projected["execution_context"][field]
+                market = PayloadScalp.model_validate(projected).model_dump()
+                unavailable.append("TRIAL_STRESS_COSTS_NOT_PROJECTED")
+            else:
+                market = PayloadScalp.model_validate_json(row["provider_input"]).model_dump()
             if timestamp(market["captured_at"]) != timestamp(row["captured_at"]):
                 market = None
                 unavailable.append("MARKET_CAPTURE_MISMATCH")
@@ -158,6 +172,29 @@ def context(row: dict[str, Any], cohort_role: str) -> dict[str, Any]:
             "unavailableReasons": unavailable,
         }
     )
+
+
+def entry_fills(fills: list[dict[str, Any]], closes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Exact closing fills already have their complete signed-cost close-deal record."""
+    return [
+        fill
+        for fill in fills
+        if fill["order_id"] is not None
+        or sum(
+            other["broker_fill_id"] == fill["broker_fill_id"]
+            and other["position_id"] == fill["position_id"]
+            for other in fills
+        )
+        != 1
+        or sum(
+            close["broker_deal_id"] == fill["broker_fill_id"]
+            and close["position_id"] == fill["position_id"]
+            and close["closed_volume"] == fill["volume"]
+            and close["occurred_at"] == fill["occurred_at"]
+            for close in closes
+        )
+        != 1
+    ]
 
 
 def export(
@@ -408,7 +445,7 @@ def setup(
         2,
     )
     fills = read(
-        """SELECT f.id,f.order_id,f.position_id,f.price,f.volume,f.commission,
+        """SELECT f.id,f.broker_fill_id,f.order_id,f.position_id,f.price,f.volume,f.commission,
         f.occurred_at,f.received_at FROM fills f LEFT JOIN orders o ON o.id=f.order_id
         LEFT JOIN positions p ON p.id=f.position_id
         WHERE o.order_group_id=%s OR p.order_group_id=%s ORDER BY f.occurred_at,f.id""",
@@ -517,7 +554,7 @@ def setup(
                         instant(r["occurred_at"]), instant(r["received_at"])
                     ),
                 }
-                for r in fills
+                for r in entry_fills(fills, closes)
             ],
             "brokerEvents": [broker(r) for r in events],
             "currentProtection": [

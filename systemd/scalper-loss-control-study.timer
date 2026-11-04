@@ -1,0 +1,10 @@
+[Unit]
+Description=Read the settled half-hour research feed for loss-control diagnostics
+
+[Timer]
+OnCalendar=*-*-* *:04,34:00
+Persistent=true
+RandomizedDelaySec=10
+
+[Install]
+WantedBy=timers.target
