@@ -1,3 +1,13 @@
+### ISSUE-534 — First registered R:R review
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/534; depends on532.
+- Acceptance: complete three-window cohort, actual net/cost/entry/close attribution,
+  four verified raw Flight chains, candidate comparison with unknowns retained,
+  evidence-based economic decision and reviewed published report.
+- Status: review complete; no candidate supported for economic deployment by this
+  four-close sample. Existing collector continues; parent529/403 remain open.
+- Report: `docs/first-rr-review.md`; reviewed publication follows.
+
 ### ISSUE-532 — Separate position-state clocks and prepare R:R diagnostics
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/532; parent529.
@@ -5,8 +15,8 @@
   reconstruction and gross1:1/1:1.5 target hypotheses, preserved legacy contracts,
   failure tests/full qualification/review/CI/merge and isolated future registration.
 - Status: full2,885 tests/no skips, four configuration checks and both independent
-  reviews pass. Reviewed delivery and isolated activation follow; actual economic/
-  early-exit execution remains separate.
+  reviews pass. PR533 merged and isolated activation verified; three natural reports
+  collected. Issue532 closed. Economic/early-exit execution remains separate.
 - Report: `docs/position-clock-rr-report.md`.
 
 ### ISSUE-529 — Future loss-control evaluation
