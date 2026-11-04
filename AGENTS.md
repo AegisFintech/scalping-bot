@@ -38,6 +38,11 @@ is a separately registered source, never a paid call. Keep parent515 open until
 two distinct completed allocations have actual fills, outcomes and restart proof.
 Old registrations/orders remain immutable; verify source activation separately.
 
+ISSUE-528: worker trial payload must match executor base/stress cost fields; exercise
+actual HTTP/DB boundaries. Preserve frozen executor source while deploying isolated
+worker/readers. See `docs/provider-monitor-repair-report.md`; absent Flight paths
+cannot justify hypothetical profitable exits. Keep storage failures visible.
+
 ## Before changing an area
 
 Read `plan.md`, the relevant report, and the matching section of

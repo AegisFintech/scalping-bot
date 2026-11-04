@@ -30,6 +30,11 @@ PROPOSAL = {
 
 def trial_request(api: bool = False) -> s.RequestV116 | s.RequestV117:
     b = body()
+    b["payload"]["execution_context"].update(
+        modeled_stress_round_trip_cost_price="2",
+        base_exit_reserve_ticks=5,
+        stress_exit_reserve_ticks=65,
+    )
     cat = load()
     profile = cat.profiles[0]
     binding = TrialBinding(
@@ -233,3 +238,58 @@ def test_actual_http_accepts_every_new_trial_receipt_without_legacy_union_failur
         == 401
     )
     assert invoked == [req.analysisId]
+
+
+@pytest.mark.parametrize("api", [False, True])
+def test_executor_cost_context_reaches_worker(api: bool, tmp_path: Path) -> None:
+    """The executor sends both cost scenarios, unlike the former worker fixture."""
+    req = trial_request(api).model_dump()
+    req["payload"]["execution_context"].update(
+        modeled_stress_round_trip_cost_price="2",
+        base_exit_reserve_ticks=5,
+        stress_exit_reserve_ticks=65,
+    )
+    parsed = s.parse_request(json.dumps(req).encode())
+    assert parsed.payload.execution_context.modeled_stress_round_trip_cost_price == "2"
+    assert parsed.payload.execution_context.base_exit_reserve_ticks == 5
+    for field, invalid in [("base_exit_reserve_ticks", 0), ("stress_exit_reserve_ticks", 5)]:
+        broken = json.loads(json.dumps(req))
+        broken["payload"]["execution_context"][field] = invalid
+        with pytest.raises(ValueError):
+            s.parse_request(json.dumps(broken).encode())
+
+
+@pytest.mark.parametrize("use_api", [False, True])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("base_exit_reserve_ticks", 0),
+        ("stress_exit_reserve_ticks", 5),
+        ("modeled_stress_round_trip_cost_price", "0"),
+    ],
+)
+def test_http_rejects_invalid_trial_costs_before_worker(
+    tmp_path, monkeypatch, use_api, field, value
+):
+    from fastapi.testclient import TestClient
+
+    from python.codex_entry import api
+
+    req = trial_request(use_api).model_dump()
+    req["payload"]["execution_context"][field] = value
+    monkeypatch.setattr(api, "run", lambda *a, **k: pytest.fail("worker must not run"))
+    client = TestClient(
+        api.create_app(
+            tmp_path,
+            PROMPT,
+            "t" * 32,
+            prompt_version="entry-scalp-v3",
+            trial_source_sha256="b" * 64,
+        )
+    )
+    response = client.post(
+        "/v1/entry-proposals", json=req, headers={"authorization": "Bearer " + "t" * 32}
+    )
+    assert response.status_code == 422
+    assert response.json() == {"detail": "CODEX_REQUEST_INVALID"}
+    assert not list(tmp_path.iterdir())

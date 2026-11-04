@@ -1,0 +1,142 @@
+{
+  "version": "provider-monitor-repair-validation-1.0",
+  "qualified": true,
+  "qualifiedSourceSha256": "f956f98b8b3e7891856459a395170c440dc6830dd63afdcab485f31c12fbf5f2",
+  "rawQualificationSha256": "1f78620c0a04c52fe3d3695c858f2e1b3633afef3af25963a7e518b5d0e3512e",
+  "counts": {
+    "node-tests": 1321,
+    "database-lifecycle": 165,
+    "python-tests": 1376
+  },
+  "totalTests": 2862,
+  "skipped": 0,
+  "command": "PATH=/opt/scalper-node22/bin:$PATH npm run qualify",
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0,
+      "elapsedMs": 24
+    },
+    {
+      "label": "test-certificate",
+      "code": 0,
+      "elapsedMs": 110
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0,
+      "elapsedMs": 12
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0,
+      "elapsedMs": 12
+    },
+    {
+      "label": "database-init",
+      "code": 0,
+      "elapsedMs": 808
+    },
+    {
+      "label": "database-start",
+      "code": 0,
+      "elapsedMs": 125
+    },
+    {
+      "label": "format",
+      "code": 0,
+      "elapsedMs": 43117
+    },
+    {
+      "label": "lint",
+      "code": 0,
+      "elapsedMs": 58653
+    },
+    {
+      "label": "types",
+      "code": 0,
+      "elapsedMs": 17509
+    },
+    {
+      "label": "build",
+      "code": 0,
+      "elapsedMs": 12386
+    },
+    {
+      "label": "node-tests",
+      "code": 0,
+      "elapsedMs": 110002
+    },
+    {
+      "label": "python-format",
+      "code": 0,
+      "elapsedMs": 77
+    },
+    {
+      "label": "python-lint",
+      "code": 0,
+      "elapsedMs": 72
+    },
+    {
+      "label": "python-types",
+      "code": 0,
+      "elapsedMs": 1151
+    },
+    {
+      "label": "secrets",
+      "code": 0,
+      "elapsedMs": 977
+    },
+    {
+      "label": "npm-audit",
+      "code": 0,
+      "elapsedMs": 5223
+    },
+    {
+      "label": "python-audit",
+      "code": 0,
+      "elapsedMs": 20941
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0,
+      "elapsedMs": 56464
+    },
+    {
+      "label": "python-tests",
+      "code": 0,
+      "elapsedMs": 61434
+    },
+    {
+      "label": "database-stop",
+      "code": 0,
+      "elapsedMs": 126
+    }
+  ],
+  "configurationChecks": {
+    "samplePolicy": "PASS",
+    "sampleStartup": "PASS",
+    "deploymentPolicy": "PASS",
+    "deploymentStartup": "PASS"
+  },
+  "independentReviews": {
+    "standards": "CLEAR",
+    "spec": "CLEAR"
+  },
+  "browserPreview": {
+    "desktopWidth": 1440,
+    "mobileWidth": 390,
+    "horizontalOverflow": false,
+    "javascriptErrors": 0
+  },
+  "priorCorrections": [
+    "Python Decimal sum/Any typing",
+    "README publication marker must remain last",
+    "SQL line-length lint after savepoint indentation"
+  ],
+  "interruptedRuns": [
+    "Rerun after review fixes",
+    "Rerun after reproduced heavy-load lifecycle timeout"
+  ],
+  "deployment": "PENDING"
+}

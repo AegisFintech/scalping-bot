@@ -574,50 +574,6 @@
       "title": "Envelope",
       "type": "object"
     },
-    "ExecutionContextV17": {
-      "additionalProperties": false,
-      "properties": {
-        "spread_price": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Spread Price",
-          "type": "string"
-        },
-        "modeled_round_trip_cost_price": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Modeled Round Trip Cost Price",
-          "type": "string"
-        },
-        "cost_basis": {
-          "const": "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
-          "title": "Cost Basis",
-          "type": "string"
-        },
-        "shared_setup_risk_percent": {
-          "const": "5",
-          "title": "Shared Setup Risk Percent",
-          "type": "string"
-        },
-        "recent_closed_outcomes": {
-          "items": {
-            "$ref": "#/$defs/ClosedOutcome"
-          },
-          "maxItems": 8,
-          "title": "Recent Closed Outcomes",
-          "type": "array"
-        }
-      },
-      "required": [
-        "spread_price",
-        "modeled_round_trip_cost_price",
-        "cost_basis",
-        "shared_setup_risk_percent",
-        "recent_closed_outcomes"
-      ],
-      "title": "ExecutionContextV17",
-      "type": "object"
-    },
     "FrameContextV11": {
       "additionalProperties": false,
       "properties": {
@@ -818,92 +774,6 @@
         "available_at"
       ],
       "title": "LiquidityPool",
-      "type": "object"
-    },
-    "PayloadScalp": {
-      "additionalProperties": false,
-      "properties": {
-        "captured_at": {
-          "title": "Captured At",
-          "type": "string"
-        },
-        "tick_size": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Tick Size",
-          "type": "string"
-        },
-        "quote": {
-          "$ref": "#/$defs/Quote"
-        },
-        "minimum_entry_distance": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Minimum Entry Distance",
-          "type": "string"
-        },
-        "entry_boundaries": {
-          "$ref": "#/$defs/Bounds"
-        },
-        "candles": {
-          "items": {
-            "$ref": "#/$defs/Candles"
-          },
-          "maxItems": 3,
-          "minItems": 3,
-          "title": "Candles",
-          "type": "array"
-        },
-        "market_captured_at": {
-          "title": "Market Captured At",
-          "type": "string"
-        },
-        "technical_context": {
-          "$ref": "#/$defs/ContextEvidenceV11"
-        },
-        "context_input_sha256": {
-          "pattern": "^[0-9a-f]{64}$",
-          "title": "Context Input Sha256",
-          "type": "string"
-        },
-        "execution_context": {
-          "$ref": "#/$defs/ExecutionContextV17"
-        },
-        "pip_size": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Pip Size",
-          "type": "string"
-        },
-        "maximum_stop_distance": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Maximum Stop Distance",
-          "type": "string"
-        },
-        "minimum_protection_distance": {
-          "maxLength": 24,
-          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
-          "title": "Minimum Protection Distance",
-          "type": "string"
-        }
-      },
-      "required": [
-        "captured_at",
-        "tick_size",
-        "quote",
-        "minimum_entry_distance",
-        "entry_boundaries",
-        "candles",
-        "market_captured_at",
-        "technical_context",
-        "context_input_sha256",
-        "execution_context",
-        "pip_size",
-        "maximum_stop_distance",
-        "minimum_protection_distance"
-      ],
-      "title": "PayloadScalp",
       "type": "object"
     },
     "Pivot": {
@@ -1218,6 +1088,155 @@
       "title": "TrialBinding",
       "type": "object"
     },
+    "TrialExecutionContext": {
+      "additionalProperties": false,
+      "properties": {
+        "spread_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Spread Price",
+          "type": "string"
+        },
+        "modeled_round_trip_cost_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Modeled Round Trip Cost Price",
+          "type": "string"
+        },
+        "cost_basis": {
+          "const": "CONSERVATIVE_MIN_VOLUME_RESERVE_EXCLUDES_SPREAD",
+          "title": "Cost Basis",
+          "type": "string"
+        },
+        "shared_setup_risk_percent": {
+          "const": "5",
+          "title": "Shared Setup Risk Percent",
+          "type": "string"
+        },
+        "recent_closed_outcomes": {
+          "items": {
+            "$ref": "#/$defs/ClosedOutcome"
+          },
+          "maxItems": 8,
+          "title": "Recent Closed Outcomes",
+          "type": "array"
+        },
+        "modeled_stress_round_trip_cost_price": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Modeled Stress Round Trip Cost Price",
+          "type": "string"
+        },
+        "base_exit_reserve_ticks": {
+          "const": 5,
+          "title": "Base Exit Reserve Ticks",
+          "type": "integer"
+        },
+        "stress_exit_reserve_ticks": {
+          "const": 65,
+          "title": "Stress Exit Reserve Ticks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "spread_price",
+        "modeled_round_trip_cost_price",
+        "cost_basis",
+        "shared_setup_risk_percent",
+        "recent_closed_outcomes",
+        "modeled_stress_round_trip_cost_price",
+        "base_exit_reserve_ticks",
+        "stress_exit_reserve_ticks"
+      ],
+      "title": "TrialExecutionContext",
+      "type": "object"
+    },
+    "TrialPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "title": "Captured At",
+          "type": "string"
+        },
+        "tick_size": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Tick Size",
+          "type": "string"
+        },
+        "quote": {
+          "$ref": "#/$defs/Quote"
+        },
+        "minimum_entry_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Entry Distance",
+          "type": "string"
+        },
+        "entry_boundaries": {
+          "$ref": "#/$defs/Bounds"
+        },
+        "candles": {
+          "items": {
+            "$ref": "#/$defs/Candles"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Candles",
+          "type": "array"
+        },
+        "market_captured_at": {
+          "title": "Market Captured At",
+          "type": "string"
+        },
+        "technical_context": {
+          "$ref": "#/$defs/ContextEvidenceV11"
+        },
+        "context_input_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Context Input Sha256",
+          "type": "string"
+        },
+        "execution_context": {
+          "$ref": "#/$defs/TrialExecutionContext"
+        },
+        "pip_size": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Pip Size",
+          "type": "string"
+        },
+        "maximum_stop_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Maximum Stop Distance",
+          "type": "string"
+        },
+        "minimum_protection_distance": {
+          "maxLength": 24,
+          "pattern": "^(0|[1-9][0-9]{0,12})(\\.[0-9]{1,10})?$",
+          "title": "Minimum Protection Distance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "captured_at",
+        "tick_size",
+        "quote",
+        "minimum_entry_distance",
+        "entry_boundaries",
+        "candles",
+        "market_captured_at",
+        "technical_context",
+        "context_input_sha256",
+        "execution_context",
+        "pip_size",
+        "maximum_stop_distance",
+        "minimum_protection_distance"
+      ],
+      "title": "TrialPayload",
+      "type": "object"
+    },
     "ZoneV11": {
       "additionalProperties": false,
       "properties": {
@@ -1342,7 +1361,7 @@
       "type": "string"
     },
     "payload": {
-      "$ref": "#/$defs/PayloadScalp"
+      "$ref": "#/$defs/TrialPayload"
     },
     "experiment": {
       "$ref": "#/$defs/TrialBinding"

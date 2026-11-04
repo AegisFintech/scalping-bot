@@ -271,3 +271,27 @@ def test_exported_schemas_match_actual_models_and_reject_authority(model, tmp_pa
     validator.validate(value)
     with pytest.raises(ValidationError):
         validator.validate({**value, "brokerAuthority": True})
+
+
+def test_fresh_storage_failure_is_visible_but_unknown_text_is_withheld(tmp_path):
+    path = tmp_path / "status.json"
+    failure = {
+        "checkedAt": NOW.isoformat(),
+        "available": False,
+        "reason": "WITNESS_STORAGE_RESERVE",
+    }
+    path.write_text(json.dumps(failure))
+    assert read_status(NOW, path) == failure
+    assert read_status(NOW + timedelta(minutes=4), path) is None
+    failure["reason"] = "private raw exception"
+    path.write_text(json.dumps(failure))
+    assert read_status(NOW, path) is None
+
+
+@pytest.mark.parametrize("at", [None, 42, {}, [], "invalid"])
+def test_malformed_failure_clock_does_not_break_learning(tmp_path, at):
+    path = tmp_path / "status.json"
+    path.write_text(
+        json.dumps({"checkedAt": at, "available": False, "reason": "WITNESS_STORAGE_RESERVE"})
+    )
+    assert read_status(NOW, path) is None

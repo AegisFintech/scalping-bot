@@ -139,22 +139,30 @@ function renderDays(value) {
     ? value.days
         .map(
           (d) =>
-            `${d.day} ${d.completeCalendarDay ? "full calendar interval" : "partial day"} | net ${d.recordedNet} | ${d.closeDeals} close deals (${d.winningCloseDeals}+ / ${d.losingCloseDeals}- / ${d.flatCloseDeals} flat) | signed fees already included ${d.signedFeesIncluded} | worst close deal ${d.worstCloseDeal ?? "none"}`,
+            `${d.day} ${d.completeCalendarDay ? "full calendar interval" : "partial day"} | net ${d.recordedNet} | ${d.closeDeals} close deals (${d.winningCloseDeals}+ / ${d.losingCloseDeals}- / ${d.flatCloseDeals} flat) | signed fees already included ${d.signedFeesIncluded} | average win ${d.averageWinningCloseDeal ?? "unavailable"} / loss ${d.averageLosingCloseDeal ?? "unavailable"} | worst close deal ${d.worstCloseDeal ?? "none"}`,
         )
         .join("\n")
     : "";
-  $("days-trial-outcomes").textContent = fresh
-    ? value.trialOutcomes
-        .map(
-          (t) =>
-            `${t.profileId} ${t.state} · source ${t.sourceSha256} / profile ${t.profileSha256} | ${t.proposals} proposals / ${t.providerClaims} provider claims / ${t.waits} WAIT / ${t.failedProposals} failed / ${t.incompleteContexts} incomplete | ${t.groups} groups: ${t.provenZeroFillGroups} proven zero-fill / ${t.provenUnsentGroups} proven unsent / ${t.provenClosedGroups} proven closed / ${t.unprovenGroups} open or unproven`,
-        )
-        .join("\n")
-    : "";
+  $("days-trial-outcomes").textContent =
+    fresh && value.trialOutcomesReadState === "unavailable"
+      ? "Trial lifecycle census unavailable; counts are not zero. Daily close-deal accounting remains separate."
+      : fresh
+        ? value.trialOutcomes
+            .map(
+              (t) =>
+                `${t.profileId} ${t.state} · source ${t.sourceSha256} / profile ${t.profileSha256} | ${t.proposals} proposals / ${t.providerClaims} provider claims / ${t.waits} WAIT / ${t.failedProposals} failed / ${t.incompleteContexts} incomplete | ${t.groups} groups: ${t.provenZeroFillGroups} proven zero-fill / ${t.provenUnsentGroups} proven unsent / ${t.provenClosedGroups} proven closed / ${t.unprovenGroups} open or unproven`,
+            )
+            .join("\n")
+        : "";
 }
 function renderTrialEvidence(value) {
   const age = Date.now() - Date.parse(value?.checkedAt);
   const fresh = Number.isFinite(age) && age >= -5000 && age <= 180000;
+  if (fresh && value.available === false) {
+    $("trial-evidence").textContent =
+      `Natural trial evidence unavailable: ${value.reason}`;
+    return;
+  }
   $("trial-evidence").textContent = fresh
     ? `Latest-window loop proof ${value.engineeringMilestoneObserved ? "observed" : "pending"} · ${value.retainedCompletedAllocations} completed allocation files retained · latest bounded window: ${value.windowFilledCompletedAllocations} filled completed allocations / ${value.windowDistinctFilledProfilesWithNextAction} different profiles with next action · restart recorded: ${value.actualRestartRecorded ? "yes" : "no"}; bound to a completed allocation: ${value.actualRestartProofBound ? "yes" : "pending"} · source ${value.sourceSha256 ?? "unavailable"}. This does not qualify profitability.`
     : "Natural trial evidence unavailable or stale";
