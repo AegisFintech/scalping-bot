@@ -18,6 +18,14 @@ from python.research.demo_trial_status import TrialReview, TrialRow, TrialStatus
 from python.research.learning_archive import atomic_bytes, bounded, immutable, unique
 from python.research.learning_evidence import Digest, Instant, encoded
 
+FAILURE_REASONS = {
+    "WITNESS_STORAGE_RESERVE",
+    "WITNESS_STORAGE_CAPACITY",
+    "WITNESS_CONTROLLER_STALE",
+    "WITNESS_STATUS_OVERSIZED",
+    "WITNESS_UNAVAILABLE",
+}
+
 ROOT = Path("/var/lib/scalper-demo-trial-witness")
 RESTART = Path("/etc/scalper-demo-trials/restart-proof.json")
 
@@ -54,11 +62,22 @@ class WitnessStatus(StrictModel):
 
 def read_status(now: datetime, path: Path = ROOT / "status.json") -> dict[str, Any] | None:
     try:
-        value = WitnessStatus.model_validate_json(bounded(path, 8192))
+        raw = json.loads(bounded(path, 8192))
+        if (
+            set(raw) == {"checkedAt", "available", "reason"}
+            and raw["available"] is False
+            and raw["reason"] in FAILURE_REASONS
+        ):
+            if not isinstance(raw["checkedAt"], str):
+                return None
+            if -5 <= (now - timestamp(raw["checkedAt"])).total_seconds() <= 180:
+                return {"checkedAt": raw["checkedAt"], "available": False, "reason": raw["reason"]}
+            return None
+        value = WitnessStatus.model_validate(raw)
         if not -5 <= (now - timestamp(value.checkedAt)).total_seconds() <= 180:
             return None
         return value.model_dump(mode="json")
-    except (OSError, ValueError):
+    except (OSError, ValueError, TypeError, KeyError):
         return None
 
 
@@ -273,8 +292,9 @@ def main() -> None:
             raise ValueError("WITNESS_STATUS_OVERSIZED")
         status = TrialStatus.model_validate_json(raw)
         value = retain(status, args.root, now, restart(RESTART, now))
-    except (OSError, ValueError, KeyError, TypeError):
-        value = {"checkedAt": now.isoformat(), "available": False, "reason": "WITNESS_UNAVAILABLE"}
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        reason = str(error) if str(error) in FAILURE_REASONS else "WITNESS_UNAVAILABLE"
+        value = {"checkedAt": now.isoformat(), "available": False, "reason": reason}
     atomic_bytes(args.root / "status.json", encoded(value), replace=True)
 
 

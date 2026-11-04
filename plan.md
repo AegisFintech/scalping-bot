@@ -1,3 +1,24 @@
+### ISSUE-529 — Future loss-control evaluation
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/529; depends on528 and
+  usable forward Flight coverage.
+- Acceptance: freeze structural-loss,180-second holding and failed-breakout candidates;
+  causal runner tests, complete denominators and explicit continue/repair/insufficient/
+  retire findings; independent review before any broker execution or promotion.
+- Status: bounded design recorded; implementation/registration is not activated.
+  Missing November4 paths cannot qualify candidates. See528 report.
+
+### ISSUE-528 — Repair provider and monitoring failures
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/528; depends on519/526.
+- Acceptance: trial worker actual-cost contract, bounded proof-preserving scorecards,
+  actionable witness failures, payoff visibility, loss/coverage audit and prospective
+  loss-control plan; full qualification/review/push/CI/merge and isolated deployment.
+- Status: reproduced worker extra-field rejection, actual scorecard SQL timeout and
+  witness disk reserve failure; fixes qualified with2,862 tests/no skips and clear independent reviews. Disposable
+  caches cleared; witness recovered without evidence deletion. Trading source frozen.
+- Evidence: `docs/provider-monitor-repair-report.md`. Economic qualification stays open.
+
 ### ISSUE-526 — Daily demo scorecards and retained natural evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/526; parent515/520; depends on519.

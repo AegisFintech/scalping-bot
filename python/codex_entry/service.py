@@ -411,10 +411,29 @@ class RequestV115(RequestV114):
     provider: Literal["openai-api"]
 
 
+class TrialExecutionContext(ExecutionContextV17):
+    modeled_stress_round_trip_cost_price: Price
+    base_exit_reserve_ticks: Literal[5]
+    stress_exit_reserve_ticks: Literal[65]
+
+    @model_validator(mode="after")
+    def ordered_costs(self) -> TrialExecutionContext:
+        if Decimal(self.modeled_stress_round_trip_cost_price) < Decimal(
+            self.modeled_round_trip_cost_price
+        ):
+            raise ValueError("CODEX_DEMO_COST_ORDER_INVALID")
+        return self
+
+
+class TrialPayload(PayloadScalp):
+    execution_context: TrialExecutionContext
+
+
 class RequestV116(RequestV114):
     version: Literal["codex-entry-request-1.16"]  # type: ignore[assignment]
     promptVersion: Literal["entry-scalp-v3"]  # type: ignore[assignment]
     experiment: TrialBinding
+    payload: TrialPayload
 
     @model_validator(mode="after")
     def registered_profile(self) -> RequestV116:

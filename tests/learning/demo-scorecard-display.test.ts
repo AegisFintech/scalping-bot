@@ -105,6 +105,15 @@ it("withholds stale day/proof observations independently and clears them when of
   now = Date.parse(data.dayScorecard.checkedAt);
   await scheduled();
   expect(text("days-results")).toContain("net 93.00");
+  Object.assign(data.dayScorecard, { trialOutcomesReadState: "unavailable" });
+  Object.assign(data.naturalTrialEvidence, {
+    available: false,
+    reason: "WITNESS_STORAGE_RESERVE",
+  });
+  await scheduled();
+  expect(text("days-results")).toContain("net 93.00");
+  expect(text("days-trial-outcomes")).toContain("counts are not zero");
+  expect(text("trial-evidence")).toContain("WITNESS_STORAGE_RESERVE");
   offline = true;
   await scheduled();
   expect(text("days-results")).toBe("");

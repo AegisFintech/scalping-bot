@@ -153,3 +153,31 @@ def test_nonfill_denominators_distinguish_proven_unsent_closed_and_unproven():
     assert TrialOutcomes.model_validate(counts).provenZeroFillGroups == 1
     with pytest.raises(ValueError, match="TRIAL_DENOMINATORS"):
         TrialOutcomes.model_validate({**counts, "unprovenGroups": 0})
+
+
+def test_average_payoff_preserves_losses_and_no_sample_is_unknown():
+    result = summarize(
+        [deal(NOW - timedelta(minutes=1), n) for n in ("100", "200", "-900")],
+        START,
+        NOW,
+        "USD",
+        0,
+        0,
+    )
+    assert result.days[-1].averageWinningCloseDeal == "150.0000000000"
+    assert result.days[-1].averageLosingCloseDeal == "-900.0000000000"
+    assert result.days[0].averageWinningCloseDeal is None
+    assert result.days[0].averageLosingCloseDeal is None
+
+
+def test_repeating_average_is_bounded_to_money_contract():
+    result = summarize(
+        [deal(NOW - timedelta(minutes=1), n) for n in ("1", "1", "2", "-1", "-1", "-2")],
+        START,
+        NOW,
+        "USD",
+        0,
+        0,
+    )
+    assert result.days[-1].averageWinningCloseDeal == "1.3333333333"
+    assert result.days[-1].averageLosingCloseDeal == "-1.3333333333"

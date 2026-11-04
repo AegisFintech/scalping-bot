@@ -46,6 +46,8 @@ class Day(StrictModel):
     winningCloseDeals: Count
     losingCloseDeals: Count
     flatCloseDeals: Count
+    averageWinningCloseDeal: Number | None
+    averageLosingCloseDeal: Number | None
     worstCloseDeal: Number | None
 
 
@@ -94,6 +96,7 @@ class Scorecard(StrictModel):
     )
     days: Annotated[list[Day], Field(min_length=1, max_length=7)]
     trialOutcomes: Annotated[list[TrialOutcomes], Field(max_length=26)]
+    trialOutcomesReadState: Literal["ready", "unavailable"] = "unavailable"
     recordedNet: Number
     realizedLedgerDrawdownLowerBound: Number
     completePositiveDays: Annotated[int, Field(ge=0, le=7)] | None
@@ -159,6 +162,7 @@ def summarize(
             end = min(day_end, upper)
             rows = [d for d in eligible if cursor <= timestamp(d.occurredAt) < end]
             net = [Decimal(d.net) for d in rows]
+            wins, losses = [v for v in net if v > 0], [v for v in net if v < 0]
             days.append(
                 Day(
                     day=day,
@@ -173,6 +177,17 @@ def summarize(
                     winningCloseDeals=sum(v > 0 for v in net),
                     losingCloseDeals=sum(v < 0 for v in net),
                     flatCloseDeals=sum(v == 0 for v in net),
+                    averageWinningCloseDeal=format(
+                        (sum(wins, Decimal(0)) / len(wins)).quantize(Decimal("0.0000000001")), "f"
+                    )
+                    if wins
+                    else None,
+                    averageLosingCloseDeal=format(
+                        (sum(losses, Decimal(0)) / len(losses)).quantize(Decimal("0.0000000001")),
+                        "f",
+                    )
+                    if losses
+                    else None,
                     worstCloseDeal=format(min(net), "f") if net else None,
                 )
             )
@@ -272,45 +287,6 @@ def load(now: datetime) -> dict[str, Any] | None:
             state = cursor.fetchone()
             if state is None:
                 return None
-            cursor.execute(
-                """WITH selected AS (
-                  SELECT t.* FROM demo_trials t JOIN strategy_versions v
-                  ON v.id=t.strategy_version_id
-                  WHERE t.account_id=%s AND t.symbol_id=%s AND t.mode='demo'
-                    AND v.version=%s ORDER BY t.cycle DESC,t.ordinal DESC LIMIT 26
-                ) SELECT t.id::text AS "trialId",t.profile_id AS "profileId",
-                t.profile_sha256 AS "profileSha256",t.source_sha256 AS "sourceSha256",t.state,
-                count(dc.context_id)::int AS proposals,
-                count(*) FILTER(WHERE c.requested_model<>'local-range-v1')::int AS "providerClaims",
-                count(*) FILTER(WHERE c.plan->>'schema_version'='entry-wait-1.0')::int AS waits,
-                count(*) FILTER(WHERE c.state='FAILED')::int AS "failedProposals",
-                count(*) FILTER(WHERE c.state='REQUESTING')::int AS "incompleteContexts",
-                count(g.id)::int AS groups,
-                count(*) FILTER(WHERE demo_trial_zero_fill_group(g.id) IS TRUE)::int
-                  AS "provenZeroFillGroups",
-                count(*) FILTER(WHERE demo_trial_unsent_group(g.id) IS TRUE)::int
-                  AS "provenUnsentGroups",
-                count(*) FILTER(WHERE demo_trial_closed_group(g.id) IS TRUE)::int
-                  AS "provenClosedGroups"
-                FROM selected t LEFT JOIN demo_trial_contexts dc ON dc.trial_id=t.id
-                LEFT JOIN scenario_contexts c ON c.id=dc.context_id
-                  AND c.account_id=t.account_id AND c.symbol_id=t.symbol_id AND c.mode=t.mode
-                LEFT JOIN order_groups g ON g.context_plan_id=dc.context_id AND g.mode=t.mode
-                  AND EXISTS(SELECT 1 FROM analysis_runs a WHERE a.id=g.analysis_id
-                    AND a.account_id=t.account_id AND a.symbol_id=t.symbol_id
-                    AND a.strategy_version_id=t.strategy_version_id)
-                GROUP BY t.id,t.profile_id,t.profile_sha256,t.source_sha256,
-                  t.state,t.cycle,t.ordinal
-                ORDER BY t.cycle DESC,t.ordinal DESC""",
-                (*scope, RELEASE),
-            )
-            outcomes = []
-            for row in cursor.fetchall():
-                row["unprovenGroups"] = row["groups"] - sum(
-                    row[k]
-                    for k in ("provenZeroFillGroups", "provenUnsentGroups", "provenClosedGroups")
-                )
-                outcomes.append(TrialOutcomes.model_validate(row))
             result = summarize(
                 deals,
                 identity["starts_at"],
@@ -319,7 +295,61 @@ def load(now: datetime) -> dict[str, Any] | None:
                 state["unresolved"],
                 state["opened"],
             )
-            result.trialOutcomes = outcomes
+            cursor.execute("SAVEPOINT trial_outcomes")
+            try:
+                cursor.execute(
+                    """WITH selected AS (
+                      SELECT t.* FROM demo_trials t JOIN strategy_versions v
+                      ON v.id=t.strategy_version_id
+                      WHERE t.account_id=%s AND t.symbol_id=%s AND t.mode='demo'
+                        AND v.version=%s ORDER BY t.cycle DESC,t.ordinal DESC LIMIT 26
+                    ) SELECT t.id::text AS "trialId",t.profile_id AS "profileId",
+                    t.profile_sha256 AS "profileSha256",t.source_sha256 AS "sourceSha256",t.state,
+                    count(dc.context_id)::int AS proposals,
+                    count(*) FILTER(WHERE c.requested_model<>'local-range-v1')::int
+                      AS "providerClaims",
+                    count(*) FILTER(WHERE c.plan->>'schema_version'='entry-wait-1.0')::int AS waits,
+                    count(*) FILTER(WHERE c.state='FAILED')::int AS "failedProposals",
+                    count(*) FILTER(WHERE c.state='REQUESTING')::int AS "incompleteContexts",
+                    count(g.id)::int AS groups,
+                    count(*) FILTER(WHERE CASE WHEN g.id IS NOT NULL
+                      AND g.state IN ('FAILED','EXPIRED')
+                      THEN demo_trial_zero_fill_group(g.id) IS TRUE ELSE false END)::int
+                      AS "provenZeroFillGroups",
+                    count(*) FILTER(WHERE CASE WHEN g.id IS NOT NULL AND g.state='FAILED'
+                      THEN demo_trial_unsent_group(g.id) IS TRUE ELSE false END)::int
+                      AS "provenUnsentGroups",
+                    count(*) FILTER(WHERE CASE WHEN g.id IS NOT NULL AND g.state='CLOSED'
+                      THEN demo_trial_closed_group(g.id) IS TRUE ELSE false END)::int
+                      AS "provenClosedGroups"
+                    FROM selected t LEFT JOIN demo_trial_contexts dc ON dc.trial_id=t.id
+                    LEFT JOIN scenario_contexts c ON c.id=dc.context_id
+                      AND c.account_id=t.account_id AND c.symbol_id=t.symbol_id AND c.mode=t.mode
+                    LEFT JOIN order_groups g ON g.context_plan_id=dc.context_id AND g.mode=t.mode
+                      AND EXISTS(SELECT 1 FROM analysis_runs a WHERE a.id=g.analysis_id
+                        AND a.account_id=t.account_id AND a.symbol_id=t.symbol_id
+                        AND a.strategy_version_id=t.strategy_version_id)
+                    GROUP BY t.id,t.profile_id,t.profile_sha256,t.source_sha256,
+                      t.state,t.cycle,t.ordinal
+                    ORDER BY t.cycle DESC,t.ordinal DESC""",
+                    (*scope, RELEASE),
+                )
+                outcomes = []
+                for row in cursor.fetchall():
+                    row["unprovenGroups"] = row["groups"] - sum(
+                        row[k]
+                        for k in (
+                            "provenZeroFillGroups",
+                            "provenUnsentGroups",
+                            "provenClosedGroups",
+                        )
+                    )
+                    outcomes.append(TrialOutcomes.model_validate(row))
+                result.trialOutcomes = outcomes
+                result.trialOutcomesReadState = "ready"
+            except (psycopg.Error, ValueError, TypeError, KeyError):
+                cursor.execute("ROLLBACK TO SAVEPOINT trial_outcomes")
+            cursor.execute("RELEASE SAVEPOINT trial_outcomes")
             return result.model_dump(mode="json")
     except (psycopg.Error, ValueError, TypeError, KeyError):
         return None

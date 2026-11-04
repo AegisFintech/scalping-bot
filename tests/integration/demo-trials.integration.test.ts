@@ -47,6 +47,77 @@ const url = process.env.TEST_DATABASE_URL;
         await admin.end();
       }
     });
+    it("scorecard skips proof calls for absent groups without hiding the trial", async () => {
+      const x = await fixture(true);
+      const key = "scorecard-no-groups-fixture";
+      await pool.query(
+        "UPDATE accounts SET provider_account_key_hash=$1 WHERE id=$2",
+        [createHash("sha256").update(key).digest("hex"), x.scope.accountId],
+      );
+      const original = (
+        await pool.query<{ definition: string }>(
+          "SELECT pg_get_functiondef('demo_trial_closed_group(uuid)'::regprocedure) AS definition",
+        )
+      ).rows[0]!.definition;
+      try {
+        await pool.query(`CREATE OR REPLACE FUNCTION demo_trial_closed_group(target uuid)
+          RETURNS boolean LANGUAGE plpgsql STABLE AS $$ BEGIN
+          IF target IS NULL THEN RAISE EXCEPTION 'UNNECESSARY_NULL_PROOF'; END IF;
+          RETURN false; END $$`);
+        const scoped = new URL(url!);
+        scoped.searchParams.set("options", `-csearch_path=${schema}`);
+        const check = spawnSync(
+          ".venv/bin/python",
+          [
+            "-c",
+            `
+from datetime import UTC, datetime
+import os, psycopg
+from python.operations.demo_scorecards import load
+connect = psycopg.connect
+class SlowCursor(psycopg.Cursor):
+    def execute(self, query, *args, **kwargs):
+        if os.getenv("FORCE_CENSUS_TIMEOUT") == "1" and isinstance(query, str) and "WITH selected AS" in query:
+            return super().execute("SELECT pg_sleep(2)")
+        return super().execute(query, *args, **kwargs)
+def isolated(*args, **kwargs):
+    assert "statement_timeout=1500" in kwargs["options"]
+    assert "default_transaction_read_only=on" in kwargs["options"]
+    kwargs["options"] += " -c search_path=" + os.environ["TEST_SCORECARD_SCHEMA"]
+    kwargs["cursor_factory"] = SlowCursor
+    return connect(*args, **kwargs)
+psycopg.connect = isolated
+value = load(datetime.now(UTC))
+assert value is not None, "scorecard unavailable"
+assert len(value["trialOutcomes"]) == 1
+assert value["trialOutcomes"][0]["groups"] == 0
+assert value["trialOutcomes"][0]["provenClosedGroups"] == 0
+assert value["trialOutcomesReadState"] == "ready"
+os.environ["FORCE_CENSUS_TIMEOUT"] = "1"
+partial = load(datetime.now(UTC))
+assert partial is not None, "optional census timeout hid daily accounting"
+assert partial["recordedNet"] == value["recordedNet"]
+assert partial["trialOutcomesReadState"] == "unavailable"
+assert partial["trialOutcomes"] == []
+`,
+          ],
+          {
+            encoding: "utf8",
+            env: {
+              ...process.env,
+              DATABASE_URL: scoped.toString(),
+              ACCOUNT_KEY: key,
+              TEST_SCORECARD_SCHEMA: schema,
+              TRADING_MODE: "demo",
+            },
+          },
+        );
+        expect(check.status, check.stderr).toBe(0);
+      } finally {
+        await pool.query(original);
+      }
+    });
+
     async function fixture(local = false) {
       const accountId = randomUUID(),
         symbolId = randomUUID(),
