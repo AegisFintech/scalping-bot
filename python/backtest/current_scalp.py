@@ -168,7 +168,12 @@ def reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
         return _reconstruct(packet)
 
 
-def _reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
+def _reconstruct(
+    packet: LearningEvidence, position_updates: dict[str, str] | None = None
+) -> list[Reconstruction]:
+    def position_clock(identity: str, legacy: str | None) -> str | None:
+        return legacy if position_updates is None else position_updates.get(identity)
+
     contexts = {c.id: c for c in packet.contexts}
     cutoff = timestamp(packet.until)
     results = []
@@ -353,8 +358,8 @@ def _reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             p.side != order.side
             or Decimal(p.volume) < 0
             or Decimal(p.entryPrice) <= 0
-            or p.observedAt is None
-            or timestamp(p.observedAt) > cutoff
+            or position_clock(p.positionId, p.observedAt) is None
+            or timestamp(position_clock(p.positionId, p.observedAt) or "") > cutoff
             for p in group.currentProtection
         ):
             row.reasons.append("POSITION_SIDE_VOLUME_OR_CLOCK_INVALID")
@@ -385,11 +390,19 @@ def _reconstruct(packet: LearningEvidence) -> list[Reconstruction]:
             row.reasons.append("CLOSE_VOLUME_OR_CHRONOLOGY_INVALID")
             continue
         if any(
-            p.observedAt is not None
-            and timestamp(p.observedAt)
+            position_clock(p.positionId, p.observedAt) is not None
+            and timestamp(position_clock(p.positionId, p.observedAt) or "")
             < max(
-                [timestamp(f.receivedAt) for f in fills.values() if f.positionId == p.positionId]
-                + [timestamp(d.recordedAt) for d in closes.values() if d.positionId == p.positionId]
+                [
+                    timestamp(f.receivedAt if position_updates is None else f.occurredAt)
+                    for f in fills.values()
+                    if f.positionId == p.positionId
+                ]
+                + [
+                    timestamp(d.recordedAt if position_updates is None else d.occurredAt)
+                    for d in closes.values()
+                    if d.positionId == p.positionId
+                ]
             )
             for p in group.currentProtection
         ):

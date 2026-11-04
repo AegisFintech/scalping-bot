@@ -1,0 +1,29 @@
+[Unit]
+Description=Prospective loss-control diagnostics; no broker or provider authority
+After=scalper-observation-feed.service
+
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+StateDirectory=scalper-rr532
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/scalper-rr532
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-rr532
+ExecStart=/opt/scalper-rr532/.venv/bin/python -P -m python.operations.loss_control_study run --directory /var/lib/scalper-rr532 --feed /var/lib/scalper-observation-feed/position-clocks.json
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/scalper-rr532
+InaccessiblePaths=-/root -/etc/scalping-bot -/etc/scalper-flight -/etc/scalper-codex-entry -/run/postgresql
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+CPUQuota=25%
+MemoryMax=256M
+MemorySwapMax=0
+TasksMax=16
+LimitFSIZE=16M
+TimeoutStartSec=60

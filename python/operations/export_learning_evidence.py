@@ -206,9 +206,11 @@ def export(
     until: datetime,
     *,
     flight_directory: Path | None = None,
+    position_clocks: dict[str, str] | None = None,
 ) -> contract.LearningEvidence:
     if (
-        not re.fullmatch(r"[a-f0-9]{64}", account)
+        bool(position_clocks)
+        or not re.fullmatch(r"[a-f0-9]{64}", account)
         or not re.fullmatch(r"[A-Z0-9._-]{1,32}", symbol)
         or not re.fullmatch(r"[a-zA-Z0-9._-]{1,80}", source)
         or start.tzinfo is None
@@ -381,7 +383,7 @@ def export(
                 )
             )
         for g in groups:
-            setups.append(setup(g, scope, start, until, read))
+            setups.append(setup(g, scope, start, until, read, position_clocks))
         unscoped = read(
             f"""SELECT {BROKER_FIELDS} FROM broker_execution_events
             WHERE account_id=%s AND symbol_id=%s
@@ -435,6 +437,7 @@ def setup(
     start: datetime,
     until: datetime,
     read: Callable[..., list[dict[str, Any]]],
+    position_clocks: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     orders = read(
         """SELECT id,side,state,execution_order_type,time_in_force,entry_price,
@@ -457,13 +460,19 @@ def setup(
         (g["id"],),
     )
     protection = read(
-        """SELECT p.id,p.side,p.state,p.volume,p.entry_price,
+        """SELECT p.id,p.side,p.state,p.volume,p.entry_price,p.updated_at position_updated_at,
         pp.stop_loss,pp.take_profit,pp.status,pp.observed_at FROM positions p
         LEFT JOIN position_protection pp ON pp.position_id=p.id
         WHERE p.order_group_id=%s AND p.strategy_owned ORDER BY p.id""",
         (g["id"],),
         10,
     )
+    if position_clocks is not None:
+        for position in protection:
+            key = contract.identity(position["id"])
+            if key in position_clocks:
+                raise ValueError("POSITION_CLOCK_DUPLICATE")
+            position_clocks[key] = timestamp(position["position_updated_at"]).isoformat()
     history = read(
         """WITH scoped AS MATERIALIZED (
           SELECT e.*,max(e.created_at) FILTER(WHERE e.created_at < %s)

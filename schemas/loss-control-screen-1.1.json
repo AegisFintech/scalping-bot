@@ -1,0 +1,123 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "loss-control-screen-1.1",
+      "default": "loss-control-screen-1.1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "packetSha256": {
+      "title": "Packetsha256",
+      "type": "string"
+    },
+    "candidates": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Candidates",
+      "type": "object"
+    },
+    "contexts": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Contexts",
+      "type": "array"
+    },
+    "setups": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Setups",
+      "type": "array"
+    },
+    "contextCounts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Contextcounts",
+      "type": "object"
+    },
+    "setupCounts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Setupcounts",
+      "type": "object"
+    },
+    "coverageWarnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Coveragewarnings",
+      "type": "array"
+    },
+    "recommendation": {
+      "enum": ["REPAIR", "COLLECT_MORE"],
+      "title": "Recommendation",
+      "type": "string"
+    },
+    "counterfactualNet": {
+      "default": null,
+      "title": "Counterfactualnet",
+      "type": "null"
+    },
+    "counterfactualFees": {
+      "default": null,
+      "title": "Counterfactualfees",
+      "type": "null"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "positionEvidenceSha256": {
+      "title": "Positionevidencesha256",
+      "type": "string"
+    },
+    "rrScreens": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Rrscreens",
+      "type": "array"
+    },
+    "netRewardToRisk": {
+      "default": null,
+      "title": "Netrewardtorisk",
+      "type": "null"
+    }
+  },
+  "required": [
+    "packetSha256",
+    "candidates",
+    "contexts",
+    "setups",
+    "contextCounts",
+    "setupCounts",
+    "coverageWarnings",
+    "recommendation",
+    "positionEvidenceSha256",
+    "rrScreens"
+  ],
+  "title": "RRReport",
+  "type": "object"
+}

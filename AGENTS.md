@@ -45,6 +45,8 @@ cannot justify hypothetical profitable exits. Keep storage failures visible.
 
 ISSUE-529: use `docs/loss-control-study-report.md`; preserve future registrations, all observation windows and null counterfactual economics. Trial market projection must validate before removing separately retained stress fields. Diagnostic signals do not authorize exits.
 
+ISSUE-532: operator authorizes reviewed demo R:R experimentation within existing risk ceilings. Read `docs/position-clock-rr-report.md`; same-snapshot position clocks never replace native protection observations. Preserve old methods/registrations; gross target geometry is not cost-qualified execution.
+
 ## Before changing an area
 
 Read `plan.md`, the relevant report, and the matching section of
@@ -229,6 +231,8 @@ see `docs/evidence/demo-scorecards-validation.json` and issue526 for activation.
 Related implementation reports: [cost/tape measurement](docs/experiment-measurement-report.md),
 [current-contract screening](docs/current-demo-runner-report.md), and
 [detached policy validation](docs/context-policy-completion-report.md).
+
+Keep the push graph rebuild bounded at ten minutes on the shared host; never bypass a failed hook.
 
 <!-- research-publication -->
 

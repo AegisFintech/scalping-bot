@@ -12,9 +12,19 @@ from pathlib import Path
 from typing import Any, Literal
 
 from python.backtest.loss_control import CANDIDATES, LossControlReport, report
+from python.backtest.rr_screen import RR_CANDIDATES, RRReport
+from python.backtest.rr_screen import report as rr_report
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_archive import bounded, immutable, parse, unique
-from python.research.learning_evidence import MAX_BYTES, Digest, Instant, digest, encoded
+from python.research.learning_evidence import (
+    MAX_BYTES,
+    Digest,
+    Instant,
+    LearningEvidence,
+    digest,
+    encoded,
+)
+from python.research.position_clock_evidence import PositionClockEvidence
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -32,6 +42,23 @@ class Registration(StrictModel):
     promotionAuthority: Literal[False] = False
 
 
+class RegistrationV11(Registration):
+    version: Literal["loss-control-registration-1.1"] = "loss-control-registration-1.1"  # type: ignore[assignment]
+    method: Literal["loss-control-screen-1.1"] = "loss-control-screen-1.1"  # type: ignore[assignment]
+
+
+def decode(raw: bytes, clocks: bool) -> LearningEvidence | PositionClockEvidence:
+    return (
+        PositionClockEvidence.model_validate(json.loads(raw, object_pairs_hook=unique))
+        if clocks
+        else parse(raw, hashlib.sha256(raw).hexdigest())
+    )
+
+
+def packet_of(value: LearningEvidence | PositionClockEvidence) -> LearningEvidence:
+    return value.packet if isinstance(value, PositionClockEvidence) else value
+
+
 def fingerprint() -> str:
     paths = [*sorted((ROOT / "python").rglob("*.py")), ROOT / "requirements.lock"]
     return digest(
@@ -43,7 +70,11 @@ def read(path: Path, maximum: int = MAX_BYTES) -> Any:
     return json.loads(bounded(path, maximum), object_pairs_hook=unique)
 
 
-def register(directory: Path, start: datetime, now: datetime, source_id: str) -> None:
+def register(
+    directory: Path, start: datetime, now: datetime, source_id: str, *, protocol: str = "1.0"
+) -> None:
+    if protocol not in {"1.0", "1.1"}:
+        raise ValueError("LOSS_STUDY_PROTOCOL_INVALID")
     if (
         not now < start <= now + timedelta(days=1)
         or start.second
@@ -56,12 +87,13 @@ def register(directory: Path, start: datetime, now: datetime, source_id: str) ->
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     if (directory / "registration.json").exists():
         raise ValueError("LOSS_STUDY_ALREADY_REGISTERED")
-    value = Registration(
+    cls = RegistrationV11 if protocol == "1.1" else Registration
+    value = cls(
         registeredAt=now.isoformat(),
         start=start.isoformat(),
         until=(start + timedelta(days=30)).isoformat(),
         sourceSha256=fingerprint(),
-        candidates=CANDIDATES,
+        candidates=RR_CANDIDATES if protocol == "1.1" else CANDIDATES,
         sourceId=source_id,
     )
     immutable(directory / "registration.json", value.model_dump())
@@ -72,12 +104,15 @@ def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
         raise ValueError("LOSS_STUDY_PATH_INVALID")
     with (directory / ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        registration = Registration.model_validate(read(directory / "registration.json", 8192))
+        saved = read(directory / "registration.json", 8192)
+        clocks = saved.get("version") == "loss-control-registration-1.1"
+        cls = RegistrationV11 if clocks else Registration
+        registration = cls.model_validate(saved)
         code = fingerprint()
         start, until = timestamp(registration.start), timestamp(registration.until)
         if (
             registration.sourceSha256 != code
-            or registration.candidates != CANDIDATES
+            or registration.candidates != (RR_CANDIDATES if clocks else CANDIDATES)
             or not timestamp(registration.registeredAt) < start
             or until != start + timedelta(days=30)
         ):
@@ -90,7 +125,8 @@ def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
         ):
             raise ValueError("LOSS_STUDY_STORAGE_RESERVE")
         raw = bounded(feed, MAX_BYTES)
-        packet = parse(raw, hashlib.sha256(raw).hexdigest())
+        input_model = decode(raw, clocks)
+        packet = packet_of(input_model)
         lower, upper = timestamp(packet.start), timestamp(packet.until)
         if lower < start or upper > until:
             return {"state": "FEED_OUTSIDE_REGISTERED_WINDOW"}
@@ -109,10 +145,15 @@ def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
         # First captured packet is immutable even if a later export revises this window.
         if source.exists():
             raw = bounded(source, MAX_BYTES)
-            packet = parse(raw, hashlib.sha256(raw).hexdigest())
+            input_model = decode(raw, clocks)
+            packet = packet_of(input_model)
             if timestamp(packet.start) != lower or timestamp(packet.until) != upper:
                 raise ValueError("LOSS_STUDY_PRIOR_INPUT_INVALID")
-        result = report(packet)
+        result = (
+            rr_report(input_model)
+            if isinstance(input_model, PositionClockEvidence)
+            else report(packet)
+        )
         missing = [i for i in range(index) if not (directory / f"window-{i:04d}.json").exists()]
         value = {
             "registrationSha256": digest(registration.model_dump()),
@@ -124,7 +165,7 @@ def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
         }
         if target.exists():
             prior = read(target)
-            LossControlReport.model_validate(prior["report"])
+            (RRReport if clocks else LossControlReport).model_validate(prior["report"])
             retained_missing = prior.get("missingPriorWindows")
             if (
                 not isinstance(retained_missing, list)
@@ -135,7 +176,7 @@ def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
                 raise ValueError("LOSS_STUDY_PRIOR_REPORT_CONFLICT")
             return {"state": "ALREADY_RECORDED", "window": index}
         pending_bytes = len(encoded(value)) + (
-            0 if source.exists() else len(encoded(packet.model_dump()))
+            0 if source.exists() else len(encoded(input_model.model_dump()))
         )
         if (
             pending_bytes > MAX_BYTES
@@ -149,7 +190,7 @@ def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
             or read(directory / "registration.json", 8192) != registration.model_dump()
         ):
             raise ValueError("LOSS_STUDY_SOURCE_DRIFT")
-        immutable(source, packet.model_dump())
+        immutable(source, input_model.model_dump())
         immutable(target, value)
         return {
             "state": "REPORT_WRITTEN",
@@ -167,12 +208,15 @@ def main() -> None:
         "--feed", type=Path, default=Path("/var/lib/scalper-observation-feed/current.json")
     )
     parser.add_argument("--start")
+    parser.add_argument("--protocol", choices=["1.0", "1.1"], default="1.0")
     args = parser.parse_args()
     now = datetime.now(UTC)
     if args.action == "register":
         if args.start is None:
             raise ValueError("LOSS_STUDY_START_REQUIRED")
-        register(args.directory, timestamp(args.start), now, "scalper-epoch314")
+        register(
+            args.directory, timestamp(args.start), now, "scalper-epoch314", protocol=args.protocol
+        )
         print("REGISTERED_NOT_QUALIFIED")
     else:
         print(json.dumps(run(args.directory, args.feed, now)))

@@ -11,7 +11,7 @@ from datetime import timedelta
 from decimal import Decimal, localcontext
 from typing import Any, Literal
 
-from python.backtest.current_scalp import CURRENT, reconstruct
+from python.backtest.current_scalp import CURRENT, Reconstruction, reconstruct
 from python.research.codex_loop import StrictModel, timestamp
 from python.research.learning_evidence import LearningEvidence, digest
 
@@ -47,7 +47,9 @@ def report(packet: LearningEvidence) -> LossControlReport:
         return _report(packet)
 
 
-def _report(packet: LearningEvidence) -> LossControlReport:
+def _report(
+    packet: LearningEvidence, facts: list[Reconstruction] | None = None
+) -> LossControlReport:
     cutoff = timestamp(packet.until)
     contexts: list[dict[str, Any]] = []
     by_id = {c.id: c for c in packet.contexts}
@@ -99,7 +101,7 @@ def _report(packet: LearningEvidence) -> LossControlReport:
                 "actualStopRisk": None,
             }
         )
-    reconstructed = {r.setupId: r for r in reconstruct(packet)}
+    reconstructed = {r.setupId: r for r in (reconstruct(packet) if facts is None else facts)}
     setups = []
     for g in packet.setups:
         fact = reconstructed[g.id]
