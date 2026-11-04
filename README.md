@@ -190,6 +190,8 @@ Current provider/monitoring repair and loss-coverage limits: [ISSUE-528 report](
 
 [Position-state clock and R:R diagnostics](docs/position-clock-rr-report.md) separate lifecycle time from protection observations and prepare two gross R:R hypotheses without changing active trades.
 
+Push maintenance permits up to ten minutes for the local AST graph rebuild; failures still block publishing.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

@@ -63,7 +63,8 @@ try {
       throw new Error("PUSH_TRACKED_WORKTREE_DIRTY");
     const result = spawnSync("graphify", ["update", "."], {
       stdio: ["ignore", "inherit", "inherit"],
-      timeout: 120_000,
+      // Full graph rebuilds exceed two minutes on the shared development host.
+      timeout: 600_000,
     });
     if (result.error || result.status !== 0)
       throw new Error("PUSH_GRAPHIFY_FAILED_INSTALL_OR_REPAIR_GRAPHIFY");

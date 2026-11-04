@@ -58,3 +58,8 @@ Final `npm run qualify`: PASS,2,885 tests/no skips (1,321 Node,165 PostgreSQL,
 Starlette test-client warning remains. All format/lint/types/build/schema/migration/
 replay/failure gates, secret scans and dependency audits pass. Source fingerprint:
 `b736f3c9b507feb9ff2f1f53b00300f2c2e874fba1ea0f75671ed03267a45089`.
+
+Delivery repair: repeated required Graphify rebuilds exceeded the old120-second
+push-hook deadline, including one which wrote the completed graph immediately before
+termination. The hook now allows a bounded600seconds; graph failures and dirty
+tracked files still block publishing. No hook, review or CI bypass is introduced.

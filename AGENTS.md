@@ -232,6 +232,8 @@ Related implementation reports: [cost/tape measurement](docs/experiment-measurem
 [current-contract screening](docs/current-demo-runner-report.md), and
 [detached policy validation](docs/context-policy-completion-report.md).
 
+Keep the push graph rebuild bounded at ten minutes on the shared host; never bypass a failed hook.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
