@@ -1,0 +1,182 @@
+"""Bounded prospective loss diagnostics from the existing read-only observation feed."""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import hashlib
+import json
+import shutil
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any, Literal
+
+from python.backtest.loss_control import CANDIDATES, LossControlReport, report
+from python.research.codex_loop import StrictModel, timestamp
+from python.research.learning_archive import bounded, immutable, parse, unique
+from python.research.learning_evidence import MAX_BYTES, Digest, Instant, digest, encoded
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+class Registration(StrictModel):
+    version: Literal["loss-control-registration-1.0"] = "loss-control-registration-1.0"
+    registeredAt: Instant
+    start: Instant
+    until: Instant
+    sourceSha256: Digest
+    method: Literal["loss-control-screen-1.0"] = "loss-control-screen-1.0"
+    candidates: dict[str, str]
+    sourceId: str
+    brokerAuthority: Literal[False] = False
+    promotionAuthority: Literal[False] = False
+
+
+def fingerprint() -> str:
+    paths = [*sorted((ROOT / "python").rglob("*.py")), ROOT / "requirements.lock"]
+    return digest(
+        [(str(p.relative_to(ROOT)), hashlib.sha256(p.read_bytes()).hexdigest()) for p in paths]
+    )
+
+
+def read(path: Path, maximum: int = MAX_BYTES) -> Any:
+    return json.loads(bounded(path, maximum), object_pairs_hook=unique)
+
+
+def register(directory: Path, start: datetime, now: datetime, source_id: str) -> None:
+    if (
+        not now < start <= now + timedelta(days=1)
+        or start.second
+        or start.microsecond
+        or start.minute % 30
+    ):
+        raise ValueError("LOSS_STUDY_FUTURE_HALF_HOUR_REQUIRED")
+    if any(p.is_symlink() for p in (directory, *directory.parents)):
+        raise ValueError("LOSS_STUDY_PATH_INVALID")
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if (directory / "registration.json").exists():
+        raise ValueError("LOSS_STUDY_ALREADY_REGISTERED")
+    value = Registration(
+        registeredAt=now.isoformat(),
+        start=start.isoformat(),
+        until=(start + timedelta(days=30)).isoformat(),
+        sourceSha256=fingerprint(),
+        candidates=CANDIDATES,
+        sourceId=source_id,
+    )
+    immutable(directory / "registration.json", value.model_dump())
+
+
+def run(directory: Path, feed: Path, now: datetime) -> dict[str, Any]:
+    if any(p.is_symlink() for p in (directory, *directory.parents, feed)):
+        raise ValueError("LOSS_STUDY_PATH_INVALID")
+    with (directory / ".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        registration = Registration.model_validate(read(directory / "registration.json", 8192))
+        code = fingerprint()
+        start, until = timestamp(registration.start), timestamp(registration.until)
+        if (
+            registration.sourceSha256 != code
+            or registration.candidates != CANDIDATES
+            or not timestamp(registration.registeredAt) < start
+            or until != start + timedelta(days=30)
+        ):
+            raise ValueError("LOSS_STUDY_SOURCE_OR_REGISTRATION_DRIFT")
+        if now < start:
+            return {"state": "WAITING_FOR_FUTURE_WINDOW"}
+        if (
+            shutil.disk_usage(directory).free < 2 * 1024**3
+            or sum(p.stat().st_size for p in directory.iterdir() if p.is_file()) > 256 * 1024**2
+        ):
+            raise ValueError("LOSS_STUDY_STORAGE_RESERVE")
+        raw = bounded(feed, MAX_BYTES)
+        packet = parse(raw, hashlib.sha256(raw).hexdigest())
+        lower, upper = timestamp(packet.start), timestamp(packet.until)
+        if lower < start or upper > until:
+            return {"state": "FEED_OUTSIDE_REGISTERED_WINDOW"}
+        if (
+            packet.sourceId != registration.sourceId
+            or upper - lower != timedelta(minutes=30)
+            or not upper <= timestamp(packet.exportedAt) <= now
+            or now - upper > timedelta(minutes=40)
+        ):
+            raise ValueError("LOSS_STUDY_FEED_STALE_OR_SCOPE_INVALID")
+        index = int((lower - start).total_seconds() // 1800)
+        if lower != start + timedelta(minutes=30 * index):
+            raise ValueError("LOSS_STUDY_WINDOW_ALIGNMENT")
+        target = directory / f"window-{index:04d}.json"
+        source = directory / f"window-{index:04d}.input.json"
+        # First captured packet is immutable even if a later export revises this window.
+        if source.exists():
+            raw = bounded(source, MAX_BYTES)
+            packet = parse(raw, hashlib.sha256(raw).hexdigest())
+            if timestamp(packet.start) != lower or timestamp(packet.until) != upper:
+                raise ValueError("LOSS_STUDY_PRIOR_INPUT_INVALID")
+        result = report(packet)
+        missing = [i for i in range(index) if not (directory / f"window-{i:04d}.json").exists()]
+        value = {
+            "registrationSha256": digest(registration.model_dump()),
+            "sourceSha256": code,
+            "from": packet.start,
+            "until": packet.until,
+            "missingPriorWindows": missing,
+            "report": result.model_dump(),
+        }
+        if target.exists():
+            prior = read(target)
+            LossControlReport.model_validate(prior["report"])
+            retained_missing = prior.get("missingPriorWindows")
+            if (
+                not isinstance(retained_missing, list)
+                or any(type(i) is not int or not 0 <= i < index for i in retained_missing)
+                or retained_missing != sorted(set(retained_missing))
+                or prior != {**value, "missingPriorWindows": retained_missing}
+            ):
+                raise ValueError("LOSS_STUDY_PRIOR_REPORT_CONFLICT")
+            return {"state": "ALREADY_RECORDED", "window": index}
+        pending_bytes = len(encoded(value)) + (
+            0 if source.exists() else len(encoded(packet.model_dump()))
+        )
+        if (
+            pending_bytes > MAX_BYTES
+            or shutil.disk_usage(directory).free - pending_bytes < 2 * 1024**3
+            or sum(p.stat().st_size for p in directory.iterdir() if p.is_file()) + pending_bytes
+            > 256 * 1024**2
+        ):
+            raise ValueError("LOSS_STUDY_STORAGE_RESERVE")
+        if (
+            fingerprint() != code
+            or read(directory / "registration.json", 8192) != registration.model_dump()
+        ):
+            raise ValueError("LOSS_STUDY_SOURCE_DRIFT")
+        immutable(source, packet.model_dump())
+        immutable(target, value)
+        return {
+            "state": "REPORT_WRITTEN",
+            "window": index,
+            "recommendation": result.recommendation,
+            "missingPriorWindows": len(missing),
+        }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=["register", "run"])
+    parser.add_argument("--directory", type=Path, required=True)
+    parser.add_argument(
+        "--feed", type=Path, default=Path("/var/lib/scalper-observation-feed/current.json")
+    )
+    parser.add_argument("--start")
+    args = parser.parse_args()
+    now = datetime.now(UTC)
+    if args.action == "register":
+        if args.start is None:
+            raise ValueError("LOSS_STUDY_START_REQUIRED")
+        register(args.directory, timestamp(args.start), now, "scalper-epoch314")
+        print("REGISTERED_NOT_QUALIFIED")
+    else:
+        print(json.dumps(run(args.directory, args.feed, now)))
+
+
+if __name__ == "__main__":
+    main()

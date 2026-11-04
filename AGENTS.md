@@ -34,14 +34,16 @@ profile and future start before proposals; only exact terminal proof plus fresh
 reconciliation permits switching. Preserve5% setup/2.5% single-leg ceilings and
 65-tick sizing reserve. Base target allowance5ticks is an experiment, not actual
 cost or economic qualification. Codex WAIT never falls back locally; LOCAL_RANGE
-is a separately registered source, never a paid call. Keep parent515 open until
-two distinct completed allocations have actual fills, outcomes and restart proof.
+is a separately registered source, never a paid call. Parent515/520 engineering acceptance is complete: six distinct filled/completed
+profiles have successors and bound restart proof (issue528 rollout receipt).
 Old registrations/orders remain immutable; verify source activation separately.
 
 ISSUE-528: worker trial payload must match executor base/stress cost fields; exercise
 actual HTTP/DB boundaries. Preserve frozen executor source while deploying isolated
 worker/readers. See `docs/provider-monitor-repair-report.md`; absent Flight paths
 cannot justify hypothetical profitable exits. Keep storage failures visible.
+
+ISSUE-529: use `docs/loss-control-study-report.md`; preserve future registrations, all observation windows and null counterfactual economics. Trial market projection must validate before removing separately retained stress fields. Diagnostic signals do not authorize exits.
 
 ## Before changing an area
 
@@ -208,8 +210,8 @@ and `docs/evidence/study511-normal-capture.json`; economic qualification stays s
 The [finite registered trials](docs/demo-trial-protocol-report.md) are active in
 ONE demo on reviewed PR525/source39588e87. Normal restart preserves orders;
 actual fills, native protection and restart/dedup readbacks are retained in the
-[rollout receipt](docs/evidence/demo-trial-rollout.json). Parent515/520 stay OPEN
-until two distinct allocations naturally fill, complete and register successors.
+[rollout receipt](docs/evidence/demo-trial-rollout.json). Parent515/520 are closed after verified natural multi-profile completion,
+successors and restart proof; economic qualification403 remains open.
 Software qualification and a positive trade do not establish a profitable strategy.
 
 [Daily scorecards and retained trial proof](docs/demo-scorecards-report.md) add

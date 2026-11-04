@@ -186,6 +186,8 @@ Related implementation reports: [cost/tape measurement](docs/experiment-measurem
 
 Current provider/monitoring repair and loss-coverage limits: [ISSUE-528 report](docs/provider-monitor-repair-report.md). Daily learning scorecards include average win/loss; sampled gaps never establish hypothetical profits.
 
+[Loss-control diagnostics](docs/loss-control-study-report.md) preserve full journal denominators while studying structural loss admission, holding time and failed breakouts. Signals are not hypothetical profits or trading authority.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
