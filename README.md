@@ -28,19 +28,19 @@ Continuous operational verification remains in
 [issue 431](https://github.com/AegisFintech/scalping-bot/issues/431).
 See the [quantitative review](docs/quantitative-review-426.md) for recent demo
 payoffs and flight-recorder limits.
-The [latest loss reconstruction](docs/loss496-review.md) verifies all14 current-release
+The [historical loss reconstruction](docs/loss496-review.md) verifies its14
 closed paths and separates broker pips, actual fees and sampled exit evidence.
 
 ## Workflow
 
 ```text
 wait -> completed OHLC / quotes / DOM -> local technical context -> Codex proposal
-     -> deterministic validation / sizing -> one STOP_LIMIT/GTD
+     -> deterministic validation / sizing -> one STOP_LIMIT or retest LIMIT / GTD
      -> native TP/SL and independent maintenance -> reconcile -> repeat
 unfilled expiry -> exact zero-fill broker proof -> fresh market analysis
 ```
 
-A registered trial selects Codex or an explicit local trend-range proposal. Code owns execution,
+A registered trend trial uses Codex proposals; historical LOCAL_RANGE trials remain separate. Code owns execution,
 broker precision, costs, margin, ownership, dynamic sizing and reconciliation.
 WAIT, stale data, closed sessions, active exposure or uncertainty prevent new orders.
 Broker history and reconciliation reject missing or mismatched account identity.
@@ -48,24 +48,26 @@ A filled position never closes just because the pending-entry timer elapsed.
 
 ## Current source contract
 
-| Item            | Contract                                                                 |
-| --------------- | ------------------------------------------------------------------------ |
-| Source / policy | `0.10.0-demo-trials.1-codex.1` / `0.10.0-demo-trials.1`                  |
-| Proposal        | Explicit CODEX Sol API-first or registered LOCAL_RANGE; no WAIT fallback |
-| Entry           | One trend STOP_LIMIT, original completed range, registered60/180s GTD    |
-| Protection      | Structural five-M1 stop <=7; fixed profile TP0.4/0.6/1 price units       |
-| Demo risk       | At most2.5% single leg inside5% setup; dynamic costs/margin/volume       |
-| Evidence        | Completed M15/M5/M1, SMC/DOM, bounded idle tape and flight recorder      |
+| Item            | Contract                                                                                                 |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| Source / policy | `0.11.0-trend-retest.1-codex.1` / `0.11.0-trend-retest.1`                                                |
+| Proposal        | Sol API-first; explicit-credit Codex fallback; WAIT retained                                             |
+| Entry           | Immediate/confirmed breakout STOP_LIMIT or same-direction retest LIMIT;60s GTD                           |
+| Protection      | Original five-M1 range invalidation and nearest known M5/M15 swing target; absolute prices, distances<=7 |
+| Demo risk       | At most2.5% single leg inside5% setup; dynamic costs/margin/volume                                       |
+| Evidence        | Completed M15/M5/M1, SMC/DOM, bounded idle tape and flight recorder                                      |
 
-Native protection stays fill-relative; proposed structural prices and actual
-broker levels are recorded separately. Target admission uses the declared5-tick base allowance; stress evidence and stop
-sizing retain65ticks. None guarantees closing proceeds. Realized net includes signed
-broker fees. `/learning` shows registered trials, source, waits, fills, net and next
-action; stale values are withheld. Persistent model memory is not training.
+Structural SL/TP stay absolute after fills. Admission requires at least1:1 modeled
+net reward/risk at actual sized volume and immediately before submission. STOP_LIMIT
+sizing reserves30entry+65exit points; LIMIT reserves65exit points. These modeled
+reserves do not guarantee closing proceeds. Realized net includes signed broker fees.
+`/learning` shows registered trials, source, waits, fills, net and next action;
+stale values are withheld. Persistent model memory is not training.
 
-See [protocol, tests, activation requirements and rollback](docs/demo-trial-protocol-report.md).
-Source updates do not prove deployment. Historical registrations, orders, native
-protection and broker/accounting history remain unchanged. No profitability claim.
+See [current protocol and activation](docs/trend-retest-plan.md) and the
+[historical0.10 protocol](docs/demo-trial-protocol-report.md). Old registrations,
+orders, native protection and broker/accounting history remain unchanged.
+Profitability remains unproven.
 
 ## Development and verification
 
@@ -159,13 +161,13 @@ and keep study failures separate from trading authority.
 Verified study511 rollout and actual normal capture: `docs/evidence/study511-activation.json`
 and `docs/evidence/study511-normal-capture.json`; economic qualification stays separate.
 
-## Current demo experiment and evidence
+## Historical0.10 demo evidence
 
-The [finite registered trials](docs/demo-trial-protocol-report.md) are active in
-ONE demo on reviewed PR525/source39588e87. Normal restart preserves orders;
+The [finite registered0.10 trials](docs/demo-trial-protocol-report.md) previously ran
+in the one demo on PR525/source39588e87. Normal restart preserved orders;
 actual fills, native protection and restart/dedup readbacks are retained in the
-[rollout receipt](docs/evidence/demo-trial-rollout.json). Parent515/520 stay OPEN
-until two distinct allocations naturally fill, complete and register successors.
+[rollout receipt](docs/evidence/demo-trial-rollout.json). Parent515/520 closed after
+verified multi-profile completion, successors and restart proof.
 Software qualification and a positive trade do not establish a profitable strategy.
 
 [Daily scorecards and retained trial proof](docs/demo-scorecards-report.md) add
@@ -194,7 +196,7 @@ Push maintenance permits up to ten minutes for the local AST graph rebuild; fail
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
 
-Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537). The0.11 implementation adds structural breakout/confirmation/retest allocations, absolute protection and cost-inclusive admission. New retest limits retain trend direction. Qualification, reviewed delivery and actual activation are tracked in the report; source defaults do not prove deployment.
+Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [merged PR537](https://github.com/AegisFintech/scalping-bot/pull/537). The0.11 implementation adds structural breakout/confirmation/retest allocations, absolute protection and cost-inclusive admission. New retest limits retain trend direction. PR537 is merged and the one demo activation is verified, including the first natural v4 WAIT response. See the report for qualification and future-window timing; profitability remains unproven.
 
 <!-- research-publication -->
 

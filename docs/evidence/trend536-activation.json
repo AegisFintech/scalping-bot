@@ -1,0 +1,44 @@
+{
+  "verifiedAt": "2026-11-05T02:55:13.895725+00:00",
+  "implementationPr": 537,
+  "mergedMain": "c493be7087bff17a775118a833fee274415175ec",
+  "artifactCommit": "e67dcccbb701c07f7e7725fca9bd0b30cb48dc4b",
+  "sourceSha256": "de2eead48727bcd55815648f0952c7353ef58380b3083f569add66a0ebeda143",
+  "mode": "demo",
+  "strategyVersion": "0.11.0-trend-retest.1-codex.1",
+  "operationalReady": true,
+  "tradingEnabled": true,
+  "reasonCodes": [],
+  "migration": "0042",
+  "priorMigrationChecksumsVerified": true,
+  "processCount": 5,
+  "processWorkingDirectory": "/opt/ctrader-ai-scalper/releases/trend536-main",
+  "providerRoot": "/opt/scalper-trend536-de2eead48727",
+  "firstNaturalProvider": {
+    "requestedAt": "2026-11-05T02:51:47.528Z",
+    "availableAt": "2026-11-05T02:51:53.394Z",
+    "promptVersion": "entry-scalp-v4",
+    "state": "READY",
+    "decision": "WAIT"
+  },
+  "trial": {
+    "profile_id": "TREND_BREAKOUT",
+    "state": "ACTIVE",
+    "registered_at": "2026-11-05T02:50:39.823Z",
+    "starts_at": "2026-11-05T02:50:40.823Z",
+    "entry_fill_events": 0,
+    "closes": 0,
+    "realized_net": null
+  },
+  "researchWindowStart": "2026-11-05T03:00:00Z",
+  "firstResearchReportDue": "2026-11-05T03:34:00Z",
+  "dashboardHttp": {
+    "/": 200,
+    "/learning": 200
+  },
+  "learningReadState": "ready",
+  "scorecardRelease": "0.11.0-trend-retest.1-codex.1",
+  "historyReset": false,
+  "forcedOrders": false,
+  "profitabilityEstablished": false
+}

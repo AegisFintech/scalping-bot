@@ -5,11 +5,13 @@
   actual-volume net-RR admission, preserved old contracts/active trades, full
   transport/DB/controller integration, reviewed qualification and one-demo activation.
 - Status: foundation qualified with2,924 tests/no skips, four config checks and
-  independent reviews; [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537).
+  independent reviews; [merged PR537](https://github.com/AegisFintech/scalping-bot/pull/537).
   Integrated source passes2,947tests/no skips and both independent reviews.
   Implemented: forward migration0042, exact source handover, four-slot controller,
   same-direction limits,95/65-point sizing and versioned readers.
-  Protected merge and verified deployment remain pending; no economic activation.
+  PR537 merged with protected checks/review; one-demo activation verified with
+  READY/WAIT from the actual v4 provider. Engineering acceptance complete;
+  prospective outcomes and profitability remain unqualified.
 - Specification: `docs/trend-retest-plan.md`.
 
 ### ISSUE-534 — First registered R:R review
