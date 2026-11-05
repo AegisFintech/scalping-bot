@@ -73,6 +73,8 @@ Profitability remains unproven.
 separates actual net results from WAIT/geometry diagnostics. A separately frozen
 observer supports0.11 without rewriting legacy loss/R:R reports. Daily net after
 costs remains the objective; a zero-trade partial day is not a winning strategy.
+[PR540](https://github.com/AegisFintech/scalping-bot/pull/540) records qualified
+source; its prepared release and activation checks are documented separately.
 
 ## Development and verification
 

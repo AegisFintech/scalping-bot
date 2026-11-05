@@ -142,3 +142,26 @@ Final full qualification passes20 checks and2,956 tests with no skips:1,345 Node
 independent review axes are CLEAR; all four configuration checks pass. Hosted
 exact-head checks, independent GitHub approval, reviewed merge and actual activation
 remain required before completion is claimed.
+
+## Prepared deployment checkpoint
+
+[PR540](https://github.com/AegisFintech/scalping-bot/pull/540) carries the qualified
+source. The clean source release was built under `/mnt/sdb/scalper/releases/trend539-main`
+and passed `release:verify`; source fingerprint is
+`ffd04a813a915f4d341375f6db56bb8045461d690b32169b5909f770ca28e630`.
+Existing runtime/log links target the unchanged persistent epoch314 state.
+
+Deployment preflight must reverify the artifact, exact-head hosted checks and
+independent approval; stop only the existing demo executor to drain inference,
+verify current terminal/owned broker evidence, then apply0043 as the local database
+owner under the existing migration lock after checking all42 historical checksums.
+Start matched protected artifacts and verify actual PIDs/cwds and controller source
+handover. Do not clear controls, reset history or claim rollback to an incompatible
+old source head. New observer state belongs to scalper-flight, its frozen code to
+root; verify feed read access and denied credentials/network before enabling its
+separate timer. Future registration must precede its half-hour start. Record actual
+capture separately from the retrospective compatibility probe.
+
+The protected branch also requires approval from someone other than the last
+pusher. Publish source through its author credential and obtain the independent
+reviewer approval on that exact head; do not change branch rules.

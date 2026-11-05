@@ -33,6 +33,8 @@ trend observation1.0. Read `docs/trend-observation-net-review.md`. Receipt fresh
 uses local market capture; source freshness uses broker time. Preserve both clocks,
 the3-second bounds, old studies and exact-source terminal-proof handover. Recorded
 geometry and zero-trade days are not net-profit evidence.
+PR540 has a prepared verified artifact; exact-head checks and a reviewer distinct
+from the last pusher must pass before activation.
 
 Operator-approved #536 runs finite registered0.11 DEMO trend trials in the ONE
 existing executor. Before changing trials, source handover, structural protection or
