@@ -225,3 +225,72 @@ describe("OcoRiskEvaluator trend filter (ISSU-102b)", () => {
     expect(result.commands).toHaveLength(2);
   });
 });
+
+it.each(["STOP_LIMIT", "LIMIT"] as const)(
+  "sizes structural %s within the single-leg budget and keeps direction",
+  async (kind) => {
+    const r = response();
+    Object.assign(r.buy_stop, {
+      entry_price: "2000",
+      trigger_price: "2000",
+      stop_loss: "1999",
+      invalidation_price: "1999",
+      take_profit: "2005",
+      risk_reward_ratio: "5",
+    });
+    const evaluator = new OcoRiskEvaluator({
+      marginEstimator: marginEstimator as never,
+      baseRiskPercent: "5",
+      maxRiskPercent: "5",
+      maxMarginUsagePercent: "100",
+      maxPositionNotional: null,
+      strategyVersion: "0.11.0-trend-retest.1-codex.1",
+      executionOrderType: kind,
+      adverseSlippagePoints: kind === "LIMIT" ? "65" : "95",
+      timeInForce: "GTD",
+      modelDefinedScalp: true,
+      entryRangePoints: () => (kind === "LIMIT" ? undefined : "30"),
+    });
+    const result = await evaluator.evaluate({
+      response: r,
+      account: account(),
+      metadata: metadata(),
+      selectedSide: "BUY",
+      quote: {
+        bid: "2000.10",
+        ask: "2000.20",
+        sourceTime: r.generated_at,
+        receivedAt: r.generated_at,
+      },
+    });
+    expect(result.approved, JSON.stringify(result.reasonCodes)).toBe(true);
+    expect(result.commands).toBeNull();
+    expect(result.directionalCommand).toMatchObject({
+      side: "BUY",
+      executionOrderType: kind,
+      entryPrice: "2000",
+      stopLoss: "1999",
+      takeProfit: "2005",
+      timeInForce: "GTD",
+    });
+    if (kind === "LIMIT")
+      expect(result.directionalCommand).not.toHaveProperty("entryRangePoints");
+    expect(Number(result.directionalRisk!.maximumLoss)).toBeLessThanOrEqual(
+      250,
+    );
+    Object.assign(r.buy_stop, { stop_loss: "bad" });
+    const rejected = await evaluator.evaluate({
+      response: r,
+      account: account(),
+      metadata: metadata(),
+      selectedSide: "BUY",
+      quote: {
+        bid: "2000.10",
+        ask: "2000.20",
+        sourceTime: r.generated_at,
+        receivedAt: r.generated_at,
+      },
+    });
+    expect(rejected.approved).toBe(false);
+  },
+);

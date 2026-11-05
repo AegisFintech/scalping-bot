@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
-from python.codex_entry.service import PayloadScalp, TrialPayload
+from python.codex_entry.service import PayloadScalp, TrendPayload, TrialPayload
 from python.operations.entry_context import timestamp
 from python.research import learning_evidence as contract
 
@@ -99,8 +99,16 @@ def context(row: dict[str, Any], cohort_role: str) -> dict[str, Any]:
     market = None
     if row.get("provider_input") is not None:
         try:
-            if row["origin_release"] == "0.10.0-demo-trials.1-codex.1":
-                trial = TrialPayload.model_validate_json(row["provider_input"])
+            if row["origin_release"] in {
+                "0.10.0-demo-trials.1-codex.1",
+                "0.11.0-trend-retest.1-codex.1",
+            }:
+                payload_type = (
+                    TrendPayload
+                    if row["origin_release"] == "0.11.0-trend-retest.1-codex.1"
+                    else TrialPayload
+                )
+                trial = payload_type.model_validate_json(row["provider_input"])
                 # Keep the immutable 1.0 research projection; exact stress fields
                 # remain in the hashed provider input, not a new risk estimate.
                 projected = trial.model_dump()

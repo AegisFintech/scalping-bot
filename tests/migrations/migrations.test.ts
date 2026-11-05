@@ -110,6 +110,7 @@ describe("migrations", () => {
       "0039_cost_balanced_scalp.sql",
       "0040_context_consultations.sql",
       "0041_demo_trial_protocol.sql",
+      "0042_trend_retest_trials.sql",
     ]);
     const sql = (
       await Promise.all(

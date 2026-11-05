@@ -236,6 +236,8 @@ Keep the push graph rebuild bounded at ten minutes on the shared host; never byp
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
 
+Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537). Before changing0.11 trials, handover, absolute protection or research readers, read the specification. Preserve historical reversal semantics and immutable registrations; new retest limits retain trend direction. Verify deployed source independently.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

@@ -1,3 +1,17 @@
+### ISSUE-536 — Trend breakout/retest demo comparison
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/536; depends on534.
+- Acceptance: versioned causal geometry, same-direction limits, structural room and
+  actual-volume net-RR admission, preserved old contracts/active trades, full
+  transport/DB/controller integration, reviewed qualification and one-demo activation.
+- Status: foundation qualified with2,924 tests/no skips, four config checks and
+  independent reviews; [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537).
+  Integrated source passes2,947tests/no skips and both independent reviews.
+  Implemented: forward migration0042, exact source handover, four-slot controller,
+  same-direction limits,95/65-point sizing and versioned readers.
+  Protected merge and verified deployment remain pending; no economic activation.
+- Specification: `docs/trend-retest-plan.md`.
+
 ### ISSUE-534 — First registered R:R review
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/534; depends on532.

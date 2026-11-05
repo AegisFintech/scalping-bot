@@ -27,6 +27,9 @@ from python.codex_entry.service import (
     ResponseV19,
     ResponseV110,
     ResponseV111,
+    ResponseV112,
+    ResponseV113,
+    ResponseV114,
     parse_request,
     run,
 )
@@ -151,7 +154,10 @@ def create_app(
         | ResponseV18
         | ResponseV19
         | ResponseV110
-        | ResponseV111,
+        | ResponseV111
+        | ResponseV112
+        | ResponseV113
+        | ResponseV114,
     )
     async def propose(
         request: HttpRequest, authorization: Annotated[str | None, Header()] = None
@@ -201,7 +207,7 @@ def main() -> None:
     if expected not in SUPPORTED_PROMPTS:
         raise ValueError("CODEX_PROMPT_VERSION_INVALID")
     source_sha256 = None
-    if expected == "entry-scalp-v3":
+    if expected in {"entry-scalp-v3", "entry-scalp-v4"}:
         manifest = (
             Path(os.environ["CODEX_ENTRY_PROMPT_FILE"]).resolve().parents[1]
             / "release-manifest.json"

@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
 import type { ProfitExitEvidence } from "./quick-profit-exit.js";
 import { Decimal } from "decimal.js";
 import type { PositionProtection } from "../../../packages/contracts/src/position-protection.js";
@@ -140,11 +141,29 @@ export function protectionPlan(
   };
   const sl = actual(raw.stopLoss),
     tp = actual(raw.takeProfit);
-  const roundedSl = (buy ? price.minus(slDistance) : price.plus(slDistance))
+  const structural = position.strategyVersion === TREND_RETEST_VERSION;
+  if (
+    structural &&
+    position.label !== `ctrader-ai-scalper:${TREND_RETEST_VERSION}`
+  )
+    throw new Error("POSITION_PROTECTION_STRATEGY_MISMATCH");
+  const roundedSl = (
+    structural
+      ? positive(position.orderStopLoss)
+      : buy
+        ? price.minus(slDistance)
+        : price.plus(slDistance)
+  )
     .div(tick)
     .toDecimalPlaces(0, buy ? Decimal.ROUND_CEIL : Decimal.ROUND_FLOOR)
     .mul(tick);
-  const roundedTp = (buy ? price.plus(tpDistance) : price.minus(tpDistance))
+  const roundedTp = (
+    structural
+      ? positive(position.orderTakeProfit)
+      : buy
+        ? price.plus(tpDistance)
+        : price.minus(tpDistance)
+  )
     .div(tick)
     .toDecimalPlaces(0, buy ? Decimal.ROUND_FLOOR : Decimal.ROUND_CEIL)
     .mul(tick);

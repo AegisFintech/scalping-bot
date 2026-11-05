@@ -1,3 +1,13 @@
+import {
+  trendProfiles,
+  trendCatalogueSha256,
+} from "../../packages/strategy-candidates/src/trend-retest-profile.js";
+import { trendInput } from "../helpers/trend-input.js";
+import { trendRetestGeometry } from "../../packages/strategy-candidates/src/trend-retest.js";
+import {
+  TREND_RETEST_VERSION,
+  TREND_PREDECESSOR_SOURCE,
+} from "../../packages/config/src/trend-retest-policy.js";
 import { spawnSync } from "node:child_process";
 import { MAX_PERSISTED_CANDLE_TAILS } from "../../apps/execution-service/src/decision-storage.js";
 import { createHash } from "node:crypto";
@@ -27,7 +37,8 @@ const url = process.env.TEST_DATABASE_URL;
     let admin: pg.Pool, pool: pg.Pool;
     let tradeCounter = 0;
     const schema = `trials_${randomUUID().replaceAll("-", "")}`,
-      strategy = randomUUID();
+      strategy = randomUUID(),
+      trendStrategy = randomUUID();
     beforeAll(async () => {
       admin = createPool({ connectionString: url! });
       await admin.query(`CREATE SCHEMA ${schema}`);
@@ -38,6 +49,10 @@ const url = process.env.TEST_DATABASE_URL;
       await pool.query(
         "INSERT INTO strategy_versions(id,version,code_hash,config_hash,prompt_version,schema_version,feature_version) VALUES($1,$2,'fixture','fixture','demo-trial-execution-v1','2.1','1.1')",
         [strategy, DEMO_TRIAL_STRATEGY_VERSION],
+      );
+      await pool.query(
+        "INSERT INTO strategy_versions(id,version,code_hash,config_hash,prompt_version,schema_version,feature_version) VALUES($1,$2,'fixture','fixture','trend-retest-execution-v1','2.1','1.1')",
+        [trendStrategy, TREND_RETEST_VERSION],
       );
     }, 60000);
     afterAll(async () => {
@@ -118,7 +133,249 @@ assert partial["trialOutcomes"] == []
       }
     });
 
-    async function fixture(local = false) {
+    it("registers a future trend allocation with matching mode and typed status", async () => {
+      const x = await fixture(false, true);
+      await expect(x.controller.check()).rejects.toThrow(
+        "DEMO_TRIAL_NOT_READY",
+      );
+      const status = await x.controller.summary();
+      expect(status.schemaVersion).toBe("demo-trial-status-1.1");
+      expect(status.trials).toHaveLength(1);
+      expect(status.trials[0]).toMatchObject({
+        profile_id: "TREND_BREAKOUT",
+        ordinal: 0,
+        cycle: 0,
+      });
+      const typed = spawnSync(
+        ".venv/bin/python",
+        [
+          "-c",
+          "import sys;from python.research.demo_trial_status import status_reader;status_reader.validate_json(sys.stdin.buffer.read())",
+        ],
+        { encoding: "utf8", input: JSON.stringify(status) },
+      );
+      expect(typed.status, typed.stderr).toBe(0);
+    });
+
+    it("hands over only the pinned predecessor after fresh safe reconciliation", async () => {
+      const x = await fixture(false, false, TREND_PREDECESSOR_SOURCE);
+      await expect(x.controller.check()).rejects.toThrow(
+        "DEMO_TRIAL_NOT_READY",
+      );
+      let safe = false;
+      const next = new DemoTrials(
+        pool,
+        {
+          ...x.scope,
+          strategyVersionId: trendStrategy,
+          strategyVersion: TREND_RETEST_VERSION,
+        },
+        "c".repeat(64),
+        () => Promise.resolve("OPEN"),
+        () => Promise.resolve(safe),
+      );
+      await expect(next.check()).rejects.toThrow();
+      expect((await next.summary()).trials).toHaveLength(1);
+      safe = true;
+      await expect(next.check()).rejects.toThrow();
+      const status = await next.summary();
+      expect(status.trials).toHaveLength(2);
+      expect(status.trials[0]).toMatchObject({
+        source_sha256: "c".repeat(64),
+        ordinal: 0,
+        cycle: 1,
+        profile_id: "TREND_CONFIRMED",
+      });
+      expect(status.trials[1]).toMatchObject({
+        state: "COMPLETED",
+        retirement_reason: "SOURCE_HANDOVER",
+        source_sha256: TREND_PREDECESSOR_SOURCE,
+      });
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            "SELECT count(*)::int AS n FROM demo_trial_events WHERE trial_id=$1 AND kind='SOURCE_HANDOVER_REQUESTED'",
+            [status.trials[1]!.id],
+          )
+        ).rows[0]!.n,
+      ).toBe(1);
+    });
+
+    it("refuses an unregistered predecessor source without retiring it", async () => {
+      const x = await fixture();
+      await expect(x.controller.check()).rejects.toThrow(
+        "DEMO_TRIAL_NOT_READY",
+      );
+      const next = new DemoTrials(
+        pool,
+        {
+          ...x.scope,
+          strategyVersionId: trendStrategy,
+          strategyVersion: TREND_RETEST_VERSION,
+        },
+        "c".repeat(64),
+        () => Promise.resolve("OPEN"),
+        () => Promise.resolve(true),
+      );
+      await expect(next.check()).rejects.toThrow();
+      const status = await next.summary();
+      expect(status.trials).toHaveLength(1);
+      expect(status.reason).toBe("DEMO_TRIAL_SOURCE_DRIFT");
+      expect(status.trials[0]!.state).toBe("ACTIVE");
+    });
+
+    it("enforces the same completed-candle structural prices in SQL", async () => {
+      const input = trendInput();
+      const context = {
+        captured_at: input.capturedAt,
+        tick_size: input.tickSize,
+        candles: input.candles.map((f) => ({
+          timeframe: f.timeframe,
+          rows: f.candles.map((c) => [
+            c.startTime,
+            c.endTime,
+            c.open,
+            c.high,
+            c.low,
+            c.close,
+            c.volume,
+            c.complete,
+            c.qualityFlags,
+          ]),
+        })),
+      };
+      for (const style of [
+        "BREAKOUT",
+        "CONFIRMED_BREAKOUT",
+        "RETEST_LIMIT",
+      ] as const) {
+        const geometry = trendRetestGeometry(input, style);
+        if (geometry.decision === "WAIT") throw new Error(geometry.reason);
+        const plan = {
+          entry_side: geometry.decision,
+          buy_stop: geometry.entryPrice,
+          stop_loss: geometry.stopLoss,
+          take_profit: geometry.takeProfit,
+        };
+        await pool.query(
+          "SELECT validate_trend_geometry($1::jsonb,$2::jsonb,$3)",
+          [plan, context, style],
+        );
+        await expect(
+          pool.query("SELECT validate_trend_geometry($1::jsonb,$2::jsonb,$3)", [
+            { ...plan, buy_stop: "4001.99" },
+            context,
+            style,
+          ]),
+        ).rejects.toThrow("TREND_GEOMETRY_MISMATCH");
+      }
+      const bad = structuredClone(context);
+      bad.candles[0]!.rows.at(-1)![7] = false;
+      await expect(
+        pool.query(
+          "SELECT validate_trend_geometry($1::jsonb,$2::jsonb,'RETEST_LIMIT')",
+          [{}, bad],
+        ),
+      ).rejects.toThrow("TREND_HISTORY_INVALID");
+    });
+
+    it("rejects a successor whose source differs from its handover receipt", async () => {
+      const x = await fixture(false, false, TREND_PREDECESSOR_SOURCE);
+      await x.controller.tick();
+      const old = (await x.controller.summary()).trials[0]!;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          "INSERT INTO demo_trial_events(trial_id,kind,details) VALUES($1,'SOURCE_HANDOVER_REQUESTED',$2)",
+          [
+            old.id,
+            {
+              fromSourceSha256: TREND_PREDECESSOR_SOURCE,
+              toSourceSha256: "c".repeat(64),
+              toStrategyVersion: TREND_RETEST_VERSION,
+              toCatalogueSha256:
+                "287a992ca3bdba0dc97d0364f0692ed5f0630194d38ca49088c572d9a2bade9f",
+            },
+          ],
+        );
+        await client.query(
+          "UPDATE demo_trials SET state='DRAINING',retirement_reason='SOURCE_HANDOVER' WHERE id=$1",
+          [old.id],
+        );
+        await client.query(
+          "UPDATE demo_trials SET state='COMPLETED',completed_at=clock_timestamp() WHERE id=$1",
+          [old.id],
+        );
+        const next = randomUUID();
+        await client.query(
+          `INSERT INTO demo_trials(id,account_id,symbol_id,mode,strategy_version_id,source_sha256,catalogue_sha256,profile_id,profile_sha256,cycle,ordinal,starts_at,mode_revision,state)
+          SELECT $1,t.account_id,t.symbol_id,t.mode,$2,$3,p.catalogue_sha256,p.profile_id,p.profile_sha256,t.cycle+1,0,clock_timestamp()+interval '1 second',t.mode_revision,'ACTIVE'
+          FROM demo_trials t CROSS JOIN demo_trial_profiles p WHERE t.id=$4 AND p.profile_id='TREND_CONFIRMED'`,
+          [next, trendStrategy, "d".repeat(64), old.id],
+        );
+        await expect(
+          client.query(
+            "UPDATE demo_trial_heads SET trial_id=$1 WHERE trial_id=$2",
+            [next, old.id],
+          ),
+        ).rejects.toThrow("DEMO_TRIAL_HANDOVER_TARGET_INVALID");
+      } finally {
+        await client.query("ROLLBACK");
+        client.release();
+      }
+    });
+
+    it.each([0, 1, 3])(
+      "records the complete structural profile lifecycle (slot %s)",
+      async (ordinal) => {
+        const x = await fixture(false, true);
+        const profile = trendProfiles[ordinal === 3 ? 2 : ordinal]!;
+        const id = randomUUID(),
+          revision = randomUUID();
+        await pool.query(
+          "UPDATE entry_mode_settings SET entry_mode=$3,revision=$4 WHERE account_id=$1 AND symbol_id=$2",
+          [
+            x.scope.accountId,
+            x.scope.symbolId,
+            ordinal === 3 ? "SINGLE_LIMIT" : "SINGLE_STOP_LIMIT",
+            revision,
+          ],
+        );
+        await pool.query(
+          `INSERT INTO demo_trials(id,account_id,symbol_id,mode,strategy_version_id,source_sha256,catalogue_sha256,profile_id,profile_sha256,cycle,ordinal,starts_at,mode_revision,state)
+        VALUES($1,$2,$3,'demo',$4,$5,$6,$7,$8,0,$9,clock_timestamp()+interval '10 milliseconds',$10,'ACTIVE')`,
+          [
+            id,
+            x.scope.accountId,
+            x.scope.symbolId,
+            trendStrategy,
+            "b".repeat(64),
+            trendCatalogueSha256,
+            profile.id,
+            profileSha256(profile),
+            ordinal,
+            revision,
+          ],
+        );
+        await pool.query(
+          "INSERT INTO demo_trial_heads VALUES($1,$2,'demo',$3)",
+          [x.scope.accountId, x.scope.symbolId, id],
+        );
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        await x.controller.check();
+        await completedTrade(x);
+        const row = (await x.controller.summary()).trials[0]!;
+        expect(row.closes).toBe(1);
+        expect(row.entry_fill_events).toBe(1);
+      },
+    );
+
+    async function fixture(
+      local = false,
+      trend = false,
+      source = "b".repeat(64),
+    ) {
       const accountId = randomUUID(),
         symbolId = randomUUID(),
         analysis = randomUUID();
@@ -134,7 +391,8 @@ assert partial["trialOutcomes"] == []
         accountId,
         symbolId,
         mode: "demo",
-        strategyVersionId: strategy,
+        strategyVersionId: trend ? trendStrategy : strategy,
+        ...(trend ? { strategyVersion: TREND_RETEST_VERSION } : {}),
       };
       const modes = new EntryModeStore(pool, scope);
       await modes.initialize();
@@ -143,7 +401,7 @@ assert partial["trialOutcomes"] == []
       const controller = new DemoTrials(
         pool,
         scope,
-        "b".repeat(64),
+        source,
         () => Promise.resolve(open),
         () => Promise.resolve(safe),
       );
@@ -212,13 +470,63 @@ assert partial["trialOutcomes"] == []
         true,
         [],
       ]);
+      const trend = binding.strategyVersion === TREND_RETEST_VERSION;
+      const profile = trendProfiles.find((p) => p.id === binding.profileId);
+      const structural = trendInput();
+      const shift =
+        end - Math.floor(Date.parse(structural.capturedAt) / 60000) * 60000;
+      structural.capturedAt = captured;
+      for (const frame of structural.candles)
+        for (const bar of frame.candles)
+          Object.assign(bar, {
+            startTime: new Date(
+              Date.parse(bar.startTime) + shift,
+            ).toISOString(),
+            endTime: new Date(Date.parse(bar.endTime) + shift).toISOString(),
+          });
+      Object.assign(structural.quote!, {
+        sourceTime: captured,
+        receivedAt: captured,
+      });
+      const geometry = trend
+        ? trendRetestGeometry(structural, profile!.entryStyle)
+        : null;
+      if (geometry?.decision === "WAIT") throw new Error(geometry.reason);
+      const entryPrice = geometry?.entryPrice ?? "4002.01",
+        stopLoss = geometry?.stopLoss ?? "3999",
+        takeProfit = geometry?.takeProfit ?? "4003.01";
+      const executionPrompt = trend
+        ? "trend-retest-execution-v1"
+        : "demo-trial-execution-v1";
+      const orderType =
+        profile?.entryStyle === "RETEST_LIMIT" ? "LIMIT" : "STOP_LIMIT";
+      const requestContext = trend
+        ? {
+            captured_at: captured,
+            tick_size: "0.01",
+            candles: structural.candles.map((f) => ({
+              timeframe: f.timeframe,
+              rows: f.candles.map((c) => [
+                c.startTime,
+                c.endTime,
+                c.open,
+                c.high,
+                c.low,
+                c.close,
+                c.volume,
+                c.complete,
+                c.qualityFlags,
+              ]),
+            })),
+          }
+        : { tick_size: "0.01", candles: [{ timeframe: "M1", rows }] };
       const raw = JSON.stringify({
         decision: "BUY",
         reason: "Synthetic recorded lifecycle",
-        entry_price: "4002.01",
-        take_profit: "4003.01",
-        stop_loss: "3999",
-        pending_seconds: 180,
+        entry_price: entryPrice,
+        take_profit: takeProfit,
+        stop_loss: stopLoss,
+        pending_seconds: trend ? 60 : 180,
       });
       const plan = bindScalpDecision(
         raw,
@@ -229,18 +537,30 @@ assert partial["trialOutcomes"] == []
           tickSize: "0.01",
           observedM1End: new Date(end).toISOString(),
         },
-        DEMO_TRIAL_STRATEGY_VERSION,
+        binding.strategyVersion,
       );
       const c = await pool.connect();
       try {
         await c.query("BEGIN");
         await c.query(
           "INSERT INTO analysis_runs(id,account_id,symbol_id,strategy_version_id,mode,state,analysis_time) VALUES($1,$2,$3,$4,'demo','DEFERRED',clock_timestamp())",
-          [analysis, x.scope.accountId, x.scope.symbolId, strategy],
+          [
+            analysis,
+            x.scope.accountId,
+            x.scope.symbolId,
+            x.scope.strategyVersionId,
+          ],
         );
         await c.query(
-          "INSERT INTO scenario_contexts(id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id) VALUES($1,$2,$3,'demo',clock_timestamp(),$4::timestamptz,$4::timestamptz+interval '5 minutes','REQUESTING','local-range-v1','0.01',$5)",
-          [contextId, x.scope.accountId, x.scope.symbolId, captured, analysis],
+          "INSERT INTO scenario_contexts(id,account_id,symbol_id,mode,requested_at,captured_at,valid_until,state,requested_model,tick_size,source_analysis_id) VALUES($1,$2,$3,'demo',clock_timestamp(),$4::timestamptz,$4::timestamptz+interval '5 minutes','REQUESTING',$6,'0.01',$5)",
+          [
+            contextId,
+            x.scope.accountId,
+            x.scope.symbolId,
+            captured,
+            analysis,
+            trend ? "gpt-6.1-sol" : "local-range-v1",
+          ],
         );
         await c.query(
           "INSERT INTO provider_prompt_artifacts(content,version) VALUES($1,$2) ON CONFLICT(content_sha256) DO NOTHING",
@@ -248,14 +568,7 @@ assert partial["trialOutcomes"] == []
         );
         await c.query(
           "INSERT INTO context_provider_evidence(context_id,prompt_sha256,request_text) VALUES($1,$2,$3)",
-          [
-            contextId,
-            artifact.sha256,
-            JSON.stringify({
-              tick_size: "0.01",
-              candles: [{ timeframe: "M1", rows }],
-            }),
-          ],
+          [contextId, artifact.sha256, JSON.stringify(requestContext)],
         );
         await c.query(
           "INSERT INTO demo_trial_contexts(context_id,trial_id) VALUES($1,$2)",
@@ -281,11 +594,11 @@ assert partial["trialOutcomes"] == []
         pool,
         accountId: x.scope.accountId,
         symbolId: x.scope.symbolId,
-        strategyVersionId: strategy,
+        strategyVersionId: x.scope.strategyVersionId,
         mode: "demo",
         apiStyle: "responses",
         model: "gpt-6.1-sol",
-        promptVersion: "demo-trial-execution-v1",
+        promptVersion: executionPrompt,
         schemaVersion: "2.1",
         payloadMode: "compact",
         instanceId: "fixture",
@@ -299,7 +612,7 @@ assert partial["trialOutcomes"] == []
         r,
         JSON.stringify(r),
         {
-          version: "demo-trial-execution-v1",
+          version: executionPrompt,
           content,
           sha256: createHash("sha256").update(content).digest("hex"),
         },
@@ -318,18 +631,30 @@ assert partial["trialOutcomes"] == []
       try {
         await intent.query("BEGIN");
         await intent.query(
-          "INSERT INTO order_groups(id,analysis_id,idempotency_key,mode,state,expires_at,time_in_force,submission_valid_until,context_plan_id,entry_side,execution_mode,mode_revision) VALUES($1::uuid,$2,$1::text,'demo','INTENT_RECORDED',$3,'GTD',$3,$4,'BUY','SINGLE_STOP_LIMIT',$5)",
-          [group, analysis, plan.valid_until, contextId, revision],
+          "INSERT INTO order_groups(id,analysis_id,idempotency_key,mode,state,expires_at,time_in_force,submission_valid_until,context_plan_id,entry_side,execution_mode,mode_revision) VALUES($1::uuid,$2,$1::text,'demo','INTENT_RECORDED',$3,'GTD',$3,$4,'BUY',$6,$5)",
+          [
+            group,
+            analysis,
+            plan.valid_until,
+            contextId,
+            revision,
+            orderType === "LIMIT" ? "SINGLE_LIMIT" : "SINGLE_STOP_LIMIT",
+          ],
         );
         await intent.query(
-          "INSERT INTO orders(id,account_id,order_group_id,side,order_type,state,client_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,requested_volume,normalized_volume,filled_volume,expires_at,time_in_force,submission_valid_until,execution_order_type,broker_order_id,entry_range_points) VALUES($1::uuid,$2,$3,'BUY','STOP','PENDING',$1::text,true,$4,$1::text,4002.01,3999,4003.01,100,100,0,$5,'GTD',$5,'STOP_LIMIT',$6,30)",
+          "INSERT INTO orders(id,account_id,order_group_id,side,order_type,state,client_order_id,strategy_owned,strategy_label,idempotency_key,entry_price,stop_loss,take_profit,requested_volume,normalized_volume,filled_volume,expires_at,time_in_force,submission_valid_until,execution_order_type,broker_order_id,entry_range_points) VALUES($1::uuid,$2,$3,'BUY','STOP','PENDING',$1::text,true,$4,$1::text,$7,$8,$9,100,100,0,$5,'GTD',$5,$10,$6,$11)",
           [
             order,
             x.scope.accountId,
             group,
-            `ctrader-ai-scalper:${DEMO_TRIAL_STRATEGY_VERSION}`,
+            `ctrader-ai-scalper:${binding.strategyVersion}`,
             plan.valid_until,
             brokerOrder,
+            entryPrice,
+            stopLoss,
+            takeProfit,
+            orderType,
+            orderType === "LIMIT" ? null : 30,
           ],
         );
         await intent.query("COMMIT");
@@ -356,7 +681,7 @@ assert partial["trialOutcomes"] == []
         brokerOrderId: brokerOrder,
         brokerPositionId: brokerPosition,
         brokerFillId: "3" + n,
-        brokerOrderType: 6,
+        brokerOrderType: orderType === "LIMIT" ? 2 : 6,
         closingOrder: false,
         order: {
           clientOrderId: order,
@@ -371,9 +696,9 @@ assert partial["trialOutcomes"] == []
           side: "BUY" as const,
           state: "OPEN" as const,
           volume: "100",
-          entryPrice: "4002.01",
-          stopLoss: "3999",
-          takeProfit: "4003.01",
+          entryPrice,
+          stopLoss,
+          takeProfit,
           openedAt: opened,
           closedAt: null,
           updatedAt: opened,
@@ -382,7 +707,7 @@ assert partial["trialOutcomes"] == []
           brokerFillId: "3" + n,
           brokerOrderId: brokerOrder,
           brokerPositionId: brokerPosition,
-          price: "4002.01",
+          price: entryPrice,
           volume: "100",
           commission: "-0.01",
           occurredAt: opened,
@@ -436,12 +761,12 @@ assert partial["trialOutcomes"] == []
               ...entry.fill,
               brokerFillId: deal,
               brokerOrderId: closeOrder,
-              price: "4003.01",
+              price: takeProfit,
               commission: "-0.02",
               occurredAt: at,
             },
             closeDetail: {
-              entryPrice: "4002.01",
+              entryPrice,
               grossProfit: "10",
               swap: "0",
               commission: "-0.02",

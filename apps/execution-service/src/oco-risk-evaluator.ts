@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
 import { createHash, randomUUID } from "node:crypto";
 
 import { Decimal } from "decimal.js";
@@ -40,7 +41,7 @@ export interface OcoRiskEvaluatorOptions {
   readonly executionOrderType?: "STOP" | "STOP_LIMIT" | "LIMIT";
   readonly adverseSlippagePoints?: string;
   readonly modelDefinedScalp?: boolean;
-  readonly entryRangePoints?: () => "10" | "30";
+  readonly entryRangePoints?: () => "10" | "30" | undefined;
   readonly timeInForce?: "GTD" | "GTC";
   readonly strategyLabelPrefix?: string;
   readonly riskMultiplier?: () => string;
@@ -411,7 +412,11 @@ export class OcoRiskEvaluator {
         return this.#reject("DIRECTIONAL_SIDE_INVALID");
       if (
         this.#options.modelDefinedScalp &&
-        (this.#options.executionOrderType !== "STOP_LIMIT" ||
+        ((this.#options.executionOrderType !== "STOP_LIMIT" &&
+          !(
+            this.#options.strategyVersion === TREND_RETEST_VERSION &&
+            this.#options.executionOrderType === "LIMIT"
+          )) ||
           this.#options.timeInForce !== "GTD")
       )
         return this.#reject("DIRECTIONAL_EXECUTION_POLICY_INVALID");
@@ -501,6 +506,7 @@ export class OcoRiskEvaluator {
             "SINGLE",
           ].join(":");
           const digest = createHash("sha256").update(identity).digest("hex");
+          const entryRangePoints = this.#options.entryRangePoints?.();
           return {
             approved: true,
             reasonCodes: [],
@@ -510,9 +516,7 @@ export class OcoRiskEvaluator {
             perLegRiskPercent: percent,
             directionalRisk: { ...risk, estimatedMargin: canonical(exact) },
             directionalCommand: {
-              ...(this.#options.entryRangePoints
-                ? { entryRangePoints: this.#options.entryRangePoints() }
-                : {}),
+              ...(entryRangePoints === undefined ? {} : { entryRangePoints }),
               executionOrderType: this.#options.executionOrderType as
                 "STOP_LIMIT" | "LIMIT",
               timeInForce: this.#options.modelDefinedScalp ? "GTD" : "GTC",

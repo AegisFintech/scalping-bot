@@ -16,9 +16,9 @@ import {
 import {
   CODEX_ENTRY_MODEL,
   CODEX_STRATEGY_VERSION,
-  DEMO_TRIAL_STRATEGY_VERSION,
 } from "../../config/src/policy.js";
 export { CODEX_ENTRY_MODEL };
+import { TREND_RETEST_VERSION } from "../../config/src/trend-retest-policy.js";
 const receipt = z
   .object({
     version: z.literal("codex-entry-response-1.6"),
@@ -74,6 +74,16 @@ const trialApiReceipt = apiReceipt.extend({
 });
 const trialFallbackReceipt = fallbackReceipt.extend({
   version: z.literal("codex-entry-response-1.11"),
+});
+
+const trendReceipt = receipt.extend({
+  version: z.literal("codex-entry-response-1.12"),
+});
+const trendApiReceipt = apiReceipt.extend({
+  version: z.literal("codex-entry-response-1.13"),
+});
+const trendFallbackReceipt = fallbackReceipt.extend({
+  version: z.literal("codex-entry-response-1.14"),
 });
 
 /** Explicitly selected proposal transport; never owns broker execution authority. */
@@ -136,9 +146,13 @@ export class CodexEntryClient {
             sha256: this.#sha,
           }
         : trialPrompt(experiment);
+    const trend = experiment?.strategyVersion === TREND_RETEST_VERSION;
     const body = JSON.stringify({
-      version:
-        experiment !== undefined
+      version: trend
+        ? this.options.provider === "openai-api"
+          ? "codex-entry-request-1.19"
+          : "codex-entry-request-1.18"
+        : experiment !== undefined
           ? this.options.provider === "openai-api"
             ? "codex-entry-request-1.17"
             : "codex-entry-request-1.16"
@@ -180,8 +194,13 @@ export class CodexEntryClient {
       );
       if (!response.ok) throw new Error("CODEX_UNAVAILABLE_OR_UNKNOWN");
       const raw = await boundedResponseText(response, 16_384);
-      const value =
-        experiment !== undefined
+      const value = trend
+        ? this.options.provider === "openai-api"
+          ? z
+              .union([trendApiReceipt, trendFallbackReceipt])
+              .parse(JSON.parse(raw))
+          : trendReceipt.parse(JSON.parse(raw))
+        : experiment !== undefined
           ? this.options.provider === "openai-api"
             ? z
                 .union([trialApiReceipt, trialFallbackReceipt])
@@ -222,7 +241,7 @@ export class CodexEntryClient {
         },
         experiment === undefined
           ? CODEX_STRATEGY_VERSION
-          : DEMO_TRIAL_STRATEGY_VERSION,
+          : experiment.strategyVersion,
       );
       const strictEntries = JSON.parse(value.rawResponse) as unknown;
       if (

@@ -194,6 +194,8 @@ Push maintenance permits up to ten minutes for the local AST graph rebuild; fail
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
 
+Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537). The0.11 implementation adds structural breakout/confirmation/retest allocations, absolute protection and cost-inclusive admission. New retest limits retain trend direction. Qualification, reviewed delivery and actual activation are tracked in the report; source defaults do not prove deployment.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

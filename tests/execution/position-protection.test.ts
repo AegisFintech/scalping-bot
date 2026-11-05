@@ -578,3 +578,46 @@ describe("broker-native profit exits", () => {
     expect(f.client.closePosition).not.toHaveBeenCalled();
   });
 });
+
+it("preserves structural exits after slippage without widening broker protection", () => {
+  const label = "ctrader-ai-scalper:0.11.0-trend-retest.1-codex.1";
+  const position = {
+    ...local,
+    label,
+    strategyVersion: "0.11.0-trend-retest.1-codex.1",
+    entryPrice: "4398.72",
+  };
+  const raw = {
+    ...broker(),
+    price: 4398.72,
+    tradeData: { ...(broker().tradeData as object), label },
+  };
+  expect(protectionPlan(position, raw, "7", "0.01")).toMatchObject({
+    expectedStopLoss: "4399.98",
+    expectedTakeProfit: "4398.39",
+    repair: true,
+  });
+  expect(
+    protectionPlan(
+      position,
+      { ...raw, stopLoss: 4399.5, takeProfit: 4398.5 },
+      "7",
+      "0.01",
+    ),
+  ).toMatchObject({
+    expectedStopLoss: "4399.5",
+    expectedTakeProfit: "4398.5",
+    repair: false,
+  });
+  expect(() =>
+    protectionPlan(
+      { ...position, label: local.label },
+      {
+        ...raw,
+        tradeData: { ...(raw.tradeData as object), label: local.label },
+      },
+      "7",
+      "0.01",
+    ),
+  ).toThrow("POSITION_PROTECTION_STRATEGY_MISMATCH");
+});

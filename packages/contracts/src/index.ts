@@ -28,7 +28,8 @@ export interface RiskPolicy {
     | "0.7.3-quick-oco.1"
     | "0.8.0-model-scalp.1"
     | "0.9.0-cost-balanced.1"
-    | "0.10.0-demo-trials.1";
+    | "0.10.0-demo-trials.1"
+    | "0.11.0-trend-retest.1";
   readonly mode?: TradingMode;
   readonly lossLimitsEnforced?: boolean;
   readonly setupRiskPercent: DecimalString;
@@ -276,8 +277,10 @@ export interface ModelPromptArtifact {
     | "entry-scalp-v1"
     | "entry-scalp-v2"
     | "entry-scalp-v3"
+    | "entry-scalp-v4"
     | "demo-local-range-v1"
     | "demo-trial-execution-v1"
+    | "trend-retest-execution-v1"
     | "entry-modes-execution-v1"
     | "entry-quick-oco-execution-v1"
     | "entry-quick-oco-execution-v2"

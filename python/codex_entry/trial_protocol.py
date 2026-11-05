@@ -9,6 +9,7 @@ from uuid import UUID
 
 from pydantic import Field, model_validator
 
+from python.codex_entry.trend_protocol import TrendBinding
 from python.research.codex_loop import StrictModel, encoded, timestamp
 from python.research.demo_catalogue import Profile, load
 
@@ -46,7 +47,7 @@ class TrialBinding(StrictModel):
         return next(p for p in load().profiles if p.id == self.profileId)
 
 
-def prompt(template: str, binding: TrialBinding) -> str:
+def prompt(template: str, binding: TrialBinding | TrendBinding) -> str:
     return (
         template.strip()
         + "\n\nREGISTERED_DEMO_TRIAL\n"

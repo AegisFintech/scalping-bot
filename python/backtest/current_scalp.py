@@ -22,6 +22,8 @@ from python.research.learning_evidence import (
     encoded,
 )
 
+TREND_RELEASE = "0.11.0-trend-retest.1-codex.1"
+
 CURRENT = {
     "0.9.0-cost-balanced.1-codex.1",
     "0.9.0-cost-balanced.1-codex.2",
@@ -181,14 +183,20 @@ def _reconstruct(
         row = Reconstruction(setupId=group.id, status="UNKNOWN", reasons=[])
         results.append(row)
         if (
-            group.originRelease not in CURRENT
+            group.originRelease not in CURRENT | {TREND_RELEASE}
             or len(group.orders) != 1
             or group.timeInForce != "GTD"
-            or group.executionMode != "SINGLE_STOP_LIMIT"
+            or (
+                group.executionMode != "SINGLE_STOP_LIMIT"
+                and not (
+                    group.originRelease == TREND_RELEASE and group.executionMode == "SINGLE_LIMIT"
+                )
+            )
         ):
             row.status, row.reasons = "UNSUPPORTED", ["VERSION_OR_CARDINALITY_UNSUPPORTED"]
             continue
         order = group.orders[0]
+        expected_type = "LIMIT" if group.executionMode == "SINGLE_LIMIT" else "STOP_LIMIT"
         if timestamp(group.updatedAt) > cutoff or timestamp(order.updatedAt) > cutoff:
             row.reasons.append("GROUP_OR_ORDER_STATE_NOT_KNOWN_AT_CUTOFF")
         if Decimal(order.approvedVolume) <= 0 or Decimal(order.filledVolume) < 0:
@@ -212,7 +220,7 @@ def _reconstruct(
             row.reasons.append("TERMINAL_BROKER_STATE_CONFLICT")
         context = contexts.get(group.contextId or "")
         if (
-            order.orderType != "STOP_LIMIT"
+            order.orderType != expected_type
             or order.timeInForce != "GTD"
             or order.expiresAt != group.expiresAt
             or group.submissionValidUntil != order.submissionValidUntil
@@ -256,7 +264,7 @@ def _reconstruct(
         ]
         if accepts:
             row.brokerAcceptedAt = min((e.occurredAt for e in accepts), key=timestamp)
-            if any(e.orderType != 6 for e in accepts):
+            if any(e.orderType != (2 if expected_type == "LIMIT" else 6) for e in accepts):
                 row.reasons.append("BROKER_ACCEPTED_ORDER_TYPE_INVALID")
             if timestamp(row.brokerAcceptedAt) < timestamp(group.createdAt) or (
                 order.expiresAt is not None

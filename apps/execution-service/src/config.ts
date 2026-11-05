@@ -1,3 +1,5 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
+import { trendCatalogueSha256 } from "../../../packages/strategy-candidates/src/trend-retest-profile.js";
 import { catalogueSha256 } from "../../../packages/config/src/demo-catalogue.js";
 import {
   COST_BALANCED_SCALP_LIMITS,
@@ -341,6 +343,7 @@ function configurationHash(
   strategyVersion: string,
 ): string {
   const trial = strategyVersion === DEMO_TRIAL_STRATEGY_VERSION;
+  const trend = strategyVersion === TREND_RETEST_VERSION;
   return createHash("sha256")
     .update(
       JSON.stringify({
@@ -348,17 +351,28 @@ function configurationHash(
         scalpProposalLimits: trial
           ? DEMO_TRIAL_SCALP_LIMITS
           : COST_BALANCED_SCALP_LIMITS,
-        strategyRelease: trial
+        strategyRelease: trend
           ? {
               strategyVersion,
-              catalogueSha256,
-              targetCostPolicy: "POSITIVE_BASE_5_STRESS_65",
+              catalogueSha256: trendCatalogueSha256,
+              targetCostPolicy: "STRUCTURAL_NET_RR_1_BASE_65_STRESS_65",
               allocation: "20_CLOSES_OR_3600_OPEN_SECONDS",
-              adverseSlippagePoints: "65",
-              orderType: "STOP_LIMIT",
+              stopLimitSizingAdversePoints: "95",
+              limitSizingAdversePoints: "65",
+              orderTypes: ["STOP_LIMIT", "LIMIT"],
               timeInForce: "GTD",
             }
-          : BREAKOUT_SCALP_RELEASE,
+          : trial
+            ? {
+                strategyVersion,
+                catalogueSha256,
+                targetCostPolicy: "POSITIVE_BASE_5_STRESS_65",
+                allocation: "20_CLOSES_OR_3600_OPEN_SECONDS",
+                adverseSlippagePoints: "65",
+                orderType: "STOP_LIMIT",
+                timeInForce: "GTD",
+              }
+            : BREAKOUT_SCALP_RELEASE,
         riskPolicy: executionRiskPolicy(config.tradingMode, strategyVersion),
         appEnv: config.appEnv,
         instanceId: config.instanceId,

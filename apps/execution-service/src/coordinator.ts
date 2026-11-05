@@ -336,7 +336,8 @@ export interface CoordinatorOptions {
     | "entry-quick-oco-execution-v3"
     | "entry-quick-oco-execution-v4"
     | "entry-scalp-execution-v1"
-    | "demo-trial-execution-v1";
+    | "demo-trial-execution-v1"
+    | "trend-retest-execution-v1";
   readonly schemaVersion: "2.1";
   readonly strategyVersion: string;
   readonly commandFeeCheck?: (
