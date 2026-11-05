@@ -1,0 +1,919 @@
+{
+  "cutoff": "2026-11-05T11:58:42.968341+00:00",
+  "from": "2026-11-04T16:00:00+00:00",
+  "journalStateReadAt": "2026-11-05T12:31:29.924268+00:00",
+  "scope": "ALL_SCOPED_DAILY_CLOSE_DEALS_PLUS_DAY_CREATED_GROUPS_AND_REQUESTED_CONTEXTS",
+  "retrospective": true,
+  "recordingGapReasons": {
+    "NO_FRESH_QUOTE": 84,
+    "QUOTE_TIME_DISCONTINUITY": 100,
+    "QUOTE_SIDE_FRESHNESS_UNKNOWN": 1
+  },
+  "gapPhases": [
+    {
+      "reason": "NO_FRESH_QUOTE",
+      "phase": "IN_POSITION",
+      "events": 77
+    },
+    {
+      "reason": "NO_FRESH_QUOTE",
+      "phase": "POST_CLOSE",
+      "events": 1
+    },
+    {
+      "reason": "NO_FRESH_QUOTE",
+      "phase": "PRE_ENTRY",
+      "events": 6
+    },
+    {
+      "reason": "QUOTE_SIDE_FRESHNESS_UNKNOWN",
+      "phase": "IN_POSITION",
+      "events": 1
+    },
+    {
+      "reason": "QUOTE_TIME_DISCONTINUITY",
+      "phase": "IN_POSITION",
+      "events": 92
+    },
+    {
+      "reason": "QUOTE_TIME_DISCONTINUITY",
+      "phase": "POST_CLOSE",
+      "events": 4
+    },
+    {
+      "reason": "QUOTE_TIME_DISCONTINUITY",
+      "phase": "PRE_ENTRY",
+      "events": 4
+    }
+  ],
+  "gapQuoteClockReplay": {
+    "chains": 16,
+    "allMatched": true,
+    "quietGapAssertions": 84,
+    "backwardAcceptedSourceClocks": 0,
+    "forwardAcceptedQuoteIntervalsOver3Seconds": {
+      "n": 100,
+      "min": "3.228",
+      "median": "4.697",
+      "max": "18.015"
+    },
+    "fixtureCostsUsedOnlyForClockReplay": true
+  },
+  "groupStates": [
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "state": "CLOSED",
+      "count": 15
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "state": "EXPIRED",
+      "count": 45
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "state": "FAILED",
+      "count": 12
+    }
+  ],
+  "groupCount": 72,
+  "groupTerminalProof": {
+    "zeroFill": 57,
+    "unsent": 0,
+    "closed": 15,
+    "unproven": 0
+  },
+  "contexts": [
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "ENTRY_CODEX",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 2
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "ENTRY_CODEX",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 47
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "ENTRY_RANGE_3",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 4
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "ENTRY_RANGE_3",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 23
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "ENTRY_RANGE_5",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 29
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "ENTRY_RANGE_5",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 117
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "RANGE_010",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 14
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "RANGE_010",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 19
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "SL_005",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 4
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "SL_005",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 21
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "SL_010",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 7
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "SL_010",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 31
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "TP_060",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 1
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "TTL_060",
+      "state": "FAILED",
+      "plan_schema": null,
+      "n": 1
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "TTL_060",
+      "state": "READY",
+      "plan_schema": "entry-scalp-1.0",
+      "n": 13
+    },
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile_id": "TTL_060",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 30
+    },
+    {
+      "release": "0.11.0-trend-retest.1-codex.1",
+      "profile_id": "TREND_BREAKOUT",
+      "state": "FAILED",
+      "plan_schema": null,
+      "n": 4
+    },
+    {
+      "release": "0.11.0-trend-retest.1-codex.1",
+      "profile_id": "TREND_BREAKOUT",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 82
+    },
+    {
+      "release": "0.11.0-trend-retest.1-codex.1",
+      "profile_id": "TREND_CONFIRMED",
+      "state": "FAILED",
+      "plan_schema": null,
+      "n": 1
+    },
+    {
+      "release": "0.11.0-trend-retest.1-codex.1",
+      "profile_id": "TREND_CONFIRMED",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 139
+    },
+    {
+      "release": "0.11.0-trend-retest.1-codex.1",
+      "profile_id": "TREND_RETEST",
+      "state": "READY",
+      "plan_schema": "entry-wait-1.0",
+      "n": 13
+    }
+  ],
+  "closeFeatures": [
+    {
+      "setup": "e097c1b42e3e3424ce939546",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "TP_060",
+      "side": "BUY",
+      "closedAt": "2026-11-04 16:00:11.801000+00:00",
+      "net": "92.1200000000",
+      "signedFees": "-60.9900000000",
+      "gross": "153.1100000000",
+      "holdingSeconds": "6.896",
+      "entryGap": "0.14",
+      "entryQuoteSpread": "0.07",
+      "plannedGrossRR": "0.1038062283737024221453287197",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": true,
+      "availableAt": "2026-11-04T15:58:29.674808+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "5.77",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "5.85",
+      "decisionQuoteSpread": "0.08"
+    },
+    {
+      "setup": "a2fa6ebecc8051e70918f460",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "SELL",
+      "closedAt": "2026-11-04 16:17:27.678000+00:00",
+      "net": "306.1900000000",
+      "signedFees": "-93.1700000000",
+      "gross": "399.3600000000",
+      "holdingSeconds": "102.451",
+      "entryGap": "0.12",
+      "entryQuoteSpread": "0.06",
+      "plannedGrossRR": "0.2865329512893982808022922636",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T16:14:09.407703+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "3.48",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "3.60",
+      "decisionQuoteSpread": "0.08"
+    },
+    {
+      "setup": "76bf6f8733f959a70e377923",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "BUY",
+      "closedAt": "2026-11-04 16:45:53.152000+00:00",
+      "net": "231.3200000000",
+      "signedFees": "-63.6100000000",
+      "gross": "294.9300000000",
+      "holdingSeconds": "6.255",
+      "entryGap": "0.25",
+      "entryQuoteSpread": "0.1",
+      "plannedGrossRR": "0.1795332136445242369838420108",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T16:45:35.829477+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "5.56",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "11.36",
+      "decisionQuoteSpread": "0.10"
+    },
+    {
+      "setup": "fbf7c5cce074b55f52144a5f",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "BUY",
+      "closedAt": "2026-11-04 16:57:06.035000+00:00",
+      "net": "198.2700000000",
+      "signedFees": "-58.5300000000",
+      "gross": "256.8000000000",
+      "holdingSeconds": "9.731",
+      "entryGap": "0.2",
+      "entryQuoteSpread": "0.08",
+      "plannedGrossRR": "0.1626016260162601626016260163",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T16:55:29.805700+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "6.14",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "2.49",
+      "decisionQuoteSpread": "0.09"
+    },
+    {
+      "setup": "e1e9ce86d51dd6b102656a74",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "BUY",
+      "closedAt": "2026-11-04 16:59:54.026000+00:00",
+      "net": "222.1500000000",
+      "signedFees": "-70.7500000000",
+      "gross": "292.9000000000",
+      "holdingSeconds": "81.419",
+      "entryGap": "0.08",
+      "entryQuoteSpread": "0.06",
+      "plannedGrossRR": "0.2012072434607645875251509054",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T16:58:19.087681+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "4.96",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "2.49",
+      "decisionQuoteSpread": "0.07"
+    },
+    {
+      "setup": "4ce6f41fe3ba20c44432b11c",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "BUY",
+      "closedAt": "2026-11-04 17:02:12.159000+00:00",
+      "net": "-1590.2700000000",
+      "signedFees": "-58.2800000000",
+      "gross": "-1531.9900000000",
+      "holdingSeconds": "83.447",
+      "entryGap": "0.11",
+      "entryQuoteSpread": "0.1",
+      "plannedGrossRR": "0.16",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_SL",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T17:00:05.399317+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "6.24",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "5.15",
+      "decisionQuoteSpread": "0.10"
+    },
+    {
+      "setup": "c819804c77d72aa5af5f9d56",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "SL_005",
+      "side": "SELL",
+      "closedAt": "2026-11-04 17:28:05.178000+00:00",
+      "net": "-1432.2200000000",
+      "signedFees": "-98.2900000000",
+      "gross": "-1333.9300000000",
+      "holdingSeconds": "422.203",
+      "entryGap": "0.22",
+      "entryQuoteSpread": "0.08",
+      "plannedGrossRR": "0.3086419753086419753086419753",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_SL",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T17:20:34.996378+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "3.18",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "2.55",
+      "decisionQuoteSpread": "0.08"
+    },
+    {
+      "setup": "4af7ac94ff452652ccddb187",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "SL_005",
+      "side": "BUY",
+      "closedAt": "2026-11-04 17:32:01.418000+00:00",
+      "net": "464.8000000000",
+      "signedFees": "-146.1800000000",
+      "gross": "610.9800000000",
+      "holdingSeconds": "52.85",
+      "entryGap": "0.1",
+      "entryQuoteSpread": "0.08",
+      "plannedGrossRR": "0.5464480874316939890710382514",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T17:30:24.950888+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "1.77",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "1.74",
+      "decisionQuoteSpread": "0.08"
+    },
+    {
+      "setup": "63f58bef591e23bd134d0a41",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "SL_005",
+      "side": "BUY",
+      "closedAt": "2026-11-04 17:54:43.101000+00:00",
+      "net": "-1451.0800000000",
+      "signedFees": "-80.0400000000",
+      "gross": "-1371.0400000000",
+      "holdingSeconds": "1232.186",
+      "entryGap": "0.09",
+      "entryQuoteSpread": "0.1",
+      "plannedGrossRR": "0.2433090024330900243309002433",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_SL",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T17:33:14.843549+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "4.05",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "1.74",
+      "decisionQuoteSpread": "0.10"
+    },
+    {
+      "setup": "562e8da10b5a29257e94c6ee",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "SL_010",
+      "side": "SELL",
+      "closedAt": "2026-11-04 18:28:59.952000+00:00",
+      "net": "341.8200000000",
+      "signedFees": "-103.3800000000",
+      "gross": "445.2000000000",
+      "holdingSeconds": "209.643",
+      "entryGap": "0.14",
+      "entryQuoteSpread": "0.1",
+      "plannedGrossRR": "0.3460207612456747404844290657",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T18:25:14.707365+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "2.78",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "2.89",
+      "decisionQuoteSpread": "0.10"
+    },
+    {
+      "setup": "55f6fd2e05831bdcb477a6cb",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "SELL",
+      "closedAt": "2026-11-04 19:31:25.267000+00:00",
+      "net": "487.8800000000",
+      "signedFees": "-157.1200000000",
+      "gross": "645.0000000000",
+      "holdingSeconds": "46.85",
+      "entryGap": "0.12",
+      "entryQuoteSpread": "0.09",
+      "plannedGrossRR": "0.6211180124223602484472049689",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T19:30:26.696401+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "1.60",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "1.13",
+      "decisionQuoteSpread": "0.09"
+    },
+    {
+      "setup": "065f90dc844c3f60a9099d39",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "TTL_060",
+      "side": "SELL",
+      "closedAt": "2026-11-04 20:50:24.381000+00:00",
+      "net": "459.1100000000",
+      "signedFees": "-145.8800000000",
+      "gross": "604.9900000000",
+      "holdingSeconds": "86.08",
+      "entryGap": "0.09",
+      "entryQuoteSpread": "0.05",
+      "plannedGrossRR": "0.5494505494505494505494505495",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T20:48:40.422878+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "1.81",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "5.12",
+      "decisionQuoteSpread": "0.05"
+    },
+    {
+      "setup": "f174b092a64c4e7c8d5e1e87",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "TTL_060",
+      "side": "SELL",
+      "closedAt": "2026-11-04 20:55:16.678000+00:00",
+      "net": "-1392.5400000000",
+      "signedFees": "-118.8600000000",
+      "gross": "-1273.6800000000",
+      "holdingSeconds": "201.076",
+      "entryGap": "0.11",
+      "entryQuoteSpread": "0.11",
+      "plannedGrossRR": "0.4065040650406504065040650407",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_SL",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T20:51:35.123752+00:00",
+      "closeUtcBand": "13-21",
+      "m1FiveBarRange": "2.45",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "3.02",
+      "decisionQuoteSpread": "0.11"
+    },
+    {
+      "setup": "9401a4383ae51c5e78c45f4f",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "SELL",
+      "closedAt": "2026-11-04 21:30:53.472000+00:00",
+      "net": "227.4700000000",
+      "signedFees": "-71.3900000000",
+      "gross": "298.8600000000",
+      "holdingSeconds": "145.753",
+      "entryGap": "0.12",
+      "entryQuoteSpread": "0.1",
+      "plannedGrossRR": "0.2183406113537117903930131004",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T21:28:19.857883+00:00",
+      "closeUtcBand": "21-24",
+      "m1FiveBarRange": "4.57",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "0.88",
+      "decisionQuoteSpread": "0.11"
+    },
+    {
+      "setup": "dd8dfae187b512f23ef98c29",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "SELL",
+      "closedAt": "2026-11-04 21:55:08.843000+00:00",
+      "net": "512.3900000000",
+      "signedFees": "-151.0100000000",
+      "gross": "663.4000000000",
+      "holdingSeconds": "944.527",
+      "entryGap": "0.18",
+      "entryQuoteSpread": "0.05",
+      "plannedGrossRR": "0.5882352941176470588235294118",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-04T21:38:20.958650+00:00",
+      "closeUtcBand": "21-24",
+      "m1FiveBarRange": "1.69",
+      "m5ThreeCloseDirection": "DOWN",
+      "m5TwoChangeMagnitude": "3.74",
+      "decisionQuoteSpread": "0.05"
+    },
+    {
+      "setup": "c42bcec5d00b9e94bd448125",
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "profile": "ENTRY_RANGE_5",
+      "side": "BUY",
+      "closedAt": "2026-11-05 00:30:16.929000+00:00",
+      "net": "476.4600000000",
+      "signedFees": "-81.3000000000",
+      "gross": "557.7600000000",
+      "holdingSeconds": "20.517",
+      "entryGap": "0.25",
+      "entryQuoteSpread": "0.05",
+      "plannedGrossRR": "0.2512562814070351758793969849",
+      "recordedContextState": "RECORDED",
+      "closeClass": "NATIVE_AT_OR_BEYOND_TP",
+      "sourceIsCarryIn": false,
+      "availableAt": "2026-11-05T00:28:44.798596+00:00",
+      "closeUtcBand": "00-07",
+      "m1FiveBarRange": "3.97",
+      "m5ThreeCloseDirection": "UP",
+      "m5TwoChangeMagnitude": "13.74",
+      "decisionQuoteSpread": "0.11"
+    }
+  ],
+  "aggregates": [
+    {
+      "dimension": "profile",
+      "value": "ENTRY_RANGE_5",
+      "closeDeals": 9,
+      "wins": 8,
+      "net": "1071.8600000000"
+    },
+    {
+      "dimension": "profile",
+      "value": "SL_005",
+      "closeDeals": 3,
+      "wins": 1,
+      "net": "-2418.5000000000"
+    },
+    {
+      "dimension": "profile",
+      "value": "SL_010",
+      "closeDeals": 1,
+      "wins": 1,
+      "net": "341.8200000000"
+    },
+    {
+      "dimension": "profile",
+      "value": "TP_060",
+      "closeDeals": 1,
+      "wins": 1,
+      "net": "92.1200000000"
+    },
+    {
+      "dimension": "profile",
+      "value": "TTL_060",
+      "closeDeals": 2,
+      "wins": 1,
+      "net": "-933.4300000000"
+    },
+    {
+      "dimension": "side",
+      "value": "BUY",
+      "closeDeals": 8,
+      "wins": 6,
+      "net": "-1356.2300000000"
+    },
+    {
+      "dimension": "side",
+      "value": "SELL",
+      "closeDeals": 8,
+      "wins": 6,
+      "net": "-489.9000000000"
+    },
+    {
+      "dimension": "closeUtcBand",
+      "value": "00-07",
+      "closeDeals": 1,
+      "wins": 1,
+      "net": "476.4600000000"
+    },
+    {
+      "dimension": "closeUtcBand",
+      "value": "13-21",
+      "closeDeals": 13,
+      "wins": 9,
+      "net": "-3062.4500000000"
+    },
+    {
+      "dimension": "closeUtcBand",
+      "value": "21-24",
+      "closeDeals": 2,
+      "wins": 2,
+      "net": "739.8600000000"
+    },
+    {
+      "dimension": "m5ThreeCloseDirection",
+      "value": "DOWN",
+      "closeDeals": 8,
+      "wins": 6,
+      "net": "-489.9000000000"
+    },
+    {
+      "dimension": "m5ThreeCloseDirection",
+      "value": "UP",
+      "closeDeals": 8,
+      "wins": 6,
+      "net": "-1356.2300000000"
+    },
+    {
+      "dimension": "outcome",
+      "value": "WIN",
+      "n": 12,
+      "holdingSeconds": {
+        "n": 12,
+        "min": "6.255",
+        "median": "67.1345",
+        "max": "944.527"
+      },
+      "entryQuoteSpread": {
+        "n": 12,
+        "min": "0.05",
+        "median": "0.075",
+        "max": "0.1"
+      },
+      "decisionQuoteSpread": {
+        "n": 12,
+        "min": "0.05",
+        "median": "0.085",
+        "max": "0.11"
+      },
+      "plannedGrossRR": {
+        "n": 12,
+        "min": "0.1038062283737024221453287197",
+        "median": "0.2688946163482167283408446242",
+        "max": "0.6211180124223602484472049689"
+      },
+      "m1FiveBarRange": {
+        "n": 12,
+        "min": "1.6",
+        "median": "3.725",
+        "max": "6.14"
+      },
+      "m5TwoChangeMagnitude": {
+        "n": 12,
+        "min": "0.88",
+        "median": "3.245",
+        "max": "13.74"
+      }
+    },
+    {
+      "dimension": "outcome",
+      "value": "LOSS",
+      "n": 4,
+      "holdingSeconds": {
+        "n": 4,
+        "min": "83.447",
+        "median": "311.6395",
+        "max": "1232.186"
+      },
+      "entryQuoteSpread": {
+        "n": 4,
+        "min": "0.08",
+        "median": "0.1",
+        "max": "0.11"
+      },
+      "decisionQuoteSpread": {
+        "n": 4,
+        "min": "0.08",
+        "median": "0.1",
+        "max": "0.11"
+      },
+      "plannedGrossRR": {
+        "n": 4,
+        "min": "0.16",
+        "median": "0.2759754888708659998197711093",
+        "max": "0.4065040650406504065040650407"
+      },
+      "m1FiveBarRange": {
+        "n": 4,
+        "min": "2.45",
+        "median": "3.615",
+        "max": "6.24"
+      },
+      "m5TwoChangeMagnitude": {
+        "n": 4,
+        "min": "1.74",
+        "median": "2.785",
+        "max": "5.15"
+      }
+    }
+  ],
+  "brokerAuthority": false,
+  "promotionAuthority": false,
+  "economicQualification": false,
+  "counterfactualNet": null,
+  "causalProfitExplanation": null,
+  "supplementReadAt": "2026-11-05T12:34:06.043292+00:00",
+  "contextTotals": [
+    {
+      "release": "0.10.0-demo-trials.1-codex.1",
+      "contexts": 363,
+      "wait": 289,
+      "failed": 1,
+      "other": 73
+    },
+    {
+      "release": "0.11.0-trend-retest.1-codex.1",
+      "contexts": 239,
+      "wait": 234,
+      "failed": 5,
+      "other": 0
+    }
+  ],
+  "dayCreatedGroupProfiles": [
+    {
+      "profile": "ENTRY_CODEX",
+      "dayCreatedGroups": 2,
+      "closedProof": 0,
+      "zeroFillProof": 2,
+      "unsentProof": 0,
+      "states": {
+        "FAILED": 2
+      }
+    },
+    {
+      "profile": "ENTRY_RANGE_3",
+      "dayCreatedGroups": 4,
+      "closedProof": 0,
+      "zeroFillProof": 4,
+      "unsentProof": 0,
+      "states": {
+        "EXPIRED": 2,
+        "FAILED": 2
+      }
+    },
+    {
+      "profile": "ENTRY_RANGE_5",
+      "dayCreatedGroups": 28,
+      "closedProof": 9,
+      "zeroFillProof": 19,
+      "unsentProof": 0,
+      "states": {
+        "EXPIRED": 18,
+        "CLOSED": 9,
+        "FAILED": 1
+      }
+    },
+    {
+      "profile": "RANGE_010",
+      "dayCreatedGroups": 14,
+      "closedProof": 0,
+      "zeroFillProof": 14,
+      "unsentProof": 0,
+      "states": {
+        "EXPIRED": 7,
+        "FAILED": 7
+      }
+    },
+    {
+      "profile": "SL_005",
+      "dayCreatedGroups": 4,
+      "closedProof": 3,
+      "zeroFillProof": 1,
+      "unsentProof": 0,
+      "states": {
+        "CLOSED": 3,
+        "EXPIRED": 1
+      }
+    },
+    {
+      "profile": "SL_010",
+      "dayCreatedGroups": 7,
+      "closedProof": 1,
+      "zeroFillProof": 6,
+      "unsentProof": 0,
+      "states": {
+        "EXPIRED": 6,
+        "CLOSED": 1
+      }
+    },
+    {
+      "profile": "TTL_060",
+      "dayCreatedGroups": 13,
+      "closedProof": 2,
+      "zeroFillProof": 11,
+      "unsentProof": 0,
+      "states": {
+        "EXPIRED": 11,
+        "CLOSED": 2
+      }
+    }
+  ],
+  "carryInCloseDeals": 1,
+  "profileBinding": "EXACT_CONTEXT_TRIAL_LINK_INCLUDING_CARRY_IN_NO_TIME_INFERENCE",
+  "contextClockBasis": "REQUESTED_IN_WINDOW_COMPLETED_AFTER_CUTOFF_IS_NOT_KNOWN_AT_CUTOFF",
+  "hypothesisStatus": "EXPLORATORY_NO_NEW_METHOD_REGISTERED",
+  "privateEvidenceFiles": [
+    {
+      "name": "fills.json",
+      "sha256": "eda8b71a181eb7b65fa5438c3bea9173319fcb4fcbdd28f6e0ca20dafe4c94cb"
+    },
+    {
+      "name": "close-deals.json",
+      "sha256": "837fdf5031347afeb6bb758e388f18e1170cd778a1a22551bfab7641702d1c73"
+    },
+    {
+      "name": "flight-review.json",
+      "sha256": "7c005a57c76fcdb8390727b3a12b2959200581c2196aa82b38709f2d3f20be8d"
+    },
+    {
+      "name": "daily.json",
+      "sha256": "f639f0d2edafb2000ecc30c6c7d0d512b66aea02c177b97bcb497e621c4eac1f"
+    },
+    {
+      "name": "cohort-audit-v3.json",
+      "sha256": "88d6834412b3cdc695202b6d854859355456f5989daf4095cb207bcfb082a242"
+    },
+    {
+      "name": "recording-inventory.json",
+      "sha256": "494b70e9763c6c6f435ab6622a2631284ebd4d41de66e156f4d2102e02913a8e"
+    }
+  ],
+  "reproductionScripts": [
+    {
+      "name": "audit-flight-cohort.py",
+      "sha256": "934f00bf163699d2bedad747832e6ec945de287e6427dc49c4ccc60981662925"
+    },
+    {
+      "name": "extend-cohort-audit.py",
+      "sha256": "4c7657c1ac85b26d8c5a0188a0c20cddd9a013745664686059302e4b8e897c26"
+    }
+  ],
+  "recordingInventory": {
+    "files": 32,
+    "bytes": 1236766
+  },
+  "recorderCodeIdentical": true
+}

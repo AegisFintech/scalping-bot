@@ -1,3 +1,19 @@
+### ISSUE-545 — Complete daily outcomes and original Flight gap audit
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/545; parent403, follows539/541.
+- Acceptance: original recorder replay and retained gap evidence; complete day-created
+  groups/carry-in close/WAIT/failure/zero-fill denominators; causal context/profile
+  comparison, no selected-winner promotion; verified current future collector and
+  finite-programme review rules; independent review and protected delivery.
+- Status: 16sealed raw chains replay all quote-gap classifications;100forward quote
+  intervals exceed3seconds and84quiet warnings satisfy the unchanged predicate.
+  72day-created groups include57proven zero-fills;16daily closes include1carry-in.
+  Historical net-1,846.13USD; no recorder defect or winning strategy established.
+  Full qualification passes2,961tests/no skips and20checks; four configuration
+  checks and fresh Spec/Standards reviews CLEAR. Protected delivery tracked on545;
+  current registered0.11 comparison stays unchanged. Economic403 remains open.
+- Report: `docs/flight-cohort-review.md`.
+
 ### ISSUE-543 — Verified rollout, prospective capture and digital hygiene
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/543; depends on539/541.
