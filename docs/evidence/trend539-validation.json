@@ -1,0 +1,113 @@
+{
+  "issue": 539,
+  "qualified": true,
+  "sourceSha256": "ffd04a813a915f4d341375f6db56bb8045461d690b32169b5909f770ca28e630",
+  "nodeVersion": "v22.23.2",
+  "counts": {
+    "node-tests": 1345,
+    "database-lifecycle": 175,
+    "python-tests": 1436
+  },
+  "totalTests": 2956,
+  "skipped": 0,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "privateReceiptSha256": "a31dbea1982922ec2de3e2fc0308bd133df1cd7d9a4f88d30de0b1472b8a6f2b",
+  "privateReceiptDirectory": "/mnt/sdb/scalper-qualification-tmp/scalper-qualification-vCpSkH/checks",
+  "configurationChecks": {
+    "samplePolicy": "PASS",
+    "sampleStartup": "PASS",
+    "protectedPolicy": "PASS",
+    "protectedStartup": "PASS"
+  },
+  "independentReviews": {
+    "Standards": "CLEAR",
+    "Spec": "CLEAR"
+  },
+  "quoteClockRegression": {
+    "originalSource": "FAIL",
+    "fixedSource": "PASS"
+  },
+  "economicQualification": false,
+  "deploymentVerified": false
+}

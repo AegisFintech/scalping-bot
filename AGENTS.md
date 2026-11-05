@@ -28,6 +28,14 @@
 
 ## Current approved economic experiment
 
+ISSUE-539 repairs broker/local quote-clock comparison and adds separately registered
+trend observation1.0. Read `docs/trend-observation-net-review.md`. Receipt freshness
+uses local market capture; source freshness uses broker time. Preserve both clocks,
+the3-second bounds, old studies and exact-source terminal-proof handover. Recorded
+geometry and zero-trade days are not net-profit evidence.
+PR540 has a prepared verified artifact; exact-head checks and a reviewer distinct
+from the last pusher must pass before activation.
+
 Operator-approved #536 runs finite registered0.11 DEMO trend trials in the ONE
 existing executor. Before changing trials, source handover, structural protection or
 readers, read `docs/trend-retest-plan.md`. Preserve5% setup/2.5% single-leg ceilings,
@@ -47,6 +55,20 @@ ISSUE-529: use `docs/loss-control-study-report.md`; preserve future registration
 ISSUE-532: operator authorizes reviewed demo R:R experimentation within existing risk ceilings. Read `docs/position-clock-rr-report.md`; same-snapshot position clocks never replace native protection observations. Preserve old methods/registrations; gross target geometry is not cost-qualified execution.
 
 ## Before changing an area
+
+Apply the installed Matt Pocock engineering skills and Ponytail: test observable
+behavior through existing public interfaces, reproduce defects before accepting
+fixes, use fresh Standards/Spec reviews and prefer the smallest complete change.
+Reuse existing modules; add no speculative framework or dependency. Use Graphify
+for code navigation and update its AST after changes. Skill installation does not
+waive the trading, evidence, delivery or independent-review rules below.
+
+Keep the codebase clean as work progresses: refactor touched code when it improves
+clarity, verify callers and deployed references before deleting unused code, remove
+temporary debug files and stale imports, and keep generated artifacts/caches outside
+tracked source. Preserve active services, credentials, audit history and frozen
+research. Use `/mnt/sdb` for suitable bulky development/evidence files after checking
+capacity, ownership and permissions. Cleanup must pass the same applicable checks.
 
 Read `plan.md`, the relevant report, and the matching section of
 [the detailed operating rules](docs/agent-contract-20261029.md). That document

@@ -96,7 +96,11 @@ export function trendRetestGeometry(
     return wait("TREND_STRUCTURAL_STOP_OUTSIDE_BOUNDS");
   if (!input.quote || input.minimumStopDistance === undefined)
     return wait("TREND_QUOTE_UNAVAILABLE");
-  if (!validQuote(input.quote, captured)) return wait("TREND_QUOTE_INVALID");
+  const localCapture = Date.parse(
+    input.technicalContext?.marketCapturedAt ?? input.capturedAt,
+  );
+  if (!validQuote(input.quote, captured, localCapture))
+    return wait("TREND_QUOTE_INVALID");
   const distance = decimal(input.minimumStopDistance);
   if (distance.lt(0)) throw new Error("TREND_MARKET_METADATA_INVALID");
   const minimum = distance.gt(tick) ? distance : tick;
@@ -172,15 +176,20 @@ function validBar(b: Candle, duration: number, at: number, tickSize: string) {
     decimal(b.low).lte(b.close)
   );
 }
-function validQuote(q: Quote, at: number) {
+function validQuote(q: Quote, brokerAt: number, localAt: number) {
   const source = Date.parse(q.sourceTime),
     received = Date.parse(q.receivedAt);
   return (
     Number.isFinite(source) &&
     Number.isFinite(received) &&
+    Number.isFinite(localAt) &&
+    localAt >= brokerAt &&
+    localAt - brokerAt <= 3000 &&
     source <= received &&
-    received <= at &&
-    at - source <= 3000 &&
+    source <= brokerAt &&
+    received <= localAt &&
+    brokerAt - source <= 3000 &&
+    localAt - received <= 3000 &&
     decimal(q.bid).gt(0) &&
     decimal(q.ask).gte(q.bid)
   );

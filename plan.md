@@ -1,3 +1,16 @@
+### ISSUE-539 — Current trend observation, quote clocks and daily net evidence
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/539; depends on536.
+- Acceptance: align development with current main; preserve private old environment;
+  repair broker/local quote-clock comparison with causal/stale/future regressions;
+  exact-source audited terminal-proof handover; separately frozen future trend
+  observer with all denominators/unknown economics retained; complete-cohort review;
+  full qualification/configuration/review/CI and matched one-demo activation.
+- Status: full qualification passes2,956 tests/no skips, all four configuration
+  checks and fresh Standards/Spec reviews CLEAR. Hosted delivery and matched
+  prospective activation pending. No profitability established.
+- Report: `docs/trend-observation-net-review.md`. Original studies remain frozen.
+
 ### ISSUE-536 — Trend breakout/retest demo comparison
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/536; depends on534.

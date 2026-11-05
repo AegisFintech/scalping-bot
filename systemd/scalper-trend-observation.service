@@ -1,0 +1,29 @@
+[Unit]
+Description=Recorded trend decisions and broker outcomes; no execution authority
+After=scalper-observation-feed.service
+RequiresMountsFor=/mnt/sdb
+AssertPathIsMountPoint=/mnt/sdb
+
+[Service]
+Type=oneshot
+User=scalper-flight
+Group=scalper-flight
+WorkingDirectory=/mnt/sdb/scalper-trend-observation539
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/scalper-trend-observation539
+ExecStart=/opt/scalper-trend-observation539/.venv/bin/python -P -m python.operations.loss_control_study run --directory /mnt/sdb/scalper-trend-observation539 --feed /var/lib/scalper-observation-feed/position-clocks.json
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/mnt/sdb/scalper-trend-observation539
+InaccessiblePaths=-/root -/etc/scalping-bot -/etc/scalper-flight -/etc/scalper-codex-entry -/run/postgresql
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+CPUQuota=25%
+MemoryMax=256M
+MemorySwapMax=0
+TasksMax=16
+LimitFSIZE=16M
+TimeoutStartSec=60

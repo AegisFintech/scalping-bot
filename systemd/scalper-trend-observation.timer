@@ -1,0 +1,10 @@
+[Unit]
+Description=Collect separately registered trend observations after the settled feed
+
+[Timer]
+OnCalendar=*-*-* *:05,35:00
+Persistent=true
+RandomizedDelaySec=10
+
+[Install]
+WantedBy=timers.target
