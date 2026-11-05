@@ -165,3 +165,22 @@ capture separately from the retrospective compatibility probe.
 The protected branch also requires approval from someone other than the last
 pusher. Publish source through its author credential and obtain the independent
 reviewer approval on that exact head; do not change branch rules.
+
+## Actual activation
+
+PR540 merged as6af0e92 after both exact-head hosted jobs and independent approval.
+Migration0043 applied under the existing lock after all42 prior checksums matched.
+The five existing processes use the verified mounted sourceffd04a813a91; the
+controller retained the old source with SOURCE_HANDOVER and registered a future
+successor through terminal proof/fresh reconciliation. Natural source-bound claims
+and WAIT outcomes were observed; operational readiness recovered automatically.
+No risk/history reset, forced call or trade occurred. The worker initially lacked
+its copied source manifest; packaging was completed,341 source files matched and
+both full bundles passed release verification.
+
+[Deployment receipt](evidence/trend539-activation.json). The new protocol1.2 observer
+registered before10:00UTC, reading the10:00–10:30UTC window on its10:35timer.
+Actual permission/namespace probing confirmed feed/state access and denied broker/API
+credentials and internet sockets. Original study methods/records remain unchanged.
+Natural capture and retirement receipts are recorded in the
+[operational closeout](ops-closeout-report.md). Economic qualification remains open.

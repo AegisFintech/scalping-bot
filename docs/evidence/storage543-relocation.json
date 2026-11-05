@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-11-05T10:09:41.459549+00:00",
+  "files": 33544,
+  "bytes": 3232586508,
+  "inventorySha256": "d5430d6a3863dfe89eab300891843a3d2ee59aee57f46bcaeb214ca30973fde0",
+  "permissionsOwnershipMtimeXattrsVerified": true,
+  "oldPathPreservedAsSymlink": "/root/restore-archive",
+  "newPath": "/mnt/sdb/restore-archive",
+  "duplicateSourceRemoved": true
+}

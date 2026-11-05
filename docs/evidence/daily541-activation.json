@@ -1,0 +1,51 @@
+{
+  "verifiedAt": "2026-11-05T10:16:41.496038+00:00",
+  "issue": 541,
+  "pr": 542,
+  "mergedMain": "e9176079723dc9c83af39d6563d841a3db904aed",
+  "sourceSha256": "d63d4f14dba259da731d51cda8209aa8947fec283111d84280f971d47e46e4eb",
+  "dashboardCwd": "/mnt/sdb/scalper/releases/daily541-main",
+  "otherFourPidsUnchanged": true,
+  "servedAssetSha256": "b6f1a319034a6e78b7774dc426c8c14ee5860b4fe7e7d2a85717c1b794c281f3",
+  "dailyTradingNet": {
+    "schemaVersion": "daily-trading-net-1.0",
+    "checkedAt": "2026-11-05T10:16:40.571535+00:00",
+    "timezone": "Asia/Singapore",
+    "currency": "USD",
+    "basis": "RECORDED_CLOSE_DEALS_ALL_BOT_RELEASES_NOT_ACCOUNT_RETURN",
+    "totals": {
+      "day": "2026-11-05",
+      "since": "2026-11-04T16:00:00+00:00",
+      "until": "2026-11-05T10:16:40.571535+00:00",
+      "completeCalendarDay": false,
+      "recordedNet": "-1846.1300000000",
+      "signedFeesIncluded": "-1558.7800000000",
+      "closeDeals": 16,
+      "winningCloseDeals": 12,
+      "losingCloseDeals": 4,
+      "flatCloseDeals": 0,
+      "averageWinningCloseDeal": "334.9983333333",
+      "averageLosingCloseDeal": "-1466.5275000000",
+      "worstCloseDeal": "-1590.2700000000"
+    },
+    "releases": [
+      {
+        "release": "0.10.0-demo-trials.1-codex.1",
+        "recordedNet": "-1846.1300000000",
+        "signedFeesIncluded": "-1558.7800000000",
+        "closeDeals": 16
+      }
+    ],
+    "scopeUnresolvedEvents": 0,
+    "openJournalPositions": 0,
+    "actualModelSpend": null,
+    "openBrokerMark": null,
+    "accountReturn": null,
+    "externalCashflows": null,
+    "economicQualification": false,
+    "brokerAuthority": false,
+    "promotionAuthority": false
+  },
+  "economicQualification": false,
+  "databaseMutation": false
+}

@@ -1,0 +1,26 @@
+{
+  "verifiedAt": "2026-11-05T10:28:57.645005+00:00",
+  "removedStoppedRestoreOnlyHelpers": [
+    {
+      "path": "/etc/systemd/system/old-volume-archive.service",
+      "sha256": "80db10cfa3f6e1cc7bf208236505c7768d607d63313d6b8f0cb2f622f7abfc4a"
+    },
+    {
+      "path": "/etc/systemd/system/old-volume-archive-tc01.service",
+      "sha256": "41f8bac01ec9df2f76753d9202b04c2b0496c1b46b6f4e07581ec33a39e4abda"
+    },
+    {
+      "path": "/usr/local/sbin/archive-old-volume",
+      "sha256": "a8e8bb8f7d8328645e2464874b3246ecc125e056558ef6b5bdec681f830ff076"
+    },
+    {
+      "path": "/usr/local/sbin/archive-old-volume-tc01",
+      "sha256": "ae797ae3468b1d2c89fd7afab17b516c3fe79bf55b5dee44c9595b8c2dcd9f96"
+    }
+  ],
+  "journalHistoryPreserved": true,
+  "remoteCancelledPartialsRemovedBytes": {
+    "tc01": 2101149696,
+    "tc02": 236355584
+  }
+}

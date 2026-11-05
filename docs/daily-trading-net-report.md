@@ -71,3 +71,19 @@ API check. API amounts retain exact decimals; display rounding is presentation o
 The same fresh read-only probe reproduces16actual close deals and net-1,846.13USD.
 Existing11 moderate npm findings and Starlette/httpx warning remain disclosed.
 Hosted exact-head checks, protected merge and dashboard activation remain pending.
+
+## Actual read-only activation
+
+PR542 merged as e917607 after both exact-head hosted jobs and independent approval.
+Only the existing dashboard moved to verified sourced63d4f14dba2; the other four
+application PIDs remained unchanged and the executor stays on its registered source.
+Fresh `/api/learning` readback retains16close deals and net-1,846.13USD with exact
+decimals. The served JavaScript matches the prepared artifact. The initial lazy
+cache response was loading/unavailable; subsequent bounded polling returned fresh
+data, rather than presenting stale values as current.
+
+[Deployment receipt](evidence/daily541-activation.json). Actual deployed Chromium
+checks at1440px/390px show the daily card without horizontal overflow; network
+observations recorded zero mutations. The independent stale/hung-request tests use
+controlled fixtures. This remains realized trading net, with unknown open/model
+economics explicit.
