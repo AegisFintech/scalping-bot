@@ -4,10 +4,7 @@ import {
   validateEntryDecision,
   type EntryDecisionPlan,
 } from "./entry-decision.js";
-import {
-  DEMO_TRIAL_STRATEGY_VERSION,
-  CODEX_STRATEGY_VERSION,
-} from "../../config/src/policy.js";
+import { CODEX_STRATEGY_VERSION } from "../../config/src/policy.js";
 import { TECHNICAL_HISTORY_COUNTS } from "../../market-data-client/src/candidate-history.js";
 import type { Quote } from "../../contracts/src/index.js";
 import type {
@@ -166,7 +163,7 @@ export class EntryPairPlanner {
       strategyVersion:
         input.experiment === undefined
           ? CODEX_STRATEGY_VERSION
-          : DEMO_TRIAL_STRATEGY_VERSION,
+          : input.experiment.strategyVersion,
     });
     return result;
   }

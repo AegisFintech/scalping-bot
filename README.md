@@ -194,6 +194,8 @@ Push maintenance permits up to ten minutes for the local AST graph rebuild; fail
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
 
+Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md). Preserve historical reversal semantics; new retest limits must retain trend direction and require versioned execution authority.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

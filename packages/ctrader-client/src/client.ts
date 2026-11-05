@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../config/src/trend-retest-policy.js";
 import type { FlightQuoteObservation } from "../../contracts/src/flight-quotes.js";
 import {
   brokerOrderTypeNumber,
@@ -110,13 +111,24 @@ export interface PositionUnrealizedPnl {
   readonly capturedAt: string;
 }
 
-export interface StopLimitProtectionFields {
+type NativeProtectionFields =
+  | {
+      readonly relativeStopLoss: number;
+      readonly relativeTakeProfit: number;
+      readonly stopLoss?: never;
+      readonly takeProfit?: never;
+    }
+  | {
+      readonly stopLoss: number;
+      readonly takeProfit: number;
+      readonly relativeStopLoss?: never;
+      readonly relativeTakeProfit?: never;
+    };
+export type StopLimitProtectionFields = NativeProtectionFields & {
   readonly orderType: 6;
   readonly stopPrice: number;
   readonly slippageInPoints: number;
-  readonly relativeStopLoss: number;
-  readonly relativeTakeProfit: number;
-}
+};
 
 function relativeProtectionDistance(
   entry: Decimal,
@@ -168,27 +180,47 @@ function validatedRelativeProtection(
   };
 }
 
-export function stopProtectionFields(
+function nativeProtectionFields(
   command: PendingOrderCommand,
   metadata: Pick<SymbolMetadata, "digits">,
-): Omit<StopLimitProtectionFields, "orderType" | "slippageInPoints"> & {
-  readonly orderType: 3;
-} {
-  const protection = validatedRelativeProtection(command);
+  protection: RelativeProtection,
+): NativeProtectionFields {
+  if (command.strategyLabel === `ctrader-ai-scalper:${TREND_RETEST_VERSION}`) {
+    if (
+      command.executionOrderType !== "STOP_LIMIT" &&
+      command.executionOrderType !== "LIMIT"
+    )
+      throw new Error("CTRADER_TREND_ORDER_TYPE_INVALID");
+    return {
+      stopLoss: exactProtocolDouble(command.stopLoss, metadata.digits),
+      takeProfit: exactProtocolDouble(command.takeProfit, metadata.digits),
+    };
+  }
   return {
-    orderType: 3,
-    stopPrice: exactProtocolDouble(protection.entryPriceText, metadata.digits),
     relativeStopLoss: protection.relativeStopLoss,
     relativeTakeProfit: protection.relativeTakeProfit,
   };
 }
 
-export interface LimitProtectionFields {
+export function stopProtectionFields(
+  command: PendingOrderCommand,
+  metadata: Pick<SymbolMetadata, "digits">,
+): NativeProtectionFields & {
+  readonly orderType: 3;
+  readonly stopPrice: number;
+} {
+  const protection = validatedRelativeProtection(command);
+  return {
+    orderType: 3,
+    stopPrice: exactProtocolDouble(protection.entryPriceText, metadata.digits),
+    ...nativeProtectionFields(command, metadata, protection),
+  };
+}
+
+export type LimitProtectionFields = NativeProtectionFields & {
   readonly orderType: 2;
   readonly limitPrice: number;
-  readonly relativeStopLoss: number;
-  readonly relativeTakeProfit: number;
-}
+};
 
 export function limitProtectionFields(
   command: PendingOrderCommand,
@@ -198,8 +230,7 @@ export function limitProtectionFields(
   return {
     orderType: 2,
     limitPrice: exactProtocolDouble(protection.entryPriceText, metadata.digits),
-    relativeStopLoss: protection.relativeStopLoss,
-    relativeTakeProfit: protection.relativeTakeProfit,
+    ...nativeProtectionFields(command, metadata, protection),
   };
 }
 

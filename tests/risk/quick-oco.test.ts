@@ -68,6 +68,8 @@ describe("approved quick OCO economics", () => {
       expect(distance.eq("0.4")).toBe(true);
       expect(cost.evidence.execution_reserve_price).toBe("0.05");
       const native = stopLimitProtectionFields(c, m, "30");
+      if (native.relativeTakeProfit === undefined)
+        throw new Error("Expected historical relative protection");
       expect(native.relativeStopLoss).toBe(native.relativeTakeProfit * 17.5);
     }
     expect(validateQuickOcoCommands(commands(), m).approved).toBe(true);

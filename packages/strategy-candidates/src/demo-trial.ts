@@ -1,4 +1,11 @@
 import {
+  trendBindingSchema,
+  trendProfiles,
+  type TrendProfile,
+  TREND_RETEST_VERSION,
+} from "./trend-retest-profile.js";
+import { trendRetestGeometry } from "./trend-retest.js";
+import {
   canonicalJson,
   digest,
   catalogueSha256,
@@ -36,7 +43,7 @@ export const trialProfileSchema = z
     stressExitReservePoints: z.literal(65),
   })
   .strict();
-export type TrialProfile = z.infer<typeof trialProfileSchema>;
+export type TrialProfile = z.infer<typeof trialProfileSchema> | TrendProfile;
 export const profiles = trialProfileSchema
   .array()
   .length(9)
@@ -46,7 +53,7 @@ export function profileSha256(profile: TrialProfile): string {
   delete parameters.id;
   return digest(parameters);
 }
-export const trialBindingSchema = z
+const legacyTrialBindingSchema = z
   .object({
     trialId: z.string().uuid(),
     profileId: z.string(),
@@ -70,21 +77,34 @@ export const trialBindingSchema = z
         message: "SCENARIO_DEMO_TRIAL_BINDING_INVALID",
       });
   });
+export const trialBindingSchema = z.union([
+  legacyTrialBindingSchema,
+  trendBindingSchema,
+]);
 export type TrialBinding = z.infer<typeof trialBindingSchema>;
 export function trialProfile(binding: TrialBinding): TrialProfile {
   const value = trialBindingSchema.parse(binding);
-  const found = profiles.find((p) => p.id === value.profileId);
+  const found = (
+    value.strategyVersion === TREND_RETEST_VERSION ? trendProfiles : profiles
+  ).find((p) => p.id === value.profileId);
   if (!found) throw new Error("SCENARIO_DEMO_PROFILE_UNAVAILABLE");
   return found;
 }
 export function trialPrompt(binding: TrialBinding) {
   const profile = trialProfile(binding);
   const local = profile.proposalSource === "LOCAL_RANGE";
-  const version = local
-    ? ("demo-local-range-v1" as const)
-    : ("entry-scalp-v3" as const);
+  const version =
+    binding.strategyVersion === TREND_RETEST_VERSION
+      ? ("entry-scalp-v4" as const)
+      : local
+        ? ("demo-local-range-v1" as const)
+        : ("entry-scalp-v3" as const);
   const template = readFileSync(
-    local ? "prompts/demo-local-range-v1.md" : "prompts/entry-scalp-v3.md",
+    binding.strategyVersion === TREND_RETEST_VERSION
+      ? "prompts/entry-scalp-v4.md"
+      : local
+        ? "prompts/demo-local-range-v1.md"
+        : "prompts/entry-scalp-v3.md",
     "utf8",
   ).trim();
   const content =
@@ -103,6 +123,25 @@ export function trialGeometry(
   proposal?: unknown,
 ) {
   const profile = trialProfile(binding);
+  if ("entryStyle" in profile) {
+    if (proposal === undefined)
+      throw new Error("AI_TREND_CODEX_PROPOSAL_REQUIRED");
+    const parsed = scalpDecisionSchema.parse(proposal);
+    if (Date.parse(input.capturedAt) < Date.parse(binding.startsAt))
+      throw new Error("SCENARIO_DEMO_TRIAL_NOT_STARTED");
+    if (parsed.decision === "WAIT") return parsed;
+    const candidate = trendRetestGeometry(input, profile.entryStyle);
+    if (
+      candidate.decision === "WAIT" ||
+      parsed.decision !== candidate.decision ||
+      !decimal(parsed.entry_price!).eq(candidate.entryPrice) ||
+      !decimal(parsed.stop_loss!).eq(candidate.stopLoss) ||
+      !decimal(parsed.take_profit!).eq(candidate.takeProfit) ||
+      parsed.pending_seconds !== candidate.pendingSeconds
+    )
+      throw new Error("AI_TREND_GEOMETRY_MISMATCH");
+    return parsed;
+  }
   const at = Date.parse(input.capturedAt);
   if (!Number.isFinite(at) || at < Date.parse(binding.startsAt))
     throw new Error("SCENARIO_DEMO_TRIAL_NOT_STARTED");

@@ -17,6 +17,7 @@ from uuid import UUID
 
 from pydantic import Field, model_validator
 
+from python.codex_entry.trend_protocol import TrendBinding
 from python.codex_entry.trial_protocol import TrialBinding
 from python.research.codex_loop import StrictModel, encoded, publish, read_bounded, timestamp
 from python.technical.models import ContextEvidence, ContextEvidenceV11
@@ -449,6 +450,32 @@ class RequestV117(RequestV116):
     provider: Literal["openai-api"]
 
 
+class TrendExecutionContext(TrialExecutionContext):
+    base_exit_reserve_ticks: Literal[65]  # type: ignore[assignment]
+
+
+class TrendPayload(PayloadScalp):
+    execution_context: TrendExecutionContext
+
+
+class RequestV118(RequestV114):
+    version: Literal["codex-entry-request-1.18"]  # type: ignore[assignment]
+    promptVersion: Literal["entry-scalp-v4"]  # type: ignore[assignment]
+    experiment: TrendBinding
+    payload: TrendPayload
+
+    @model_validator(mode="after")
+    def registered_profile(self) -> RequestV118:
+        if timestamp(self.payload.captured_at) < timestamp(self.experiment.startsAt):
+            raise ValueError("CODEX_DEMO_REQUEST_INVALID")
+        return self
+
+
+class RequestV119(RequestV118):
+    version: Literal["codex-entry-request-1.19"]  # type: ignore[assignment]
+    provider: Literal["openai-api"]
+
+
 REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     Request,
     RequestV12,
@@ -467,6 +494,8 @@ REQUEST_MODELS: tuple[type[Request] | type[RequestV12], ...] = (
     RequestV115,
     RequestV116,
     RequestV117,
+    RequestV118,
+    RequestV119,
 )
 REQUEST_BY_VERSION = {
     version: model
@@ -500,6 +529,8 @@ def parse_request(
     | RequestV115
     | RequestV116
     | RequestV117
+    | RequestV118
+    | RequestV119
 ):
     value = json.loads(raw)
     version = value.get("version") if isinstance(value, dict) else None
@@ -697,6 +728,18 @@ class ResponseV111(ResponseV19):
     fallbackReason: Literal["API_DAILY_LIMIT", "API_CREDIT_EXHAUSTED"]
 
 
+class ResponseV112(ResponseV16):
+    version: Literal["codex-entry-response-1.12"]  # type: ignore[assignment]
+
+
+class ResponseV113(ResponseV17):
+    version: Literal["codex-entry-response-1.13"]  # type: ignore[assignment]
+
+
+class ResponseV114(ResponseV18):
+    version: Literal["codex-entry-response-1.14"]  # type: ignore[assignment]
+
+
 def invoke(prompt: str, job: Path) -> bytes:
     if os.geteuid() == 0 or not job.resolve().is_relative_to(Path.home().resolve()):
         raise ValueError("CODEX_DEDICATED_USER_REQUIRED")
@@ -771,7 +814,7 @@ def run(
         or not timedelta(0) <= started - captured <= timedelta(seconds=30)
     ):
         raise ValueError("CODEX_INPUT_STALE")
-    if isinstance(request, RequestV116):
+    if isinstance(request, (RequestV116, RequestV118)):
         if trial_source_sha256 is None or request.experiment.sourceSha256 != trial_source_sha256:
             raise ValueError("CODEX_DEMO_SOURCE_MISMATCH")
         from python.codex_entry.trial_protocol import prompt as trial_prompt
@@ -808,7 +851,7 @@ def run(
         publish(job / "request.json", request.model_dump())
         publish(job / "prompt.json", {"text": prompt})
         fallback_reason = None
-        if isinstance(request, (RequestV113, RequestV115, RequestV117)):
+        if isinstance(request, (RequestV113, RequestV115, RequestV117, RequestV119)):
             from python.codex_entry import openai_api
 
             fallback_reason = openai_api.reserve(job, prompt)
@@ -845,7 +888,7 @@ def run(
             )
             api_metadata = None
             if (
-                isinstance(request, (RequestV113, RequestV115, RequestV117))
+                isinstance(request, (RequestV113, RequestV115, RequestV117, RequestV119))
                 and fallback_reason is None
             ):
                 from python.codex_entry import openai_api
@@ -893,13 +936,15 @@ def run(
                 "executionAuthority": False,
             }
             if (
-                isinstance(request, (RequestV113, RequestV115, RequestV117))
+                isinstance(request, (RequestV113, RequestV115, RequestV117, RequestV119))
                 and fallback_reason is None
             ):
                 assert api_metadata is not None
                 response.update(api_metadata)
                 response.update(
-                    version="codex-entry-response-1.10"
+                    version="codex-entry-response-1.13"
+                    if isinstance(request, RequestV119)
+                    else "codex-entry-response-1.10"
                     if isinstance(request, RequestV117)
                     else "codex-entry-response-1.7"
                     if isinstance(request, RequestV115)
@@ -909,7 +954,9 @@ def run(
                 )
                 response = (
                     (
-                        ResponseV110
+                        ResponseV113
+                        if isinstance(request, RequestV119)
+                        else ResponseV110
                         if isinstance(request, RequestV117)
                         else ResponseV17
                         if isinstance(request, RequestV115)
@@ -920,7 +967,11 @@ def run(
                 )
             elif isinstance(request, RequestV13):
                 response_model = (
-                    ResponseV111
+                    ResponseV114
+                    if isinstance(request, RequestV119) and fallback_reason is not None
+                    else ResponseV112
+                    if isinstance(request, RequestV118)
+                    else ResponseV111
                     if isinstance(request, RequestV117) and fallback_reason is not None
                     else ResponseV19
                     if isinstance(request, RequestV116)

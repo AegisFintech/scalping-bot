@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "trend-retest-catalogue-1.0",
+  "status": "EXPERIMENTAL_NOT_CHAMPION",
+  "maximumCloses": 20,
+  "maximumMarketOpenSeconds": 3600,
+  "setupRiskPercentCeiling": "5",
+  "singleLegRiskPercentCeiling": "2.5",
+  "profiles": [
+    {
+      "id": "TREND_BREAKOUT",
+      "proposalSource": "CODEX",
+      "entryStyle": "BREAKOUT",
+      "rangeBars": 5,
+      "targetDistance": "STRUCTURAL",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 60,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 65,
+      "stressExitReservePoints": 65,
+      "minimumNetRewardRisk": "1"
+    },
+    {
+      "id": "TREND_CONFIRMED",
+      "proposalSource": "CODEX",
+      "entryStyle": "CONFIRMED_BREAKOUT",
+      "rangeBars": 5,
+      "targetDistance": "STRUCTURAL",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 60,
+      "entryRangePoints": 30,
+      "baseExitReservePoints": 65,
+      "stressExitReservePoints": 65,
+      "minimumNetRewardRisk": "1"
+    },
+    {
+      "id": "TREND_RETEST",
+      "proposalSource": "CODEX",
+      "entryStyle": "RETEST_LIMIT",
+      "rangeBars": 5,
+      "targetDistance": "STRUCTURAL",
+      "stopBufferTicks": 0,
+      "pendingSeconds": 60,
+      "entryRangePoints": 0,
+      "baseExitReservePoints": 65,
+      "stressExitReservePoints": 65,
+      "minimumNetRewardRisk": "1"
+    }
+  ],
+  "batches": [
+    { "id": "CONFIRMATION", "profiles": ["TREND_BREAKOUT", "TREND_CONFIRMED"] },
+    { "id": "ENTRY_TYPE", "profiles": ["TREND_CONFIRMED", "TREND_RETEST"] }
+  ]
+}

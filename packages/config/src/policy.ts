@@ -1,3 +1,7 @@
+import {
+  TREND_RETEST_VERSION,
+  TREND_RETEST_POLICY,
+} from "./trend-retest-policy.js";
 import type { RiskPolicy, TradingMode } from "../../contracts/src/index.js";
 
 /** Versioned operator-authorized policy. These are release constants, not tuning knobs. */
@@ -45,6 +49,8 @@ export const DEMO_TRIAL_SCALP_LIMITS = Object.freeze({
   maximumTargetDistance: "1",
 });
 export function scalpLimits(strategyVersion: string = LEGACY_SCALP_VERSION) {
+  if (strategyVersion === TREND_RETEST_VERSION)
+    return COST_BALANCED_SCALP_LIMITS;
   if (strategyVersion === DEMO_TRIAL_STRATEGY_VERSION)
     return DEMO_TRIAL_SCALP_LIMITS;
   if (strategyVersion === LEGACY_SCALP_VERSION) return SCALP_LIMITS;
@@ -121,9 +127,11 @@ export function executionRiskPolicy(
 ): RiskPolicy {
   return {
     version:
-      strategyVersion === DEMO_TRIAL_STRATEGY_VERSION
-        ? DEMO_TRIAL_POLICY_VERSION
-        : POLICY_VERSION,
+      strategyVersion === TREND_RETEST_VERSION
+        ? TREND_RETEST_POLICY
+        : strategyVersion === DEMO_TRIAL_STRATEGY_VERSION
+          ? DEMO_TRIAL_POLICY_VERSION
+          : POLICY_VERSION,
     mode,
     lossLimitsEnforced: enforcesLossLimits(mode),
     ...MONEY_MANAGEMENT,

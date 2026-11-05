@@ -1,3 +1,12 @@
+### ISSUE-536 — Trend breakout/retest demo comparison
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/536; depends on534.
+- Acceptance: versioned causal geometry, same-direction limits, structural room and
+  actual-volume net-RR admission, preserved old contracts/active trades, full
+  transport/DB/controller integration, reviewed qualification and one-demo activation.
+- Status: implementation in progress; no economic activation yet.
+- Specification: `docs/trend-retest-plan.md`.
+
 ### ISSUE-534 — First registered R:R review
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/534; depends on532.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { PendingOrderCommand } from "../../packages/contracts/src/index.js";
 import {
+  limitProtectionFields,
   stopLimitProtectionFields,
   stopProtectionFields,
   stopLimitLifetimeFields,
@@ -184,3 +185,34 @@ it("requires exact native GTD acknowledgement without reinterpreting fills", () 
     validatePendingLifetimeAcknowledgement(c, { orderStatus: 2 }),
   ).not.toThrow();
 });
+
+it.each(["BUY", "SELL"] as const)(
+  "keeps trend %s structural exits absolute for both pending types",
+  (side) => {
+    const c = {
+      ...command(side),
+      strategyLabel: "ctrader-ai-scalper:0.11.0-trend-retest.1-codex.1",
+      executionOrderType: "STOP_LIMIT" as const,
+    };
+    const stop = stopLimitProtectionFields(c, { digits: 2 }, "30");
+    const limit = limitProtectionFields(
+      { ...c, executionOrderType: "LIMIT" },
+      { digits: 2 },
+    );
+    for (const fields of [stop, limit]) {
+      expect(fields.stopLoss).toBe(Number(c.stopLoss));
+      expect(fields.takeProfit).toBe(Number(c.takeProfit));
+      expect(fields.relativeStopLoss).toBeUndefined();
+      expect(fields.relativeTakeProfit).toBeUndefined();
+    }
+    expect(() =>
+      stopProtectionFields({ ...c, executionOrderType: "STOP" }, { digits: 2 }),
+    ).toThrow("CTRADER_TREND_ORDER_TYPE_INVALID");
+    expect(() =>
+      limitProtectionFields(
+        { ...c, executionOrderType: "LIMIT", stopLoss: c.takeProfit },
+        { digits: 2 },
+      ),
+    ).toThrow("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
+  },
+);

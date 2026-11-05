@@ -31,11 +31,14 @@ function check(
   trial?: TrialProfile,
   volumeStage: "MINIMUM_DIAGNOSTIC" | "ACTUAL" = "ACTUAL",
 ) {
-  const limits = trial
-    ? DEMO_TRIAL_SCALP_LIMITS
-    : balanced
+  const limits =
+    trial && "entryStyle" in trial
       ? COST_BALANCED_SCALP_LIMITS
-      : SCALP_LIMITS;
+      : trial
+        ? DEMO_TRIAL_SCALP_LIMITS
+        : balanced
+          ? COST_BALANCED_SCALP_LIMITS
+          : SCALP_LIMITS;
   const e = decimal(entry),
     t = decimal(target),
     s = decimal(stop),
@@ -46,8 +49,9 @@ function check(
   if (
     ![e, t, s].every((p) => p.gt(0) && isTickAligned(p, tick)) ||
     (side === "BUY" ? !(s.lt(e) && t.gt(e)) : !(t.lt(e) && s.gt(e))) ||
-    !reward.div(metadata.pipSize).isInteger() ||
-    !risk.div(metadata.pipSize).isInteger() ||
+    (!(trial && "entryStyle" in trial) &&
+      (!reward.div(metadata.pipSize).isInteger() ||
+        !risk.div(metadata.pipSize).isInteger())) ||
     reward.lt(minimum) ||
     risk.lt(minimum) ||
     reward.gt(limits.maximumTargetDistance) ||
@@ -61,6 +65,20 @@ function check(
     cost.netPrice.lt(decimal(metadata.pipSize).mul(QUICK_OCO.netTargetPips))
   )
     throw new Error("SCALP_NET_OBJECTIVE_UNAFFORDABLE");
+  if (trial && "entryStyle" in trial) {
+    const evidence = trendPayoffEvidence(
+      metadata,
+      side,
+      entry,
+      target,
+      stop,
+      volume,
+      trial.entryRangePoints,
+    );
+    if (volumeStage === "ACTUAL" && !evidence.admitted)
+      throw new Error("SCALP_TREND_NET_REWARD_BELOW_RISK");
+    return { ...cost.evidence, trend_cost_admission: evidence };
+  }
   if (trial) {
     if (!reward.eq(trial.targetDistance))
       throw new Error("SCALP_TRIAL_TARGET_MISMATCH");
@@ -196,14 +214,25 @@ export function directionalScalpTransform(
                 ? input.response.buy_stop
                 : input.response.sell_stop;
             return {
-              trial_cost_admission: trialPayoffEvidence(
-                input.snapshot.metadata,
-                leg.entry_price,
-                leg.take_profit,
-                leg.stop_loss,
-                input.snapshot.metadata.minVolume,
-                trial,
-              ),
+              trial_cost_admission:
+                "entryStyle" in trial
+                  ? trendPayoffEvidence(
+                      input.snapshot.metadata,
+                      input.side,
+                      leg.entry_price,
+                      leg.take_profit,
+                      leg.stop_loss,
+                      input.snapshot.metadata.minVolume,
+                      trial.entryRangePoints,
+                    )
+                  : trialPayoffEvidence(
+                      input.snapshot.metadata,
+                      leg.entry_price,
+                      leg.take_profit,
+                      leg.stop_loss,
+                      input.snapshot.metadata.minVolume,
+                      trial,
+                    ),
             };
           } catch {
             return { trial_cost_evidence_unavailable: true };
@@ -224,7 +253,12 @@ export function validateDirectionalScalpCommands(
   try {
     if (commands.length !== 1) throw new Error("SCALP_ONE_COMMAND_REQUIRED");
     const c = commands[0]!;
-    if (c.executionOrderType !== "STOP_LIMIT" || c.timeInForce !== "GTD")
+    const retest =
+      trial && "entryStyle" in trial && trial.entryStyle === "RETEST_LIMIT";
+    if (
+      c.executionOrderType !== (retest ? "LIMIT" : "STOP_LIMIT") ||
+      c.timeInForce !== "GTD"
+    )
       throw new Error("SCALP_LIFETIME_INVALID");
     const diagnostic: Record<string, unknown> = {
       side: c.side,
@@ -245,16 +279,30 @@ export function validateDirectionalScalpCommands(
       evidence.push(diagnostic);
     }
     if (trial) {
-      if (c.entryRangePoints !== String(trial.entryRangePoints))
+      if (
+        c.entryRangePoints !==
+        (retest ? undefined : String(trial.entryRangePoints))
+      )
         throw new Error("SCALP_TRIAL_RANGE_MISMATCH");
-      diagnostic.trial_cost_admission = trialPayoffEvidence(
-        metadata,
-        c.entryPrice,
-        c.takeProfit,
-        c.stopLoss,
-        c.volume,
-        trial,
-      );
+      diagnostic.trial_cost_admission =
+        "entryStyle" in trial
+          ? trendPayoffEvidence(
+              metadata,
+              c.side,
+              c.entryPrice,
+              c.takeProfit,
+              c.stopLoss,
+              c.volume,
+              trial.entryRangePoints,
+            )
+          : trialPayoffEvidence(
+              metadata,
+              c.entryPrice,
+              c.takeProfit,
+              c.stopLoss,
+              c.volume,
+              trial,
+            );
       evidence.push(diagnostic);
     }
     const approved = {
@@ -421,6 +469,16 @@ export function costBalancedPayoffEvidence(
   };
 }
 
+function validateTrialPointBasis(metadata: SymbolMetadata) {
+  if (
+    !Number.isSafeInteger(metadata.digits) ||
+    metadata.digits < 0 ||
+    metadata.digits > 10 ||
+    !decimal(metadata.tickSize).eq(decimal("10").pow(-metadata.digits))
+  )
+    throw new Error("SCALP_TRIAL_POINT_BASIS_UNSUPPORTED");
+}
+
 /** Distinct experimental target allowance; stress loss reserve remains unchanged. */
 export function trialPayoffEvidence(
   metadata: SymbolMetadata,
@@ -430,13 +488,7 @@ export function trialPayoffEvidence(
   volume: string,
   profile: TrialProfile,
 ) {
-  if (
-    !Number.isSafeInteger(metadata.digits) ||
-    metadata.digits < 0 ||
-    metadata.digits > 10 ||
-    !decimal(metadata.tickSize).eq(decimal("10").pow(-metadata.digits))
-  )
-    throw new Error("SCALP_TRIAL_POINT_BASIS_UNSUPPORTED");
+  validateTrialPointBasis(metadata);
   const e = decimal(entry),
     reward = decimal(target).minus(e).abs(),
     risk = decimal(stop).minus(e).abs();
@@ -487,3 +539,53 @@ export const validateDemoTrialScalpCommands = (
   metadata: SymbolMetadata,
   profile: TrialProfile,
 ) => validateDirectionalScalpCommands(commands, metadata, false, profile);
+
+/** Worst permitted entry fill with absolute structural exits; no target adjustment. */
+export function trendPayoffEvidence(
+  metadata: SymbolMetadata,
+  side: "BUY" | "SELL",
+  entry: string,
+  target: string,
+  stop: string,
+  volume: string,
+  entryRangePoints: number,
+) {
+  validateTrialPointBasis(metadata);
+  if (entryRangePoints !== 0 && entryRangePoints !== 30)
+    throw new Error("SCALP_TREND_RANGE_INVALID");
+  const allowance = decimal(metadata.tickSize).mul(entryRangePoints);
+  const e = decimal(entry).plus(allowance.mul(side === "BUY" ? 1 : -1));
+  const reward = decimal(target)
+    .minus(e)
+    .mul(side === "BUY" ? 1 : -1);
+  const risk = e.minus(stop).mul(side === "BUY" ? 1 : -1);
+  const p = balancedPayoff(
+    metadata,
+    e,
+    reward,
+    risk,
+    decimal(volume),
+    "65",
+    "0",
+  );
+  return {
+    evidence_version: "trend-retest-payoff-1.0",
+    volume,
+    worst_entry_price: canonical(e),
+    entry_allowance_price: canonical(allowance),
+    modeled_net_reward_price: canonical(p.netReward),
+    modeled_stop_loss_price: canonical(p.netLoss),
+    modeled_commission_price: canonical(p.fees),
+    exit_reserve_price: canonical(p.reserve),
+    minimum_net_reward_risk: "1",
+    admitted:
+      reward.gt(0) &&
+      risk.gt(0) &&
+      p.netReward.gt(0) &&
+      p.netLoss.gt(0) &&
+      p.netReward.gte(p.netLoss),
+    actual_exit_cost: null,
+    future_swap: null,
+    guaranteed_closing_proceeds: false,
+  };
+}

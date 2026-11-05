@@ -2,7 +2,6 @@ import {
   trialPrompt,
   trialGeometry,
 } from "../../strategy-candidates/src/demo-trial.js";
-import { DEMO_TRIAL_STRATEGY_VERSION } from "../../config/src/policy.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { bindScalpDecision } from "./scalp-entry.js";
@@ -129,7 +128,7 @@ export class EntryPairHttpPlanner {
       },
       input.experiment === undefined
         ? CODEX_STRATEGY_VERSION
-        : DEMO_TRIAL_STRATEGY_VERSION,
+        : input.experiment.strategyVersion,
     );
     validateEntryDecision(JSON.stringify(plan), {
       ...input,
@@ -137,7 +136,7 @@ export class EntryPairHttpPlanner {
       strategyVersion:
         input.experiment === undefined
           ? CODEX_STRATEGY_VERSION
-          : DEMO_TRIAL_STRATEGY_VERSION,
+          : input.experiment.strategyVersion,
     });
     return {
       model: FIXED_DEFAULTS.AI_MODEL,
