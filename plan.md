@@ -1,3 +1,15 @@
+### ISSUE-543 — Verified rollout, prospective capture and digital hygiene
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/543; depends on539/541.
+- Acceptance: actual source/artifact/PID/API/browser checks; source-bound natural
+  future report and idempotency; proof before superseded timer retirement;
+  checksum/permission-preserving archive relocation and unused helper cleanup;
+  accurate records, protected delivery and clean primary main checkout.
+- Status: operational acceptance verified. Natural window0000 records21WAIT,
+  1FAILED and zero setups; COLLECT_MORE. Protected closeout delivery tracked on543.
+  Economic403 remains open; no profitable candidate is established.
+- Report: `docs/ops-closeout-report.md`.
+
 ### ISSUE-541 — Daily trading net across bot releases
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/541; depends on539.
@@ -8,8 +20,8 @@
   fresh Standards/Spec review, protected delivery and isolated dashboard activation.
 - Status: full qualification passes2,961 tests/no skips and20 checks; four config
   checks and fresh Standards/Spec reviews CLEAR; actual SQL bounds and Chromium
-  desktop/mobile fixture pass. Protected delivery/read-only activation pending.
-  No executor/economic change.
+  desktop/mobile fixture pass. [PR542](https://github.com/AegisFintech/scalping-bot/pull/542) merged and
+  read-only dashboard/API/deployed-browser activation verified. No executor/economic change.
 - Report: `docs/daily-trading-net-report.md`.
 
 ### ISSUE-539 — Current trend observation, quote clocks and daily net evidence
@@ -21,8 +33,9 @@
   observer with all denominators/unknown economics retained; complete-cohort review;
   full qualification/configuration/review/CI and matched one-demo activation.
 - Status: full qualification passes2,956 tests/no skips, all four configuration
-  checks and fresh Standards/Spec reviews CLEAR. Hosted delivery and matched
-  prospective activation pending. No profitability established.
+  checks and fresh Standards/Spec reviews CLEAR. [PR540](https://github.com/AegisFintech/scalping-bot/pull/540) merged; matched
+  one-demo activation and first future capture verified. Superseded study timers
+  retired after proof; old evidence preserved. No profitability established.
 - Report: `docs/trend-observation-net-review.md`. Original studies remain frozen.
 
 ### ISSUE-536 — Trend breakout/retest demo comparison

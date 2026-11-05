@@ -1,0 +1,84 @@
+{
+  "verifiedAt": "2026-11-05T09:48:24.063182+00:00",
+  "issue": 539,
+  "pr": 540,
+  "mergedMain": "6af0e921495f95fcc75afa84736b620d980ef25e",
+  "sourceSha256": "ffd04a813a915f4d341375f6db56bb8045461d690b32169b5909f770ca28e630",
+  "migration": "0043",
+  "priorChecksumsVerified": 42,
+  "processes": [
+    {
+      "service": "scalper-restored-execution.service",
+      "active": "active",
+      "cwd": "/mnt/sdb/scalper/releases/trend539-main"
+    },
+    {
+      "service": "scalper-restored-market-data.service",
+      "active": "active",
+      "cwd": "/mnt/sdb/scalper/releases/trend539-main"
+    },
+    {
+      "service": "scalper-restored-ai.service",
+      "active": "active",
+      "cwd": "/mnt/sdb/scalper/releases/trend539-main"
+    },
+    {
+      "service": "scalper-restored-analytics.service",
+      "active": "active",
+      "cwd": "/mnt/sdb/scalper/releases/trend539-main"
+    },
+    {
+      "service": "scalper-restored-dashboard.service",
+      "active": "active",
+      "cwd": "/mnt/sdb/scalper/releases/trend539-main"
+    }
+  ],
+  "mode": "demo",
+  "operationalReady": true,
+  "reasonCodes": [],
+  "trials": [
+    {
+      "profile_id": "TREND_CONFIRMED",
+      "state": "ACTIVE",
+      "source_sha256": "ffd04a813a915f4d341375f6db56bb8045461d690b32169b5909f770ca28e630",
+      "retirement_reason": null,
+      "proposals": 6,
+      "provider_claims": 6,
+      "waits": 6,
+      "closes": 0,
+      "realized_net": null
+    },
+    {
+      "profile_id": "TREND_CONFIRMED",
+      "state": "COMPLETED",
+      "source_sha256": "de2eead48727bcd55815648f0952c7353ef58380b3083f569add66a0ebeda143",
+      "retirement_reason": "SOURCE_HANDOVER",
+      "proposals": 48,
+      "provider_claims": 48,
+      "waits": 48,
+      "closes": 0,
+      "realized_net": null
+    }
+  ],
+  "observerRegistration": {
+    "brokerAuthority": false,
+    "candidates": {
+      "RECORDED_TREND": "absolute-structural-prices-no-exit-simulation"
+    },
+    "method": "trend-observation-1.0",
+    "promotionAuthority": false,
+    "registeredAt": "2026-11-05T09:38:01.956920+00:00",
+    "sourceId": "scalper-epoch314",
+    "sourceSha256": "c67693bd1aa91d26d1c9ab3e7062fcccf79f749ec400a2db71268fccfa1af065",
+    "start": "2026-11-05T10:00:00+00:00",
+    "until": "2026-12-05T10:00:00+00:00",
+    "version": "loss-control-registration-1.2"
+  },
+  "observerState": "WAITING_FOR_FUTURE_WINDOW",
+  "firstWindowUntil": "2026-11-05T10:30:00Z",
+  "firstReportDueAround": "2026-11-05T10:35:00Z",
+  "economicQualification": false,
+  "historyReset": false,
+  "forcedTrade": false,
+  "initialWorkerAssetFailure": "MISSING_SOURCE_MANIFEST_CORRECTED_AND_341_FILES_VERIFIED"
+}

@@ -1,0 +1,58 @@
+{
+  "verifiedAt": "2026-11-05T10:43:23.783042+00:00",
+  "window": 0,
+  "from": "2026-11-05T10:00:00+00:00",
+  "until": "2026-11-05T10:30:00+00:00",
+  "registrationSha256": "6962989924016919896ef96c8e638fb21a0a32596721b71bdaf61497beeb7739",
+  "sourceSha256": "c67693bd1aa91d26d1c9ab3e7062fcccf79f749ec400a2db71268fccfa1af065",
+  "reportSha256": "ead3c2ac914f5a8a9b6513fbc4fc3bda17bb5b5de1d3973d8e1e0cabce8c1b2d",
+  "inputSha256": "83d1f13ebaa69ab988080b10cb0ca3a8cb68d0878e67acca6c0c702f9e6c39b0",
+  "reportReproduced": true,
+  "actualRerunState": "ALREADY_RECORDED",
+  "missingPriorWindows": [],
+  "contextCounts": {
+    "FAILED": 1,
+    "WAIT": 21
+  },
+  "setupCounts": {},
+  "recommendation": "COLLECT_MORE",
+  "recordedFailureCode": "AI_ANALYSIS_FAILED",
+  "privateDispatchOutcome": "FAILED_OR_UNKNOWN",
+  "unknownDispatchRetried": false,
+  "laterNaturalReadyObservedAt": "2026-11-05T10:37:23.976Z",
+  "counterfactualNet": null,
+  "economicQualification": false,
+  "retiredCollectors": [
+    {
+      "timer": "scalper-loss-control-study.timer",
+      "enabled": false,
+      "registrationSha256": "21d535cd8798605f1ad6b5ce59ac917fbdba0c54a696963357d81b67840722c0",
+      "lastRetainedReport": "window-0014.json",
+      "lastReportSha256": "dd7ecd1c874a2b9604133a8b3501e260c99d0601c19bb90fabfb218c0610d142",
+      "lastWindowUntil": "2026-11-05T10:30:00+00:00",
+      "oldMissingPriorWindows": [0, 1, 2, 4, 5, 6],
+      "originalRegistrationUnchanged": true,
+      "remainingTail": "RIGHT_CENSORED_AFTER_LAST_RETAINED_WINDOW",
+      "reason": "SUPERSEDED_UNSUPPORTED_CONTEXT_METHOD_CURRENT_TREND_OBSERVER_VERIFIED"
+    },
+    {
+      "timer": "scalper-rr-study.timer",
+      "enabled": false,
+      "registrationSha256": "80e98025d32a4a4bc88cf7f8f69e0a331bb4c740156a6677819a7b1041551a61",
+      "lastRetainedReport": "window-0014.json",
+      "lastReportSha256": "a246816b92c880c4eb63b8fe2ef7f883a49a327f49c840f9dd1ed2dd96429d1c",
+      "lastWindowUntil": "2026-11-05T10:30:00+00:00",
+      "oldMissingPriorWindows": [0, 1, 2, 4, 5, 6],
+      "originalRegistrationUnchanged": true,
+      "remainingTail": "RIGHT_CENSORED_AFTER_LAST_RETAINED_WINDOW",
+      "reason": "SUPERSEDED_UNSUPPORTED_CONTEXT_METHOD_CURRENT_TREND_OBSERVER_VERIFIED"
+    }
+  ],
+  "isolationProbe": {
+    "unprivileged": true,
+    "feedRead": true,
+    "privateStateWrite": true,
+    "credentialReadsDenied": true,
+    "inetSocketDenied": true
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "verifiedAt": "2026-11-05T10:46:46.597808+00:00",
+  "releaseChecks": [
+    {
+      "path": "/mnt/sdb/scalper/releases/trend539-main",
+      "command": "Node22 scripts/prepare-release.mjs verify TARGET",
+      "exitCode": 0,
+      "result": "RELEASE_VERIFIED",
+      "sourceSha256": "ffd04a813a915f4d341375f6db56bb8045461d690b32169b5909f770ca28e630",
+      "manifestSha256": "8027ac3a3e140cef0d4e640bad24f34293f216e9b3a5de0eef01983f571c3703"
+    },
+    {
+      "path": "/opt/scalper-trend-observation539",
+      "command": "Node22 scripts/prepare-release.mjs verify TARGET",
+      "exitCode": 0,
+      "result": "RELEASE_VERIFIED",
+      "sourceSha256": "ffd04a813a915f4d341375f6db56bb8045461d690b32169b5909f770ca28e630",
+      "manifestSha256": "8027ac3a3e140cef0d4e640bad24f34293f216e9b3a5de0eef01983f571c3703"
+    },
+    {
+      "path": "/mnt/sdb/scalper/releases/daily541-main",
+      "command": "Node22 scripts/prepare-release.mjs verify TARGET",
+      "exitCode": 0,
+      "result": "RELEASE_VERIFIED",
+      "sourceSha256": "d63d4f14dba259da731d51cda8209aa8947fec283111d84280f971d47e46e4eb",
+      "manifestSha256": "67545c9d348aa4a4ce3aa4560992a23fd46b98ab350be6903583d6426377f934"
+    }
+  ],
+  "deployedBrowser": {
+    "widths": [1440, 390],
+    "horizontalOverflow": false,
+    "mutations": 0,
+    "rawReceiptSha256": "951215cd1e3c07d85965c53a0f32ce7f6f3fec0602630e059b1f363907e8f41e"
+  },
+  "independentReviews": {
+    "Standards": "CLEAR",
+    "Spec": "CLEAR"
+  },
+  "economicQualification": false
+}
