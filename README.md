@@ -194,7 +194,7 @@ Push maintenance permits up to ten minutes for the local AST graph rebuild; fail
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
 
-Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md). Preserve historical reversal semantics; new retest limits must retain trend direction and require versioned execution authority.
+Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537). Foundation passes2,924 tests; controller/DB/sizing integration and activation remain pending. Preserve historical reversal semantics; new retest limits retain trend direction.
 
 <!-- research-publication -->
 

@@ -41,7 +41,7 @@ unresolved integration work on issue536; never claim a profitable result from te
 ## Delivery checkpoints
 
 1. Geometry, registration/prompt/transport contracts, actual-volume payoff gate,
-   absolute pending protection and repair: implementation under qualification.
+   absolute pending protection and repair: implemented and qualified as a foundation checkpoint.
    Defaults still select0.10; this checkpoint is not deployable as0.11.
 2. Additive database authority and audited source handover, controller allocation
    and same-direction mode integration: pending. Preserve all historical migrations.
@@ -104,4 +104,11 @@ policy; there is intentionally no development `.env`. Cross-language registratio
 profile/catalogue and exact prompt-hash parity also passed. An initial full run
 found one outdated prompt whitelist expectation; updated it and extended registry
 routing coverage through1.19. The focused rerun passed47 tests; final complete
-qualification is running and is required before any merge.
+qualification passed20 checks and2,924 tests with no skips (1,334 Node,165 database,
+1,425 Python). The existing FastAPI/httpx deprecation warning remains. This validates
+the foundation, not pending execution integration or profitability.
+
+Qualified source: `995fd2e4b09647159ca5ff27e2537f972835c438be3ce4d320e1da61f5ce7860`.
+Private receipt: `/var/lib/scalper-experiments515-evidence/qualification536-checkpoint1.json`.
+[Draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537) preserves the
+checkpoint; issue536 remains open and the existing demo is unchanged.

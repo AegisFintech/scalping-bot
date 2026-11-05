@@ -4,7 +4,9 @@
 - Acceptance: versioned causal geometry, same-direction limits, structural room and
   actual-volume net-RR admission, preserved old contracts/active trades, full
   transport/DB/controller integration, reviewed qualification and one-demo activation.
-- Status: implementation in progress; no economic activation yet.
+- Status: foundation qualified with2,924 tests/no skips, four config checks and
+  independent reviews; [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537).
+  DB/controller/sizing integration and verified deployment remain pending; no economic activation.
 - Specification: `docs/trend-retest-plan.md`.
 
 ### ISSUE-534 — First registered R:R review
