@@ -1,0 +1,111 @@
+{
+  "checkedAt": "2026-11-05T12:40:12.064794+00:00",
+  "sourceSha256": "d63d4f14dba259da731d51cda8209aa8947fec283111d84280f971d47e46e4eb",
+  "qualificationReportSha256": "8457ca0c398ce8a9266e9da81e17ec3220bc7f597b350e6f6cfe4b0ab9f6c83c",
+  "qualified": true,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "tests": {
+    "node": 1345,
+    "database": 175,
+    "python": 1441,
+    "total": 2961,
+    "skipped": 0
+  },
+  "configuration": {
+    "samplePolicy": true,
+    "sampleStartup": true,
+    "protectedPolicy": true,
+    "protectedStartup": true
+  },
+  "independentReviews": {
+    "Spec": "CLEAR",
+    "Standards": "CLEAR"
+  },
+  "warnings": [
+    "10 moderate npm findings retained; high-severity gate passed",
+    "Existing Starlette/httpx deprecation warning"
+  ],
+  "runtimeChanged": false,
+  "economicQualification": false
+}

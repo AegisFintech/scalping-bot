@@ -264,6 +264,8 @@ Keep the push graph rebuild bounded at ten minutes on the shared host; never byp
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
 
+For complete daily win/loss and recorder-gap diagnosis, read `docs/flight-cohort-review.md`. Preserve valid quiet/discontinuity warnings, exact carry-in profile links and all zero-fills. Existing0.11 already tests cost-aware1:1 admission; retrospective positive subgroups never authorize rollback or promotion.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

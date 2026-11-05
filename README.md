@@ -210,6 +210,8 @@ First registered R:R findings: [review](docs/first-rr-review.md). Preserve the c
 
 Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [merged PR537](https://github.com/AegisFintech/scalping-bot/pull/537). The0.11 implementation adds structural breakout/confirmation/retest allocations, absolute protection and cost-inclusive admission. New retest limits retain trend direction. PR537 is merged and the one demo activation is verified, including the first natural v4 WAIT response. See the report for qualification and future-window timing; profitability remains unproven.
 
+[Complete daily cohort and Flight gap audit](docs/flight-cohort-review.md): all outcomes, reproduced clock gaps and prospective review rules; no trading change or profitability qualification.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

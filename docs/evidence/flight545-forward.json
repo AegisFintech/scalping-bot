@@ -1,0 +1,87 @@
+{
+  "checkedAt": "2026-11-05T12:36:58.076822+00:00",
+  "sourceSha256": "c67693bd1aa91d26d1c9ab3e7062fcccf79f749ec400a2db71268fccfa1af065",
+  "registrationFileSha256": "6962989924016919896ef96c8e638fb21a0a32596721b71bdaf61497beeb7739",
+  "registrationSha256": "6962989924016919896ef96c8e638fb21a0a32596721b71bdaf61497beeb7739",
+  "registeredAt": "2026-11-05T09:38:01.956920+00:00",
+  "start": "2026-11-05T10:00:00+00:00",
+  "until": "2026-12-05T10:00:00+00:00",
+  "windows": [
+    {
+      "name": "window-0000.json",
+      "from": "2026-11-05T10:00:00+00:00",
+      "until": "2026-11-05T10:30:00+00:00",
+      "contexts": {
+        "FAILED": 1,
+        "WAIT": 21
+      },
+      "setups": {},
+      "missingPriorWindows": [],
+      "inputSha256": "83d1f13ebaa69ab988080b10cb0ca3a8cb68d0878e67acca6c0c702f9e6c39b0",
+      "reportSha256": "ead3c2ac914f5a8a9b6513fbc4fc3bda17bb5b5de1d3973d8e1e0cabce8c1b2d",
+      "reproduced": true
+    },
+    {
+      "name": "window-0001.json",
+      "from": "2026-11-05T10:30:00+00:00",
+      "until": "2026-11-05T11:00:00+00:00",
+      "contexts": {
+        "NOT_KNOWN_AT_CUTOFF": 1,
+        "WAIT": 21
+      },
+      "setups": {},
+      "missingPriorWindows": [],
+      "inputSha256": "3055d2e72a1665a2654c462c6bb1237465db80a8a3b63bc6df2fbc6daf2afd38",
+      "reportSha256": "fd3ee5393c5d6d09334672c548b0d42865edb9c7b16009ddeadd365173c4ff76",
+      "reproduced": true
+    },
+    {
+      "name": "window-0002.json",
+      "from": "2026-11-05T11:00:00+00:00",
+      "until": "2026-11-05T11:30:00+00:00",
+      "contexts": {
+        "FAILED": 2,
+        "UNAVAILABLE": 1,
+        "WAIT": 17
+      },
+      "setups": {},
+      "missingPriorWindows": [],
+      "inputSha256": "04b87fd241158328f2cdaac313eea004b9187fe5215f21fc9042580b9051f2aa",
+      "reportSha256": "669ea0705c499ec8c35e73012c7bd567f300dbac23190f454df8eefc6adc444a",
+      "reproduced": true
+    },
+    {
+      "name": "window-0003.json",
+      "from": "2026-11-05T11:30:00+00:00",
+      "until": "2026-11-05T12:00:00+00:00",
+      "contexts": {
+        "FAILED": 1,
+        "UNAVAILABLE": 1,
+        "WAIT": 16
+      },
+      "setups": {},
+      "missingPriorWindows": [],
+      "inputSha256": "06a71d60ce8437db5174811360e13ea0116fd9653a1a5cc87a166ece3524a8da",
+      "reportSha256": "7d82974039a3585e22fc26002744793f128a054a8167811272bcbe8b6ef82a41",
+      "reproduced": true
+    },
+    {
+      "name": "window-0004.json",
+      "from": "2026-11-05T12:00:00+00:00",
+      "until": "2026-11-05T12:30:00+00:00",
+      "contexts": {
+        "FAILED": 1,
+        "NOT_KNOWN_AT_CUTOFF": 1,
+        "UNAVAILABLE": 1,
+        "WAIT": 21
+      },
+      "setups": {},
+      "missingPriorWindows": [],
+      "inputSha256": "f57ce63d8b5e1dbb85d5c1419c7186470b5aed56100ce0114f7636ed8918444e",
+      "reportSha256": "0aceefc05ead103e55a8c404b6c93815ace6c71eb154596d5c95f522a208c8e6",
+      "reproduced": true
+    }
+  ],
+  "brokerAuthority": false,
+  "promotionAuthority": false
+}
