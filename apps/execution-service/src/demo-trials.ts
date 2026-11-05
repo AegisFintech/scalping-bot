@@ -1,6 +1,7 @@
 import {
   TREND_RETEST_VERSION,
   TREND_PREDECESSOR_SOURCE,
+  TREND_CLOCK_PREDECESSOR_SOURCE,
 } from "../../../packages/config/src/trend-retest-policy.js";
 import {
   trendProfiles,
@@ -141,9 +142,13 @@ export class DemoTrials {
       handover = Boolean(
         row &&
         this.trend &&
-        row.strategy_version === DEMO_TRIAL_STRATEGY_VERSION &&
-        row.source_sha256 === TREND_PREDECESSOR_SOURCE &&
-        row.catalogue_sha256 === catalogueSha256,
+        ((row.strategy_version === DEMO_TRIAL_STRATEGY_VERSION &&
+          row.source_sha256 === TREND_PREDECESSOR_SOURCE &&
+          row.catalogue_sha256 === catalogueSha256) ||
+          (row.strategy_version === TREND_RETEST_VERSION &&
+            row.source_sha256 === TREND_CLOCK_PREDECESSOR_SOURCE &&
+            row.catalogue_sha256 === this.catalogueDigest &&
+            row.source_sha256 !== this.sourceSha256)),
       );
       if (row && !handover) {
         const registeredProfile = this.profileList.find(

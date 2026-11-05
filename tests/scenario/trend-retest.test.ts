@@ -1,6 +1,54 @@
 import { trendInput as input } from "../helpers/trend-input.js";
 import { expect, it } from "vitest";
 import { trendRetestGeometry } from "../../packages/strategy-candidates/src/trend-retest.js";
+it("checks quote receipt against local capture separately from broker source time", () => {
+  const i = input();
+  const at = Date.parse(i.capturedAt);
+  Object.assign(i.quote!, {
+    sourceTime: i.capturedAt,
+    receivedAt: new Date(at + 150).toISOString(),
+  });
+  Object.assign(i, {
+    technicalContext: {
+      evidence: {},
+      inputSha256: "a".repeat(64),
+      marketCapturedAt: new Date(at + 200).toISOString(),
+    },
+  });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT").decision).toBe("BUY");
+  Object.assign(i.quote!, { receivedAt: new Date(at + 201).toISOString() });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({
+    reason: "TREND_QUOTE_INVALID",
+  });
+  Object.assign(i.quote!, { receivedAt: new Date(at + 150).toISOString() });
+  Object.assign(i.quote!, { sourceTime: new Date(at + 1).toISOString() });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({
+    reason: "TREND_QUOTE_INVALID",
+  });
+  Object.assign(i.quote!, { sourceTime: new Date(at - 3001).toISOString() });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({
+    reason: "TREND_QUOTE_INVALID",
+  });
+  Object.assign(i.quote!, { sourceTime: i.capturedAt });
+  Object.assign(i.technicalContext!, {
+    marketCapturedAt: new Date(at + 3001).toISOString(),
+  });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({
+    reason: "TREND_QUOTE_INVALID",
+  });
+  Object.assign(i.quote!, {
+    sourceTime: new Date(at - 3000).toISOString(),
+    receivedAt: new Date(at - 3000).toISOString(),
+  });
+  Object.assign(i.technicalContext!, { marketCapturedAt: i.capturedAt });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT").decision).toBe("BUY");
+  Object.assign(i.technicalContext!, {
+    marketCapturedAt: new Date(at + 1).toISOString(),
+  });
+  expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({
+    reason: "TREND_QUOTE_INVALID",
+  });
+});
 it("keeps trend direction for retest LIMIT and original range before confirmation", () => {
   const i = input();
   expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({

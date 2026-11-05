@@ -7,6 +7,7 @@ import { trendRetestGeometry } from "../../packages/strategy-candidates/src/tren
 import {
   TREND_RETEST_VERSION,
   TREND_PREDECESSOR_SOURCE,
+  TREND_CLOCK_PREDECESSOR_SOURCE,
 } from "../../packages/config/src/trend-retest-policy.js";
 import { spawnSync } from "node:child_process";
 import { MAX_PERSISTED_CANDLE_TAILS } from "../../apps/execution-service/src/decision-storage.js";
@@ -199,6 +200,55 @@ assert partial["trialOutcomes"] == []
           )
         ).rows[0]!.n,
       ).toBe(1);
+    });
+
+    it("hands over the exact trend clock predecessor only after safe reconciliation", async () => {
+      const x = await fixture(false, true, TREND_CLOCK_PREDECESSOR_SOURCE);
+      await expect(x.controller.check()).rejects.toThrow(
+        "DEMO_TRIAL_NOT_READY",
+      );
+      let safe = false;
+      const next = new DemoTrials(
+        pool,
+        x.scope,
+        "c".repeat(64),
+        () => Promise.resolve("OPEN"),
+        () => Promise.resolve(safe),
+      );
+      await expect(next.check()).rejects.toThrow();
+      expect((await next.summary()).trials).toHaveLength(1);
+      safe = true;
+      await expect(next.check()).rejects.toThrow();
+      const status = await next.summary();
+      expect(status.trials).toHaveLength(2);
+      expect(status.trials[0]).toMatchObject({
+        source_sha256: "c".repeat(64),
+        cycle: 1,
+      });
+      expect(status.trials[1]).toMatchObject({
+        state: "COMPLETED",
+        retirement_reason: "SOURCE_HANDOVER",
+        source_sha256: TREND_CLOCK_PREDECESSOR_SOURCE,
+      });
+    });
+
+    it("refuses unregistered trend source drift without retiring its allocation", async () => {
+      const x = await fixture(false, true);
+      await expect(x.controller.check()).rejects.toThrow(
+        "DEMO_TRIAL_NOT_READY",
+      );
+      const next = new DemoTrials(
+        pool,
+        x.scope,
+        "c".repeat(64),
+        () => Promise.resolve("OPEN"),
+        () => Promise.resolve(true),
+      );
+      await expect(next.check()).rejects.toThrow();
+      const status = await next.summary();
+      expect(status.trials).toHaveLength(1);
+      expect(status.reason).toBe("DEMO_TRIAL_SOURCE_DRIFT");
+      expect(status.trials[0]!.state).toBe("ACTIVE");
     });
 
     it("refuses an unregistered predecessor source without retiring it", async () => {

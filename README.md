@@ -69,6 +69,11 @@ See [current protocol and activation](docs/trend-retest-plan.md) and the
 orders, native protection and broker/accounting history remain unchanged.
 Profitability remains unproven.
 
+[Current trend evidence and quote-clock repair](docs/trend-observation-net-review.md)
+separates actual net results from WAIT/geometry diagnostics. A separately frozen
+observer supports0.11 without rewriting legacy loss/R:R reports. Daily net after
+costs remains the objective; a zero-trade partial day is not a winning strategy.
+
 ## Development and verification
 
 Use Node22 and Python3.13 with an isolated development environment. Preserve

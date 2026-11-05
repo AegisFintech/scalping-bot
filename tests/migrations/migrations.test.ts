@@ -111,6 +111,7 @@ describe("migrations", () => {
       "0040_context_consultations.sql",
       "0041_demo_trial_protocol.sql",
       "0042_trend_retest_trials.sql",
+      "0043_trend_quote_clock_handover.sql",
     ]);
     const sql = (
       await Promise.all(

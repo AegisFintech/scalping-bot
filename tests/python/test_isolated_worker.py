@@ -41,9 +41,14 @@ def test_bundle_identity_includes_paths_and_bytes() -> None:
 
 
 def test_trust_path_rejects_writable_ancestors_and_links(tmp_path: Path) -> None:
-    # Temporary paths have an untrusted owner or a writable /tmp ancestor.
+    # Exercise a writable ancestor explicitly, including on a trusted mounted TMPDIR.
+    ancestor = tmp_path / "writable"
+    ancestor.mkdir()
+    runtime = ancestor / "runtime"
+    runtime.mkdir()
+    ancestor.chmod(0o777)
     with pytest.raises(ValueError, match="TRUST_PATH_UNSAFE"):
-        worker.trusted_path(tmp_path)
+        worker.trusted_path(runtime)
     link = tmp_path / "link"
     link.symlink_to("/usr")
     with pytest.raises(ValueError, match="TRUST_PATH_NOT_CANONICAL"):
