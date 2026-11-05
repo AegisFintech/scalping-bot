@@ -28,15 +28,14 @@
 
 ## Current approved economic experiment
 
-Operator-approved #515/#519/#520 adds finite registered0.10 DEMO trials in the
-ONE existing executor. Read `docs/demo-trial-protocol-report.md`. Freeze source,
-profile and future start before proposals; only exact terminal proof plus fresh
-reconciliation permits switching. Preserve5% setup/2.5% single-leg ceilings and
-65-tick sizing reserve. Base target allowance5ticks is an experiment, not actual
-cost or economic qualification. Codex WAIT never falls back locally; LOCAL_RANGE
-is a separately registered source, never a paid call. Parent515/520 engineering acceptance is complete: six distinct filled/completed
-profiles have successors and bound restart proof (issue528 rollout receipt).
-Old registrations/orders remain immutable; verify source activation separately.
+Operator-approved #536 runs finite registered0.11 DEMO trend trials in the ONE
+existing executor. Before changing trials, source handover, structural protection or
+readers, read `docs/trend-retest-plan.md`. Preserve5% setup/2.5% single-leg ceilings,
+95-point STOP_LIMIT sizing (30entry+65exit) and65-point LIMIT sizing. Retest limits
+retain trend direction. Exact terminal proof and fresh reconciliation precede each
+allocation change. Keep0.10 definitions/records immutable; its5-tick base allowance
+and LOCAL_RANGE source remain historical. Verified activation is recorded separately
+from economic qualification; no profitability claim or automatic promotion.
 
 ISSUE-528: worker trial payload must match executor base/stress cost fields; exercise
 actual HTTP/DB boundaries. Preserve frozen executor source while deploying isolated
@@ -235,8 +234,6 @@ Related implementation reports: [cost/tape measurement](docs/experiment-measurem
 Keep the push graph rebuild bounded at ten minutes on the shared host; never bypass a failed hook.
 
 First registered R:R findings: [review](docs/first-rr-review.md). Preserve the complete cohort; no exit candidate is economically qualified by these four closes.
-
-Operator-approved trend breakout/retest experiment: [specification](docs/trend-retest-plan.md), [draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537). Before changing0.11 trials, handover, absolute protection or research readers, read the specification. Preserve historical reversal semantics and immutable registrations; new retest limits retain trend direction. Verify deployed source independently.
 
 <!-- research-publication -->
 

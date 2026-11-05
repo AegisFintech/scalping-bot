@@ -47,7 +47,7 @@ unresolved integration work on issue536; never claim a profitable result from te
 2. Additive database authority and audited source handover, controller allocation
    and same-direction mode integration: implemented. Preserve all historical migrations.
 3. Full integrated qualification, independent review, exact-head CI, reviewed merge,
-   one-demo activation and broker/source readback: pending.
+   one-demo activation and broker/source readback: complete; see activation receipt.
 
 The worker validates versioned registration, source, output geometry bounds and
 provider claims. The executor verifies exact candle-derived prices and owns actual
@@ -163,4 +163,38 @@ logs: `/tmp/scalper-qualification-nPvPdQ/checks`. Both independent review axes a
 All four policy/startup checks on `.env.sample` and the actual protected environment
 passed with0.11. Graphify's AST graph updated; pyproject.toml produces no graph nodes.
 Earlier lint/fixture-type/storage failures remain failed runs, not qualification.
-Reviewed merge and activation readback remain separate, pending delivery steps.
+At qualification time, reviewed merge and activation remained separate delivery steps;
+the verified activation below completes them.
+
+## Verified demo activation —2026-11-05
+
+[PR537](https://github.com/AegisFintech/scalping-bot/pull/537) merged after independent
+approval and both exact-head hosted qualification jobs passed. Merged mainc493be7
+has the same qualified source as the prepared e67dccc artifact. All five PM2 processes
+now run from `/opt/ctrader-ai-scalper/releases/trend536-main`; the provider and read-only
+workers use matched protected `/opt/scalper-trend536-de2eead48727` files.
+[Activation receipt](evidence/trend536-activation.json).
+
+The runtime database role correctly refused DDL. The local database owner applied
+0042 in one transaction under the migration advisory lock after verifying every
+existing checksum. PM2 reload initially retained old working directories; replacing
+only the five existing process definitions corrected that, preserving runtime state.
+The initial future-trial readiness fault retried automatically after60seconds and
+cleared; no pause, accounting reset, provider/order force or manual latch clear occurred.
+
+The exact old source completed with SOURCE_HANDOVER after terminal reconciliation.
+New TREND_BREAKOUT registered02:50:39.823UTC, future start02:50:40.823UTC. The first
+natural request used entry-scalp-v4 at02:51:47.528UTC and returned READY/WAIT at
+02:51:53.394UTC. Executor startup checks, operational readiness and trading-enabled
+status are true with no reason codes. This proves the new flow is running, not a win.
+Both dashboard routes return200; `/api/learning` validates trial/status1.1 and the
+new release's scorecard1.1. Historical P/L has not been reset or relabeled.
+
+Old529/532 registrations and reports remain intact. A separate handover receipt
+right-censors their remaining tails; new loss and R:R registrations begin03:00UTC
+(11:00SGT). The first full report is due around03:34UTC (11:34SGT). Their original
+persistent timers and the observation feed now point to the new frozen code and
+separate state directories. Initial read-only runs succeeded, waiting for the future
+window. Pre-window trades remain in broker journals/Flight and are not backfilled
+into a prospective window. Next economic review retains the existing complete-cohort
+floor and censoring rules; tests and startup health do not establish profitability.
