@@ -280,6 +280,7 @@ export interface ModelPromptArtifact {
     | "entry-scalp-v4"
     | "demo-local-range-v1"
     | "demo-trial-execution-v1"
+    | "trend-retest-execution-v1"
     | "entry-modes-execution-v1"
     | "entry-quick-oco-execution-v1"
     | "entry-quick-oco-execution-v2"

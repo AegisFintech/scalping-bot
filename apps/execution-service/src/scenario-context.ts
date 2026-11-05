@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
 import {
   canonicalJson,
   trialProfile,
@@ -517,7 +518,9 @@ export class ReusableScenarioModel implements ModelProvider {
       : null;
     const content = readFileSync(
       trial
-        ? "prompts/demo-trial-execution-v1.md"
+        ? scalpStrategyVersion === TREND_RETEST_VERSION
+          ? "prompts/trend-retest-execution-v1.md"
+          : "prompts/demo-trial-execution-v1.md"
         : entryOnly
           ? "prompts/entry-scalp-execution-v1.md"
           : "prompts/scenario-execution-v2.md",
@@ -525,7 +528,9 @@ export class ReusableScenarioModel implements ModelProvider {
     ).trim();
     this.artifact = {
       version: trial
-        ? ("demo-trial-execution-v1" as const)
+        ? scalpStrategyVersion === TREND_RETEST_VERSION
+          ? ("trend-retest-execution-v1" as const)
+          : ("demo-trial-execution-v1" as const)
         : entryOnly
           ? ("entry-scalp-execution-v1" as const)
           : ("scenario-execution-v2" as const),

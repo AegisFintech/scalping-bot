@@ -1,3 +1,7 @@
+import {
+  TREND_RETEST_VERSION,
+  TREND_RETEST_POLICY,
+} from "../../../packages/config/src/trend-retest-policy.js";
 import { DemoTrials, demoTrialSource } from "./demo-trials.js";
 import { DemoTrialPlanner } from "../../../packages/strategy-candidates/src/demo-trial-planner.js";
 import { trialProfile } from "../../../packages/strategy-candidates/src/demo-trial.js";
@@ -385,10 +389,14 @@ async function main(): Promise<void> {
   const strategyVersion =
     environment.STRATEGY_VERSION ?? CODEX_STRATEGY_VERSION;
   const configHash = safetyConfigHash(config, strategyVersion);
-  const demoTrialsActive = strategyVersion === DEMO_TRIAL_STRATEGY_VERSION;
-  const policyVersion = demoTrialsActive
-    ? DEMO_TRIAL_POLICY_VERSION
-    : POLICY_VERSION;
+  const trendRetestActive = strategyVersion === TREND_RETEST_VERSION;
+  const demoTrialsActive =
+    trendRetestActive || strategyVersion === DEMO_TRIAL_STRATEGY_VERSION;
+  const policyVersion = trendRetestActive
+    ? TREND_RETEST_POLICY
+    : demoTrialsActive
+      ? DEMO_TRIAL_POLICY_VERSION
+      : POLICY_VERSION;
   const breakoutScalpActive =
     demoTrialsActive ||
     strategyVersion === BREAKOUT_SCALP_RELEASE.strategyVersion;
@@ -415,9 +423,11 @@ async function main(): Promise<void> {
       .update(environment.CODE_VERSION ?? "0.1.0")
       .digest("hex"),
     configHash: strategyConfigHash(config, strategyVersion),
-    promptVersion: demoTrialsActive
-      ? "demo-trial-execution-v1"
-      : "entry-scalp-execution-v1",
+    promptVersion: trendRetestActive
+      ? "trend-retest-execution-v1"
+      : demoTrialsActive
+        ? "demo-trial-execution-v1"
+        : "entry-scalp-execution-v1",
     schemaVersion: "2.1",
     featureVersion: "1.1",
   });
@@ -576,18 +586,19 @@ async function main(): Promise<void> {
           spread_price: canonical(
             decimal(snapshot.quote.ask).minus(decimal(snapshot.quote.bid)),
           ),
-          modeled_round_trip_cost_price: demoTrialsActive
-            ? canonical(
-                decimal(costBalancedModeledCost(snapshot)).minus(
-                  decimal(snapshot.metadata.tickSize).mul(60),
-                ),
-              )
-            : costBalancedModeledCost(snapshot),
+          modeled_round_trip_cost_price:
+            demoTrialsActive && !trendRetestActive
+              ? canonical(
+                  decimal(costBalancedModeledCost(snapshot)).minus(
+                    decimal(snapshot.metadata.tickSize).mul(60),
+                  ),
+                )
+              : costBalancedModeledCost(snapshot),
           ...(demoTrialsActive
             ? {
                 modeled_stress_round_trip_cost_price:
                   costBalancedModeledCost(snapshot),
-                base_exit_reserve_ticks: 5,
+                base_exit_reserve_ticks: trendRetestActive ? 65 : 5,
                 stress_exit_reserve_ticks: 65,
               }
             : {}),
@@ -634,13 +645,18 @@ async function main(): Promise<void> {
       modelDefinedScalp: breakoutScalpActive,
       ...(demoTrialsActive
         ? {
-            entryRangePoints: () =>
-              String(trialProfile(trialBinding()).entryRangePoints) as
-                "10" | "30",
+            entryRangePoints: () => {
+              const points = trialProfile(trialBinding()).entryRangePoints;
+              return points === 0 ? undefined : (String(points) as "10" | "30");
+            },
           }
         : {}),
       executionOrderType,
-      adverseSlippagePoints: activeExecutionPolicy.adverseSlippagePoints,
+      adverseSlippagePoints: trendRetestActive
+        ? executionOrderType === "STOP_LIMIT"
+          ? "95"
+          : "65"
+        : activeExecutionPolicy.adverseSlippagePoints,
       timeInForce: breakoutScalpActive ? "GTD" : ORDER_LIFECYCLE.timeInForce,
       riskMultiplier: () => capitalMultiplier,
       riskPercentCap: () => capitalRiskCap,
@@ -662,9 +678,11 @@ async function main(): Promise<void> {
         ? "chat_completions"
         : "responses",
     model: environment.AI_MODEL ?? "unconfigured",
-    promptVersion: demoTrialsActive
-      ? "demo-trial-execution-v1"
-      : "entry-scalp-execution-v1",
+    promptVersion: trendRetestActive
+      ? "trend-retest-execution-v1"
+      : demoTrialsActive
+        ? "demo-trial-execution-v1"
+        : "entry-scalp-execution-v1",
     schemaVersion: "2.1",
     payloadMode: environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
     instanceId: config.instanceId,
@@ -1336,6 +1354,7 @@ async function main(): Promise<void> {
         symbolId: identity.symbolId,
         mode: config.tradingMode,
         strategyVersionId: identity.strategyVersionId,
+        strategyVersion,
       },
       demoTrialSource(),
       async () => (await sessionGate.check()).state,
@@ -1355,9 +1374,28 @@ async function main(): Promise<void> {
         );
       },
     );
-  const admissionModes = { read: () => entryModes.readForAdmission() };
+  const admissionModes = {
+    read: async () => {
+      if (!trendRetestActive) return entryModes.readForAdmission();
+      await demoTrials!.check();
+      const selection = await entryModes.read();
+      const p = trialProfile(trialBinding());
+      const expected =
+        "entryStyle" in p && p.entryStyle === "RETEST_LIMIT"
+          ? "SINGLE_LIMIT"
+          : "SINGLE_STOP_LIMIT";
+      if (selection.mode !== expected)
+        throw new Error("DEMO_TRIAL_MODE_CHANGED");
+      return selection;
+    },
+  };
   const coordinator = new EntryModeCoordinator(admissionModes, (selection) => {
-    if (breakoutScalpActive && selection.mode !== "SINGLE_STOP_LIMIT")
+    if (
+      breakoutScalpActive &&
+      (trendRetestActive
+        ? !["SINGLE_STOP_LIMIT", "SINGLE_LIMIT"].includes(selection.mode)
+        : selection.mode !== "SINGLE_STOP_LIMIT")
+    )
       throw new Error("SCALP_SINGLE_STOP_LIMIT_REQUIRED");
     const profile = entryModeProfile(selection.mode);
     const selectedRisk = createRisk(profile.orderType);
@@ -1392,9 +1430,11 @@ async function main(): Promise<void> {
       },
       modelPayloadMode:
         environment.MODEL_PAYLOAD_MODE === "full" ? "full" : "compact",
-      promptVersion: demoTrialsActive
-        ? "demo-trial-execution-v1"
-        : "entry-scalp-execution-v1",
+      promptVersion: trendRetestActive
+        ? "trend-retest-execution-v1"
+        : demoTrialsActive
+          ? "demo-trial-execution-v1"
+          : "entry-scalp-execution-v1",
       schemaVersion: "2.1",
       strategyVersion,
       breakoutScalp: breakoutScalpActive,
@@ -1422,7 +1462,7 @@ async function main(): Promise<void> {
           }
         : {}),
       minRiskRewardRatio: breakoutScalpActive
-        ? demoTrialsActive
+        ? demoTrialsActive && !trendRetestActive
           ? DEMO_TRIAL_SCALP_LIMITS.minimumRiskReward
           : "1"
         : fadeLimitActive
@@ -1493,7 +1533,7 @@ async function main(): Promise<void> {
       spreadContext,
       market,
       analytics,
-      model: entryModeModel(model, selection),
+      model: entryModeModel(model, selection, strategyVersion),
       account,
       risk: {
         currentSetupRiskPercent: () => selectedRisk.currentSetupRiskPercent(),

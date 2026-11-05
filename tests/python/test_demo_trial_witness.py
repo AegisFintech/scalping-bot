@@ -295,3 +295,48 @@ def test_malformed_failure_clock_does_not_break_learning(tmp_path, at):
         json.dumps({"checkedAt": at, "available": False, "reason": "WITNESS_STORAGE_RESERVE"})
     )
     assert read_status(NOW, path) is None
+
+
+def test_source_handover_is_not_a_completed_allocation(tmp_path):
+    s = status()
+    s.trials[-1].retirement_reason = "SOURCE_HANDOVER"
+    result = retain(s, tmp_path, NOW, None)
+    assert result["retainedCompletedAllocations"] == 1
+    assert result["windowFilledCompletedAllocations"] == 1
+    assert not (tmp_path / f"trial-{s.trials[-1].id}.json").exists()
+
+
+def test_trend_status_schema_preserves_old_schema_and_rejects_wrong_catalogue():
+    from python.codex_entry.trend_protocol import TrendProfile, catalogue
+    from python.research.demo_trial_status import TrendTrialStatus, status_reader
+
+    schema = json.loads(Path("schemas/demo-trial-status-1.1.json").read_bytes())
+    schema.pop("$id")
+    schema.pop("$schema")
+    assert schema == TrendTrialStatus.model_json_schema()
+    raw = status().model_dump(mode="json")
+    raw["schemaVersion"] = "demo-trial-status-1.1"
+    row = raw["trials"][0]
+    profile = TrendProfile.model_validate(catalogue()["profiles"][0])
+    row.update(
+        profile_id=profile.id,
+        definition=profile.model_dump(),
+        profile_sha256=profile.digest(),
+        catalogue_sha256=hashlib.sha256(encoded(catalogue())).hexdigest(),
+    )
+    assert status_reader.validate_json(json.dumps(raw)).trials[0].profile_id == "TREND_BREAKOUT"
+    row["catalogue_sha256"] = "f" * 64
+    with pytest.raises(ValueError):
+        status_reader.validate_json(json.dumps(raw))
+
+
+def test_scorecard_labels_the_selected_release_without_relabeling_history():
+    from python.operations.demo_scorecards import TrendScorecard
+
+    new = summarize([], NOW - timedelta(hours=1), NOW, "USD", 0, 0, "0.11.0-trend-retest.1-codex.1")
+    assert isinstance(new, TrendScorecard)
+    assert new.schemaVersion == "demo-day-scorecard-1.1"
+    old = summarize([], NOW - timedelta(hours=1), NOW, "USD", 0, 0)
+    assert old.release == "0.10.0-demo-trials.1-codex.1"
+    with pytest.raises(ValueError, match="SCORECARD_RELEASE_UNKNOWN"):
+        summarize([], NOW - timedelta(hours=1), NOW, "USD", 0, 0, "unknown")

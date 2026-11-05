@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
 import { DEMO_TRIAL_STRATEGY_VERSION } from "../../../packages/config/src/policy.js";
 import {
   brokerOrderTypeNumber,
@@ -683,13 +684,23 @@ export class CTraderDemoGateway implements ExecutionGateway {
       const trial =
         command.strategyLabel ===
         `ctrader-ai-scalper:${DEMO_TRIAL_STRATEGY_VERSION}`;
+      const structural =
+        command.strategyLabel === `ctrader-ai-scalper:${TREND_RETEST_VERSION}`;
       if (
-        trial
+        structural
           ? !(
-              command.entryRangePoints === "10" ||
-              command.entryRangePoints === "30"
+              command.timeInForce === "GTD" &&
+              ((command.executionOrderType === "STOP_LIMIT" &&
+                command.entryRangePoints === "30") ||
+                (command.executionOrderType === "LIMIT" &&
+                  command.entryRangePoints === undefined))
             )
-          : command.entryRangePoints !== undefined
+          : trial
+            ? !(
+                command.entryRangePoints === "10" ||
+                command.entryRangePoints === "30"
+              )
+            : command.entryRangePoints !== undefined
       )
         throw new Error("DEMO_TRIAL_ENTRY_RANGE_INVALID");
     }

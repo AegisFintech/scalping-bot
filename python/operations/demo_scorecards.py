@@ -114,6 +114,11 @@ class Scorecard(StrictModel):
     promotionAuthority: Literal[False] = False
 
 
+class TrendScorecard(Scorecard):
+    schemaVersion: Literal["demo-day-scorecard-1.1"] = "demo-day-scorecard-1.1"  # type: ignore[assignment]
+    release: Literal["0.11.0-trend-retest.1-codex.1"] = "0.11.0-trend-retest.1-codex.1"  # type: ignore[assignment]
+
+
 def bounds(start: datetime, now: datetime) -> tuple[datetime, datetime]:
     if start.tzinfo is None or now.tzinfo is None or start > now:
         raise ValueError("SCORECARD_WINDOW_INVALID")
@@ -128,7 +133,10 @@ def summarize(
     currency: str,
     unresolved: int,
     opened: int,
-) -> Scorecard:
+    release: str = RELEASE,
+) -> Scorecard | TrendScorecard:
+    if release not in {RELEASE, "0.11.0-trend-retest.1-codex.1"}:
+        raise ValueError("SCORECARD_RELEASE_UNKNOWN")
     lower, upper = bounds(start, now)
     if len(deals) > MAX_DEALS:
         raise ValueError("SCORECARD_DEAL_LIMIT")
@@ -193,7 +201,8 @@ def summarize(
             )
             cursor = end
         complete = [d for d in days if d.completeCalendarDay]
-        return Scorecard(
+        model = TrendScorecard if release == "0.11.0-trend-retest.1-codex.1" else Scorecard
+        return model(
             checkedAt=upper.isoformat(),
             since=lower.isoformat(),
             until=upper.isoformat(),
@@ -233,10 +242,13 @@ def load(now: datetime) -> dict[str, Any] | None:
         ):
             cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             cursor.execute(
-                """SELECT a.id AS account_id,s.id AS symbol_id,a.currency,
+                """SELECT a.id AS account_id,s.id AS symbol_id,a.currency,v.version AS release,
                 (SELECT min(t.starts_at) FROM demo_trials t WHERE t.account_id=a.id
-                 AND t.symbol_id=s.id AND t.mode='demo') AS starts_at
+                 AND t.symbol_id=s.id AND t.mode='demo' AND t.strategy_version_id=v.id) AS starts_at
                 FROM accounts a JOIN symbols s ON s.account_id=a.id
+                JOIN demo_trial_heads h ON h.account_id=a.id AND h.symbol_id=s.id AND h.mode='demo'
+                JOIN demo_trials head ON head.id=h.trial_id
+                JOIN strategy_versions v ON v.id=head.strategy_version_id
                 WHERE a.provider='ctrader' AND a.environment='demo' AND s.name='XAUUSD'
                   AND a.provider_account_key_hash=%s""",
                 (hashlib.sha256(key.encode()).hexdigest(),),
@@ -245,6 +257,9 @@ def load(now: datetime) -> dict[str, Any] | None:
             if len(identities) != 1 or identities[0]["starts_at"] is None:
                 return None
             identity = identities[0]
+            release = identity["release"]
+            if release not in {RELEASE, "0.11.0-trend-retest.1-codex.1"}:
+                return None
             start, until = bounds(identity["starts_at"], now)
             scope = (identity["account_id"], identity["symbol_id"])
             cursor.execute(
@@ -264,7 +279,7 @@ def load(now: datetime) -> dict[str, Any] | None:
                   AND t.strategy_version_id=a.strategy_version_id AND t.mode='demo'
                   AND d.recorded_at<=%s AND d.occurred_at>=%s
                 ORDER BY d.occurred_at,d.broker_deal_id LIMIT %s""",
-                (*scope, RELEASE, until, start, MAX_DEALS + 1),
+                (*scope, release, until, start, MAX_DEALS + 1),
             )
             deals = [
                 CloseDeal(
@@ -294,6 +309,7 @@ def load(now: datetime) -> dict[str, Any] | None:
                 identity["currency"],
                 state["unresolved"],
                 state["opened"],
+                release,
             )
             cursor.execute("SAVEPOINT trial_outcomes")
             try:
@@ -332,7 +348,7 @@ def load(now: datetime) -> dict[str, Any] | None:
                     GROUP BY t.id,t.profile_id,t.profile_sha256,t.source_sha256,
                       t.state,t.cycle,t.ordinal
                     ORDER BY t.cycle DESC,t.ordinal DESC""",
-                    (*scope, RELEASE),
+                    (*scope, release),
                 )
                 outcomes = []
                 for row in cursor.fetchall():

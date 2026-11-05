@@ -14,7 +14,13 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, model_validator
 
 from python.research.codex_loop import StrictModel, timestamp
-from python.research.demo_trial_status import TrialReview, TrialRow, TrialStatus
+from python.research.demo_trial_status import (
+    TrendTrialStatus,
+    TrialReview,
+    TrialRow,
+    TrialStatus,
+    status_reader,
+)
 from python.research.learning_archive import atomic_bytes, bounded, immutable, unique
 from python.research.learning_evidence import Digest, Instant, encoded
 
@@ -196,7 +202,7 @@ def receipt(row: TrialRow) -> dict[str, Any]:
 
 
 def retain(
-    status: TrialStatus, root: Path, now: datetime, proof: RestartProof | None
+    status: TrialStatus | TrendTrialStatus, root: Path, now: datetime, proof: RestartProof | None
 ) -> dict[str, Any]:
     verified = status.controllerVerifiedAt
     if verified is None or not -5 <= (now - verified).total_seconds() <= 30:
@@ -212,7 +218,7 @@ def retain(
         raise ValueError("WITNESS_STORAGE_CAPACITY")
     current = []
     for row in status.trials:
-        if row.state == "COMPLETED":
+        if row.state == "COMPLETED" and row.retirement_reason != "SOURCE_HANDOVER":
             if row.completed_at is None or row.completed_at > now:
                 raise ValueError("WITNESS_COMPLETION_FUTURE")
             current.append(receipt(row))
@@ -242,7 +248,8 @@ def retain(
     filled = [r for r in filled if r["sourceSha256"] == source]
     next_links = []
     for r in filled:
-        following = (r["cycle"] + (r["ordinal"] == 12), (r["ordinal"] + 1) % 13)
+        slots = 4 if r["profileId"].startswith("TREND_") else 13
+        following = (r["cycle"] + (r["ordinal"] == slots - 1), (r["ordinal"] + 1) % slots)
         successors = [
             t
             for t in status.trials
@@ -290,7 +297,7 @@ def main() -> None:
             raw = response.read(131073)
         if len(raw) > 131072:
             raise ValueError("WITNESS_STATUS_OVERSIZED")
-        status = TrialStatus.model_validate_json(raw)
+        status = status_reader.validate_json(raw)
         value = retain(status, args.root, now, restart(RESTART, now))
     except (OSError, ValueError, KeyError, TypeError) as error:
         reason = str(error) if str(error) in FAILURE_REASONS else "WITNESS_UNAVAILABLE"

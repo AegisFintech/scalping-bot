@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
 import { CodexEntryClient } from "../../../packages/ai-client/src/codex-entry-client.js";
 import {
   DEMO_TRIAL_STRATEGY_VERSION,
@@ -187,17 +188,18 @@ export function createProductionAiOptions(
     environment.AI_PROVIDER !== FIXED_DEFAULTS.AI_PROVIDER
   )
     throw new Error("AI_PROVIDER_POLICY_MISMATCH");
+  const trials = [DEMO_TRIAL_STRATEGY_VERSION, TREND_RETEST_VERSION].includes(
+    environment.STRATEGY_VERSION ?? "",
+  );
   const client = new CodexEntryClient({
     provider: "openai-api",
-    trialProtocol: environment.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION,
+    trialProtocol: trials,
     localToken: environment.CODEX_ENTRY_LOCAL_TOKEN ?? "",
     beforeDispatch,
     ...(fetchImpl === undefined ? {} : { fetchImpl }),
   });
   return {
-    [environment.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION
-      ? "trialEntryPlanner"
-      : "entryPairPlanner"]: new EntryPairPlanner({
+    [trials ? "trialEntryPlanner" : "entryPairPlanner"]: new EntryPairPlanner({
       client,
       requireTechnicalContext: true,
     }),

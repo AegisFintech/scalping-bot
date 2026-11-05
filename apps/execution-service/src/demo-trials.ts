@@ -1,3 +1,11 @@
+import {
+  TREND_RETEST_VERSION,
+  TREND_PREDECESSOR_SOURCE,
+} from "../../../packages/config/src/trend-retest-policy.js";
+import {
+  trendProfiles,
+  trendCatalogueSha256,
+} from "../../../packages/strategy-candidates/src/trend-retest-profile.js";
 import { readFileSync, lstatSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
@@ -26,14 +34,41 @@ export class DemoTrials {
       symbolId: string;
       mode: string;
       strategyVersionId: string;
+      strategyVersion?: string;
     },
     private readonly sourceSha256: string,
     private readonly sessionState: () => Promise<TrialSessionState>,
     private readonly safeToSwitch: () => Promise<boolean>,
     private readonly now = Date.now,
   ) {
-    if (scope.mode !== "demo" || !/^[a-f0-9]{64}$/.test(sourceSha256))
+    if (
+      scope.mode !== "demo" ||
+      !/^[a-f0-9]{64}$/.test(sourceSha256) ||
+      ![DEMO_TRIAL_STRATEGY_VERSION, TREND_RETEST_VERSION].includes(
+        this.version,
+      )
+    )
       throw new Error("DEMO_TRIAL_SCOPE_INVALID");
+  }
+  private get version() {
+    return this.scope.strategyVersion ?? DEMO_TRIAL_STRATEGY_VERSION;
+  }
+  private get trend() {
+    return this.version === TREND_RETEST_VERSION;
+  }
+  private get catalogueDigest() {
+    return this.trend ? trendCatalogueSha256 : catalogueSha256;
+  }
+  private get profileList() {
+    return this.trend ? trendProfiles : profiles;
+  }
+  private get slots() {
+    return this.trend ? 4 : 13;
+  }
+  private slot(cycle: number, ordinal: number) {
+    return this.trend
+      ? trendTrialSlot(cycle, ordinal)
+      : trialSlot(cycle, ordinal);
   }
   binding = (): TrialBinding => {
     if (
@@ -54,9 +89,14 @@ export class DemoTrials {
   }
   tick(): Promise<void> {
     this.task ??= this.advance()
-      .catch(() => {
+      .catch((error: unknown) => {
         this.current = null;
-        this.error = "DEMO_TRIAL_RECONCILIATION_REQUIRED";
+        this.error =
+          this.trend &&
+          error instanceof Error &&
+          error.message === "DEMO_TRIAL_SOURCE_DRIFT"
+            ? "DEMO_TRIAL_SOURCE_DRIFT"
+            : "DEMO_TRIAL_RECONCILIATION_REQUIRED";
         this.observed = false;
       })
       .finally(() => {
@@ -69,6 +109,7 @@ export class DemoTrials {
     const open = session === "OPEN";
     const client = await this.pool.connect();
     let switchNeeded = false;
+    let handover: boolean;
     try {
       await client.query("BEGIN");
       await client.query("SET LOCAL statement_timeout='5s'");
@@ -81,19 +122,44 @@ export class DemoTrials {
         "SELECT revision,entry_mode FROM entry_mode_settings WHERE account_id=$1 AND symbol_id=$2 AND environment=$3 FOR UPDATE",
         args,
       );
-      if (mode.rows[0]?.entry_mode !== "SINGLE_STOP_LIMIT")
+      if (
+        !mode.rows[0] ||
+        (this.trend
+          ? !["SINGLE_STOP_LIMIT", "SINGLE_LIMIT"].includes(
+              mode.rows[0].entry_mode,
+            )
+          : mode.rows[0].entry_mode !== "SINGLE_STOP_LIMIT")
+      )
         throw new Error("DEMO_TRIAL_MODE_INVALID");
       const result = await client.query<Row>(
-        `SELECT t.*,clock_timestamp() AS now,
+        `SELECT t.*,v.version AS strategy_version,clock_timestamp() AS now,
         (SELECT count(DISTINCT p.id)::int FROM trades tr JOIN positions p ON p.id=tr.position_id AND p.state='CLOSED' JOIN order_groups g ON g.id=tr.order_group_id JOIN demo_trial_contexts dc ON dc.context_id=g.context_plan_id WHERE dc.trial_id=t.id) AS closes
-        FROM demo_trial_heads h JOIN demo_trials t ON t.id=h.trial_id WHERE h.account_id=$1 AND h.symbol_id=$2 AND h.mode=$3 FOR UPDATE OF h,t`,
+        FROM demo_trial_heads h JOIN demo_trials t ON t.id=h.trial_id JOIN strategy_versions v ON v.id=t.strategy_version_id WHERE h.account_id=$1 AND h.symbol_id=$2 AND h.mode=$3 FOR UPDATE OF h,t`,
         args,
       );
       let row = result.rows[0];
-      if (row) {
+      handover = Boolean(
+        row &&
+        this.trend &&
+        row.strategy_version === DEMO_TRIAL_STRATEGY_VERSION &&
+        row.source_sha256 === TREND_PREDECESSOR_SOURCE &&
+        row.catalogue_sha256 === catalogueSha256,
+      );
+      if (row && !handover) {
+        const registeredProfile = this.profileList.find(
+          (p) => p.id === row!.profile_id,
+        );
+        const expectedMode =
+          registeredProfile &&
+          "entryStyle" in registeredProfile &&
+          registeredProfile.entryStyle === "RETEST_LIMIT"
+            ? "SINGLE_LIMIT"
+            : "SINGLE_STOP_LIMIT";
         if (
           row.source_sha256 !== this.sourceSha256 ||
-          row.catalogue_sha256 !== catalogueSha256 ||
+          row.catalogue_sha256 !== this.catalogueDigest ||
+          !registeredProfile ||
+          mode.rows[0].entry_mode !== expectedMode ||
           row.strategy_version_id !== this.scope.strategyVersionId ||
           row.mode_revision !== mode.rows[0].revision
         )
@@ -144,6 +210,7 @@ export class DemoTrials {
       } else {
         switchNeeded = true;
         this.current = null;
+        if (handover) this.error = "DEMO_TRIAL_SOURCE_HANDOVER_PENDING";
       }
       // Reconciliation may use the same pool; never hold DB locks across broker IO.
       await client.query("COMMIT");
@@ -160,7 +227,7 @@ export class DemoTrials {
         );
         if (
           m.rows[0]?.revision !== mode.rows[0].revision ||
-          m.rows[0]?.entry_mode !== "SINGLE_STOP_LIMIT"
+          m.rows[0]?.entry_mode !== mode.rows[0].entry_mode
         )
           throw new Error("DEMO_TRIAL_MODE_CHANGED");
         const h = await client.query<{ trial_id: string }>(
@@ -180,17 +247,55 @@ export class DemoTrials {
           await client.query("ROLLBACK");
           return;
         }
-        if (row)
-          await client.query(
-            "UPDATE demo_trials SET state='COMPLETED',completed_at=clock_timestamp(),retirement_reason='ALLOCATION_COMPLETE',observed_at=clock_timestamp() WHERE id=$1 AND state='DRAINING'",
+        if (handover && row) {
+          const proof = await client.query<{ ok: boolean }>(
+            "SELECT demo_trial_can_complete($1) AS ok",
             [row.id],
           );
-        const ordinal = row ? (row.ordinal + 1) % 13 : 0,
+          if (proof.rows[0]?.ok !== true) {
+            await client.query("ROLLBACK");
+            return;
+          }
+          await client.query(
+            "INSERT INTO demo_trial_events(trial_id,kind,details) VALUES($1,'SOURCE_HANDOVER_REQUESTED',$2::jsonb)",
+            [
+              row.id,
+              JSON.stringify({
+                fromSourceSha256: row.source_sha256,
+                toSourceSha256: this.sourceSha256,
+                toStrategyVersion: this.version,
+                toCatalogueSha256: this.catalogueDigest,
+              }),
+            ],
+          );
+          await client.query(
+            "UPDATE demo_trials SET state='DRAINING',retirement_reason='SOURCE_HANDOVER',observed_at=clock_timestamp() WHERE id=$1 AND state='ACTIVE'",
+            [row.id],
+          );
+        }
+        if (row && row.state !== "COMPLETED")
+          await client.query(
+            "UPDATE demo_trials SET state='COMPLETED',completed_at=clock_timestamp(),retirement_reason=$2,observed_at=clock_timestamp() WHERE id=$1 AND state='DRAINING'",
+            [row.id, handover ? "SOURCE_HANDOVER" : "ALLOCATION_COMPLETE"],
+          );
+        const ordinal = row && !handover ? (row.ordinal + 1) % this.slots : 0,
           cycle = row ? row.cycle + (ordinal === 0 ? 1 : 0) : 0;
-        const profile = profiles.find(
-          (p) => p.id === trialSlot(cycle, ordinal),
+        const profile = this.profileList.find(
+          (p) => p.id === this.slot(cycle, ordinal),
         )!;
         const id = randomUUID();
+        let modeRevision = m.rows[0].revision;
+        if (this.trend) {
+          modeRevision = randomUUID();
+          const entryMode =
+            "entryStyle" in profile && profile.entryStyle === "RETEST_LIMIT"
+              ? "SINGLE_LIMIT"
+              : "SINGLE_STOP_LIMIT";
+          await client.query(
+            "UPDATE entry_mode_settings SET entry_mode=$4,revision=$5,actor='demo-trial-controller',reason=$6,updated_at=clock_timestamp() WHERE account_id=$1 AND symbol_id=$2 AND environment=$3",
+            [...args, entryMode, modeRevision, `registered-trial:${id}`],
+          );
+        }
         const created = await client.query<Row>(
           `INSERT INTO demo_trials(id,account_id,symbol_id,mode,strategy_version_id,source_sha256,catalogue_sha256,profile_id,profile_sha256,cycle,ordinal,registered_at,starts_at,mode_revision,state)
          VALUES($1,$2,$3,'demo',$4,$5,$6,$7,$8,$9,$10,clock_timestamp(),clock_timestamp()+interval '1 second',$11,'ACTIVE') RETURNING *`,
@@ -200,12 +305,12 @@ export class DemoTrials {
             this.scope.symbolId,
             this.scope.strategyVersionId,
             this.sourceSha256,
-            catalogueSha256,
+            this.catalogueDigest,
             profile.id,
             profileSha256(profile),
             cycle,
             ordinal,
-            m.rows[0].revision,
+            modeRevision,
           ],
         );
         await client.query(
@@ -215,13 +320,16 @@ export class DemoTrials {
         await client.query("COMMIT");
         row = created.rows[0]!;
       }
-      if (row?.state === "ACTIVE") {
+      if (
+        row?.state === "ACTIVE" &&
+        row.catalogue_sha256 === this.catalogueDigest
+      ) {
         this.current = trialBindingSchema.parse({
           trialId: row.id,
           profileId: row.profile_id,
           profileSha256: row.profile_sha256,
           catalogueSha256: row.catalogue_sha256,
-          strategyVersion: DEMO_TRIAL_STRATEGY_VERSION,
+          strategyVersion: this.version,
           sourceSha256: row.source_sha256,
           registeredAt: row.registered_at.toISOString(),
           startsAt: row.starts_at.toISOString(),
@@ -260,7 +368,9 @@ export class DemoTrials {
       [this.scope.accountId, this.scope.symbolId, this.scope.mode],
     );
     return {
-      schemaVersion: "demo-trial-status-1.0",
+      schemaVersion: this.trend
+        ? "demo-trial-status-1.1"
+        : "demo-trial-status-1.0",
       observedAt: new Date(this.now()).toISOString(),
       controllerVerifiedAt: this.verifiedAt
         ? new Date(this.verifiedAt).toISOString()
@@ -268,12 +378,17 @@ export class DemoTrials {
       reason: this.error,
       experimental: true,
       nextProfileId: rows.rows[0]
-        ? trialSlot(
+        ? this.slot(
             Number(rows.rows[0].cycle) +
-              (Number(rows.rows[0].ordinal) === 12 ? 1 : 0),
-            (Number(rows.rows[0].ordinal) + 1) % 13,
+              (rows.rows[0].catalogue_sha256 !== this.catalogueDigest ||
+              Number(rows.rows[0].ordinal) === this.slots - 1
+                ? 1
+                : 0),
+            rows.rows[0].catalogue_sha256 !== this.catalogueDigest
+              ? 0
+              : (Number(rows.rows[0].ordinal) + 1) % this.slots,
           )
-        : trialSlot(0, 0),
+        : this.slot(0, 0),
       nextAction:
         this.error === "DEMO_TRIAL_DRAINING"
           ? "WAIT_FOR_TERMINAL_PROOF_THEN_REGISTER_NEXT"
@@ -294,6 +409,7 @@ type Row = {
   profile_id: string;
   profile_sha256: string;
   strategy_version_id: string;
+  strategy_version: string;
   mode_revision: string;
   cycle: number;
   ordinal: number;
@@ -388,4 +504,25 @@ export function trialClockReceipt(
     sessionState: session,
     creditedMilliseconds: 0 as const,
   };
+}
+
+export function trendTrialSlot(cycle: number, ordinal: number): string {
+  if (
+    !Number.isSafeInteger(cycle) ||
+    cycle < 0 ||
+    !Number.isSafeInteger(ordinal) ||
+    ordinal < 0 ||
+    ordinal >= 4
+  )
+    throw new Error("DEMO_TRIAL_SLOT_INVALID");
+  const sequence =
+    cycle % 2 === 0
+      ? ["TREND_BREAKOUT", "TREND_CONFIRMED", "TREND_CONFIRMED", "TREND_RETEST"]
+      : [
+          "TREND_CONFIRMED",
+          "TREND_BREAKOUT",
+          "TREND_RETEST",
+          "TREND_CONFIRMED",
+        ];
+  return sequence[ordinal]!;
 }

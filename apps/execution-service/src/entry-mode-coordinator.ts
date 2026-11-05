@@ -1,3 +1,4 @@
+import { TREND_RETEST_VERSION } from "../../../packages/config/src/trend-retest-policy.js";
 import type { EntryModeSelection } from "../../../packages/contracts/src/entry-mode.js";
 import { entryModeProfile } from "../../../packages/contracts/src/entry-mode.js";
 import type { CycleResult, ModelProvider } from "./coordinator.js";
@@ -29,8 +30,13 @@ export class EntryModeCoordinator {
 export function entryModeModel(
   model: ModelProvider,
   selection: EntryModeSelection,
+  strategyVersion?: string,
 ): ModelProvider {
   const profile = entryModeProfile(selection.mode);
+  const structural = strategyVersion === TREND_RETEST_VERSION;
+  if (structural && !profile.single)
+    throw new Error("TREND_SINGLE_MODE_REQUIRED");
+  const reverse = profile.limit && !structural;
   return {
     get circuitOpen() {
       return model.circuitOpen;
@@ -50,7 +56,7 @@ export function entryModeModel(
       if (entrySide !== "BUY" && entrySide !== "SELL")
         throw new Error("ENTRY_MODE_MODEL_SIDE_REQUIRED");
       const response = structuredClone(result.response);
-      if (profile.limit) {
+      if (reverse) {
         const buy = response.buy_stop,
           sell = response.sell_stop;
         Object.assign(response, { buy_stop: sell, sell_stop: buy });
@@ -64,7 +70,7 @@ export function entryModeModel(
       Object.assign(response, {
         setup_tags: [...response.setup_tags, `OPERATOR_${selection.mode}`],
       });
-      const selected = profile.limit
+      const selected = reverse
         ? entrySide === "BUY"
           ? "SELL"
           : "BUY"

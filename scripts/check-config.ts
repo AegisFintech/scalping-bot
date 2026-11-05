@@ -1,3 +1,7 @@
+import {
+  TREND_RETEST_VERSION,
+  TREND_RETEST_POLICY,
+} from "../packages/config/src/trend-retest-policy.js";
 import { readFileSync } from "node:fs";
 import { parse } from "dotenv";
 import {
@@ -30,9 +34,11 @@ try {
       valid: true,
       scope: startup ? "execution_configuration" : "policy_compatibility",
       policy:
-        resolved.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION
-          ? DEMO_TRIAL_POLICY_VERSION
-          : POLICY_VERSION,
+        resolved.STRATEGY_VERSION === TREND_RETEST_VERSION
+          ? TREND_RETEST_POLICY
+          : resolved.STRATEGY_VERSION === DEMO_TRIAL_STRATEGY_VERSION
+            ? DEMO_TRIAL_POLICY_VERSION
+            : POLICY_VERSION,
       normalSettings: OPERATOR_KEYS.length,
       fileSettings: Object.keys(source).length,
       requestedModel: resolved.AI_MODEL,

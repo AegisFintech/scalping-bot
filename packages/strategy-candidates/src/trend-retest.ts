@@ -105,8 +105,8 @@ export function trendRetestGeometry(
   if (
     style === "RETEST_LIMIT"
       ? up
-        ? entry.gt(ask.minus(minimum))
-        : entry.lt(bid.plus(minimum))
+        ? entry.gt(ask.minus(minimum)) || entry.gt(bid)
+        : entry.lt(bid.plus(minimum)) || entry.lt(ask)
       : up
         ? entry.lt(ask.plus(minimum))
         : entry.gt(bid.minus(minimum))

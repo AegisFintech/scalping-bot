@@ -2,7 +2,7 @@
 
 Operator approved implementation after the first R:R review. This is a prospective
 experiment, not promotion of a proven winner. Preserve the single existing demo,
-5% setup/2.5% single-leg ceilings,65-tick sizing reserve, costs, ownership, session,
+5% setup/2.5% single-leg ceilings,65-tick exit reserve, costs, ownership, session,
 freshness, reconciliation, unknown-command handling and native protection.
 
 Build a new versioned catalogue and release; retain0.10 definitions, registrations,
@@ -25,7 +25,8 @@ Candidate rules are frozen before activation:
   after a fill; the30-point adverse entry allowance reduces modeled reward and
   increases modeled loss before the net R:R check. No fabricated room or widened target to pass
   an R:R check. Admission requires at least1:1 modeled net reward/risk at actual
-  sized volume and again immediately before submission; reserve65ticks for sizing.
+  sized volume and again immediately before submission; sizing reserves95points for
+  STOP_LIMIT (30entry+65exit) and65for LIMIT.
 - Preserve Codex WAIT and explicit proposal provenance; no local fallback on a
   failed/unknown provider request. Historical controls retain their original rules.
 - New future registrations and exact terminal reconciliation precede source/catalogue
@@ -42,9 +43,9 @@ unresolved integration work on issue536; never claim a profitable result from te
 
 1. Geometry, registration/prompt/transport contracts, actual-volume payoff gate,
    absolute pending protection and repair: implemented and qualified as a foundation checkpoint.
-   Defaults still select0.10; this checkpoint is not deployable as0.11.
+   At that checkpoint defaults selected0.10; it was not deployable as0.11.
 2. Additive database authority and audited source handover, controller allocation
-   and same-direction mode integration: pending. Preserve all historical migrations.
+   and same-direction mode integration: implemented. Preserve all historical migrations.
 3. Full integrated qualification, independent review, exact-head CI, reviewed merge,
    one-demo activation and broker/source readback: pending.
 
@@ -112,3 +113,54 @@ Qualified source: `995fd2e4b09647159ca5ff27e2537f972835c438be3ce4d320e1da61f5ce7
 Private receipt: `/var/lib/scalper-experiments515-evidence/qualification536-checkpoint1.json`.
 [Draft PR537](https://github.com/AegisFintech/scalping-bot/pull/537) preserves the
 checkpoint; issue536 remains open and the existing demo is unchanged.
+
+## Integrated implementation and preflight
+
+Forward migration0042 retains old catalogue and immutable identities. A source
+handover accepts only the pinned deployed0.10 source39588e87, fresh reconciliation,
+complete terminal broker proof and an append-only destination receipt. The head
+trigger binds the actual successor source/catalogue/version/cycle/slot to that receipt.
+Shortened allocations are explicitly SOURCE_HANDOVER and excluded from completion
+witness counts. No accepted order is repriced/cancelled to make a transition happen.
+Four slots alternate immediate/confirmed and confirmed/retest; direction stays intact.
+
+The executor and provider route the new request, provider prompt and local execution
+artifact together. Runtime hashes include the actual structural limits/catalogue,
+95-point STOP_LIMIT sizing and65-point LIMIT sizing. Account inspection at2026-11-05
+confirmed an explicit false limited-risk flag; every new structural placement reads
+it again and rejects true/unknown before an order command. This is account compatibility,
+not a test fill. [Broker contract](https://help.ctrader.com/open-api/messages/#protooaneworderreq).
+
+Status1.1 and scorecard1.1 preserve historical1.0 contracts. Scorecards select the
+actual registered head release and its own start/outcomes; historical P/L is never
+relabeled. Reconstruction validates the actual broker order type for structural
+LIMIT/STOP_LIMIT. Historical counterfactual candidate screens remain unchanged.
+Provider market projection retains its original hashed input and excludes stress
+fields from the immutable research schema, as before.
+
+Independent reviews found and corrected destination binding, local prompt routing,
+LIMIT admission and policy-hash limit selection. The isolated database suite passes
+173tests, including all three complete structural order lifecycles and malformed
+geometry/source rejection.73focused tests independently passed review. Final whole-source
+qualification is still required; early database-only runs also execute all Python
+tests and failed their real disk-reserve checks. Their failures remain recorded.
+Two unused temporary node_modules installs were checked for active users and removed;
+source trees, lockfiles, broker history and research artifacts remain intact.
+
+Final rollout requires matched protected provider/executor artifacts, forward migration,
+reviewed main, frozen future observation registration and exact source/config/health
+readback. Existing frozen observers must retain a separate censored-tail handover
+receipt. No forced provider call or order is part of deployment verification.
+
+## Final integrated qualification
+
+`PATH=/opt/scalper-node22/bin:$PATH npm run qualify` passed all20checks and2,947tests:
+1,344Node,173PostgreSQL lifecycle and1,430Python, with no skips. Formatting, lint,
+TypeScript/Python types, build, schemas/migrations, secrets and both dependency audits
+passed. Source fingerprint: `de2eead48727bcd55815648f0952c7353ef58380b3083f569add66a0ebeda143`.
+Private receipt: `/var/lib/scalper-experiments515-evidence/qualification536-integrated.json`;
+logs: `/tmp/scalper-qualification-nPvPdQ/checks`. Both independent review axes are clear.
+All four policy/startup checks on `.env.sample` and the actual protected environment
+passed with0.11. Graphify's AST graph updated; pyproject.toml produces no graph nodes.
+Earlier lint/fixture-type/storage failures remain failed runs, not qualification.
+Reviewed merge and activation readback remain separate, pending delivery steps.

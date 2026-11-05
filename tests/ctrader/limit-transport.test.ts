@@ -171,3 +171,47 @@ describe("LIMIT pending order wire transport", () => {
     ).rejects.toThrow("CTRADER_RELATIVE_PROTECTION_GEOMETRY_INVALID");
   });
 });
+
+it.each([true, undefined, "false"])(
+  "blocks structural orders on unverified or limited-risk accounts (%s)",
+  async (flag) => {
+    const { client, request } = await buildClient();
+    request.mockResolvedValue({
+      payloadType: CTraderPayload.TRADER_RES,
+      payload: { trader: { isLimitedRisk: flag } },
+    });
+    const before = request.mock.calls.length;
+    await expect(
+      client.placeLimit(
+        limitCommand({
+          strategyLabel: "ctrader-ai-scalper:0.11.0-trend-retest.1-codex.1",
+        }),
+      ),
+    ).rejects.toThrow("CTRADER_ABSOLUTE_PROTECTION_ACCOUNT_UNVERIFIED");
+    expect(request.mock.calls.slice(before).map((c) => c[0])).toEqual([
+      CTraderPayload.TRADER_REQ,
+    ]);
+  },
+);
+
+it("sends absolute trend LIMIT protection only after explicit compatible account evidence", async () => {
+  const { client, request } = await buildClient();
+  request
+    .mockResolvedValueOnce({
+      payloadType: CTraderPayload.TRADER_RES,
+      payload: { trader: { isLimitedRisk: false } },
+    })
+    .mockResolvedValueOnce(executionEvent(2));
+  await client.placeLimit(
+    limitCommand({
+      strategyLabel: "ctrader-ai-scalper:0.11.0-trend-retest.1-codex.1",
+    }),
+  );
+  const body = request.mock.calls.at(-1)![1];
+  expect(body).toMatchObject({
+    stopLoss: 4389,
+    takeProfit: 4405.5,
+    orderType: 2,
+  });
+  expect(body).not.toHaveProperty("relativeStopLoss");
+});

@@ -19,7 +19,7 @@ from python.learning.budget import Policy
 from python.operations.breakout_observer import read_status
 from python.operations.demo_scorecards import load as load_scorecard
 from python.operations.demo_trial_witness import read_status as read_trial_witness
-from python.research.demo_trial_status import TrialStatus
+from python.research.demo_trial_status import status_reader
 
 ASSETS = Path(__file__).with_name("assets")
 SSH = Path("/etc/scalper-learning-ui/ssh.conf")
@@ -81,7 +81,7 @@ def load() -> dict[str, Any]:
             raw = reply.read(131073)
         if len(raw) > 131072:
             raise ValueError("DEMO_TRIAL_STATUS_OVERSIZED")
-        result["demoTrials"] = TrialStatus.model_validate_json(raw).model_dump(
+        result["demoTrials"] = status_reader.validate_json(raw).model_dump(
             mode="json", by_alias=True
         )
     except (OSError, ValueError):

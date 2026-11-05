@@ -1211,6 +1211,13 @@ export class CTraderClient implements MarketDataAdapter, AccountAdapter {
     if (metadata === undefined)
       throw new Error("CTRADER_ORDER_SYMBOL_METADATA_MISSING");
     const kind = pendingOrderType(command);
+    if (
+      command.strategyLabel === `ctrader-ai-scalper:${TREND_RETEST_VERSION}`
+    ) {
+      const trader = await this.#trader();
+      if (trader.isLimitedRisk !== false)
+        throw new Error("CTRADER_ABSOLUTE_PROTECTION_ACCOUNT_UNVERIFIED");
+    }
     const response = await this.#transport.request(
       CTraderPayload.NEW_ORDER_REQ,
       {

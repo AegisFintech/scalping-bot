@@ -289,3 +289,20 @@ def test_new_trial_recorded_release_keeps_source_identity_separate():
         screen(context, load().profiles[0], packet.until).reason
         == "RECORDED_CODEX_SOURCE_UNAVAILABLE"
     )
+
+
+@pytest.mark.parametrize(
+    "kind,mode,broker_type", [("LIMIT", "SINGLE_LIMIT", 2), ("STOP_LIMIT", "SINGLE_STOP_LIMIT", 6)]
+)
+def test_trend_reconstruction_requires_matching_actual_broker_order_type(kind, mode, broker_type):
+    value = current()
+    value["contexts"][0]["originRelease"] = "0.11.0-trend-retest.1-codex.1"
+    group = value["setups"][0]
+    group["originRelease"] = "0.11.0-trend-retest.1-codex.1"
+    group["executionMode"] = mode
+    group["orders"][0]["orderType"] = kind
+    for event in group["brokerEvents"]:
+        event["orderType"] = broker_type
+    assert reconstruct(model(value))[0].status == "PENDING"
+    group["brokerEvents"][0]["orderType"] = 3
+    assert "BROKER_ACCEPTED_ORDER_TYPE_INVALID" in reconstruct(model(value))[0].reasons

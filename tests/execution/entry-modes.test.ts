@@ -235,3 +235,36 @@ it("keeps schemas bound to approved profile and range authority", () => {
     ranges.parse(JSON.stringify({ ...plan, entry_side: "BOTH" })).accepted,
   ).toBe(false);
 });
+
+it.each(["BUY", "SELL"] as const)(
+  "retains %s direction and levels for registered trend LIMIT",
+  async (side) => {
+    const original = response();
+    const provider: ModelProvider = {
+      circuitOpen: false,
+      analyze: () =>
+        Promise.resolve({
+          response: original,
+          entrySide: side,
+          rawResponse: "registered",
+          promptArtifact: artifact,
+        }),
+    };
+    const selected = { mode: "SINGLE_LIMIT" as const, revision: randomUUID() };
+    const result = await entryModeModel(
+      provider,
+      selected,
+      "0.11.0-trend-retest.1-codex.1",
+    ).analyze(request);
+    expect(result.entrySide).toBe(side);
+    expect(result.response.buy_stop).toEqual(original.buy_stop);
+    expect(result.response.sell_stop).toEqual(original.sell_stop);
+    expect(() =>
+      entryModeModel(
+        provider,
+        { ...selected, mode: "OCO_LIMIT" },
+        "0.11.0-trend-retest.1-codex.1",
+      ),
+    ).toThrow("TREND_SINGLE_MODE_REQUIRED");
+  },
+);

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from hashlib import sha256
 from typing import Annotated, Literal
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, TypeAdapter, model_validator
 
-from python.research.codex_loop import StrictModel
+from python.codex_entry.trend_protocol import TrendProfile, catalogue
+from python.research.codex_loop import StrictModel, encoded
 from python.research.demo_catalogue import Profile
 
 Hash = Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
@@ -96,3 +98,29 @@ class TrialStatus(StrictModel):
     netIncludesSignedFees: Literal[True]
     actualFutureCosts: None
     trials: Annotated[list[TrialRow], Field(max_length=26)]
+
+
+class TrendTrialRow(TrialRow):
+    definition: Profile | TrendProfile  # type: ignore[assignment]
+
+    @model_validator(mode="after")
+    def registered_profile(self) -> TrendTrialRow:
+        if isinstance(self.definition, TrendProfile):
+            frozen = catalogue()
+            if (
+                self.ordinal > 3
+                or sha256(encoded(frozen)).hexdigest() != self.catalogue_sha256
+                or self.definition.model_dump() not in frozen["profiles"]
+            ):
+                raise ValueError("DEMO_TRIAL_STATUS_INVALID")
+        return self
+
+
+class TrendTrialStatus(TrialStatus):
+    schemaVersion: Literal["demo-trial-status-1.1"]  # type: ignore[assignment]
+    trials: Annotated[list[TrendTrialRow], Field(max_length=26)]  # type: ignore[assignment]
+
+
+status_reader: TypeAdapter[TrialStatus | TrendTrialStatus] = TypeAdapter(
+    TrialStatus | TrendTrialStatus
+)

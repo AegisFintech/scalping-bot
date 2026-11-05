@@ -1050,3 +1050,39 @@ it.each([
     else expect(store.row?.reason).toBe("AI_SCALP_GEOMETRY_INVALID");
   },
 );
+
+it("binds the structural execution artifact to the trend release", () => {
+  const row = stored();
+  const store = {
+    latest: () => Promise.resolve(row),
+    claim: () => Promise.resolve(false),
+    finish: async () => {},
+    consultation: async () => {},
+  };
+  const model = new ReusableScenarioModel(
+    store,
+    { generate: vi.fn() },
+    () => base + 40_000,
+    () => {},
+    true,
+    undefined,
+    undefined,
+    "0.11.0-trend-retest.1-codex.1",
+    () => {
+      throw new Error("unused");
+    },
+  );
+  // Prompt provenance is observable without granting a context or broker authority.
+  const artifact = (
+    model as unknown as {
+      artifact: { version: string; content: string; sha256: string };
+    }
+  ).artifact;
+  expect(artifact.version).toBe("trend-retest-execution-v1");
+  expect(artifact.content).toBe(
+    readFileSync("prompts/trend-retest-execution-v1.md", "utf8").trim(),
+  );
+  expect(artifact.sha256).toBe(
+    createHash("sha256").update(artifact.content).digest("hex"),
+  );
+});
