@@ -1,3 +1,17 @@
+### ISSUE-541 — Daily trading net across bot releases
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/541; depends on539.
+- Acceptance: bounded SELECT-only same-account XAUUSD Singapore-day projection,
+  signed broker costs once, all bot releases including prior losses/partial closes,
+  explicit unknown open/model/equity economics; unchanged programme schemas;
+  readable stale-safe /learning card; actual SQL/API/browser tests, full qualification,
+  fresh Standards/Spec review, protected delivery and isolated dashboard activation.
+- Status: full qualification passes2,961 tests/no skips and20 checks; four config
+  checks and fresh Standards/Spec reviews CLEAR; actual SQL bounds and Chromium
+  desktop/mobile fixture pass. Protected delivery/read-only activation pending.
+  No executor/economic change.
+- Report: `docs/daily-trading-net-report.md`.
+
 ### ISSUE-539 — Current trend observation, quote clocks and daily net evidence
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/539; depends on536.

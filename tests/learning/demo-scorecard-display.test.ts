@@ -11,9 +11,30 @@ it("withholds stale day/proof observations independently and clears them when of
     ]),
   );
   let now = Date.parse("2026-11-04T05:00:00Z");
-  let scheduled: () => Promise<void> = () => Promise.resolve();
+  let scheduled: () => Promise<void> | void = () => undefined;
+  let expire: () => Promise<void> | void = () => undefined;
   let offline = false;
+  let hanging = false;
   const data = {
+    dailyTradingNet: {
+      schemaVersion: "daily-trading-net-1.0",
+      checkedAt: new Date(now).toISOString(),
+      currency: "USD",
+      timezone: "Asia/Singapore",
+      totals: {
+        day: "2026-11-04",
+        since: "2026-11-03T16:00:00Z",
+        until: "2026-11-04T05:00:00Z",
+        recordedNet: "-1846.13",
+        signedFeesIncluded: "-1558.78",
+        closeDeals: 16,
+      },
+      releases: [
+        { release: "old-release", recordedNet: "-1846.13", closeDeals: 16 },
+      ],
+      openJournalPositions: 0,
+      scopeUnresolvedEvents: 0,
+    },
     dayScorecard: {
       checkedAt: new Date(now).toISOString(),
       currency: "USD",
@@ -73,20 +94,31 @@ it("withholds stale day/proof observations independently and clears them when of
       }
     },
     window: {
-      setInterval: (fn: () => Promise<void>) => {
-        scheduled = fn;
+      setInterval: (fn: () => Promise<void> | void, interval: number) => {
+        if (interval === 1000) expire = fn;
+        else scheduled = fn;
       },
     },
     fetch: () =>
-      offline
-        ? Promise.reject(new Error("fixture offline"))
-        : Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ readState: "ready", data }),
-          }),
+      hanging
+        ? new Promise(() => {})
+        : offline
+          ? Promise.reject(new Error("fixture offline"))
+          : Promise.resolve({
+              ok: true,
+              json: () => Promise.resolve({ readState: "ready", data }),
+            }),
   });
   const text = (id: string) => elements.get(id)?.textContent ?? "missing";
   await vi.waitFor(() => expect(text("days-results")).toContain("net 93.00"));
+  expect(text("daily-net-value")).toContain("USD -1,846.13");
+  expect(text("daily-net-releases")).toContain("old-release");
+  expect(text("daily-net-details")).toContain(
+    "Configured demo account · XAUUSD",
+  );
+  expect(text("daily-net-time")).toContain(
+    "2026-11-03T16:00:00Z to 2026-11-04T05:00:00Z",
+  );
   expect(text("days-results")).toContain("partial day");
   expect(text("days-results")).toContain("already included -7.00");
   expect(text("days-trial-outcomes")).toContain(
@@ -96,6 +128,8 @@ it("withholds stale day/proof observations independently and clears them when of
   expect(text("trial-evidence")).toContain("restart recorded: no");
   now += 31000;
   await scheduled();
+  expect(text("daily-net-value")).toContain("unavailable");
+  expect(text("daily-net-releases")).toBe("");
   expect(text("days-results")).toBe("");
   expect(text("days-trial-outcomes")).toBe("");
   expect(text("trial-evidence")).toContain("proof pending");
@@ -114,8 +148,27 @@ it("withholds stale day/proof observations independently and clears them when of
   expect(text("days-results")).toContain("net 93.00");
   expect(text("days-trial-outcomes")).toContain("counts are not zero");
   expect(text("trial-evidence")).toContain("WITNESS_STORAGE_RESERVE");
+  now = Date.parse("2026-11-04T15:59:59Z");
+  data.dailyTradingNet.checkedAt = new Date(now).toISOString();
+  await scheduled();
+  expect(text("daily-net-value")).toContain("USD -1,846.13");
+  now += 2000;
+  await scheduled();
+  expect(text("daily-net-value")).toContain("unavailable");
+  expect(text("daily-net-releases")).toBe("");
   offline = true;
   await scheduled();
   expect(text("days-results")).toBe("");
   expect(text("trial-evidence")).toContain("unavailable or stale");
+  offline = false;
+  now = Date.parse("2026-11-04T05:00:00Z");
+  data.dailyTradingNet.checkedAt = new Date(now).toISOString();
+  await scheduled();
+  expect(text("daily-net-value")).toContain("USD -1,846.13");
+  hanging = true;
+  void scheduled();
+  now += 31000;
+  void expire();
+  expect(text("daily-net-value")).toContain("unavailable");
+  expect(text("daily-net-releases")).toBe("");
 });

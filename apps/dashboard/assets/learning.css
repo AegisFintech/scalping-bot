@@ -82,6 +82,11 @@ small {
   border: 1px solid #66d9cf;
   border-radius: 20px;
 }
+#daily-net-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 #message {
   color: #ffd08a;
 }

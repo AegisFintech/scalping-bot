@@ -2,6 +2,10 @@
 
 ## Operator directives
 
+- Primary economic objective: daily net after costs across bot releases. Preserve
+  earlier losses when a release changes; distinguish realized trading net from
+  unknown model spend/open P/L and account return. No profit guarantee or risk increase.
+
 - Own the whole XAUUSD scalping bot and research harness: diagnose root causes,
   inspect related failures, finish fixes, tests, commit/push, reviewed merge,
   safe deployment and post-deployment verification without repeated prompts.

@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from apps.dashboard.learning_progress import progress
 from python.learning.budget import Policy
 from python.operations.breakout_observer import read_status
+from python.operations.daily_trading_net import load as load_daily_net
 from python.operations.demo_scorecards import load as load_scorecard
 from python.operations.demo_trial_witness import read_status as read_trial_witness
 from python.research.demo_trial_status import status_reader
@@ -88,6 +89,7 @@ def load() -> dict[str, Any]:
         result["demoTrials"] = None
     result["pipeline"] = progress(datetime.now(UTC))
     result["dayScorecard"] = load_scorecard(datetime.now(UTC))
+    result["dailyTradingNet"] = load_daily_net(datetime.now(UTC))
     result["naturalTrialEvidence"] = read_trial_witness(datetime.now(UTC))
     result["registeredStudy"] = read_status(
         Path("/etc/scalper-breakout507-v2/registration.json"),
