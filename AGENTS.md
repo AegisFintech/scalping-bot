@@ -133,7 +133,7 @@ supersede the current versioned policy or explicit operator instructions.
 
 - Controlled DEMO only; credentials never authorize live trading. Keep scalping:
   completed OHLC/quotes/DOM → local context → Codex → deterministic validation,
-  dynamic sizing and one trend-direction STOP_LIMIT/GTD → native TP/SL →
+  dynamic sizing and one trend-direction STOP_LIMIT or retest LIMIT/GTD → native TP/SL →
   reconciliation → repeat. WAIT has no order authority. Old groups keep their
   immutable order type, lifetime, cardinality and protection.
 - Session, freshness, accounting, ownership, affordability, cooldown, active-group
@@ -206,10 +206,10 @@ and keep study failures separate from trading authority.
 Verified study511 rollout and actual normal capture: `docs/evidence/study511-activation.json`
 and `docs/evidence/study511-normal-capture.json`; economic qualification stays separate.
 
-## Current demo experiment and evidence
+## Historical0.10 demo evidence
 
-The [finite registered trials](docs/demo-trial-protocol-report.md) are active in
-ONE demo on reviewed PR525/source39588e87. Normal restart preserves orders;
+The [finite registered0.10 trials](docs/demo-trial-protocol-report.md) previously ran
+in the one demo on PR525/source39588e87. Normal restart preserved orders;
 actual fills, native protection and restart/dedup readbacks are retained in the
 [rollout receipt](docs/evidence/demo-trial-rollout.json). Parent515/520 are closed after verified natural multi-profile completion,
 successors and restart proof; economic qualification403 remains open.
