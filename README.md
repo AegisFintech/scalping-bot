@@ -69,6 +69,11 @@ See [current protocol and activation](docs/trend-retest-plan.md) and the
 orders, native protection and broker/accounting history remain unchanged.
 Profitability remains unproven.
 
+[Daily trading net across releases](docs/daily-trading-net-report.md) adds a
+Singapore-day ledger view alongside unchanged programme scorecards. Switching
+releases never resets that day's earlier gains or losses; operating costs and
+open P/L remain separate unavailable values.
+
 [Current trend evidence and quote-clock repair](docs/trend-observation-net-review.md)
 separates actual net results from WAIT/geometry diagnostics. A separately frozen
 observer supports0.11 without rewriting legacy loss/R:R reports. Daily net after

@@ -1,0 +1,253 @@
+{
+  "$defs": {
+    "Day": {
+      "additionalProperties": false,
+      "properties": {
+        "day": {
+          "format": "date",
+          "title": "Day",
+          "type": "string"
+        },
+        "since": {
+          "title": "Since",
+          "type": "string"
+        },
+        "until": {
+          "title": "Until",
+          "type": "string"
+        },
+        "completeCalendarDay": {
+          "title": "Completecalendarday",
+          "type": "boolean"
+        },
+        "recordedNet": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Recordednet",
+          "type": "string"
+        },
+        "signedFeesIncluded": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Signedfeesincluded",
+          "type": "string"
+        },
+        "closeDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Closedeals",
+          "type": "integer"
+        },
+        "winningCloseDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Winningclosedeals",
+          "type": "integer"
+        },
+        "losingCloseDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Losingclosedeals",
+          "type": "integer"
+        },
+        "flatCloseDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Flatclosedeals",
+          "type": "integer"
+        },
+        "averageWinningCloseDeal": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Averagewinningclosedeal"
+        },
+        "averageLosingCloseDeal": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Averagelosingclosedeal"
+        },
+        "worstCloseDeal": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Worstclosedeal"
+        }
+      },
+      "required": [
+        "day",
+        "since",
+        "until",
+        "completeCalendarDay",
+        "recordedNet",
+        "signedFeesIncluded",
+        "closeDeals",
+        "winningCloseDeals",
+        "losingCloseDeals",
+        "flatCloseDeals",
+        "averageWinningCloseDeal",
+        "averageLosingCloseDeal",
+        "worstCloseDeal"
+      ],
+      "title": "Day",
+      "type": "object"
+    },
+    "ReleaseNet": {
+      "additionalProperties": false,
+      "properties": {
+        "release": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$",
+          "title": "Release",
+          "type": "string"
+        },
+        "recordedNet": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Recordednet",
+          "type": "string"
+        },
+        "signedFeesIncluded": {
+          "maxLength": 32,
+          "pattern": "^-?(0|[1-9][0-9]{0,19})(\\.[0-9]{1,10})?$",
+          "title": "Signedfeesincluded",
+          "type": "string"
+        },
+        "closeDeals": {
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Closedeals",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "release",
+        "recordedNet",
+        "signedFeesIncluded",
+        "closeDeals"
+      ],
+      "title": "ReleaseNet",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "daily-trading-net-1.0",
+      "default": "daily-trading-net-1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "checkedAt": {
+      "title": "Checkedat",
+      "type": "string"
+    },
+    "timezone": {
+      "const": "Asia/Singapore",
+      "default": "Asia/Singapore",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3,8}$",
+      "title": "Currency",
+      "type": "string"
+    },
+    "basis": {
+      "const": "RECORDED_CLOSE_DEALS_ALL_BOT_RELEASES_NOT_ACCOUNT_RETURN",
+      "default": "RECORDED_CLOSE_DEALS_ALL_BOT_RELEASES_NOT_ACCOUNT_RETURN",
+      "title": "Basis",
+      "type": "string"
+    },
+    "totals": {
+      "$ref": "#/$defs/Day"
+    },
+    "releases": {
+      "items": {
+        "$ref": "#/$defs/ReleaseNet"
+      },
+      "maxItems": 5000,
+      "title": "Releases",
+      "type": "array"
+    },
+    "scopeUnresolvedEvents": {
+      "minimum": 0,
+      "title": "Scopeunresolvedevents",
+      "type": "integer"
+    },
+    "openJournalPositions": {
+      "minimum": 0,
+      "title": "Openjournalpositions",
+      "type": "integer"
+    },
+    "actualModelSpend": {
+      "default": null,
+      "title": "Actualmodelspend",
+      "type": "null"
+    },
+    "openBrokerMark": {
+      "default": null,
+      "title": "Openbrokermark",
+      "type": "null"
+    },
+    "accountReturn": {
+      "default": null,
+      "title": "Accountreturn",
+      "type": "null"
+    },
+    "externalCashflows": {
+      "default": null,
+      "title": "Externalcashflows",
+      "type": "null"
+    },
+    "economicQualification": {
+      "const": false,
+      "default": false,
+      "title": "Economicqualification",
+      "type": "boolean"
+    },
+    "brokerAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Brokerauthority",
+      "type": "boolean"
+    },
+    "promotionAuthority": {
+      "const": false,
+      "default": false,
+      "title": "Promotionauthority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "checkedAt",
+    "currency",
+    "totals",
+    "releases",
+    "scopeUnresolvedEvents",
+    "openJournalPositions"
+  ],
+  "title": "DailyTradingNet",
+  "type": "object"
+}

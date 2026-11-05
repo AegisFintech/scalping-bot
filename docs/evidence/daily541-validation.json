@@ -1,0 +1,116 @@
+{
+  "issue": 541,
+  "qualified": true,
+  "sourceSha256": "d63d4f14dba259da731d51cda8209aa8947fec283111d84280f971d47e46e4eb",
+  "nodeVersion": "v22.23.2",
+  "counts": {
+    "node-tests": 1345,
+    "database-lifecycle": 175,
+    "python-tests": 1441
+  },
+  "totalTests": 2961,
+  "skipped": 0,
+  "checks": [
+    {
+      "label": "postgres-bindir",
+      "code": 0
+    },
+    {
+      "label": "test-certificate",
+      "code": 0
+    },
+    {
+      "label": "postgres-uid",
+      "code": 0
+    },
+    {
+      "label": "postgres-gid",
+      "code": 0
+    },
+    {
+      "label": "database-init",
+      "code": 0
+    },
+    {
+      "label": "database-start",
+      "code": 0
+    },
+    {
+      "label": "format",
+      "code": 0
+    },
+    {
+      "label": "lint",
+      "code": 0
+    },
+    {
+      "label": "types",
+      "code": 0
+    },
+    {
+      "label": "build",
+      "code": 0
+    },
+    {
+      "label": "node-tests",
+      "code": 0
+    },
+    {
+      "label": "python-format",
+      "code": 0
+    },
+    {
+      "label": "python-lint",
+      "code": 0
+    },
+    {
+      "label": "python-types",
+      "code": 0
+    },
+    {
+      "label": "secrets",
+      "code": 0
+    },
+    {
+      "label": "npm-audit",
+      "code": 0
+    },
+    {
+      "label": "python-audit",
+      "code": 0
+    },
+    {
+      "label": "database-lifecycle",
+      "code": 0
+    },
+    {
+      "label": "python-tests",
+      "code": 0
+    },
+    {
+      "label": "database-stop",
+      "code": 0
+    }
+  ],
+  "privateReceiptSha256": "2f9a0d8d1cbea093069a393c135eb2645a5e138e3cdb56234d7d901c753c7c79",
+  "privateReceiptDirectory": "/mnt/sdb/scalper-qualification-tmp/scalper-qualification-WvcQDk/checks",
+  "configurationChecks": {
+    "samplePolicy": "PASS",
+    "sampleStartup": "PASS",
+    "protectedPolicy": "PASS",
+    "protectedStartup": "PASS"
+  },
+  "independentReviews": {
+    "Standards": "CLEAR",
+    "Spec": "CLEAR"
+  },
+  "browser": {
+    "fixture": true,
+    "widths": [1440, 390],
+    "horizontalOverflow": false,
+    "staleWithheld": true,
+    "mutations": 0
+  },
+  "economicQualification": false,
+  "deploymentVerified": false
+}

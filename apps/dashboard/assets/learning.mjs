@@ -1,5 +1,10 @@
 const $ = (id) => document.getElementById(id);
+const amounts = new Intl.NumberFormat("en-SG", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 let tradeInitial = true;
+let latestDailyNet = null;
 let initial = true,
   busy = false;
 async function call(path, body) {
@@ -101,6 +106,8 @@ function renderFunnel(d) {
 function withhold(message) {
   renderTrials(null);
   renderDays(null);
+  latestDailyNet = null;
+  renderDailyNet(null);
   renderTrialEvidence(null);
   renderFunnel({});
   $("board").hidden = true;
@@ -128,6 +135,38 @@ function renderTrials(value) {
         `${t.profile_id} [cycle ${t.cycle}, slot ${t.ordinal}] ${t.state} | ${t.proposals} proposals / ${t.provider_claims} provider claims / ${t.waits} WAIT | ${t.entry_fill_events} entry fill events / ${t.closes} closed outcomes | net ${t.realized_net ?? "unavailable"} | ${t.review?.interpretation ?? "allocation not reviewed"} | frozen review: ${t.review?.failedProposals ?? "unavailable"} failed / ${t.review?.incompleteContexts ?? "unavailable"} incomplete | clock receipts ${t.clock_receipts}; last ${t.last_clock_receipt ? `${t.last_clock_receipt.reason}: ${t.last_clock_receipt.from} to ${t.last_clock_receipt.until}; credited0ms` : "none"}`,
     )
     .join("\n");
+}
+function renderDailyNet(value) {
+  const age = Date.now() - Date.parse(value?.checkedAt);
+  const fresh =
+    value?.schemaVersion === "daily-trading-net-1.0" &&
+    Number.isFinite(age) &&
+    age >= -5000 &&
+    age <= 30000 &&
+    value.totals.day ===
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Singapore",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(Date.now());
+  $("daily-net-value").textContent = fresh
+    ? `${value.currency} ${amounts.format(value.totals.recordedNet)} · realized trading net`
+    : "Daily trading net unavailable or stale";
+  $("daily-net-details").textContent = fresh
+    ? `Configured demo account · XAUUSD · strategy-owned positions · ${value.totals.day} (${value.timezone}), partial day · ${value.totals.closeDeals} close deals · signed fees already included ${amounts.format(value.totals.signedFeesIncluded)} · open journal positions ${value.openJournalPositions} / unresolved events ${value.scopeUnresolvedEvents}`
+    : "";
+  $("daily-net-time").textContent = fresh
+    ? `Window: ${value.totals.since} to ${value.totals.until}; as of ${value.checkedAt}`
+    : "";
+  $("daily-net-releases").textContent = fresh
+    ? value.releases
+        .map(
+          (r) =>
+            `${r.release}: net ${amounts.format(r.recordedNet)} · ${r.closeDeals} close deals`,
+        )
+        .join("\n")
+    : "";
 }
 function renderDays(value) {
   const age = Date.now() - Date.parse(value?.checkedAt);
@@ -170,6 +209,8 @@ function renderTrialEvidence(value) {
 function render(d) {
   renderTrials(d.demoTrials);
   renderDays(d.dayScorecard);
+  latestDailyNet = d.dailyTradingNet;
+  renderDailyNet(latestDailyNet);
   renderTrialEvidence(d.naturalTrialEvidence);
   const p = d.pipeline;
   $("pipeline-health").textContent = p?.available
@@ -319,6 +360,7 @@ $("controls").addEventListener("submit", async (e) => {
   }
 });
 poll();
+window.setInterval(() => renderDailyNet(latestDailyNet), 1000);
 window.setInterval(poll, 10000);
 
 $("trade-controls").addEventListener("submit", async (e) => {
