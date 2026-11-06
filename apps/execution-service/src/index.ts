@@ -729,6 +729,14 @@ async function main(): Promise<void> {
     mode: config.tradingMode,
   });
   const automaticAnalysisWatchdog = new PostgresAutomaticAnalysisWatchdog({
+    ...(fadeLimitActive || breakoutScalpActive
+      ? {
+          lossCooldown: {
+            streakLosses: Number(fadeExecutionPolicy.streakLosses),
+            streakPauseMinutes: Number(fadeExecutionPolicy.streakPauseMinutes),
+          },
+        }
+      : {}),
     scenarioCadence: true,
     pool,
     accountId: identity.accountId,

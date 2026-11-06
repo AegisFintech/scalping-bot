@@ -31,6 +31,10 @@ payoffs and flight-recorder limits.
 The [historical loss reconstruction](docs/loss496-review.md) verifies its14
 closed paths and separates broker pips, actual fees and sampled exit evidence.
 
+[Loss-cooldown reporting](docs/watchdog-cooldown-report.md) distinguishes fresh
+verified safety waits from stalled analysis without changing order eligibility.
+Forward executor activation remains separate.
+
 ## Workflow
 
 ```text

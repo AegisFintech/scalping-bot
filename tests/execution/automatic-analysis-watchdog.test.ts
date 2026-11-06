@@ -106,3 +106,72 @@ it("treats an explicit closed session as waiting despite recent quotes while ret
     }).state,
   ).toBe("RUNNING");
 });
+
+it("reports a verified active loss cooldown instead of a cycle stall", () => {
+  const observation = {
+    ...defaults,
+    lastClaimedAt: new Date("2026-08-31T00:40:00.000Z"),
+    lastCompletedAt: new Date("2026-08-31T00:40:45.000Z"),
+    lossCooldown: {
+      checkedAt: now.toISOString(),
+      until: "2026-08-31T01:23:54.000Z",
+    },
+  };
+  expect(evaluateAutomaticAnalysisActivity(observation)).toMatchObject({
+    state: "WAITING_FOR_COOLDOWN",
+    stalledSince: null,
+    reasonCodes: ["LOSS_STREAK_PAUSE_ACTIVE"],
+  });
+});
+
+const stalled = {
+  ...defaults,
+  lastClaimedAt: null,
+  lastCompletedAt: null,
+};
+it.each([
+  { checkedAt: "2026-08-31T00:59:56.999Z", until: "2026-08-31T01:23:54.000Z" },
+  { checkedAt: "2026-08-31T01:00:00.001Z", until: "2026-08-31T01:23:54.000Z" },
+  { checkedAt: now.toISOString(), until: now.toISOString() },
+  { checkedAt: now.toISOString(), until: "2026-08-31T00:59:59.999Z" },
+])(
+  "does not mask a genuine stall with stale, future or expired cooldown proof %j",
+  (lossCooldown) => {
+    expect(
+      evaluateAutomaticAnalysisActivity({ ...stalled, lossCooldown }),
+    ).toMatchObject({
+      state: "STALLED",
+      reasonCodes: ["AUTOMATIC_ANALYSIS_STALLED"],
+    });
+  },
+);
+it("retains pause, managed setup and market precedence over a cooldown", () => {
+  const input = {
+    ...stalled,
+    lossCooldown: {
+      checkedAt: now.toISOString(),
+      until: "2026-08-31T01:23:54.000Z",
+    },
+  };
+  expect(
+    evaluateAutomaticAnalysisActivity({ ...input, paused: true }).state,
+  ).toBe("PAUSED");
+  expect(
+    evaluateAutomaticAnalysisActivity({ ...input, managedSetupActive: true })
+      .state,
+  ).toBe("MANAGING_SETUP");
+  expect(
+    evaluateAutomaticAnalysisActivity({
+      ...input,
+      marketSessionState: "CLOSED",
+    }).state,
+  ).toBe("WAITING_FOR_MARKET");
+});
+it("rejects malformed cooldown evidence instead of declaring a wait", () => {
+  expect(() =>
+    evaluateAutomaticAnalysisActivity({
+      ...stalled,
+      lossCooldown: { checkedAt: "invalid", until: now.toISOString() },
+    }),
+  ).toThrow("AUTOMATIC_WATCHDOG_COOLDOWN_CLOCK_INVALID");
+});
