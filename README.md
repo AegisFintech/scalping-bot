@@ -212,6 +212,8 @@ Operator-approved trend breakout/retest experiment: [specification](docs/trend-r
 
 [Complete daily cohort and Flight gap audit](docs/flight-cohort-review.md): all outcomes, reproduced clock gaps and prospective review rules; no trading change or profitability qualification.
 
+[Recorded WAIT diagnostics](docs/wait-distinction-report.md) separate historical input warnings from Codex reasons and provider failures; no execution change.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
