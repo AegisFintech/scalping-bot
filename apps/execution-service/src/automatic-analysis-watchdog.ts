@@ -7,6 +7,7 @@ export type AutomaticAnalysisActivityState =
   | "DISABLED"
   | "PAUSED"
   | "MANAGING_SETUP"
+  | "WAITING_FOR_COOLDOWN"
   | "WAITING_FOR_MARKET"
   | "STARTING"
   | "RUNNING"
@@ -21,6 +22,10 @@ export interface AutomaticAnalysisActivity {
   readonly latestMarketAt: string | null;
   readonly stalledSince: string | null;
   readonly reasonCodes: readonly string[];
+  readonly lossCooldown?: {
+    readonly checkedAt: string;
+    readonly until: string;
+  };
 }
 
 interface ActivityRows {
@@ -43,6 +48,7 @@ function iso(value: number | null): string | null {
 
 export function evaluateAutomaticAnalysisActivity(input: {
   readonly now: Date;
+  readonly lossCooldown?: AutomaticAnalysisActivity["lossCooldown"];
   readonly serviceStartedAt: Date;
   readonly automaticAnalysisEnabled: boolean;
   readonly paused: boolean;
@@ -114,6 +120,29 @@ export function evaluateAutomaticAnalysisActivity(input: {
     now - market > input.marketActiveWithinMs
   )
     return { state: "WAITING_FOR_MARKET", ...base };
+  if (input.lossCooldown !== undefined) {
+    const checkedAt = time(
+      input.lossCooldown.checkedAt,
+      "AUTOMATIC_WATCHDOG_COOLDOWN_CLOCK_INVALID",
+    );
+    const until = time(
+      input.lossCooldown.until,
+      "AUTOMATIC_WATCHDOG_COOLDOWN_EXPIRY_INVALID",
+    );
+    if (
+      checkedAt !== null &&
+      until !== null &&
+      checkedAt <= now &&
+      now - checkedAt <= 3_000 &&
+      until > now
+    )
+      return {
+        ...base,
+        state: "WAITING_FOR_COOLDOWN",
+        reasonCodes: ["LOSS_STREAK_PAUSE_ACTIVE"],
+        lossCooldown: input.lossCooldown,
+      };
+  }
   if (
     claimed === null &&
     completed === null &&
@@ -144,6 +173,12 @@ export class PostgresAutomaticAnalysisWatchdog {
   readonly #serviceStartedAt: Date;
   readonly #stallAfterMs: number;
   readonly #marketActiveWithinMs: number;
+  readonly #lossCooldown:
+    | {
+        readonly streakLosses: number;
+        readonly streakPauseMinutes: number;
+      }
+    | undefined;
   readonly #intervalTable:
     "automatic_analysis_intervals" | "scenario_decision_intervals";
 
@@ -162,7 +197,20 @@ export class PostgresAutomaticAnalysisWatchdog {
     readonly stallAfterMs: number;
     readonly marketActiveWithinMs?: number;
     readonly scenarioCadence?: boolean;
+    readonly lossCooldown?: {
+      readonly streakLosses: number;
+      readonly streakPauseMinutes: number;
+    };
   }) {
+    if (
+      input.lossCooldown !== undefined &&
+      (!Number.isSafeInteger(input.lossCooldown.streakLosses) ||
+        input.lossCooldown.streakLosses <= 0 ||
+        !Number.isSafeInteger(input.lossCooldown.streakPauseMinutes) ||
+        input.lossCooldown.streakPauseMinutes <= 0)
+    )
+      throw new Error("AUTOMATIC_WATCHDOG_COOLDOWN_CONFIG_INVALID");
+    this.#lossCooldown = input.lossCooldown;
     this.#pool = input.pool;
     this.#accountId = input.accountId;
     this.#symbolId = input.symbolId;
@@ -188,6 +236,8 @@ export class PostgresAutomaticAnalysisWatchdog {
     readonly marketSessionState?: "OPEN" | "CLOSED" | "UNAVAILABLE";
     readonly now?: Date;
   }): Promise<AutomaticAnalysisActivity> {
+    // Capture before either read: slow queries must not mint fresh cooldown proof.
+    const checkedAt = input.now ?? new Date();
     const result = await this.#pool.query<ActivityRows>(
       `SELECT
          (SELECT max(ai.claimed_at)
@@ -216,8 +266,45 @@ export class PostgresAutomaticAnalysisWatchdog {
     const row = result.rows[0];
     if (row === undefined)
       throw new Error("AUTOMATIC_WATCHDOG_ACTIVITY_UNAVAILABLE");
+    let lossCooldown: AutomaticAnalysisActivity["lossCooldown"];
+    if (this.#lossCooldown !== undefined && this.#mode === "demo") {
+      // Match the existing account-wide safety gate, including zero-P/L outcomes.
+      // This observation has no authority to change that gate or dispatch orders.
+      const losses = await this.#pool.query<{
+        is_loss: boolean;
+        closed_at: Date;
+      }>(
+        `SELECT (t.realized_pnl <= 0) AS is_loss, t.closed_at
+         FROM trades t
+         JOIN order_groups og ON og.id = t.order_group_id
+         JOIN analysis_runs ar ON ar.id = og.analysis_id
+         WHERE t.mode = 'demo' AND ar.account_id = $1
+         ORDER BY t.closed_at DESC LIMIT $2`,
+        [this.#accountId, this.#lossCooldown.streakLosses],
+      );
+      const lastLoss = losses.rows[0];
+      if (
+        losses.rows.length === this.#lossCooldown.streakLosses &&
+        losses.rows.every((row) => row.is_loss) &&
+        lastLoss !== undefined
+      ) {
+        const closed = time(
+          lastLoss.closed_at,
+          "AUTOMATIC_WATCHDOG_LOSS_TIME_INVALID",
+        );
+        if (closed === null || closed > checkedAt.getTime())
+          throw new Error("AUTOMATIC_WATCHDOG_LOSS_TIME_INVALID");
+        lossCooldown = {
+          checkedAt: checkedAt.toISOString(),
+          until: new Date(
+            closed + this.#lossCooldown.streakPauseMinutes * 60_000,
+          ).toISOString(),
+        };
+      }
+    }
     return evaluateAutomaticAnalysisActivity({
       ...input,
+      lossCooldown,
       now: input.now ?? new Date(),
       serviceStartedAt: this.#serviceStartedAt,
       stallAfterMs: this.#stallAfterMs,

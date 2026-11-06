@@ -1,3 +1,16 @@
+### ISSUE-353 — Verified cooldown versus scheduler stall
+
+- Issue: https://github.com/AegisFintech/scalping-bot/issues/353.
+- Acceptance: fresh account-wide loss-cooldown observation, missing/stale/expired
+  evidence and real stall regressions, actual SQL and health consumer boundaries;
+  unchanged eligibility/cooldown/audits, full qualification, independent reviews,
+  exact-head protected delivery and separately reviewed executor activation.
+- Status: false stall reproduced; implementation and unit/consumer regressions
+  pass. Full qualification passes2,991tests/no skips and20checks; four configuration
+  checks and independent Standards/Spec reviews CLEAR. Protected delivery pending;
+  no runtime activation.
+- Report: `docs/watchdog-cooldown-report.md`. Frozen executor remains unchanged.
+
 ### ISSUE-547 — Recorded WAIT, history and provider distinction
 
 - Issue: https://github.com/AegisFintech/scalping-bot/issues/547; parent403.
@@ -7,7 +20,8 @@
   delivery and isolated reader verification; frozen trading source preserved.
 - Status: implementation/focused regressions and independent Standards/Spec reviews
   complete; full qualification passes2,974tests/no skips and20checks. Four
-  configuration checks pass. Protected delivery and dashboard-only activation pending.
+  configuration checks pass. PR549 merged; dashboard-only activation verified and
+  issue547 closed. Frozen executor/provider/Flight remain unchanged.
 - Report: `docs/wait-distinction-report.md`. Prospective pre-provider admission
   requires a separate reviewed source handover/registration; no promotion.
 
@@ -17,8 +31,12 @@
 - Acceptance: reproduce pre-provider history boundary; separately freeze forward
   admission/source segment, preserve clocks/flags/unknown claims and all cohorts;
   full qualification, independent review and explicit reviewed source handover.
-- Status: research/specification queued; no executor or economic activation.
-- Specification: `docs/wait-distinction-report.md`, next economic work.
+- Status: foundation PR550 passes2,985tests/no skips and20checks, four config
+  checks and independent reviews; exact-head hosted checks pass, authentic approval
+  pending. Runtime implementation, prospective registration/source handover and
+  natural recovery evidence remain open. No executor or economic activation.
+- Specification: `docs/required-history-admission-plan.md`; unchanged original
+  Codex WAIT and history warning remain distinct.
 
 ### ISSUE-545 — Complete daily outcomes and original Flight gap audit
 

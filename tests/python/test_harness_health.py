@@ -377,3 +377,42 @@ def test_budget_wait_never_hides_unknown_jobs_or_other_errors(root, reason, unkn
         assert "budget exhausted" in result.detail
     if unknown:
         assert "never authorize redispatch" in result.detail
+
+
+def test_verified_loss_cooldown_is_waiting_without_recovery_authority():
+    activity = {
+        "state": "WAITING_FOR_COOLDOWN",
+        "lossCooldown": {
+            "checkedAt": NOW.isoformat(),
+            "until": (NOW + timedelta(minutes=10)).isoformat(),
+        },
+    }
+    assert h.demo(bot(automationActivity=activity), NOW).state == "WAITING"
+    assert "no forced analysis" in h.demo(bot(automationActivity=activity), NOW).detail
+    assert h.demo(bot(automationActivity=activity, pauseNewAnalyses=True), NOW).state == "BLOCKED"
+
+
+@pytest.mark.parametrize(
+    "proof",
+    [
+        None,
+        {},
+        {"checkedAt": "invalid", "until": NOW.isoformat()},
+        {
+            "checkedAt": (NOW - timedelta(seconds=4)).isoformat(),
+            "until": (NOW + timedelta(minutes=10)).isoformat(),
+        },
+        {
+            "checkedAt": (NOW + timedelta(seconds=1)).isoformat(),
+            "until": (NOW + timedelta(minutes=10)).isoformat(),
+        },
+        {"checkedAt": NOW.isoformat(), "until": NOW.isoformat()},
+    ],
+)
+def test_unverified_cooldown_is_unavailable(proof):
+    assert (
+        h.demo(
+            bot(automationActivity={"state": "WAITING_FOR_COOLDOWN", "lossCooldown": proof}), NOW
+        ).state
+        == "UNAVAILABLE"
+    )

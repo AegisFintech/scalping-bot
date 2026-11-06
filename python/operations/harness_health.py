@@ -324,12 +324,30 @@ def demo(value: dict[str, Any], now: datetime) -> Stage:
         "DISABLED",
         "PAUSED",
         "MANAGING_SETUP",
+        "WAITING_FOR_COOLDOWN",
         "WAITING_FOR_MARKET",
         "STARTING",
         "RUNNING",
         "STALLED",
     }:
         return stage("Demo", "UNAVAILABLE", at, "Scheduler progress cannot be verified.")
+    if state == "WAITING_FOR_COOLDOWN":
+        proof = activity.get("lossCooldown")
+        if not isinstance(proof, dict):
+            return stage("Demo", "UNAVAILABLE", at, "Loss cooldown evidence is missing.")
+        try:
+            checked_at = proof.get("checkedAt")
+            until_at = proof.get("until")
+            if not isinstance(checked_at, str) or not isinstance(until_at, str):
+                raise ValueError("HEALTH_COOLDOWN_CLOCK_SHAPE")
+            checked = timestamp(checked_at)
+            until = timestamp(until_at)
+            valid = now - timedelta(seconds=3) <= checked <= now < until
+        except (ValueError, TypeError, AttributeError):
+            valid = False
+        if not valid:
+            return stage("Demo", "UNAVAILABLE", at, "Loss cooldown evidence is stale or invalid.")
+        return stage("Demo", "WAITING", at, "Verified loss cooldown; no forced analysis.")
     if state == "STALLED":
         return stage("Demo", "BLOCKED", at, "Existing analysis watchdog reports stalled progress.")
     if state in {"DISABLED", "PAUSED", "WAITING_FOR_MARKET", "STARTING"}:

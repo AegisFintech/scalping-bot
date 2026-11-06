@@ -268,6 +268,10 @@ For complete daily win/loss and recorder-gap diagnosis, read `docs/flight-cohort
 
 For WAIT/history/provider diagnosis, read `docs/wait-distinction-report.md`; recorded tail warnings are not model causality, current readiness or execution authority.
 
+For loss-cooldown watchdog reporting, read `docs/watchdog-cooldown-report.md`;
+require fresh independent proof, retain stall detection and preserve the safety gate.
+Forward executor handover remains separately reviewed.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.
