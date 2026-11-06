@@ -268,6 +268,10 @@ For complete daily win/loss and recorder-gap diagnosis, read `docs/flight-cohort
 
 For WAIT/history/provider diagnosis, read `docs/wait-distinction-report.md`; recorded tail warnings are not model causality, current readiness or execution authority.
 
+For prospective pre-provider history admission, read
+`docs/required-history-admission-plan.md`. Preserve original WAIT reasons, frozen
+worker contracts, unknown claims and separate forward registration/handover.
+
 <!-- research-publication -->
 
 Research-only delivery `fb2b9b805295ffbf6bfc9456486195059edb36f9f46f4ec9089ea6bfb1155b88`; no execution or promotion authority.

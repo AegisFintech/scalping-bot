@@ -296,3 +296,45 @@ it("does not treat an inside-spread retest as a passive entry", () => {
   Object.assign(i.quote!, { bid: "4000.99", ask: "4001.02" });
   expect(trendRetestGeometry(i, "RETEST_LIMIT").decision).toBe("WAIT");
 });
+
+// This is historical characterization, not prospective admission authority.
+it.each(["short", "session_gap"] as const)(
+  "retains unusable %s history and the original WAIT without manufacturing geometry",
+  (kind) => {
+    const i = input();
+    const frame = i.candles[2]!;
+    if (kind === "short")
+      Object.assign(frame, { candles: frame.candles.slice(-5) });
+    else {
+      for (const bar of frame.candles.slice(0, 6)) {
+        Object.assign(bar, {
+          startTime: new Date(
+            Date.parse(bar.startTime) - 900_000,
+          ).toISOString(),
+          endTime: new Date(Date.parse(bar.endTime) - 900_000).toISOString(),
+        });
+      }
+      Object.assign(frame.candles[6]!, {
+        qualityFlags: ["BROKER_SESSION_GAP_BEFORE"],
+      });
+    }
+    const before = JSON.stringify(i);
+    expect(trendRetestGeometry(i, "RETEST_LIMIT")).toMatchObject({
+      decision: "WAIT",
+      reason: "TREND_COMPLETED_HISTORY_UNAVAILABLE",
+    });
+    const proposal = {
+      decision: "WAIT",
+      reason: "Recorded model reason",
+      entry_price: null,
+      stop_loss: null,
+      take_profit: null,
+      pending_seconds: null,
+    };
+    expect(trialGeometry(i, binding(), proposal)).toMatchObject({
+      decision: "WAIT",
+      reason: "Recorded model reason",
+    });
+    expect(JSON.stringify(i)).toBe(before);
+  },
+);
