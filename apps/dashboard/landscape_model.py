@@ -88,6 +88,20 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                 if local
                 else "Durable local claim; not proof of provider receipt.",
             )
+            if "history_note" in row and row.get("history_note") != "":
+                note = row.get("history_note")
+                emit(
+                    row,
+                    row.get("requested_at"),
+                    "engine",
+                    "Recorded history warning" if note else "Recorded history unavailable",
+                    (
+                        str(note)
+                        + "; not Codex reasoning. Historical input only, not current readiness."
+                    )
+                    if note
+                    else "Bounded recorded input unavailable; history quality is unknown.",
+                )
             if row.get("state") == "READY":
                 emit(
                     row,
@@ -121,9 +135,18 @@ def event_tape(rows: list[dict[str, Any]], now: datetime) -> list[dict[str, str]
                     row,
                     row.get("completed_at"),
                     source,
-                    "Local proposal failed" if local else "Provider request failed",
-                    codes(row.get("reason"))
-                    or "Recorded failure; no valid result authorizes a new order.",
+                    "Local proposal failed"
+                    if local
+                    else {
+                        "OPENAI_API_BUDGET_WAIT": "Provider budget wait",
+                        "SCENARIO_INPUT_STALE": "Recorded input expired",
+                    }.get(str(row.get("reason")), "Provider result unavailable"),
+                    (codes(row.get("reason")) or "Recorded failure")
+                    + (
+                        "; no valid result authorizes a new order."
+                        if local
+                        else "; provider dispatch and billing are unverified by this status."
+                    ),
                 )
         elif kind == "analysis":
             state = str(row.get("state"))
