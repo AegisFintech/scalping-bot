@@ -5,9 +5,9 @@
   separate safe tail warnings and provider failure categories; actual SQL/failure
   regressions, full qualification/config checks, independent reviews, protected
   delivery and isolated reader verification; frozen trading source preserved.
-- Status: implementation/focused regressions and independent Standards/Spec reviews
-  complete; full qualification passes2,974tests/no skips and20checks. Four
-  configuration checks pass. Protected delivery and dashboard-only activation pending.
+- Status: complete; PR549 merged at b86f999. Full qualification passes2,974tests/no
+  skips and20checks; four configuration checks and independent reviews pass.
+  Isolated dashboard activation verified; executor/provider/Flight source preserved.
 - Report: `docs/wait-distinction-report.md`. Prospective pre-provider admission
   requires a separate reviewed source handover/registration; no promotion.
 
@@ -17,8 +17,12 @@
 - Acceptance: reproduce pre-provider history boundary; separately freeze forward
   admission/source segment, preserve clocks/flags/unknown claims and all cohorts;
   full qualification, independent review and explicit reviewed source handover.
-- Status: research/specification queued; no executor or economic activation.
-- Specification: `docs/wait-distinction-report.md`, next economic work.
+- Status: HTTP/geometry/actual-DB characterization and prospective design pass full
+  qualification:2,985tests/no skips,20checks, four configuration checks and fresh
+  independent Standards/Spec reviews CLEAR. Foundation protected delivery pending;
+  no runtime change. Implementation, future registration, handover and natural
+  evidence remain open.
+- Specification: `docs/required-history-admission-plan.md`.
 
 ### ISSUE-545 — Complete daily outcomes and original Flight gap audit
 

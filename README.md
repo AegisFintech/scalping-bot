@@ -31,6 +31,9 @@ payoffs and flight-recorder limits.
 The [historical loss reconstruction](docs/loss496-review.md) verifies its14
 closed paths and separates broker pips, actual fees and sampled exit evidence.
 
+[Required-history admission design](docs/required-history-admission-plan.md) records
+tested HTTP/DB boundaries and a separate future handover; runtime admission is unchanged.
+
 ## Workflow
 
 ```text

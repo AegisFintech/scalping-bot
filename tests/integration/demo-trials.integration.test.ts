@@ -2,6 +2,7 @@ import {
   trendProfiles,
   trendCatalogueSha256,
 } from "../../packages/strategy-candidates/src/trend-retest-profile.js";
+import { entryProviderPayload } from "../../packages/scenario-engine/src/entry-planner.js";
 import { trendInput } from "../helpers/trend-input.js";
 import { trendRetestGeometry } from "../../packages/strategy-candidates/src/trend-retest.js";
 import {
@@ -480,7 +481,7 @@ assert partial["trialOutcomes"] == []
       }
       await pool.query(
         "INSERT INTO analysis_runs(id,account_id,symbol_id,strategy_version_id,mode,state,analysis_time) VALUES($1,$2,$3,$4,'demo','DEFERRED',now())",
-        [analysis, accountId, symbolId, strategy],
+        [analysis, accountId, symbolId, scope.strategyVersionId],
       );
       return {
         scope,
@@ -1022,6 +1023,94 @@ assert partial["trialOutcomes"] == []
         ),
       ).rejects.toThrow("IMMUTABLE");
     });
+    it.each(["contiguous", "short", "session_gap"] as const)(
+      "retains exact %s input at the frozen database claim boundary without granting orders",
+      async (kind) => {
+        const x = await fixture(false, true);
+        await x.controller.tick();
+        await new Promise((resolve) => setTimeout(resolve, 1050));
+        await x.controller.tick();
+        const b = x.controller.binding(),
+          artifact = trialPrompt(b);
+        const input = trendInput();
+        const captured = new Date().toISOString(),
+          shift =
+            Math.floor(Date.parse(captured) / 60000) * 60000 -
+            Math.floor(Date.parse(input.capturedAt) / 60000) * 60000;
+        input.capturedAt = captured;
+        for (const frame of input.candles)
+          for (const bar of frame.candles)
+            Object.assign(bar, {
+              startTime: new Date(
+                Date.parse(bar.startTime) + shift,
+              ).toISOString(),
+              endTime: new Date(Date.parse(bar.endTime) + shift).toISOString(),
+            });
+        Object.assign(input.quote!, {
+          sourceTime: captured,
+          receivedAt: captured,
+        });
+        const frame = input.candles[2]!;
+        if (kind === "short")
+          Object.assign(frame, { candles: frame.candles.slice(-5) });
+        if (kind === "session_gap") {
+          for (const bar of frame.candles.slice(0, 6)) {
+            Object.assign(bar, {
+              startTime: new Date(
+                Date.parse(bar.startTime) - 900_000,
+              ).toISOString(),
+              endTime: new Date(
+                Date.parse(bar.endTime) - 900_000,
+              ).toISOString(),
+            });
+          }
+          Object.assign(frame.candles[6]!, {
+            qualityFlags: ["BROKER_SESSION_GAP_BEFORE"],
+          });
+        }
+        const before = JSON.stringify(input),
+          requestText = JSON.stringify(entryProviderPayload(input));
+        const id = randomUUID();
+        const store = new PostgresContextStore(pool, {
+          ...x.scope,
+          trial: () => b,
+        });
+        expect(
+          await store.claim({
+            id,
+            sourceAnalysisId: x.analysis,
+            capturedAt: input.capturedAt,
+            tickSize: input.tickSize,
+            experiment: b,
+            providerEvidence: {
+              promptContent: artifact.content,
+              promptVersion: artifact.version,
+              requestText,
+            },
+          }),
+        ).toBe(true);
+        const saved = (
+          await pool.query<{ request_text: string; request_sha256: string }>(
+            "SELECT request_text,request_sha256 FROM context_provider_evidence WHERE context_id=$1",
+            [id],
+          )
+        ).rows[0]!;
+        expect(saved.request_text).toBe(requestText);
+        expect(saved.request_sha256).toBe(
+          createHash("sha256").update(requestText).digest("hex"),
+        );
+        expect(JSON.stringify(input)).toBe(before);
+        expect((await store.latest())?.state).toBe("REQUESTING");
+        expect(
+          (
+            await pool.query<{ n: string }>(
+              "SELECT count(*) AS n FROM order_groups og JOIN analysis_runs ar ON ar.id=og.analysis_id WHERE ar.account_id=$1",
+              [x.scope.accountId],
+            )
+          ).rows[0]?.n,
+        ).toBe("0");
+      },
+    );
     it("atomically binds exact prompt/profile before claim and preserves local identity", async () => {
       const x = await fixture(true);
       await new Promise((r) => setTimeout(r, 20));
